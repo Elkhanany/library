@@ -80,3 +80,64 @@ Next batch is **F1: Chapters 3.7 and 3.8**. Write `MATHPLAN-3.7-3.9.md` first �
 derivation plan, in the shape of `MATHPLAN-3.md`, which is why Part III came out well. Extract every
 debt naming 3.7 from `GAPS.md` §4 and put it in the writing agent's brief. Chapters from Part III
 onward are written **with their plain-terms boxes inline, in one pass, by the same agent**.
+
+---
+
+# Batch F1 — Chapters 3.7 and 3.8 (18 August 2026)
+
+**Part III is now nine chapters.** Chapter 3.7 was carrying 34 forward promises from four earlier
+chapters plus eight planned derivations; `PLAN-FORWARD.md` §4 argued for the split and it was taken.
+The division is where the physics divides: everything in 3.7 is a timelike geodesic in an effective
+potential, everything in 3.8 is null or about causal structure.
+
+| | |
+|---|---|
+| **3.7** | Schwarzschild: The Solution and Its Orbits — 15,800 words, 73 equations |
+| **3.8** | Light, Redshift, and What a Horizon Is — 17,900 words, 71 equations |
+| **3.9** | Cosmology, and a Loose Thread — **next**, plus the Part III reunification pass |
+
+All 393 forward references were re-aimed in the same pass, and the section numbers those references
+cite are fixed by `MATHPLAN-3.7-3.9.md`. The debt load on the old 3.7 is now 22 and 12.
+
+## What the independent verification found
+
+Per the standing rule, an agent that did not write the chapters re-derived everything. Every
+symbolic result reproduced exactly — the nine Christoffel symbols, the $(AB)'=0$ collapse, Birkhoff
+genuinely derived rather than sketched, the ISCO, $\omega^2$, the photon sphere, the exactly-zero
+first-order null residual, the two-halves split of the deflection, the Kretschmann scalar, both null
+slopes. **The signature never slipped.**
+
+It found **3 BLOCKERs and 4 MAJORs**:
+
+- Three wrong printed numbers — two metre-to-kilometre conversions done as $\div10^{6}$, and a
+  proper time out by a factor of ten.
+- **Four unescaped `<` characters that silently deleted text from the rendered page.** HTML5 opens a
+  tag whenever `<` is followed by a letter, so `$r<r_{+}$` swallowed everything to the next `>`. One
+  site removed the sign analysis identifying which root is the orbital maximum; another removed part
+  (c) of a problem. Nothing looked wrong: no error, no warning, just missing sentences. The review
+  caught two; a parser sweep written in response caught two more.
+- A stated error bound that would have destroyed the chapter's own headline result — it justified
+  dropping a quadratic term by a first-order argument, admitting a 4″ error where the text then
+  compares against $42.98\pm0.04$. The real argument is that a quadratic term averages to zero over
+  a cycle and shifts the frequency only at second order; numerically the formula is good to
+  $2.7\times10^{-8}$.
+
+Plus sixteen minors, mostly cross-references pointing at sections that do not say what was claimed.
+All applied.
+
+**`tagcheck.py` is new and now runs as the first step of `verify.py`.** It parses every chapter with
+a real HTML parser and fails the build on any `<` that a browser would read as a tag. That class of
+fault is invisible to a rendered-page audit, because by the time you measure the page the text is
+already gone.
+
+## Two corrections to my own plan, worth remembering
+
+Both writing agents independently caught the same error: the plan computed $G\times M_{\odot}$ where
+it should have used the measured $GM_{\odot}$. $GM_{\odot}$ is known to ten significant figures and
+$G$ alone to five, so multiplying discards five digits — enough to move Mercury by 0.01″ and the
+solar deflection by 0.0004″, on exactly the two numbers a reader checks against a measurement.
+`CONVENTIONS.md` now carries the rule. The plan also said eight Christoffel symbols where there are
+nine.
+
+That is now **five planning errors caught by writing or reviewing agents across this build**, and
+zero errors that reached a reader. The pipeline is the product.

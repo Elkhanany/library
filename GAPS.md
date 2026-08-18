@@ -594,8 +594,9 @@ Every reference in the written text to a chapter that does not exist. Counted by
 
 | Owed to | Debts | Owed to | Debts | Owed to | Debts |
 |---|---|---|---|---|---|
-| 3.7 | 34 | 5.1 | 3 | 6.4 | 11 |
-| 3.8 | 17 | 5.2 | 15 | 6.5 | 9 |
+| 3.7 | 22 | 5.1 | 3 | 6.4 | 11 |
+| 3.8 | 12 | 5.2 | 16 | 6.5 | 9 |
+| 3.9 | 17 | | | | |
 | 4.1 | 4 | 5.3 | 17 | 6.6 | 10 |
 | 4.2 | 19 | 5.4 | 5 | 6.7 | 5 |
 | 4.3 | 16 | 5.5 | 12 | 7.1 | 7 |
@@ -607,11 +608,18 @@ Every reference in the written text to a chapter that does not exist. Counted by
 | | | 6.2 | 1 | 7.7 | 3 |
 | | | 6.3 | **33** | 7.8 | 5 |
 
-**Total: 390 forward references to unwritten chapters.**
+**Total: 393 forward references to unwritten chapters.**
+
+> **Updated 18 August 2026.** Chapter 3.7 has been split — 3.7 now carries the Schwarzschild
+> solution and its timelike orbits, 3.8 carries light, redshift and horizons, and cosmology moves to
+> 3.9. That was done *because* of the 34-debt load recorded here, and it worked: the load is now
+> 22 and 12. Every reference was re-aimed in the same commit, and the section numbers in those
+> references are fixed by `MATHPLAN-3.7-3.9.md`.
 
 ### The four heaviest, and what they actually owe
 
-**Chapter 3.7 — 34 debts.** The heaviest single load in the book, from four different chapters:
+**Chapter 3.7 — was 34 debts, now 22 after the split.** It was the heaviest single load in the
+book, from four different chapters, and that is why Part III is now nine chapters:
 - 1.2 §5.1 and 2.3 §6.2: conjugate points become the multiple images of a lensed quasar, and the
   caustic is where the second variation stops being positive. *Two chapters have promised this
   specific illustration.*

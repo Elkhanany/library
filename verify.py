@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """Verify the shipped build at desktop and phone widths, with all network blocked."""
-import asyncio, sys, os
+import asyncio, sys, os, glob, importlib.util
 from playwright.async_api import async_playwright
+
+# Source-level check first: it is cheap, and it catches a class of fault the
+# rendered-page audit cannot see, because the browser has already eaten the text
+# by the time we measure the page.
+_spec = importlib.util.spec_from_file_location("tagcheck", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tagcheck.py"))
+_tc = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_tc)
+_TAGFAIL = _tc.main(sorted(glob.glob("src/ch*.html")))
+
 F=[f[:-5] for f in sorted(os.listdir("build")) if f.endswith(".html")]
 OVF="""(()=>{let bad=0;document.querySelectorAll('.eq').forEach(eq=>{const box=eq.getBoundingClientRect().width;
  let w=eq.scrollWidth;eq.querySelectorAll('.katex-html').forEach(k=>{w=Math.max(w,k.scrollWidth,k.getBoundingClientRect().width)});
@@ -39,6 +47,6 @@ async def main():
             print(f"{f:9s} desktop katex={d['kx']:4d} ovf={d['ovf']} canvas={d['canv']} | "
                   f"phone hscroll={m['hscroll']} | external={d['ext']+m['ext']} "
                   f"{'ok' if not problem else '<-- CHECK '+str(d['errs']+m['errs'])}")
-        print(f"\n{len(F)} pages · {kx} typeset expressions · zero external requests · needing attention: {bad}")
+        print(f"\n{len(F)} pages · {kx} typeset expressions · zero external requests · needing attention: {bad + _TAGFAIL}")
         await b.close()
 asyncio.run(main())

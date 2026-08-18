@@ -192,7 +192,7 @@ quantitative work you already do.*
 
 ---
 
-### PART III · GENERAL RELATIVITY (8 ch)
+### PART III · GENERAL RELATIVITY (9 ch)
 
 | # | Chapter | Key content |
 |---|---|---|
@@ -202,8 +202,9 @@ quantitative work you already do.*
 | 3.4 | Curvature ※ | Riemann tensor from the commutator of covariant derivatives; geodesic deviation; Ricci; the Ricci scalar; Bianchi identities |
 | 3.5 | Forms, Lie Derivatives, Killing Vectors ※ | Differential forms and the exterior derivative; integration on manifolds; Lie derivative; **Killing vectors ⇒ conserved quantities** (Noether, geometrized) |
 | 3.6 | The Einstein Field Equations | Motivated, then **derived from the Einstein–Hilbert action**; stress-energy tensor; Newtonian limit recovers Poisson |
-| 3.7 | Schwarzschild | Solution derived in full; orbits and the ISCO; perihelion precession; light bending; redshift; what a horizon really is |
-| 3.8 | Cosmology and a Loose Thread | FLRW; Friedmann equations; expansion; **black hole entropy S = A/4** — deliberately left dangling until 7.8 |
+| 3.7 | Schwarzschild: The Solution and Its Orbits | The solution derived in full from the symmetric ansatz; Birkhoff; conserved quantities from Killing vectors; the effective potential; **the ISCO at r = 6GM/c²**, which Newton has no name for; **Mercury's 43″ per century** |
+| 3.8 | Light, Redshift, and What a Horizon Is | Null geodesics; **1.75″ of deflection with the missing half identified as spatial curvature** — the factor of two Chapter 3.1 confessed; gravitational redshift from the metric; Eddington–Finkelstein; the Kretschmann scalar, finite at the horizon and divergent at the centre |
+| 3.9 | Cosmology, and a Loose Thread | FLRW; Friedmann equations; expansion; **why energy is not conserved in an expanding universe** — no timelike Killing vector, so Noether has nothing to work with; **black hole entropy S = A/4** deliberately left dangling until 7.9 |
 
 *Interactives:* parallel transport around a loop on a sphere (holonomy — *the* insight for curvature); Schwarzschild effective potential with a slider, watching the ISCO appear where Newton has nothing; light-bending ray tracer.
 

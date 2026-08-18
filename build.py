@@ -52,8 +52,9 @@ PARTS = [
   ("3.4","ch3-4","Curvature",True),
   ("3.5","ch3-5","Forms, Lie Derivatives, Killing Vectors",True),
   ("3.6","ch3-6","The Einstein Field Equations",False),
-  ("3.7","ch3-7","Schwarzschild",False),
-  ("3.8","ch3-8","Cosmology and a Loose Thread",False),
+  ("3.7","ch3-7","Schwarzschild: The Solution and Its Orbits",False),
+  ("3.8","ch3-8","Light, Redshift, and What a Horizon Is",False),
+  ("3.9","ch3-9","Cosmology, and a Loose Thread",False),
  ]),
  ("Part IV · Quantum Mechanics", "Linear algebra, taken absolutely seriously.", [
   ("4.1","ch4-1","What Classical Physics Cannot Do",False),

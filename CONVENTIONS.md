@@ -93,3 +93,14 @@ Address the reader in the **second person**. Never "the reader".
 - **"is just X" stays where its job is to deflate intimidating notation** ("a Hermitian matrix is
   just a symmetric matrix with complex entries") and **goes where the thing being deflated is
   something the book worked for**. A result that cost three pages is not "just" anything.
+
+## Physical constants
+
+Use the **measured combination**, not a product of separately measured pieces. $GM_{\odot} =
+1.32712440018\times10^{20}\ \mathrm{m^{3}s^{-2}}$ is known to ten significant figures; $G$ alone is
+known to five, and $M_{\odot}$ is derived from the two. Writing $G\times M_{\odot}$ discards five
+digits. It shifts Mercury's precession by 0.01″ and the solar light deflection by 0.0004″ — small,
+but these are precisely the numbers a reader checks against a measurement, and the book's whole
+claim is that its arithmetic can be reproduced.
+
+The same applies to $GM_{\oplus} = 3.986004418\times10^{14}\ \mathrm{m^{3}s^{-2}}$.
