@@ -1,0 +1,1642 @@
+<p class="eyebrow">Part 0 · The Toolkit — Chapter 0.6</p>
+<h1>Multivariable Calculus</h1>
+<p class="subtitle">One equation from Chapter 0.1, with a vector in it. Everything else is consequences.</p>
+
+<div class="callout where">
+  <span class="ct">Where we are</span>
+  <p>This entire chapter is one substitution. Take the equation that
+  <a href="ch0-1.html">Chapter 0.1</a> built the book on,</p>
+  $$ f(a+h) \;=\; f(a) + f'(a)\,h + o(h), $$
+  <p>and let $h$ be a <em>vector</em> and $f'(a)$ a <em>linear map</em>
+  (<a href="ch0-4.html">Chapter 0.4</a>). That is it. That is the whole idea. Partial derivatives,
+  the gradient, the chain rule as a product of matrices, the Hessian, Lagrange multipliers and the
+  Jacobian determinant are all consequences of that one move, and this chapter derives them in that
+  order.</p>
+  <p>This is the promised payoff for a decision made on the first page. Chapter 0.1 insisted, at some
+  cost in apparent pedantry, that the derivative is <strong>the coefficient of the best linear
+  approximation</strong> and not a slope. Had we defined it as a slope, we would now be stuck: there
+  is no such thing as "the slope" of a function of three variables — there are infinitely many, one
+  per direction, and no way to choose. There <em>is</em> exactly one best linear approximation. The
+  general definition costs nothing extra here; the special one would have cost us the chapter.</p>
+  <p>One section — §4 — is more important than it looks. It observes that the gradient is not
+  really a vector, that turning it into one requires an inner product you did not notice yourself
+  using, and that this stops being invisible the moment you leave Cartesian coordinates. You will
+  meet your first covector there. Chapters 2.4, 3.2 and 3.3 are built on it.</p>
+</div>
+
+<p class="tools"><b>Tools you'll need</b> &nbsp;— <a href="ch0-1.html">Chapter 0.1</a>: the derivative
+as a linear approximation, the $o(h)$ bookkeeping, the chain rule as composition.
+<a href="ch0-3.html">Chapter 0.3</a>: Taylor's theorem with remainder, used once in §6.
+<a href="ch0-4.html">Chapter 0.4</a>: linear maps, their matrices in a basis, composition as matrix
+multiplication, and the determinant as a signed volume scaling factor.
+<a href="ch0-5.html">Chapter 0.5</a>: inner products, Cauchy–Schwarz with its equality condition,
+orthogonal projection, and the spectral theorem for symmetric matrices. Chapters 0.4 and 0.5 are not
+decoration here — §3, §6 and §7 each cash a specific theorem from them.</p>
+
+<h2>1 · Partial derivatives, and the trap</h2>
+
+<p>The obvious first move, when a function has several inputs, is to freeze all but one and
+differentiate in the survivor. Let $f:\R^{n}\to\R$ and let $\vv e_{1},\ldots,\vv e_{n}$ be the
+standard basis. The <strong>partial derivative</strong> of $f$ with respect to $x^{i}$ at
+$\vv a$ is</p>
+
+<div class="eq" id="e-partial">
+$$ \pdv{f}{x^{i}}(\vv a) \;\equiv\; \partial_{i}f(\vv a) \;=\; \lim_{t\to0}\frac{f(\vv a + t\,\vv e_{i}) - f(\vv a)}{t}. $$
+</div>
+
+<p>Nothing new is happening. Restricted to the line $\vv a + t\,\vv e_{i}$, the function $f$ is a
+function of the single variable $t$, and <a class="eqref" href="#e-partial"></a> is Chapter 0.1's
+definition applied to it. Every rule you already have — product, quotient, chain — applies verbatim,
+because during the computation the other variables are literally constants. So
+$\partial_{x}(x^{2}y^{3}) = 2xy^{3}$ and $\partial_{y}(x^{2}y^{3}) = 3x^{2}y^{2}$, and there is no
+technique to learn.</p>
+
+<p>The trap is that this feels like it ought to be the whole story, and it is not. Partial
+derivatives are a genuinely <em>weaker</em> notion than differentiability, and the gap is not
+subtle.</p>
+
+<div class="callout insight">
+  <span class="ct">The counterexample to have permanently</span>
+  <p>Define</p>
+  $$ f(x,y) = \frac{xy}{x^{2}+y^{2}} \quad\text{for }(x,y)\neq(0,0),\qquad f(0,0)=0. $$
+  <p>Both partial derivatives exist at the origin, and both are zero. But $f$ is <em>not
+  continuous</em> at the origin — it does not even have a limit there.</p>
+</div>
+
+<p>Check the partials first. Along the $x$-axis, $f(x,0) = 0/(x^{2}) = 0$ for every $x$, so the
+function $t\mapsto f(t,0)$ is identically zero and its derivative at $t=0$ is $0$. Hence
+$\partial_{x}f(0,0)=0$, and by the symmetry $f(x,y)=f(y,x)$ also $\partial_{y}f(0,0)=0$. Both
+partials exist, are finite, and are perfectly well behaved.</p>
+
+<p>Now approach the origin along the diagonal $y=x$ instead. For $x\neq0$,</p>
+
+<div class="eq" id="e-diag">
+$$ f(x,x) \;=\; \frac{x\cdot x}{x^{2}+x^{2}} \;=\; \frac{x^{2}}{2x^{2}} \;=\; \tfrac12, $$
+</div>
+
+<p>a constant. So $f\to\tfrac12$ along the diagonal and $f\to0$ along the axes. Two different limits,
+so there is no limit, so $f$ is not continuous at the origin — and a function that is not continuous
+at a point certainly does not have a good linear approximation there.</p>
+
+<p>It is worth seeing <em>why</em> the function is so badly behaved, because the reason is
+geometrical. Write $x=r\cos\theta$, $y=r\sin\theta$. Then</p>
+
+<div class="eq" id="e-polarf">
+$$ f \;=\; \frac{r\cos\theta\cdot r\sin\theta}{r^{2}} \;=\; \cos\theta\sin\theta \;=\; \tfrac12\sin 2\theta. $$
+</div>
+
+<p>The radius has cancelled completely: $f$ depends only on the <em>direction</em> of approach, never
+on the distance. Every value in $[-\tfrac12,\tfrac12]$ is attained arbitrarily close to the origin,
+on some ray. The two coordinate axes happen to be rays on which $f$ vanishes, and the partial
+derivatives look along exactly those two rays and see nothing wrong. They are two samples from a
+circle's worth of behaviour.</p>
+
+<p>That is the honest indictment. <strong>Partial derivatives probe $n$ lines through a point; a
+function has infinitely many directions and can misbehave in all the ones you didn't check.</strong>
+So we need a definition that constrains the function's behaviour in <em>every</em> direction at once,
+and constrains it uniformly. Chapter 0.1 already wrote it down; we only have to let the displacement
+be a vector.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.1</span></span>
+  <p>Freezing every input but one and differentiating in the survivor is the obvious opening move, and it behaves exactly as it did with a single variable, since the frozen inputs are literally constants while the calculation is going on. No new technique is required. There is a trap, though, and it is not a subtle one.</p>
+  <p>Such derivatives look along the coordinate axes and nowhere else. A point in a plane has a whole circle of directions leading away from it, and a function is at liberty to behave one way along the two axes you inspected and quite differently along everything between them. The standard example has a value depending only on the direction of approach and not at all on the distance travelled, so that it is zero along both axes, a different constant along the diagonal, and every intermediate value on some ray or other. It has no limit at the origin and is not continuous there, and its two axis derivatives exist, are finite, and report nothing amiss.</p>
+  <p>The moral concerns what a definition must achieve rather than what your daily calculations look like. Sampling finitely many lines cannot control a function, so the honest definition has to constrain every direction at once and constrain them uniformly. That definition was written down in the first chapter, and it needs exactly one alteration.</p>
+</div>
+
+<h2>2 · The total derivative</h2>
+
+<p>Here is the definition the rest of the chapter runs on. Let $f:\R^{n}\to\R^{m}$.</p>
+
+<div class="callout insight">
+  <span class="ct">Definition — the total derivative</span>
+  <p>$f$ is <strong>differentiable at $\vv a$</strong> if there exists a <em>linear map</em>
+  $\mathrm{D}f(\vv a):\R^{n}\to\R^{m}$ such that</p>
+  <div class="eq" id="e-totaldef">
+  $$ f(\vv a + \vv h) \;=\; f(\vv a) \;+\; \mathrm{D}f(\vv a)\,\vv h \;+\; o(\abs{\vv h}), $$
+  </div>
+  <p>where, exactly as in Chapter 0.1, "$o(\abs{\vv h})$" means a remainder $R(\vv h)$ with
+  $\abs{R(\vv h)}/\abs{\vv h}\to 0$ as $\vv h\to\vv 0$. The map $\mathrm{D}f(\vv a)$ is the
+  <strong>total derivative</strong>, or the <strong>differential</strong>, of $f$ at $\vv a$.</p>
+</div>
+
+<p>Compare it with the one-variable equation letter by letter. $a$ became $\vv a$; $h$ became
+$\vv h$; the <em>number</em> $f'(a)$ became the <em>linear map</em> $\mathrm{D}f(\vv a)$; and
+"multiply by $f'(a)$" became "apply the linear map". Multiplication by a number is what a linear map
+$\R\to\R$ does, so the old definition is the case $n=m=1$ of the new one, not an analogy to it.</p>
+
+<p>Notice how much stronger this is than §1. The limit is over $\vv h\to\vv 0$ with no restriction on
+direction, so the approximation must hold uniformly as $\vv h$ approaches zero <em>any way at all</em>
+— including along spirals and along the diagonal that broke the counterexample. Differentiability at
+$\vv a$ immediately forces continuity at $\vv a$: as $\vv h\to\vv 0$ the right-hand side of
+<a class="eqref" href="#e-totaldef"></a> tends to $f(\vv a)$, since a linear map sends $\vv 0$ to
+$\vv 0$ and is continuous.</p>
+
+<h3>2.1 · There is only one such map</h3>
+
+<p>The definition says "there exists". It is worth two lines to check that it cannot exist twice,
+because otherwise "<em>the</em> derivative" would be an abuse of language.</p>
+
+<p>Suppose $A$ and $B$ both satisfy <a class="eqref" href="#e-totaldef"></a>. Subtracting the two
+statements, the function values cancel and we are left with
+$(A-B)\vv h = o(\abs{\vv h})$. Fix any direction $\vv u$ with $\abs{\vv u}=1$ and put
+$\vv h = t\vv u$ for small $t\gt0$. By linearity $(A-B)(t\vv u) = t\,(A-B)\vv u$, so</p>
+
+<div class="eq" id="e-unique">
+$$ \frac{\abs{(A-B)(t\vv u)}}{\abs{t\vv u}} \;=\; \frac{t\,\abs{(A-B)\vv u}}{t} \;=\; \abs{(A-B)\vv u}. $$
+</div>
+
+<p>The left side must tend to $0$ as $t\to0$; the right side does not depend on $t$ at all. A
+constant that tends to zero is zero, so $(A-B)\vv u = \vv 0$ for every $\vv u$, so $A=B$. The
+derivative, when it exists, is unique — and note the mechanism: <em>the linearity did all the
+work</em>, by letting us pull the small parameter out and cancel it.</p>
+
+<h3>2.2 · Its matrix is the Jacobian</h3>
+
+<p>$\mathrm{D}f(\vv a)$ is a linear map, so by <a href="ch0-4.html">Chapter 0.4</a> it has a matrix
+once we fix bases, and the recipe for that matrix is: <em>the $j$-th column is the image of the
+$j$-th basis vector</em>. So feed basis vectors into the definition. Put $\vv h = t\,\vv e_{j}$ in
+<a class="eqref" href="#e-totaldef"></a>:</p>
+
+<div class="eq" id="e-feedbasis">
+$$ f(\vv a + t\,\vv e_{j}) \;=\; f(\vv a) + t\,\mathrm{D}f(\vv a)\vv e_{j} + o(t), $$
+</div>
+
+<p>using $\mathrm{D}f(\vv a)(t\vv e_{j}) = t\,\mathrm{D}f(\vv a)\vv e_{j}$ by linearity. Rearrange and
+divide by $t$:</p>
+
+<div class="eq" id="e-colj">
+$$ \frac{f(\vv a + t\,\vv e_{j}) - f(\vv a)}{t} \;=\; \mathrm{D}f(\vv a)\vv e_{j} + \frac{o(t)}{t} \;\xrightarrow[t\to0]{}\; \mathrm{D}f(\vv a)\vv e_{j}. $$
+</div>
+
+<p>But the left-hand side is, componentwise, exactly the definition
+<a class="eqref" href="#e-partial"></a> of the partial derivative with respect to $x^{j}$. Therefore
+the $j$-th column of the matrix of $\mathrm{D}f(\vv a)$ is the column of partials
+$\partial_{j}f^{1},\ldots,\partial_{j}f^{m}$, and the matrix is the <strong>Jacobian</strong>:</p>
+
+<div class="eq" id="e-jacobian">
+$$ \mathrm{D}f(\vv a) \;\longleftrightarrow\; \begin{pmatrix} \partial_{1}f^{1} & \cdots & \partial_{n}f^{1}\\ \vdots & \ddots & \vdots\\ \partial_{1}f^{m} & \cdots & \partial_{n}f^{m}\end{pmatrix}, \qquad \big[\mathrm{D}f\big]^{i}{}_{j} = \pdv{f^{i}}{x^{j}}. $$
+</div>
+
+<p>Read the shape: $m$ rows, one per output component; $n$ columns, one per input direction. A map
+$\R^{3}\to\R^{2}$ has a $2\times3$ Jacobian, and there is never any doubt about which way round it
+goes, because a matrix acting on a column vector in $\R^{n}$ must have $n$ columns.</p>
+
+<p>So the partials do reconstruct the derivative — <em>once you know the derivative exists</em>. That
+qualifier is the entire content of §1. The logic runs one way only:</p>
+
+<div class="eq" id="e-implication">
+$$ \text{differentiable at }\vv a \;\Longrightarrow\; \text{all partials exist at }\vv a, $$
+</div>
+
+<p>and the converse is false, by <a class="eqref" href="#e-polarf"></a>. What rescues the converse is
+one extra hypothesis, and this is the one theorem in the chapter we will quote rather than prove in
+the main text:</p>
+
+<div class="callout insight">
+  <span class="ct">Theorem (quoted — proved in the grind box below)</span>
+  <p>If all the partial derivatives $\partial_{j}f^{i}$ exist in a neighbourhood of $\vv a$ and are
+  <strong>continuous at $\vv a$</strong>, then $f$ is differentiable at $\vv a$, and
+  $\mathrm{D}f(\vv a)$ is the Jacobian <a class="eqref" href="#e-jacobian"></a>.</p>
+</div>
+
+<p>Why it is safe to lean on this: every function you will differentiate in this book is built from
+polynomials, exponentials, logarithms and trigonometric functions by arithmetic and composition, and
+the partials of such a thing are again of the same type and continuous wherever they are defined. So
+in practice you compute the partials, observe that they are continuous, and conclude that the
+Jacobian really is the derivative. The counterexample of §1 is not a warning about your daily
+calculations; it is a warning about what the <em>definition</em> has to be if the theorems are going
+to be true. We are quoting the theorem rather than deriving it in the flow of the argument only
+because its proof needs the mean value theorem from <a href="ch0-2.html">Chapter 0.2</a> and adds
+nothing to the picture — but it is written out below, because this book does not say "it can be
+shown".</p>
+
+<details class="grind">
+  <summary>Grind box — the boundedness lemma, and continuous partials ⇒ differentiable</summary>
+  <div class="grind-body">
+    <p><b>Lemma (linear maps are bounded).</b> For any linear $A:\R^{n}\to\R^{m}$ there is a constant
+    $C$ with $\abs{A\vv v}\le C\abs{\vv v}$ for all $\vv v$.</p>
+    <p><em>Proof.</em> Write $\vv v = \sum_{i}v^{i}\vv e_{i}$, so $A\vv v = \sum_{i}v^{i}A\vv e_{i}$.
+    By the triangle inequality and then Cauchy–Schwarz (<a href="ch0-5.html">Chapter 0.5</a>) applied
+    to the two lists of numbers $\abs{v^{i}}$ and $\abs{A\vv e_{i}}$,</p>
+    $$ \abs{A\vv v} \;\le\; \sum_{i}\abs{v^{i}}\,\abs{A\vv e_{i}} \;\le\; \left(\sum_{i}(v^{i})^{2}\right)^{1/2}\!\left(\sum_{i}\abs{A\vv e_{i}}^{2}\right)^{1/2} \;=\; C\abs{\vv v} $$
+    <p>with $C=\big(\sum_{i}\abs{A\vv e_{i}}^{2}\big)^{1/2}$, a number depending only on $A$. ∎</p>
+    <p>This innocuous fact is used constantly and silently: it is what lets us say
+    $\mathrm{D}f\big(o(\abs{\vv h})\big) = o(\abs{\vv h})$, i.e. that a linear map does not turn a
+    negligible displacement into a non-negligible one. It is also where finite-dimensionality enters.
+    In infinite dimensions (Chapter 4.3) linear maps can be unbounded, $\dv{}{x}$ being the standard
+    offender, and a great deal of quantum mechanics' technical difficulty descends from exactly that.</p>
+    <p><b>Theorem.</b> If the partials of $f$ exist near $\vv a$ and are continuous at $\vv a$, then
+    $f$ is differentiable at $\vv a$.</p>
+    <p><em>Proof for $n=2$, $m=1$;</em> the general case is the same argument with more terms. Write
+    $\vv a=(a,b)$ and $\vv h=(h,k)$. Split the total change into two moves, one along each axis, by
+    adding and subtracting the corner value:</p>
+    $$ f(a+h,b+k)-f(a,b) = \underbrace{\big[f(a+h,b+k)-f(a,b+k)\big]}_{\text{move in }x} + \underbrace{\big[f(a,b+k)-f(a,b)\big]}_{\text{move in }y}. $$
+    <p>Each bracket changes only one variable, so each is a one-variable increment and the mean value
+    theorem of Chapter 0.2 applies to it. There exist $\theta_{1},\theta_{2}\in(0,1)$ with</p>
+    $$ f(a+h,b+k)-f(a,b) = h\,\partial_{x}f(a+\theta_{1}h,\,b+k) \;+\; k\,\partial_{y}f(a,\,b+\theta_{2}k). $$
+    <p>Now use continuity of the partials <em>at</em> $(a,b)$: both evaluation points converge to
+    $(a,b)$ as $(h,k)\to(0,0)$, so we may write
+    $\partial_{x}f(a+\theta_{1}h,b+k) = \partial_{x}f(a,b)+\varepsilon_{1}$ and
+    $\partial_{y}f(a,b+\theta_{2}k) = \partial_{y}f(a,b)+\varepsilon_{2}$ with
+    $\varepsilon_{1},\varepsilon_{2}\to0$. Then</p>
+    $$ f(\vv a+\vv h)-f(\vv a) = \underbrace{h\,\partial_{x}f(\vv a) + k\,\partial_{y}f(\vv a)}_{\text{linear in }\vv h} \;+\; \underbrace{h\varepsilon_{1}+k\varepsilon_{2}}_{\text{remainder}}, $$
+    <p>and since $\abs{h}\le\abs{\vv h}$ and $\abs{k}\le\abs{\vv h}$,</p>
+    $$ \frac{\abs{h\varepsilon_{1}+k\varepsilon_{2}}}{\abs{\vv h}} \;\le\; \abs{\varepsilon_{1}}+\abs{\varepsilon_{2}} \;\longrightarrow\; 0 . $$
+    <p>That is exactly <a class="eqref" href="#e-totaldef"></a> with the Jacobian as the linear map. ∎</p>
+    <p>Where the counterexample of §1 fails this test: its partials do exist away from the origin, but
+    a short computation from <a class="eqref" href="#e-polarf"></a> shows they blow up like $1/r$ as
+    you approach it, so they are nowhere near continuous at the origin. The hypothesis is not
+    decorative.</p>
+  </div>
+</details>
+
+<div class="callout warn">
+  <span class="ct">⚠ Why this isn't obvious</span>
+  <p>The symbol $\pdv{f}{x}$ hides a choice, and the notation gives you no warning. In one variable
+  there is nothing to hold fixed, so $\dv{f}{x}$ is unambiguous. In several variables the phrase
+  "differentiate with respect to $x$" is incomplete until you say <em>along which direction</em>,
+  which is the same as saying <em>what is being held constant</em> — and the symbol does not say.</p>
+  <p>Here is the cleanest possible demonstration, with no physics in it. Take the function
+  $f = y$ on the plane, and describe the plane in two ways: by coordinates $(x,y)$, and by
+  coordinates $(x,z)$ where $z = x+y$. Both are legitimate coordinate systems; both contain a
+  coordinate called $x$. Then</p>
+  $$ \left(\pdv{f}{x}\right)_{y} = \pdv{}{x}\,y = 0, \qquad\text{while}\qquad \left(\pdv{f}{x}\right)_{z} = \pdv{}{x}(z-x) = -1. $$
+  <p>Same function, same symbol $\partial/\partial x$, answers $0$ and $-1$. Nothing has gone wrong:
+  the two derivatives are taken along different directions — one along the line $y=\text{const}$, the
+  other along the line $z=\text{const}$ — and there is no reason for them to agree. The subscript is
+  not fussiness; without it the expression is not defined.</p>
+  <p>This is why thermodynamics is written the way it is. From the first law $\dd U = T\,\dd S - p\,\dd V$,
+  holding $S$ fixed gives $\left(\pdv{U}{V}\right)_{S} = -p$. But for an ideal gas the internal energy
+  depends only on temperature — Joule's free-expansion experiment — so
+  $\left(\pdv{U}{V}\right)_{T} = 0$. For air at atmospheric pressure the first is about
+  $-10^{5}\,\mathrm{J\,m^{-3}}$ and the second is exactly zero. Two genuinely different numbers wearing
+  the same-looking symbol, and generations of students have lost marks to the difference.</p>
+  <p>Now notice what the total derivative does to this problem: <strong>it dissolves it.</strong>
+  $\mathrm{D}f(\vv a)$ is a single object that eats <em>all</em> displacement vectors at once and
+  returns the corresponding first-order change. It does not privilege any direction, so there is
+  nothing to hold fixed and nothing to suppress. The ambiguity was never in the mathematics; it was
+  in the decision to decompose a directionless object along a basis and then forget which basis. That
+  is a second, independent argument — the first was §1 — for treating $\mathrm{D}f$ rather than the
+  partials as the fundamental object. The partials are its components, and components always
+  presuppose a basis.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.2</span></span>
+  <p>Here a decision taken on the first page pays for itself, and the debt is worth naming as it is settled. The derivative was defined as the coefficient of the best straight-line stand-in for a function rather than as the slope of a graph, at some cost in apparent fussiness. There is no such thing as the slope of a function of three inputs: there are infinitely many, one per direction, and no principle for preferring any. There is exactly one best linear stand-in. Let the displacement be a vector and the coefficient a linear map, and the definition transfers unchanged.</p>
+  <p>Everything downstream is a consequence of that substitution. The map, where it exists, is unique, and its array is the table of partial derivatives arranged with one row for each output and one column for each input direction. So the partial derivatives do rebuild the whole derivative, but only once its existence is known by some other route, which is what the trap was there to establish.</p>
+  <p>A second dividend is easy to overlook. The symbol for a partial derivative conceals which quantity was held fixed, and different choices give genuinely different numbers, as anyone who has lost marks in thermodynamics can attest. The total derivative accepts every displacement at once, so it has nothing to hold fixed and the ambiguity never arises.</p>
+</div>
+
+<h2>3 · The gradient</h2>
+
+<p>Specialise to a scalar-valued function, $m=1$, which is the case physics uses most: a temperature
+field, a potential, an action, a log-likelihood. Now $\mathrm{D}f(\vv a):\R^{n}\to\R$ is a linear map
+into the reals — a <em>linear functional</em>, in Chapter 0.4's terms a linear map whose target happens
+to be one-dimensional. Its matrix is therefore a single row,
+$\big(\partial_{1}f\;\cdots\;\partial_{n}f\big)$.</p>
+
+<p>A row of numbers looks like a vector lying on its side, and the temptation to stand it up is
+irresistible. Give in to it — but notice the step, because §4 is about what it costs. Using the
+standard inner product of <a href="ch0-5.html">Chapter 0.5</a>, define the <strong>gradient</strong>
+$\nabla f(\vv a)$ as the unique vector satisfying</p>
+
+<div class="eq" id="e-graddef">
+$$ \mathrm{D}f(\vv a)\,\vv h \;=\; \nabla f(\vv a)\cdot\vv h \qquad\text{for every }\vv h. $$
+</div>
+
+<p>Its components follow by feeding in basis vectors, exactly as in §2.2: taking $\vv h=\vv e_{i}$
+gives $\nabla f\cdot\vv e_{i} = \partial_{i}f$, and the left side is the $i$-th component of
+$\nabla f$. So</p>
+
+<div class="eq" id="e-gradcomp">
+$$ \nabla f \;=\; \big(\partial_{1}f,\;\partial_{2}f,\;\ldots,\;\partial_{n}f\big). $$
+</div>
+
+<h3>3.1 · Steepest ascent, derived from Cauchy–Schwarz</h3>
+
+<p>Ask the natural question: in which direction does $f$ increase fastest? Make it precise. For a unit
+vector $\hat u$, the <strong>directional derivative</strong> is the rate of change of $f$ along
+$\hat u$,</p>
+
+<div class="eq" id="e-dirdef">
+$$ D_{\hat u}f(\vv a) \;=\; \lim_{t\to0}\frac{f(\vv a+t\hat u)-f(\vv a)}{t} \;=\; \mathrm{D}f(\vv a)\hat u \;=\; \nabla f\cdot\hat u, $$
+</div>
+
+<p>where the middle equality is <a class="eqref" href="#e-totaldef"></a> with $\vv h = t\hat u$,
+divided by $t$, in the limit — the same computation as <a class="eqref" href="#e-colj"></a> but with
+an arbitrary direction instead of a basis vector. So the question is: over all unit $\hat u$, which
+maximises $\nabla f\cdot\hat u$?</p>
+
+<p>That is precisely the question Cauchy–Schwarz answers. Chapter 0.5 proved that for any two
+vectors,</p>
+
+<div class="eq" id="e-cs">
+$$ \abs{\vv p\cdot\vv q} \;\le\; \abs{\vv p}\,\abs{\vv q}, \qquad\text{with equality iff }\vv p\parallel\vv q. $$
+</div>
+
+<p>Apply it with $\vv p = \nabla f$ and $\vv q = \hat u$, remembering $\abs{\hat u}=1$:</p>
+
+<div class="eq" id="e-steep">
+$$ -\abs{\nabla f} \;\le\; \nabla f\cdot\hat u \;\le\; +\abs{\nabla f}. $$
+</div>
+
+<p>Both bounds are attained, by the equality clause: the upper one at
+$\hat u = \nabla f/\abs{\nabla f}$, where $\nabla f\cdot\hat u = \abs{\nabla f}^{2}/\abs{\nabla f} =
+\abs{\nabla f}$; the lower one at $\hat u = -\nabla f/\abs{\nabla f}$. Hence, with nothing assumed and
+nothing waved at:</p>
+
+<div class="callout insight">
+  <span class="ct">Steepest ascent</span>
+  <p>The direction of fastest increase of $f$ at $\vv a$ is $\nabla f/\abs{\nabla f}$; the rate of
+  increase in that direction is $\abs{\nabla f}$; the direction of fastest decrease is the opposite
+  one, with rate $-\abs{\nabla f}$. The gradient does not merely <em>point</em> uphill — its length
+  <em>is</em> the steepness.</p>
+</div>
+
+<p>This is the cleanest single payoff for having proved Cauchy–Schwarz. Note also what happens at the
+other extreme: if $\nabla f\cdot\hat u = 0$ then $f$ does not change at all to first order along
+$\hat u$. Those directions are worth a name, and they have a geometric meaning.</p>
+
+<h3>3.2 · The gradient is perpendicular to level sets</h3>
+
+<p>A <strong>level set</strong> of $f$ is a set $\{\vv x : f(\vv x)=c\}$ — an isotherm, an
+equipotential, a contour line on a map. Let $\vv x(t)$ be any differentiable curve that lies inside
+one of them, so that $f(\vv x(t)) = c$ for all $t$. Differentiate that identity.</p>
+
+<p>We can do this from the definition, which also quietly proves the special case of the chain rule
+we will need repeatedly. Expand $\vv x$ to first order, $\vv x(t+s) = \vv x(t) + s\,\dot{\vv x}(t) +
+o(s)$, and feed the result into <a class="eqref" href="#e-totaldef"></a>:</p>
+
+<div class="eq" id="e-curvechain">
+$$ \begin{aligned} f\big(\vv x(t+s)\big) &= f\big(\vv x(t)\big) + \mathrm{D}f\big[s\,\dot{\vv x}(t)+o(s)\big] + o(s)\\[3pt] &= f\big(\vv x(t)\big) + s\,\nabla f\cdot\dot{\vv x}(t) + o(s), \end{aligned} $$
+</div>
+
+<p>where the boundedness lemma of §2 was used to absorb $\mathrm{D}f\big[o(s)\big]$ into $o(s)$.
+Comparing with the one-variable definition of a derivative in $s$, we read off</p>
+
+<div class="eq" id="e-alongcurve">
+$$ \dv{}{t}f\big(\vv x(t)\big) \;=\; \nabla f\cdot\dot{\vv x}(t). $$
+</div>
+
+<p>Now impose that the curve lies in a level set: the left side is $\dv{c}{t}=0$, so</p>
+
+<div class="eq" id="e-perp">
+$$ \nabla f\cdot\dot{\vv x} \;=\; 0 \qquad\text{for every curve inside a level set.} $$
+</div>
+
+<p>The velocity $\dot{\vv x}$ of such a curve is exactly what we mean by a vector <em>tangent</em> to
+the level set. So $\nabla f$ is orthogonal to every tangent direction of the level set through
+$\vv a$: <strong>the gradient is perpendicular to the level surface, and points across it in the
+direction of increase.</strong></p>
+
+<p>The two facts fit together into one picture. Contours are lines of no change; the gradient is
+perpendicular to them; and it is longest where the contours are closest together, because that is
+where a small step changes $f$ the most. The figure below is that picture, with the arithmetic
+exposed so you can check it rather than believe it.</p>
+
+<figure class="fig">
+  <canvas id="fig-grad" data-h="430"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s-px">point&nbsp;<i>x</i></label>
+      <input type="range" id="s-px" min="-3.2" max="3.2" step="0.05" value="1.40">
+    </div>
+    <div class="ctrl">
+      <label for="s-py">point&nbsp;<i>y</i></label>
+      <input type="range" id="s-py" min="-1.6" max="1.6" step="0.05" value="1.40">
+    </div>
+    <div class="ctrl">
+      <button id="b-con">show constraint (§7)</button>
+    </div>
+    <div class="ctrl"><output id="o-grad"></output></div>
+    <div class="ctrl"><output id="o-perp"></output></div>
+    <div class="ctrl"><output id="o-lag"></output></div>
+  </div>
+  <figcaption><b>One figure, three sections.</b> Grey ellipses are level sets of
+  $f(x,y)=x^{2}+2y^{2}$; green arrows are the gradient field, all drawn the same length so that only
+  their <em>direction</em> is being claimed. Drag the point (or use the sliders). The blue curve is
+  the level set through it, the dashed grey line is that curve's tangent, and the thick blue arrow is
+  $\nabla f$ there, drawn to scale. The readout reports $\nabla f\cdot\hat t$, computed by taking a
+  numerical tangent from the contour and dotting it with the analytic gradient: it stays around
+  $10^{-12}$, which is machine roundoff and nothing else — <a class="eqref" href="#e-perp"></a>
+  measured rather than asserted.
+  Watch the blue arrow lengthen as you move outward, where the contours crowd — that is
+  §3.1's claim that $\abs{\nabla f}$ <em>is</em> the steepness — and shrink to nothing at the origin,
+  where the level sets degenerate to a point and the gradient vanishes.
+  <b>Now press the button.</b> The orange line is the constraint $g(x,y)=x+y=3$. Its lowest-$f$ point
+  is marked, and there the purple level curve of $f$ is <em>tangent</em> to the constraint line, so
+  the two gradients are parallel: $\nabla f = (4,4) = 4\,\nabla g$. That number $4$ is the Lagrange
+  multiplier of §7, and it is also $\dv{f^{*}}{c}$. Slide the point along the orange line and watch
+  the blue contour cut across it everywhere except at the marked point — which is the whole proof of
+  §7 in one image.</figcaption>
+</figure>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.3</span></span>
+  <p>For a function returning a single number the linear stand-in is a row rather than a square, and a row of numbers is very hard not to stand upright and call a vector. Do so, then ask which direction increases the function fastest, and the question becomes the one the overlap inequality of the previous chapter answers exactly. An overlap with a direction of unit length is largest when the two are parallel, and its size is then the length of the other. So the steepest direction is the gradient's own, and the rate of increase along it is the gradient's length. The arrow does not merely point uphill; how long it is is how steep the hill is.</p>
+  <p>The complementary statement comes out of the same computation. Travel along a curve on which the function never changes, and its rate of change along that curve is zero, which says the gradient has no overlap with any direction tangent to such a curve. The gradient is therefore perpendicular to the contours and crosses them by the shortest route available.</p>
+  <p>The two facts assemble into one picture a walker would recognise. Contours are the lines along which nothing happens, the arrow cuts squarely across them, and it is longest precisely where they crowd together, since crowded contours are where a short step buys the largest change.</p>
+</div>
+
+<h2>4 · The gradient is really a one-form — and why you must care</h2>
+
+<p>Go back to <a class="eqref" href="#e-graddef"></a> and look at what was actually done there. We had
+a perfectly good object, the linear map $\mathrm{D}f(\vv a)$, which eats a displacement vector and
+returns a number. We converted it into a <em>vector</em>, $\nabla f$, by demanding that dotting with
+that vector reproduce the map. The conversion required a dot product. It could not have been done
+without one.</p>
+
+<p>Give the natural object its usual name. Write</p>
+
+<div class="eq" id="e-df">
+$$ \dd f(\vv h) \;\equiv\; \mathrm{D}f(\vv a)\,\vv h \;=\; h^{i}\,\partial_{i}f, $$
+</div>
+
+<p>a sum over $i$. The object $\dd f$ is a <strong>one-form</strong>, or <strong>covector</strong>: a
+linear machine that eats a vector and returns a number. In Chapter 0.4's language it is nothing but a
+linear map whose target happens to be one-dimensional; and since such maps can be added and scaled and
+the result is another one, they form a vector space in their own right — the <strong>dual space</strong>
+$V^{*}$, which Chapter 2.4 will treat properly. What matters here is that $\dd f$ is defined by $f$
+alone. No inner product, no notion of length, no notion of angle went into
+<a class="eqref" href="#e-df"></a> — only the pairing of a displacement with a rate of change, which
+is exactly what a physical derivative is. (This is also the honest definition of the $\dd x$ you have
+been cancelling since school; Chapter 0.1's warning callout promised you it would get one here.)</p>
+
+<p>The gradient, by contrast, is defined by <em>two</em> things: $f$ and an inner product. Look at the
+index positions, which are about to earn their keep. In <a class="eqref" href="#e-df"></a> the
+components $h^{i}$ of a vector carry an <strong>upper</strong> index; the components $\partial_{i}f$ of
+the one-form carry a <strong>lower</strong> one; and they are summed against each other to make a
+number.</p>
+
+<p>Now bring in a general inner product. Given a basis, bilinearity determines it completely by what
+it does to basis vectors: writing $\vv p = p^{i}\vv e_{i}$ and $\vv q = q^{j}\vv e_{j}$ and expanding,</p>
+
+<div class="eq" id="e-metricdef">
+$$ \vv p\cdot\vv q \;=\; p^{i}q^{j}\,\big(\vv e_{i}\cdot\vv e_{j}\big) \;\equiv\; g_{ij}\,p^{i}q^{j}, \qquad g_{ij}\equiv \vv e_{i}\cdot\vv e_{j}. $$
+</div>
+
+<p>The array $g_{ij}$ is called the <strong>metric</strong> in that basis. It is symmetric because the
+inner product is, and it is invertible because the inner product is non-degenerate — if some $\vv v$
+had $g_{ij}v^{i}=0$ for all $j$ then $\vv v$ would be orthogonal to everything, including itself, so
+$\vv v=\vv 0$. Both index positions are down, matching the fact that it eats two vectors. Write the
+defining relation <a class="eqref" href="#e-graddef"></a> in these components:</p>
+
+<div class="eq" id="e-raise1">
+$$ g_{ij}\,(\nabla f)^{i}\,h^{j} \;=\; \partial_{j}f\;h^{j} \qquad\text{for every }\vv h, $$
+</div>
+
+<p>so the coefficients of each $h^{j}$ must agree: $g_{ij}(\nabla f)^{i} = \partial_{j}f$. Multiplying
+by the inverse matrix $g^{ij}$ (which exists because the inner product is non-degenerate),</p>
+
+<div class="eq" id="e-raise2">
+$$ \boxed{\;(\nabla f)^{i} \;=\; g^{ij}\,\partial_{j}f.\;} $$
+</div>
+
+<p>There it is, in the open. <strong>Converting the one-form $\partial_{j}f$ into the vector
+$(\nabla f)^{i}$ is exactly the act of contracting with the inverse metric.</strong> It is called
+<em>raising an index</em>, and it is not free.</p>
+
+<p>In Cartesian coordinates on Euclidean space $g_{ij}=\delta_{ij}$, so $g^{ij}=\delta^{ij}$ and
+<a class="eqref" href="#e-raise2"></a> reads $(\nabla f)^{i}=\partial_{i}f$: the components are
+numerically identical and the distinction is invisible. That invisibility is why the gradient is
+usually taught as a vector and why the whole issue can seem like pedantry. It is not pedantry, and
+here is where it stops being invisible:</p>
+
+<ul>
+<li><b>Non-Cartesian coordinates, immediately.</b> In plane polar coordinates the metric is
+$g_{ij}=\mathrm{diag}(1,r^{2})$, so $g^{ij}=\mathrm{diag}(1,r^{-2})$ and the gradient's angular
+component is $r^{-2}\partial_{\theta}f$, not $\partial_{\theta}f$. If you have ever wondered where the
+stray $1/r$ in the polar gradient formula comes from, it comes from here — see the grind box.</li>
+<li><b>Relativity, permanently.</b> The Minkowski metric has signature $(+,-,-,-)$
+(Chapter 2.3), so raising a spatial index <em>flips its sign</em>: $(\nabla f)^{i} = -\partial_{i}f$.
+There is no coordinate choice that makes this go away, because no coordinate choice makes the metric
+the identity. From Chapter 2.4 onward, upper and lower indices are different objects and mixing them
+is an error, not a style preference.</li>
+<li><b>Curved space, structurally.</b> On a manifold (Chapter 3.2) there is no inner product at all
+until you supply one — and supplying one <em>is</em> the gravitational field (Chapter 3.3). So on a
+manifold $\dd f$ exists always and $\nabla f$ exists only once gravity has been specified. That is a
+statement about physics, not notation.</li>
+</ul>
+
+<p>So: you have just met your first covector, and it was hiding in the most familiar object in
+vector calculus. The rule to carry forward is short. <strong>Differentiation naturally produces
+lower indices; vectors naturally carry upper ones; the metric is what converts between them, and
+when the metric is the identity you cannot see the conversion happening.</strong> Chapter 2.4 makes
+this a formal convention and Chapter 3.2 makes it unavoidable. Nothing more is needed here.</p>
+
+<details class="grind">
+  <summary>Grind box — the polar gradient, derived rather than memorised</summary>
+  <div class="grind-body">
+    <p>In plane polar coordinates $(r,\theta)$ the squared length of a small displacement is, by
+    Pythagoras on a radial step $\dd r$ and a perpendicular arc $r\,\dd\theta$,</p>
+    $$ \dd s^{2} = \dd r^{2} + r^{2}\dd\theta^{2} \qquad\Longrightarrow\qquad g_{ij} = \begin{pmatrix}1&0\\0&r^{2}\end{pmatrix}. $$
+    <p>Inverting a diagonal matrix is easy: $g^{ij}=\mathrm{diag}(1,\,r^{-2})$. So by
+    <a class="eqref" href="#e-raise2"></a> the gradient's components in the coordinate basis
+    $\{\partial_{r},\partial_{\theta}\}$ are</p>
+    $$ (\nabla f)^{r} = \partial_{r}f, \qquad (\nabla f)^{\theta} = \frac{1}{r^{2}}\,\partial_{\theta}f. $$
+    <p>The coordinate basis vector $\partial_{\theta}$ is not a unit vector — moving one unit of
+    $\theta$ moves you a distance $r$ — so its normalised version is
+    $\hat{\boldsymbol\theta} = r^{-1}\partial_{\theta}$, i.e. $\partial_\theta = r\,\hat{\boldsymbol\theta}$.
+    Substituting,</p>
+    $$ \nabla f = (\nabla f)^{r}\,\hat{\vv r} + (\nabla f)^{\theta}\,r\,\hat{\boldsymbol\theta} = \pdv{f}{r}\,\hat{\vv r} + \frac{1}{r}\pdv{f}{\theta}\,\hat{\boldsymbol\theta}. $$
+    <p>That is the formula printed on the inside cover of every vector-calculus text, and you have
+    just derived it. Two morals. First, the notorious $1/r$ is not a quirk of polar coordinates; it is
+    <em>one</em> factor of $r^{-2}$ from raising the index and <em>one</em> factor of $r$ from
+    normalising the basis vector. Second — and this is the part that matters later — the "$h_{i}$
+    scale factors" that vector-calculus books ask you to memorise for cylindrical and spherical
+    coordinates are nothing but the diagonal entries $\sqrt{g_{ii}}$ of the metric. Chapter 3.3
+    replaces the table with the metric and never mentions scale factors again.</p>
+    <p>Sanity check: for $f=r$ we get $\nabla f = \hat{\vv r}$, correct — the fastest way to increase
+    your distance from the origin is to move directly away from it, at unit rate. For $f=\theta$ we
+    get $\nabla f = \hat{\boldsymbol\theta}/r$, which correctly says that far from the origin you must
+    travel a long way to change your bearing.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.4</span></span>
+  <p>Look again at the step where the row was stood upright, because something was spent unnoticed. What differentiation naturally produces is a measuring device: it accepts a displacement and returns the resulting change, needing no notion of length or angle to do so. This is also the honest account of the symbols people have been cancelling since school. Turning it into an arrow required a rule for converting one into the other, and that rule is extra structure, assumed rather than derived. In square coordinates on flat space it is the identity, so device and arrow carry identical numbers and the conversion cannot be seen.</p>
+  <p>Step outside them and it becomes visible at once. In polar coordinates the conversion divides the angular part by the square of the radius, which is where the notorious reciprocal in the memorised polar formula comes from, one factor from the conversion and one from the angular basis direction not being of unit length. In relativity the conversion reverses the sign of every spatial part, and no coordinates remove it.</p>
+  <p>The rule to carry forward is short. Differentiation produces measuring devices, arrows are a different species, and the metric converts between them. On a curved space no such object exists until somebody supplies one, and supplying it is what specifying a gravitational field means. The measuring device is always there; the arrow is not.</p>
+</div>
+
+<h2>5 · The chain rule in several variables</h2>
+
+<p>Chapter 0.1 derived the chain rule by composing two linear approximations and observing that
+linear maps compose by multiplication. In one dimension "multiplication" meant multiplying two
+numbers. Here it means composing two linear maps, which by Chapter 0.4 means <strong>multiplying two
+matrices</strong>. The derivation is word-for-word the same.</p>
+
+<p>Let $g:\R^{n}\to\R^{p}$ be differentiable at $\vv a$ and $f:\R^{p}\to\R^{m}$ differentiable at
+$\vv b = g(\vv a)$. Nudge the input by $\vv h$. Then $g$ moves by</p>
+
+<div class="eq" id="e-chaink">
+$$ \vv k \;\equiv\; g(\vv a+\vv h)-g(\vv a) \;=\; \mathrm{D}g(\vv a)\,\vv h \;+\; o(\abs{\vv h}). $$
+</div>
+
+<p>Feed that displacement into $f$, using $f$'s own linear approximation at $\vv b$:</p>
+
+<div class="eq" id="e-chainmv">
+$$ \begin{aligned} f(\vv b+\vv k) &= f(\vv b) + \mathrm{D}f(\vv b)\,\vv k + o(\abs{\vv k})\\[3pt] &= f(\vv b) + \mathrm{D}f(\vv b)\Big[\mathrm{D}g(\vv a)\,\vv h + o(\abs{\vv h})\Big] + o(\abs{\vv k})\\[3pt] &= f(\vv b) + \mathrm{D}f(\vv b)\,\mathrm{D}g(\vv a)\,\vv h + o(\abs{\vv h}). \end{aligned} $$
+</div>
+
+<p>Two small steps hide in that last line, and both are the boundedness lemma. First,
+$\mathrm{D}f(\vv b)$ applied to something $o(\abs{\vv h})$ is again $o(\abs{\vv h})$. Second,
+$\abs{\vv k}\le C\abs{\vv h}$ for small $\vv h$ by <a class="eqref" href="#e-chaink"></a>, so anything
+that is $o(\abs{\vv k})$ is also $o(\abs{\vv h})$. Comparing the result with the definition
+<a class="eqref" href="#e-totaldef"></a> and invoking uniqueness (§2.1) to read off the coefficient:</p>
+
+<div class="eq" id="e-chainrule">
+$$ \boxed{\;\mathrm{D}(f\circ g)(\vv a) \;=\; \mathrm{D}f\big(g(\vv a)\big)\;\mathrm{D}g(\vv a).\;} $$
+</div>
+
+<p>In matrices: an $(m\times p)$ Jacobian times a $(p\times n)$ Jacobian gives an $(m\times n)$
+Jacobian. The inner dimensions match automatically, because the output space of $g$ is the input space
+of $f$ — the shapes cannot be wrong. This is one of the reasons to think of the derivative as a map
+rather than a table of numbers: the bookkeeping is enforced by the structure.</p>
+
+<h3>5.1 · The case you will use every day</h3>
+
+<p>Let $\vv x(t)$ be a curve in $\R^{n}$ and $f$ a scalar field. Then $f\circ\vv x$ is a function of
+one variable, $\mathrm{D}\vv x(t)$ is the column $\dot{\vv x}$, and $\mathrm{D}f$ is the row of
+partials, so <a class="eqref" href="#e-chainrule"></a> reduces to a row times a column:</p>
+
+<div class="eq" id="e-chaincurve">
+$$ \dv{}{t}f\big(\vv x(t)\big) \;=\; \nabla f\cdot\dot{\vv x}(t) \;=\; \pdv{f}{x^{i}}\,\dv{x^{i}}{t}, $$
+</div>
+
+<p>which is <a class="eqref" href="#e-alongcurve"></a>, now obtained as a special case rather than
+from scratch. This is the workhorse. It is how you compute the rate of change of a temperature felt
+by a moving thermometer, of a potential felt by a moving charge, of a Lagrangian along a trajectory —
+Chapter 1.2 opens with it.</p>
+
+<h3>5.2 · Changing coordinates, and a convention appearing on its own</h3>
+
+<p>Now the case that runs all of tensor analysis. Suppose the $x^{i}$ are themselves functions of new
+coordinates $u^{a}$ — polar in terms of Cartesian, say, or one observer's coordinates in terms of
+another's. Then <a class="eqref" href="#e-chainrule"></a>, written out entry by entry, is</p>
+
+<div class="eq" id="e-chainindex">
+$$ \pdv{f}{u^{a}} \;=\; \sum_{i}\pdv{f}{x^{i}}\,\pdv{x^{i}}{u^{a}} \;\equiv\; \pdv{f}{x^{i}}\,\pdv{x^{i}}{u^{a}}. $$
+</div>
+
+<p>Three things about that equation deserve to be noticed now rather than in Chapter 2.4.</p>
+
+<p><b>It is a matrix product.</b> The object $\partial x^{i}/\partial u^{a}$ is the Jacobian of the
+coordinate change, and <a class="eqref" href="#e-chainindex"></a> says: to convert the components of
+$\dd f$ from one coordinate system to another, hit them with that Jacobian. That single sentence,
+promoted to a definition, is what a tensor <em>is</em>.</p>
+
+<p><b>The summation happens by itself.</b> The index $i$ appears twice on the right and is summed
+over; the index $a$ appears once on each side and is not. That pattern is not a coincidence of this
+formula — it is what always happens when you compose linear maps, because matrix multiplication sums
+over the shared index. Chapter 2.4 will therefore drop the $\sum$ entirely and adopt the
+<strong>Einstein summation convention</strong>: a repeated index is summed. The convention is
+possible because the pattern is universal, and the pattern is universal because everything in sight
+is a composition of linear maps.</p>
+
+<p><b>The index heights are already right.</b> Look at where the repeated index $i$ sits: upstairs in
+$\partial x^{i}/\partial u^{a}$ (in the numerator) and downstairs in $\partial f/\partial x^{i}$ (in
+the denominator). By the rule of §4 — differentiation lowers, coordinates raise — one is up and one is
+down, and the summed pair consists of one of each. This is not luck. It is
+<a class="eqref" href="#e-raise2"></a> and <a class="eqref" href="#e-df"></a> telling you that the
+only combinations that can be summed to give a coordinate-independent number are one-up-one-down. In
+Chapter 2.4 that becomes a rule you can use to check your algebra: if you have written down a formula
+with two indices at the same height summed against each other, you have made a mistake.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.5</span></span>
+  <p>Composing two functions near a point amounts to composing their linear stand-ins, and that sentence was already the entire chain rule when one variable was in play. All that changes with several is what composing linear maps means, which the linear algebra chapter settled: their arrays are multiplied. The derivation is the earlier one word for word. As a bonus the bookkeeping can no longer go astray: the output space of the inner function is the input space of the outer, so the shapes are forced into agreement.</p>
+  <p>Written out with indices for the case that governs everything later, in which the coordinates are themselves functions of new coordinates, the same formula says how the components of a rate of change convert from one coordinate system to another. Promoted to a definition, that single sentence is what a tensor is, and the concept holds nothing else.</p>
+  <p>Two habits appear here of their own accord rather than by decree. One index is always repeated and summed while the others are not, because that is what composing maps does, which is why the summation sign is eventually dropped as redundant. And the repeated index turns up once as a measuring device and once as an arrow — the only pairing yielding a number that survives a change of description, and later the quickest way to catch an error.</p>
+</div>
+
+<h2>6 · Second derivatives, the Hessian, and what a critical point looks like</h2>
+
+<p>Differentiate a partial derivative again and you get a second partial, written
+$\partial_{i}\partial_{j}f$ or $\partial^{2}f/\partial x^{i}\partial x^{j}$. There are $n^{2}$ of
+them, and the first question is whether the order matters.</p>
+
+<h3>6.1 · Clairaut's theorem, with the hypothesis said out loud</h3>
+
+<div class="callout insight">
+  <span class="ct">Theorem (Clairaut / Schwarz)</span>
+  <p>If the second partial derivatives of $f$ exist in a neighbourhood of $\vv a$ and are
+  <strong>continuous at $\vv a$</strong>, then</p>
+  $$ \partial_{i}\partial_{j}f(\vv a) \;=\; \partial_{j}\partial_{i}f(\vv a) \qquad\text{for all }i,j. $$
+</div>
+
+<p>The continuity hypothesis is real: the grind box below both proves the theorem and exhibits a
+function for which the two mixed partials at the origin are $+1$ and $-1$. But for every function you
+will meet in this book the hypothesis holds, so second partials commute and the matrix of them is
+symmetric. That matrix has a name:</p>
+
+<div class="eq" id="e-hessdef">
+$$ H(\vv a) \;=\; \big[\partial_{i}\partial_{j}f(\vv a)\big], \qquad H^{\mathsf T}=H. $$
+</div>
+
+<p>It is the <strong>Hessian</strong>. Note what it is, structurally: $\nabla f$ is a map
+$\R^{n}\to\R^{n}$, and $H$ is its Jacobian. The second derivative of a scalar field is the derivative
+of a vector field.</p>
+
+<details class="grind">
+  <summary>Grind box — proof of Clairaut, and the counterexample when continuity fails</summary>
+  <div class="grind-body">
+    <p><b>Proof.</b> Work in the two relevant variables and call them $x,y$. Consider the
+    <em>double difference</em> across a small rectangle of sides $h,k$:</p>
+    $$ \Delta \;=\; f(a+h,b+k) - f(a+h,b) - f(a,b+k) + f(a,b). $$
+    <p>It is symmetric under swapping the roles of the two variables, and we will evaluate it in the
+    two possible orders. First group it as a difference in $x$ of the function
+    $\varphi(x) = f(x,b+k)-f(x,b)$, so $\Delta=\varphi(a+h)-\varphi(a)$. By the mean value theorem
+    (Chapter 0.2) there is $\theta\in(0,1)$ with $\Delta = h\,\varphi'(a+\theta h)$, i.e.</p>
+    $$ \Delta = h\Big[\partial_{x}f(a+\theta h,\,b+k) - \partial_{x}f(a+\theta h,\,b)\Big]. $$
+    <p>The bracket is a difference in $y$ of the function $\partial_{x}f(a+\theta h,\cdot)$, so the
+    mean value theorem applies again, giving $\theta'\in(0,1)$ with</p>
+    $$ \Delta = h\,k\;\partial_{y}\partial_{x}f\big(a+\theta h,\;b+\theta' k\big). $$
+    <p>Now group $\Delta$ the other way, as a difference in $y$ first. The identical argument gives
+    $\sigma,\sigma'\in(0,1)$ with $\Delta = h\,k\;\partial_{x}\partial_{y}f(a+\sigma h, b+\sigma' k)$.
+    Equate the two, divide by $hk\neq0$, and let $(h,k)\to(0,0)$. Both evaluation points converge to
+    $(a,b)$, and by the assumed continuity of the two second partials <em>at</em> $(a,b)$ both sides
+    converge to their values there. Hence
+    $\partial_{y}\partial_{x}f(a,b)=\partial_{x}\partial_{y}f(a,b)$. ∎</p>
+    <p><b>The counterexample.</b> Continuity was used in the very last step, so removing it should
+    break the theorem, and it does. Take</p>
+    $$ f(x,y) = \frac{xy\,(x^{2}-y^{2})}{x^{2}+y^{2}} \ \ \text{for }(x,y)\neq(0,0), \qquad f(0,0)=0. $$
+    <p>This one <em>is</em> continuous, and differentiable, and has second partials everywhere. Compute
+    $\partial_{x}f$ in general and then restrict it to the $y$-axis: a short calculation gives
+    $\partial_{x}f(0,y) = -y$. Restricting $\partial_{y}f$ to the $x$-axis gives
+    $\partial_{y}f(x,0) = +x$. Therefore</p>
+    $$ \partial_{y}\partial_{x}f(0,0) = \dv{}{y}(-y) = -1, \qquad \partial_{x}\partial_{y}f(0,0) = \dv{}{x}(+x) = +1. $$
+    <p>The mixed partials at the origin differ. What fails is precisely the hypothesis: away from the
+    origin the second mixed partial is a bounded but direction-dependent function of $\theta$ — the
+    same pathology as §1's counterexample, one derivative up — so it has no limit at the origin and is
+    not continuous there. The theorem is not "obviously true"; it is true under a condition, and the
+    condition is exactly what stops direction-dependence from surviving to the limit.</p>
+  </div>
+</details>
+
+<h3>6.2 · Taylor to second order</h3>
+
+<p>We already have the machinery. Fix $\vv a$ and $\vv h$ and define the one-variable function
+$\varphi(t) = f(\vv a + t\vv h)$, which traces $f$ along the straight line through $\vv a$ in the
+direction $\vv h$. Differentiate it with the chain rule <a class="eqref" href="#e-chaincurve"></a>,
+noting that the "velocity" of the line is the constant vector $\vv h$:</p>
+
+<div class="eq" id="e-phi1">
+$$ \varphi'(t) = \nabla f(\vv a + t\vv h)\cdot\vv h = h^{i}\,\partial_{i}f(\vv a+t\vv h). $$
+</div>
+
+<p>Differentiate again, applying the same rule to each $\partial_{i}f$:</p>
+
+<div class="eq" id="e-phi2">
+$$ \varphi''(t) = h^{i}h^{j}\,\partial_{j}\partial_{i}f(\vv a+t\vv h) = \vv h^{\mathsf T}H(\vv a+t\vv h)\,\vv h. $$
+</div>
+
+<p>Now apply the one-variable Taylor theorem of <a href="ch0-3.html">Chapter 0.3</a> to $\varphi$ about
+$t=0$ and evaluate at $t=1$, which lands exactly on $f(\vv a+\vv h)$:</p>
+
+<div class="eq" id="e-taylor2">
+$$ \boxed{\;f(\vv a+\vv h) \;=\; f(\vv a) \;+\; \nabla f(\vv a)\cdot\vv h \;+\; \tfrac12\,\vv h^{\mathsf T}H(\vv a)\,\vv h \;+\; o(\abs{\vv h}^{2}).\;} $$
+</div>
+
+<p>Three terms: a constant, a linear form, a quadratic form. That is the general shape of a smooth
+function near a point, and it is why quadratic forms — Chapter 0.5's whole subject — are not an
+algebraic curiosity but the universal local model of everything.</p>
+
+<h3>6.3 · Critical points, classified by eigenvalues</h3>
+
+<p>A <strong>critical point</strong> is a point where $\nabla f=\vv 0$: no direction, to first order,
+changes $f$. Every maximum, minimum and saddle is one, because if $\nabla f\neq\vv 0$ you can increase
+$f$ by stepping along it and decrease $f$ by stepping the other way, so you are not at an extremum.
+At a critical point the linear term of <a class="eqref" href="#e-taylor2"></a> vanishes and</p>
+
+<div class="eq" id="e-critquad">
+$$ f(\vv a+\vv h) - f(\vv a) \;=\; \tfrac12\,\vv h^{\mathsf T}H\,\vv h \;+\; o(\abs{\vv h}^{2}). $$
+</div>
+
+<p>So the local behaviour is decided by the sign of the quadratic form $\vv h^{\mathsf T}H\vv h$. And
+$H$ is symmetric, which is exactly the hypothesis of the <strong>spectral theorem</strong> of
+<a href="ch0-5.html">Chapter 0.5</a>: there is an orthonormal basis $\vv e_{1},\ldots,\vv e_{n}$ of
+eigenvectors of $H$, with real eigenvalues $\mu_{1},\ldots,\mu_{n}$. Expand the displacement in that
+basis, $\vv h=\sum_{k}c_{k}\vv e_{k}$, and the quadratic form collapses to a sum of squares:</p>
+
+<div class="eq" id="e-diagform">
+$$ \vv h^{\mathsf T}H\vv h \;=\; \sum_{k}\mu_{k}c_{k}^{2}, \qquad \abs{\vv h}^{2}=\sum_{k}c_{k}^{2}. $$
+</div>
+
+<p>All cross terms are gone. The classification now reads itself off:</p>
+
+<ul>
+<li><b>All $\mu_{k}\gt0$:</b> then $\sum\mu_{k}c_{k}^{2}\ge\mu_{\min}\abs{\vv h}^{2}$ with
+$\mu_{\min}\gt0$, so the quadratic term is positive and of order $\abs{\vv h}^{2}$, while the
+remainder is $o(\abs{\vv h}^{2})$ and therefore eventually smaller. For small enough $\abs{\vv h}$ the
+difference in <a class="eqref" href="#e-critquad"></a> is positive in every direction: a strict local
+<strong>minimum</strong>.</li>
+<li><b>All $\mu_{k}\lt0$:</b> the same argument with signs reversed — a strict local
+<strong>maximum</strong>.</li>
+<li><b>Mixed signs:</b> a <strong>saddle</strong>. Along an eigenvector with $\mu_{k}\gt0$ the function
+rises; along one with $\mu_{k}\lt0$ it falls. It is a maximum and a minimum at the same point,
+depending on which way you look.</li>
+<li><b>Some $\mu_{k}=0$:</b> the test is silent. The quadratic term vanishes in that direction and the
+$o(\abs{\vv h}^{2})$ remainder — which we have no control over — decides. You need higher order.
+Chapter 6.6's Higgs potential at the symmetric point is exactly such a case, and what happens in the
+flat direction is the entire physics.</li>
+</ul>
+
+<p>The eigenvectors are not bystanders. Set $\vv h = t\vv e_{k}$ in
+<a class="eqref" href="#e-critquad"></a>: since $\vv e_{k}^{\mathsf T}H\vv e_{k}=\mu_{k}$,</p>
+
+<div class="eq" id="e-princurv">
+$$ f(\vv a + t\,\vv e_{k}) - f(\vv a) \;=\; \tfrac12\mu_{k}t^{2} + o(t^{2}). $$
+</div>
+
+<p>Along the $k$-th eigenvector, $f$ is a one-dimensional parabola whose second derivative is
+$\mu_{k}$. <strong>The eigenvalues of the Hessian are the curvatures of $f$ along the principal
+directions, and the eigenvectors are those directions.</strong> Near a minimum the level sets are
+ellipsoids: setting $\tfrac12\sum\mu_{k}c_{k}^{2}=\delta$ gives semi-axes
+$c_{k}=\sqrt{2\delta/\mu_{k}}$, so a <em>small</em> eigenvalue means a <em>long</em> axis — a shallow,
+extended valley in that direction. Hold onto the picture of a long thin valley; the next callout is
+about nothing else.</p>
+
+<div class="callout familiar">
+  <span class="ct">Familiar ground</span>
+  <p>You already read Hessians for a living. When a model is fitted by maximum likelihood, the
+  software finds $\hat{\boldsymbol\theta}$ where the gradient of the log-likelihood
+  $\ell(\boldsymbol\theta)$ vanishes, and then reports standard errors. Those standard errors are
+  §6.3, exactly.</p>
+  <p>At the maximum, $H=\big[\partial_{i}\partial_{j}\ell(\hat{\boldsymbol\theta})\big]$ has all
+  eigenvalues $\le0$ — that is what "maximum" means. So $-H$ is positive semi-definite, and it gets
+  its own name: the <strong>observed Fisher information</strong>,
+  $J(\hat{\boldsymbol\theta}) = -H(\hat{\boldsymbol\theta})$. The estimated covariance matrix of the
+  estimate is its inverse, and the reported standard errors are</p>
+  $$ \widehat{\mathrm{Cov}}\big(\hat{\boldsymbol\theta}\big) = J^{-1}, \qquad \mathrm{SE}_{j} = \sqrt{\big(J^{-1}\big)_{jj}}. $$
+  <p>Read that as geometry and it says something you can feel: <strong>the curvature of the
+  log-likelihood surface at its peak is the precision of the estimate.</strong> A sharp peak — large
+  curvature, large $J$, small $J^{-1}$ — is a tight confidence interval. A flat peak is a wide one. The
+  data's ability to distinguish parameter values <em>is</em> the steepness with which the likelihood
+  falls away from the best fit.</p>
+  <p><b>The one-parameter case, checkable by hand.</b> For $n$ exponentially distributed survival
+  times with rate $\lambda$ and no censoring,
+  $\ell(\lambda) = n\ln\lambda - \lambda\sum_{i}t_{i}$. Setting $\ell'=0$ gives
+  $\hat\lambda = n/\sum t_{i} = 1/\bar t$, and $\ell''(\lambda) = -n/\lambda^{2}$, so
+  $J = n/\hat\lambda^{2}$ and</p>
+  $$ \mathrm{SE}(\hat\lambda) = J^{-1/2} = \hat\lambda/\sqrt{n}. $$
+  <p>The familiar $1/\sqrt n$ is the statement that doubling the sample doubles the curvature.</p>
+  <p><b>Observed versus expected — the distinction is not cosmetic.</b> The <em>expected</em> Fisher
+  information is $I(\boldsymbol\theta) = \mathbb{E}_{\boldsymbol\theta}\!\left[-H\right]$, an average
+  of the curvature over all datasets the model could have produced. The <em>observed</em> information
+  is $-H$ evaluated on the dataset you actually have, at the estimate you actually got. They agree in
+  expectation, and both are consistent; in the exponential example above they happen to be identically
+  equal, because $\ell''=-n/\lambda^{2}$ contains no data. In general they differ, and Efron and
+  Hinkley's argument — which has held up — is that the observed information is the better variance
+  estimate for the sample in hand, because it conditions on what you actually saw rather than
+  averaging over what you might have seen. Most software reports the observed version by default. It
+  is worth knowing which one you are quoting.</p>
+  <p><b>The spectral reading, which is where Chapter 0.5 earns its place.</b> Diagonalise
+  $J=\sum_{k}\mu_{k}\vv e_{k}\vv e_{k}^{\mathsf T}$. Then
+  $J^{-1}=\sum_{k}\mu_{k}^{-1}\vv e_{k}\vv e_{k}^{\mathsf T}$, and the variance of the linear
+  combination $\vv e_{k}\cdot\hat{\boldsymbol\theta}$ is exactly
+  $\vv e_{k}^{\mathsf T}J^{-1}\vv e_{k} = 1/\mu_{k}$. So: <strong>the eigenvectors of the Hessian are
+  the directions in parameter space along which the data constrain you best and worst, and the
+  reciprocal eigenvalues are how badly.</strong></p>
+  <p>Two collinear covariates make this concrete. Fit $y = \beta_{1}x_{1}+\beta_{2}x_{2}+\varepsilon$
+  with Gaussian noise of known variance $\sigma^{2}$; then $\ell$ is $-\tfrac1{2\sigma^{2}}$ times a
+  sum of squares, and $J=-H = X^{\mathsf T}X/\sigma^{2}$. Suppose $\sigma=1$ and</p>
+  $$ J = \begin{pmatrix} 100 & 99\\ 99 & 100\end{pmatrix}, \qquad J^{-1} = \frac{1}{199}\begin{pmatrix}100 & -99\\ -99 & 100\end{pmatrix}. $$
+  <p>The eigenvalues are $199$ (eigenvector $(1,1)/\sqrt2$) and $1$ (eigenvector $(1,-1)/\sqrt2$). The
+  <em>sum</em> $\beta_{1}+\beta_{2}$ is pinned down with variance $1/199$; the <em>difference</em> is
+  known only with variance $1$, two hundred times worse. That is the long thin valley of §6.3, and it
+  is what "the two predictors are collinear" means geometrically: the likelihood has a nearly flat
+  direction. The reported standard errors are
+  $\sqrt{100/199}=0.709$ each — seven times larger than the naive $1/\sqrt{100}=0.1$ you would get by
+  inverting the diagonal instead of taking the diagonal of the inverse. That factor of seven <em>is</em>
+  the correlation, here $-99/100=-0.99$. Inverting first and taking the diagonal second is not a
+  convention; it is the only way the off-diagonal curvature can reach the answer.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.6</span></span>
+  <p>One order further in the approximation and every smooth function near a point becomes the same three things: a constant, a linear part, and a quadratic part built from the array of second derivatives. That array is symmetric whenever those derivatives are continuous, and symmetric is exactly the hypothesis the previous chapter spent its length on. So the quadratic part falls apart into independent pieces: along each of a set of mutually perpendicular directions the function is an ordinary parabola, and the numbers belonging to those directions are its curvatures.</p>
+  <p>The classification then reads itself off. Curving upward in every direction is a minimum, downward in every direction a maximum, and mixed signs a saddle, which is a maximum and a minimum at once, depending on where you stand. A curvature of zero leaves the matter unsettled and hands it to higher order, no idle case: it is where a mechanism for breaking a symmetry eventually lives.</p>
+  <p>Read curvature as information and it says something you can feel. A sharp peak means its location is well determined and a flat one means it is not, so the curvature of a likelihood surface at its maximum is the precision of an estimate, and the width of a confidence interval is the shallowness of a hill. A long shallow valley is what two nearly redundant predictors look like from the inside.</p>
+</div>
+
+<h2>7 · Lagrange multipliers</h2>
+
+<p>Now the constrained problem: extremise $f(\vv x)$ subject to $g(\vv x)=c$. The recipe is famous and
+usually presented as one; we will derive it instead, in three sentences of geometry, and then extract
+something from it that the recipe hides.</p>
+
+<p>Let $\vv a$ be a point on the constraint surface $S=\{g=c\}$ at which $f$ is extremal
+<em>among points of $S$</em>, and assume $\nabla g(\vv a)\neq\vv 0$. Two facts, both already proved.</p>
+
+<p><b>Which directions are tangent to $S$.</b> If $\vv x(t)$ is a curve lying in $S$ then
+$g(\vv x(t))=c$, so by <a class="eqref" href="#e-alongcurve"></a>, $\nabla g\cdot\dot{\vv x}=0$: every
+tangent vector to $S$ is orthogonal to $\nabla g$. The converse — that every vector orthogonal to
+$\nabla g$ is the velocity of some curve in $S$ — is the implicit function theorem, which we quote;
+it is guaranteed precisely by the assumption $\nabla g\neq\vv 0$, which says the constraint really
+does cut down the dimension by one near $\vv a$. So the tangent space to $S$ at $\vv a$ is exactly
+$(\mathrm{span}\,\nabla g)^{\perp}$.</p>
+
+<p><b>What extremality says.</b> If $\vv x(t)$ is a curve in $S$ through $\vv a$, then
+$t\mapsto f(\vv x(t))$ has an extremum at that point, so its derivative vanishes:
+$\nabla f\cdot\dot{\vv x}=0$. Moving along the constraint surface cannot change $f$ to first order —
+that is what being extremal <em>on</em> $S$ means. Hence $\nabla f(\vv a)$ is orthogonal to every
+tangent vector of $S$.</p>
+
+<p>Put them together, using Chapter 0.5's projection. Write $\vv n = \nabla g(\vv a)$ and split
+$\nabla f$ into its component along $\vv n$ and whatever is left:</p>
+
+<div class="eq" id="e-split">
+$$ \nabla f \;=\; \lambda\,\vv n \;+\; \vv w, \qquad \lambda \;\equiv\; \frac{\nabla f\cdot\vv n}{\vv n\cdot\vv n}, \qquad \vv w \;\equiv\; \nabla f - \lambda\vv n. $$
+</div>
+
+<p>The residual is orthogonal to $\vv n$ by construction —
+$\vv w\cdot\vv n = \nabla f\cdot\vv n - \lambda\abs{\vv n}^{2} = 0$ — so by the first fact $\vv w$ is a
+tangent vector to $S$. But the second fact says $\nabla f$ is orthogonal to <em>every</em> tangent
+vector, so in particular to $\vv w$ itself:</p>
+
+<div class="eq" id="e-wzero">
+$$ 0 \;=\; \nabla f\cdot\vv w \;=\; \big(\lambda\vv n + \vv w\big)\cdot\vv w \;=\; \lambda\,\underbrace{\vv n\cdot\vv w}_{0} + \abs{\vv w}^{2} \;=\; \abs{\vv w}^{2}. $$
+</div>
+
+<p>A vector of zero length is the zero vector, so $\vv w=\vv 0$ and</p>
+
+<div class="eq" id="e-lagrange">
+$$ \boxed{\;\nabla f(\vv a) \;=\; \lambda\,\nabla g(\vv a),\qquad g(\vv a)=c.\;} $$
+</div>
+
+<p>Notice that the argument even handed us the multiplier explicitly,
+$\lambda = \nabla f\cdot\nabla g/\abs{\nabla g}^{2}$, which is worth remembering when you want to
+check a solution rather than find one. The geometric statement is the one to remember: <strong>at a constrained extremum the level set of
+$f$ is tangent to the constraint surface</strong>, since both have the same normal direction. If they
+crossed instead of touching, you could slide along the constraint from one side of the $f$-contour to
+the other and change $f$ — so you were not at an extremum. Press the button in the §3 figure and this
+is exactly what you are looking at.</p>
+
+<p>The mechanical version everyone quotes follows immediately. Define</p>
+
+<div class="eq" id="e-lagrangian">
+$$ \mathcal{L}(\vv x,\lambda) \;=\; f(\vv x) \;-\; \lambda\big(g(\vv x)-c\big) $$
+</div>
+
+<p>and look for its <em>unconstrained</em> critical points. Setting $\partial\mathcal{L}/\partial x^{i}=0$
+gives $\nabla f=\lambda\nabla g$; setting $\partial\mathcal{L}/\partial\lambda=0$ gives $g=c$. The
+constraint has been converted from a restriction on the search space into one more equation to solve,
+at the price of one more unknown. That trade — restrict the space, or enlarge it and add a multiplier
+— is one of the deepest moves in theoretical physics, and it returns in Chapter 1.2 as the way to
+handle a bead on a wire, and again, much later, as the way gauge symmetry is imposed.</p>
+
+<h3>7.1 · The multiplier means something</h3>
+
+<p>$\lambda$ looks like a bookkeeping device you introduce and then discard. It is not. Let
+$\vv x^{*}(c)$ be the constrained optimum as a function of the constraint level $c$, and let
+$f^{*}(c) = f(\vv x^{*}(c))$ be the optimal value. Assume $\vv x^{*}$ varies differentiably with $c$
+(it does, under the same non-degeneracy that made the multiplier exist). Differentiate $f^{*}$ using
+the chain rule <a class="eqref" href="#e-chaincurve"></a>:</p>
+
+<div class="eq" id="e-env1">
+$$ \dv{f^{*}}{c} \;=\; \nabla f\cdot\dv{\vv x^{*}}{c} \;=\; \lambda\,\nabla g\cdot\dv{\vv x^{*}}{c}, $$
+</div>
+
+<p>where the second step used <a class="eqref" href="#e-lagrange"></a>. Now differentiate the
+constraint itself, $g(\vv x^{*}(c)) = c$, with respect to $c$ — the same chain rule, applied to an
+identity that holds for all $c$:</p>
+
+<div class="eq" id="e-env2">
+$$ \nabla g\cdot\dv{\vv x^{*}}{c} \;=\; 1. $$
+</div>
+
+<p>Substituting <a class="eqref" href="#e-env2"></a> into <a class="eqref" href="#e-env1"></a>:</p>
+
+<div class="eq" id="e-envelope">
+$$ \boxed{\;\dv{f^{*}}{c} \;=\; \lambda.\;} $$
+</div>
+
+<p>The multiplier is a <strong>sensitivity</strong>: it is the rate at which the best achievable value
+improves when you relax the constraint by one unit. Economists call it a shadow price; in mechanics it
+is the constraint force; in thermodynamics, as Worked Example 1 will show, it is the temperature. A
+large $\lambda$ says the constraint is expensive and worth negotiating; $\lambda=0$ says the
+constraint is not binding at all.</p>
+
+<p>A concrete check, which is also the figure's setup. Minimise $f=x^{2}+2y^{2}$ subject to
+$x+y=c$. Then <a class="eqref" href="#e-lagrange"></a> reads $(2x,4y)=\lambda(1,1)$, so $x=\lambda/2$
+and $y=\lambda/4$; the constraint gives $3\lambda/4=c$, hence $\lambda=4c/3$,
+$\vv x^{*}=(2c/3,\,c/3)$ and</p>
+
+<div class="eq" id="e-envcheck">
+$$ f^{*}(c) = \frac{4c^{2}}{9}+\frac{2c^{2}}{9} = \frac{2c^{2}}{3}, \qquad \dv{f^{*}}{c} = \frac{4c}{3} = \lambda. \;\checkmark $$
+</div>
+
+<p>At $c=3$: the optimum is $(2,1)$, $f^{*}=6$, and $\lambda=4$ — which is the number printed in the
+figure when the constraint is showing.</p>
+
+<details class="grind">
+  <summary>Grind box — when Lagrange fails, and why the fine print is the interesting part</summary>
+  <div class="grind-body">
+    <p>The derivation used $\nabla g(\vv a)\neq\vv 0$ twice: to know the tangent space is a genuine
+    hyperplane, and to invoke the implicit function theorem. Drop it and the method can simply be
+    wrong. Minimise $f(x,y)=x$ subject to</p>
+    $$ g(x,y) = x^{3}-y^{2} = 0. $$
+    <p>The constraint set is the curve $y^{2}=x^{3}$, a cusp at the origin, defined only for
+    $x\ge0$. The minimum of $x$ on it is obviously at the origin. But there
+    $\nabla g = (3x^{2},-2y) = (0,0)$, while $\nabla f = (1,0)$ everywhere, and no $\lambda$ satisfies
+    $(1,0)=\lambda(0,0)$. The method returns nothing, and the answer it failed to find was sitting at
+    the origin all along.</p>
+    <p>The condition $\nabla g\neq\vv 0$ is called a <em>constraint qualification</em>, and the moral is
+    that the multiplier exists because the constraint surface is smooth and non-degenerate there — not
+    because algebra says so. Where constraints are degenerate, the multiplier framework needs repair.
+    That is not an exotic case: in gauge theories the constraints are degenerate <em>by design</em>,
+    because a gauge symmetry means several different field configurations describe the same physics, and
+    handling that properly is what Dirac's constrained-Hamiltonian machinery and the Faddeev–Popov
+    procedure exist to do. Every one of those is a descendant of
+    <a class="eqref" href="#e-lagrange"></a> plus an honest accounting of when it breaks.</p>
+    <p><b>Several constraints.</b> With $g_{1}=c_{1},\ldots,g_{r}=c_{r}$ the argument is identical
+    word for word, with $\vv n$ replaced by the subspace $W=\mathrm{span}\{\nabla g_{1},\ldots,\nabla
+    g_{r}\}$ and the one-line split <a class="eqref" href="#e-split"></a> replaced by Chapter 0.5's
+    orthogonal projection onto $W$. Tangent vectors are those orthogonal to every $\nabla g_{\alpha}$;
+    the residual $\vv w = \nabla f - P\nabla f$ is one of them; extremality kills it; and what survives
+    is</p>
+    $$ \nabla f = \sum_{\alpha=1}^{r}\lambda_{\alpha}\nabla g_{\alpha}, $$
+    <p>with the qualification now reading "the $\nabla g_{\alpha}$ are linearly independent at
+    $\vv a$" — which is Chapter 0.4's notion of independence doing real work. Worked Example 1 uses two
+    constraints and therefore two multipliers, one of which turns out to be the temperature.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.7</span></span>
+  <p>The rule for optimising under a constraint is famous as a recipe and is not a recipe at all. Being extremal along a surface means that no motion within the surface changes the function to first order, which says the gradient has no component in any direction you are still permitted to move. What remains of it must point straight out of the surface, and pointing straight out of the surface is exactly what the constraint's own gradient does. So the two are parallel, and the number relating them is the multiplier. There is nowhere left to go, and the equation is that sentence written down.</p>
+  <p>Put geometrically it stops being clever and becomes obvious. At the answer, the contour of the function touches the constraint rather than crossing it. Anywhere the two cross you can slide along the constraint from one side of the contour to the other and change the function, so you were not yet at the answer.</p>
+  <p>The multiplier is not a device introduced and then discarded. It measures how much the best achievable value improves when the constraint is relaxed by one unit, which makes it a price. Economists call it a shadow price, mechanics the force the constraint exerts, and thermodynamics, in one celebrated instance, the temperature. A multiplier of zero says the constraint was never binding.</p>
+</div>
+
+<h2>8 · Change of variables and the Jacobian determinant</h2>
+
+<p>The last consequence, and the one that pays a debt. Let $\Phi:U\to\R^{n}$ be a differentiable,
+injective change of coordinates with $\det\mathrm{D}\Phi\neq0$. How does an integral transform?</p>
+
+<p>The answer is forced by two things we already have. <em>First</em>, §2: near any point $\vv u$, the
+map $\Phi$ <strong>is</strong> a linear map, up to an error that dies faster than the displacement,</p>
+
+<div class="eq" id="e-locallin">
+$$ \Phi(\vv u+\vv h) = \Phi(\vv u) + \mathrm{D}\Phi(\vv u)\,\vv h + o(\abs{\vv h}). $$
+</div>
+
+<p><em>Second</em>, <a href="ch0-4.html">Chapter 0.4</a>: a linear map $A$ takes a region of volume $V$
+to a region of volume $\abs{\det A}\,V$ — that is what the determinant <em>is</em>, the signed factor
+by which a linear map scales volume, and the absolute value is there because volume does not care
+about orientation.</p>
+
+<p>Put them together. Chop $U$ into tiny cubes of side $\epsilon$. The cube at $\vv u$ is a set of
+displacements $\vv h$ of size at most $\epsilon\sqrt n$, so by
+<a class="eqref" href="#e-locallin"></a> its image under $\Phi$ is the image under the linear map $\mathrm{D}\Phi(\vv u)$ — a
+parallelepiped — translated to $\Phi(\vv u)$, with a distortion that is small <em>compared to
+$\epsilon$</em>. Hence</p>
+
+<div class="eq" id="e-cellvol">
+$$ \mathrm{vol}\big(\Phi(\text{cube})\big) \;=\; \abs{\det \mathrm{D}\Phi(\vv u)}\;\epsilon^{n}\,\big(1+o(1)\big). $$
+</div>
+
+<p>Summing $f(\Phi(\vv u))$ times that over all cubes and taking $\epsilon\to0$ turns the Riemann sums
+of Chapter 0.2 on one side into the Riemann sums on the other, giving</p>
+
+<div class="eq" id="e-cov">
+$$ \boxed{\;\int_{\Phi(U)} f(\vv x)\,\dd^{n}x \;=\; \int_{U} f\big(\Phi(\vv u)\big)\;\abs{\det\mathrm{D}\Phi(\vv u)}\;\dd^{n}u.\;} $$
+</div>
+
+<p>In one dimension $\det\mathrm{D}\Phi = \Phi'$ and this is the substitution rule of Chapter 0.2,
+with the absolute value doing the job that reversing the limits of integration does there. The factor
+$\abs{\det \mathrm{D}\Phi}$ is called the <strong>Jacobian determinant</strong> and it is the local
+volume-magnification of the coordinate change: nothing more mysterious than that.</p>
+
+<details class="grind">
+  <summary>Grind box — what that argument does and doesn't establish</summary>
+  <div class="grind-body">
+    <p>The chop-and-sum argument is the right picture and it is how every physicist thinks about the
+    Jacobian, but it is not a proof, and it is worth being clear about where the gap is.</p>
+    <p>Two things were glossed. <b>(i) Uniformity.</b> The $o(1)$ in
+    <a class="eqref" href="#e-cellvol"></a> must shrink at a rate that does not depend on which cube you
+    are looking at, or summing a large number of small errors need not give a small total. This is
+    delivered by continuity of $\mathrm{D}\Phi$ on a compact region, which is the usual hypothesis.
+    <b>(ii) The boundary.</b> Cubes that straddle the edge of $U$ are only partly inside, and one must
+    show their total contribution vanishes — true, because the boundary of a reasonable region has
+    $n$-dimensional volume zero, but "reasonable" needs defining, and doing it properly is where measure
+    theory enters and where the theorem is genuinely a theorem.</p>
+    <p>What the argument <em>does</em> establish, and what you should take from it, is the mechanism:
+    the $\abs{\det}$ appears because differentiability means local linearity, and because
+    determinants are what linear maps do to volume. Change either fact and the formula changes with
+    it.</p>
+  </div>
+</details>
+
+<h3>8.1 · Polar coordinates — paying Chapter 0.2's debt</h3>
+
+<p>In <a href="ch0-2.html">Chapter 0.2</a>, deriving the Gaussian integral, we needed the polar area
+element and obtained it geometrically, by differencing two circular sectors. It was an honest
+argument, but it was special to the plane and to circles, and the chapter explicitly said that
+Chapter 0.6 would produce the same factor mechanically. Here is that promise kept.</p>
+
+<p>Take $\Phi(r,\theta) = (r\cos\theta,\;r\sin\theta)$. Its Jacobian is a $2\times2$ matrix of
+partials, computed by the rules of §1 — differentiate each output with respect to each input:</p>
+
+<div class="eq" id="e-polarjac">
+$$ \mathrm{D}\Phi = \begin{pmatrix} \pdv{x}{r} & \pdv{x}{\theta}\\[6pt] \pdv{y}{r} & \pdv{y}{\theta}\end{pmatrix} = \begin{pmatrix} \cos\theta & -r\sin\theta\\ \sin\theta & \phantom{-}r\cos\theta\end{pmatrix}. $$
+</div>
+
+<p>Its determinant, by the $2\times2$ rule $ad-bc$ of Chapter 0.4, is</p>
+
+<div class="eq" id="e-polardet">
+$$ \det\mathrm{D}\Phi = r\cos^{2}\theta + r\sin^{2}\theta = r, $$
+</div>
+
+<p>and therefore, since $r\ge0$,</p>
+
+<div class="eq" id="e-polararea">
+$$ \dd x\,\dd y \;=\; r\,\dd r\,\dd\theta. $$
+</div>
+
+<p>That is the factor Chapter 0.2 used on faith, now derived from the definition of the determinant.
+The debt is paid, and the derivation cost three lines instead of a picture. Note that it also
+<em>explains</em> the geometric argument: the columns of <a class="eqref" href="#e-polarjac"></a> are
+the displacement produced by a unit change in $r$ (length $1$, pointing radially) and by a unit change
+in $\theta$ (length $r$, pointing tangentially). They are perpendicular, so the parallelogram they
+span has area $1\times r = r$. The determinant computed the area of the little polar cell, which is
+precisely what the sector argument computed by hand.</p>
+
+<h3>8.2 · Spherical coordinates</h3>
+
+<p>Same procedure in three dimensions, with $x=r\sin\theta\cos\phi$, $y=r\sin\theta\sin\phi$,
+$z=r\cos\theta$ ($\theta$ measured from the $z$-axis, as physics always does):</p>
+
+<div class="eq" id="e-sphjac">
+$$ \mathrm{D}\Phi = \begin{pmatrix} \sin\theta\cos\phi & r\cos\theta\cos\phi & -r\sin\theta\sin\phi\\ \sin\theta\sin\phi & r\cos\theta\sin\phi & \phantom{-}r\sin\theta\cos\phi\\ \cos\theta & -r\sin\theta & 0 \end{pmatrix}. $$
+</div>
+
+<p>Expand along the bottom row, which has a zero in it and so costs only two cofactors. The
+$\cos\theta$ entry multiplies</p>
+
+<div class="eq" id="e-cof1">
+$$ \det\begin{pmatrix} r\cos\theta\cos\phi & -r\sin\theta\sin\phi\\ r\cos\theta\sin\phi & \phantom{-}r\sin\theta\cos\phi\end{pmatrix} = r^{2}\sin\theta\cos\theta, $$
+</div>
+
+<p>after using $\cos^{2}\phi+\sin^{2}\phi=1$; and the $-r\sin\theta$ entry, with the alternating sign
+$(-1)^{3+2}=-1$, multiplies $-\big(r\sin^{2}\theta\big)$. Adding the two contributions:</p>
+
+<div class="eq" id="e-sphdet">
+$$ \det\mathrm{D}\Phi = r^{2}\sin\theta\cos^{2}\theta + r^{2}\sin^{3}\theta = r^{2}\sin\theta, $$
+</div>
+
+<p>using $\cos^{2}\theta+\sin^{2}\theta=1$ once more. Hence</p>
+
+<div class="eq" id="e-sphvol">
+$$ \dd V = r^{2}\sin\theta\;\dd r\,\dd\theta\,\dd\phi, $$
+</div>
+
+<p>positive for $\theta\in(0,\pi)$, so the absolute value is automatic. Problem 1 uses this to compute
+the volume of a sphere, which is the cheapest possible check that the factor is right.</p>
+
+<h3>8.3 · The same factor, in general relativity</h3>
+
+<p>One forward glance, because the connection is exact rather than analogical. In curved spacetime the
+invariant volume element is written $\sqrt{-g}\;\dd^{4}x$, where $g=\det g_{\mu\nu}$ is the determinant
+of the metric (negative because of the Lorentzian signature, hence the minus sign under the root). That
+$\sqrt{-g}$ is <a class="eqref" href="#e-cov"></a> wearing different clothes.</p>
+
+<p>You can see it without any relativity at all, using the flat-space metrics of §4. In plane polar
+coordinates $g_{ij}=\mathrm{diag}(1,r^{2})$, so</p>
+
+<div class="eq" id="e-sqrtg2">
+$$ \sqrt{\det g_{ij}} = \sqrt{1\cdot r^{2}} = r, $$
+</div>
+
+<p>which is exactly <a class="eqref" href="#e-polararea"></a>. In spherical coordinates the metric is
+$\dd s^{2}=\dd r^{2}+r^{2}\dd\theta^{2}+r^{2}\sin^{2}\theta\,\dd\phi^{2}$, so
+$g_{ij}=\mathrm{diag}(1,\,r^{2},\,r^{2}\sin^{2}\theta)$ and</p>
+
+<div class="eq" id="e-sqrtg3">
+$$ \sqrt{\det g_{ij}} = \sqrt{r^{4}\sin^{2}\theta} = r^{2}\sin\theta, $$
+</div>
+
+<p>exactly <a class="eqref" href="#e-sphvol"></a>. The reason is structural: Chapter 3.3 will show that
+under a coordinate change the metric picks up two factors of the Jacobian matrix, so its determinant
+picks up $(\det J)^{2}$ and $\sqrt{\abs{g}}$ picks up $\abs{\det J}$ — precisely cancelling the
+$\abs{\det J}^{-1}$ that $\dd^{n}x$ acquires. The combination $\sqrt{\abs{g}}\,\dd^{n}x$ is therefore
+the same in every coordinate system, which is what "invariant volume element" means. The
+Einstein–Hilbert action of Chapter 3.6 carries that factor for this reason and no other.</p>
+
+<p>The same $\abs{\det}$ turns up every time you change variables in a path integral (Chapter 5.5),
+where it is no longer a nuisance factor but the whole story: the Faddeev–Popov ghosts of
+non-abelian gauge theory are the Jacobian determinant of a change of variables, promoted to a field.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.6.8</span></span>
+  <p>Near any point a differentiable map is a linear map, to within an error dying faster than the step you took; and a linear map multiplies every volume by its determinant. Those two facts settle the last question. Chop a region into cells small enough for the first to hold, apply the second to each cell, and the factor appearing in every change of variables is the size of that determinant, which is a local volume magnification and nothing more mysterious.</p>
+  <p>Two familiar weights thereby stop being items to memorise. The radial factor in plane polar coordinates and the more elaborate one in spherical coordinates both fall out of a short calculation, and the first repays a debt taken out several chapters ago, where it had to be got by cutting up a circle by hand. The same quantity returns in curved spacetime as the square root of the metric's determinant, which is why the volume element of general relativity looks as it does.</p>
+  <p>That closes the toolkit's account of change. A rate of change is a linear approximation; the description worth having is the one in which a problem separates into pieces that ignore each other; and changing description costs a determinant. What is missing is any account of accumulating a quantity across a region rather than at a point, and that is where the next chapters go.</p>
+</div>
+
+<h2>9 · Worked examples</h2>
+
+<div class="worked">
+  <span class="ct">Worked example 1 — the Boltzmann distribution, from two constraints</span>
+  <p><em>A system can be in states $1,\ldots,N$ with energies $E_{i}$. All you know is that the
+  probabilities sum to one and that the mean energy is $\bar E$. What distribution should you assign?</em></p>
+  <p>The principle — due to Gibbs, sharpened by Jaynes — is to choose the distribution that maximises
+  the entropy $S=-\sum_{i}p_{i}\ln p_{i}$, i.e. the one that is maximally noncommittal about
+  everything you were not told. So: maximise $S$ subject to</p>
+  $$ g_{1}=\sum_{i}p_{i}=1, \qquad g_{2}=\sum_{i}p_{i}E_{i}=\bar E. $$
+  <p>Two constraints, two multipliers. Form the Lagrangian of the grind box in §7, calling the
+  multipliers $\alpha$ and $\beta$:</p>
+  $$ \mathcal{L} = -\sum_{i}p_{i}\ln p_{i} \;-\;\alpha\Big(\sum_{i}p_{i}-1\Big)\;-\;\beta\Big(\sum_{i}p_{i}E_{i}-\bar E\Big). $$
+  <p>The variables are the $N$ numbers $p_{i}$, so take $N$ partial derivatives. Using
+  $\pdv{}{p_{i}}\big(p_{i}\ln p_{i}\big)=\ln p_{i}+1$:</p>
+  $$ \pdv{\mathcal{L}}{p_{i}} = -\ln p_{i} - 1 - \alpha - \beta E_{i} = 0 \qquad\Longrightarrow\qquad p_{i} = \ee^{-1-\alpha}\,\ee^{-\beta E_{i}}. $$
+  <p>The first factor is the same for every state, so it is fixed by normalisation. Imposing
+  $\sum_{i}p_{i}=1$ gives $\ee^{-1-\alpha}=1/Z$ with</p>
+  $$ \boxed{\;p_{i} = \frac{\ee^{-\beta E_{i}}}{Z},\qquad Z(\beta)=\sum_{i}\ee^{-\beta E_{i}}.\;} $$
+  <p>That is the Boltzmann distribution, and $Z$ — which arrived as nothing more grand than a
+  normalisation constant — is the <strong>partition function</strong>, from which all of equilibrium
+  thermodynamics is extracted by differentiation. For instance $\bar E = -\partial_{\beta}\ln Z$, which
+  is the second constraint restated and is what implicitly determines $\beta$.</p>
+  <p><b>Is it a maximum?</b> §6 answers this without any extra work. The Hessian of $S$ with respect to
+  the $p_{i}$ is $\partial_{i}\partial_{j}S = -\delta_{ij}/p_{i}$, a diagonal matrix with all entries
+  negative, so all its eigenvalues are negative and the critical point is a genuine maximum. (Being
+  diagonal, the spectral theorem has nothing to do — the eigenvalues are the diagonal entries. It is
+  still §6.3 doing the work.)</p>
+  <p><b>What $\beta$ is.</b> It arrived as a multiplier on the energy constraint. By
+  <a class="eqref" href="#e-envelope"></a>, a multiplier is the sensitivity of the optimum to its
+  constraint level, so here</p>
+  $$ \beta = \dv{S^{*}}{\bar E}, $$
+  <p>the rate at which the maximum attainable entropy rises when you feed the system more energy. Now
+  compare with the thermodynamic definition of temperature, $1/T = \pdv{S_{\text{thermo}}}{U}$, and note
+  that thermodynamic entropy is $k_{B}$ times the information entropy used above. Then
+  $1/T = k_{B}\beta$, so</p>
+  $$ \beta = \frac{1}{k_{B}T}. $$
+  <p>This is the honest route to that identification: $\beta$ is not <em>defined</em> as $1/k_{B}T$ and
+  then justified, it <em>emerges</em> as a Lagrange multiplier and is <em>identified</em> with inverse
+  temperature because §7.1 says multipliers are sensitivities and thermodynamics says
+  $\partial S/\partial U$ is one over the temperature. Temperature is a shadow price.</p>
+  <p>Two remarks worth carrying. First, that calculation is most of statistical mechanics: everything
+  else is evaluating $Z$ for particular energy spectra and differentiating it. Second, look at the
+  <em>shape</em> of the answer — a probability proportional to $\ee^{-\beta(\text{something})}$,
+  normalised by a sum over all possibilities. In Chapter 5.8 the path integral assigns to each history
+  a weight $\ee^{\ii S/\hbar}$ normalised by a sum over all histories. The structures are the same
+  down to the last symbol, with $\ii S/\hbar$ in place of $-\beta E$; and the substitution
+  $t\to-\ii\tau$ that converts one into the other is the reason a quantum field theory at finite
+  temperature and a statistical mechanics problem in one extra dimension are the same computation.</p>
+</div>
+
+<div class="worked">
+  <span class="ct">Worked example 2 — classifying every critical point of a double well</span>
+  <p><em>Find and classify all critical points of $f(x,y)=x^{4}+y^{4}-4xy$.</em></p>
+  <p><b>Locate them.</b> Set the gradient to zero:</p>
+  $$ \partial_{x}f = 4x^{3}-4y = 0, \qquad \partial_{y}f = 4y^{3}-4x = 0 \qquad\Longrightarrow\qquad y=x^{3},\;\; x=y^{3}. $$
+  <p>Substituting the first into the second, $x = x^{9}$, so $x\big(x^{8}-1\big)=0$, giving $x=0$ or
+  $x=\pm1$ (over the reals). The critical points are</p>
+  $$ (0,0), \qquad (1,1), \qquad (-1,-1), $$
+  <p>with $f(0,0)=0$ and $f(\pm1,\pm1)=1+1-4=-2$.</p>
+  <p><b>The Hessian.</b> Differentiating again,</p>
+  $$ H(x,y) = \begin{pmatrix} 12x^{2} & -4\\ -4 & 12y^{2}\end{pmatrix}, $$
+  <p>symmetric as Clairaut promised — and note we may as well have checked directly:
+  $\partial_{y}\partial_{x}f = \partial_{y}(4x^{3}-4y) = -4$ and
+  $\partial_{x}\partial_{y}f = \partial_{x}(4y^{3}-4x) = -4$. ✓</p>
+  <p><b>At the origin.</b> $H=\begin{pmatrix}0&-4\\-4&0\end{pmatrix}$. Its eigenvalues solve
+  $\det(H-\mu I) = \mu^{2}-16=0$, so $\mu=\pm4$, with eigenvectors found by inspection:
+  $H(1,-1)^{\mathsf T} = (4,-4)^{\mathsf T}$ and $H(1,1)^{\mathsf T}=(-4,-4)^{\mathsf T}$, so</p>
+  $$ \mu_{+}=+4 \ \text{ along } \ \tfrac{1}{\sqrt2}(1,-1), \qquad \mu_{-}=-4 \ \text{ along } \ \tfrac{1}{\sqrt2}(1,1). $$
+  <p>Mixed signs: a <strong>saddle</strong>. And <a class="eqref" href="#e-princurv"></a> says exactly
+  what it should look like. Check it against the function directly. Along the displacement $(t,t)$,</p>
+  $$ f(t,t) = t^{4}+t^{4}-4t\cdot t = 2t^{4}-4t^{2}, $$
+  <p>which falls for small $t$; along $(t,-t)$, $f = 2t^{4}+4t^{2}$, which rises. And the quadratic
+  terms match the prediction: the displacement $(t,t)$ has component
+  $c = \vv h\cdot\tfrac1{\sqrt2}(1,1) = t\sqrt2$ along the unit eigenvector, so
+  <a class="eqref" href="#e-critquad"></a> predicts $\tfrac12\mu_{-}c^{2} = \tfrac12(-4)(2t^{2}) =
+  -4t^{2}$ — exactly the $-4t^{2}$ above. ✓ Likewise $\tfrac12(+4)(2t^{2}) = +4t^{2}$ in the other
+  direction.</p>
+  <p><b>At $(1,1)$.</b> $H=\begin{pmatrix}12&-4\\-4&12\end{pmatrix}$. Same eigenvectors — any matrix of
+  the form $aI+bJ$ with $J=\begin{pmatrix}0&1\\1&0\end{pmatrix}$ has eigenvectors $(1,1)$ and $(1,-1)$
+  — with eigenvalues</p>
+  $$ \mu = 12\mp4: \qquad \mu_{1}=8 \ \text{ along } \ \tfrac1{\sqrt2}(1,1), \qquad \mu_{2}=16 \ \text{ along } \ \tfrac1{\sqrt2}(1,-1). $$
+  <p>Both positive: a <strong>local minimum</strong>. The principal curvatures are $8$ and $16$, so the
+  valley floor is twice as stiff across the diagonal as along it, and the elliptical contours around
+  the minimum have semi-axis ratio $\sqrt{16/8}=\sqrt2$ — longer along $(1,1)$, which is the soft
+  direction. By the symmetry $f(-x,-y)=f(x,y)$ the point $(-1,-1)$ is an identical minimum.</p>
+  <p><b>What you have just drawn.</b> Two degenerate minima of equal depth, related by a symmetry, with
+  a saddle sitting at the symmetric point between them. That is the double well, and it is the entire
+  mechanism of spontaneous symmetry breaking: the potential respects the symmetry
+  $(x,y)\to(-x,-y)$, but the system must sit in one minimum or the other and therefore does not. The
+  soft direction along $(1,1)$ at the minimum — the small eigenvalue — is the direction along which the
+  system is easiest to excite, which in Chapter 0.8 becomes the lowest normal mode, and in Chapter 6.6,
+  when the symmetry is continuous rather than discrete so that the soft direction becomes exactly flat,
+  becomes a massless Goldstone boson. The eigenvalues of a Hessian are, quite literally, masses
+  squared.</p>
+</div>
+
+<h2>10 · Your turn</h2>
+
+<div class="problems">
+
+<div class="prob">
+  <p class="pnum">Problem 1 — the spherical volume element, and a check</p>
+  <p>Verify the Jacobian determinant $r^{2}\sin\theta$ for spherical coordinates by expanding
+  <a class="eqref" href="#e-sphjac"></a> along its <em>first</em> column instead of its last row (you
+  should of course get the same answer). Then use <a class="eqref" href="#e-sphvol"></a> to compute the
+  volume of a ball of radius $R$, and the surface area of a sphere of radius $R$.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>The determinant.</b> Expanding along the first column, with entries
+    $\sin\theta\cos\phi$, $\sin\theta\sin\phi$, $\cos\theta$ and signs $+,-,+$:</p>
+    $$ \begin{aligned} \det = \;&\sin\theta\cos\phi\,\big(0 + r^{2}\sin^{2}\theta\cos\phi\big)\\ &-\sin\theta\sin\phi\,\big(0 - r^{2}\sin^{2}\theta\sin\phi\big)\\ &+\cos\theta\,\big(r^{2}\sin\theta\cos\theta\cos^{2}\phi + r^{2}\sin\theta\cos\theta\sin^{2}\phi\big). \end{aligned} $$
+    <p>The first two lines give $r^{2}\sin^{3}\theta(\cos^{2}\phi+\sin^{2}\phi)=r^{2}\sin^{3}\theta$;
+    the third gives $r^{2}\sin\theta\cos^{2}\theta$. Adding,
+    $\det = r^{2}\sin\theta(\sin^{2}\theta+\cos^{2}\theta) = r^{2}\sin\theta$. ✓ Same answer, as it must
+    be — the determinant does not know which row you expanded along.</p>
+    <p><b>Volume.</b> The integrand factorises completely, so the triple integral is a product:</p>
+    $$ V = \int_{0}^{R}\!\!\int_{0}^{\pi}\!\!\int_{0}^{2\pi} r^{2}\sin\theta\;\dd\phi\,\dd\theta\,\dd r = \left(\int_{0}^{R}\!r^{2}\dd r\right)\!\left(\int_{0}^{\pi}\!\sin\theta\,\dd\theta\right)\!\left(\int_{0}^{2\pi}\!\dd\phi\right). $$
+    <p>These are $R^{3}/3$, $\big[-\cos\theta\big]_{0}^{\pi}=2$, and $2\pi$. So</p>
+    $$ V = \frac{R^{3}}{3}\cdot 2\cdot 2\pi = \frac{4}{3}\pi R^{3}. \;\checkmark $$
+    <p><b>Area.</b> Fix $r=R$; the surface element is what remains after dropping $\dd r$ and setting
+    $r=R$, namely $\dd A = R^{2}\sin\theta\,\dd\theta\,\dd\phi$, so $A = R^{2}\cdot2\cdot2\pi=4\pi R^{2}$.
+    Note that $\dv{V}{R}=4\pi R^{2}=A$, which is not a coincidence: growing the ball by $\dd R$ adds a
+    shell of area $A$ and thickness $\dd R$. That is the fundamental theorem of Chapter 0.2 in three
+    dimensions, and Chapter 0.7 turns the observation into the divergence theorem.</p>
+    <p>The $\sin\theta$ is doing something physical, incidentally: it says that a patch of
+    $\dd\theta\times\dd\phi$ near the pole covers less area than the same patch at the equator, because
+    the circles of constant $\theta$ shrink to points there. Any map projection you have ever
+    complained about is a fight with this factor.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 2 — the Coulomb field as a gradient</p>
+  <p>Let $\phi(\vv r) = 1/r$ where $r = \abs{\vv r} = \sqrt{x^{2}+y^{2}+z^{2}}$, defined for
+  $\vv r\neq\vv 0$. (a) Compute $\nabla\phi$. (b) Verify that it is perpendicular to the level sets of
+  $\phi$. (c) At the point $(1,2,2)$, give the direction of steepest ascent of $\phi$ and the rate of
+  increase in that direction. (d) Interpret $-\nabla\phi$.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>(a)</b> First $\pdv{r}{x}$. From $r^{2}=x^{2}+y^{2}+z^{2}$, differentiate both sides with
+    respect to $x$: $2r\,\pdv{r}{x} = 2x$, so $\pdv{r}{x}=x/r$, and likewise for $y,z$. Compactly,
+    $\nabla r = \vv r/r = \hat{\vv r}$ — the direction of fastest increase of distance from the origin
+    is straight outward, at unit rate, which is reassuring. Now the chain rule of §5.1 with
+    $\phi = r^{-1}$:</p>
+    $$ \nabla\phi = \dv{\phi}{r}\,\nabla r = -\frac{1}{r^{2}}\,\hat{\vv r} = -\frac{\vv r}{r^{3}}. $$
+    <p><b>(b)</b> The level sets $1/r=c$ are the spheres $r=1/c$. A curve on such a sphere has
+    $\abs{\vv x(t)}$ constant, so differentiating $\vv x\cdot\vv x = \text{const}$ gives
+    $2\,\vv x\cdot\dot{\vv x}=0$: tangent vectors to a sphere are perpendicular to the radius. And
+    $\nabla\phi$ is parallel to the radius. Hence $\nabla\phi\cdot\dot{\vv x}=0$. ✓ — which is
+    <a class="eqref" href="#e-perp"></a> confirmed in a case where you can see both objects.</p>
+    <p><b>(c)</b> At $(1,2,2)$, $r=\sqrt{1+4+4}=3$, so</p>
+    $$ \nabla\phi = -\frac{(1,2,2)}{27}, \qquad \abs{\nabla\phi} = \frac{3}{27} = \frac19 = \frac{1}{r^{2}}. $$
+    <p>By §3.1 the steepest-ascent direction is $\nabla\phi/\abs{\nabla\phi} = -\tfrac13(1,2,2)$ — a unit
+    vector pointing directly <em>at</em> the origin — and the rate is $\abs{\nabla\phi}=1/9$. Obvious in
+    hindsight: $1/r$ increases fastest when you head straight for the singularity.</p>
+    <p><b>(d)</b> $-\nabla\phi = \vv r/r^{3} = \hat{\vv r}/r^{2}$. That is an inverse-square field
+    pointing radially outward — the electric field of a positive point charge (in units with
+    $q/4\pi\epsilon_{0}=1$), or minus the gravitational field of a point mass. The relation
+    $\vv E = -\nabla\phi$ is the definition of the potential, and the minus sign is the statement that
+    <em>things fall down the gradient</em>: forces point in the direction of steepest <em>descent</em> of
+    the potential energy, which by §3.1 is the direction $-\nabla\phi/\abs{\nabla\phi}$. Chapter 0.7
+    takes this field and computes its flux; Chapter 1.2 takes the same $\phi$ and derives the orbit.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 3 — maximum entropy with nothing to go on</p>
+  <p>Repeat Worked Example 1 with only the normalisation constraint $\sum_{i}p_{i}=1$: maximise
+  $S=-\sum_{i}p_{i}\ln p_{i}$ over $N$ states. Show that the answer is the uniform distribution and
+  find the maximum entropy. Then obtain the same result as a limit of the Boltzmann distribution, and
+  say what physical situation that limit describes.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p>One constraint, one multiplier:</p>
+    $$ \mathcal{L} = -\sum_{i}p_{i}\ln p_{i} - \alpha\Big(\sum_{i}p_{i}-1\Big), \qquad \pdv{\mathcal{L}}{p_{i}} = -\ln p_{i}-1-\alpha = 0. $$
+    <p>So $p_{i} = \ee^{-1-\alpha}$ — <em>the same value for every $i$</em>, because the right-hand side
+    carries no $i$ at all. That single observation is the whole result. Normalising,
+    $N\ee^{-1-\alpha}=1$, so</p>
+    $$ p_{i} = \frac{1}{N}, \qquad S_{\max} = -\sum_{i=1}^{N}\frac1N\ln\frac1N = \ln N. $$
+    <p>The Hessian is again $\mathrm{diag}(-1/p_{i}) = \mathrm{diag}(-N)$, negative definite, so it is a
+    maximum (§6.3). "Maximum entropy = uniform" is thus a one-line consequence of §7, not a separate
+    principle.</p>
+    <p><b>As a limit.</b> Boltzmann gives $p_{i}=\ee^{-\beta E_{i}}/Z$. As $\beta\to0$ every exponential
+    tends to $1$ and $Z\to N$, so $p_{i}\to1/N$. Since $\beta=1/k_{B}T$, the limit $\beta\to0$ is
+    $T\to\infty$: <strong>at infinite temperature every state is equally likely</strong>, because the
+    energy constraint has stopped costing anything. Consistently,
+    <a class="eqref" href="#e-envelope"></a> reads $\beta = \dv{S^{*}}{\bar E}$, and at the unconstrained
+    maximum $S^{*}$ is stationary in $\bar E$, so $\beta=0$. The two statements are the same statement.</p>
+    <p><b>Why this matters beyond the algebra.</b> The result $p_{i}=1/N$ is the "equal a priori
+    probabilities" postulate of the microcanonical ensemble — the assumption usually placed at the very
+    foundation of statistical mechanics and defended with hand-waving about ergodicity. Here it is a
+    <em>theorem</em>: given only that the probabilities sum to one, the least presumptuous distribution
+    is the flat one. And $S_{\max}=\ln N$ is Boltzmann's $S=k_{B}\ln W$ carved on his headstone, with
+    $W=N$ the number of accessible states.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 4 — mixed partials and a full classification</p>
+  <p>(a) Verify Clairaut's theorem explicitly for $f(x,y) = x^{3}y^{2} + \ee^{xy}$ by computing
+  $\partial_{y}\partial_{x}f$ and $\partial_{x}\partial_{y}f$ separately.
+  (b) Find all critical points of $h(x,y) = x^{3}+y^{3}-3xy$ and classify each one using the
+  eigenvalues of its Hessian, stating the principal curvature directions.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>(a)</b> Treating $y$ as constant,
+    $\partial_{x}f = 3x^{2}y^{2} + y\,\ee^{xy}$. Now differentiate that in $y$, using the product rule on
+    both terms:</p>
+    $$ \partial_{y}\partial_{x}f = 6x^{2}y + \ee^{xy} + xy\,\ee^{xy}. $$
+    <p>The other order: $\partial_{y}f = 2x^{3}y + x\,\ee^{xy}$, and differentiating in $x$,</p>
+    $$ \partial_{x}\partial_{y}f = 6x^{2}y + \ee^{xy} + xy\,\ee^{xy}. $$
+    <p>Identical. ✓ Both second partials are continuous everywhere (they are polynomials and exponentials),
+    so Clairaut's hypothesis holds and the agreement was guaranteed in advance.</p>
+    <p><b>(b) Critical points.</b> $\partial_{x}h = 3x^{2}-3y=0$ and $\partial_{y}h=3y^{2}-3x=0$ give
+    $y=x^{2}$ and $x=y^{2}$. Substituting, $x = x^{4}$, so $x(x^{3}-1)=0$ and $x\in\{0,1\}$ over the
+    reals. The critical points are $(0,0)$ with $h=0$, and $(1,1)$ with $h=1+1-3=-1$.</p>
+    <p><b>The Hessian.</b> $H(x,y) = \begin{pmatrix}6x & -3\\ -3 & 6y\end{pmatrix}$.</p>
+    <p><b>At $(0,0)$:</b> $H=\begin{pmatrix}0&-3\\-3&0\end{pmatrix}$, characteristic equation
+    $\mu^{2}-9=0$, so $\mu=\pm3$. The eigenvector for $\mu=+3$ is $(1,-1)/\sqrt2$ and for $\mu=-3$ is
+    $(1,1)/\sqrt2$ (check: $H(1,-1)^{\mathsf T}=(3,-3)^{\mathsf T}$ ✓). Mixed signs, so a
+    <strong>saddle</strong>: $h$ curves upward along $(1,-1)$ and downward along $(1,1)$, each with
+    curvature $3$.</p>
+    <p><b>At $(1,1)$:</b> $H=\begin{pmatrix}6&-3\\-3&6\end{pmatrix}$, eigenvalues $6\mp3$, i.e. $\mu=3$
+    along $(1,1)/\sqrt2$ and $\mu=9$ along $(1,-1)/\sqrt2$. Both positive, so a <strong>local
+    minimum</strong>, three times stiffer across the diagonal than along it. The contours near it are
+    ellipses elongated by $\sqrt{9/3}=\sqrt3$ in the $(1,1)$ direction.</p>
+    <p><b>Sanity checks worth doing.</b> The determinant of $H$ is $36xy-9$, which is $-9\lt0$ at the
+    origin and $+27\gt0$ at $(1,1)$ — and since $\det H = \mu_{1}\mu_{2}$ (Chapter 0.5), a negative
+    determinant in two dimensions <em>immediately</em> signals opposite signs, hence a saddle, with no
+    eigenvector computation at all. That is the standard "second derivative test" for two variables:
+    $\det H\lt0$ means saddle, $\det H\gt0$ with $\partial_{x}^{2}h\gt0$ means minimum. It is not a
+    separate rule — it is §6.3 plus the fact that the determinant is the product of the eigenvalues, and
+    it stops being usable in three dimensions, where a positive determinant is compatible with two
+    negative eigenvalues. The eigenvalue formulation is the one that generalises.</p>
+    <p>Note also that $h$ is unbounded below (take $y=0$, $x\to-\infty$), so the local minimum at
+    $(1,1)$ is emphatically <em>not</em> global. §6 is a local theory: the Hessian is a statement about
+    a neighbourhood and knows nothing about what happens far away.</p>
+  </div></details>
+</div>
+
+</div>
+
+<div class="callout brick">
+  <span class="ct">The brick you just laid</span>
+  <p>You took one equation from Chapter 0.1 and let the displacement be a vector. Out of that came the
+  <strong>total derivative</strong> $\mathrm{D}f(\vv a)$ — a linear map, unique, whose matrix is the
+  Jacobian — and the recognition that partial derivatives are its components and can exist without it.
+  You derived the steepest-ascent property of the <strong>gradient</strong> from Cauchy–Schwarz and its
+  perpendicularity to level sets from the chain rule; you saw that turning $\dd f$ into $\nabla f$
+  requires a <strong>metric</strong>, and met your first covector doing it. The chain rule became a
+  <strong>product of Jacobians</strong> and quietly produced the summation convention. The
+  <strong>Hessian</strong>, symmetric by Clairaut and therefore diagonalisable by the spectral theorem,
+  classified critical points by its eigenvalues and told you the principal curvatures.
+  <strong>Lagrange multipliers</strong> came from a picture — level set tangent to constraint — and
+  turned out to be sensitivities. And the <strong>Jacobian determinant</strong> converted local
+  linearity plus the determinant-as-volume into every change-of-variables formula there is.</p>
+  <p><b>Where this gets spent.</b></p>
+  <ul>
+    <li><b>The total derivative</b> → Chapter 1.2, where the same definition applied to a functional
+    gives the Euler–Lagrange equations; Chapter 3.2, where $\mathrm{D}f$ becomes the pushforward between
+    tangent spaces on a manifold.</li>
+    <li><b>The gradient as a one-form</b> → Chapter 2.4 (upper and lower indices, made a convention),
+    Chapter 3.2 (the cotangent space), Chapter 3.3 (raising and lowering with $g^{\mu\nu}$), Chapter 3.5
+    (where $\dd f$ becomes the exterior derivative and $\dd^{2}=0$ starts doing work).</li>
+    <li><b>The chain rule as a matrix product</b> → Chapter 2.4, where
+    <a class="eqref" href="#e-chainindex"></a>, promoted from a computation to a <em>definition</em>, is
+    what a tensor is; Chapter 3.2, where it is how you change charts on a manifold.</li>
+    <li><b>Hessian + spectral theorem</b> → Chapter 0.8 (normal modes: eigenvalues of the Hessian of the
+    potential are the squared frequencies), Chapter 1.3 (stability of equilibria in phase space), Chapter
+    6.6 (the Higgs potential, where a zero eigenvalue is a massless particle).</li>
+    <li><b>Lagrange multipliers</b> → Chapters 1.2 and 1.3 (constraint forces are multipliers, and now
+    you know why they have units of force: they are sensitivities of an energy to a displacement), and
+    later the constrained-Hamiltonian treatment of gauge theories, where the multipliers enforce Gauss's
+    law.</li>
+    <li><b>The Jacobian determinant</b> → Chapter 0.2's debt, now paid; Chapter 3.3's
+    $\sqrt{-g}\,\dd^{4}x$; Chapter 5.5, where changing variables inside a path integral produces a
+    determinant that is not a nuisance but a new field.</li>
+  </ul>
+  <p>One thing to carry above all: every result in this chapter came from replacing a number by a linear
+  map. That is the only idea here. Chapter 0.7 replaces the linear map by something that varies from
+  point to point and asks what happens when you integrate it over a surface — and gets Stokes' theorem,
+  which is the fundamental theorem of calculus with the same substitution applied.</p>
+</div>
+
+<!--SCRIPT-->
+(function () {
+
+  /* =========================================================
+     The one figure: contours, gradient field, and a constraint
+     f(x,y) = x^2 + 2y^2      g(x,y) = x + y
+     ========================================================= */
+
+  var F  = function (x, y) { return x * x + 2 * y * y; };
+  var GX = function (x, y) { return 2 * x; };          /* d f / d x */
+  var GY = function (x, y) { return 4 * y; };          /* d f / d y */
+
+  var CVAL = 3;                 /* constraint level  x + y = 3      */
+  var OPTX = 2, OPTY = 1;       /* constrained minimum              */
+  var LAM  = 4;                 /* Lagrange multiplier              */
+
+  var sx = document.getElementById('s-px'),
+      sy = document.getElementById('s-py'),
+      bc = document.getElementById('b-con'),
+      oG = document.getElementById('o-grad'),
+      oP = document.getElementById('o-perp'),
+      oL = document.getElementById('o-lag');
+
+  var showCon = false;
+  var LP = null;                 /* last Plot, for drag mapping */
+  var SCALE = 0.125;              /* data units per unit of |grad|   */
+
+  /* run a drawing block clipped to the plot area (seg/dot don't clip) */
+  function clipped(p, fn) {
+    var g = p.g, pa = p.o.pad;
+    g.save();
+    g.beginPath();
+    g.rect(pa.l, pa.t, p.w - pa.l - pa.r, p.h - pa.t - pa.b);
+    g.clip();
+    fn();
+    g.restore();
+  }
+
+  /* level set of f at value c, as an exact ellipse */
+  function levelPts(c) {
+    var A = Math.sqrt(c), B = Math.sqrt(c / 2), pts = [], N = 200;
+    for (var i = 0; i <= N; i++) {
+      var t = 2 * Math.PI * i / N;
+      pts.push([A * Math.cos(t), B * Math.sin(t)]);
+    }
+    return pts;
+  }
+
+  /* point on that ellipse at parameter t */
+  function ellPt(c, t) {
+    return [Math.sqrt(c) * Math.cos(t), Math.sqrt(c / 2) * Math.sin(t)];
+  }
+
+  function arrow(p, x, y, ux, uy, L, col, w) {
+    var x2 = x + ux * L, y2 = y + uy * L;
+    p.seg(x, y, x2, y2, { color: col, width: w });
+    var hl = Math.max(L * 0.34, 0.10), a = 0.42;
+    var bx = -ux, by = -uy;
+    var ca = Math.cos(a), sa = Math.sin(a);
+    p.seg(x2, y2, x2 + hl * (bx * ca - by * sa), y2 + hl * (bx * sa + by * ca),
+          { color: col, width: w });
+    p.seg(x2, y2, x2 + hl * (bx * ca + by * sa), y2 + hl * (-bx * sa + by * ca),
+          { color: col, width: w });
+  }
+
+  NMT.figure('fig-grad', function (c) {
+    var px = parseFloat(sx.value), py = parseFloat(sy.value);
+
+    var p = new NMT.Plot(c, {
+      xmin: -4.4, xmax: 4.4, ymin: -2.6, ymax: 2.6,
+      xlabel: 'x', ylabel: 'y', equal: true
+    });
+    LP = p;
+    p.axes({ nx: 8, ny: 5 });
+
+    var cc = F(px, py);
+    var vx0 = GX(px, py), vy0 = GY(px, py), m0 = Math.hypot(vx0, vy0);
+    var acc = NMT.css('--accent');
+
+    clipped(p, function () {
+
+      /* ---- level sets of f ---- */
+      var levels = [0.5, 1.5, 3, 5, 7.5, 10.5, 14, 18, 23, 28];
+      levels.forEach(function (L) {
+        p.path(levelPts(L), { color: NMT.css('--rule'), width: 1.3 });
+      });
+
+      /* ---- gradient field, all arrows the same length ---- */
+      var gcol = NMT.css('--insight');
+      for (var gx = -4; gx <= 4.001; gx += 1) {
+        for (var gy = -2; gy <= 2.001; gy += 1) {
+          var vx = GX(gx, gy), vy = GY(gx, gy);
+          var m = Math.hypot(vx, vy);
+          if (m < 1e-9) continue;
+          arrow(p, gx, gy, vx / m, vy / m, 0.34, gcol, 1.2);
+        }
+      }
+
+      /* ---- constraint overlay ---- */
+      if (showCon) {
+        var wcol = NMT.css('--warn'), fcol = NMT.css('--familiar');
+        /* level curve of f through the constrained optimum: f = 6 */
+        p.path(levelPts(F(OPTX, OPTY)), { color: fcol, width: 2.4 });
+        /* the constraint line x + y = CVAL */
+        p.path([[-4.4, CVAL + 4.4], [4.4, CVAL - 4.4]], { color: wcol, width: 2.2 });
+        /* both gradients at the optimum, same scale: |grad f| is 4x |grad g| */
+        var u = 1 / Math.SQRT2;
+        var Lf = SCALE * Math.hypot(GX(OPTX, OPTY), GY(OPTX, OPTY));
+        var Lg = SCALE * Math.SQRT2;
+        arrow(p, OPTX, OPTY, u, u, Lf, acc, 2.6);
+        p.text(OPTX + u * Lf, OPTY + u * Lf, '∇f', { color: acc, dx: 8, dy: -2 });
+        arrow(p, OPTX, OPTY, u, u, Lg, wcol, 2.6);
+        p.text(OPTX + u * Lg, OPTY + u * Lg, '∇g',
+               { color: wcol, align: 'right', dx: -7, dy: -3 });
+        p.dot(OPTX, OPTY, { color: wcol, ring: true, r: 5 });
+        p.text(OPTX, OPTY, '(2, 1)', { color: wcol, dx: -34, dy: 18 });
+      }
+
+      /* ---- the movable point ---- */
+      if (cc > 1e-9) {
+        p.path(levelPts(cc), { color: acc, width: 2.4 });
+      }
+
+      if (m0 > 1e-9) {
+        /* numerical tangent to the level curve, taken from the contour itself */
+        var t0 = Math.atan2(py * Math.SQRT2, px), eps = 1e-4;
+        var Pa = ellPt(cc, t0 + eps), Pb = ellPt(cc, t0 - eps);
+        var tx = (Pa[0] - Pb[0]) / (2 * eps), ty = (Pa[1] - Pb[1]) / (2 * eps);
+        var tm = Math.hypot(tx, ty); tx /= tm; ty /= tm;
+
+        var TL = 1.25;
+        p.seg(px - TL * tx, py - TL * ty, px + TL * tx, py + TL * ty,
+              { color: NMT.css('--ink-faint'), width: 1.4, dash: [5, 4] });
+
+        arrow(p, px, py, vx0 / m0, vy0 / m0, SCALE * m0, acc, 2.6);
+
+        var dot = vx0 * tx + vy0 * ty;
+        oG.textContent = '∇f = (' + vx0.toFixed(2) + ', ' + vy0.toFixed(2) +
+                         '),  |∇f| = ' + m0.toFixed(3);
+        oP.textContent = '∇f · t̂ = ' + dot.toExponential(1) + '   (zero)';
+      } else {
+        oG.textContent = '∇f = (0.00, 0.00),  |∇f| = 0';
+        oP.textContent = 'gradient vanishes — this is the minimum';
+      }
+
+      p.dot(px, py, { color: acc, ring: true, r: 5 });
+    });
+
+    oL.textContent = showCon
+      ? 'at (2,1):  ∇f = (4,4) = 4·∇g,  λ = 4 = df*/dc,  f* = 6'
+      : '';
+  });
+
+  sx.addEventListener('input', NMT.redrawAll);
+  sy.addEventListener('input', NMT.redrawAll);
+  bc.addEventListener('click', function () {
+    showCon = !showCon;
+    bc.className = showCon ? 'on' : '';
+    bc.textContent = showCon ? 'hide constraint' : 'show constraint (§7)';
+    NMT.redrawAll();
+  });
+
+  /* ---- drag the point directly on the canvas ---- */
+  var cv = document.getElementById('fig-grad');
+  if (cv) {
+    var dragging = false;
+    cv.style.cursor = 'crosshair';
+    var place = function (e) {
+      if (!LP) return;
+      var r = cv.getBoundingClientRect();
+      var X = LP.invX(e.clientX - r.left), Y = LP.invY(e.clientY - r.top);
+      sx.value = Math.max(-3.2, Math.min(3.2, X)).toFixed(2);
+      sy.value = Math.max(-1.6, Math.min(1.6, Y)).toFixed(2);
+      NMT.redrawAll();
+    };
+    cv.addEventListener('mousedown', function (e) { dragging = true; place(e); });
+    window.addEventListener('mousemove', function (e) { if (dragging) place(e); });
+    window.addEventListener('mouseup', function () { dragging = false; });
+  }
+})();
+<!--/SCRIPT-->

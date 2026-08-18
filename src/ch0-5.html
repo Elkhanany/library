@@ -1,0 +1,1636 @@
+<p class="eyebrow">Part 0 · The Toolkit — Chapter 0.5</p>
+<h1>Inner Products, Eigenvectors, and the Spectral Theorem</h1>
+<p class="subtitle">Quantum mechanics, four parts early, with the physics stripped off.</p>
+
+<div class="callout where">
+  <span class="ct">Where we are</span>
+  <p>Here is the stake, stated as plainly as it can be stated: <strong>every postulate of quantum
+  mechanics is a statement about Hermitian operators on an inner-product space.</strong> Not
+  <em>modelled by</em>, not <em>analogous to</em> — is. Measurement outcomes are eigenvalues.
+  States are unit vectors. Time evolution is a unitary map. Compatible observables are commuting
+  operators. Take the physics away and what is left is a chapter of linear algebra, and it is this
+  one.</p>
+  <p>So we are going to prove that chapter of linear algebra now, four parts early, with no physics
+  attached whatsoever. No wavefunctions, no $\hbar$, no measurement. By the end you will have
+  <em>proved</em> — with no mention of physics anywhere in the argument — that a certain class of
+  operators has only real eigenvalues, and that eigenvectors belonging to different eigenvalues are
+  exactly perpendicular. When Chapter 4.2 announces that measurement results are real numbers and
+  that distinct outcomes are perfectly distinguishable, you will already have the proof. Chapter 4.2
+  becomes a <em>translation exercise</em>: a table of renamings, not a new subject.</p>
+  <p>That is the whole design of this book compressed into one chapter. The mathematics is not
+  scaffolding erected to support the physics. It is the physics, wearing different words.</p>
+</div>
+
+<p class="tools"><b>Tools you'll need</b> &nbsp;— <a href="ch0-1.html">Chapter 0.1</a>: nothing
+beyond fluency. <a href="ch0-3.html">Chapter 0.3</a>: Euler's formula $\ee^{\ii\theta}=\cos\theta+
+\ii\sin\theta$, and power series. <a href="ch0-4.html">Chapter 0.4</a>: vector spaces, basis and
+dimension, linear maps and their matrices, change of basis, determinant, trace, and the fact that
+over $\C$ every square matrix has at least one eigenvalue. Everything here is built on those.</p>
+
+<h2>1 · Inner products</h2>
+
+<p>A vector space as Chapter 0.4 left it is a bleak place. You can add vectors and scale them, and
+that is all. There is no length, no angle, no notion of two vectors pointing in different
+directions. Every geometric word you know is missing. An <strong>inner product</strong> is the
+single extra structure that puts all of them back at once.</p>
+
+<h3>Why the axioms look the way they do</h3>
+
+<p>In $\R^{n}$ you already have one: the dot product $\vv{u}\cdot\vv{v}=\sum_i u_i v_i$, whose
+essential property is that $\vv{v}\cdot\vv{v}=\sum_i v_i^{2}$ is the squared length — a
+non-negative number that vanishes only for the zero vector. Try to carry that over to $\C^{n}$
+unchanged and it breaks immediately. Take $v=(1,\ii)$ in $\C^{2}$:</p>
+
+<div class="eq" id="e-fail">
+$$ \sum_i v_i^{2} \;=\; 1^{2} + \ii^{2} \;=\; 1 - 1 \;=\; 0, $$
+</div>
+
+<p>and yet $v\neq0$. A non-zero vector with zero length is useless; we would lose the ability to say
+that two states are different. The repair is forced, and it is the only repair available: replace
+$v_i^{2}$ by $\abs{v_i}^{2}=\bar v_i v_i$, which is non-negative for every complex number and zero
+only when $v_i=0$. So the complex inner product must conjugate one of its two arguments. Everything
+below is bookkeeping around that single fact.</p>
+
+<p>An <strong>inner product</strong> on a complex vector space $V$ is a map
+$V\times V\to\C$, written $\avg{u,v}$, satisfying three axioms.</p>
+
+<div class="eq" id="e-axioms">
+$$ \begin{aligned} \textbf{(i) conjugate symmetry:}\quad & \avg{u,v} = \overline{\avg{v,u}},\\[4pt] \textbf{(ii) linearity in slot 2:}\quad & \avg{u,\alpha v+\beta w} = \alpha\avg{u,v}+\beta\avg{u,w},\\[4pt] \textbf{(iii) positive definiteness:}\quad & \avg{v,v}\gt 0 \ \text{ for all } v\neq 0. \end{aligned} $$
+</div>
+
+<p>Three remarks, in increasing order of importance.</p>
+
+<p><b>Axiom (iii) is not quite well posed until (i) is used.</b> "$\avg{v,v}\gt0$" presumes
+$\avg{v,v}$ is real, and that is a <em>consequence</em>, not an assumption: setting $u=v$ in (i)
+gives $\avg{v,v}=\overline{\avg{v,v}}$, and a complex number equal to its own conjugate is real.
+Good — the axioms are consistent, and we derived the fact rather than assuming it.</p>
+
+<p><b>Linearity in one slot forces conjugate-linearity in the other.</b> We only demanded linearity
+in the second argument. The first is then determined:</p>
+
+<div class="eq" id="e-conjlin">
+$$ \avg{\alpha u,v} \;=\; \overline{\avg{v,\alpha u}} \;=\; \overline{\alpha\avg{v,u}} \;=\; \bar\alpha\,\overline{\avg{v,u}} \;=\; \bar\alpha\avg{u,v}. $$
+</div>
+
+<p>Pull a scalar out of the <em>second</em> slot and it comes out unchanged; pull it out of the
+<em>first</em> and it comes out conjugated. This asymmetry is real and you must keep track of it.
+It is also the reason the notation of §2 exists.</p>
+
+<p><b>The convention.</b> Which slot is the linear one is pure convention, and the two communities
+chose differently. <strong>Mathematicians make the first slot linear; physicists make the
+second.</strong> We have chosen the physics convention above, and will keep it for the whole book,
+because in Chapter 4.2 the object $\avg{\phi,\psi}$ becomes a probability amplitude, read
+right-to-left as "amplitude to find $\psi$ in state $\phi$", and the linear slot had better be the
+one holding the state that is actually evolving. If you open a mathematics text and every formula
+appears to have its conjugates on the wrong side, this is why.</p>
+
+<h3>The standard examples</h3>
+
+<table>
+<tr><th>Space</th><th>Inner product</th><th>Where it turns up</th></tr>
+<tr><td>$\R^{n}$</td><td>$\sum_i u_i v_i$</td><td>Ordinary geometry; least squares (§3)</td></tr>
+<tr><td>$\C^{n}$</td><td>$\sum_i \bar u_i v_i$</td><td>Spin, qubits, any finite quantum system (4.7)</td></tr>
+<tr><td>$\R^{n}$, weighted</td><td>$\sum_i w_i u_i v_i$, $w_i\gt0$</td><td>Weighted regression; $\chi^{2}$ fitting</td></tr>
+<tr><td>Functions on $[a,b]$</td><td>$\int_a^b \overline{f(x)}\,g(x)\,\dd x$</td><td>Fourier series (0.9); wavefunctions (4.3)</td></tr>
+<tr><td>$n\times n$ matrices</td><td>$\operatorname{tr}(A^{\dagger}B)$</td><td>Density matrices (4.8)</td></tr>
+</table>
+
+<p>Check the fourth row against the axioms and you will find nothing new is needed: conjugate
+symmetry because $\overline{\int \bar g f} = \int \bar f g$, linearity in the second slot because
+integration is linear, positive definiteness because $\int\abs{f}^{2}\ge0$ with equality only if
+$f\equiv0$. That row is the entire reason Chapter 4.3 is possible: <em>a space of functions is an
+inner-product space</em>, and every theorem of this chapter will try to move there. Some of them
+survive the trip and some need repair, which is the subject of a warning later on.</p>
+
+<h3>Length, distance, and the angle we cannot yet define</h3>
+
+<p>Given an inner product, define the <strong>norm</strong> and the <strong>distance</strong>:</p>
+
+<div class="eq" id="e-norm">
+$$ \left\lVert v\right\rVert \;\equiv\; \sqrt{\avg{v,v}}, \qquad d(u,v) \;\equiv\; \left\lVert u-v\right\rVert. $$
+</div>
+
+<p>Both are well defined: $\avg{v,v}$ is real and non-negative, so the square root is real. Call
+$u$ and $v$ <strong>orthogonal</strong> when $\avg{u,v}=0$, and note that this is symmetric, since
+$\avg{v,u}=\overline{\avg{u,v}}=0$ too. Expanding a norm-squared using the axioms gives the
+generalised Pythagoras:</p>
+
+<div class="eq" id="e-pyth">
+$$ \left\lVert u+v\right\rVert^{2} = \left\lVert u\right\rVert^{2} + \left\lVert v\right\rVert^{2} + 2\,\mathrm{Re}\avg{u,v}, $$
+</div>
+
+<p>because $\avg{u+v,u+v}=\avg{u,u}+\avg{u,v}+\avg{v,u}+\avg{v,v}$ and the middle two are
+conjugates of each other, so they add to twice the real part. When $u\perp v$ the cross term dies
+and $\left\lVert u+v\right\rVert^{2}=\left\lVert u\right\rVert^{2}+\left\lVert v\right\rVert^{2}$: Pythagoras, in any dimension, over $\C$, derived in
+one line from three axioms.</p>
+
+<p>Now the angle. In $\R^{n}$ you were told $\cos\theta = \vv{u}\cdot\vv{v}/(\left\lVert u\right\rVert\left\lVert v\right\rVert)$.
+We would like to <em>define</em> the angle that way in general — but a definition is only legal if
+the right-hand side lands in $[-1,1]$, and nothing so far guarantees it. Proving that it does is
+the next item, and it is much more than a technicality.</p>
+
+<h3>The Cauchy–Schwarz inequality</h3>
+
+<p>The claim is that for all $u,v$ in an inner-product space,</p>
+
+<div class="eq" id="e-cs">
+$$ \boxed{\;\abs{\avg{u,v}}^{2} \;\le\; \avg{u,u}\,\avg{v,v}\;} $$
+</div>
+
+<p>with equality exactly when $u$ and $v$ are parallel. The proof is one idea: <em>positivity of a
+norm is an infinite supply of inequalities, and we get to choose which one to use.</em> Whatever
+$\lambda\in\C$ we pick, axiom (iii) guarantees</p>
+
+<div class="eq" id="e-cs0">
+$$ 0 \;\le\; \avg{u-\lambda v,\;u-\lambda v}. $$
+</div>
+
+<p>Expand it, remembering that the first slot conjugates by <a class="eqref" href="#e-conjlin"></a>
+and the second does not:</p>
+
+<div class="eq" id="e-csexp">
+$$ \begin{aligned} \avg{u-\lambda v,u-\lambda v} &= \avg{u,u} - \lambda\avg{u,v} - \bar\lambda\avg{v,u} + \abs{\lambda}^{2}\avg{v,v}\\[4pt] &= \avg{u,u} - 2\,\mathrm{Re}\!\left(\lambda\avg{u,v}\right) + \abs{\lambda}^{2}\avg{v,v}, \end{aligned} $$
+</div>
+
+<p>where the two middle terms combined because $\bar\lambda\avg{v,u}=\overline{\lambda\avg{u,v}}$.
+This is non-negative for <em>every</em> $\lambda$, so it is non-negative for the $\lambda$ that
+makes it smallest, and we now choose that one. Assume $v\neq0$ (if $v=0$ both sides of
+<a class="eqref" href="#e-cs"></a> are zero and there is nothing to prove) and take</p>
+
+<div class="eq" id="e-lam">
+$$ \lambda \;=\; \frac{\avg{v,u}}{\avg{v,v}} \;=\; \frac{\overline{\avg{u,v}}}{\avg{v,v}}. $$
+</div>
+
+<p>With that choice $\lambda\avg{u,v} = \abs{\avg{u,v}}^{2}/\avg{v,v}$, which is real and
+non-negative, and $\abs{\lambda}^{2}\avg{v,v}=\abs{\avg{u,v}}^{2}/\avg{v,v}$ as well. Substituting
+into <a class="eqref" href="#e-csexp"></a>, the two copies partially cancel:</p>
+
+<div class="eq" id="e-csfin">
+$$ 0 \;\le\; \avg{u,u} - \frac{2\abs{\avg{u,v}}^{2}}{\avg{v,v}} + \frac{\abs{\avg{u,v}}^{2}}{\avg{v,v}} \;=\; \avg{u,u} - \frac{\abs{\avg{u,v}}^{2}}{\avg{v,v}}. $$
+</div>
+
+<p>Multiply through by $\avg{v,v}\gt0$ and you have <a class="eqref" href="#e-cs"></a>. Equality
+holds precisely when the quantity in <a class="eqref" href="#e-cs0"></a> is zero, i.e. when
+$u=\lambda v$ — the two vectors are parallel.</p>
+
+<p>So the angle is now legal. Dividing <a class="eqref" href="#e-cs"></a> by
+$\left\lVert u\right\rVert^{2}\left\lVert v\right\rVert^{2}$ shows $\abs{\avg{u,v}}/(\left\lVert u\right\rVert\left\lVert v\right\rVert)\le1$, and we may define</p>
+
+<div class="eq" id="e-angle">
+$$ \cos\theta \;\equiv\; \frac{\mathrm{Re}\avg{u,v}}{\left\lVert u\right\rVert\,\left\lVert v\right\rVert} \;\in\;[-1,1]. $$
+</div>
+
+<details class="grind">
+  <summary>Grind box — the triangle inequality, and what $\lambda$ was</summary>
+  <div class="grind-body">
+    <p><b>The triangle inequality falls out.</b> Start from
+    <a class="eqref" href="#e-pyth"></a> and bound the cross term using
+    $\mathrm{Re}\,z\le\abs{z}$ and then Cauchy–Schwarz:</p>
+    $$ \begin{aligned} \left\lVert u+v\right\rVert^{2} &= \left\lVert u\right\rVert^{2}+\left\lVert v\right\rVert^{2}+2\,\mathrm{Re}\avg{u,v}\\[3pt] &\le \left\lVert u\right\rVert^{2}+\left\lVert v\right\rVert^{2}+2\left\lVert u\right\rVert\left\lVert v\right\rVert = \big(\left\lVert u\right\rVert+\left\lVert v\right\rVert\big)^{2}. \end{aligned} $$
+    <p>Taking square roots, $\left\lVert u+v\right\rVert\le\left\lVert u\right\rVert+\left\lVert v\right\rVert$. Every metric-space fact you have ever
+    used about these spaces descends from this line, and this line descends from
+    <a class="eqref" href="#e-cs"></a>.</p>
+    <p><b>What the magic $\lambda$ was.</b> It looks pulled from a hat. It is not: minimise
+    <a class="eqref" href="#e-csexp"></a> honestly. Write $\lambda = t\,\overline{\avg{u,v}}$ with
+    $t$ real, so that $\lambda\avg{u,v}=t\abs{\avg{u,v}}^{2}$ is real. Then the expression is the
+    real quadratic</p>
+    $$ q(t) = \avg{u,u} - 2t\abs{\avg{u,v}}^{2} + t^{2}\abs{\avg{u,v}}^{2}\avg{v,v}, $$
+    $$ q'(t) = 0 \;\Longrightarrow\; t = \frac{1}{\avg{v,v}}, $$
+    <p>which reproduces <a class="eqref" href="#e-lam"></a> exactly. And the minimising vector
+    $\lambda v = \dfrac{\avg{v,u}}{\avg{v,v}}\,v$ is precisely the <em>orthogonal projection of $u$
+    onto the line through $v$</em>, which is §3. Cauchy–Schwarz is the statement that a projection
+    is never longer than the thing being projected. Everything in this chapter is one geometric
+    picture seen from different angles.</p>
+    <p><b>An alternative proof, for the file.</b> If $\left\lVert u\right\rVert=\left\lVert v\right\rVert=1$ then
+    $0\le\left\lVert u-\ee^{\ii\varphi}v\right\rVert^{2}=2-2\,\mathrm{Re}(\ee^{-\ii\varphi}\avg{u,v})$; choosing
+    $\varphi$ to be the argument of $\avg{u,v}$ makes the real part equal $\abs{\avg{u,v}}$ and
+    gives $\abs{\avg{u,v}}\le1$ directly. The general case follows by rescaling. Same idea, phase
+    instead of magnitude.</p>
+  </div>
+</details>
+
+<div class="callout insight">
+  <span class="ct">This inequality is the uncertainty principle</span>
+  <p>Chapter 4.6 will prove that for any two observables $A$ and $B$ measured on a state $\psi$,</p>
+  $$ \Delta A\,\Delta B \;\ge\; \tfrac12\abs{\avg{[A,B]}}. $$
+  <p>The proof there is <a class="eqref" href="#e-cs"></a> applied to the two vectors</p>
+  $$ u = (A-\avg{A})\psi, \qquad v = (B-\avg{B})\psi, $$
+  <p>followed by one line splitting $\avg{u,v}$ into its real and imaginary parts. That is the
+  entire derivation. <strong>Nothing is added in Chapter 4.6 except the physical meaning of the
+  symbols.</strong> The Heisenberg uncertainty principle — the single most quoted statement in
+  twentieth-century physics, the one that gets prose written about the limits of human knowledge —
+  is Cauchy–Schwarz. You have just proved it. You are simply not yet allowed to say what the
+  letters mean.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.1</span></span>
+  <p>Until now the space has had no geometry in it whatever: no lengths, no angles, no way of saying that two directions differ rather than merely being labelled differently. An inner product restores all of that in one stroke, and the question it answers is how much of one vector lies along another. Over the complex numbers the definition is obliged to conjugate one of its two arguments, and that is forced rather than chosen, because without the conjugation a perfectly respectable non-zero vector can be assigned zero length, and the ability to tell two states apart would be lost on the first page.</p>
+  <p>Out of three short axioms comes an inequality stating that the overlap between two vectors can never exceed the product of their lengths, with equality only when the two are parallel. It has the air of housekeeping. What it actually does is make the word angle legal in a setting where no angles had been defined, and it will do considerably more than that.</p>
+  <p>Worth saying plainly now, because it is later dressed up beyond recognition. That inequality, applied to two particular vectors assembled from a state and a pair of measurements, is the uncertainty principle. The most quoted sentence of twentieth-century physics is a statement about overlaps, and nothing is added to it afterwards except an interpretation of the letters.</p>
+</div>
+
+<h2>2 · Orthonormal bases</h2>
+
+<p>Chapter 0.4 showed that any basis lets you write every vector uniquely in coordinates. It also
+showed that finding those coordinates means solving a linear system, which is work. With an inner
+product, one class of basis makes that work vanish.</p>
+
+<p>A set $\{e_1,\dots,e_n\}$ is <strong>orthonormal</strong> if</p>
+
+<div class="eq" id="e-onb">
+$$ \avg{e_i,e_j} \;=\; \delta_{ij} \;=\; \begin{cases}1,& i=j\\ 0,& i\neq j.\end{cases} $$
+</div>
+
+<p>Orthonormal sets are automatically linearly independent, so in dimension $n$ any $n$ of them form
+a basis. (Suppose $\sum_i c_i e_i=0$. Take $\avg{e_j,\cdot}$ of both sides: linearity in the second
+slot gives $\sum_i c_i\avg{e_j,e_i}=c_j=0$ for every $j$. Independence, in one line.)</p>
+
+<p>That same computation is the payoff. Write any $v=\sum_i c_i e_i$ and hit it with $\avg{e_j,\cdot}$:</p>
+
+<div class="eq" id="e-coords">
+$$ \avg{e_j,v} \;=\; \Big\langle e_j,\ \textstyle\sum_i c_i e_i\Big\rangle \;=\; \sum_i c_i\,\delta_{ji} \;=\; c_j, $$
+</div>
+
+<p>and therefore</p>
+
+<div class="eq" id="e-expand">
+$$ \boxed{\;v \;=\; \sum_i \avg{e_i,v}\,e_i\;} $$
+</div>
+
+<p><strong>Coordinates have become inner products.</strong> No system to solve, no matrix to invert
+— to find the $i$-th coordinate you take one inner product. This is the single practical reason
+orthonormal bases dominate physics, and notice that the physics convention is paying already:
+because the second slot is the linear one, $\avg{e_i,v}$ is the coefficient with no stray
+conjugate.</p>
+
+<p>Two more consequences, each obtained by substituting <a class="eqref" href="#e-expand"></a> into
+an inner product and using <a class="eqref" href="#e-onb"></a> to collapse the double sum:</p>
+
+<div class="eq" id="e-parseval">
+$$ \avg{u,v} = \sum_i \overline{\avg{e_i,u}}\,\avg{e_i,v}, \qquad \left\lVert v\right\rVert^{2} = \sum_i \abs{\avg{e_i,v}}^{2}. $$
+</div>
+
+<p>The second is <strong>Parseval's identity</strong>: the squared length of a vector is the sum of
+the squared magnitudes of its coordinates — but only in an orthonormal basis. In Chapter 0.9 the
+$e_i$ become the Fourier modes and this becomes the statement that total energy equals the sum of
+energies in each mode; in Chapter 4.2 the $\abs{\avg{e_i,v}}^{2}$ become probabilities and this
+becomes the statement that they add to one.</p>
+
+<h3>Gram–Schmidt: orthonormal bases always exist</h3>
+
+<p>The formulae above are worthless if orthonormal bases are rare. They are not. Given <em>any</em>
+basis $\{v_1,\dots,v_n\}$, the following procedure manufactures an orthonormal one. Set</p>
+
+<div class="eq" id="e-gs">
+$$ w_k \;=\; v_k - \sum_{i\lt k}\avg{e_i,v_k}\,e_i, \qquad e_k \;=\; \frac{w_k}{\left\lVert w_k\right\rVert}, $$
+</div>
+
+<p>running $k=1,2,\dots,n$ in order (for $k=1$ the sum is empty, so $e_1=v_1/\left\lVert v_1\right\rVert$). In
+words: <em>take the next vector, subtract off everything it has in common with the directions
+already fixed, and normalise what is left.</em></p>
+
+<details class="grind">
+  <summary>Grind box — why Gram–Schmidt works, line by line</summary>
+  <div class="grind-body">
+    <p>Three things must be checked: that we never divide by zero, that the output is orthonormal,
+    and that it spans the same space. All three come from one induction hypothesis:</p>
+    <p style="text-align:center"><b>$H_k$:</b> &nbsp; $\{e_1,\dots,e_k\}$ is orthonormal and
+    $\mathrm{span}\{e_1,\dots,e_k\}=\mathrm{span}\{v_1,\dots,v_k\}$.</p>
+    <p><b>Base case.</b> $v_1\neq0$ because it belongs to a basis, so $\left\lVert v_1\right\rVert\neq0$ and
+    $e_1=v_1/\left\lVert v_1\right\rVert$ is a unit vector spanning the same line. $H_1$ holds.</p>
+    <p><b>No division by zero.</b> Assume $H_{k-1}$. If $w_k$ were $0$, then by
+    <a class="eqref" href="#e-gs"></a> $v_k=\sum_{i\lt k}\avg{e_i,v_k}e_i$ would lie in
+    $\mathrm{span}\{e_1,\dots,e_{k-1}\}=\mathrm{span}\{v_1,\dots,v_{k-1}\}$, contradicting the
+    linear independence of the $v$'s. So $w_k\neq0$ and $e_k$ is defined.</p>
+    <p><b>Orthogonality.</b> For any $j\lt k$, take the inner product of
+    <a class="eqref" href="#e-gs"></a> with $e_j$ and use $\avg{e_j,e_i}=\delta_{ji}$:</p>
+    $$ \avg{e_j,w_k} = \avg{e_j,v_k} - \sum_{i\lt k}\avg{e_i,v_k}\,\delta_{ji} = \avg{e_j,v_k}-\avg{e_j,v_k} = 0. $$
+    <p>Exactly one term of the sum survives, and it is exactly the term that cancels. Dividing by
+    $\left\lVert w_k\right\rVert$ preserves this, so $e_k\perp e_j$ for all $j\lt k$, and $\left\lVert e_k\right\rVert=1$ by
+    construction.</p>
+    <p><b>Same span.</b> From <a class="eqref" href="#e-gs"></a>, $e_k$ is a combination of $v_k$
+    and earlier $e$'s, hence of $v_1,\dots,v_k$; and rearranged, $v_k$ is a combination of
+    $e_1,\dots,e_k$. So each spans the other's span, and $H_k$ holds. Induction completes the proof
+    at $k=n$. $\blacksquare$</p>
+    <p><b>Two consequences worth naming.</b> First, <em>every</em> finite-dimensional inner-product
+    space has an orthonormal basis — the theorems below never have to assume one exists. Second,
+    Gram–Schmidt is <em>triangular</em>: $e_k$ involves only $v_1,\dots,v_k$. Writing that
+    relationship as a matrix statement gives $V=QR$ with $Q$ having orthonormal columns and $R$
+    upper triangular — the QR decomposition, which is how a computer actually solves the
+    least-squares problem of §3.</p>
+  </div>
+</details>
+
+<h3>Dirac notation, introduced where it is harmless</h3>
+
+<p>We now install the notation that Chapter 4.2 will use for everything. It is standard to meet it
+in the middle of learning quantum mechanics, where it acquires an entirely undeserved mystique. It
+is a piece of pure linear algebra and there is nothing in it. Here it is.</p>
+
+<p>Write a vector $v\in V$ as $\ket{v}$, a <strong>ket</strong>. Now fix a vector $u$ and consider
+the map that sends any $w$ to the number $\avg{u,w}$. By axiom (ii) that map is <em>linear</em> in
+$w$ — it is a <strong>linear functional</strong>, an element of the space $V^{*}$ of linear maps
+$V\to\C$ (itself a vector space, since sums and scalar multiples of linear maps are linear). Call
+it $\bra{u}$, a <strong>bra</strong>. Then:</p>
+
+<div class="eq" id="e-diracpair">
+$$ \bra{u}\ \text{applied to}\ \ket{v} \;\equiv\; \avg{u|v} \;=\; \avg{u,v} \;\in\; \C. $$
+</div>
+
+<p>The bracket closes, and a closed bracket is a <em>number</em>. Now leave it open. Define
+$\ket{u}\bra{v}$ to be the map that acts on $\ket{w}$ by applying $\bra{v}$ first and using the
+resulting number to scale $\ket{u}$:</p>
+
+<div class="eq" id="e-outer">
+$$ \big(\ket{u}\bra{v}\big)\ket{w} \;\equiv\; \ket{u}\avg{v|w} \;=\; \avg{v,w}\,u. $$
+</div>
+
+<p>Is that a linear map? Check: $w\mapsto \avg{v,w}u$ is linear in $w$ because $\avg{v,\cdot}$ is,
+so yes. The <strong>outer product $\ket{u}\bra{v}$ is an operator</strong>; the <strong>inner
+product $\avg{u|v}$ is a number</strong>. In coordinates with respect to an orthonormal basis the
+distinction is the one you already know from Chapter 0.4:</p>
+
+<div class="eq" id="e-rowcol">
+$$ \underbrace{\begin{pmatrix}\bar u_1 & \cdots & \bar u_n\end{pmatrix}}_{\bra{u}\ \text{(row)}} \underbrace{\begin{pmatrix}v_1\\ \vdots\\ v_n\end{pmatrix}}_{\ket{v}\ \text{(column)}} = \text{a } 1\times1, \qquad \ket{u}\bra{v} = \text{an } n\times n. $$
+</div>
+
+<p>Row times column is a number; column times row is a matrix. That is the whole content. Dirac
+notation is a device for making the <em>type</em> of an object visible in its <em>shape</em>: you
+can tell at a glance whether an expression is a scalar or an operator, without tracking any
+dimensions. Note also, from <a class="eqref" href="#e-conjlin"></a>, that the map $u\mapsto\bra{u}$
+is conjugate-linear: $\bra{\alpha u}=\bar\alpha\bra{u}$. The conjugates in
+<a class="eqref" href="#e-rowcol"></a> are that fact in coordinates.</p>
+
+<h3>Completeness: the resolution of the identity</h3>
+
+<p>Now rewrite the expansion <a class="eqref" href="#e-expand"></a> in the new notation. Its
+coefficient $\avg{e_i,v}$ is $\avg{e_i|v}$, so</p>
+
+<div class="eq" id="e-resolve0">
+$$ \ket{v} \;=\; \sum_i \ket{e_i}\avg{e_i|v} \;=\; \left(\sum_i \ket{e_i}\bra{e_i}\right)\ket{v}. $$
+</div>
+
+<p>The regrouping in the second step is legal by <a class="eqref" href="#e-outer"></a>. Since this
+holds for <em>every</em> $\ket{v}$, the operator in brackets acts as the identity on every vector,
+and two linear maps that agree on every vector are equal:</p>
+
+<div class="eq" id="e-resolve">
+$$ \boxed{\;\sum_i \ket{e_i}\bra{e_i} \;=\; \hat I\;} $$
+</div>
+
+<p>This is the <strong>completeness relation</strong>, or <em>resolution of the identity</em>. It
+says the basis is not missing any directions: reconstruct any vector from its components and you
+get the vector back, with nothing left over. It is used constantly and always the same way — you
+insert $\hat I$ in the middle of an expression in the form
+<a class="eqref" href="#e-resolve"></a>, and a hard object turns into a sum of easy ones. Chapter
+4.2 does this on nearly every page; so does Chapter 0.9, where the sum becomes an integral over a
+continuum of modes.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.2</span></span>
+  <p>Not all descriptions cost the same, and the difference is large enough to change what is worth attempting. In a general basis, finding the coordinates of a vector means solving a system of equations. Choose the basis so that its members are mutually perpendicular and each of unit length, and the work disappears: every coordinate is a single overlap, computed on its own, without reference to any of the others. Nothing has been approximated. This is why perpendicular bases dominate physics so thoroughly that people forget the other kind exists.</p>
+  <p>Two consequences arrive immediately. The squared length of a vector becomes the sum of the squared sizes of its coordinates, which later says that the total energy of a vibrating string is the sum of the energies in its modes, and later still that a set of probabilities adds to one. And the claim that the basis has missed no direction can be written as an operation which, inserted anywhere in an expression, changes nothing, so that a difficult object breaks into a sum of easy ones without being altered.</p>
+  <p>None of it would matter if such bases were rare. They are not. Take any basis at all, subtract from each new vector everything it shares with the directions already settled, and rescale what survives. The procedure never fails, so no theorem ahead has to assume its raw material exists.</p>
+</div>
+
+<h2>3 · Projection, and why least squares is a right angle</h2>
+
+<p>Let $W\subseteq V$ be a <strong>subspace</strong> — a subset closed under addition and scalar
+multiplication, hence a vector space in its own right, and one that inherits $V$'s inner product
+unchanged. By Gram–Schmidt it has an orthonormal basis $\{f_1,\dots,f_m\}$. Define the
+<strong>orthogonal projection onto $W$</strong>:</p>
+
+<div class="eq" id="e-proj">
+$$ P \;=\; \sum_{j=1}^{m}\ket{f_j}\bra{f_j}, \qquad\text{so}\qquad Pv = \sum_j \avg{f_j,v}\,f_j. $$
+</div>
+
+<p>Compare with <a class="eqref" href="#e-resolve"></a>: this is the same construction, truncated.
+We keep only the directions inside $W$ and throw the rest away. Three properties, all derived.</p>
+
+<p><b>$P$ lands in $W$ and fixes $W$.</b> $Pv$ is visibly a combination of the $f_j$, so
+$Pv\in W$. And if $w\in W$ then <a class="eqref" href="#e-expand"></a> applied inside $W$ says
+$w=\sum_j\avg{f_j,w}f_j=Pw$. Hence for any $v$, $Pv\in W$ gives $P(Pv)=Pv$:</p>
+
+<div class="eq" id="e-idem">
+$$ P^{2} = P. $$
+</div>
+
+<p>Projecting something that has already been projected does nothing. That is what "projection"
+means, and <a class="eqref" href="#e-idem"></a> is the algebraic form of it.</p>
+
+<p><b>$P$ is symmetric under the inner product.</b> Expanding both sides with
+<a class="eqref" href="#e-proj"></a>,</p>
+
+<div class="eq" id="e-psym">
+$$ \avg{Pu,v} = \sum_j \avg{u,f_j}\avg{f_j,v} = \avg{u,Pv}. $$
+</div>
+
+<p>(The first equality uses conjugate-linearity in slot 1: $\overline{\avg{f_j,u}}=\avg{u,f_j}$.)
+In §4 this will be written $P^{\dagger}=P$.</p>
+
+<p><b>The residual is orthogonal to $W$.</b> For each $j$,</p>
+
+<div class="eq" id="e-resid">
+$$ \avg{f_j,\,v-Pv} = \avg{f_j,v} - \avg{f_j,v} = 0, $$
+</div>
+
+<p>so $v-Pv\perp f_j$ for every $j$, hence $v-Pv\perp W$ entirely (an inner product with any
+combination of the $f_j$ is the corresponding combination of zeros).</p>
+
+<h3>Projection is the closest point — proved</h3>
+
+<p>Now the theorem that makes projection useful rather than merely tidy.</p>
+
+<p><em>Claim: for every $w\in W$, $\left\lVert v-w\right\rVert\ge\left\lVert v-Pv\right\rVert$, with equality only for $w=Pv$.</em></p>
+
+<p>Split the vector $v-w$ into two pieces by adding and subtracting $Pv$:</p>
+
+<div class="eq" id="e-split">
+$$ v-w \;=\; \underbrace{(v-Pv)}_{\perp\, W} \;+\; \underbrace{(Pv-w)}_{\in\, W}. $$
+</div>
+
+<p>The first piece is orthogonal to $W$ by <a class="eqref" href="#e-resid"></a>; the second lies
+in $W$ because both $Pv$ and $w$ do. So the two pieces are orthogonal to each other, and Pythagoras
+<a class="eqref" href="#e-pyth"></a> applies with no cross term:</p>
+
+<div class="eq" id="e-closest">
+$$ \left\lVert v-w\right\rVert^{2} \;=\; \left\lVert v-Pv\right\rVert^{2} + \left\lVert Pv-w\right\rVert^{2}. $$
+</div>
+
+<p>The first term does not depend on $w$; the second is non-negative and vanishes only when
+$w=Pv$. So the minimum is attained there and nowhere else. $\blacksquare$</p>
+
+<p>Read <a class="eqref" href="#e-closest"></a> once more. It says <strong>"nearest point" and
+"perpendicular residual" are the same condition</strong>. Not similar, not related: the same. Every
+optimisation problem that turns out to have a linear-algebra answer is this theorem in disguise.</p>
+
+<div class="callout insight">
+  <span class="ct">You have just derived least squares</span>
+  <p>Fit $y \approx X\beta$, with $y\in\R^{n}$ the outcomes, $X$ the $n\times p$ design matrix, and
+  $\beta$ the coefficients to be chosen. Minimising the residual sum of squares means minimising
+  $\left\lVert y-X\beta\right\rVert^{2}$ — a squared distance in $\R^{n}$ with the ordinary inner product.</p>
+  <p>As $\beta$ ranges over all of $\R^{p}$, the vector $X\beta$ ranges over exactly the
+  <em>column space</em> of $X$: the subspace spanned by the predictors. So the problem is: find the
+  point of that subspace closest to $y$. By the theorem just proved, the answer is the orthogonal
+  projection, and it is characterised by the residual being perpendicular to the subspace — which
+  means perpendicular to every column of $X$:</p>
+  $$ X^{\!\top}(y-X\hat\beta)=0 \quad\Longleftrightarrow\quad X^{\!\top}\!X\hat\beta = X^{\!\top}y. $$
+  <p>Those are the <strong>normal equations</strong>, and the word "normal" in their name has always
+  meant "perpendicular". Solving them gives $\hat\beta=(X^{\!\top}\!X)^{-1}X^{\!\top}y$ and
+  $\hat y = Hy$ with $H = X(X^{\!\top}\!X)^{-1}X^{\!\top}$ — the "hat matrix" of every regression
+  output you have ever read, which satisfies $H^{2}=H$ and $H^{\!\top}=H$ because it <em>is</em> the
+  projection $P$ of <a class="eqref" href="#e-proj"></a>.</p>
+  <p>One more line pays a dividend. If $X$ contains an intercept column, the constant vector lies in
+  the column space, so <a class="eqref" href="#e-closest"></a> applied to $v = y-\bar y\mathbf{1}$
+  gives</p>
+  $$ \underbrace{\left\lVert y-\bar y\mathbf{1}\right\rVert^{2}}_{\text{total SS}} = \underbrace{\left\lVert \hat y-\bar y\mathbf{1}\right\rVert^{2}}_{\text{explained SS}} + \underbrace{\left\lVert y-\hat y\right\rVert^{2}}_{\text{residual SS}}. $$
+  <p>The ANOVA decomposition is Pythagoras' theorem, and $R^{2}$ is the squared cosine of the angle
+  between the centred outcome vector and its projection. Regression is trigonometry in
+  $n$ dimensions.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.3</span></span>
+  <p>Suppose you are stranded outside some subspace and want the point of it nearest to you. Keep the parts of your vector lying along that subspace's own perpendicular directions and discard everything else, and what you kept is the nearest point, uniquely so. The proof is Pythagoras used once. What is left over is perpendicular to the subspace, the error committed by choosing any other point lies inside the subspace, and two perpendicular pieces add as squares, so wandering away can only add.</p>
+  <p>The sentence to carry off is that nearest point and perpendicular leftover are not two conditions that happen to agree. They are one condition. Every optimisation problem whose answer turns out to be linear algebra is this fact wearing a costume.</p>
+  <p>The most familiar costume is ordinary least squares. Fitting a model means choosing the combination of predictors closest to the observed outcomes; the combinations you can reach form a subspace; the fitted values are therefore the projection of the data onto it. The equations defining the fit assert that the residual is perpendicular to every predictor, which is why the word normal in their name has always meant perpendicular. The decomposition of variance printed at the foot of every regression table is Pythagoras with the right angle at the fitted values.</p>
+</div>
+
+<h2>4 · The adjoint</h2>
+
+<p>Every operator on an inner-product space has a partner, defined not by a formula in coordinates
+but by how it interacts with the inner product.</p>
+
+<p><strong>Definition.</strong> The <strong>adjoint</strong> $A^{\dagger}$ of a linear map
+$A:V\to V$ is the linear map satisfying</p>
+
+<div class="eq" id="e-adjdef">
+$$ \boxed{\;\avg{Au,\,v} \;=\; \avg{u,\,A^{\dagger}v}\qquad\text{for all }u,v\in V.\;} $$
+</div>
+
+<p>Read it as a rule for <em>moving an operator across the comma</em>: it costs you a dagger. No
+basis appears anywhere in <a class="eqref" href="#e-adjdef"></a>, which is the point — the adjoint
+is a property of $A$ and the inner product, not of any coordinate system.</p>
+
+<p><b>It is unique.</b> Suppose $B$ and $C$ both satisfy <a class="eqref" href="#e-adjdef"></a>.
+Then $\avg{u,(B-C)v}=0$ for every $u$ and $v$. Choose $u=(B-C)v$: this gives
+$\left\lVert (B-C)v\right\rVert^{2}=0$, so $(B-C)v=0$ for every $v$, so $B=C$.</p>
+
+<p><b>It exists.</b> Fix an orthonormal basis and define $A^{\dagger}v \equiv \sum_i\avg{Ae_i,v}\,e_i$.
+This is linear in $v$ (the inner product is linear in slot 2), and expanding $u$ via
+<a class="eqref" href="#e-expand"></a>,</p>
+
+<div class="eq" id="e-adjex">
+$$ \avg{Au,v} = \sum_i \overline{\avg{e_i,u}}\,\avg{Ae_i,v} = \Big\langle u,\ \textstyle\sum_i \avg{Ae_i,v}e_i\Big\rangle, $$
+</div>
+
+<p>which is $\avg{u,A^{\dagger}v}$. Existence and uniqueness settled, in five lines.</p>
+
+<h3>In an orthonormal basis it is the conjugate transpose</h3>
+
+<p>Chapter 0.4 defined the matrix of $A$ by $A e_j = \sum_i A_{ij}e_i$. Taking $\avg{e_i,\cdot}$ of
+that and using <a class="eqref" href="#e-onb"></a> gives the useful formula
+$A_{ij}=\avg{e_i,Ae_j}$: <em>a matrix element is an inner product</em>. Now compute the matrix of
+$A^{\dagger}$ the same way, using <a class="eqref" href="#e-adjdef"></a> and then conjugate
+symmetry:</p>
+
+<div class="eq" id="e-conjtrans">
+$$ (A^{\dagger})_{ij} = \avg{e_i,A^{\dagger}e_j} = \avg{Ae_i,e_j} = \overline{\avg{e_j,Ae_i}} = \overline{A_{ji}}. $$
+</div>
+
+<p>So $A^{\dagger}$ is the <strong>conjugate transpose</strong> — transpose the matrix and conjugate
+the entries. That familiar recipe is not the definition; it is what the definition
+<a class="eqref" href="#e-adjdef"></a> looks like once you commit to an orthonormal basis. Note the
+hypothesis: in a non-orthonormal basis <a class="eqref" href="#e-conjtrans"></a> is simply false.</p>
+
+<p>Three algebraic rules follow immediately from <a class="eqref" href="#e-adjdef"></a>, each by
+moving operators across the comma one at a time:</p>
+
+<div class="eq" id="e-adjrules">
+$$ (A^{\dagger})^{\dagger} = A, \qquad (\alpha A)^{\dagger} = \bar\alpha A^{\dagger}, \qquad (AB)^{\dagger} = B^{\dagger}A^{\dagger}. $$
+</div>
+
+<p>For the last: $\avg{ABu,v}=\avg{Bu,A^{\dagger}v}=\avg{u,B^{\dagger}A^{\dagger}v}$, and
+uniqueness does the rest. The order reverses, exactly as it does for the transpose and the
+inverse. One more, used constantly below and derived the same way:
+$\big(\ket{u}\bra{v}\big)^{\dagger}=\ket{v}\bra{u}$.</p>
+
+<h3>The three species of operator</h3>
+
+<table>
+<tr><th>Name</th><th>Condition</th><th>What it is for</th></tr>
+<tr><td><b>Hermitian</b> (self-adjoint)</td><td>$A^{\dagger}=A$</td><td>Observables. §6 is about these</td></tr>
+<tr><td><b>Unitary</b></td><td>$U^{\dagger}U=\hat I$</td><td>Symmetries, time evolution, change of orthonormal basis</td></tr>
+<tr><td><b>Normal</b></td><td>$AA^{\dagger}=A^{\dagger}A$</td><td>The largest class that can be diagonalised orthonormally</td></tr>
+</table>
+
+<p>Both Hermitian and unitary operators are normal — for Hermitian because
+$AA^{\dagger}=A^{2}=A^{\dagger}A$, for unitary because $U^{\dagger}U=\hat I$ implies (in finite
+dimensions) that $U$ is invertible with $U^{-1}=U^{\dagger}$, whence $UU^{\dagger}=\hat I$ too.
+For a Hermitian matrix, <a class="eqref" href="#e-conjtrans"></a> says
+$A_{ij}=\overline{A_{ji}}$: the diagonal entries are real, and entries across the diagonal are
+conjugates. A real Hermitian matrix is just a <em>symmetric</em> matrix.</p>
+
+<h3>Unitary maps preserve all geometry</h3>
+
+<p>This is a two-line calculation with large consequences. If $U^{\dagger}U=\hat I$ then for any
+$u,v$:</p>
+
+<div class="eq" id="e-uniprop">
+$$ \avg{Uu,Uv} \;=\; \avg{u,U^{\dagger}Uv} \;=\; \avg{u,v}. $$
+</div>
+
+<p>The inner product is untouched. Setting $v=u$ gives $\left\lVert Uu\right\rVert=\left\lVert u\right\rVert$ — lengths preserved.
+Feeding both facts into <a class="eqref" href="#e-angle"></a> leaves $\cos\theta$ unchanged —
+angles preserved. And taking $u,v$ from an orthonormal basis shows $\{Ue_i\}$ is again orthonormal:
+<strong>unitary maps are exactly the maps that carry orthonormal bases to orthonormal bases.</strong></p>
+
+<p>A real unitary matrix satisfies $U^{\!\top}U=I$, which is precisely an orthogonal matrix — a
+rotation or a reflection. <strong>Unitary is the complex analogue of rotation.</strong> Hold that
+next to the last section of Chapter 0.3, where $\ee^{\ii\theta}$ turned out to be a rotation of the
+plane: the connection is not an analogy, and §7 will make it an identity.</p>
+
+<p>Where this goes: in Chapter 4.4, the state of a quantum system evolves by
+$\ket{\psi(t)}=U(t)\ket{\psi(0)}$, and $U(t)$ must be unitary <em>because</em>
+$\left\lVert \psi\right\rVert^{2}=1$ is a total probability and probabilities must stay summing to one.
+<a class="eqref" href="#e-uniprop"></a> is that requirement, and it is the reason time evolution in
+quantum mechanics is a rotation rather than a flow that stretches.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.4</span></span>
+  <p>Every map acquires a partner the moment its space has an inner product, and the partner is specified by a piece of behaviour rather than by a recipe. It is the map you substitute when you want to shift an operator from one side of an overlap to the other. No basis is mentioned anywhere in that description, which is exactly what makes it worth having. The familiar instruction to transpose an array and conjugate its entries is not the definition; it is what the definition looks like after you commit to a perpendicular basis, and in any other basis it is false.</p>
+  <p>Three kinds of map are then singled out by how each sits beside its partner. One kind is its own partner. A second has a partner that undoes it. A third merely commutes with its partner, and is the widest family for which the results ahead continue to hold.</p>
+  <p>The second kind earns a word now. A map whose partner undoes it leaves every overlap exactly as it found it, so it alters no length and no angle, and it carries perpendicular bases to perpendicular bases. It is the complex counterpart of a rigid rotation. That is why evolution in time, in any theory where a total probability must stay equal to one, has no choice about what kind of map it is.</p>
+</div>
+
+<h2>5 · Eigenvalues and eigenvectors</h2>
+
+<p>A linear map generally does two things at once to a vector: turns it and rescales it. Some
+directions are special.</p>
+
+<p><strong>Definition.</strong> A non-zero $v$ is an <strong>eigenvector</strong> of $A$ with
+<strong>eigenvalue</strong> $\lambda$ if</p>
+
+<div class="eq" id="e-eig">
+$$ Av \;=\; \lambda v. $$
+</div>
+
+<p>Geometrically: <em>$v$ spans a direction the map does not turn — it only stretches it, by the
+factor $\lambda$.</em> (Negative $\lambda$ flips it; complex $\lambda$ means, as we will see, that
+no such real direction exists.) The requirement $v\neq0$ is essential, since $A0=\lambda 0$ holds
+for every $\lambda$ and would make the definition vacuous.</p>
+
+<p>To find them, rewrite <a class="eqref" href="#e-eig"></a> as $(A-\lambda\hat I)v=0$. A non-zero
+solution exists exactly when $A-\lambda\hat I$ fails to be invertible, which by Chapter 0.4 happens
+exactly when its determinant vanishes. So the eigenvalues are the roots of the
+<strong>characteristic polynomial</strong>:</p>
+
+<div class="eq" id="e-charpoly">
+$$ p(\lambda) \;=\; \det\!\big(A-\lambda \hat I\big) \;=\; 0. $$
+</div>
+
+<p>Expanding the determinant of an $n\times n$ matrix produces a polynomial of degree $n$ in
+$\lambda$, with leading term $(-\lambda)^{n}$. Over $\R$ a polynomial need not have any roots
+($\lambda^{2}+1$ has none), and correspondingly a real matrix can have no real eigenvectors at all
+— a rotation of the plane turns <em>every</em> direction, so none is preserved. Over $\C$ this
+cannot happen: as recorded in Chapter 0.4, every non-constant polynomial has a complex root, so</p>
+
+<div class="eq" id="e-exists">
+$$ \text{every operator on a complex vector space has at least one eigenvalue.} $$
+</div>
+
+<p>That single sentence is why quantum mechanics is built over $\C$ and not $\R$, and it is the
+hypothesis that makes §6 work. The set of eigenvectors for a given $\lambda$, together with $0$,
+forms the <strong>eigenspace</strong> $E_\lambda=\ker(A-\lambda\hat I)$, a subspace of dimension at
+least one. An eigenvalue whose eigenspace has dimension greater than one is called
+<strong>degenerate</strong>.</p>
+
+<h3>Seeing it</h3>
+
+<p>Before proving anything, look at the phenomenon. The figure below applies a $2\times2$ real
+matrix to every vector on the unit circle. The image is an ellipse — take that as observed for the
+moment; §6 will prove it, and the proof turns out to be the spectral theorem itself. A rotating
+input vector is drawn together with its image, and the eigen-directions — the angles at which input
+and image become parallel — are marked.</p>
+
+<figure class="fig">
+  <canvas id="fig-eig" data-h="480"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label>preset</label>
+      <button id="b-sym" class="on">symmetric</button>
+      <button id="b-asym">non-symmetric</button>
+      <button id="b-col">collapse</button>
+      <button id="b-rot">rotation</button>
+    </div>
+    <div class="ctrl">
+      <label for="s-th">input angle&nbsp;<i>θ</i></label>
+      <input type="range" id="s-th" min="0" max="360" step="0.25" value="62">
+      <output id="o-th"></output>
+    </div>
+    <div class="ctrl">
+      <label for="s-c">skew&nbsp;<i>c</i></label>
+      <input type="range" id="s-c" min="0" max="1.5" step="0.005" value="0">
+      <output id="o-c"></output>
+    </div>
+    <div class="ctrl"><button id="b-snap">snap θ to eigen-direction</button></div>
+    <div class="ctrl"><output id="o-mat"></output></div>
+    <div class="ctrl"><output id="o-eig"></output></div>
+    <div class="ctrl"><output id="o-ang"></output></div>
+  </div>
+  <figcaption><b>The spectral theorem, made visible.</b> Dashed grey is the unit circle of inputs;
+  blue is its image under $A$. Purple is the input $v(\theta)$, blue the image $Av(\theta)$, and the
+  arc between them is the angle by which $A$ turns that direction — the readout gives it, and it is
+  <em>exactly zero</em> on an eigen-direction (green and orange lines; use the snap button).
+  <b>Start symmetric.</b> The two eigen-directions are $90^{\circ}$ apart. Now raise the skew $c$,
+  which adds an antisymmetric piece to the same matrix: they tilt <em>toward</em> each other —
+  $60^{\circ}$ at $c=0.5$, and at $c=1$ they collide into a single direction, leaving a
+  $2\times2$ matrix with only a one-dimensional eigenspace. Past $c=1$ they are gone entirely.
+  The rotation preset is the extreme case: every direction turns by the same $50^{\circ}$ and no
+  real eigenvector exists anywhere. Perpendicularity is not a feature of matrices in general. It is
+  a feature of <em>symmetric</em> ones, and §6 explains why.</figcaption>
+</figure>
+
+<p>The figure's whole behaviour is one small computation. Write the family it uses as a symmetric
+matrix plus an antisymmetric one,</p>
+
+<div class="eq" id="e-family">
+$$ A(c) = \begin{pmatrix} a & b+c\\ b-c & d\end{pmatrix}, \qquad \operatorname{tr}A = a+d, \quad \det A = ad-b^{2}+c^{2}, $$
+</div>
+
+<p>and form the discriminant of the quadratic <a class="eqref" href="#e-charpoly"></a>, whose roots
+are $\lambda = \tfrac12\big(\operatorname{tr}A \pm\sqrt{\mathcal D}\big)$:</p>
+
+<div class="eq" id="e-disc">
+$$ \mathcal{D} = (\operatorname{tr}A)^{2}-4\det A = (a-d)^{2}+4b^{2}-4c^{2}. $$
+</div>
+
+<p>At $c=0$ the discriminant is a sum of squares, so it is non-negative and the eigenvalues of a
+real symmetric $2\times2$ matrix are always real — a preview of §6(a). Turning on $c$ eats into it,
+and the eigenvalues stay real only until $c^{2}=\big(\tfrac{a-d}{2}\big)^{2}+b^{2}$, which is
+exactly the squared half-gap between the eigenvalues of the symmetric part. In the figure
+$a=2$, $b=\sqrt3/2$, $d=1$, so the symmetric matrix has eigenvalues $2.5$ and $0.5$, half-gap $1$,
+and the collapse happens at $c=1$ — which is what the button does.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.5</span></span>
+  <p>Turning and rescaling are what a map does to a vector at once, and the directions in which the turning stops are where the map is at its most legible. Locating them comes down to asking when the map, with a multiple of the identity subtracted from it, stops being invertible, since only then can something non-zero be sent to nothing. That condition is the vanishing of a determinant, which converts the search into finding the roots of a polynomial.</p>
+  <p>What the polynomial returns depends on which numbers you permit, exactly as the previous chapter warned. It depends on the map too, in a way better watched than read about. Begin with a symmetric object and its two special directions stand at right angles. Add an antisymmetric piece and they lean towards one another, meeting and merging at a definite amount of skew, beyond which they are gone altogether and nothing is left unturned.</p>
+  <p>That behaviour is what the remainder of the chapter accounts for. Perpendicular special directions are not a general property of maps and may never be assumed; they belong to symmetric ones specifically, and the symmetry does every bit of the work. Notice which way the dependence runs, because an enormous amount will later be resting on it.</p>
+</div>
+
+<h2>6 · The spectral theorem</h2>
+
+<p>This is the centre of the chapter and of Part 0. Everything before it was preparation, and a
+great deal after it is consequence.</p>
+
+<h3>(a) Hermitian ⇒ every eigenvalue is real</h3>
+
+<p>Let $A^{\dagger}=A$ and $Av=\lambda v$ with $v\neq0$. Since $A$ is Hermitian, the defining
+property <a class="eqref" href="#e-adjdef"></a> reads $\avg{Au,w}=\avg{u,Aw}$. Apply it with
+$u=w=v$ and evaluate each side using <a class="eqref" href="#e-eig"></a>:</p>
+
+<div class="eq" id="e-real">
+$$ \bar\lambda\avg{v,v} \;=\; \avg{\lambda v,v} \;=\; \avg{Av,v} \;=\; \avg{v,Av} \;=\; \avg{v,\lambda v} \;=\; \lambda\avg{v,v}. $$
+</div>
+
+<p>The first step used conjugate-linearity in slot 1, the last linearity in slot 2. Since $v\neq0$,
+axiom (iii) gives $\avg{v,v}\gt0$, so we may divide:</p>
+
+<div class="eq" id="e-realconc">
+$$ \bar\lambda = \lambda \qquad\Longrightarrow\qquad \lambda\in\R. $$
+</div>
+
+<p>Three lines. The entire asymmetry between the two slots of the inner product has been converted
+into a statement that a number is real.</p>
+
+<h3>(b) Hermitian ⇒ eigenvectors with distinct eigenvalues are orthogonal</h3>
+
+<p>Let $Av=\lambda v$ and $Aw=\mu w$ with $\lambda\neq\mu$, both real by (a). Compute
+$\avg{v,Aw}$ two ways:</p>
+
+<div class="eq" id="e-orth">
+$$ \begin{aligned} \avg{v,Aw} &= \avg{v,\mu w} = \mu\avg{v,w},\\[3pt] \avg{v,Aw} &= \avg{Av,w} = \avg{\lambda v,w} = \bar\lambda\avg{v,w} = \lambda\avg{v,w}. \end{aligned} $$
+</div>
+
+<p>The last step is where reality is spent: $\bar\lambda=\lambda$ by (a). Subtracting,</p>
+
+<div class="eq" id="e-orthconc">
+$$ (\mu-\lambda)\avg{v,w} = 0 \qquad\Longrightarrow\qquad \avg{v,w}=0, $$
+</div>
+
+<p>since $\mu-\lambda\neq0$. Different eigenvalues force exactly perpendicular eigenvectors — not
+merely independent, <em>perpendicular</em>. Nothing was assumed about $A$ but $A^{\dagger}=A$.</p>
+
+<h3>(c) The theorem</h3>
+
+<div class="callout insight">
+  <span class="ct">The spectral theorem (finite-dimensional, Hermitian)</span>
+  <p>Let $A$ be a Hermitian operator on a finite-dimensional complex inner-product space $V$. Then
+  $V$ has an <strong>orthonormal basis consisting of eigenvectors of $A$</strong>, with real
+  eigenvalues $\lambda_1,\dots,\lambda_n$, and</p>
+  $$ A \;=\; \sum_{i=1}^{n}\lambda_i\,\ket{e_i}\bra{e_i}. $$
+</div>
+
+<p>Before the proof, note what the last equation says. Compare it with completeness
+<a class="eqref" href="#e-resolve"></a>: the identity is $\sum_i\ket{e_i}\bra{e_i}$, and $A$ is the
+<em>same sum with the terms weighted by the eigenvalues</em>. An operator that would be complicated
+in a random basis is, in its own eigenbasis, nothing but a list of numbers attached to a list of
+perpendicular directions.</p>
+
+<p>Granting the orthonormal eigenbasis, the formula is immediate: both sides are linear maps, and
+they agree on every basis vector, since</p>
+
+<div class="eq" id="e-specagree">
+$$ \Big(\sum_i\lambda_i\ket{e_i}\bra{e_i}\Big)\ket{e_j} = \sum_i\lambda_i\ket{e_i}\delta_{ij} = \lambda_j\ket{e_j} = A\ket{e_j}, $$
+</div>
+
+<p>and by Chapter 0.4 two linear maps agreeing on a basis are equal. So the work is entirely in
+producing the basis.</p>
+
+<details class="grind">
+  <summary>Grind box — the induction proof of the spectral theorem</summary>
+  <div class="grind-body">
+    <p>We induct on $n=\dim V$. The claim to be proved at each stage is: <em>every Hermitian
+    operator on an $n$-dimensional complex inner-product space has an orthonormal basis of
+    eigenvectors.</em></p>
+    <p><b>Base case $n=1$.</b> Pick any unit vector $e_1$; it spans $V$, so $Ae_1$ is a multiple of
+    it, $Ae_1=\lambda_1 e_1$. Done, and $\lambda_1$ is real by part (a).</p>
+    <p><b>Step 1 — get one eigenvector.</b> Let $\dim V = n\ge2$ and assume the claim in dimension
+    $n-1$. Because $V$ is complex, <a class="eqref" href="#e-exists"></a> supplies an eigenvalue
+    $\lambda_1$ and an eigenvector, which we normalise to a unit vector $e_1$. By (a),
+    $\lambda_1\in\R$.</p>
+    <p><b>Step 2 — pass to the orthogonal complement.</b> Define</p>
+    $$ W \;=\; e_1^{\perp} \;=\; \{\,w\in V : \avg{e_1,w}=0\,\}. $$
+    <p>It is a subspace, because $\avg{e_1,\cdot}$ is linear. It inherits the inner product of $V$
+    and every axiom still holds on a subset, so $W$ is a complex inner-product space. We claim
+    $\dim W = n-1$. Split any $v\in V$ using the projection of §3 onto the line through $e_1$:</p>
+    $$ v \;=\; \underbrace{\avg{e_1,v}\,e_1}_{\in\,\mathrm{span}\{e_1\}} \;+\; \underbrace{\big(v-\avg{e_1,v}e_1\big)}_{\in\,W}, $$
+    <p>the second bracket lying in $W$ by <a class="eqref" href="#e-resid"></a>. So if
+    $\{f_2,\dots,f_m\}$ is any basis of $W$, then $\{e_1,f_2,\dots,f_m\}$ <em>spans</em> $V$. It is
+    also independent: applying $\avg{e_1,\cdot}$ to a vanishing combination
+    $\alpha e_1+\sum_j\beta_jf_j=0$ kills every $f_j$ term and leaves $\alpha=0$, after which the
+    independence of the $f_j$ forces every $\beta_j=0$. So it is a basis, and since dimension is
+    well defined (Chapter 0.4), $1+\dim W = n$.</p>
+    <p><b>Step 3 — $A$ maps $W$ into $W$.</b> This is the step that uses Hermiticity, and it is the
+    hinge of the whole proof. For $w\in W$,</p>
+    $$ \avg{e_1,Aw} = \avg{Ae_1,w} = \avg{\lambda_1 e_1,w} = \lambda_1\avg{e_1,w} = 0, $$
+    <p>using $A^{\dagger}=A$ in the first step and $\bar\lambda_1=\lambda_1$ in the third. So
+    $Aw\in W$: the restriction $A|_{W}$ is a genuine operator on $W$. <em>Without Hermiticity this
+    fails</em> — a general operator does not preserve the orthogonal complement of one of its
+    eigenvectors, and the induction dies right here. That is precisely why the figure in §5 loses
+    its perpendicular eigen-directions the moment you break the symmetry.</p>
+    <p><b>Step 4 — the restriction is still Hermitian.</b> For $u,w\in W$, the defining property is
+    inherited verbatim, because it is a statement about inner products of vectors that all lie
+    in $W$:</p>
+    $$ \avg{A|_{W}u,\,w} = \avg{Au,w} = \avg{u,Aw} = \avg{u,\,A|_{W}w}. $$
+    <p><b>Step 5 — induct.</b> By the induction hypothesis $W$ has an orthonormal basis
+    $e_2,\dots,e_n$ of eigenvectors of $A|_{W}$. But $A|_{W}$ acts as $A$ does, so these are
+    eigenvectors of $A$. Each lies in $W$, hence is orthogonal to $e_1$; and they are orthonormal
+    among themselves. So $\{e_1,e_2,\dots,e_n\}$ is an orthonormal set of $n$ eigenvectors in an
+    $n$-dimensional space — a basis. $\blacksquare$</p>
+    <p><b>What was used.</b> Exactly three things: that $\C$ guarantees an eigenvalue
+    <a class="eqref" href="#e-exists"></a>; that Hermiticity makes the orthogonal complement
+    invariant; that the property survives restriction. Remove any one and the theorem is false.</p>
+  </div>
+</details>
+
+<h3>Degeneracy, and the honest statement</h3>
+
+<p>Nothing above assumed the eigenvalues were distinct. If $\lambda$ is degenerate, the induction
+simply hands you several basis vectors with the same eigenvalue, and <em>any</em> orthonormal basis
+of the eigenspace $E_\lambda$ will do — the choice is not unique, and no theorem prefers one. What
+<em>is</em> unique is the eigenspace itself. Grouping the terms of the spectral decomposition by
+distinct eigenvalue $\lambda_k$ and writing $P_k$ for the projection onto $E_{\lambda_k}$:</p>
+
+<div class="eq" id="e-specproj">
+$$ A = \sum_k \lambda_k P_k, \qquad P_kP_l = \delta_{kl}P_k, \qquad \sum_k P_k = \hat I. $$
+</div>
+
+<p>The middle identity holds because eigenvectors from different eigenspaces are orthogonal by (b);
+the right-hand one is completeness <a class="eqref" href="#e-resolve"></a> regrouped. This is the
+basis-independent form, and it is the one that survives to infinite dimensions in Chapter 4.3.</p>
+
+<p>Finally, the matrix version. Assemble the orthonormal eigenvectors as the columns of a matrix
+$U$. Orthonormality of the columns is exactly the statement $U^{\dagger}U=\hat I$, so $U$ is
+unitary, and $Ae_i=\lambda_ie_i$ for every column reads</p>
+
+<div class="eq" id="e-udu">
+$$ A = U D U^{\dagger}, \qquad D = \operatorname{diag}(\lambda_1,\dots,\lambda_n),\ \lambda_i\in\R. $$
+</div>
+
+<p>In the language of Chapter 0.4 this is a change of basis — and the change of basis is
+<em>unitary</em>, i.e. a rotation. <strong>Every Hermitian operator is a diagonal one, seen from a
+rotated angle.</strong> Two immediate dividends, using cyclicity of the trace from Chapter 0.4:</p>
+
+<div class="eq" id="e-trdet">
+$$ \operatorname{tr}A = \operatorname{tr}(DU^{\dagger}U) = \sum_i\lambda_i, \qquad \det A = \prod_i \lambda_i. $$
+</div>
+
+<h3>The real case, and the ellipse we borrowed</h3>
+
+<p>A real symmetric matrix is Hermitian, so (a) gives it real eigenvalues. For a real $\lambda$ the
+matrix $A-\lambda I$ is real and singular, so it has a real null vector; and Gram–Schmidt inside
+each eigenspace uses only real arithmetic. So <strong>a real symmetric matrix has an orthonormal
+basis of real eigenvectors</strong>, and <a class="eqref" href="#e-udu"></a> becomes
+$A=ODO^{\!\top}$ with $O$ real orthogonal — the classical <em>principal axes theorem</em>.</p>
+
+<p>That closes the loan taken out in §5. Let $A$ be real, invertible, acting on the unit circle. A
+point $x$ of the image is $x=Au$ with $\left\lVert u\right\rVert=1$, i.e.
+$\left\lVert A^{-1}x\right\rVert=1$, which squared reads</p>
+
+<div class="eq" id="e-ellipse">
+$$ x^{\!\top}\!Mx = 1, \qquad M = (A^{-1})^{\!\top}A^{-1}. $$
+</div>
+
+<p>Now $M^{\!\top}=M$, and $x^{\!\top}\!Mx=\left\lVert A^{-1}x\right\rVert^{2}\gt0$ for $x\neq0$.
+So $M$ is real symmetric with strictly positive eigenvalues $\mu_i$ (each $\mu_i=u_i^{\!\top}Mu_i
+\gt0$), and substituting $x=Oy$ turns <a class="eqref" href="#e-ellipse"></a> into
+$\sum_i\mu_iy_i^{2}=1$ — an ellipse with semi-axes $1/\sqrt{\mu_i}$ along the eigenvectors of $M$.
+The image of a circle under any invertible linear map is an ellipse, and the reason is the theorem
+you just proved.</p>
+
+<p>One detail is worth extracting, because the figure in §5 shows it. The ellipse's axes are the
+eigenvectors of $M$, <em>not</em> of $A$. If $A=ODO^{\!\top}$ is symmetric then
+$M=OD^{-2}O^{\!\top}$ has the same eigenvectors and the two coincide — which is why, in the
+symmetric preset, the eigen-lines lie exactly along the ellipse. Break the symmetry and they part
+company, visibly.</p>
+
+<div class="callout insight">
+  <span class="ct">What you have just proved, in physics language</span>
+  <p>Read the three results back, replacing "Hermitian operator" with "observable" and "eigenvalue"
+  with "possible measurement outcome". Do not accept the replacement yet — just look at the
+  sentences.</p>
+  <p><b>(a) Eigenvalues are real</b> becomes: <em>measurement outcomes are real numbers.</em> An
+  apparatus reads out a number on a dial; it cannot read $3+2\ii$ grams. In Chapter 4.2 this is
+  presented as a requirement on the theory. It is not a requirement. It is
+  <a class="eqref" href="#e-realconc"></a>.</p>
+  <p><b>(b) Eigenvectors are orthogonal</b> becomes: <em>distinct outcomes are perfectly
+  distinguishable.</em> Two states with different measured values have zero overlap, so the
+  probability of confusing one for the other — which will turn out to be $\abs{\avg{u,v}}^{2}$ — is
+  exactly zero. Not small. Zero.</p>
+  <p><b>(c) The eigenvectors form a complete orthonormal basis</b> becomes: <em>any state
+  whatsoever can be written as a superposition of outcomes</em>, $\ket{\psi}=\sum_i c_i\ket{e_i}$
+  with $c_i = \avg{e_i|\psi}$, and $\sum_i\abs{c_i}^{2}=\left\lVert \psi\right\rVert^{2}=1$ by Parseval
+  <a class="eqref" href="#e-parseval"></a> — the probabilities add to one automatically.</p>
+  <p>These are three of the postulates of quantum mechanics as they are usually taught, and
+  <strong>they are not postulates. They are theorems about Hermitian matrices, proved above, in a
+  chapter containing no physics.</strong> Chapter 4.2 will do exactly one thing that this chapter
+  did not: assert that a physical state is a unit vector and a physical observable is a Hermitian
+  operator. That is one postulate, not four. Everything else is renaming.</p>
+</div>
+
+<div class="callout warn">
+  <span class="ct">⚠ Why this isn't obvious</span>
+  <p><b>Most matrices are not diagonalisable at all.</b> The spectral theorem's hypothesis is doing
+  heavy work, and it is easy to miss how heavy. Consider</p>
+  $$ J = \begin{pmatrix}1&1\\0&1\end{pmatrix}, \qquad \det(J-\lambda I) = (1-\lambda)^{2}. $$
+  <p>The only eigenvalue is $\lambda=1$, repeated twice. Its eigenvectors solve
+  $(J-I)v=0$, i.e. $\begin{pmatrix}0&1\\0&0\end{pmatrix}v=0$, which forces $v_2=0$: the eigenspace
+  is the single line spanned by $(1,0)$. A two-dimensional space, and only a one-dimensional supply
+  of eigenvectors. There is no basis of eigenvectors, no diagonal form, and no spectral
+  decomposition. Such a matrix is called <strong>defective</strong>, and it is not exotic — the
+  skew slider in the figure above manufactures one at $c=1$. Of course $J^{\dagger}\neq J$; the
+  theorem is not violated, it is simply inapplicable. When a physics text says "expand in
+  eigenstates", it is quietly leaning on Hermiticity, every time.</p>
+  <p><b>In infinite dimensions the theorem needs genuine repair.</b> Everything proved in this
+  chapter is a <em>finite-dimensional</em> theorem, and two of the steps fail outright in a function
+  space. First, "Hermitian" and "self-adjoint" come apart: an unbounded operator carries a
+  <em>domain</em> — the subset of functions it is allowed to act on — and $A^{\dagger}$ carries its
+  own, generally larger. The symmetric condition $\avg{Au,v}=\avg{u,Av}$ on a domain is strictly
+  weaker than genuine self-adjointness, and the difference is not pedantry: the momentum operator
+  $-\ii\hbar\,\dd/\dd x$ on the half-line $[0,\infty)$ is symmetric and admits <em>no</em>
+  self-adjoint extension whatsoever. Second, eigenvectors can fail to exist inside the space at all:
+  on the whole line, the momentum eigenfunctions $\ee^{\ii kx}$ solve the eigenvalue equation but are
+  not square-integrable, so they are not vectors of the Hilbert space. The spectrum becomes
+  <em>continuous</em>, the sum $\sum_k\lambda_kP_k$ becomes an integral $\int\lambda\,\dd P(\lambda)$
+  over projection-valued measures, and completeness must be re-proved rather than assumed.
+  <strong>Chapter 4.3 pays this bill in full.</strong> Until then, everything here is exact and
+  everything here is finite-dimensional.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.6</span></span>
+  <p>At the centre of the toolkit sit three statements, none of them long to prove. A map that is its own partner has multipliers that are real numbers. Its special directions belonging to different multipliers are exactly perpendicular, not merely independent. And there are enough of those directions to describe every vector in the space, with nothing left over.</p>
+  <p>Taken together they say that such a map, viewed in the right description, is a list of numbers attached to a list of mutually perpendicular directions, each one acting alone and none of them speaking to any other. This is the move most of the book is built from, and it deserves its name: the problem has fallen apart into independent pieces. Coupled oscillators, the modes of a plucked string, the components of a wave, the energy levels of an atom — every one of those is this, and the repetition is not laziness. It is one theorem being spent over and over.</p>
+  <p>Nothing in the argument is physics. Yet read the three again with the words changed and they say that measurement outcomes are real numbers, that distinct outcomes are perfectly distinguishable rather than merely different, and that any state can be written as a combination of outcomes whose weights add to one. Those are usually offered as postulates about nature. They are theorems about symmetric arrays.</p>
+</div>
+
+<h2>7 · Functions of operators</h2>
+
+<p>You know what $\ee^{x}$ means for a number. What could $\ee^{A}$ mean for an operator? The
+spectral theorem answers it at once. If $A$ acts on each $e_i$ by multiplying by $\lambda_i$, then
+whatever $f(A)$ is, it ought to act on $e_i$ by multiplying by $f(\lambda_i)$. So define</p>
+
+<div class="eq" id="e-fdef">
+$$ \boxed{\;f(A) \;\equiv\; \sum_i f(\lambda_i)\,\ket{e_i}\bra{e_i}\;} $$
+</div>
+
+<p>for $A$ Hermitian with spectral decomposition $A=\sum_i\lambda_i\ket{e_i}\bra{e_i}$, and any
+function $f$ defined on the eigenvalues. In the projection form
+<a class="eqref" href="#e-specproj"></a> this is $f(A)=\sum_k f(\lambda_k)P_k$, which makes the
+definition manifestly independent of which orthonormal basis you chose inside a degenerate
+eigenspace: the $P_k$ are unique. So <a class="eqref" href="#e-fdef"></a> is well posed.</p>
+
+<p>It had better agree with the answer you would get by substituting $A$ into a power series, and
+it does. The key is that orthonormality makes the cross terms vanish:</p>
+
+<div class="eq" id="e-Asq">
+$$ A^{2} = \sum_{i,j}\lambda_i\lambda_j\ket{e_i}\underbrace{\avg{e_i|e_j}}_{\delta_{ij}}\bra{e_j} = \sum_i \lambda_i^{2}\ket{e_i}\bra{e_i}, $$
+</div>
+
+<p>and by the same collapse, inductively, $A^{m}=\sum_i\lambda_i^{m}\ket{e_i}\bra{e_i}$ for every
+$m\ge1$. It holds for $m=0$ as well, since $A^{0}=\hat I=\sum_i\ket{e_i}\bra{e_i}$ by
+completeness. Therefore, for any $f(z)=\sum_m c_m z^{m}$ whose series converges at every
+eigenvalue,</p>
+
+<div class="eq" id="e-series">
+$$ \sum_m c_m A^{m} = \sum_i\Big(\sum_m c_m\lambda_i^{m}\Big)\ket{e_i}\bra{e_i} = \sum_i f(\lambda_i)\ket{e_i}\bra{e_i}. $$
+</div>
+
+<p>Swapping the two sums is legitimate because the sum over $i$ is finite. So
+<a class="eqref" href="#e-fdef"></a> and "plug the matrix into the series" agree wherever both make
+sense — and <a class="eqref" href="#e-fdef"></a> keeps working for functions with no power series,
+such as $\sqrt{\cdot}$ on a positive operator.</p>
+
+<h3>The exponential of $\ii$ times a Hermitian operator</h3>
+
+<p><em>Claim: if $A$ is Hermitian then $U=\ee^{\ii A}$ is unitary.</em></p>
+
+<p>Take the adjoint of <a class="eqref" href="#e-fdef"></a> with $f(\lambda)=\ee^{\ii\lambda}$,
+using $(\alpha M)^{\dagger}=\bar\alpha M^{\dagger}$ and
+$\big(\ket{e}\bra{e}\big)^{\dagger}=\ket{e}\bra{e}$ from <a class="eqref" href="#e-adjrules"></a>:</p>
+
+<div class="eq" id="e-expadj">
+$$ \big(\ee^{\ii A}\big)^{\dagger} = \sum_i \overline{\ee^{\ii\lambda_i}}\,\ket{e_i}\bra{e_i} = \sum_i \ee^{-\ii\lambda_i}\ket{e_i}\bra{e_i} = \ee^{-\ii A}. $$
+</div>
+
+<p>The middle step is where reality is spent: $\overline{\ee^{\ii\lambda}}=\ee^{-\ii\bar\lambda}$,
+and $\bar\lambda=\lambda$ only because $A$ is Hermitian. Now multiply, collapsing with
+orthonormality exactly as in <a class="eqref" href="#e-Asq"></a>:</p>
+
+<div class="eq" id="e-unitproof">
+$$ \big(\ee^{\ii A}\big)^{\dagger}\ee^{\ii A} = \sum_i \ee^{-\ii\lambda_i}\ee^{\ii\lambda_i}\ket{e_i}\bra{e_i} = \sum_i\ket{e_i}\bra{e_i} = \hat I. $$
+</div>
+
+<p>So $\ee^{\ii A}$ is unitary. $\blacksquare$ And the converse holds too: every unitary operator is
+$\ee^{\ii A}$ for some Hermitian $A$ (grind box). <strong>Hermitian operators and unitary operators
+are the same information, related by an exponential</strong> — exactly as real numbers and points
+on the unit circle are related by $\theta\mapsto\ee^{\ii\theta}$ in Chapter 0.3. This is that
+statement with the number replaced by an operator.</p>
+
+<details class="grind">
+  <summary>Grind box — the converse: every unitary is $\ee^{\ii A}$</summary>
+  <div class="grind-body">
+    <p>We need a spectral theorem for unitary operators. The induction of §6 goes through with two
+    substitutions.</p>
+    <p><b>Eigenvalues have modulus one.</b> If $U\ket{v}=\mu\ket{v}$ with $v\neq0$ then by
+    <a class="eqref" href="#e-uniprop"></a>, $\avg{v,v}=\avg{Uv,Uv}=\abs{\mu}^{2}\avg{v,v}$, so
+    $\abs{\mu}=1$ and we may write $\mu=\ee^{\ii\theta}$ with $\theta$ real.</p>
+    <p><b>The orthogonal complement is invariant.</b> In finite dimensions $U^{\dagger}=U^{-1}$, and
+    $Uv=\mu v$ gives $U^{\dagger}v=\mu^{-1}v=\bar\mu v$ since $\abs{\mu}=1$. So for $w\perp v$,</p>
+    $$ \avg{v,Uw} = \avg{U^{\dagger}v,w} = \avg{\bar\mu v,w} = \mu\avg{v,w} = 0, $$
+    <p>so $Uw\perp v$. The restriction $U|_{W}$ preserves inner products on $W$ and maps $W$ into
+    $W$; being injective on a finite-dimensional space it is onto, hence unitary on $W$.</p>
+    <p><b>Induct</b> exactly as before, using <a class="eqref" href="#e-exists"></a> to start. The
+    result is an orthonormal basis $\{f_i\}$ with $Uf_i=\ee^{\ii\theta_i}f_i$, so</p>
+    $$ U = \sum_i \ee^{\ii\theta_i}\ket{f_i}\bra{f_i} = \ee^{\ii A}, \qquad A \equiv \sum_i\theta_i\ket{f_i}\bra{f_i}. $$
+    <p>That $A$ is Hermitian because the $\theta_i$ are real and each $\ket{f_i}\bra{f_i}$ is
+    self-adjoint. $\blacksquare$ (The $\theta_i$ are only defined modulo $2\pi$, so $A$ is not
+    unique — the exponential map is many-to-one, exactly as $\ee^{\ii\theta}$ is on $\R$.)</p>
+  </div>
+</details>
+
+<div class="callout insight">
+  <span class="ct">Where this is spent</span>
+  <p>In Chapter 4.4 the Hamiltonian $\hat H$ is Hermitian because energy is an observable, and time
+  evolution is</p>
+  $$ \ket{\psi(t)} = \ee^{-\ii\hat Ht/\hbar}\ket{\psi(0)}. $$
+  <p>That operator is unitary <em>by the theorem just proved</em>, and unitary means probability is
+  conserved by <a class="eqref" href="#e-uniprop"></a>. So the sentence "energy is observable,
+  therefore probability is conserved" is not a physical argument at all — it is
+  <a class="eqref" href="#e-unitproof"></a>. Differentiate the exponential and you get
+  $\ii\hbar\,\dd\ket{\psi}/\dd t = \hat H\ket{\psi}$: the Schrödinger equation is the statement that
+  a Hermitian operator generates a unitary flow.</p>
+  <p>This pairing — <em>Hermitian generator, unitary group element</em> — is the finite-dimensional
+  shadow of the Lie algebra / Lie group relationship of Chapter 6.1, where $\ee$ maps the algebra
+  (a vector space of generators) to the group (a curved space of transformations). Every symmetry in
+  the Standard Model is an instance. You have just met the whole idea in two dimensions, with no
+  differential geometry anywhere.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.7</span></span>
+  <p>Once an object has been broken into independent directions you can do arithmetic on it one direction at a time, and that is the whole of what it means to take a function of a map. Multiply each direction's number by whatever the function does to that number, and leave the directions themselves alone. This agrees with the obvious alternative of substituting the map into a power series, because perpendicularity kills every cross term, and it goes on working for functions that have no series at all.</p>
+  <p>The case that matters is the exponential of the imaginary unit times a self-partnered map. Each of the real numbers becomes a phase of unit length, so the result preserves every overlap and belongs to the rotation-like family met earlier. The converse holds as well, so the two families carry the same information and are related by exponentiation, precisely as the real numbers are related to the points of a circle.</p>
+  <p>That equivalence is more consequential than its length suggests. It is the reason a quantity being observable forces the flow it generates to conserve probability, so that an argument people offer as physics is a line of algebra. It is also the first sighting of the pairing between a generator and the family of transformations it builds, which is how every symmetry in fundamental physics is eventually described.</p>
+</div>
+
+<h2>8 · Commuting operators and simultaneous diagonalisation</h2>
+
+<p>Define the <strong>commutator</strong> $[A,B]\equiv AB-BA$. It measures the failure of two
+operators to be interchangeable, and it is zero exactly when order does not matter. The theorem
+below is the reason that quantity is worth a name.</p>
+
+<p><strong>Theorem.</strong> <em>Two Hermitian operators $A$ and $B$ on a finite-dimensional
+complex inner-product space admit a common orthonormal basis of eigenvectors if and only if
+$[A,B]=0$.</em></p>
+
+<h3>Forward direction (easy)</h3>
+
+<p>Suppose $\{e_i\}$ is an orthonormal basis with $Ae_i=a_ie_i$ and $Be_i=b_ie_i$. Then</p>
+
+<div class="eq" id="e-comm-fwd">
+$$ ABe_i = A(b_ie_i) = a_ib_i e_i, \qquad BAe_i = B(a_ie_i)=b_ia_ie_i, $$
+</div>
+
+<p>and $a_ib_i=b_ia_i$ because they are numbers. So $AB$ and $BA$ agree on a basis, hence are equal
+(Chapter 0.4), so $[A,B]=0$. $\blacksquare$</p>
+
+<h3>Reverse direction (the real content)</h3>
+
+<p>Here the difficulty is degeneracy. If $A$ had $n$ distinct eigenvalues the argument would be
+three lines. It generally does not, and the honest proof must build the common basis inside each
+eigenspace.</p>
+
+<details class="grind">
+  <summary>Grind box — the reverse direction, degeneracy handled</summary>
+  <div class="grind-body">
+    <p>Assume $A^{\dagger}=A$, $B^{\dagger}=B$, and $AB=BA$.</p>
+    <p><b>Step 1 — decompose $V$ by $A$.</b> By the spectral theorem, $V$ is the orthogonal direct
+    sum of the eigenspaces of $A$ for its distinct eigenvalues $\lambda_1,\dots,\lambda_r$:</p>
+    $$ V = E_{\lambda_1}\oplus\cdots\oplus E_{\lambda_r}, \qquad E_{\lambda_k}\perp E_{\lambda_l}\ (k\neq l), $$
+    <p>the orthogonality being part (b) of §6 and the spanning being part (c).</p>
+    <p><b>Step 2 — $B$ preserves each eigenspace.</b> This is the only place the hypothesis
+    $[A,B]=0$ is used. Let $v\in E_{\lambda_k}$, so $Av=\lambda_k v$. Then</p>
+    $$ A(Bv) = (AB)v = (BA)v = B(Av) = B(\lambda_k v) = \lambda_k (Bv), $$
+    <p>so $Bv$ is again an eigenvector of $A$ with eigenvalue $\lambda_k$ (or zero, which lies in
+    $E_{\lambda_k}$ too). Hence $B\big(E_{\lambda_k}\big)\subseteq E_{\lambda_k}$.</p>
+    <p><b>Step 3 — the restriction is Hermitian.</b> Exactly as in Step 4 of the spectral-theorem
+    proof: for $u,w\in E_{\lambda_k}$, $\avg{Bu,w}=\avg{u,Bw}$ holds because it holds in all of
+    $V$, and both vectors lie in the subspace. So $B|_{E_{\lambda_k}}$ is a Hermitian operator on
+    the finite-dimensional inner-product space $E_{\lambda_k}$.</p>
+    <p><b>Step 4 — apply the spectral theorem inside the eigenspace.</b> Therefore
+    $E_{\lambda_k}$ has an orthonormal basis of eigenvectors <em>of $B$</em>. And every vector in
+    $E_{\lambda_k}$ is automatically an eigenvector of $A$, with eigenvalue $\lambda_k$ — that is
+    what the eigenspace <em>is</em>. So this basis consists of simultaneous eigenvectors of both
+    operators. <em>This is exactly where degeneracy is handled</em>: within a degenerate eigenspace
+    of $A$, the operator $B$ chooses the basis that $A$ could not.</p>
+    <p><b>Step 5 — assemble.</b> Take the union of these bases over $k=1,\dots,r$. Vectors from the
+    same eigenspace are orthonormal by construction; vectors from different eigenspaces are
+    orthogonal by Step 1. The total count is $\sum_k\dim E_{\lambda_k}=\dim V$, so the union is an
+    orthonormal basis of $V$ consisting of simultaneous eigenvectors of $A$ and $B$.
+    $\blacksquare$</p>
+    <p><b>Remark.</b> The same argument run with three or more mutually commuting Hermitian
+    operators produces a basis of simultaneous eigenvectors for all of them — apply Step 2 to each
+    in turn, refining the decomposition until no eigenspace has dimension greater than one.</p>
+  </div>
+</details>
+
+<div class="callout insight">
+  <span class="ct">This theorem is the structure of quantum numbers</span>
+  <p>An orthonormal basis of simultaneous eigenvectors is a way of <em>labelling</em> every state by
+  a list of numbers — one eigenvalue from each operator. Chapter 4.7 calls such a list the
+  <strong>quantum numbers</strong> of the state, and the operators a <em>complete set of commuting
+  observables</em>: mutually commuting, and enough of them that every eigenspace has been cut down
+  to a single line, so the labels determine the state uniquely. When you write the hydrogen states
+  as $\ket{n,\ell,m}$ you are naming the eigenvalues of three commuting operators, and the reason
+  the labels are consistent — the reason a state can have a definite $\ell$ <em>and</em> a definite
+  $m$ at the same time — is Step 4 above, and nothing else.</p>
+  <p>Run it backwards and you get the other half. If $[A,B]\neq0$ there is <em>no</em> common
+  eigenbasis, so there is no state in which both observables are sharp. That is the qualitative
+  content of Chapter 4.6, and the quantitative version is the Cauchy–Schwarz bound
+  $\Delta A\,\Delta B\ge\tfrac12\abs{\avg{[A,B]}}$ from §1, whose right-hand side is non-zero
+  exactly when the operators fail to commute. The two great mysteries of quantum mechanics —
+  <em>why can some quantities be known together and others not?</em> — are one theorem about
+  matrices, proved above, with an "if and only if" in the middle.</p>
+</div>
+
+<div class="callout familiar">
+  <span class="ct">Familiar ground</span>
+  <p>You have run principal component analysis on expression data, on imaging features, on
+  multiplexed assay panels. Here is what was actually happening, and why it could not have failed.</p>
+  <p>Centre the data matrix $X$ ($n$ samples $\times$ $p$ features) and form the covariance matrix
+  $\Sigma = \tfrac{1}{n-1}X^{\!\top}\!X$, whose entries are $\Sigma_{ij}=\mathrm{cov}(\text{feature
+  }i,\text{feature }j)$. Covariance is symmetric in its two arguments, so
+  $\Sigma^{\!\top}=\Sigma$ — <strong>a real covariance matrix is Hermitian by construction</strong>,
+  not by assumption or by luck. Section 6 therefore <em>guarantees</em>, as a theorem:</p>
+  <ul>
+    <li><b>The eigenvalues are real.</b> They are variances, so this had better be true. It is not
+    a numerical accident, and it does not depend on the data.</li>
+    <li><b>The principal components are mutually orthogonal.</b> Uncorrelated components are not
+    something PCA arranges by cleverness. They come out perpendicular because §6(b) says
+    eigenvectors of a symmetric matrix with distinct eigenvalues have no choice.</li>
+    <li><b>They span the whole feature space.</b> Completeness
+    <a class="eqref" href="#e-resolve"></a> says no direction of variation is missed, so
+    reconstructing from all $p$ components returns your data exactly.</li>
+  </ul>
+  <p>More is true, and it is worth being precise about the extra. $\Sigma$ is not merely Hermitian,
+  it is <strong>positive semi-definite</strong>: for any direction $u$,</p>
+  $$ u^{\!\top}\Sigma u = \tfrac{1}{n-1}\left\lVert Xu\right\rVert^{2} \;\ge\; 0, $$
+  <p>because it is a sum of squares — and it is exactly the sample variance of the data projected
+  onto $u$. Applying this to a unit eigenvector gives $\lambda = u^{\!\top}\Sigma u\ge0$: the
+  eigenvalues are not just real, they are non-negative, and <em>each eigenvalue is the variance
+  along its own component</em>. Positive semi-definiteness is strictly stronger than Hermiticity —
+  a Hermitian matrix may have negative eigenvalues, a covariance matrix may not.</p>
+  <p>Two further standard facts now cost one line each. Writing a unit vector as $u=\sum_i c_iu_i$
+  in the eigenbasis with $\sum_i c_i^{2}=1$, the spectral decomposition gives
+  $u^{\!\top}\Sigma u=\sum_i\lambda_ic_i^{2}$, a weighted average of the eigenvalues — maximised by
+  putting all the weight on the largest. <em>The first principal component is the top eigenvector
+  because a weighted average is largest when it is not an average.</em> And by
+  <a class="eqref" href="#e-trdet"></a> the total variance $\operatorname{tr}\Sigma=\sum_i\lambda_i$,
+  which is why "proportion of variance explained" is $\lambda_i/\sum_j\lambda_j$ and why those
+  fractions sum to one.</p>
+  <p>Now the point worth carrying away. <strong>PCA works for exactly the same reason quantum
+  measurement outcomes are real numbers.</strong> One theorem, §6, applied twice: once to a
+  covariance matrix, where the real eigenvalues are variances and the orthogonal eigenvectors are
+  uncorrelated components; once to a Hamiltonian, where the real eigenvalues are energies and the
+  orthogonal eigenvectors are distinguishable states. It is not an analogy and not a coincidence of
+  formalism. It is one theorem with two costumes, and you have been using the harder-looking costume
+  for years without noticing.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.5.8</span></span>
+  <p>Two maps of the self-partnered kind fall apart into the same independent directions when, and only when, the order of applying them makes no difference. Half of that is easy: if both are lists of numbers over one shared set of directions, then numbers commute and so must the maps. The other half carries the content. Wherever the first map cannot distinguish between several directions, having given them all the same number, the second goes inside that ambiguity and chooses, and between them they produce one set of directions suiting both.</p>
+  <p>This is how a physical state comes to be labelled by a handful of numbers, one from each map, the labels fixing the state completely once there are enough maps to leave no ambiguity. The reason such labels can coexist, which is to say the reason a state may have a definite value of one quantity and simultaneously of another, is the argument above and nothing besides.</p>
+  <p>Run it backwards for the other half. Where two maps fail to commute there is no shared set of directions, so no state exists in which both quantities are sharp, and the size of the failure is what the overlap inequality from the opening of the chapter measures. The two things people find most mysterious about quantum mechanics are one theorem about matrices with an if and only if in it.</p>
+</div>
+
+<h2>9 · Worked examples</h2>
+
+<div class="worked">
+  <span class="ct">Worked example 1 — the two-state system, diagonalised completely</span>
+  <p>Take the Hermitian matrix</p>
+  $$ H = \begin{pmatrix}E_0 & \Delta\\ \Delta & E_0\end{pmatrix}, \qquad E_0,\Delta\in\R,\ \Delta\gt0. $$
+  <p>It is real and symmetric, hence Hermitian, so §6 applies before we compute anything: the
+  eigenvalues will be real and the eigenvectors perpendicular. Let us watch it happen.</p>
+  <p><b>Eigenvalues.</b> From <a class="eqref" href="#e-charpoly"></a>,</p>
+  $$ \det\begin{pmatrix}E_0-\lambda & \Delta\\ \Delta & E_0-\lambda\end{pmatrix} = (E_0-\lambda)^{2}-\Delta^{2} = 0, $$
+  $$ \Longrightarrow\quad E_0-\lambda = \pm\Delta \quad\Longrightarrow\quad \lambda_{\pm} = E_0\pm\Delta. $$
+  <p>Real, as promised, and note what has happened: a matrix with equal diagonal entries — two
+  "levels" of the same value $E_0$ — has eigenvalues that are <em>split apart</em> by the
+  off-diagonal coupling, into $E_0+\Delta$ and $E_0-\Delta$, separated by $2\Delta$.</p>
+  <p><b>Eigenvectors.</b> For $\lambda_{+}=E_0+\Delta$, solve $(H-\lambda_{+}I)v=0$:</p>
+  $$ \begin{pmatrix}-\Delta & \Delta\\ \Delta & -\Delta\end{pmatrix}\begin{pmatrix}v_1\\v_2\end{pmatrix}=0 \;\Longrightarrow\; v_1=v_2 \;\Longrightarrow\; \ket{+}=\tfrac{1}{\sqrt2}\begin{pmatrix}1\\1\end{pmatrix}. $$
+  <p>For $\lambda_{-}=E_0-\Delta$ the matrix becomes $\left(\begin{smallmatrix}\Delta&\Delta\\\Delta&\Delta\end{smallmatrix}\right)$, forcing $v_1=-v_2$, so
+  $\ket{-}=\tfrac{1}{\sqrt2}\begin{pmatrix}1\\-1\end{pmatrix}$. Both have been normalised by
+  dividing by $\sqrt{1^{2}+1^{2}}$.</p>
+  <p><b>Orthogonality, checked.</b> $\avg{+|-} = \tfrac12\big(1\cdot1 + 1\cdot(-1)\big) = 0.$ ✓
+  Perpendicular, exactly as §6(b) requires — and we never used that fact to find them, so this is a
+  genuine test.</p>
+  <p><b>Spectral decomposition.</b> Build the projections
+  $P_{\pm}=\ket{\pm}\bra{\pm}$ as column times row:</p>
+  $$ P_{+} = \tfrac12\begin{pmatrix}1\\1\end{pmatrix}\begin{pmatrix}1&1\end{pmatrix} = \tfrac12\begin{pmatrix}1&1\\1&1\end{pmatrix}, \qquad P_{-} = \tfrac12\begin{pmatrix}1&-1\\-1&1\end{pmatrix}. $$
+  <p>Sanity checks: $P_{+}+P_{-}=I$ ✓ (completeness), $P_{+}P_{-}=0$ ✓ (orthogonality),
+  $P_{\pm}^{2}=P_{\pm}$ ✓ (idempotence).</p>
+  <p><b>Reconstruction.</b> Now rebuild $H$ from its spectrum alone:</p>
+  $$ \begin{aligned} \lambda_{+}P_{+}+\lambda_{-}P_{-} &= \tfrac{E_0+\Delta}{2}\begin{pmatrix}1&1\\1&1\end{pmatrix} + \tfrac{E_0-\Delta}{2}\begin{pmatrix}1&-1\\-1&1\end{pmatrix}\\[6pt] &= \begin{pmatrix}E_0 & \Delta\\ \Delta & E_0\end{pmatrix} \;=\; H. \;\checkmark \end{aligned} $$
+  <p>The matrix has been completely dissolved into two numbers and two perpendicular directions, and
+  reassembled from them.</p>
+  <p><b>Why this example and not another.</b> The eigenvalues $E_0\pm\Delta$ are a <em>level
+  splitting</em>: two states that would be degenerate at energy $E_0$ are pushed apart by the
+  coupling $\Delta$, and the new eigenstates are the symmetric and antisymmetric combinations rather
+  than either original state. This $2\times2$ matrix is the most reused object in all of quantum
+  mechanics. It is the ammonia molecule, whose two mirror-image configurations split by $2\Delta$
+  and give the ammonia maser; it is neutrino oscillation, where the states of definite mass are not
+  the states of definite flavour and the mismatch makes them convert into one another; it is the
+  qubit, where $\ket{+}$ and $\ket{-}$ are the two states you engineer and control. Chapter 4.5 will
+  do all three, and the linear algebra will already be finished.</p>
+</div>
+
+<div class="worked">
+  <span class="ct">Worked example 2 — $\ee^{\ii\theta\sigma_x}$, or Euler's formula with a matrix in the exponent</span>
+  <p>Let</p>
+  $$ \sigma_x = \begin{pmatrix}0&1\\1&0\end{pmatrix}, $$
+  <p>which is real symmetric, hence Hermitian. Compute $\ee^{\ii\theta\sigma_x}$ for real $\theta$
+  using <a class="eqref" href="#e-fdef"></a> rather than by summing a series.</p>
+  <p><b>Step 1 — the spectrum.</b> $\det(\sigma_x-\lambda I)=\lambda^{2}-1=0$, so
+  $\lambda=\pm1$. The eigenvectors are the same $\ket{\pm}$ as in Worked Example 1 (set $E_0=0$,
+  $\Delta=1$ there and compare), giving the spectral decomposition</p>
+  $$ \sigma_x = (+1)P_{+} + (-1)P_{-} = P_{+}-P_{-}. $$
+  <p><b>Step 2 — apply the function.</b> The operator in the exponent is $\theta\sigma_x$, whose
+  eigenvalues are $\pm\theta$ on the same eigenvectors. So with $f(\lambda)=\ee^{\ii\lambda}$,</p>
+  $$ \ee^{\ii\theta\sigma_x} = \ee^{\ii\theta}P_{+} + \ee^{-\ii\theta}P_{-}. $$
+  <p><b>Step 3 — regroup using Euler.</b> Write $\ee^{\pm\ii\theta}=\cos\theta\pm\ii\sin\theta$
+  from Chapter 0.3 and collect the $P$'s:</p>
+  $$ \begin{aligned} \ee^{\ii\theta\sigma_x} &= \cos\theta\,\big(P_{+}+P_{-}\big) + \ii\sin\theta\,\big(P_{+}-P_{-}\big)\\[4pt] &= \cos\theta\,I + \ii\sin\theta\,\sigma_x, \end{aligned} $$
+  <p>using completeness for the first bracket and Step 1 for the second. Explicitly,</p>
+  $$ \ee^{\ii\theta\sigma_x} = \begin{pmatrix}\cos\theta & \ii\sin\theta\\ \ii\sin\theta & \cos\theta\end{pmatrix}. $$
+  <p><b>What this is.</b> Compare with $\ee^{\ii\theta}=\cos\theta+\ii\sin\theta$. The structure is
+  identical — <em>this is Euler's formula with a matrix in the exponent</em> — and the reason it
+  works is that $\sigma_x^{2}=I$, so $\sigma_x$ plays the role that $\ii$ plays for numbers except
+  that it squares to $+1$ rather than $-1$; the eigenvalues $\pm1$ are what carry the alternating
+  signs. Any Hermitian $M$ with $M^{2}=I$ gives $\ee^{\ii\theta M}=\cos\theta\,I+\ii\sin\theta\,M$
+  by the identical three steps.</p>
+  <p><b>Checks.</b> Unitarity: $\big(\ee^{\ii\theta\sigma_x}\big)^{\dagger} = \cos\theta\,I -
+  \ii\sin\theta\,\sigma_x$, and multiplying gives $\cos^{2}\theta\,I+\sin^{2}\theta\,\sigma_x^{2} =
+  I$ ✓, as §7 promised. Determinant: $\cos^{2}\theta-(\ii\sin\theta)^{2}=\cos^{2}\theta+
+  \sin^{2}\theta=1$ ✓.</p>
+  <p><b>Where it goes.</b> Unitary $2\times2$ matrices of determinant $1$ form the group
+  $\mathrm{SU}(2)$, and the operator above is a member of it. In Chapter 4.7,
+  $\ee^{-\ii\theta\,\hat n\cdot\vec\sigma/2}$ is precisely the operator that rotates a spin-$\tfrac12$
+  state about the axis $\hat n$ by angle $\theta$ — the same computation, with a general unit vector
+  in place of the $x$-direction. The factor of $\tfrac12$ in the exponent is why a spin must be
+  turned through $720^{\circ}$ to return to itself, a fact you can already see coming: at
+  $\theta=2\pi$ the formula above gives $\cos\pi\,I=-I$, not $I$. Chapter 6.1 explains what kind of
+  object does that.</p>
+</div>
+
+<h2>10 · Your turn</h2>
+
+<div class="problems">
+
+<div class="prob">
+  <p class="pnum">Problem 1 — Gram–Schmidt, twice</p>
+  <p>(a) Apply <a class="eqref" href="#e-gs"></a> to the basis
+  $v_1=(1,1,0)$, $v_2=(1,0,1)$, $v_3=(0,1,1)$ of $\R^{3}$ with the ordinary dot product. Verify the
+  result is orthonormal.</p>
+  <p>(b) Now do the same in a space with no arrows in it. Take the polynomials $1,x,x^{2}$ on
+  $[-1,1]$ with $\avg{f,g}=\int_{-1}^{1}f(x)g(x)\,\dd x$, and orthonormalise them.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>(a)</b> $\left\lVert v_1\right\rVert=\sqrt2$, so $e_1=\tfrac{1}{\sqrt2}(1,1,0)$.</p>
+    <p>Next, $\avg{e_1,v_2}=\tfrac{1}{\sqrt2}(1+0+0)=\tfrac{1}{\sqrt2}$, so</p>
+    $$ w_2 = (1,0,1) - \tfrac{1}{\sqrt2}\cdot\tfrac{1}{\sqrt2}(1,1,0) = \left(\tfrac12,-\tfrac12,1\right), $$
+    $$ \left\lVert w_2\right\rVert = \sqrt{\tfrac14+\tfrac14+1} = \sqrt{\tfrac32} \;\Longrightarrow\; e_2 = \tfrac{1}{\sqrt6}(1,-1,2). $$
+    <p>Finally $\avg{e_1,v_3}=\tfrac{1}{\sqrt2}$ and $\avg{e_2,v_3}=\tfrac{1}{\sqrt6}(0-1+2)
+    =\tfrac{1}{\sqrt6}$, so</p>
+    $$ \begin{aligned} w_3 &= (0,1,1) - \tfrac12(1,1,0) - \tfrac16(1,-1,2)\\[3pt] &= \left(-\tfrac23,\ \tfrac23,\ \tfrac23\right), \qquad \left\lVert w_3\right\rVert=\tfrac{2}{\sqrt3}, \end{aligned} $$
+    $$ e_3 = \tfrac{1}{\sqrt3}(-1,1,1). $$
+    <p><b>Check.</b> $\avg{e_1,e_2}=\tfrac{1}{\sqrt{12}}(1-1+0)=0$;
+    $\avg{e_1,e_3}=\tfrac{1}{\sqrt6}(-1+1+0)=0$;
+    $\avg{e_2,e_3}=\tfrac{1}{\sqrt{18}}(-1-1+2)=0$; and each has norm $1$ by construction. ✓</p>
+    <p><b>(b)</b> $\avg{1,1}=\int_{-1}^{1}\dd x=2$, so $e_0=1/\sqrt2$.</p>
+    <p>$\avg{e_0,x}=\tfrac{1}{\sqrt2}\int_{-1}^{1}x\,\dd x=0$ — the integrand is odd, so $x$ is
+    <em>already</em> orthogonal to the constants and nothing needs subtracting. With
+    $\avg{x,x}=\int_{-1}^{1}x^{2}\dd x=\tfrac23$,</p>
+    $$ e_1 = \sqrt{\tfrac32}\;x. $$
+    <p>For $x^{2}$: $\avg{e_1,x^{2}}=0$ by oddness again, while
+    $\avg{e_0,x^{2}}=\tfrac{1}{\sqrt2}\cdot\tfrac23$. Subtracting,</p>
+    $$ w_2 = x^{2} - \tfrac{1}{\sqrt2}\cdot\tfrac23\cdot\tfrac{1}{\sqrt2} = x^{2}-\tfrac13, $$
+    $$ \left\lVert w_2\right\rVert^{2} = \int_{-1}^{1}\!\left(x^{2}-\tfrac13\right)^{2}\dd x = \tfrac25-\tfrac49+\tfrac29 = \tfrac{8}{45}, $$
+    $$ e_2 = \sqrt{\tfrac{45}{8}}\left(x^{2}-\tfrac13\right) = \sqrt{\tfrac52}\cdot\tfrac{3x^{2}-1}{2}. $$
+    <p>Those are the first three <strong>Legendre polynomials</strong>, normalised: $P_0=1$,
+    $P_1=x$, $P_2=(3x^{2}-1)/2$, each divided by $\sqrt{2/(2n+1)}$. They were not invented; they
+    are what you get by running Gram–Schmidt on $1,x,x^{2},\dots$ and there is nothing else they
+    could have been. The identical procedure with a weight $\ee^{-x^{2}}$ on the whole line produces
+    the Hermite polynomials, which are the quantum harmonic oscillator states of Chapter 4.5.
+    <em>The machinery does not care that the vectors are functions.</em> That is the whole content
+    of the abstraction, and it is what Chapter 4.3 will exploit.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 2 — the spectrum of a unitary operator</p>
+  <p>Prove that every eigenvalue of a unitary operator has $\abs{\lambda}=1$. Then interpret it:
+  what does this say geometrically, and what would go wrong physically if it were false?</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p>Let $Uv=\lambda v$ with $v\neq0$. Apply <a class="eqref" href="#e-uniprop"></a> with both
+    arguments equal to $v$:</p>
+    $$ \avg{v,v} = \avg{Uv,Uv} = \avg{\lambda v,\lambda v} = \bar\lambda\lambda\avg{v,v} = \abs{\lambda}^{2}\avg{v,v}. $$
+    <p>Since $v\neq0$, axiom (iii) gives $\avg{v,v}\gt0$ and we may divide:
+    $\abs{\lambda}^{2}=1$, so $\abs{\lambda}=1$ and $\lambda=\ee^{\ii\varphi}$ for some real
+    $\varphi$.</p>
+    <p><b>Geometry.</b> A unitary map preserves all lengths, so along any direction it preserves it
+    must stretch by a factor of modulus one — i.e. not stretch at all, only rotate the phase. A
+    unitary operator has no expanding or contracting directions anywhere; in its eigenbasis it is
+    $\operatorname{diag}(\ee^{\ii\varphi_1},\dots,\ee^{\ii\varphi_n})$, a separate rotation on each
+    of $n$ perpendicular axes. Contrast a Hermitian operator, which in its eigenbasis is
+    $\operatorname{diag}(\lambda_1,\dots,\lambda_n)$ with the $\lambda_i$ real: it <em>only</em>
+    stretches and never rotates. The two classes are exactly complementary, which is the content of
+    $U=\ee^{\ii A}$.</p>
+    <p><b>Physically.</b> If some $\abs{\lambda}\gt1$, a state along that eigenvector would grow in
+    norm under repeated application of $U$. Since $\left\lVert \psi\right\rVert^{2}$ is total probability, that state
+    would end up with probability greater than one — an outcome would occur more often than always.
+    If $\abs{\lambda}\lt1$ the state would fade away and probability would leak out of the universe.
+    Chapter 4.4's insistence on unitarity is exactly the demand that neither happens, and by the
+    result above there is no third option: unitary forces $\abs{\lambda}=1$ automatically.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 3 — symmetry is what makes the right angle</p>
+  <p>(a) Diagonalise $S=\begin{pmatrix}3&1\\1&3\end{pmatrix}$: find the eigenvalues, normalise the
+  eigenvectors, and verify they are orthogonal.</p>
+  <p>(b) Now break the symmetry with $N=\begin{pmatrix}3&\tfrac32\\[2pt]\tfrac12&3\end{pmatrix}$,
+  which has the same symmetric part. Find its eigenvalues and eigen-directions and compute the angle
+  between them. Comment on what happened.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>(a)</b> $\det(S-\lambda I)=(3-\lambda)^{2}-1=0$ gives $3-\lambda=\pm1$, so
+    $\lambda=4$ and $\lambda=2$. For $\lambda=4$: $\begin{pmatrix}-1&1\\1&-1\end{pmatrix}v=0$
+    forces $v_1=v_2$, giving $u_{1}=\tfrac{1}{\sqrt2}(1,1)$, at $45^{\circ}$. For $\lambda=2$:
+    $v_1=-v_2$, giving $u_{2}=\tfrac{1}{\sqrt2}(1,-1)$, at $-45^{\circ}$.</p>
+    <p>Orthogonality: $u_1\cdot u_2=\tfrac12(1-1)=0$ ✓. The two eigen-directions are exactly
+    $90^{\circ}$ apart, as §6(b) guarantees for any real symmetric matrix with distinct
+    eigenvalues.</p>
+    <p><b>(b)</b> $\operatorname{tr}N=6$ and $\det N = 9-\tfrac34=\tfrac{33}{4}$, so</p>
+    $$ \lambda = \frac{6\pm\sqrt{36-33}}{2} = 3\pm\frac{\sqrt3}{2} \approx 3.866,\ 2.134. $$
+    <p>Real — but that is luck, not a theorem; the discriminant came out positive here and will not
+    in general. For $\lambda_{+}=3+\tfrac{\sqrt3}{2}$, the first row of $N-\lambda_{+}I$ gives</p>
+    $$ -\tfrac{\sqrt3}{2}v_1 + \tfrac32 v_2 = 0 \;\Longrightarrow\; v_2 = \tfrac{1}{\sqrt3}v_1, $$
+    <p>a direction at $\arctan(1/\sqrt3)=30^{\circ}$. For $\lambda_{-}$ the sign flips and the
+    direction is at $-30^{\circ}$. Their dot product, with $v_{\pm}=(1,\pm 1/\sqrt3)$, is
+    $1-\tfrac13=\tfrac23\neq0$, and</p>
+    $$ \cos\alpha = \frac{2/3}{\left(2/\sqrt3\right)^{2}} = \frac{2/3}{4/3} = \frac12 \;\Longrightarrow\; \alpha = 60^{\circ}. $$
+    <p><b>Comment.</b> The right angle is gone: $90^{\circ}$ became $60^{\circ}$. Nothing was done
+    to the symmetric part of the matrix — $N = S + \tfrac12\begin{pmatrix}0&1\\-1&0\end{pmatrix}$,
+    an antisymmetric addition — and yet the eigen-directions tilted toward each other by
+    $15^{\circ}$ each. This is the figure of §5 with different numbers, and by
+    <a class="eqref" href="#e-disc"></a> the eigenvalues would have gone complex once the
+    antisymmetric coefficient exceeded half the eigenvalue gap of $S$, i.e. $c=1$. Orthogonality of
+    eigenvectors is not a property of matrices. It is a property of <em>Hermitian</em> matrices, and
+    it is lost the moment the hypothesis is.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 4 — non-degenerate commuting operators share everything</p>
+  <p>Let $A$ and $B$ be Hermitian with $[A,B]=0$, and suppose $A$ is <em>non-degenerate</em>: every
+  eigenvalue of $A$ has a one-dimensional eigenspace. Show that every eigenvector of $A$ is
+  automatically an eigenvector of $B$. Then explain why the general proof of §8 needed to be longer
+  than this one.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p>Let $Av=\lambda v$ with $v\neq0$. Using $AB=BA$,</p>
+    $$ A(Bv) = (AB)v = (BA)v = B(Av) = B(\lambda v) = \lambda(Bv). $$
+    <p>So $Bv$ lies in the eigenspace $E_\lambda$. By hypothesis $E_\lambda$ is one-dimensional and
+    contains $v$, so $E_\lambda = \mathrm{span}\{v\}$ and therefore $Bv=\mu v$ for some scalar
+    $\mu$. Hence $v$ is an eigenvector of $B$. (If $Bv=0$ then $\mu=0$, which is still an
+    eigenvalue — the zero vector is excluded as an eigen<em>vector</em>, not as an
+    eigen<em>value</em>.) Since the eigenvectors of $A$ already form an orthonormal basis, that
+    basis diagonalises $B$ too. $\blacksquare$</p>
+    <p><b>Why the general case is harder.</b> The step "$E_\lambda$ is one-dimensional, therefore
+    $Bv$ is a multiple of $v$" is exactly what fails under degeneracy. If $\dim E_\lambda = 3$, all
+    we learn is that $B$ maps that three-dimensional space into itself — $Bv$ could be any vector in
+    it, and a generic $v\in E_\lambda$ will <em>not</em> be an eigenvector of $B$. The repair, and
+    the whole content of the grind box in §8, is that $B$ restricted to $E_\lambda$ is still
+    Hermitian, so the spectral theorem applies <em>inside</em> $E_\lambda$ and selects the right
+    basis there. Degeneracy does not break the theorem; it just means $A$ alone no longer specifies
+    the basis and needs $B$'s help to finish the job.</p>
+    <p><b>The physics of that last sentence,</b> for later: a degenerate energy level is one where
+    the Hamiltonian alone does not tell you which state you are in, and you must measure a second
+    commuting observable to say. That is exactly why hydrogen states need three labels rather than
+    one, and why "lifting a degeneracy" — with a magnetic field, say — is such a common experimental
+    move. Chapter 4.7.</p>
+  </div></details>
+</div>
+
+</div>
+
+<div class="callout brick">
+  <span class="ct">The brick you just laid</span>
+  <p>You have the <em>inner product</em> from three axioms, with the conjugate forced by the demand
+  that no non-zero vector have zero length, and every geometric notion — length, distance,
+  orthogonality, angle — reconstructed from it. You have <em>Cauchy–Schwarz</em>, proved by
+  optimising a manifestly non-negative quantity, which is what makes "angle" definable at all. You
+  have <em>orthonormal bases</em>, in which coordinates are inner products; <em>Gram–Schmidt</em>,
+  which shows they always exist; and <em>completeness</em>, $\sum_i\ket{e_i}\bra{e_i}=\hat I$, in
+  Dirac notation introduced where it is nothing but bookkeeping about rows and columns. You have
+  <em>orthogonal projection</em> as the nearest-point map, and with it the fact that least-squares
+  regression is a right angle and ANOVA is Pythagoras. You have the <em>adjoint</em> defined without
+  reference to any basis, and shown to be the conjugate transpose in an orthonormal one. And you
+  have the <em>spectral theorem</em>: a Hermitian operator has real eigenvalues, perpendicular
+  eigenvectors, and a complete orthonormal eigenbasis, so that it dissolves into
+  $\sum_i\lambda_i\ket{e_i}\bra{e_i}$ — with functions of operators, the Hermitian–unitary
+  correspondence $U=\ee^{\ii A}$, and simultaneous diagonalisation of commuting operators as
+  corollaries.</p>
+  <p><b>Where this gets spent.</b> <em>Cauchy–Schwarz</em> → Chapter 4.6, where it becomes the
+  uncertainty principle with nothing added but interpretation. <em>Orthonormal bases and
+  completeness</em> → Chapter 4.2 (superposition and probability amplitudes) and Chapter 0.9, where
+  Fourier analysis turns out to be an orthonormal expansion in a function space and Parseval becomes
+  conservation of energy across modes. <em>Adjoint and Hermiticity</em> → Chapter 4.2, where "an
+  observable is a Hermitian operator" is the one postulate that has to be made. <em>The spectral
+  theorem</em> → Chapter 4.2 (the measurement postulates, which are these theorems renamed), Chapter
+  4.5 (solving a system means diagonalising its Hamiltonian), Chapter 0.8 (normal modes of coupled
+  oscillators are eigenvectors of a symmetric matrix), and every PCA you will ever run.
+  <em>$\ee^{\ii A}$</em> → Chapter 4.4, where a Hermitian Hamiltonian generates unitary time
+  evolution and probability is conserved as a matter of algebra, and Chapter 6.1, where the same
+  pairing becomes the Lie algebra of a Lie group. <em>Commuting observables</em> → Chapters 4.6 and
+  4.7, where they become the complete set of quantum numbers that labels every state of every atom.</p>
+  <p>One thing remains outstanding, and it is worth naming so that you notice when it is paid. Every
+  proof in this chapter used <em>finite dimension</em> — in the induction, in rank–nullity, in the
+  interchange of sums, in the claim that an injective map is surjective. Quantum mechanics happens
+  in infinite dimensions. Chapter 4.3 is where the bill comes due.</p>
+</div>
+
+<!--SCRIPT-->
+(function () {
+  var B = Math.sqrt(3) / 2;                 /* off-diagonal of the symmetric part */
+  var ROTANG = 50 * Math.PI / 180, ROTSC = 1.25;
+  var mode = 'fam';                          /* 'fam' | 'rot' */
+
+  var sTh = document.getElementById('s-th'),
+      sC  = document.getElementById('s-c'),
+      oTh = document.getElementById('o-th'),
+      oC  = document.getElementById('o-c'),
+      oM  = document.getElementById('o-mat'),
+      oE  = document.getElementById('o-eig'),
+      oA  = document.getElementById('o-ang'),
+      bSym = document.getElementById('b-sym'),
+      bAsym= document.getElementById('b-asym'),
+      bCol = document.getElementById('b-col'),
+      bRot = document.getElementById('b-rot'),
+      bSnap= document.getElementById('b-snap');
+
+  function famA(c) { return [[2, B + c], [B - c, 1]]; }
+  function rotA()  { return [[ROTSC * Math.cos(ROTANG), -ROTSC * Math.sin(ROTANG)],
+                             [ROTSC * Math.sin(ROTANG),  ROTSC * Math.cos(ROTANG)]]; }
+  function curM()  { return mode === 'rot' ? rotA() : famA(parseFloat(sC.value)); }
+  function ap(M, v) { return [M[0][0] * v[0] + M[0][1] * v[1],
+                              M[1][0] * v[0] + M[1][1] * v[1]]; }
+
+  /* eigen-analysis of a real 2x2 */
+  function eig(M) {
+    var tr = M[0][0] + M[1][1],
+        de = M[0][0] * M[1][1] - M[0][1] * M[1][0],
+        D  = tr * tr - 4 * de;
+    if (D < -1e-12) return { real: false, D: D };
+    var r = Math.sqrt(Math.max(D, 0)), l = [(tr + r) / 2, (tr - r) / 2];
+    function vec(lam) {
+      var a = M[0][0] - lam, b = M[0][1], c = M[1][0], d = M[1][1] - lam, v;
+      if (Math.abs(a) + Math.abs(b) >= Math.abs(c) + Math.abs(d)) v = [-b, a];
+      else v = [-d, c];
+      var n = Math.hypot(v[0], v[1]);
+      if (n < 1e-12) return [1, 0];
+      return [v[0] / n, v[1] / n];
+    }
+    return { real: true, D: D, l: l, v: [vec(l[0]), vec(l[1])] };
+  }
+
+  function deg(a) { var d = a * 180 / Math.PI % 180; return d < 0 ? d + 180 : d; }
+
+  /* arrow drawn in screen space on top of the plot */
+  function arrow(p, x0, y0, x1, y1, col, w) {
+    var g = p.g, X0 = p.X(x0), Y0 = p.Y(y0), X1 = p.X(x1), Y1 = p.Y(y1);
+    g.save();
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w || 2.6;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(X0, Y0); g.lineTo(X1, Y1); g.stroke();
+    var a = Math.atan2(Y1 - Y0, X1 - X0), s = 10;
+    g.beginPath();
+    g.moveTo(X1, Y1);
+    g.lineTo(X1 - s * Math.cos(a - 0.42), Y1 - s * Math.sin(a - 0.42));
+    g.lineTo(X1 - s * Math.cos(a + 0.42), Y1 - s * Math.sin(a + 0.42));
+    g.closePath(); g.fill();
+    g.restore();
+  }
+
+  NMT.figure('fig-eig', function (canvas) {
+    var M = curM(), E = eig(M);
+    var th = parseFloat(sTh.value) * Math.PI / 180;
+
+    var p = new NMT.Plot(canvas, {
+      xmin: -3.2, xmax: 3.2, ymin: -3.2, ymax: 3.2,
+      xlabel: 'x', ylabel: 'y', equal: true
+    });
+    p.axes({ nx: 6, ny: 6 });
+
+    /* unit circle of inputs */
+    var circ = [], img = [], i, t;
+    for (i = 0; i <= 240; i++) {
+      t = 2 * Math.PI * i / 240;
+      var u = [Math.cos(t), Math.sin(t)];
+      circ.push(u);
+      img.push(ap(M, u));
+    }
+    p.path(circ, { color: NMT.css('--ink-faint'), width: 1.4, dash: [4, 4] });
+    p.path(img,  { color: NMT.css('--accent'), width: 2.2 });
+
+    /* eigen-directions */
+    var cols = [NMT.css('--insight'), NMT.css('--warn')];
+    var merged = E.real && E.D < 1e-9;      /* repeated root: only one eigen-line exists */
+    if (E.real) {
+      for (i = 0; i < (merged ? 1 : 2); i++) {
+        var e = E.v[i], L = 4.6;
+        p.seg(-L * e[0], -L * e[1], L * e[0], L * e[1],
+              { color: cols[i], width: 1.7, dash: [8, 5] });
+        p.dot(e[0], e[1], { color: cols[i], r: 3.6, ring: true });
+        p.dot(E.l[i] * e[0], E.l[i] * e[1], { color: cols[i], r: 3.6, ring: true });
+      }
+    }
+
+    /* the rotating input and its image */
+    var v = [Math.cos(th), Math.sin(th)], Av = ap(M, v);
+    arrow(p, 0, 0, v[0], v[1], NMT.css('--familiar'), 2.6);
+    arrow(p, 0, 0, Av[0], Av[1], NMT.css('--accent'), 2.6);
+    p.text(v[0], v[1], ' v', { color: NMT.css('--familiar'), dy: -4,
+                               font: 'italic 13px ' + NMT.css('--serif') });
+    p.text(Av[0], Av[1], ' Av', { color: NMT.css('--accent'), dx: 4, dy: -6,
+                                  font: 'italic 13px ' + NMT.css('--serif') });
+
+    /* arc marking the turn angle */
+    var a1 = Math.atan2(v[1], v[0]), a2 = Math.atan2(Av[1], Av[0]);
+    var dth = a2 - a1;
+    while (dth >  Math.PI) dth -= 2 * Math.PI;
+    while (dth < -Math.PI) dth += 2 * Math.PI;
+    var g = p.g, rpx = Math.abs(p.X(0.55) - p.X(0));
+    g.save();
+    g.strokeStyle = NMT.css('--ink-soft'); g.lineWidth = 1.6;
+    g.beginPath();
+    g.arc(p.X(0), p.Y(0), rpx, -a1, -(a1 + dth), dth > 0);
+    g.stroke();
+    g.restore();
+
+    /* ---- readouts ---- */
+    oTh.textContent = 'θ = ' + parseFloat(sTh.value).toFixed(2) + '°';
+    oC.textContent  = mode === 'rot' ? 'c = —  (rotation)'
+                                     : 'c = ' + parseFloat(sC.value).toFixed(3);
+    oM.textContent  = 'A = [ ' + M[0][0].toFixed(3) + '  ' + M[0][1].toFixed(3) +
+                      ' ;  ' + M[1][0].toFixed(3) + '  ' + M[1][1].toFixed(3) + ' ]';
+
+    if (E.real) {
+      var d0 = deg(Math.atan2(E.v[0][1], E.v[0][0])),
+          d1 = deg(Math.atan2(E.v[1][1], E.v[1][0]));
+      var sep = Math.abs(d0 - d1); sep = Math.min(sep, 180 - sep);
+      if (E.D < 1e-9) {
+        oE.textContent = 'λ = ' + E.l[0].toFixed(3) + ' (twice) — eigen-directions have ' +
+                         'merged at ' + d0.toFixed(1) + '°: one line only, matrix is defective';
+      } else {
+        oE.textContent = 'λ = ' + E.l[0].toFixed(3) + ', ' + E.l[1].toFixed(3) +
+                         '   eigen-directions ' + d0.toFixed(1) + '°, ' + d1.toFixed(1) +
+                         '°  →  ' + sep.toFixed(1) + '° apart';
+      }
+    } else {
+      oE.textContent = 'no real eigenvalues (discriminant ' + E.D.toFixed(3) +
+                       ') — every direction is turned';
+    }
+
+    var turn = Math.abs(dth) * 180 / Math.PI;
+    oA.textContent = '∠(v, Av) = ' + turn.toFixed(2) + '°' +
+                     (turn < 0.005 ? '   ← eigenvector: A only rescales it' : '');
+  });
+
+  /* ---- wiring ---- */
+  function setButtons() {
+    bSym.className  = (mode === 'fam' && Math.abs(parseFloat(sC.value)) < 1e-9) ? 'on' : '';
+    bAsym.className = (mode === 'fam' && Math.abs(parseFloat(sC.value) - 0.5) < 1e-9) ? 'on' : '';
+    bCol.className  = (mode === 'fam' && Math.abs(parseFloat(sC.value) - 1) < 1e-9) ? 'on' : '';
+    bRot.className  = (mode === 'rot') ? 'on' : '';
+  }
+  function refresh() { setButtons(); NMT.redrawAll(); }
+
+  sTh.addEventListener('input', refresh);
+  sC.addEventListener('input', function () { mode = 'fam'; refresh(); });
+  bSym.addEventListener('click',  function () { mode = 'fam'; sC.value = 0;   refresh(); });
+  bAsym.addEventListener('click', function () { mode = 'fam'; sC.value = 0.5; refresh(); });
+  bCol.addEventListener('click',  function () { mode = 'fam'; sC.value = 1;   refresh(); });
+  bRot.addEventListener('click',  function () { mode = 'rot'; refresh(); });
+
+  bSnap.addEventListener('click', function () {
+    var E = eig(curM());
+    if (!E.real) return;
+    var cur = parseFloat(sTh.value), best = cur, bd = 1e9;
+    for (var i = 0; i < 2; i++) {
+      var a = deg(Math.atan2(E.v[i][1], E.v[i][0]));
+      [a, a + 180].forEach(function (cand) {
+        var d = Math.abs(((cand - cur + 540) % 360) - 180);
+        if (d < bd) { bd = d; best = (cand + 360) % 360; }
+      });
+    }
+    sTh.value = best;
+    refresh();
+  });
+
+  setButtons();
+})();
+<!--/SCRIPT-->

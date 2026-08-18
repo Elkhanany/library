@@ -1,0 +1,1348 @@
+<p class="eyebrow">Part 0 · The Toolkit — Chapter 0.4</p>
+<h1>Vector Spaces and Linear Maps</h1>
+<p class="subtitle">The matrix is not the point. The matrix is a shadow the point casts once you pick coordinates.</p>
+
+<div class="callout where">
+  <span class="ct">Where we are</span>
+  <p>Linear algebra is not the study of matrices. It is the study of <em>things that add and
+  scale</em> — and a matrix is what one of those things looks like after you have made an arbitrary
+  choice of how to describe it. Almost every difficulty people have later in this book traces back
+  to having learned the shadow instead of the object.</p>
+  <p>Physics is overwhelmingly linear, and for two reasons that are worth keeping strictly apart.
+  The first: <strong>we linearize everything.</strong> <a href="ch0-1.html">Chapter 0.1</a> replaced
+  functions by their best linear approximations, and Chapter 0.3 made that into a controlled
+  expansion. When the linear term is the first surviving one, linear algebra is the mathematics of
+  the leading behaviour of anything at all. The second reason is different in kind: <strong>in
+  quantum mechanics superposition is not an approximation.</strong> If a system can be in state
+  $\ket{\psi_1}$ and in state $\ket{\psi_2}$, it can be in $\alpha\ket{\psi_1}+\beta\ket{\psi_2}$,
+  exactly, with no small parameter and no correction terms. Quantum mechanics is not
+  <em>approximately</em> linear algebra; from Chapter 4.2 onward it simply <em>is</em> linear
+  algebra, and the physical content lives in which vector space and which operators.</p>
+  <p>So this chapter builds the object first and the array second. By the end you will know why
+  matrix multiplication has the shape it has (it is forced — it is not a convention), what a
+  determinant is before anyone writes down a cofactor, and why the trace — an apparently trivial
+  sum of diagonal entries — turns out to be one of the most reused quantities in theoretical
+  physics.</p>
+</div>
+
+<p class="tools"><b>Tools you'll need</b> &nbsp;— <a href="ch0-1.html">Chapter 0.1</a>: linearization,
+and the characterisation of the exponential as the function equal to its own derivative (we use it
+once, in §6). Nothing else. Everything about vectors is built here from scratch.</p>
+
+<h2>1 · What a vector actually is</h2>
+
+<p>You were probably told a vector is an arrow: a thing with magnitude and direction. That
+description is a special case of a special case, and it will strand you in Chapter 4.2, where the
+vectors are functions and there is not an arrow in sight.</p>
+
+<p>Here is the actual definition. A <strong>vector space</strong> over a field of scalars
+$\mathbb{F}$ (for us always $\R$ or $\C$) is a set $V$ equipped with two operations — addition of
+two elements of $V$, and multiplication of an element of $V$ by a scalar — whose results again lie
+in $V$, and which satisfy eight rules:</p>
+
+<div class="eq" id="e-axioms">
+$$ \begin{aligned}
+&\text{(A1)}\quad u+v = v+u                 &&\text{(S1)}\quad 1\,v = v\\[2pt]
+&\text{(A2)}\quad (u+v)+w = u+(v+w)         &&\text{(S2)}\quad a(bv) = (ab)v\\[2pt]
+&\text{(A3)}\quad \exists\ 0:\ v+0 = v      &&\text{(S3)}\quad a(u+v) = au+av\\[2pt]
+&\text{(A4)}\quad \exists\ (-v):\ v+(-v)=0  &&\text{(S4)}\quad (a+b)v = av+bv
+\end{aligned} $$
+</div>
+
+<p>That is the whole definition. Notice what is <em>not</em> in it: no length, no angle, no
+coordinates, no arrows. Those come later and cost extra — length and angle are Chapter 0.5,
+coordinates are §2 of this chapter and are always a choice.</p>
+
+<p>The axioms are not decoration; they do work. Two examples, both of which you have used a thousand
+times without noticing they need proving.</p>
+
+<p><b>The scalar $0$ annihilates.</b> Nothing in <a class="eqref" href="#e-axioms"></a> says
+$0\,v$ is the zero vector — the symbol $0$ on the left is a number and on the right a vector, and
+they are different objects. But by (S4), $0v = (0+0)v = 0v+0v$. Add $-(0v)$ to both sides and use
+(A4), (A3): $0 = 0v$. Similarly $(-1)v = -v$, because
+$v + (-1)v = 1v + (-1)v = \big(1+(-1)\big)v = 0v = 0$, and by (A4) the thing you add to $v$ to get
+$0$ is what "$-v$" means.</p>
+
+<h3>The examples that are not arrows</h3>
+
+<p><b>1. Tuples, $\R^{n}$.</b> Add componentwise, scale componentwise. This is the familiar one,
+and it is the <em>only</em> one that looks like arrows.</p>
+
+<p><b>2. Polynomials of degree at most $n$.</b> Call this space $P_{n}$. The sum of two polynomials
+of degree $\le n$ has degree $\le n$; a scalar multiple likewise; the zero polynomial is the zero
+vector. All eight axioms hold because they hold coefficient by coefficient. Note the trap:
+polynomials of degree <em>exactly</em> $n$ do <em>not</em> form a vector space —
+$x^{2}$ and $-x^{2}+x$ are both of degree exactly $2$, and their sum is not, and the zero
+polynomial is missing entirely. Closure is a real condition.</p>
+
+<p><b>3. The solutions of a linear differential equation.</b> This one matters more than the
+others, so we will do it properly. Consider</p>
+
+<div class="eq" id="e-ode">
+$$ L[y] \;\equiv\; y'' + p(x)\,y' + q(x)\,y \;=\; 0. $$
+</div>
+
+<p>Suppose $y_{1}$ and $y_{2}$ both solve it. Then for any scalars $a,b$, using only the fact that
+differentiation is itself additive and commutes with constants,</p>
+
+<div class="eq" id="e-superpose">
+$$ \begin{aligned} L[a y_{1} + b y_{2}] \;&=\; a\big(y_{1}''+py_{1}'+qy_{1}\big) + b\big(y_{2}''+py_{2}'+qy_{2}\big)\\[4pt] &=\; a\cdot 0 + b\cdot 0 \;=\; 0. \end{aligned} $$
+</div>
+
+<p>So the solution set is closed under addition and scaling: <strong>it is a vector space.</strong>
+That statement has a name in physics — <em>superposition</em> — and it is the reason you may add two
+solutions of the wave equation and get a solution, the reason normal modes work
+(Chapter 0.8), and the reason a plucked string can be decomposed into harmonics (Chapter 0.9). It is
+not a physical principle. It is the observation that $L$ is a linear map and that the set of things
+a linear map sends to zero is a vector space.</p>
+
+<p>The converse trap is worth seeing now, since it explains a rule you were once made to memorise.
+If the equation is <em>inhomogeneous</em>, $L[y]=f$ with $f\neq0$, the solution set is not a vector
+space: the sum of two solutions gives $2f$, not $f$. But if $y_{p}$ is any one solution and $y$ is
+any other, then $L[y-y_{p}] = f-f = 0$, so the difference solves the homogeneous equation. Hence
+<em>general solution = particular solution + (vector space of homogeneous solutions)</em>. That is a
+plane in a space, shifted off the origin; the "arbitrary constants" you were told to add are
+coordinates on the shifted plane.</p>
+
+<p><b>4. Functions on an interval.</b> All real-valued functions on $[a,b]$, added pointwise:
+$(f+g)(x)\equiv f(x)+g(x)$, $(cf)(x)\equiv c\,f(x)$. Every axiom holds pointwise because it holds for
+real numbers. This space is <em>infinite-dimensional</em> in the sense §2 is about to make precise,
+and it is the arena of Chapters 0.9 and 4.3.</p>
+
+<p><b>5. Matrices.</b> The $m\times n$ real matrices form a vector space under entrywise addition.
+Read that twice: <em>matrices are themselves vectors</em>. If you think "vector = column of numbers"
+you cannot even parse the sentence, and you will need it in Chapter 6.1, where the vector space in
+question is a space of matrices and its elements are the generators of a symmetry group.</p>
+
+<p><b>6. Quantum states.</b> The states of a quantum system form a vector space over $\C$. Not
+metaphorically — the superposition principle is precisely the assertion that the axioms
+<a class="eqref" href="#e-axioms"></a> hold for physical states. This is why Chapter 4.2 is a linear
+algebra chapter with physics vocabulary sprinkled on top.</p>
+
+<div class="callout insight">
+  <span class="ct">The definition to carry forward</span>
+  <p><strong>"Vector" does not mean "arrow". It means "element of a vector space".</strong> The word
+  is a statement about what you are allowed to do to the object — add it to another one, scale it —
+  and about nothing else.</p>
+  <p>A function, a polynomial, a matrix, a solution of a differential equation, and a quantum state
+  are all vectors, and every theorem in this chapter applies to all of them without modification.
+  That is not generality for its own sake: it is why the same eigenvalue machinery solves a
+  coupled-oscillator problem in Chapter 0.8 and a hydrogen atom in Chapter 4.5.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.1</span></span>
+  <p>There is no arrow anywhere in the definition of a vector, and no length and no angle either, which is exactly what gives the subject its reach. What the definition lists is what you are permitted to do to the object: add two of them together, stretch one by a number, and find that the results still belong to the collection you started with. Anything meeting that short list is a vector, and no theorem proved from the list can tell one example from another.</p>
+  <p>Which is why the examples are so unalike. A polynomial is a vector, a function on an interval is a vector, an array of numbers is a vector, and so is the state of a quantum system. Most consequential of all, the solutions of a linear differential equation form a vector space, because adding two solutions produces a solution and scaling one produces another. Physicists call that superposition and speak of it as a principle of nature. It is nothing of the sort. It is an observation about the equation.</p>
+  <p>Carry that forward, because it is what makes the abstraction worth its awkwardness. One body of results, proved once and never again, will later solve a room full of coupled pendulums and a hydrogen atom without needing to be told which of the two it is looking at.</p>
+</div>
+
+<h2>2 · Span, independence, basis, dimension</h2>
+
+<p>We now build the machinery that lets us describe an abstract vector by a list of numbers — and,
+just as importantly, that tells us the list is not the vector.</p>
+
+<p>A <strong>linear combination</strong> of $v_{1},\dots,v_{k}$ is any vector
+$c_{1}v_{1}+\cdots+c_{k}v_{k}$. The <strong>span</strong> of a set is the collection of all its
+linear combinations; it is itself a vector space (a sum of two linear combinations is a linear
+combination, and so is a multiple of one). The set $\{v_{1},\dots,v_{k}\}$ is <strong>linearly
+independent</strong> if</p>
+
+<div class="eq" id="e-indep">
+$$ c_{1}v_{1}+c_{2}v_{2}+\cdots+c_{k}v_{k} = 0 \quad\Longrightarrow\quad c_{1}=c_{2}=\cdots=c_{k}=0, $$
+</div>
+
+<p>i.e. the only way to build the zero vector out of them is to use none of them. A
+<strong>basis</strong> is a set that is both linearly independent and spans the whole space.</p>
+
+<h3>Coordinates exist, and they are unique</h3>
+
+<p>Let $\{e_{1},\dots,e_{n}\}$ be a basis of $V$. Because it spans, every $v\in V$ can be written as
+$v=\sum_{j}x_{j}e_{j}$ for some scalars $x_{j}$. The claim is that those scalars are
+<em>uniquely determined</em> by $v$. Suppose two expansions:</p>
+
+<div class="eq" id="e-unique">
+$$ v = \sum_{j=1}^{n} x_{j}e_{j} = \sum_{j=1}^{n} y_{j}e_{j} \quad\Longrightarrow\quad \sum_{j=1}^{n}(x_{j}-y_{j})\,e_{j} = 0 \quad\Longrightarrow\quad x_{j}=y_{j}\ \ \forall j, $$
+</div>
+
+<p>the last step being exactly the definition of independence <a class="eqref" href="#e-indep"></a>
+applied to the coefficients $c_{j}=x_{j}-y_{j}$. The converse is just as quick: if every vector has
+a unique expansion, apply that to $v=0$, which certainly has the expansion with all coefficients
+zero; uniqueness says there is no other, which is independence. So:</p>
+
+<div class="callout insight">
+  <span class="ct">Basis, restated</span>
+  <p>A set is a basis exactly when <strong>every vector in the space has one and only one coordinate
+  list with respect to it.</strong> Spanning gives you <em>at least</em> one; independence gives you
+  <em>at most</em> one.</p>
+</div>
+
+<p>The scalars $x_{j}$ are the <strong>coordinates</strong> of $v$ in the basis $\{e_{j}\}$, and we
+will write them as a column and give the column its own symbol, deliberately different from the
+vector's:</p>
+
+<div class="eq" id="e-coord">
+$$ v = \sum_{j=1}^{n} x_{j}\,e_{j} \qquad\longleftrightarrow\qquad \vv{x} = \begin{pmatrix} x_{1}\\ \vdots\\ x_{n}\end{pmatrix}. $$
+</div>
+
+<p>Throughout this chapter, $v$ is the vector and $\vv{x}$ is its coordinate list. They are not the
+same kind of thing, and keeping them typographically apart is not pedantry — it is the entire
+subject.</p>
+
+<h3>Dimension</h3>
+
+<p>The <strong>dimension</strong> of $V$ is the number of elements in a basis. For that to be a
+definition rather than a hope, we need to know that two different bases cannot have different sizes.
+They cannot, and the proof is a swapping argument worth seeing once (grind box below). Given it, the
+examples fall out:</p>
+
+<table>
+<tr><th>Space</th><th>A basis</th><th>Dimension</th></tr>
+<tr><td>$\R^{n}$</td><td>$e_{1},\dots,e_{n}$ (the standard columns)</td><td>$n$</td></tr>
+<tr><td>$P_{3}$, polynomials of degree $\le3$</td><td>$1,\ x,\ x^{2},\ x^{3}$</td><td>$4$</td></tr>
+<tr><td>$2\times2$ real matrices</td><td>the four matrices with a single $1$</td><td>$4$</td></tr>
+<tr><td>Solutions of $y''+\omega^{2}y=0$</td><td>$\cos\omega t,\ \sin\omega t$</td><td>$2$</td></tr>
+<tr><td>Functions on $[a,b]$</td><td>— no finite basis exists —</td><td>$\infty$</td></tr>
+</table>
+
+<p>The polynomial entry deserves a word, since it is the one people wave through. Why are
+$1,x,x^{2},x^{3}$ independent? Because if $c_{0}+c_{1}x+c_{2}x^{2}+c_{3}x^{3}=0$ <em>as a
+function</em> — true for every $x$ — then the polynomial has infinitely many roots. A nonzero
+polynomial of degree $\le3$ has at most three. So it is the zero polynomial and all $c_{k}=0$. The
+independence of $\cos$ and $\sin$ is Problem 1, and it is proved the same way: evaluate somewhere
+convenient.</p>
+
+<details class="grind">
+  <summary>Grind box — why every basis has the same size (the exchange lemma)</summary>
+  <div class="grind-body">
+    <p><b>Lemma.</b> If $\{w_{1},\dots,w_{m}\}$ spans $V$ and $\{v_{1},\dots,v_{k}\}$ is
+    independent, then $k\le m$. <em>An independent set can never be larger than a spanning set.</em></p>
+    <p><b>Proof.</b> We swap the $v$'s in one at a time, keeping a spanning set at every step.</p>
+    <p>Since the $w$'s span, $v_{1}=\sum_{j}c_{j}w_{j}$. Not every $c_{j}$ is zero, since that would
+    make $v_{1}=0$ and a set containing $0$ is never independent (take $c_{1}=1$ and the rest zero in
+    <a class="eqref" href="#e-indep"></a>). Relabel so that $c_{1}\neq0$; then</p>
+    $$ w_{1} = \frac{1}{c_{1}}\Big(v_{1} - \sum_{j\ge2}c_{j}w_{j}\Big), $$
+    <p>so anything expressible with $w_{1}$ is expressible with $v_{1}$ instead, and
+    $\{v_{1},w_{2},\dots,w_{m}\}$ still spans $V$.</p>
+    <p>Now suppose we have got as far as $\{v_{1},\dots,v_{r},w_{r+1},\dots,w_{m}\}$ spanning, with
+    $r\lt k$. Expand the next one:</p>
+    $$ v_{r+1} = \sum_{i\le r} a_{i}v_{i} + \sum_{j\gt r} b_{j}w_{j}. $$
+    <p>If every $b_{j}$ vanished, $v_{r+1}$ would be a linear combination of $v_{1},\dots,v_{r}$,
+    and then $a_{1}v_{1}+\cdots+a_{r}v_{r}-v_{r+1}=0$ would be a nontrivial vanishing combination
+    (the coefficient of $v_{r+1}$ is $-1\neq0$), contradicting independence. So some $b_{j}\neq0$;
+    relabel it as $b_{r+1}$, solve for $w_{r+1}$ as above, and swap it out. The new set still spans.</p>
+    <p>Each step consumes one $w$. If $k\gt m$ we would run out of $w$'s while $v$'s remained — but
+    the step above <em>proved</em> that some $b_{j}$ with $j\gt r$ is nonzero, which requires at
+    least one $w$ to still be present. Contradiction. Hence $k\le m$. $\blacksquare$</p>
+    <p><b>Consequence.</b> Let $B_{1}$ and $B_{2}$ be bases with $n_{1}$ and $n_{2}$ elements. $B_{1}$
+    is independent and $B_{2}$ spans, so $n_{1}\le n_{2}$. $B_{2}$ is independent and $B_{1}$ spans,
+    so $n_{2}\le n_{1}$. Therefore $n_{1}=n_{2}$, and <em>dimension</em> is a property of the space,
+    not of the description. $\blacksquare$</p>
+    <p><b>A corollary we need in §5.</b> In an $n$-dimensional space, any $n$ independent vectors
+    already form a basis. For if they failed to span, there would be some $u$ outside their span, and
+    then $\{v_{1},\dots,v_{n},u\}$ would be independent — a vanishing combination
+    $\sum c_{i}v_{i}+cu=0$ must have $c=0$ (otherwise $u=-\frac1c\sum c_iv_i$ lies in the span), and
+    then all $c_{i}=0$ by independence of the $v$'s. That is $n+1$ independent vectors in a space
+    spanned by $n$, contradicting the lemma.</p>
+  </div>
+</details>
+
+<div class="callout insight">
+  <span class="ct">The sentence that governs the rest of this book</span>
+  <p><strong>The vector is the object. The coordinate list is a description of it relative to a
+  choice you made.</strong> Change the choice and every number in the list changes, while nothing
+  whatsoever happens to the vector.</p>
+  <p>This is the seed of two things that will otherwise look like arbitrary formalism when you meet
+  them. In Chapter 2.4, a <em>tensor</em> is defined as an object whose components transform in the
+  particular way that keeps the underlying object fixed while the description changes — the
+  bookkeeping is §4 of this chapter, promoted to a definition. And in Chapter 3.2, the demand that
+  <em>physics must not depend on the coordinates</em> becomes the organising principle of general
+  relativity: a coordinate system is a choice of labels for events, no more physical than a choice of
+  basis, so any equation whose content depends on that choice is not a law of nature. Both of those
+  are this paragraph.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.2</span></span>
+  <p>Coordinates arrive as a convenience and become a hazard within a page, so it is worth being exact about what they are. Choose a collection of vectors large enough to build everything in sight and lean enough that none of them is redundant, and every vector in the space acquires one list of numbers with respect to that collection. Being able to build everything gets you at least one such list; having no redundancy gets you at most one; a basis is the name for a collection with both properties at once.</p>
+  <p>The hazard hides in the phrase with respect to. The list is not the vector. It is a description of the vector relative to a choice somebody made, and a different choice yields a completely different list while nothing whatever happens to the thing being described. This is the first appearance of the idea the whole book is organised around, which is the separation of what depends on your point of view from what does not, and the habit is worth installing now, while the stakes are still small.</p>
+  <p>One thing does survive every choice. Any two bases of the same space contain the same number of vectors, so that count is a property of the space rather than of anybody's description of it. It is the first invariant you meet.</p>
+</div>
+
+<h2>3 · Linear maps, and why matrix multiplication looks the way it does</h2>
+
+<p>A map $T:V\to W$ between vector spaces is <strong>linear</strong> if it respects both
+operations:</p>
+
+<div class="eq" id="e-linmap">
+$$ \begin{aligned} &T(u+v) = T(u)+T(v), \qquad T(av) = a\,T(v)\\[4pt] &\qquad\Longleftrightarrow\qquad T(au+bv) = a\,T(u)+b\,T(v). \end{aligned} $$
+</div>
+
+<p>Examples, deliberately not all of them matrices: rotation of the plane; differentiation
+$y\mapsto y'$ acting on polynomials or on smooth functions; the operator
+$L$ of <a class="eqref" href="#e-ode"></a>; definite integration $f\mapsto\int_{a}^{b}f$, which is
+linear from a function space to $\R$; and, in Chapter 4.2, every physical observable.</p>
+
+<h3>A linear map is determined by what it does to a basis</h3>
+
+<p>Let $\{e_{1},\dots,e_{n}\}$ be a basis of $V$ and let $T:V\to W$ be linear. Take any $v\in V$ and
+expand it in coordinates as in <a class="eqref" href="#e-coord"></a>. Applying additivity $n-1$ times
+and then homogeneity to each term,</p>
+
+<div class="eq" id="e-detbybasis">
+$$ T(v) \;=\; T\Big(\sum_{j=1}^{n} x_{j}e_{j}\Big) \;=\; \sum_{j=1}^{n} x_{j}\,T(e_{j}). $$
+</div>
+
+<p>Read what that says: <strong>if you know the $n$ vectors $T(e_{j})$, you know $T$ completely</strong>
+— its value on <em>every</em> one of the infinitely many vectors in $V$ is then forced. And the
+converse holds too: choose any $n$ vectors $w_{1},\dots,w_{n}$ in $W$, whatever you like, and
+<em>define</em> $T(v)\equiv\sum_{j}x_{j}w_{j}$. This is a legitimate definition precisely because the
+coordinates $x_{j}$ are unique — that is what <a class="eqref" href="#e-unique"></a> was for — and it
+is linear because coordinates add and scale. So linear maps $V\to W$ correspond exactly to arbitrary
+lists of $n$ vectors in $W$. Nothing is left over.</p>
+
+<h3>The matrix, defined</h3>
+
+<p>Now pick a basis $\{f_{1},\dots,f_{m}\}$ of the target space $W$. Each $T(e_{j})$ lives in $W$, so
+it has coordinates there, and we give them a name:</p>
+
+<div class="eq" id="e-matdef">
+$$ \boxed{\;T(e_{j}) \;=\; \sum_{i=1}^{m} T_{ij}\,f_{i}\;} $$
+</div>
+
+<p>The $m\times n$ array of numbers $T_{ij}$ is <strong>the matrix of $T$ in the bases
+$\{e_{j}\},\{f_{i}\}$</strong>. In words, and this is the sentence to remember:
+<em>the $j$-th column of the matrix is the coordinate list of the image of the $j$-th basis
+vector.</em> The first index labels which component in the target; the second labels which basis
+vector went in.</p>
+
+<p>What does the array do to coordinates? Combine
+<a class="eqref" href="#e-detbybasis"></a> with <a class="eqref" href="#e-matdef"></a> and swap the
+order of two finite sums:</p>
+
+<div class="eq" id="e-matvec">
+$$ \begin{aligned} T(v) \;&=\; \sum_{j} x_{j}\sum_{i} T_{ij}f_{i} \;=\; \sum_{i}\Big(\sum_{j}T_{ij}x_{j}\Big)f_{i}\\[4pt] &\Longrightarrow\qquad \big(T(v)\big)_{i} = \sum_{j=1}^{n} T_{ij}\,x_{j}. \end{aligned} $$
+</div>
+
+<p>That is the row-times-column rule for a matrix acting on a column vector. We did not postulate it.
+It is what <a class="eqref" href="#e-matdef"></a> forces.</p>
+
+<h3>Composition, and the punchline</h3>
+
+<p>Here is the moment this section exists for. Let $T:U\to V$ and $S:V\to W$, with bases
+$\{u_{k}\}$ of $U$, $\{v_{j}\}$ of $V$, $\{w_{i}\}$ of $W$, and matrices defined by
+<a class="eqref" href="#e-matdef"></a> in each case:</p>
+
+<div class="eq" id="e-twomaps">
+$$ T(u_{k}) = \sum_{j} T_{jk}\,v_{j}, \qquad\qquad S(v_{j}) = \sum_{i} S_{ij}\,w_{i}. $$
+</div>
+
+<p>The composite map $S\circ T:U\to W$ — do $T$, then $S$ — is linear (compose the definitions), so
+it has a matrix of its own, and by <a class="eqref" href="#e-matdef"></a> that matrix is read off
+from what $S\circ T$ does to the basis $\{u_{k}\}$. So compute:</p>
+
+<div class="eq" id="e-compose">
+$$ \begin{aligned}
+(S\circ T)(u_{k}) &= S\big(T(u_{k})\big) = S\Big(\sum_{j}T_{jk}\,v_{j}\Big) = \sum_{j} T_{jk}\,S(v_{j})\\[4pt]
+&= \sum_{j} T_{jk}\sum_{i} S_{ij}\,w_{i} \;=\; \sum_{i}\Big(\underbrace{\sum_{j} S_{ij}T_{jk}}_{\text{coefficient of }w_{i}}\Big) w_{i}.
+\end{aligned} $$
+</div>
+
+<p>Compare the last line with the definition <a class="eqref" href="#e-matdef"></a> and read off the
+matrix of the composite:</p>
+
+<div class="eq" id="e-matmul">
+$$ \boxed{\;(ST)_{ik} \;=\; \sum_{j=1}^{\dim V} S_{ij}\,T_{jk}\;} $$
+</div>
+
+<p>There it is. <strong>Matrix multiplication is not a convention someone chose; it is what
+composition of linear maps does to the arrays.</strong> Every strange feature of the rule is now
+explained rather than memorised:</p>
+
+<ul>
+<li><b>Why rows times columns.</b> The summed index $j$ is the one that labels a basis of the
+<em>middle</em> space $V$ — the space the output of $T$ lands in and the input of $S$ comes from. It
+must be summed because <a class="eqref" href="#e-compose"></a> feeds every component of $T(u_{k})$
+through $S$. The free indices $i$ and $k$ label the two ends.</li>
+<li><b>Why the shapes must match.</b> An $m\times n$ times an $n\times p$ is legal and nothing else
+is, because the middle dimension is <em>the dimension of the middle space</em>. Mismatched shapes are
+not a typing error; they are an attempt to compose maps that do not connect.</li>
+<li><b>Why $ST$ means "first $T$".</b> Because $(S\circ T)(u)=S(T(u))$ and the function nearest the
+argument acts first. The reversed-looking order is inherited from function notation, which is in turn
+inherited from writing $f(x)$ rather than $(x)f$.</li>
+<li><b>Why it is associative for free.</b> $(RS)T = R(ST)$ requires no computation whatsoever:
+composition of functions is associative, since both sides mean "do $T$, then $S$, then $R$". People
+verify this with triple sums. There is no need.</li>
+<li><b>Why it need not commute.</b> Doing $T$ then $S$ is a different operation from doing $S$ then
+$T$. See the warning box below, and then most of twentieth-century physics.</li>
+</ul>
+
+<p>The repeated index $j$ in <a class="eqref" href="#e-matmul"></a>, summed over while the free
+indices survive, is your first <em>contraction</em>. In Chapter 2.4 it gets a notation of its own —
+Einstein's convention, in which a repeated index is silently summed — and from there it never stops.</p>
+
+<div class="callout familiar">
+  <span class="ct">Familiar ground</span>
+  <p>You already iterate a linear map professionally. Take a three-state disease model —
+  progression-free (PF), progressed (P), dead (D) — and a cycle length of, say, three months. Let the
+  state of a cohort be a <em>column</em> of probabilities $\vv{p}$, and let the transition matrix act
+  on the left, $\vv{p}^{(n+1)} = P\,\vv{p}^{(n)}$. With that convention
+  $P_{ij} = \Pr(\text{next state } i \mid \text{current state } j)$, so the <em>columns</em> sum to
+  one. (Much of the health-economics literature writes the state as a row vector and multiplies on
+  the right, in which case the rows sum to one instead. Both are correct; mixing them silently is
+  the standard way to get a wrong answer.) With per-cycle probabilities $0.15$ for progression,
+  $0.05$ for death from PF and $0.30$ for death from P:</p>
+  $$ P = \begin{pmatrix} 0.80 & 0 & 0\\ 0.15 & 0.70 & 0\\ 0.05 & 0.30 & 1 \end{pmatrix}, \qquad \vv{p}^{(0)} = \begin{pmatrix}1\\0\\0\end{pmatrix}. $$
+  <p><b>$n$ cycles is $P^{n}$</b> — the matrix of the $n$-fold composite, by
+  <a class="eqref" href="#e-matmul"></a> applied $n-1$ times. And the entries of $P^{2}$ are exactly
+  the derivation in <a class="eqref" href="#e-compose"></a> read aloud: the chance of being progressed
+  after two cycles is $(P^{2})_{21}=\sum_{j}P_{2j}P_{j1} = 0.15\times0.70 + 0.80\times0.15 = 0.225$,
+  a sum over the <em>intermediate</em> state $j$ — progress-then-survive plus survive-then-progress.
+  The summed middle index of matrix multiplication is a sum over all the ways of getting there.</p>
+  <p>The column-sum constraint has an algebraic reading. Writing $\vv{1}^{\!\top}$ for the row of
+  ones, "every column sums to one" is $\vv{1}^{\!\top}P = \vv{1}^{\!\top}$: that row vector is left
+  unchanged by $P$. A vector the map leaves alone is what §7 will call an <em>eigenvector</em>, here
+  with eigenvalue $1$, and this one is the algebraic form of "probability is conserved" — the total
+  is the thing this map cannot change.</p>
+  <p>Everything else about the model's long run is likewise eigenvalues. The eigenvalues are the
+  numbers $\lambda$ for which $P-\lambda I$ fails to be invertible (§7 proves that is the same
+  condition), and this $P$ is triangular, for which §5 shows the determinant is the product of the
+  diagonal. So $\det(P-\lambda I) = (0.8-\lambda)(0.7-\lambda)(1-\lambda)$ and the eigenvalues are
+  $1,\ 0.8,\ 0.7$. The $\lambda=1$ direction is the absorbing state — everyone is eventually dead —
+  and the <em>rate</em> of approach is governed by the largest of the others: the PF fraction is
+  exactly $0.8^{n}$, and at $n=10$ the cohort is $10.7\%$ PF, $11.9\%$ progressed, $77.4\%$ dead.
+  Which sub-unit eigenvalue dominates, and how fast, is the whole content of Chapter 0.5.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.3</span></span>
+  <p>Knowing what a map does to the members of a basis is knowing everything about it, since every other vector is a combination of those few and the map respects combinations. That single observation is where the array of numbers comes from. Record what happens to each basis vector, in coordinates, stack the answers as columns, and you have the array; it is a transcript of that and of nothing else.</p>
+  <p>Once the array is defined that way, the strange rule for multiplying two of them stops being a rule. Ask which array describes doing one map and then a second, follow the bookkeeping, and rows against columns emerges at the far end with no choice made anywhere. Every odd feature is thereby explained rather than memorised: why the inner sizes must agree, since that number counts the dimensions of the space in the middle; and why nobody need check that the operation is associative, since doing three things in sequence cannot depend on how you bracket the description of it.</p>
+  <p>The same reading explains the failure that matters most. Two maps applied in opposite orders are two different operations, so the arrays do not commute, and the size of that discrepancy is not a blemish on the notation. Turn a book and then flip it, then flip a book and turn it, and the book finishes somewhere else.</p>
+</div>
+
+<h2>4 · Change of basis</h2>
+
+<p>Two people describe the same space with different bases. What is the relationship between their
+arrays? This is the most mechanical section of the chapter and the one with the longest reach: it is
+the prototype of every transformation law in relativity.</p>
+
+<p>Let $\{e_{j}\}$ and $\{e'_{j}\}$ both be bases of $V$. Each new basis vector, being a vector, has
+coordinates in the old basis; call them $P_{ij}$:</p>
+
+<div class="eq" id="e-newbasis">
+$$ e'_{j} \;=\; \sum_{i=1}^{n} P_{ij}\,e_{i}. $$
+</div>
+
+<p>In words: <em>the columns of $P$ are the new basis vectors, written in old coordinates.</em>
+$P$ is invertible, and we can see it without appealing to anything: since $\{e'_{k}\}$ is also a
+basis, we may equally expand $e_{i}=\sum_{k}Q_{ki}e'_{k}$. Substitute one into the other:</p>
+
+<div class="eq" id="e-pinv">
+$$ e'_{j} = \sum_{i}P_{ij}\sum_{k}Q_{ki}\,e'_{k} = \sum_{k}\Big(\sum_{i}Q_{ki}P_{ij}\Big)e'_{k} \quad\Longrightarrow\quad \sum_{i}Q_{ki}P_{ij} = \delta_{kj}, $$
+</div>
+
+<p>where the implication is uniqueness of coordinates <a class="eqref" href="#e-unique"></a> again
+(the left side must be the expansion of $e'_{j}$ in the basis $\{e'_{k}\}$, which is $1$ in slot $j$
+and $0$ elsewhere — that is what the Kronecker delta $\delta_{kj}$ means). So $QP=I$, and the same
+argument with the roles exchanged gives $PQ=I$. Hence $Q=P^{-1}$.</p>
+
+<h3>Components go the other way</h3>
+
+<p>Now take a vector $v$ and expand it both ways, $v=\sum_{j}x_{j}e_{j}=\sum_{j}x'_{j}e'_{j}$.
+Substituting <a class="eqref" href="#e-newbasis"></a> into the second expansion,</p>
+
+<div class="eq" id="e-coordtrans">
+$$ v = \sum_{j}x'_{j}\sum_{i}P_{ij}e_{i} = \sum_{i}\Big(\sum_{j}P_{ij}x'_{j}\Big)e_{i} \quad\Longrightarrow\quad \vv{x} = P\vv{x}', \qquad \vv{x}' = P^{-1}\vv{x}. $$
+</div>
+
+<p>Stare at that for a second, because it is the source of a lifetime of index confusion. The
+<em>basis vectors</em> transform with $P$; the <em>components</em> transform with $P^{-1}$. They must
+go in opposite directions, because their product — the actual vector — does not change at all. Make
+your ruler twice as long and every measurement in rulers is halved. In Chapter 2.4 this opposition is
+given names, <em>covariant</em> and <em>contravariant</em>, and it is why some indices are written
+upstairs and some downstairs.</p>
+
+<h3>The similarity transformation</h3>
+
+<p>Finally, let $T:V\to V$ be a linear map from the space to itself — an <em>operator</em> — with
+matrix $A$ in the old basis and $A'$ in the new one:</p>
+
+<div class="eq" id="e-twomat">
+$$ T(e_{j}) = \sum_{i}A_{ij}\,e_{i}, \qquad\qquad T(e'_{j}) = \sum_{i}A'_{ij}\,e'_{i}. $$
+</div>
+
+<p>Compute $T(e'_{j})$ two ways. First, push $T$ through <a class="eqref" href="#e-newbasis"></a>:</p>
+
+<div class="eq" id="e-simA">
+$$ T(e'_{j}) = T\Big(\sum_{k}P_{kj}e_{k}\Big) = \sum_{k}P_{kj}\,T(e_{k}) = \sum_{k}P_{kj}\sum_{i}A_{ik}e_{i} = \sum_{i}(AP)_{ij}\,e_{i}. $$
+</div>
+
+<p>Second, use the new-basis matrix and then express the new basis vectors in the old basis:</p>
+
+<div class="eq" id="e-simB">
+$$ T(e'_{j}) = \sum_{k}A'_{kj}\,e'_{k} = \sum_{k}A'_{kj}\sum_{i}P_{ik}e_{i} = \sum_{i}(PA')_{ij}\,e_{i}. $$
+</div>
+
+<p>Both are expansions of the same vector in the same basis $\{e_{i}\}$, so by uniqueness of
+coordinates the coefficients agree: $AP=PA'$, and therefore</p>
+
+<div class="eq" id="e-similar">
+$$ \boxed{\;A' = P^{-1}AP\;} $$
+</div>
+
+<p>Two matrices related this way are called <strong>similar</strong>, and the content of
+<a class="eqref" href="#e-similar"></a> is: <em>similar matrices are the same map, seen twice.</em>
+(Sanity check in coordinates: if $\vv{y}=A\vv{x}$ then $\vv{y}'=P^{-1}\vv{y}=P^{-1}AP\vv{x}'$ — the
+sandwich reads right to left as "translate the new coordinates into old, apply the map, translate
+back".)</p>
+
+<p>Everything that is genuinely <em>about the map</em> must be unchanged by
+<a class="eqref" href="#e-similar"></a>, since $P$ encodes only our change of mind. §5 and §6 will
+prove that the determinant and the trace are two such invariants; Chapter 0.5 adds the eigenvalues
+and the characteristic polynomial. Conversely, anything that changes under
+<a class="eqref" href="#e-similar"></a> — any individual entry, for instance — is a fact about your
+description, not about the physics.</p>
+
+<div class="callout warn">
+  <span class="ct">⚠ Why this isn't obvious</span>
+  <p><b>(a) The matrix is not the map.</b> A single linear map has <em>infinitely many</em>
+  matrices — one for every basis, and there are infinitely many bases. Consider reflection of the
+  plane in the line $y=x$. In the standard basis its matrix is
+  $\begin{pmatrix}0&1\\1&0\end{pmatrix}$, which looks like a swap. In the basis
+  $e'_{1}=(1,1)$, $e'_{2}=(1,-1)$ — along the mirror and perpendicular to it — the matrix is
+  $\begin{pmatrix}1&0\\0&-1\end{pmatrix}$, which looks like "keep one direction, flip the other", and
+  is a much better description of what the map actually does. You can check with
+  $P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$ that these are related by
+  <a class="eqref" href="#e-similar"></a>. Same map. Different arrays. Note that the trace is $0$ and
+  the determinant $-1$ in both.</p>
+  <p>Confusing the two is the single most common failure mode in everything downstream. It is why
+  people think a tensor "is" an array of numbers (Chapter 2.4), why the Schrödinger and Heisenberg
+  pictures look like different physics instead of different bases (Chapter 4.4), and why gauge
+  transformations look like magic instead of like changes of description (Chapter 6.3).</p>
+  <p><b>(b) Matrices do not commute, and the reason is not algebraic.</b> Take
+  $R=\begin{pmatrix}0&-1\\1&0\end{pmatrix}$, rotation by $90^{\circ}$, and
+  $F=\begin{pmatrix}1&0\\0&-1\end{pmatrix}$, reflection in the $x$-axis. Then</p>
+  $$ FR = \begin{pmatrix}0&-1\\-1&0\end{pmatrix}, \qquad RF = \begin{pmatrix}0&1\\1&0\end{pmatrix}, \qquad [R,F] \equiv RF-FR = \begin{pmatrix}0&2\\2&0\end{pmatrix} \neq 0. $$
+  <p>These are genuinely different operations: $FR$ is a reflection in the line $y=-x$, $RF$ a
+  reflection in the line $y=+x$. Follow the single vector $e_{1}=(1,0)$: rotating first sends it to
+  $(0,1)$ and then reflecting sends it to $(0,-1)$; reflecting first leaves it at $(1,0)$ and then
+  rotating sends it to $(0,+1)$. Same start, opposite finish. Pick up a book and try it: turn it
+  $90^{\circ}$ then flip it, versus flip then turn. <strong>Matrix multiplication fails to commute
+  because composing transformations fails to commute.</strong> The algebra is only reporting.</p>
+  <p>The quantity $[A,B]=AB-BA$ measuring the failure is the <strong>commutator</strong>, and its
+  non-vanishing is not a nuisance to be tidied away. It is most of modern physics.
+  $[\hat x,\hat p]=\ii\hbar$ <em>is</em> the uncertainty principle (Chapter 4.6) — measuring position
+  then momentum is a different operation from momentum then position, by an amount $\hbar$. The
+  commutator of two covariant derivatives is the curvature of spacetime (Chapter 3.4) — transporting
+  a vector east-then-north differs from north-then-east, and the difference is gravity. And the
+  commutator of two gauge fields is why gluons interact with each other while photons do not
+  (Chapter 6.4), which is why quarks are confined and you are made of protons rather than a plasma.
+  Every one of those is this box.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.4</span></span>
+  <p>Set two descriptions of one space side by side and a small opposition appears which is worth more than it looks. The new basis vectors are assembled from the old ones by some recipe, and the components of any particular vector are reassembled by the exact reverse of it. They must oppose each other, because their product is the vector, and the vector is taking no part in the change. Lengthen your ruler and every measurement expressed in rulers shrinks by the compensating factor.</p>
+  <p>For a map from a space to itself the same argument yields a sandwich: translate the new description into the old, apply the map, translate back again. Two arrays related in that way are one map seen twice. Whatever genuinely belongs to the map must be left untouched by the sandwich, and whatever moves was a fact about your bookkeeping rather than about the physics. An individual entry means nothing on its own.</p>
+  <p>A promise starts here as well. Reflection in a diagonal line looks like a swap of two numbers in one description and like keeping one direction while flipping the other in a better one, and the better description is the one in which the map has fallen apart into independent pieces that no longer interfere. Finding such a description, in general, is what the following chapter exists to do.</p>
+</div>
+
+<h2>5 · The determinant, as signed volume</h2>
+
+<p>The determinant is usually introduced as a formula involving alternating signs and minors, from
+which nothing at all is obvious. We will do it the other way: state the three properties that
+characterise it, notice that they are the properties of <em>volume</em>, and get the formulas as a
+consequence.</p>
+
+<p>Think of an $n\times n$ matrix $A$ as an ordered list of its columns $a_{1},\dots,a_{n}$, each a
+vector in $\R^{n}$. The three properties are:</p>
+
+<div class="eq" id="e-detprops">
+$$ \begin{aligned}
+\textbf{(D1) Multilinear:}\quad & D(\dots,\ \alpha a_{j}+\beta a_{j}',\ \dots)\\[2pt]
+&\qquad = \alpha\,D(\dots,a_{j},\dots) + \beta\,D(\dots,a_{j}',\dots)\\[7pt]
+\textbf{(D2) Alternating:}\quad & \text{swapping any two columns flips the sign of } D\\[7pt]
+\textbf{(D3) Normalised:}\quad & D(e_{1},e_{2},\dots,e_{n}) = 1
+\end{aligned} $$
+</div>
+
+<p>(D1) says: linear in each column separately, with the others held fixed. Note immediately a
+consequence of (D2): if two columns are <em>equal</em>, swapping them changes nothing, yet must flip
+the sign, so $D=-D$ and therefore $D=0$. <strong>Repeated column $\Rightarrow$ zero.</strong></p>
+
+<h3>These are the properties of volume</h3>
+
+<p>Let $\mathrm{Vol}(a_{1},\dots,a_{n})$ be the <em>signed</em> volume of the parallelepiped spanned
+by the columns from a common corner — in two dimensions, the area of the parallelogram with edges
+$a_{1},a_{2}$; in three, the volume of the skewed box. We take from geometry exactly one fact:
+<em>volume equals base times perpendicular height</em>, the fact that makes a leaning stack of paper
+occupy the same volume as a straight one. Then:</p>
+
+<p><b>(D3) is the choice of unit.</b> The unit cube, spanned by $e_{1},\dots,e_{n}$, has volume $1$.
+That is what "unit" means.</p>
+
+<p><b>(D2) is orientation.</b> The parallelepiped spanned by $(a_{1},a_{2})$ and the one spanned by
+$(a_{2},a_{1})$ are the same set of points, but the ordered lists have opposite handedness — going
+from the first edge to the second is counterclockwise in one case and clockwise in the other. Signed
+volume records that with a sign. Consistently, if two edges coincide the solid is flat and its volume
+is genuinely zero, matching the consequence we just derived from (D2).</p>
+
+<p><b>(D1) is base times height.</b> Hold all columns but $a_{j}$ fixed. They span a
+"base" — an $(n-1)$-dimensional parallelepiped of some fixed content $B$ lying in a hyperplane
+through the origin. The volume of the whole solid is $B\times h$, where $h$ is the signed
+perpendicular height of $a_{j}$ above that hyperplane. But $h$ is the component of $a_{j}$ along the
+fixed unit normal $\hat n$ of the base, and taking a component is a linear operation:
+$h(\alpha a_{j} + \beta a'_{j}) = \alpha h(a_{j}) + \beta h(a'_{j})$. Multiply by the constant $B$ and
+you have exactly (D1). (If the base is itself degenerate, $B=0$ and both sides vanish.)</p>
+
+<p>So signed volume satisfies (D1)–(D3). Now the key structural fact, proved in the grind box: those
+three properties determine the function <em>completely</em> — there is exactly one $D$ satisfying
+them. Since $\det$ and signed volume both satisfy them, they are the same thing:</p>
+
+<div class="eq" id="e-detvol">
+$$ \boxed{\;\begin{aligned} \det A \;=\;& \text{ the signed volume of the parallelepiped}\\ &\text{ spanned by the columns of } A. \end{aligned}\;} $$
+</div>
+
+<p>And since <a class="eqref" href="#e-matdef"></a> makes the columns of $A$ the images $A e_{j}$ of
+the standard basis vectors, that parallelepiped is the image of the unit cube. So the
+sentence to carry away is: <strong>$\det A$ is the factor by which the map $A$ multiplies volumes,
+with a sign recording whether it preserves or reverses orientation.</strong> The interactive below
+lets you drive that with your hands.</p>
+
+<details class="grind">
+  <summary>Grind box — uniqueness, the explicit formula, and the $2\times2$ and $3\times3$ cases</summary>
+  <div class="grind-body">
+    <p><b>Uniqueness.</b> Suppose $D$ satisfies (D1)–(D3). Expand every column in the standard basis,
+    $a_{j}=\sum_{i}A_{ij}e_{i}$, and use multilinearity in each of the $n$ slots in turn. Every slot
+    contributes a sum over which basis vector was chosen there, so</p>
+    $$ D(a_{1},\dots,a_{n}) = \sum_{i_{1}=1}^{n}\cdots\sum_{i_{n}=1}^{n} A_{i_{1}1}A_{i_{2}2}\cdots A_{i_{n}n}\; D(e_{i_{1}},\dots,e_{i_{n}}). $$
+    <p>Any term in which two of the $i$'s coincide has a repeated column and dies. So only the terms
+    where $(i_{1},\dots,i_{n})$ is a <em>permutation</em> $\sigma$ of $(1,\dots,n)$ survive. Each such
+    $D(e_{\sigma(1)},\dots,e_{\sigma(n)})$ can be sorted back into $D(e_{1},\dots,e_{n})=1$ by a
+    sequence of swaps, each costing a factor $-1$ by (D2). Writing
+    $\mathrm{sgn}(\sigma)=(-1)^{\#\text{swaps}}$,</p>
+    $$ \det A \;=\; \sum_{\sigma} \mathrm{sgn}(\sigma)\, A_{\sigma(1)1}A_{\sigma(2)2}\cdots A_{\sigma(n)n}, $$
+    <p>which is <em>determined</em> — no freedom was left anywhere. This is the Leibniz formula, and
+    the derivation is simultaneously the proof that at most one such $D$ exists.</p>
+    <p><b>Is $\mathrm{sgn}$ well defined?</b> It had better not depend on which sequence of swaps you
+    used. Count the <em>inversions</em> of $\sigma$: the pairs $i\lt j$ with $\sigma(i)\gt\sigma(j)$.
+    Swapping two adjacent entries changes that count by exactly $\pm1$; a swap of two entries $d$
+    apart can be built from $2d-1$ adjacent swaps, so any single swap changes the inversion count by
+    an odd number. Hence the parity of the number of swaps needed is fixed by $\sigma$ alone, and
+    $\mathrm{sgn}(\sigma)=(-1)^{\#\text{inversions}}$.</p>
+    <p><b>Existence.</b> Uniqueness is worthless if nothing satisfies the axioms, so check that the
+    Leibniz formula does. Each term contains exactly one factor from each column, so it is linear in
+    each column: (D1). ✓ Swapping columns $p,q$ replaces each $\sigma$ by $\sigma$ composed with a
+    transposition, which is a relabelling of the sum that flips every sign: (D2). ✓ For $A=I$ every
+    factor $\delta_{\sigma(j)j}$ forces $\sigma=\mathrm{id}$, leaving the single term $1$: (D3). ✓</p>
+    <p><b>Rows or columns?</b> Substituting $i=\sigma(j)$ in the product shows
+    $\det A^{\top} = \sum_{\sigma}\mathrm{sgn}(\sigma)\prod_{i}A_{\sigma^{-1}(i)\,i}$; and
+    $\sigma^{-1}$ has the same parity as $\sigma$ (reverse the order of the same swaps), while
+    $\sigma\mapsto\sigma^{-1}$ merely reshuffles which terms are summed. So
+    $\det A^{\top}=\det A$: every statement about columns is equally a statement about rows.</p>
+    <p><b>The $2\times2$ case, straight from the axioms.</b> No formula needed — just expand
+    bilinearly and kill the repeats:</p>
+    $$ \begin{aligned} D\big(ae_{1}+ce_{2},\; be_{1}+de_{2}\big) &= ab\underbrace{D(e_{1},e_{1})}_{0} + ad\underbrace{D(e_{1},e_{2})}_{1} + cb\underbrace{D(e_{2},e_{1})}_{-1} + cd\underbrace{D(e_{2},e_{2})}_{0}\\[4pt] &= ad-bc. \end{aligned} $$
+    <p><b>The $3\times3$ case.</b> Six permutations of $(1,2,3)$: three even
+    ($123,231,312$) and three odd ($213,132,321$). The Leibniz formula gives</p>
+    $$ \det\begin{pmatrix}a&b&c\\ d&e&f\\ g&h&i\end{pmatrix} = aei + bfg + cdh - ceg - bdi - afh, $$
+    <p>which regroups into the cofactor expansion you may have memorised,
+    $a(ei-fh)-b(di-fg)+c(dh-eg)$. Both are the same six products. The alternating signs of the
+    cofactor rule are (D2) in disguise, and the reason the formula has $n!$ terms is that it is a sum
+    over permutations — which is also why nobody computes a large determinant this way.</p>
+    <p><b>Triangular matrices.</b> If $A_{ij}=0$ whenever $i\lt j$ (lower triangular), then any
+    $\sigma\neq\mathrm{id}$ must somewhere send a column $j$ to a row $i\lt j$, contributing a zero
+    factor. Only the identity permutation survives: $\det A = A_{11}A_{22}\cdots A_{nn}$. That is the
+    fact the Familiar Ground box used to read off the eigenvalues of the transition matrix.</p>
+  </div>
+</details>
+
+<h3>The product rule, in one line</h3>
+
+<p>Now the payoff for having done it geometrically. What is $\det(AB)$? The map $B$ multiplies every
+volume by $\det B$; the map $A$ then multiplies whatever it is given by $\det A$; doing both
+multiplies volumes by the product. Hence</p>
+
+<div class="eq" id="e-detmul">
+$$ \boxed{\;\det(AB) = \det A\;\det B\;} $$
+</div>
+
+<p>That is the entire proof, and it is worth pausing on how much better it is than the algebraic
+version. Nothing is being manipulated; the identity is a statement that <em>scaling factors
+multiply</em>, which is a fact about the word "factor". (The airtight version, for readers who want
+the geometric hand-waving cashed out into axioms, is in the next grind box — it is four lines.)</p>
+
+<p>Two immediate consequences. First, taking $B=A^{-1}$: $\det(A)\det(A^{-1})=\det I = 1$, so
+$\det(A^{-1}) = 1/\det A$ — undoing a map undoes its volume scaling, as it must. Second, the
+determinant is <strong>basis independent</strong>:</p>
+
+<div class="eq" id="e-detinv">
+$$ \det(P^{-1}AP) = \det(P^{-1})\,\det A\,\det P = \frac{1}{\det P}\,\det A\,\det P = \det A. $$
+</div>
+
+<p>So the determinant is not a property of the array; it is a property of the <em>map</em>, which is
+why it will still make sense in Chapter 3.3 where there is no preferred basis anywhere.</p>
+
+<details class="grind">
+  <summary>Grind box — the product rule without the hand-waving</summary>
+  <div class="grind-body">
+    <p>Fix $A$ and define $D(B) \equiv \det(AB)$, regarded as a function of the columns
+    $b_{1},\dots,b_{n}$ of $B$. Column $j$ of $AB$ is $A b_{j}$, by
+    <a class="eqref" href="#e-matvec"></a>. Now check the three axioms:</p>
+    <p><b>(D1)</b> $b_{j}\mapsto Ab_{j}$ is linear, and $\det$ is linear in each column, so the
+    composite is linear in each $b_{j}$. ✓</p>
+    <p><b>(D2)</b> Swapping $b_{p}$ and $b_{q}$ swaps columns $Ab_{p}$ and $Ab_{q}$ of $AB$, which
+    flips the sign of $\det(AB)$. ✓</p>
+    <p><b>(D3)</b> Not normalised: $D(I) = \det(A)$, not $1$. Fix that by dividing. If
+    $\det A\neq0$, the function $\tilde D(B) = D(B)/\det A$ satisfies all three axioms, so by the
+    uniqueness proved above $\tilde D = \det$, i.e. $\det(AB) = \det A\,\det B$. ✓</p>
+    <p>If $\det A = 0$ the division is illegal, but then the columns of $A$ are dependent (proved
+    just below), so the columns of $AB$ — which are combinations of the columns of $A$ — are
+    dependent too, and both sides are $0$. The identity holds in every case. $\blacksquare$</p>
+  </div>
+</details>
+
+<h3>Zero determinant means information destroyed</h3>
+
+<p>The single most-used fact about determinants:</p>
+
+<div class="eq" id="e-detinvertible">
+$$ \det A \neq 0 \qquad\Longleftrightarrow\qquad A \text{ is invertible.} $$
+</div>
+
+<p>Both directions are now cheap. <b>($\Leftarrow$)</b> If $A$ is invertible then
+$\det A\det(A^{-1})=1$, so $\det A\neq0$. <b>($\Rightarrow$)</b> Contrapositive: suppose $A$ is not
+invertible. Then its columns are not independent — if they were, the corollary in the §2 grind box
+says $n$ independent vectors in $\R^{n}$ form a basis, so every vector in $\R^{n}$ is
+$A\vv{x}$ for exactly one $\vv{x}$, and the map $\vv{y}\mapsto\vv{x}$ that undoes it is linear and is
+an inverse. So some column is a combination of the others, say $a_{1}=\sum_{j\ge2}c_{j}a_{j}$.
+Expanding by multilinearity in the first slot gives a sum of determinants, each with a repeated
+column, each therefore zero. Hence $\det A=0$. $\blacksquare$</p>
+
+<p>The geometry says the same thing more vividly. $\det A = 0$ means the image of the unit cube has
+<em>no volume</em>: the map has flattened $n$-dimensional space onto something lower-dimensional — a
+plane, a line, a point. A whole direction's worth of information has been thrown away, and no map can
+retrieve it, because many different inputs now share an output. <strong>Non-invertible is not a
+technicality about matrices. It is destruction of information, visible as the collapse of a
+volume.</strong> That is exactly what the "singular" preset in the figure below does, and you can
+watch it happen by hand.</p>
+
+<figure class="fig">
+  <canvas id="fig-lin" data-h="520"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s-a">a</label><input type="range" id="s-a" min="-2" max="2" step="0.05" value="1.2"><output id="o-a"></output>
+    </div>
+    <div class="ctrl">
+      <label for="s-b">b</label><input type="range" id="s-b" min="-2" max="2" step="0.05" value="0.6"><output id="o-b"></output>
+    </div>
+    <div class="ctrl">
+      <label for="s-c">c</label><input type="range" id="s-c" min="-2" max="2" step="0.05" value="-0.3"><output id="o-c"></output>
+    </div>
+    <div class="ctrl">
+      <label for="s-d">d</label><input type="range" id="s-d" min="-2" max="2" step="0.05" value="1"><output id="o-d"></output>
+    </div>
+    <div class="ctrl"><output id="o-det"></output></div>
+    <div class="ctrl"><output id="o-tr"></output></div>
+    <div class="ctrl">
+      <label>presets</label>
+      <button id="b-rot">rotation</button>
+      <button id="b-shear">shear</button>
+      <button id="b-refl">reflection</button>
+      <button id="b-sing">singular</button>
+    </div>
+  </div>
+  <figcaption><b>A $2\times2$ matrix, doing its job.</b> The dashed grey square and circle are the
+  originals; the solid shapes are their images under
+  $A=\left(\begin{smallmatrix}a&b\\c&d\end{smallmatrix}\right)$. The two arrows are the
+  <em>columns</em> of $A$ — that is, the images $A e_{1}$ and $Ae_{2}$ of the basis vectors, which is
+  all a matrix ever is — see <a class="eqref" href="#e-matdef"></a>. The shaded area is
+  $\abs{\det A}$: the area of the original square — namely $1$ — times the factor the map applies to
+  every area, which is the whole content of <a class="eqref" href="#e-detvol"></a>.
+  <b>Three things to do.</b> (i) Hit <em>rotation</em>: the square is rigidly turned, area unchanged,
+  $\det=1$. (ii) Hit <em>reflection</em>, and watch the shape flip through the axis while $\det$ goes
+  negative — the sign is orientation, nothing else. (iii) Hit <em>singular</em>, or just tune the
+  sliders until $ad=bc$: the parallelogram collapses onto a line, the circle collapses with it, the
+  area goes to zero, and two-dimensional space has been crushed into one. Everything that used to lie
+  on a line perpendicular to that image now lands on a single point, so the map cannot be undone.
+  That is <a class="eqref" href="#e-detinvertible"></a>, made visible. The trace readout is there for
+  §6; note that it is <em>not</em> the area, and that shearing changes the trace while leaving the
+  area alone.</figcaption>
+</figure>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.5</span></span>
+  <p>Three demands pin the determinant down completely, and not one of them mentions a formula. Ask for a quantity that responds linearly to each edge of a solid separately, that reverses sign when two edges are exchanged, and that assigns the value one to the standard cube. Those are the properties of signed volume, and because only a single quantity can satisfy all three, the determinant and the signed volume of the box spanned by the columns are one thing under two names.</p>
+  <p>Read it as a statement about the map rather than the array and the useful sentence appears. The determinant is the factor by which a map multiplies every volume, and its sign records whether handedness survived the trip. The celebrated product rule then requires no proof whatever: do one map and then another, and volume is scaled twice, and scaling factors multiply because multiplying is what the word factor means. The algebra people are usually made to suffer proves something visible by inspection once you know what the quantity is.</p>
+  <p>The vanishing case is the one to keep. A determinant of zero means the image of the cube has been flattened onto something thinner, so a whole direction has been discarded and no map can recover it. That is not a technicality about invertibility. It is the destruction of information, made visible as a collapse.</p>
+</div>
+
+<h2>6 · Trace, and the identity that matters</h2>
+
+<p>The <strong>trace</strong> of a square matrix is the sum of its diagonal entries:</p>
+
+<div class="eq" id="e-trdef">
+$$ \mathrm{tr}\,A \;\equiv\; \sum_{i=1}^{n} A_{ii}. $$
+</div>
+
+<p>This looks like the least interesting definition in the chapter. It is the most useful one in the
+book. Everything follows from a single identity.</p>
+
+<h3>The cyclic property</h3>
+
+<p>Write out both sides using <a class="eqref" href="#e-matmul"></a> and swap the order of two finite
+sums:</p>
+
+<div class="eq" id="e-trcyc">
+$$ \begin{aligned} \mathrm{tr}(AB) \;&=\; \sum_{i}(AB)_{ii} \;=\; \sum_{i}\sum_{j} A_{ij}B_{ji}\\[4pt] &=\; \sum_{j}\sum_{i} B_{ji}A_{ij} \;=\; \sum_{j}(BA)_{jj} \;=\; \mathrm{tr}(BA). \end{aligned} $$
+</div>
+
+<p>The only thing used was that scalars commute — $A_{ij}B_{ji}=B_{ji}A_{ij}$ — even though the
+<em>matrices</em> emphatically do not. This is why the identity is startling: $AB\neq BA$ in general,
+yet their traces always agree. (Worked example 1 shows a pair where the two products differ in every
+entry and the traces are equal anyway.)</p>
+
+<p>An immediate consequence, and the reason trace is worth anything at all:</p>
+
+<div class="eq" id="e-trinv">
+$$ \mathrm{tr}(P^{-1}AP) \;=\; \mathrm{tr}\big((AP)P^{-1}\big) \;=\; \mathrm{tr}(A), $$
+</div>
+
+<p>taking $X=P^{-1}$ and $Y=AP$ in <a class="eqref" href="#e-trcyc"></a>. <strong>The trace is
+basis independent.</strong> Like the determinant, it is a property of the map, not of the array — even
+though its definition mentions only diagonal entries, and "diagonal" is meaningless without a basis.</p>
+
+<h3>Trace is the infinitesimal determinant</h3>
+
+<p>Now the identity this section exists for. Take any $A$ and any small number $\epsilon$, and ask
+for the determinant of the matrix that is <em>almost</em> the identity:</p>
+
+<div class="eq" id="e-detexp">
+$$ \boxed{\;\det(I+\epsilon A) \;=\; 1 + \epsilon\,\mathrm{tr}A + O(\epsilon^{2})\;} $$
+</div>
+
+<p>Here is the honest derivation for general $n$, which needs nothing but the Leibniz formula from
+the §5 grind box. Write $M = I+\epsilon A$, so $M_{ij} = \delta_{ij}+\epsilon A_{ij}$, and</p>
+
+<div class="eq" id="e-detexpand">
+$$ \det M \;=\; \sum_{\sigma}\mathrm{sgn}(\sigma)\prod_{i=1}^{n}\Big(\delta_{\sigma(i)\,i} + \epsilon A_{\sigma(i)\,i}\Big). $$
+</div>
+
+<p>Split the sum into the identity permutation and everything else.</p>
+
+<p><b>Every non-identity permutation contributes only at order $\epsilon^{2}$.</b> If
+$\sigma\neq\mathrm{id}$ then it moves at least one index — and therefore at least <em>two</em>, since
+a permutation cannot displace exactly one thing and leave everything else fixed (if $\sigma(i)\ne i$
+then whatever was at $\sigma(i)$ has been displaced as well). For each moved index $i$ the Kronecker
+delta $\delta_{\sigma(i)i}$ vanishes and the factor is $\epsilon A_{\sigma(i)i}$, carrying one power
+of $\epsilon$. Two or more moved indices means two or more powers of $\epsilon$. So all of these
+terms are $O(\epsilon^{2})$ and none of them can affect the first-order answer.</p>
+
+<p><b>The identity permutation gives the trace.</b> With $\sigma=\mathrm{id}$ every delta is $1$ and
+$\mathrm{sgn}=+1$, leaving</p>
+
+<div class="eq" id="e-diagprod">
+$$ \prod_{i=1}^{n}\big(1+\epsilon A_{ii}\big) \;=\; 1 \;+\; \epsilon\sum_{i=1}^{n}A_{ii} \;+\; O(\epsilon^{2}), $$
+</div>
+
+<p>because expanding the product means choosing, from each of the $n$ factors, either the $1$ or the
+$\epsilon A_{ii}$: taking all the $1$s gives the leading $1$; taking $\epsilon A_{ii}$ from exactly
+one factor and $1$ from the rest gives $\epsilon A_{ii}$, and summing over which factor gives
+$\epsilon\,\mathrm{tr}A$; any choice of two or more is $O(\epsilon^{2})$. Adding the two contributions
+gives <a class="eqref" href="#e-detexp"></a>. $\blacksquare$</p>
+
+<div class="callout insight">
+  <span class="ct">What this identity says</span>
+  <p><strong>The trace is the infinitesimal version of the determinant.</strong> The determinant is
+  the factor by which a map multiplies volume; the trace is the <em>rate</em> at which a map changes
+  volume when it barely does anything at all. One is a multiplicative statement about a
+  transformation, the other an additive statement about a tendency, and
+  <a class="eqref" href="#e-detexp"></a> is the bridge — exactly the relationship $\ee^{x}\approx1+x$
+  has to $\ee$, which is not a coincidence, as we are about to see.</p>
+</div>
+
+<h3>Where this gets spent — four places, immediately</h3>
+
+<p><b>1. The divergence of a vector field is the trace of its Jacobian.</b> Let a fluid have velocity
+field $v(x)$. In a short time $\epsilon$ each particle moves from $x$ to $x+\epsilon\,v(x)$. That map
+has derivative matrix (Chapter 0.6 will call it the Jacobian) $I + \epsilon J$, where
+$J_{ij}=\pdv{v_{i}}{x_{j}}$, and Chapter 0.6 will also show that the determinant of a map's
+derivative matrix is precisely its local volume factor — <a class="eqref" href="#e-detvol"></a>
+applied to the linear approximation. So the volume of a small blob is multiplied, in time
+$\epsilon$, by</p>
+
+<div class="eq" id="e-div">
+$$ \begin{aligned} \det(I+\epsilon J) \;&=\; 1 + \epsilon\,\mathrm{tr}\,J + O(\epsilon^{2})\\[4pt] &=\; 1 + \epsilon\sum_{i}\pdv{v_{i}}{x_{i}} + O(\epsilon^{2}) \;=\; 1 + \epsilon\,(\nabla\!\cdot v) + O(\epsilon^{2}). \end{aligned} $$
+</div>
+
+<p>So the divergence — which arrives in Chapter 0.7 looking like an arbitrary sum of partial
+derivatives — <em>is the fractional rate of change of volume</em>, and it is that because trace is
+the infinitesimal determinant. "Incompressible" and "divergence-free" are the same sentence.</p>
+
+<p><b>2. Liouville's theorem is this identity.</b> In Chapter 1.3 the state of a mechanical system
+is a point in phase space $(q,p)$, moving with velocity
+$\dot q = \pdv{H}{p}$, $\dot p = -\pdv{H}{q}$. That is a vector field on phase space, and its
+divergence is</p>
+
+<div class="eq" id="e-liouville">
+$$ \nabla\!\cdot v \;=\; \pdv{}{q}\!\left(\pdv{H}{p}\right) + \pdv{}{p}\!\left(-\pdv{H}{q}\right) \;=\; \frac{\partial^{2}H}{\partial q\,\partial p} - \frac{\partial^{2}H}{\partial p\,\partial q} \;=\; 0, $$
+</div>
+
+<p>because mixed partial derivatives commute (Chapter 0.6). The trace of the Jacobian vanishes
+identically, so by <a class="eqref" href="#e-div"></a> phase-space volume is exactly conserved by
+Hamiltonian flow. That is Liouville's theorem, one of the deepest facts in classical mechanics, and
+it is three lines of §6.</p>
+
+<p><b>3. $\det \ee^{A} = \ee^{\mathrm{tr}A}$.</b> Define the matrix exponential by the series
+$\ee^{tA}=\sum_{k}t^{k}A^{k}/k!$, which converges for every $t$ (Chapter 0.3 — the terms are bounded
+by those of a convergent scalar exponential series). Differentiating term by term, legitimate for a
+power series in $t$, gives $\dv{}{t}\ee^{tA} = A\,\ee^{tA}$, so to first order in $\epsilon$</p>
+
+<div class="eq" id="e-expstep">
+$$ \ee^{(t+\epsilon)A} = \ee^{tA} + \epsilon A\,\ee^{tA} + O(\epsilon^{2}) = \big(I + \epsilon A + O(\epsilon^{2})\big)\,\ee^{tA}. $$
+</div>
+
+<p>Let $f(t)\equiv\det \ee^{tA}$. Take determinants of
+<a class="eqref" href="#e-expstep"></a> and use the product rule
+<a class="eqref" href="#e-detmul"></a> together with
+<a class="eqref" href="#e-detexp"></a> — legitimate because $\det$ is a polynomial in the entries, so
+an $O(\epsilon^{2})$ change in the entries makes an $O(\epsilon^{2})$ change in the determinant:</p>
+
+<div class="eq" id="e-fode">
+$$ \begin{aligned} f(t+\epsilon) \;&=\; \big(1+\epsilon\,\mathrm{tr}A + O(\epsilon^{2})\big)\,f(t)\\[4pt] &\Longrightarrow\qquad f'(t) = (\mathrm{tr}A)\,f(t), \qquad f(0)=\det I=1. \end{aligned} $$
+</div>
+
+<p>By Chapter 0.1, the function equal to a constant times its own derivative, starting at $1$, is the
+exponential. Hence $f(t)=\ee^{t\,\mathrm{tr}A}$, and at $t=1$</p>
+
+<div class="eq" id="e-detexpA">
+$$ \boxed{\;\det \ee^{A} = \ee^{\,\mathrm{tr}A}\;} $$
+</div>
+
+<p><b>4. Why the generators of SU($N$) are traceless.</b> A continuous symmetry is built by
+exponentiating a generator: $U(\theta) = \ee^{\theta X}$. The "S" in SU($N$) stands for
+<em>special</em>, meaning $\det U = 1$ — the transformations preserve volume. By
+<a class="eqref" href="#e-detexpA"></a> that requires $\ee^{\theta\,\mathrm{tr}X}=1$ for all
+$\theta$, i.e.</p>
+
+<div class="eq" id="e-traceless">
+$$ \det U = 1 \ \ \text{for all }\theta \qquad\Longleftrightarrow\qquad \mathrm{tr}\,X = 0. $$
+</div>
+
+<p>This is not a bookkeeping convention. In Chapter 6.1 you will count the anti-Hermitian
+$3\times3$ matrices and find a $9$-dimensional space; tracelessness is one real linear condition,
+which removes exactly one dimension, leaving $3^{2}-1=8$. There are eight gluons because of
+<a class="eqref" href="#e-detexp"></a>. The most consequential appearance of a sum of diagonal
+entries in physics is a particle count.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.6</span></span>
+  <p>Adding up the diagonal entries of an array looks like the least promising operation in the chapter, and it is the one this book spends most often. Two facts do the work. The first is that the sum is unaltered when the array is rewritten in another description, which is startling, since the word diagonal has no meaning until a description has been chosen. The second connects it to volume: take a map that barely differs from doing nothing, and the amount by which it multiplies volume is one plus that sum, scaled by how small the disturbance is.</p>
+  <p>So the trace is the infinitesimal shadow of the determinant. One is a multiplicative statement about a transformation that has happened, the other an additive statement about a tendency, and they are the same quantity caught at two moments — the relation the exponential bears to its own first correction, which is no coincidence.</p>
+  <p>A surprising amount follows. The rate at which a flowing fluid expands is the trace of its derivative, which is why a certain sum of partial derivatives measures compressibility. Volume in the space of mechanical states is conserved because a particular trace vanishes identically, which is one of the deepest facts in classical mechanics. And there are eight gluons rather than nine because tracelessness is one condition, removing exactly one direction from the candidates.</p>
+</div>
+
+<h2>7 · Why complex vector spaces</h2>
+
+<p>Everything so far worked equally over $\R$ and over $\C$. Here is where they part, and the
+difference is not aesthetic.</p>
+
+<p>An <strong>eigenvector</strong> of an operator $T$ is a nonzero $v$ with $Tv=\lambda v$ — a
+direction the map leaves alone, stretching by the factor $\lambda$. These are the directions in which
+a linear map is simple, and Chapter 0.5 is devoted to finding them.</p>
+
+<p><b>Over $\R$, they need not exist.</b> Let $R$ be rotation of the plane by $90^{\circ}$. If
+$Rv=\lambda v$ for real $\lambda$ and nonzero real $v$, apply $R$ again: $R^{2}v=\lambda^{2}v$. But
+rotating twice by $90^{\circ}$ is $R^{2}=-I$, so $\lambda^{2}v = -v$, giving $\lambda^{2}=-1$ — with
+no real solution. The geometric statement is obvious once said: <em>a rotation leaves no direction
+pointing along itself.</em> That is what rotating means.</p>
+
+<p><b>Over $\C$, they always exist.</b> Let $A$ be any $n\times n$ complex matrix, $n\ge1$. Consider</p>
+
+<div class="eq" id="e-charpoly">
+$$ p(\lambda) \;\equiv\; \det(A-\lambda I). $$
+</div>
+
+<p>By the Leibniz formula this is a polynomial in $\lambda$ of degree exactly $n$: the identity
+permutation contributes $\prod_{i}(A_{ii}-\lambda)$, whose leading term is $(-\lambda)^{n}$, and every
+other permutation misses at least two diagonal factors and so has degree at most $n-2$ — nothing can
+cancel the leading term. By the fundamental theorem of algebra, every non-constant polynomial with
+complex coefficients has a complex root. (This is the one result in this chapter we import rather than
+prove; it is a theorem of complex analysis, and Chapter 0.3's discussion of the complex plane is the
+right place to have made peace with it.) So there is a $\lambda_{0}\in\C$ with
+$\det(A-\lambda_{0}I)=0$, and then by <a class="eqref" href="#e-detinvertible"></a> the matrix
+$A-\lambda_{0}I$ is not invertible, so some nonzero $v$ has $(A-\lambda_{0}I)v=0$, that is</p>
+
+<div class="eq" id="e-eigexists">
+$$ A v = \lambda_{0} v. $$
+</div>
+
+<p><strong>Every operator on a complex vector space has at least one eigenvalue.</strong> Over $\R$
+that statement is simply false, and the $90^{\circ}$ rotation is the counterexample.</p>
+
+<p>Watch what the complex numbers do to that rotation. Over $\C$ the rotation by angle $\theta$,
+$R_{\theta}=\begin{pmatrix}\cos\theta&-\sin\theta\\ \sin\theta&\cos\theta\end{pmatrix}$, acting on the
+complex vector $(1,-\ii)$, gives</p>
+
+<div class="eq" id="e-roteig">
+$$ R_{\theta}\begin{pmatrix}1\\ -\ii\end{pmatrix} = \begin{pmatrix}\cos\theta+\ii\sin\theta\\ \sin\theta-\ii\cos\theta\end{pmatrix} = (\cos\theta+\ii\sin\theta)\begin{pmatrix}1\\ -\ii\end{pmatrix} = \ee^{\ii\theta}\begin{pmatrix}1\\ -\ii\end{pmatrix}. $$
+</div>
+
+<p>The eigenvalue of a rotation is $\ee^{\ii\theta}$ — Euler's formula from Chapter 0.3, arriving as
+the spectrum of a rotation matrix. The rotation that had no real eigenvector has two complex ones,
+with eigenvalues $\ee^{\pm\ii\theta}$ of unit modulus. Rotation and complex phase are the same
+phenomenon written twice, which is why Chapter 0.3 could say $\mathrm{U}(1)$ and $\mathrm{SO}(2)$ are
+the same group.</p>
+
+<p>This is why quantum mechanics is built on complex vector spaces rather than real ones. Physical
+quantities in Chapter 4.2 are represented by operators, and their measurable values are eigenvalues;
+a theory in which operators can fail to have any is not a theory of measurement. And time evolution is
+a rotation in state space (Chapter 0.1's closing observation, now precise): $\ee^{-\ii\hat Ht/\hbar}$
+has unit-modulus eigenvalues, so it preserves lengths, so probability is conserved. Take away the
+complex numbers and you lose the eigenvalues, the phases, and the conservation of probability
+together.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.4.7</span></span>
+  <p>A direction that a map leaves pointing where it was, altering only its length, is the simplest behaviour a map can have, and hunting for such directions is the entire business of the chapter to come. Whether any exist depends on which numbers you allowed yourself at the outset, and the dependence is not a technicality. Rotate the plane by a quarter turn and no direction survives pointing along itself, since turning everything is precisely what rotating means. Over the real numbers that map has no special directions whatever.</p>
+  <p>Admit complex numbers and the obstruction evaporates, for a reason almost embarrassing in its brevity: the special directions are the roots of a polynomial, and over the complex numbers every polynomial has roots. The rotation that had none now has two, and their multipliers are phases of unit length, which is Euler's formula arriving from a direction nobody was watching. Rotation and complex phase were never two separate phenomena.</p>
+  <p>This settles in advance a question usually raised about quantum mechanics much later and treated as mysterious. Measurable quantities are going to be these multipliers, so a theory whose maps might possess none of them is not a theory of measurement; and evolution in time is going to be a rotation, so probability survives because rotations preserve lengths. Both were decided here, with no physics anywhere in the argument.</p>
+</div>
+
+<h2>8 · Worked examples</h2>
+
+<div class="worked">
+  <span class="ct">Worked example 1 — matrix multiplication, derived on a concrete pair</span>
+  <p><em>Let $T$ be the shear $\begin{pmatrix}1&2\\0&1\end{pmatrix}$ and $S$ the map
+  $\begin{pmatrix}3&0\\1&-1\end{pmatrix}$, both from $\R^{2}$ to $\R^{2}$ in the standard basis. Find
+  the matrix of $S\circ T$ by tracking basis vectors only, then check against
+  <a class="eqref" href="#e-matmul"></a>.</em></p>
+  <p>First read the columns as images of basis vectors, which is all
+  <a class="eqref" href="#e-matdef"></a> says:</p>
+  $$ \begin{aligned} T e_{1} &= \begin{pmatrix}1\\0\end{pmatrix} = e_{1}, &\qquad T e_{2} &= \begin{pmatrix}2\\1\end{pmatrix} = 2e_{1}+e_{2};\\[6pt] S e_{1} &= \begin{pmatrix}3\\1\end{pmatrix}, &\qquad S e_{2} &= \begin{pmatrix}0\\-1\end{pmatrix}. \end{aligned} $$
+  <p>Now push the basis vectors through both maps in turn, using linearity of $S$ and
+  <em>nothing else</em>:</p>
+  $$ \begin{aligned} (S\circ T)e_{1} &= S(e_{1}) = \begin{pmatrix}3\\1\end{pmatrix},\\[4pt] (S\circ T)e_{2} &= S(2e_{1}+e_{2}) = 2\,S e_{1} + S e_{2} = 2\begin{pmatrix}3\\1\end{pmatrix}+\begin{pmatrix}0\\-1\end{pmatrix} = \begin{pmatrix}6\\1\end{pmatrix}. \end{aligned} $$
+  <p>Those two columns <em>are</em> the matrix of the composite:
+  $ST=\begin{pmatrix}3&6\\1&1\end{pmatrix}$. Check against the formula
+  $(ST)_{ik}=\sum_{j}S_{ij}T_{jk}$:</p>
+  $$ \begin{aligned} (ST)_{11} &= 3\cdot1+0\cdot0 = 3, & (ST)_{12} &= 3\cdot2+0\cdot1 = 6,\\ (ST)_{21} &= 1\cdot1+(-1)\cdot0 = 1, & (ST)_{22} &= 1\cdot2+(-1)\cdot1 = 1. \quad\checkmark \end{aligned} $$
+  <p>Identical, as it must be — the formula was <em>derived</em> from this procedure, so the check is
+  really a check that we can add.</p>
+  <p><b>Now reverse the order.</b> $TS = \begin{pmatrix}5&-2\\1&-1\end{pmatrix}$, which shares not one
+  entry with $ST$. Composition does not commute, and here is the visible reason: $ST$ means shear
+  first, $TS$ means shear last, and a shear applied to an already-distorted figure does something
+  different from a shear applied to the original.</p>
+  <p><b>Two invariants survive anyway.</b> Determinants: $\det S = -3$, $\det T = 1$, and
+  $\det(ST) = 3\cdot1-6\cdot1 = -3 = \det(TS) = 5(-1)-(-2)(1)$. Both equal
+  $\det S\det T$, exactly as <a class="eqref" href="#e-detmul"></a> requires — volume scalings
+  multiply and do not care about order, because numbers commute even when maps do not. Traces:
+  $\mathrm{tr}(ST) = 3+1 = 4$ and $\mathrm{tr}(TS) = 5-1 = 4$. Equal, as
+  <a class="eqref" href="#e-trcyc"></a> promised, despite every single entry being different. That is
+  the cyclic identity earning its keep.</p>
+</div>
+
+<div class="worked">
+  <span class="ct">Worked example 2 — $\det(I+\epsilon A)$ for a $3\times3$, with the $\epsilon^{2}$ terms exposed</span>
+  <p><em>Verify <a class="eqref" href="#e-detexp"></a> explicitly for</em>
+  $A = \begin{pmatrix}2&1&0\\ 0&-1&3\\ 1&4&5\end{pmatrix}$, <em>whose trace is $2-1+5=6$.</em></p>
+  <p>Write out the perturbed matrix and expand the determinant exactly — no approximation anywhere,
+  using the $3\times3$ formula from the §5 grind box:</p>
+  $$ I+\epsilon A = \begin{pmatrix}1+2\epsilon & \epsilon & 0\\ 0 & 1-\epsilon & 3\epsilon\\ \epsilon & 4\epsilon & 1+5\epsilon\end{pmatrix} $$
+  $$ \begin{aligned} \det(I+\epsilon A) &= (1+2\epsilon)\Big[(1-\epsilon)(1+5\epsilon) - 12\epsilon^{2}\Big] - \epsilon\Big[0 - 3\epsilon^{2}\Big] + 0\\[4pt] &= (1+2\epsilon)\big(1+4\epsilon-17\epsilon^{2}\big) + 3\epsilon^{3}\\[4pt] &= 1 + 6\epsilon - 9\epsilon^{2} - 31\epsilon^{3}. \end{aligned} $$
+  <p>The coefficient of $\epsilon$ is $6=\mathrm{tr}A$. ✓ The identity holds, and we now have the
+  whole polynomial rather than just its first two terms, so we can see precisely what was discarded.</p>
+  <p><b>Where the $\epsilon^{2}$ terms come from.</b> Two sources, exactly as the general derivation
+  said. First, the identity permutation: taking $\epsilon A_{ii}$ from <em>two</em> of the three
+  diagonal factors in <a class="eqref" href="#e-diagprod"></a> gives
+  $\epsilon^{2}(A_{11}A_{22}+A_{11}A_{33}+A_{22}A_{33}) = \epsilon^{2}(-2+10-5)=3\epsilon^{2}$.
+  Second, the transpositions — permutations that swap exactly two indices and fix the rest. The swap
+  $1\leftrightarrow3$ contributes $-\epsilon^{2}A_{13}A_{31}(1+\epsilon A_{22})$, and so on; at order
+  $\epsilon^{2}$ these give $-\epsilon^{2}(A_{12}A_{21}+A_{13}A_{31}+A_{23}A_{32}) =
+  -\epsilon^{2}(0+0+12) = -12\epsilon^{2}$. Total: $3-12=-9$. ✓</p>
+  <p>Combining the two sources, the $\epsilon^{2}$ coefficient is
+  $\sum_{i\lt j}\big(A_{ii}A_{jj}-A_{ij}A_{ji}\big)$ — the sum of the principal $2\times2$ minors,
+  $-2+10-17=-9$. ✓ And the $\epsilon^{3}$ coefficient is $\det A = -31$, which it must be, since
+  taking $\epsilon A$ from every slot is the same as scaling $A$ by $\epsilon$ in all three columns.
+  The pattern continues for every $n$: the coefficient of $\epsilon^{k}$ in $\det(I+\epsilon A)$ is
+  the sum of the principal $k\times k$ minors, starting at $1$, then $\mathrm{tr}A$, and ending at
+  $\det A$. <strong>Trace and determinant are the first and last members of one family</strong>, which
+  is the family Chapter 0.5 will identify with the coefficients of the characteristic polynomial.</p>
+  <p><b>How good is first order?</b> At $\epsilon=0.01$ the exact value is
+  $1.059069$ against the linear estimate $1+6\epsilon=1.06$: an error of $-9.31\times10^{-4}$,
+  where the quadratic term alone predicts $-9\epsilon^{2}=-9.00\times10^{-4}$. Agreement to two
+  figures, with the small residue supplied by the cubic term — exactly the behaviour the
+  $O(\epsilon^{2})$ notation promises. This is
+  <a href="ch0-1.html">Chapter 0.1</a>'s linearization applied to a function of nine variables, and it
+  behaves exactly as advertised.</p>
+</div>
+
+<h2>9 · Your turn</h2>
+
+<div class="problems">
+
+<div class="prob">
+  <p class="pnum">Problem 1 — a two-dimensional space with no arrows in it</p>
+  <p>Show that the set of solutions of $y''+\omega^{2}y=0$ (with $\omega\neq0$ fixed) is a vector
+  space, that $\{\cos\omega t,\ \sin\omega t\}$ is a basis for it, and hence that its dimension is
+  $2$. Then say what the "two arbitrary constants" of your first differential-equations course
+  actually are.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>Vector space.</b> This is <a class="eqref" href="#e-superpose"></a> with $p=0$, $q=\omega^{2}$:
+    if $y_{1},y_{2}$ are solutions then $(ay_{1}+by_{2})''+\omega^{2}(ay_{1}+by_{2}) =
+    a(y_{1}''+\omega^{2}y_{1}) + b(y_{2}''+\omega^{2}y_{2}) = 0$. The zero function is a solution, so
+    the set is nonempty and closed under both operations. ✓</p>
+    <p><b>Both candidates are solutions.</b> $\dv{^{2}}{t^{2}}\cos\omega t = -\omega^{2}\cos\omega t$
+    and likewise for $\sin$ (Chapter 0.1). ✓</p>
+    <p><b>Independent.</b> Suppose $a\cos\omega t + b\sin\omega t = 0$ for all $t$. Put $t=0$:
+    $a=0$. Differentiate and put $t=0$: $b\omega = 0$, and $\omega\neq0$, so $b=0$. ✓</p>
+    <p><b>Spanning</b> — the only part with any content. Let $y$ be <em>any</em> solution. Set
+    $c_{1}=y(0)$ and $c_{2}=y'(0)/\omega$, and define
+    $u = y - c_{1}\cos\omega t - c_{2}\sin\omega t$. Then $u$ solves the same equation (it is a
+    combination of solutions) and satisfies $u(0)=0$, $u'(0)=0$. Now consider</p>
+    $$ E(t) \;\equiv\; \big(u'\big)^{2} + \omega^{2}u^{2}, \qquad E' = 2u'u'' + 2\omega^{2}uu' = 2u'\big(u''+\omega^{2}u\big) = 0. $$
+    <p>So $E$ is constant, and $E(0)=0$. Both terms of $E$ are non-negative and sum to zero, so each
+    is zero for every $t$; in particular $u\equiv0$ and
+    $y = c_{1}\cos\omega t + c_{2}\sin\omega t$. ✓ (That $E$ is the energy of a harmonic oscillator is
+    not an accident, and Chapter 0.8 will make a habit of this trick.)</p>
+    <p>Hence the solution set has a basis with two elements and dimension $2$.</p>
+    <p><b>The constants.</b> They are <strong>coordinates</strong>. Specifying a solution means
+    specifying a vector in a two-dimensional space, which takes exactly two numbers — and the
+    familiar alternative form $y = C\cos(\omega t-\varphi)$ is not a different solution set but a
+    different <em>parametrisation</em> of the same plane: expanding gives
+    $C\cos\varphi\cos\omega t + C\sin\varphi\sin\omega t$, so
+    $(c_{1},c_{2}) = (C\cos\varphi, C\sin\varphi)$, which is polar coordinates on the same
+    two-dimensional space. Amplitude-and-phase versus sine-and-cosine is a change of description, and
+    the physics is in neither.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 2 — differentiation as a matrix, and why integration needs a $+C$</p>
+  <p>Let $D$ be the derivative operator on $P_{3}$, the polynomials of degree $\le3$, with basis
+  $\{1,\ x,\ x^{2},\ x^{3}\}$. Write down its matrix. Compute $\det D$ and $\mathrm{tr}\,D$, and
+  interpret both.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p>Apply <a class="eqref" href="#e-matdef"></a>: the $j$-th column is the image of the $j$-th
+    basis vector, written in coordinates. With $e_{1}=1,\ e_{2}=x,\ e_{3}=x^{2},\ e_{4}=x^{3}$:</p>
+    $$ D(1)=0, \qquad D(x)=1=e_{1}, \qquad D(x^{2})=2x=2e_{2}, \qquad D(x^{3})=3x^{2}=3e_{3}, $$
+    $$ \text{so}\qquad D = \begin{pmatrix}0&1&0&0\\ 0&0&2&0\\ 0&0&0&3\\ 0&0&0&0\end{pmatrix}. $$
+    <p><b>Determinant.</b> The first column is entirely zero, so by multilinearity
+    (D1) the determinant is linear in that column and $D(\dots,0,\dots)=0$. Hence $\det D = 0$.
+    Equivalently the matrix is triangular with zero diagonal. By
+    <a class="eqref" href="#e-detinvertible"></a> the operator is <em>not invertible</em>, and §5 says
+    what that means concretely: it destroys information. Here you can name the information exactly.
+    $D$ kills every constant, so $1$ and $1+7$ and $1-\pi$ all have the same image, and no operation
+    can tell them apart afterwards. <strong>That is the constant of integration.</strong> The $+C$ is
+    not a bookkeeping nicety; it is the statement that $\det D=0$ and that antidifferentiation is
+    therefore not a function but a one-parameter family.</p>
+    <p>Geometrically: the image of $D$ is $P_{2}$, of dimension $3$, so a four-dimensional space has
+    been flattened onto a three-dimensional one — the unit hypercube of $P_{3}$ has been crushed to
+    zero four-volume, exactly the collapse the interactive shows in two dimensions.</p>
+    <p><b>Trace.</b> $\mathrm{tr}\,D = 0+0+0+0 = 0$. Consistent with
+    <a class="eqref" href="#e-detexp"></a>: $\det(I+\epsilon D) = 1$ exactly, since $I+\epsilon D$ is
+    triangular with $1$s on the diagonal, and the linear term $\epsilon\,\mathrm{tr}D$ is indeed
+    zero. Nudging the identity in the direction of "differentiate a bit" changes no volume at all to
+    first order — reassuring, since $D$ is <em>nilpotent</em> ($D^{4}=0$: differentiate a cubic four
+    times and nothing is left), and nilpotent operators always have zero trace.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 3 — how far does the cyclic property go?</p>
+  <p>Prove $\mathrm{tr}(AB)=\mathrm{tr}(BA)$ for all square $A,B$ of the same size. Then show
+  $\mathrm{tr}(ABC)=\mathrm{tr}(BCA)$ follows immediately, but that
+  $\mathrm{tr}(ABC)=\mathrm{tr}(ACB)$ is <em>false</em> in general — give an explicit $2\times2$
+  counterexample.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>Two factors.</b> This is <a class="eqref" href="#e-trcyc"></a>:
+    $\mathrm{tr}(AB)=\sum_{i,j}A_{ij}B_{ji}=\sum_{j,i}B_{ji}A_{ij}=\mathrm{tr}(BA)$, using only
+    commutativity of the scalars and the fact that a finite double sum may be reordered.</p>
+    <p><b>Three factors, cyclically.</b> Apply the two-factor result with $X=AB$ and $Y=C$:</p>
+    $$ \mathrm{tr}(ABC) = \mathrm{tr}\big((AB)C\big) = \mathrm{tr}\big(C(AB)\big) = \mathrm{tr}(CAB), $$
+    <p>and once more with $X=A$, $Y=BC$ gives $\mathrm{tr}(ABC)=\mathrm{tr}(BCA)$. So the three
+    <em>cyclic</em> rotations $ABC$, $BCA$, $CAB$ all agree.</p>
+    <p><b>The other three orderings need not.</b> Take</p>
+    $$ A = \begin{pmatrix}0&1\\0&0\end{pmatrix},\qquad B = \begin{pmatrix}0&0\\1&0\end{pmatrix},\qquad C = \begin{pmatrix}1&0\\0&0\end{pmatrix}. $$
+    <p>Then $AB = \begin{pmatrix}1&0\\0&0\end{pmatrix}$, so
+    $ABC = \begin{pmatrix}1&0\\0&0\end{pmatrix}$ and $\mathrm{tr}(ABC)=1$. But
+    $AC = \begin{pmatrix}0&1\\0&0\end{pmatrix}\begin{pmatrix}1&0\\0&0\end{pmatrix} = 0$, so
+    $ACB = 0$ and $\mathrm{tr}(ACB) = 0 \neq 1$. ✓</p>
+    <p><b>The moral.</b> The trace is invariant under <em>cyclic</em> permutation, not under arbitrary
+    permutation — because cycling is the only rearrangement you can reach by repeatedly moving the
+    last factor to the front, which is all $\mathrm{tr}(XY)=\mathrm{tr}(YX)$ licenses. Anyone who
+    forgets this and "simplifies" $\mathrm{tr}(ABC)$ to $\mathrm{tr}(ACB)$ has assumed
+    $BC=CB$. In Chapter 5.7 you will evaluate traces of products of gamma matrices, which anticommute
+    rather than commute; the cyclic property is what makes those traces computable, and the absence of
+    the non-cyclic property is what makes them interesting.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 4 — every entry changes, two numbers do not</p>
+  <p>Let $T$ have matrix $A = \begin{pmatrix}2&1\\3&4\end{pmatrix}$ in the standard basis. Change to
+  the basis $e'_{1}=e_{1}+e_{2}$, $e'_{2}=2e_{1}+3e_{2}$. Compute $A'=P^{-1}AP$, verify directly from
+  <a class="eqref" href="#e-twomat"></a> that $A'$ really is the matrix of the same map, and check
+  the determinant and trace.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p>By <a class="eqref" href="#e-newbasis"></a> the columns of $P$ are the new basis vectors in old
+    coordinates, so $P = \begin{pmatrix}1&2\\1&3\end{pmatrix}$, with $\det P = 1$ and (using the
+    $2\times2$ inverse, which you can verify by multiplying out)
+    $P^{-1} = \begin{pmatrix}3&-2\\-1&1\end{pmatrix}$. Then</p>
+    $$ AP = \begin{pmatrix}2&1\\3&4\end{pmatrix}\begin{pmatrix}1&2\\1&3\end{pmatrix} = \begin{pmatrix}3&7\\7&18\end{pmatrix}, \qquad A' = P^{-1}(AP) = \begin{pmatrix}-5&-15\\ 4&11\end{pmatrix}. $$
+    <p><b>Direct check.</b> <a class="eqref" href="#e-twomat"></a> says column $1$ of $A'$ should be
+    the coordinates of $T(e'_{1})$ in the new basis. Compute the left side:
+    $T(e'_{1}) = A\begin{pmatrix}1\\1\end{pmatrix} = \begin{pmatrix}3\\7\end{pmatrix}$. And the right
+    side: $-5e'_{1}+4e'_{2} = -5\begin{pmatrix}1\\1\end{pmatrix}+4\begin{pmatrix}2\\3\end{pmatrix} =
+    \begin{pmatrix}3\\7\end{pmatrix}$. ✓ Same vector. Likewise
+    $T(e'_{2}) = A\begin{pmatrix}2\\3\end{pmatrix} = \begin{pmatrix}7\\18\end{pmatrix}$ and
+    $-15e'_{1}+11e'_{2} = \begin{pmatrix}-15+22\\ -15+33\end{pmatrix} = \begin{pmatrix}7\\18\end{pmatrix}$. ✓</p>
+    <p><b>Invariants.</b></p>
+    $$ \mathrm{tr}A = 2+4 = 6, \qquad \mathrm{tr}A' = -5+11 = 6; \qquad \det A = 8-3 = 5, \qquad \det A' = -55+60 = 5. $$
+    <p>Not one of the four entries survived — $2,1,3,4$ became $-5,-15,4,11$, and no entry of $A'$
+    even appears in $A$ — yet the trace and the determinant are untouched, exactly as
+    <a class="eqref" href="#e-detinv"></a> and <a class="eqref" href="#e-trinv"></a> guarantee. If you
+    were handed only $A'$ and asked "what does this map do to areas?", you would answer $5$, the same
+    answer as from $A$, because that question is about the map. If you were asked "what is the
+    top-left entry?", you would be answering a question about the basis.</p>
+    <p>This is the entire chapter in four numbers.</p>
+  </div></details>
+</div>
+
+</div>
+
+<div class="callout brick">
+  <span class="ct">The brick you just laid</span>
+  <p>You have the vector space defined by what you may do to its elements rather than by what they
+  look like, so that functions, polynomials, matrices, solutions of differential equations and
+  quantum states are all vectors and all obey the same theorems. You have coordinates, proved unique,
+  together with the discipline of never confusing the vector with its coordinate list. You have
+  matrix multiplication <em>derived</em> from composition of maps — including why the shapes must
+  match, why it is associative for free, and why it does not commute. You have the change-of-basis
+  law $A'=P^{-1}AP$ and the distinction between what changes with the description and what does not.
+  You have the determinant as signed volume, from three properties rather than a formula, with
+  $\det(AB)=\det A\det B$ as a one-line statement that scaling factors multiply, and $\det=0$ as the
+  destruction of information. And you have the trace: cyclic, basis independent, and — the identity
+  worth the whole chapter — the first-order determinant,
+  $\det(I+\epsilon A)=1+\epsilon\,\mathrm{tr}A+O(\epsilon^{2})$.</p>
+  <p><b>Where this gets spent.</b> <em>Basis and coordinates</em> → Chapter 2.4 (a tensor is defined
+  by its transformation law, which is §4) and Chapter 3.2 (physics must not depend on coordinates).
+  <em>Composition of linear maps</em> → Chapter 0.6, where the chain rule becomes a product of
+  Jacobian matrices and is the same statement as <a class="eqref" href="#e-matmul"></a>.
+  <em>Determinant</em> → Chapter 0.6 again (the Jacobian determinant in a change of variables is
+  precisely "the factor by which volume is multiplied") and Chapter 3.3, where $\sqrt{-g}$ — the
+  square root of a determinant — is what makes an integral over curved spacetime mean anything.
+  <em>Trace</em> → Chapter 0.7 (divergence is the trace of the Jacobian), Chapter 1.3 (Liouville's
+  theorem is $\mathrm{tr}=0$), and Chapter 6.1 (the generators of SU($N$) are traceless because
+  $\det\ee^{A}=\ee^{\mathrm{tr}A}$, which is why there are eight gluons). <em>Non-commutativity</em>
+  → Chapter 4.6 (uncertainty), Chapter 3.4 (curvature), Chapter 6.4 (Yang–Mills self-interaction).
+  <em>Complex scalars</em> → Chapter 4.2, where the existence of eigenvalues is the existence of
+  measurable values.</p>
+  <p>Next, Chapter 0.5 asks the obvious follow-up question: given an operator, can we <em>find</em>
+  a basis in which its matrix is as simple as possible? For a large and physically crucial class of
+  operators the answer is yes — diagonal — and the diagonal entries are the eigenvalues that this
+  chapter has twice promised.</p>
+</div>
+
+<!--SCRIPT-->
+(function () {
+
+  var keys = ['a', 'b', 'c', 'd'];
+  var S = {}, O = {};
+  keys.forEach(function (k) {
+    S[k] = document.getElementById('s-' + k);
+    O[k] = document.getElementById('o-' + k);
+  });
+  var oDet = document.getElementById('o-det'),
+      oTr  = document.getElementById('o-tr');
+
+  /* hex colour -> rgba with alpha, so we can shade without extra CSS */
+  function fade(v, al) {
+    var m = /^#([0-9a-fA-F]{6})$/.exec((v || '').trim());
+    if (!m) return v;
+    var n = parseInt(m[1], 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + al + ')';
+  }
+
+  /* filled arrowhead, sized in data units (the plot is equal-aspect) */
+  function arrow(p, x, y, col) {
+    var L = Math.hypot(x, y);
+    if (L < 1e-6) return;
+    var ux = x / L, uy = y / L, hl = 0.17, hw = 0.075;
+    p.path([[x, y],
+            [x - hl * ux + hw * (-uy), y - hl * uy + hw * ux],
+            [x - hl * ux - hw * (-uy), y - hl * uy - hw * ux]],
+           { close: true, fill: col, color: col, width: 1 });
+  }
+
+  function ring(f, N) {
+    var pts = [];
+    for (var i = 0; i <= N; i++) {
+      var t = 2 * Math.PI * i / N;
+      pts.push(f(Math.cos(t), Math.sin(t)));
+    }
+    return pts;
+  }
+
+  NMT.figure('fig-lin', function (cv) {
+    var a = parseFloat(S.a.value), b = parseFloat(S.b.value),
+        c = parseFloat(S.c.value), d = parseFloat(S.d.value);
+    var det = a * d - b * c, tr = a + d;
+
+    var p = new NMT.Plot(cv, { xmin: -2.4, xmax: 3.1, ymin: -2.4, ymax: 3.1,
+                               equal: true, xlabel: 'x', ylabel: 'y' });
+    p.axes({ nx: 6, ny: 6 });
+
+    var faint = NMT.css('--ink-faint');
+
+    /* originals: unit square and unit circle */
+    p.path([[0, 0], [1, 0], [1, 1], [0, 1]],
+           { close: true, color: fade(faint, 0.85), width: 1.5, dash: [5, 4] });
+    p.path(ring(function (x, y) { return [x, y]; }, 96),
+           { close: true, color: fade(faint, 0.5), width: 1.2, dash: [3, 3] });
+    p.text(1, 0, 'e₁', { color: faint, dx: 4, dy: 17 });
+    p.text(0, 1, 'e₂', { color: faint, dx: -28, dy: -6 });
+
+    /* image */
+    var col = (det < 0) ? NMT.css('--warn') : NMT.css('--accent');
+    var quad = [[0, 0], [a, c], [a + b, c + d], [b, d]];
+    p.path(quad, { close: true, fill: fade(col, 0.2), color: col, width: 2 });
+    p.path(ring(function (x, y) { return [a * x + b * y, c * x + d * y]; }, 160),
+           { close: true, color: fade(col, 0.6), width: 1.5 });
+
+    /* the two columns of A, as arrows */
+    p.seg(0, 0, a, c, { color: col, width: 2.4 });
+    p.seg(0, 0, b, d, { color: col, width: 2.4 });
+    arrow(p, a, c, col);
+    arrow(p, b, d, col);
+    p.text(a, c, 'Ae₁', { color: col, dx: 8, dy: -6 });
+    p.text(b, d, 'Ae₂', { color: col, dx: 8, dy: -6 });
+    p.dot(0, 0, { color: faint, r: 3 });
+
+    keys.forEach(function (k) {
+      O[k].textContent = parseFloat(S[k].value).toFixed(2);
+    });
+    var tag = (Math.abs(det) < 0.025) ? '  ← collapsed to a line'
+            : (det < 0 ? '  ← orientation flipped' : '');
+    oDet.textContent = 'det = ' + det.toFixed(3) + '   (area = ' +
+                       Math.abs(det).toFixed(3) + ')' + tag;
+    oTr.textContent = 'tr = ' + tr.toFixed(2);
+  });
+
+  keys.forEach(function (k) { S[k].addEventListener('input', NMT.redrawAll); });
+
+  function preset(a, b, c, d) {
+    S.a.value = a; S.b.value = b; S.c.value = c; S.d.value = d;
+    NMT.redrawAll();
+  }
+  document.getElementById('b-rot').addEventListener('click',
+    function () { preset(0.6, -0.8, 0.8, 0.6); });     /* det = +1, rigid */
+  document.getElementById('b-shear').addEventListener('click',
+    function () { preset(1, 0.8, 0, 1); });            /* det = +1, not rigid */
+  document.getElementById('b-refl').addEventListener('click',
+    function () { preset(1, 0, 0, -1); });             /* det = -1 */
+  document.getElementById('b-sing').addEventListener('click',
+    function () { preset(1, 0.5, 2, 1); });            /* det = 0 */
+})();
+<!--/SCRIPT-->

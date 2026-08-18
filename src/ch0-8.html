@@ -1,0 +1,2048 @@
+<p class="eyebrow">Part 0 · The Toolkit — Chapter 0.8</p>
+<h1>Differential Equations and the Oscillator</h1>
+<p class="subtitle">One equation, solved completely — and then found hiding inside everything else in the book.</p>
+
+<div class="callout where">
+  <span class="ct">Where we are</span>
+  <p>Every law of physics in this book is a differential equation. Newton's second law, Maxwell's
+  equations, the geodesic equation, the Schrödinger equation, the Klein–Gordon and Dirac and
+  Yang–Mills equations — all of them relate a quantity to its own rate of change. That is not a
+  stylistic preference. It is what a <em>law</em> is: a statement that the way something is now
+  determines the way it will be an instant from now. Physics is the study of local rules; a
+  differential equation is a local rule written down.</p>
+  <p>So solving them is most of what physicists do, and this chapter solves the one that matters
+  most. It is embarrassingly simple —</p>
+  $$ \ddot x = -\omega^{2}x $$
+  <p>— and Chapter 0.3 already told you why it is unavoidable: expand any potential about a stable
+  equilibrium and the first surviving term is quadratic, so <strong>every stable system, looked at
+  closely enough, is a harmonic oscillator</strong>. That result is the reason this chapter is long.
+  We are not studying a toy. We are studying the universal local model of stability, and the last
+  section builds the ladder from <em>two masses on springs</em> to <em>a field is infinitely many
+  oscillators</em> — which is the single most important structural bridge in this book, the one
+  Chapter 5.3 walks across when it quantises a field.</p>
+  <p>Along the way one structural fact will be stated louder than anything else here: a linear
+  differential equation is an <strong>eigenvalue problem</strong>, and the exponential is the
+  eigenfunction of $\dd/\dd t$. Solving a constant-coefficient linear ODE <em>is</em> diagonalising
+  the derivative. Chapters 0.9, 4.5 and 5.3 are that sentence, three times, in different costumes.</p>
+</div>
+
+<p class="tools"><b>Tools you'll need</b> &nbsp;— <a href="ch0-1.html">Chapter 0.1</a>: the derivative,
+the chain rule, and $\ee$ defined by $\dv{}{t}\ee^{t}=\ee^{t}$; the licence to separate differentials.
+<a href="ch0-3.html">Chapter 0.3</a>: Taylor expansion, the small-oscillations result, and Euler's
+formula $\ee^{\ii\theta}=\cos\theta+\ii\sin\theta$ — used constantly. <a href="ch0-4.html">Chapter
+0.4</a>: vector spaces, basis, dimension, linear maps. <a href="ch0-5.html">Chapter 0.5</a>:
+eigenvalues and eigenvectors, the spectral theorem for symmetric matrices, and the warning about
+<em>defective</em> matrices — §3 and §7 each cash one of these. <a href="ch0-6.html">Chapter 0.6</a>:
+the Hessian and its eigenvalues as principal curvatures.</p>
+
+<h2>1 · What a differential equation is</h2>
+
+<p>An <strong>ordinary differential equation</strong> (ODE) is a relation among an unknown function
+$y(t)$, its derivatives, and $t$ itself. "Ordinary" means one independent variable; when there are
+several — a field depending on $x,y,z,t$ — you get a <em>partial</em> differential equation, which
+§7 will produce for you at the end.</p>
+
+<p>Three words classify almost everything we will do.</p>
+
+<p><b>Order</b> is the highest derivative appearing. Newton's law is second order, because force
+determines acceleration; this one fact is why you always get <em>two</em> constants of integration
+in mechanics, and why "where is it and how fast is it going" is the right amount of information to
+specify a trajectory.</p>
+
+<p><b>Linear</b> means the unknown and its derivatives appear only to the first power, never
+multiplied together, never inside a $\sin$ or a square root. The general linear ODE of order $n$ is</p>
+
+<div class="eq" id="e-linode">
+$$ L[y] \;\equiv\; y^{(n)} + a_{n-1}(t)\,y^{(n-1)} + \cdots + a_1(t)\,\dot y + a_0(t)\,y \;=\; f(t). $$
+</div>
+
+<p>The coefficients $a_i(t)$ may do whatever they like; what matters is that $y$ enters linearly.
+The point of the notation is that $L$ is a <strong>linear map</strong> in the sense of Chapter 0.4:
+$L[\alpha y_1 + \beta y_2] = \alpha L[y_1] + \beta L[y_2]$, because differentiation is linear and so
+is multiplication by a fixed function. Everything in §3 follows from that single observation.</p>
+
+<p><b>Homogeneous</b> means $f\equiv0$ — no source term, nothing driving the system from outside.
+An inhomogeneous equation has a source, and §2 and §6 are about what a source does.</p>
+
+<h3>Initial conditions, and the mathematical content of determinism</h3>
+
+<p>An ODE by itself has infinitely many solutions. To pick one you supply <strong>initial
+conditions</strong>: the value of $y$ and of its first $n-1$ derivatives at one instant $t_0$. That
+count is not a convention — it is exactly what the following theorem says is needed, and exactly what
+it says is enough.</p>
+
+<div class="callout warn">
+  <span class="ct">⚑ Quoted, not proved — Picard–Lindelöf</span>
+  <p>This is the one result in this chapter we take on faith. <em>Let $F(t,\vv y)$ be continuous in
+  $t$ and <strong>Lipschitz</strong> in $\vv y$ near a point $(t_0,\vv y_0)$ — meaning there is a
+  constant $K$ with $\norm{F(t,\vv u)-F(t,\vv v)}\le K\norm{\vv u-\vv v}$ for all $\vv u,\vv v$ in
+  some neighbourhood. Then the initial-value problem</em></p>
+  $$ \dot{\vv y} = F(t,\vv y), \qquad \vv y(t_0)=\vv y_0 $$
+  <p><em>has exactly one solution on some open interval containing $t_0$.</em> The proof constructs
+  the solution as the limit of the iterates
+  $\vv y_{k+1}(t) = \vv y_0 + \int_{t_0}^{t}F(s,\vv y_k(s))\,\dd s$ and shows the Lipschitz condition
+  makes that map a contraction. It is a fixed-point argument, it is genuinely elementary, and it is
+  in every analysis text; we are quoting it because building it here would cost a chapter and buy no
+  physics.</p>
+  <p><b>Why it covers everything.</b> The theorem is stated for a first-order <em>system</em>, but
+  that is no restriction: given an $n$-th order equation, set
+  $\vv y = (y,\dot y,\ddot y,\dots,y^{(n-1)})$ and the equation becomes a first-order system for
+  $\vv y$, whose last component's derivative is supplied by the original equation. So $n$ initial
+  numbers is precisely one initial vector, and the theorem applies verbatim.</p>
+  <p><b>The hypothesis has teeth.</b> Drop Lipschitz and uniqueness dies. The equation
+  $\dot y = 3y^{2/3}$ with $y(0)=0$ is solved by $y\equiv0$ and also by $y=t^{3}$ — and also by
+  anything that sits at zero for a while and then takes off. The right-hand side is continuous, but
+  its slope blows up at $y=0$, so no $K$ exists. Physical laws are built to be Lipschitz; when a
+  model of yours has a non-unique solution, look for the missing physics.</p>
+</div>
+
+<p>Now read the theorem as a physical statement rather than an analytic one. It says: <strong>the
+state now determines the state later, uniquely.</strong> That is determinism, and it is not a
+philosophical posture bolted onto physics — it is a theorem about the equations, given that the
+equations are of this form. The "state" of a classical system is exactly the list of numbers the
+theorem requires, which for mechanics is position <em>and</em> velocity, and that list is what
+Chapter 1.3 will call a point of <strong>phase space</strong>.</p>
+
+<p>Two places where this gets interesting, both flagged now and paid later. In §8 we meet systems
+that are perfectly deterministic and still unpredictable: the solution exists and is unique, but
+neighbouring initial conditions separate exponentially, so a finite-precision measurement of the
+present buys you only a finite time of usable future. That is <em>chaos</em>, and it is a statement
+about sensitivity, not about determinism. And in quantum mechanics the determinism survives intact
+in a place people rarely look: the Schrödinger equation $\ii\hbar\,\partial_t\ket\psi = \hat H\ket\psi$
+is a first-order linear ODE for the state, so the state evolves as deterministically as a planet.
+The randomness in quantum mechanics enters only at measurement, and Chapter 4.8 is about exactly
+where that seam is.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.1</span></span>
+  <p>Every law stated in this book relates a quantity to its own rate of change, and that is not a stylistic habit of physicists but what a law is. To say that nature runs on local rules is to say that the way things stand at one instant fixes the way they stand an instant later, and writing that down produces a differential equation and nothing else. Solving such equations is therefore most of the work.</p>
+  <p>Two consequences follow from the shape of the equations rather than from any philosophy. The first is that a law does not by itself determine a history. Law and starting conditions together do, and the number of quantities they must supply is exactly the highest rate of change appearing, which is why mechanics wants a position and a velocity rather than one or three.</p>
+  <p>The second is determinism, which is not an attitude adopted by physicists but a theorem about equations of this form, holding whenever the right-hand side does not vary too violently as the state is nudged. The hypothesis has teeth: where it fails, uniqueness fails with it, and there are innocent-looking equations whose solutions are not fixed by their starting conditions at all. When a model of yours behaves that way, the usual diagnosis is a missing piece of physics rather than an undecided universe.</p>
+</div>
+
+<h2>2 · First-order linear equations</h2>
+
+<p>Start where the mathematics is easiest and the physics is already familiar.</p>
+
+<h3>2.1 · Separation of variables, done honestly</h3>
+
+<p>If the equation has the form $\dot y = g(y)\,h(t)$ — the right-hand side factorises into a piece
+depending only on $y$ and a piece depending only on $t$ — then it can be integrated directly. The
+usual manipulation is to write $\dd y/g(y) = h(t)\,\dd t$ and integrate both sides, which is the
+"deliberate abuse" that Chapter 0.1 warned you was legitimate. Here is why it is legitimate, in one
+line. Let $G$ be an antiderivative of $1/g$. Then by the chain rule,</p>
+
+<div class="eq" id="e-sep">
+$$ \dv{}{t}\,G\big(y(t)\big) \;=\; G'(y)\,\dot y \;=\; \frac{\dot y}{g(y)} \;=\; h(t), $$
+</div>
+
+<p>so $G(y(t)) = \int h(t)\,\dd t + C$. No differentials were harmed. Separation of variables is the
+chain rule read from right to left.</p>
+
+<p>The example you already know: $\dot y = -ky$ has $g(y)=y$, $h(t)=-k$, so $G(y)=\ln\abs y$ and
+$\ln\abs y = -kt + C$, giving $y = y_0\ee^{-kt}$. Chapter 0.1 got this by recognising the defining
+property of $\ee$; we now have it as a special case of a method.</p>
+
+<h3>2.2 · The integrating factor, derived</h3>
+
+<p>Separation fails the moment there is a source: $\dot y = -ky + f(t)$ does not factorise. The
+trick that works is one of the most quietly clever manoeuvres in elementary mathematics, and it is
+worth deriving rather than remembering.</p>
+
+<p>Take the general first-order linear equation</p>
+
+<div class="eq" id="e-fol">
+$$ \dot y + p(t)\,y \;=\; f(t). $$
+</div>
+
+<p>We would like the left-hand side to be a single derivative, because then we could integrate it.
+It is not — but suppose we multiply the whole equation by some function $\mu(t)$ and <em>ask</em>
+what $\mu$ would have to be for the result to be exactly $\dv{}{t}(\mu y)$. Expanding that target
+with the product rule,</p>
+
+<div class="eq" id="e-mu">
+$$ \dv{}{t}\big(\mu y\big) \;=\; \mu\,\dot y + \dot\mu\, y \qquad\text{versus}\qquad \mu\dot y + \mu p\, y. $$
+</div>
+
+<p>The two agree for every $y$ precisely when $\dot\mu = p\,\mu$ — which is the separable equation
+we just solved. So $\mu$ is forced:</p>
+
+<div class="eq" id="e-mudef">
+$$ \mu(t) \;=\; \exp\!\left(\int^{t} p(s)\,\dd s\right). $$
+</div>
+
+<p>Nothing was guessed. We asked for the function that makes the left side a total derivative and
+the demand determined it. Multiplying <a class="eqref" href="#e-fol"></a> by $\mu$ and integrating
+from $t_0$ to $t$ now gives the general solution outright:</p>
+
+<div class="eq" id="e-folsol">
+$$ y(t) \;=\; \frac{1}{\mu(t)}\left[\mu(t_0)y(t_0) + \int_{t_0}^{t}\mu(s)f(s)\,\dd s\right]. $$
+</div>
+
+<h3>2.3 · Exponential decay with a source — and a Green's function in embryo</h3>
+
+<p>Specialise to constant $p=k$, so $\mu=\ee^{kt}$, and set $t_0=0$:</p>
+
+<div class="eq" id="e-duhamel">
+$$ \boxed{\;y(t) \;=\; \underbrace{y(0)\,\ee^{-kt}}_{\text{memory of the start}} \;+\; \underbrace{\int_{0}^{t}\ee^{-k(t-s)}f(s)\,\dd s}_{\text{memory of the source}}\;} $$
+</div>
+
+<p>Stare at the integral. It says: the source deposited an amount $f(s)\,\dd s$ into the system at
+time $s$, that deposit has been decaying ever since for a duration $t-s$, and the present value is
+the sum over all past deposits of what is left of each. The system is a <em>memory</em> with a
+fading kernel, and the kernel is the response to a single sharp kick.</p>
+
+<p>This is called the <strong>Duhamel</strong> form, and the function</p>
+
+<div class="eq" id="e-green">
+$$ G(t,s) \;=\; \ee^{-k(t-s)} \ \ \text{for } t\ge s, \qquad G(t,s)=0 \ \text{ for } t\lt s, $$
+</div>
+
+<p>is a <strong>Green's function</strong> — the response at time $t$ to a unit impulse at time $s$,
+with the second clause enforcing that causes precede effects. Chapter 0.9 will give the impulse a
+name ($\delta$), prove that <a class="eqref" href="#e-duhamel"></a> is a <em>convolution</em>, and
+show that convolutions become ordinary products under Fourier transform — at which point solving
+linear differential equations becomes division. Everything in this book that computes a response to
+a disturbance, up to and including the propagators of Chapter 5.6, is
+<a class="eqref" href="#e-duhamel"></a> with more indices.</p>
+
+<details class="grind">
+  <summary>Grind box — checking the solution, and one nonlinear equation solved exactly</summary>
+  <div class="grind-body">
+    <p><b>Verification.</b> Never trust a derived formula you have not differentiated back.
+    Differentiate <a class="eqref" href="#e-duhamel"></a>, using the fundamental theorem of calculus
+    on the upper limit <em>and</em> the chain rule on the $t$ inside the integrand:</p>
+    $$ \begin{aligned} \dot y &= -k\,y(0)\ee^{-kt} + \underbrace{\ee^{-k(t-t)}f(t)}_{\text{upper limit}} \;-\; k\int_{0}^{t}\ee^{-k(t-s)}f(s)\,\dd s\\[3pt] &= f(t) - k\left[y(0)\ee^{-kt} + \int_{0}^{t}\ee^{-k(t-s)}f(s)\dd s\right] \;=\; f(t)-k\,y. \end{aligned} $$
+    <p>So $\dot y + ky = f$, and $y(0)=y(0)$ because the integral is empty at $t=0$. ✓</p>
+    <p><b>A constant infusion.</b> Put $f(t)=R$, a steady rate. Then
+    $\int_0^t\ee^{-k(t-s)}R\,\dd s = \tfrac{R}{k}\big(1-\ee^{-kt}\big)$, so</p>
+    $$ y(t) = y(0)\ee^{-kt} + \frac{R}{k}\left(1-\ee^{-kt}\right) \;\longrightarrow\; \frac{R}{k}. $$
+    <p>The steady state is rate in over rate out, approached with time constant $1/k$ — so the time
+    to reach steady state is set by the <em>elimination</em> constant and not by the infusion rate,
+    which sets only the level. This is why a loading dose exists as a concept.</p>
+    <p><b>A nonlinear equation that still yields.</b> Separation does not care about linearity. The
+    logistic equation $\dot y = ry(1-y/K)$ separates:</p>
+    $$ \int\frac{\dd y}{y(1-y/K)} = \int r\,\dd t \quad\Longrightarrow\quad \ln\frac{y}{K-y} = rt + C, $$
+    <p>using the partial fractions $\frac{1}{y(1-y/K)} = \frac1y + \frac{1/K}{1-y/K}$. Solving for
+    $y$ gives $y(t) = K/\big(1+A\ee^{-rt}\big)$ with $A=(K-y_0)/y_0$. Note what we did <em>not</em>
+    get: any right to add two solutions. Superposition is a linear privilege, and §8 is about how
+    much that costs.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.2</span></span>
+  <p>Multiplying an equation through by a carefully chosen function, so that its left-hand side collapses into a single derivative, has the air of a manoeuvre somebody once had the wit to think of. It is nothing of the sort. Demand that the collapse happen, write out what the demand requires, and the multiplier is pinned down by an equation already solved a page earlier. Nothing was guessed, and this is another object arriving because a requirement cornered it into existence rather than because anyone liked it.</p>
+  <p>What comes out deserves to be read rather than filed. The state of a system at any moment is the fading memory of where it started plus the fading memory of everything done to it since, each past disturbance still contributing whatever remains of it after the time elapsed. So the entire response is built from one ingredient, namely what the system does after a single sharp isolated kick, and everything else is that ingredient shifted, scaled and added up.</p>
+  <p>The ingredient has a long future ahead of it. It reappears as the response of any linear system to any disturbance, it carries a condition saying that effects do not precede their causes, and in the last part of the book, with a point of spacetime in place of an instant, it is the object out of which Feynman diagrams are assembled.</p>
+</div>
+
+<h2>3 · A linear ODE is an eigenvalue problem</h2>
+
+<p>This section is the one to read twice. It contains no computation you could not do without it,
+and it changes what all the computations mean.</p>
+
+<h3>3.1 · The solution set is a vector space, and its dimension is the order</h3>
+
+<p>Take the homogeneous equation $L[y]=0$ with $L$ as in <a class="eqref" href="#e-linode"></a>.
+Because $L$ is linear, if $L[y_1]=0$ and $L[y_2]=0$ then</p>
+
+<div class="eq" id="e-superpos">
+$$ L[\alpha y_1 + \beta y_2] \;=\; \alpha L[y_1] + \beta L[y_2] \;=\; 0. $$
+</div>
+
+<p>Any combination of solutions is a solution, and $y\equiv0$ is a solution. Chapter 0.4 already
+identified this: <strong>the solution set of a homogeneous linear ODE is a vector space</strong> —
+the kernel of the linear map $L$. That is the structural reason superposition works, and it is worth
+noticing that it has nothing to do with the physics of waves and everything to do with the
+algebra of $L$.</p>
+
+<p>Now the dimension, which is where the quoted theorem of §1 gets spent. Consider the map that
+takes a solution to its initial data:</p>
+
+<div class="eq" id="e-initmap">
+$$ \Phi: \ y \;\longmapsto\; \big(y(t_0),\,\dot y(t_0),\,\dots,\,y^{(n-1)}(t_0)\big) \;\in\; \R^{n}. $$
+</div>
+
+<p>$\Phi$ is linear, because evaluating a derivative at a point is a linear operation. It is
+<em>injective</em>: if two solutions share all $n$ initial values, then by the uniqueness half of
+Picard–Lindelöf they are the same solution, so $\Phi(y)=0$ forces $y=0$. It is <em>surjective</em>:
+given any list of $n$ numbers, the existence half produces a solution with those initial values. So
+$\Phi$ is an isomorphism of vector spaces, and by Chapter 0.4 isomorphic spaces have equal
+dimension:</p>
+
+<div class="eq" id="e-dimn">
+$$ \boxed{\;\dim\big(\text{solutions of } L[y]=0\big) \;=\; n \;=\; \text{the order.}\;} $$
+</div>
+
+<p>Read what has happened to a phrase you have used since school. "The general solution contains two
+arbitrary constants" is a vague and slightly apologetic statement. <strong>"The solution space is
+two-dimensional"</strong> is a precise one, and it tells you exactly what to do: <em>find a
+basis</em>. Two independent solutions is not a lucky haul, it is a complete answer, and the
+"arbitrary constants" are <em>coordinates</em> in that basis. Chapter 0.4 proved this for
+$\ddot y+\omega^{2}y=0$ by hand; we now have it for every linear ODE at once.</p>
+
+<h3>3.2 · The exponential is the eigenfunction of the derivative</h3>
+
+<p>Here is the punchline. Let $D=\dd/\dd t$, regarded as a linear map on the space of smooth
+functions — an entirely legitimate vector space, as Chapter 0.4 insisted. Ask Chapter 0.5's
+question of it: <em>which vectors does this map merely rescale?</em> That is</p>
+
+<div class="eq" id="e-eigfn">
+$$ D y \;=\; \lambda y, \qquad\text{i.e.}\qquad \dot y = \lambda y, $$
+</div>
+
+<p>which we solved in §2: $y=C\ee^{\lambda t}$, and only that. So</p>
+
+<div class="callout insight">
+  <span class="ct">The sentence this chapter is built on</span>
+  <p><strong>$\ee^{\lambda t}$ is the eigenfunction of $\dd/\dd t$, with eigenvalue $\lambda$.</strong>
+  Every eigenvalue $\lambda\in\C$ occurs, each with a one-dimensional eigenspace.</p>
+  <p>Therefore: <em>solving a constant-coefficient linear ODE is diagonalising the derivative
+  operator.</em> The reason you were told to "try $\ee^{\lambda t}$" is not that somebody once
+  noticed it works. It is that you are looking for the basis in which $D$ is a diagonal matrix, and
+  <a class="eqref" href="#e-eigfn"></a> says what that basis is.</p>
+  <p>This recurs, undisguised, three more times. In Chapter 0.9 the eigenfunctions of $\dd/\dd x$
+  with purely imaginary eigenvalue are $\ee^{\ii kx}$, and expanding a function in them is the
+  <strong>Fourier transform</strong> — Fourier analysis is diagonalisation of the derivative. In
+  Chapter 4.5 the eigenvectors of $\hat H$ are the stationary states, and the reason they are the
+  useful basis is <a class="eqref" href="#e-eigfn"></a> applied to
+  $\ii\hbar\,\partial_t\ket\psi=\hat H\ket\psi$. In Chapter 5.3 the eigenfunctions of the field's
+  wave operator are the modes, and each one turns out to be an independent oscillator, which is what
+  makes quantising a field possible at all.</p>
+</div>
+
+<h3>3.3 · The characteristic equation, from the eigenvalue view</h3>
+
+<p>Now specialise to <strong>constant coefficients</strong>, which is the case where diagonalising
+$D$ actually solves the problem. Write the equation using $D$:</p>
+
+<div class="eq" id="e-pD">
+$$ L[y] \;=\; \big(D^{n} + a_{n-1}D^{n-1} + \cdots + a_1 D + a_0\big)y \;\equiv\; p(D)\,y, $$
+</div>
+
+<p>where $p$ is an ordinary polynomial with the constants as coefficients. Feed an eigenfunction in.
+Since $D\ee^{\lambda t} = \lambda\ee^{\lambda t}$, applying $D$ again gives
+$D^{2}\ee^{\lambda t}=\lambda^{2}\ee^{\lambda t}$, and inductively $D^{m}\ee^{\lambda t}=\lambda^{m}\ee^{\lambda t}$.
+So <em>every</em> term of $p(D)$ acts on $\ee^{\lambda t}$ by multiplication, and</p>
+
+<div class="eq" id="e-pDe">
+$$ p(D)\,\ee^{\lambda t} \;=\; p(\lambda)\,\ee^{\lambda t}. $$
+</div>
+
+<p>An exponential is a solution of $p(D)y=0$ exactly when $p(\lambda)=0$. That is the
+<strong>characteristic equation</strong>, and it did not have to be introduced as a recipe: it is
+<a class="eqref" href="#e-pDe"></a>, which is Chapter 0.5's statement that a polynomial in an
+operator acts on an eigenvector by the same polynomial in the eigenvalue. Compare
+<a class="eqref" href="#e-charpoly-note"></a> below with the matrix characteristic polynomial of
+Chapter 0.5 and you are looking at the same object.</p>
+
+<div class="eq" id="e-charpoly-note">
+$$ \lambda^{n} + a_{n-1}\lambda^{n-1} + \cdots + a_1\lambda + a_0 \;=\; 0. $$
+</div>
+
+<p>If this degree-$n$ polynomial has $n$ <em>distinct</em> roots $\lambda_1,\dots,\lambda_n$ — over
+$\C$ it has $n$ roots counted with multiplicity, by the fact recorded in Chapter 0.4 — then the $n$
+functions $\ee^{\lambda_i t}$ are independent, and by <a class="eqref" href="#e-dimn"></a> they are
+a basis. Done: the general solution is $y=\sum_i c_i\ee^{\lambda_i t}$.</p>
+
+<p><b>Real equations, complex roots.</b> Physics equations have real coefficients, so complex roots
+come in conjugate pairs $\lambda = a\pm\ii b$. The corresponding solutions $\ee^{at}\ee^{\pm\ii bt}$
+are complex, but their combinations</p>
+
+<div class="eq" id="e-realbasis">
+$$ \frac{\ee^{\lambda t}+\ee^{\bar\lambda t}}{2} = \ee^{at}\cos bt, \qquad \frac{\ee^{\lambda t}-\ee^{\bar\lambda t}}{2\ii} = \ee^{at}\sin bt, $$
+</div>
+
+<p>are real, by Euler's formula from Chapter 0.3. Since they span the same two-dimensional space,
+you may use either basis. <strong>A complex eigenvalue with non-zero imaginary part means
+oscillation; its real part is growth or decay.</strong> That single sentence classifies the
+behaviour of every linear system in this book, and §5 is nothing but it applied once.</p>
+
+<h3>3.4 · Repeated roots: the defective case, and where $t\ee^{\lambda t}$ comes from</h3>
+
+<p>Suppose $p$ has a double root: $p(\lambda)=(\lambda-\lambda_0)^{2}q(\lambda)$ with
+$q(\lambda_0)\neq0$. Then $\ee^{\lambda_0 t}$ is a solution, but it is only <em>one</em> solution,
+and <a class="eqref" href="#e-dimn"></a> insists there must be two associated with this root. The
+eigenvector supply has run short.</p>
+
+<p>You have seen this before, and it was flagged as a warning. Chapter 0.5's warn box exhibited</p>
+
+<div class="eq" id="e-jordan">
+$$ J = \begin{pmatrix}1&1\\0&1\end{pmatrix}, $$
+</div>
+
+<p>a $2\times2$ matrix with a repeated eigenvalue and only a one-dimensional eigenspace — a
+<strong>defective</strong> matrix, with no basis of eigenvectors and no diagonal form. The
+correspondence about to appear is exact, not an analogy.</p>
+
+<p>Write $N = D-\lambda_0$, and restrict attention to the two-dimensional space
+$V=\ker\!\big((D-\lambda_0)^{2}\big)$ of solutions belonging to this root. On $V$ we have $N^{2}=0$
+by construction, and $N\neq0$ (or the eigenspace would be two-dimensional and $\ee^{\lambda_0t}$
+would not be alone). An operator with $N^2=0\neq N$ is <strong>nilpotent</strong>, and it cannot be
+diagonalised: a diagonal $N$ with $N^2=0$ would have all diagonal entries zero, hence be $0$.</p>
+
+<p>What does $V$ contain? Take any $w\in V$ with $Nw\neq0$. Then $N(Nw)=N^{2}w=0$, so $Nw$ <em>is</em>
+an eigenvector — it is a multiple of $\ee^{\lambda_0t}$. So we need a function that $N$ maps to
+$\ee^{\lambda_0 t}$ rather than to zero. Try $w=t\ee^{\lambda_0t}$ and compute, with the product
+rule:</p>
+
+<div class="eq" id="e-teltderiv">
+$$ N\big(t\ee^{\lambda_0t}\big) = \dv{}{t}\big(t\ee^{\lambda_0t}\big) - \lambda_0 t\ee^{\lambda_0t} = \ee^{\lambda_0t} + \lambda_0t\ee^{\lambda_0t} - \lambda_0t\ee^{\lambda_0t} = \ee^{\lambda_0t}. $$
+</div>
+
+<p>Exactly what was needed. Applying $N$ once more kills it, so
+$(D-\lambda_0)^{2}\big(t\ee^{\lambda_0t}\big)=0$ and $t\ee^{\lambda_0t}$ is the second solution —
+<em>derived</em>, not guessed. And in the basis $\{u,w\}=\{\ee^{\lambda_0t},\,t\ee^{\lambda_0t}\}$
+the operator $D$ acts by $Du=\lambda_0u$ and $Dw = \lambda_0 w + u$, whose matrix is</p>
+
+<div class="eq" id="e-jordanD">
+$$ \begin{pmatrix}\lambda_0 & 1\\ 0 & \lambda_0\end{pmatrix}, \qquad\text{which is exactly } J \text{ when } \lambda_0=1. $$
+</div>
+
+<p>So <a class="eqref" href="#e-jordan"></a> is not a curiosity a linear-algebra text invented to
+spoil the spectral theorem. It is what the derivative operator looks like at a repeated root, and
+the extra factor of $t$ in $t\ee^{\lambda_0 t}$ is the off-diagonal $1$. The vector $w$ has a name in
+linear algebra — a <strong>generalised eigenvector</strong> — and now you know what one is: a
+function that the operator almost, but not quite, merely rescales.</p>
+
+<details class="grind">
+  <summary>Grind box — higher multiplicity, reduction of order, and the confluent limit</summary>
+  <div class="grind-body">
+    <p><b>Multiplicity $m$.</b> The same argument iterates. Since
+    $N\big(t^{j}\ee^{\lambda_0t}\big) = j\,t^{j-1}\ee^{\lambda_0t}$ by the identical product-rule
+    computation, applying $N$ repeatedly walks down the ladder
+    $t^{m-1}\to t^{m-2}\to\cdots\to 1\to 0$. Hence $N^{m}$ annihilates $t^{j}\ee^{\lambda_0t}$ for
+    every $j\lt m$, and</p>
+    $$ \ee^{\lambda_0t},\ t\ee^{\lambda_0t},\ t^{2}\ee^{\lambda_0t},\ \dots,\ t^{m-1}\ee^{\lambda_0t} $$
+    <p>are $m$ independent solutions — independent because a vanishing combination would make a
+    polynomial of degree $\lt m$ identically zero. That is exactly the $m$ the dimension count
+    demands, and the matrix of $D$ on this space is an $m\times m$ Jordan block.</p>
+    <p><b>Reduction of order, if you prefer no operators.</b> Knowing one solution
+    $y_1=\ee^{\lambda_0t}$ of $\ddot y - 2\lambda_0\dot y+\lambda_0^{2}y=0$, substitute
+    $y = v(t)\,\ee^{\lambda_0t}$. Then $\dot y = (\dot v+\lambda_0v)\ee^{\lambda_0t}$ and
+    $\ddot y = (\ddot v + 2\lambda_0\dot v + \lambda_0^{2}v)\ee^{\lambda_0t}$, and substituting,
+    every term without a derivative of $v$ cancels:</p>
+    $$ \big(\ddot v + 2\lambda_0\dot v+\lambda_0^{2}v\big) - 2\lambda_0\big(\dot v + \lambda_0 v\big) + \lambda_0^{2}v = \ddot v = 0. $$
+    <p>So $v = A+Bt$, recovering $y=(A+Bt)\ee^{\lambda_0t}$. The cancellation is not luck; it is
+    <a class="eqref" href="#e-pDe"></a> saying that the coefficient of $v$ is $p(\lambda_0)$ and the
+    coefficient of $\dot v$ is $p'(\lambda_0)$ — both zero at a double root.</p>
+    <p><b>The confluent limit, which is the most physical derivation.</b> Take two distinct roots
+    $\lambda_1\neq\lambda_2$. The pair $\{\ee^{\lambda_1t},\ee^{\lambda_2t}\}$ is a basis, but so is
+    the pair $\{\ee^{\lambda_1t},\,(\ee^{\lambda_2t}-\ee^{\lambda_1t})/(\lambda_2-\lambda_1)\}$,
+    since the second is a combination of the first two with non-zero coefficient. Now let
+    $\lambda_2\to\lambda_1$. The second basis vector is a difference quotient in $\lambda$, and by
+    the definition of the derivative (Chapter 0.1),</p>
+    $$ \frac{\ee^{\lambda_2t}-\ee^{\lambda_1t}}{\lambda_2-\lambda_1} \;\longrightarrow\; \left.\pdv{}{\lambda}\ee^{\lambda t}\right|_{\lambda_1} \;=\; t\,\ee^{\lambda_1 t}. $$
+    <p>The second solution does not appear from nowhere when the roots collide — it is the
+    <em>derivative with respect to the eigenvalue</em>, and it was there all along as a
+    finite-difference of the two exponentials. This is the same manoeuvre that will produce the
+    secular term $t\sin\omega_0t$ at exact resonance in §6, and for the same reason: two things
+    became equal and the difference between them had to be rescaled to survive.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.3</span></span>
+  <p>An exponential is the one function that differentiation barely touches, since the operation hands the same function back multiplied by a number, and that single fact is why every method for solving linear equations with constant coefficients works. Put the question the linear algebra chapters put to every map, namely which vectors it merely rescales, to differentiation itself, treating functions as the vectors they were shown to be. The answer is the exponentials, one for each multiplier, and nothing besides.</p>
+  <p>The old instruction to try an exponential, usually presented as a historical accident, is therefore an instruction to move to the description in which differentiation has stopped being differentiation and become multiplication by a number. This is the move already made twice in other clothes, the one that turned a symmetric array into a list of numbers along perpendicular directions, and it works for the same reason: the problem has fallen apart into independent pieces.</p>
+  <p>Two dividends arrive at once. The solutions form a space whose dimension is the order of the equation, so two independent solutions of a second-order equation are a complete answer rather than a lucky haul, and school algebra's arbitrary constants are coordinates in a basis. A multiplier with an imaginary part means oscillation while its real part means growth or decay, and between them they classify the behaviour of every linear system in the book.</p>
+</div>
+
+<h2>4 · The harmonic oscillator</h2>
+
+<p>A mass $m$ on a spring of stiffness $k$, with no friction and no driving. Hooke's law says the
+restoring force is $-kx$, so Newton gives $m\ddot x = -kx$, i.e.</p>
+
+<div class="eq" id="e-sho">
+$$ \ddot x + \omega^{2}x = 0, \qquad \omega \equiv \sqrt{k/m}. $$
+</div>
+
+<p>By Chapter 0.3 this is not a statement about springs. Expand any potential $V$ about a stable
+minimum at $x_0$: the constant is irrelevant, the linear term vanishes because $V'(x_0)=0$, and what
+survives is $V\approx V(x_0)+\tfrac12V''(x_0)(x-x_0)^{2}$ — a spring with $k=V''(x_0)$. So
+<a class="eqref" href="#e-sho"></a> governs a pendulum, a diatomic molecule, an atom in a crystal, a
+mode of the electromagnetic field, and a small perturbation of a black hole. Solve it once.</p>
+
+<h3>4.1 · First way: real exponentials that are not real</h3>
+
+<p>Apply §3. The characteristic equation is $\lambda^{2}+\omega^{2}=0$, so
+$\lambda=\pm\ii\omega$ — a conjugate pair with zero real part. By
+<a class="eqref" href="#e-realbasis"></a> a real basis is $\{\cos\omega t,\ \sin\omega t\}$, and</p>
+
+<div class="eq" id="e-shosol">
+$$ x(t) = C_1\cos\omega t + C_2\sin\omega t \;=\; A\cos(\omega t+\varphi). $$
+</div>
+
+<p>The second form is the first, rewritten: expanding $A\cos(\omega t+\varphi) = A\cos\varphi\cos\omega t - A\sin\varphi\sin\omega t$
+identifies $C_1 = A\cos\varphi$ and $C_2=-A\sin\varphi$, hence</p>
+
+<div class="eq" id="e-ampphase">
+$$ A = \sqrt{C_1^{2}+C_2^{2}}, \qquad \tan\varphi = -C_2/C_1. $$
+</div>
+
+<p>Two constants either way, as <a class="eqref" href="#e-dimn"></a> demands — the same
+two-dimensional space in two coordinate systems. Fitting initial conditions $x(0)=x_0$,
+$\dot x(0)=v_0$ gives $C_1=x_0$ and $C_2=v_0/\omega$. Note what is <em>not</em> in
+<a class="eqref" href="#e-shosol"></a>: the frequency does not depend on the amplitude. A pendulum
+clock keeps time whether it swings wide or narrow, and §8 is about the fact that this is only
+approximately true.</p>
+
+<h3>4.2 · Second way: the complex amplitude</h3>
+
+<p>Physicists rarely write <a class="eqref" href="#e-shosol"></a>. They write</p>
+
+<div class="eq" id="e-cplxamp">
+$$ x(t) \;=\; \mathrm{Re}\!\left[Z\,\ee^{\ii\omega t}\right], \qquad Z = A\,\ee^{\ii\varphi}\in\C, $$
+</div>
+
+<p>which is the same thing: $\mathrm{Re}[A\ee^{\ii\varphi}\ee^{\ii\omega t}] = A\cos(\omega t+\varphi)$
+by Euler. The gain is bookkeeping, and it is large. <strong>The single complex number $Z$ carries
+both the amplitude (its modulus) and the phase (its argument).</strong> Adding two oscillations of
+the same frequency becomes adding two complex numbers; shifting a phase becomes multiplying by
+$\ee^{\ii\theta}$, which Chapter 0.3 showed is a rotation. Differentiating becomes multiplying by
+$\ii\omega$ — the derivative has been turned into an algebraic operation, which is exactly
+<a class="eqref" href="#e-eigfn"></a> being used as a labour-saving device.</p>
+
+<p>The move is legal for one reason worth stating: the equation is linear with <em>real</em>
+coefficients, so if $z(t)$ solves it then so do $\bar z$ and hence $\mathrm{Re}\,z=(z+\bar z)/2$. You
+may solve the complex problem and take the real part at the end. The moment the equation is
+nonlinear this fails — $\mathrm{Re}(z^{2})\neq(\mathrm{Re}\,z)^{2}$ — which is one more entry on
+§8's list.</p>
+
+<h3>4.3 · Third way: energy, and the first integral</h3>
+
+<p>The third route does not solve the equation at all; it reduces its order, and it generalises
+further than either of the others. Multiply <a class="eqref" href="#e-sho"></a> by $m\dot x$:</p>
+
+<div class="eq" id="e-firstint">
+$$ m\dot x\ddot x + m\omega^{2}x\dot x = 0 \quad\Longrightarrow\quad \dv{}{t}\left[\tfrac12m\dot x^{2} + \tfrac12 m\omega^{2}x^{2}\right] = 0, $$
+</div>
+
+<p>because each term is the derivative of a square by the chain rule. So the bracket is constant:</p>
+
+<div class="eq" id="e-energy">
+$$ E \;=\; \tfrac12 m\dot x^{2} + \tfrac12 kx^{2} \;=\; \text{constant}, \qquad k=m\omega^{2}. $$
+</div>
+
+<p>A quantity that is constant along solutions is a <strong>first integral</strong>, and finding one
+converts a second-order equation into a first-order one. Here it does more: solve
+<a class="eqref" href="#e-energy"></a> for $\dot x$ and you get a separable equation whose
+integration reproduces <a class="eqref" href="#e-shosol"></a>. Chapter 1.4 will explain where first
+integrals come from in general — every one of them is a symmetry, and this one is invariance under
+shifting the clock.</p>
+
+<h3>4.4 · Phase space: the trajectory is a closed ellipse</h3>
+
+<p>Plot the state $(x,p)$ with $p=m\dot x$ rather than plotting $x$ against $t$. Rewriting
+<a class="eqref" href="#e-energy"></a> in these variables,</p>
+
+<div class="eq" id="e-ellipse">
+$$ \frac{p^{2}}{2mE} + \frac{x^{2}}{2E/(m\omega^{2})} \;=\; 1, $$
+</div>
+
+<p>an <strong>ellipse</strong> with semi-axes $x_{\max}=A=\sqrt{2E/(m\omega^{2})}$ and
+$p_{\max}=m\omega A$. Every solution runs around it, clockwise, at uniform angular rate in the
+rescaled coordinates $(\omega x,\ \dot x)$ — where the ellipse becomes a circle and the motion
+becomes literally a rotation, which is <a class="eqref" href="#e-cplxamp"></a> drawn as a picture.</p>
+
+<p>That the curve <em>closes</em> is the whole content of energy conservation. An orbit that failed
+to close would return to the same position with a different speed, and $E$ would have changed. So
+"the trajectory is a closed loop in phase space" and "energy is conserved" are the same statement,
+one drawn and one written.</p>
+
+<p>Compute the enclosed area, since the answer will matter later. The area of an ellipse is $\pi$
+times the product of the semi-axes:</p>
+
+<div class="eq" id="e-area">
+$$ \mathcal A = \pi\,x_{\max}\,p_{\max} = \pi\,A\cdot m\omega A = \pi m\omega A^{2} = \frac{2\pi E}{\omega} = E\,T, $$
+</div>
+
+<p>using $E=\tfrac12m\omega^{2}A^{2}$ and $T=2\pi/\omega$. <strong>Phase-space area is energy times
+period.</strong> Hold onto that, because Chapter 4.5 will find that a quantum oscillator has
+$E_n = (n+\tfrac12)\hbar\omega$, whence</p>
+
+<div class="eq" id="e-quant">
+$$ \mathcal A_n = \frac{2\pi E_n}{\omega} = 2\pi\left(n+\tfrac12\right)\hbar = \left(n+\tfrac12\right)h. $$
+</div>
+
+<p>The allowed orbits are those enclosing an integer-and-a-half multiple of Planck's constant. The
+classical ellipse is not replaced in quantum mechanics; it is <em>rationed</em>. Chapter 4.5 derives
+this properly with ladder operators, and Chapter 1.3 will show that phase-space area is preserved by
+all of classical mechanics, not just this example — which is why it was the right thing to
+quantise.</p>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.4</span></span>
+  <p>Expand any potential energy about a stable resting point and watch what is left. The constant is irrelevant, the linear term is absent precisely because the point was a resting point, and what survives is quadratic. So the equation being solved here is not a statement about springs at all. Every stable system in nature, examined closely enough, obeys it, which is why a molecule, an atom in a crystal, a pendulum, a mode of the electromagnetic field and a disturbed black hole are all describable by the same few lines, and why solving one equation completely is worth more than surveying a dozen partially.</p>
+  <p>Three routes to the answer are worth carrying instead of one, because they generalise in different directions. Trying an exponential is the eigenvalue reading. Packing amplitude and phase into a single complex number turns differentiation into multiplication and turns the addition of two oscillations into the addition of two numbers. Multiplying through by the velocity produces a quantity that never changes, which lowers the order of the problem without solving it.</p>
+  <p>That last route reaches furthest. Plot position against momentum rather than against time and every solution becomes a closed loop, closed precisely because the energy is conserved. The area it encloses is the energy multiplied by the period, and quantum mechanics will leave the ellipse standing and merely ration which of them are permitted.</p>
+</div>
+
+<h2>5 · Damping</h2>
+
+<p>Nothing oscillates forever. Add a resistive force proportional to velocity — viscous drag, an
+electrical resistance, the radiation of energy away to infinity — and Newton's law reads
+$m\ddot x = -kx - b\dot x$. Divide by $m$ and name the two constants:</p>
+
+<div class="eq" id="e-damped">
+$$ \ddot x + 2\gamma\dot x + \omega_0^{2}x = 0, \qquad \gamma \equiv \frac{b}{2m}, \quad \omega_0 \equiv \sqrt{k/m}. $$
+</div>
+
+<p>The factor of $2$ in the definition of $\gamma$ is chosen purely to make what follows tidy, and
+you should expect it to be worth its keep. Section 3 does all the work: the characteristic equation
+is $\lambda^{2}+2\gamma\lambda+\omega_0^{2}=0$, so</p>
+
+<div class="eq" id="e-droots">
+$$ \lambda_{\pm} = -\gamma \pm \sqrt{\gamma^{2}-\omega_0^{2}}. $$
+</div>
+
+<p>Everything about damped motion is in the discriminant $\gamma^{2}-\omega_0^{2}$, and there are
+exactly three cases because a real number is negative, zero, or positive.</p>
+
+<h3>5.1 · Underdamped: $\gamma \lt \omega_0$</h3>
+
+<p>The discriminant is negative, so the roots are a complex conjugate pair
+$\lambda_\pm = -\gamma\pm\ii\omega_{\mathrm d}$ with</p>
+
+<div class="eq" id="e-wd">
+$$ \omega_{\mathrm d} = \sqrt{\omega_0^{2}-\gamma^{2}}, \qquad x(t) = A\,\ee^{-\gamma t}\cos\!\left(\omega_{\mathrm d}t + \varphi\right). $$
+</div>
+
+<p>Read it off <a class="eqref" href="#e-realbasis"></a>: the real part $-\gamma$ is the decay, the
+imaginary part $\omega_{\mathrm d}$ is the oscillation. The system rings and the ringing dies away
+with time constant $1/\gamma$. Two details are worth noticing. First, damping <em>lowers</em> the
+frequency, $\omega_{\mathrm d}\lt\omega_0$ — the system is dragged, so it takes longer to come back.
+Second, the effect is second-order small: $\omega_{\mathrm d}\approx\omega_0\big(1-\tfrac12\gamma^{2}/\omega_0^{2}\big)$,
+so a system that loses a per cent of its amplitude per radian shifts its frequency by only a part in
+$2\times10^{4}$. Weak damping kills the amplitude long before it moves the pitch.</p>
+
+<h3>5.2 · Overdamped: $\gamma \gt \omega_0$</h3>
+
+<p>The discriminant is positive, both roots are real and negative, and the motion is a sum of two
+decaying exponentials with no oscillation at all:</p>
+
+<div class="eq" id="e-over">
+$$ x(t) = C_+\ee^{\lambda_+t} + C_-\ee^{\lambda_-t}, \qquad \lambda_\pm = -\gamma\pm\sqrt{\gamma^{2}-\omega_0^{2}} \lt 0. $$
+</div>
+
+<p>Both are negative because $\sqrt{\gamma^{2}-\omega_0^{2}}\lt\gamma$. At long times the slower one
+— $\lambda_+$, the one closer to zero — dominates, and here is the counter-intuitive part. For heavy
+damping, $\gamma\gg\omega_0$, expand the square root by Chapter 0.3:</p>
+
+<div class="eq" id="e-slowroot">
+$$ \lambda_+ = -\gamma\left(1-\sqrt{1-\omega_0^{2}/\gamma^{2}}\right) \approx -\frac{\omega_0^{2}}{2\gamma}. $$
+</div>
+
+<p><strong>More damping makes the return to equilibrium slower</strong>, not faster. A door closer
+filled with treacle takes forever. The rate is inversely proportional to the drag, exactly as in the
+overdamped limit of any relaxation problem.</p>
+
+<h3>5.3 · Critically damped: $\gamma = \omega_0$</h3>
+
+<p>The discriminant vanishes and $\lambda=-\gamma$ is a <em>repeated</em> root. This is precisely the
+defective case of §3.4, and the second solution is forced to be
+<a class="eqref" href="#e-teltderiv"></a>:</p>
+
+<div class="eq" id="e-crit">
+$$ x(t) = (A + Bt)\,\ee^{-\gamma t}. $$
+</div>
+
+<p>So the extra factor of $t$ in a critically damped shock absorber and the off-diagonal $1$ in the
+Jordan block <a class="eqref" href="#e-jordan"></a> are the same fact. Critical damping is the
+boundary between ringing and crawling, and it is the fastest possible approach to equilibrium
+without overshoot — which is why car suspensions, galvanometers and control loops are tuned to it.
+That it is fastest can be read off <a class="eqref" href="#e-slowroot"></a>: the decay exponent is
+$\gamma=\omega_0$ here, larger in magnitude than the $\omega_0^{2}/2\gamma$ available on the
+overdamped side and larger than the envelope $\ee^{-\gamma t}$ available on the underdamped side,
+since $\gamma\lt\omega_0$ there.</p>
+
+<h3>5.4 · The quality factor</h3>
+
+<p>The dimensionless combination that controls everything is</p>
+
+<div class="eq" id="e-Q">
+$$ \boxed{\;Q \;\equiv\; \frac{\omega_0}{2\gamma}\;} $$
+</div>
+
+<p>and its meaning is energetic. Energy in an oscillator is quadratic in amplitude, and the amplitude
+envelope decays as $\ee^{-\gamma t}$, so</p>
+
+<div class="eq" id="e-Edecay">
+$$ E(t) = E_0\,\ee^{-2\gamma t} = E_0\,\ee^{-\omega_0 t/Q}. $$
+</div>
+
+<p>In time $t$ the oscillator has advanced $\omega_0 t$ radians of phase, and the exponent is that
+number divided by $Q$. Hence, exactly:</p>
+
+<p style="text-align:center"><b>$Q$ is the number of radians of oscillation in which the energy falls
+by a factor of $\ee$.</b></p>
+
+<p>Divide by $2\pi$ and it is the number of <em>cycles</em>, times $2\pi$; a system with $Q=100$
+rings for about $16$ cycles before losing $63\%$ of its energy. The often-quoted statement "the
+fractional energy lost per cycle is $2\pi/Q$" is the small-loss expansion of
+<a class="eqref" href="#e-Edecay"></a>: over one period $T=2\pi/\omega_0$ the energy ratio is
+$\ee^{-2\pi/Q}\approx 1-2\pi/Q$, which is accurate to a per cent only for $Q\gtrsim 300$. Use the
+exponential; it is no harder.</p>
+
+<p>Section 6 will produce a second, entirely independent meaning for the same number — $Q$ is the
+sharpness of the resonance peak — and the fact that one number does both jobs is the width–lifetime
+relation that runs through the rest of this book.</p>
+
+<details class="grind">
+  <summary>Grind box — all three cases with the same initial conditions, and the seam between them</summary>
+  <div class="grind-body">
+    <p>Release from rest: $x(0)=x_0$, $\dot x(0)=0$. Impose these on each case.</p>
+    <p><b>Underdamped.</b> From <a class="eqref" href="#e-wd"></a> written as
+    $x=\ee^{-\gamma t}(A\cos\omega_{\mathrm d}t + B\sin\omega_{\mathrm d}t)$: at $t=0$, $A=x_0$;
+    differentiating, $\dot x(0) = -\gamma A + \omega_{\mathrm d}B = 0$ gives
+    $B = \gamma x_0/\omega_{\mathrm d}$, so</p>
+    $$ x(t) = x_0\,\ee^{-\gamma t}\left[\cos\omega_{\mathrm d}t + \frac{\gamma}{\omega_{\mathrm d}}\sin\omega_{\mathrm d}t\right]. $$
+    <p><b>Critically damped.</b> From <a class="eqref" href="#e-crit"></a>: $A=x_0$ and
+    $\dot x(0) = B-\gamma A=0$ gives $B=\gamma x_0$, so
+    $x(t) = x_0\ee^{-\gamma t}(1+\gamma t)$.</p>
+    <p><b>The seam is continuous.</b> Let $\omega_{\mathrm d}\to0$ in the underdamped answer. Then
+    $\cos\omega_{\mathrm d}t\to1$ and $\sin(\omega_{\mathrm d}t)/\omega_{\mathrm d}\to t$, so the
+    bracket tends to $1+\gamma t$ — exactly the critical solution. Nothing discontinuous happens at
+    $\gamma=\omega_0$; the oscillation simply has its first zero crossing pushed out to
+    $t=\pi/\omega_{\mathrm d}\to\infty$. This is the confluent limit of the grind box in §3 seen in
+    physical clothing, and it is why the repeated-root case is not a separate phenomenon.</p>
+    <p><b>Overdamped.</b> Same algebra with $\omega_{\mathrm d}\to\ii\kappa$,
+    $\kappa=\sqrt{\gamma^{2}-\omega_0^{2}}$, turns the trigonometric functions into hyperbolic ones:</p>
+    $$ x(t) = x_0\,\ee^{-\gamma t}\left[\cosh\kappa t + \frac{\gamma}{\kappa}\sinh\kappa t\right], $$
+    <p>which is positive for all $t\gt0$: an overdamped system released from rest never crosses zero.
+    The critically damped case is the last one for which that is true, and the underdamped case
+    crosses first at $\omega_{\mathrm d}t = \pi-\arctan(\gamma/\omega_{\mathrm d})$.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.5</span></span>
+  <p>Everything a resisted oscillator does is settled by one comparison, between the rate at which it would swing unopposed and the rate at which the opposition drains it, and the three outcomes are the three things a real number can be with respect to zero. Under light resistance the multipliers are complex, so the motion rings and fades, the imaginary part setting the pitch and the real part how long the ringing lasts. Under heavy resistance they are real and the motion crawls back to rest without crossing over.</p>
+  <p>There is a surprise in the heavy case. More resistance makes the return slower rather than faster, so a door closer filled with treacle takes forever, and the quickest return available sits on the boundary between ringing and crawling. That boundary is where two multipliers have collided and the supply of independent solutions has run short, the defective situation the linear algebra chapter warned about, met here in a shock absorber instead of an array.</p>
+  <p>One dimensionless number does all the summarising. It counts the radians of swinging over which the stored energy falls by a factor of e, so a system rated at a hundred rings for about sixteen cycles before losing most of what it had. It is shortly going to measure something apparently unrelated, namely how sharp the response is when the system is pushed from outside.</p>
+</div>
+
+<h2>6 · Driving, resonance, and the shape of every spectral line</h2>
+
+<p>Now push on it. Take a sinusoidal drive of angular frequency $\omega$, which need not be
+$\omega_0$, and write the force per unit mass as $F_0\cos\omega t$:</p>
+
+<div class="eq" id="e-driven">
+$$ \ddot x + 2\gamma\dot x + \omega_0^{2}x = F_0\cos\omega t. $$
+</div>
+
+<p>This is inhomogeneous, and Chapter 0.4 already told us the structure of the answer: <em>general
+solution = one particular solution + the whole vector space of homogeneous solutions</em>. The
+homogeneous part is §5, and it decays as $\ee^{-\gamma t}$. So after a few times $1/\gamma$ the
+system forgets how it was started and settles onto the particular solution. That survivor is the
+<strong>steady state</strong>, and — this will matter in a moment — <em>it exists as a well-defined
+attractor only because $\gamma\gt0$</em>.</p>
+
+<h3>6.1 · Solving it with a complex amplitude</h3>
+
+<p>Solve the complex equation $\ddot z + 2\gamma\dot z+\omega_0^{2}z = F_0\ee^{\ii\omega t}$ and take
+the real part at the end, which is legal because <a class="eqref" href="#e-driven"></a> is linear
+with real coefficients. Try $z = Z\ee^{\ii\omega t}$ with $Z\in\C$ constant. Each derivative brings
+down a factor $\ii\omega$ — this is <a class="eqref" href="#e-eigfn"></a> earning its keep, since
+$\ee^{\ii\omega t}$ is an eigenfunction of $D$ — so the differential equation collapses to an
+algebraic one:</p>
+
+<div class="eq" id="e-Zalg">
+$$ \left(-\omega^{2} + 2\ii\gamma\omega + \omega_0^{2}\right)Z = F_0 \quad\Longrightarrow\quad Z = \frac{F_0}{\omega_0^{2}-\omega^{2}+2\ii\gamma\omega}. $$
+</div>
+
+<p>That is the entire solution. Writing $Z = A\ee^{-\ii\delta}$ so that
+$x(t)=A\cos(\omega t-\delta)$ — with $\delta$ the amount by which the response <em>lags</em> the
+drive — and taking modulus and argument of <a class="eqref" href="#e-Zalg"></a>:</p>
+
+<div class="eq" id="e-ampphase2">
+$$ \begin{aligned} A(\omega) &= \frac{F_0}{\sqrt{\left(\omega_0^{2}-\omega^{2}\right)^{2}+4\gamma^{2}\omega^{2}}},\\[6pt] \tan\delta(\omega) &= \frac{2\gamma\omega}{\omega_0^{2}-\omega^{2}}, \qquad \delta\in(0,\pi). \end{aligned} $$
+</div>
+
+<p>The branch is fixed by requiring $\delta$ to be continuous and to start at $0$: the imaginary part
+of the denominator of $Z$ is $2\gamma\omega\gt0$, so $\delta$ is always in the upper half range.</p>
+
+<h3>6.2 · Where the amplitude peaks — and it is not at $\omega_0$</h3>
+
+<p>Maximise $A$ by minimising the quantity under the root. Write $s=\omega^{2}$, so we are minimising
+$g(s) = (\omega_0^{2}-s)^{2}+4\gamma^{2}s$; then $g'(s) = -2(\omega_0^{2}-s)+4\gamma^{2}=0$ gives
+$s = \omega_0^{2}-2\gamma^{2}$, i.e.</p>
+
+<div class="eq" id="e-peak">
+$$ \boxed{\;\omega_{\text{peak}} = \sqrt{\omega_0^{2}-2\gamma^{2}}\;} \qquad A_{\max} = \frac{F_0}{2\gamma\sqrt{\omega_0^{2}-\gamma^{2}}}, $$
+</div>
+
+<p>the amplitude following by substituting $\omega_0^{2}-\omega_{\text{peak}}^{2}=2\gamma^{2}$ back
+into <a class="eqref" href="#e-ampphase2"></a>. Three things fall out. The peak is at neither the
+natural frequency $\omega_0$ nor the damped frequency $\omega_{\mathrm d}=\sqrt{\omega_0^{2}-\gamma^{2}}$
+but at a third, still lower value. It exists at all only when $\omega_0^{2}\gt2\gamma^{2}$, that is
+$Q\gt1/\sqrt2$; below that the response falls monotonically and there is no resonance. And as
+$\gamma\to0$ the peak height diverges like $F_0/(2\gamma\omega_0)$ — a fact the warning box below is
+about.</p>
+
+<h3>6.3 · Power absorbed, and the exact width</h3>
+
+<p>Amplitude is not the physically cleanest quantity; <em>power</em> is, because that is what a
+spectrometer measures. The instantaneous power delivered by the drive is force times velocity. With
+$x = A\cos(\omega t-\delta)$, so $\dot x = -A\omega\sin(\omega t-\delta)$, average over a cycle using
+$\avg{\cos^{2}}=\tfrac12$ and $\avg{\sin\cos}=0$:</p>
+
+<div class="eq" id="e-power1">
+$$ \begin{aligned} \bar P &= \big\langle F_0\cos\omega t\cdot\left(-A\omega\sin(\omega t-\delta)\right)\big\rangle\\[3pt] &= -F_0A\omega\big\langle \cos\omega t\,\sin\omega t\cos\delta - \cos^{2}\omega t\,\sin\delta\big\rangle \;=\; \tfrac12 F_0 A\omega\sin\delta. \end{aligned} $$
+</div>
+
+<p>Only the component of the response <em>in phase with the velocity</em> absorbs energy — the
+$\sin\delta$ — which is why phase matters physically and not just bookkeeping-ly. From
+<a class="eqref" href="#e-Zalg"></a>, $\sin\delta = 2\gamma\omega A/F_0$, so</p>
+
+<div class="eq" id="e-power2">
+$$ \bar P(\omega) \;=\; \gamma\,\omega^{2}A^{2} \;=\; \frac{\gamma F_0^{2}\,\omega^{2}}{\left(\omega_0^{2}-\omega^{2}\right)^{2}+4\gamma^{2}\omega^{2}}. $$
+</div>
+
+<p>Now maximise <em>this</em>. Divide numerator and denominator by $\omega^{2}$:</p>
+
+<div class="eq" id="e-powerform">
+$$ \bar P = \frac{\gamma F_0^{2}}{\left(\dfrac{\omega_0^{2}-\omega^{2}}{\omega}\right)^{2}+4\gamma^{2}}, $$
+</div>
+
+<p>whose denominator is smallest exactly when the first bracket vanishes, i.e. at $\omega=\omega_0$
+precisely, with $\bar P(\omega_0) = F_0^{2}/4\gamma$. <strong>The power resonance sits exactly at the
+natural frequency, even though the amplitude resonance does not.</strong> Half-power points are just
+as clean: setting $\bar P = \tfrac12\bar P(\omega_0)$ requires the bracket to equal $\pm2\gamma$,</p>
+
+<div class="eq" id="e-halfpower">
+$$ \frac{\omega_0^{2}-\omega^{2}}{\omega} = \pm2\gamma \quad\Longrightarrow\quad \omega^{2}\pm2\gamma\omega-\omega_0^{2}=0 \quad\Longrightarrow\quad \omega_\pm = \sqrt{\omega_0^{2}+\gamma^{2}}\ \pm\ \gamma, $$
+</div>
+
+<p>taking the positive roots. Subtracting, the square roots cancel and</p>
+
+<div class="eq" id="e-fwhm">
+$$ \boxed{\;\text{FWHM} \;=\; \omega_+-\omega_- \;=\; 2\gamma\;}\qquad\text{and}\qquad \omega_+\omega_- = \omega_0^{2}. $$
+</div>
+
+<p>Not approximately $2\gamma$ — exactly $2\gamma$, for every $\gamma$, with the resonant frequency
+recoverable as the geometric mean of the half-power points. Combining with
+<a class="eqref" href="#e-Q"></a>,</p>
+
+<div class="eq" id="e-Qwidth">
+$$ Q = \frac{\omega_0}{2\gamma} = \frac{\omega_0}{\text{FWHM}} = \frac{\text{centre frequency}}{\text{width}}. $$
+</div>
+
+<p>The same $Q$ that counted radians of ringdown in <a class="eqref" href="#e-Edecay"></a> now
+measures the sharpness of a peak in frequency. One number, two apparently unrelated jobs. That
+coincidence is not a coincidence, and it is the point of this section.</p>
+
+<h3>6.4 · The Lorentzian</h3>
+
+<p>Near resonance the exact curve <a class="eqref" href="#e-power2"></a> takes a universal form.
+Factor $\omega_0^{2}-\omega^{2}=(\omega_0-\omega)(\omega_0+\omega)$ and set
+$\omega_0+\omega\approx2\omega_0$, $\omega\approx\omega_0$ elsewhere — valid when
+$\abs{\omega-\omega_0}\ll\omega_0$, i.e. for a sharp resonance. Then</p>
+
+<div class="eq" id="e-lorentz">
+$$ \bar P(\omega) \;\approx\; \frac{\gamma F_0^{2}\omega_0^{2}}{4\omega_0^{2}\left[(\omega-\omega_0)^{2}+\gamma^{2}\right]} \;=\; \underbrace{\frac{F_0^{2}}{4\gamma}}_{\bar P(\omega_0)}\cdot\frac{\gamma^{2}}{(\omega-\omega_0)^{2}+\gamma^{2}}. $$
+</div>
+
+<p>That shape — a peak of half-width $\gamma$ falling off as the inverse square of the detuning — is
+the <strong>Lorentzian</strong>. It is worth being clear about what has and has not been assumed.
+Nothing about springs. Only two ingredients entered: <em>one</em> mode with a natural frequency
+$\omega_0$, and a decay rate $\gamma$ for its amplitude. Any system with those two properties, driven
+near resonance, has this lineshape.</p>
+
+<div class="callout insight">
+  <span class="ct">This curve is a particle</span>
+  <p>Follow the chain, because it ends somewhere surprising.</p>
+  <p><b>Spectral lines.</b> An excited atom is a mode with frequency $\omega_0$ that decays, because
+  it radiates. Its emitted field is $\ee^{-\gamma t}\ee^{-\ii\omega_0t}$ for $t\gt0$. Chapter 0.9
+  will compute the Fourier transform of exactly this function and get
+  $1/\big[\ii(\omega_0-\omega)+\gamma\big]$, whose squared modulus is
+  <a class="eqref" href="#e-lorentz"></a>. So the <em>natural linewidth</em> of a spectral line is
+  the Lorentzian, and its width is the decay rate. A line is not infinitely sharp because the state
+  emitting it does not last forever.</p>
+  <p><b>Unstable particles.</b> Now the same statement with the same mathematics and different
+  words. In Chapter 5.7 you will scatter two particles and plot the cross-section against
+  centre-of-mass energy, and find a bump. Its shape is the <strong>Breit–Wigner</strong> formula</p>
+  $$ \sigma(E) \;\propto\; \frac{\Gamma^{2}/4}{(E-E_0)^{2}+\Gamma^{2}/4}, $$
+  <p>which is <a class="eqref" href="#e-lorentz"></a> with $E=\hbar\omega$ and
+  $\Gamma = 2\hbar\gamma$. The unstable particle is a mode of a quantum field with a natural
+  frequency $E_0/\hbar$ and a decay rate; the beam is the drive; the bump is the resonance curve.
+  <strong>A particle detected as a bump in a cross-section is literally a driven damped
+  oscillator.</strong></p>
+  <p>And <a class="eqref" href="#e-Edecay"></a> becomes a measurement technique. The probability of
+  survival decays as $\ee^{-2\gamma t}=\ee^{-t/\tau}$ with $\tau=1/2\gamma$, while
+  <a class="eqref" href="#e-fwhm"></a> says the width in angular frequency is $2\gamma$. Multiply:</p>
+  $$ \Gamma\,\tau = \hbar \qquad\Longleftrightarrow\qquad \text{width} = \frac{\hbar}{\text{lifetime}}. $$
+  <p>The $\rho$ meson has $\Gamma\approx150\ \mathrm{MeV}$; with
+  $\hbar = 6.58\times10^{-22}\,\mathrm{MeV\,s}$ that is a lifetime of $4.4\times10^{-24}$ s. The $Z$
+  boson has $\Gamma = 2.50\ \mathrm{GeV}$, hence $\tau=2.6\times10^{-25}$ s. Nobody timed those
+  particles. Nobody could. <strong>They were measured by the width of a peak</strong>, using the
+  identity you just derived from a mass on a spring.</p>
+</div>
+
+<h3>6.5 · The phase, and why its sign structure matters</h3>
+
+<p>Look again at $\tan\delta = 2\gamma\omega/(\omega_0^{2}-\omega^{2})$. Three regimes:</p>
+
+<ul>
+<li><b>$\omega\ll\omega_0$:</b> the denominator is positive and large, $\delta\to0$. The mass follows
+the force. Push slowly and it goes where you push — the response is <em>stiffness-controlled</em>.</li>
+<li><b>$\omega=\omega_0$:</b> the denominator vanishes and $\delta=\pi/2$ exactly, for any $\gamma$
+whatsoever. The displacement lags the force by a quarter cycle, which puts the <em>velocity</em>
+exactly in phase with the force — which is why <a class="eqref" href="#e-power1"></a> is maximal
+here, and why the power resonance is exactly at $\omega_0$ while the amplitude resonance is not.</li>
+<li><b>$\omega\gg\omega_0$:</b> the denominator is negative and large, $\delta\to\pi$. The mass moves
+<em>opposite</em> to the applied force. Shake a heavy object fast and it stays put while your hand
+goes back and forth around it — the response is <em>mass-controlled</em>.</li>
+</ul>
+
+<p>That a resonance flips the sign of the response as you pass through it is one of the most
+consequential facts in physics. It is why the refractive index of glass falls with wavelength in the
+visible and rises again beyond an absorption line — <em>anomalous dispersion</em> — and the
+mathematical statement that the real and imaginary parts of a response function (here $\mathrm{Re}\,Z$
+and $\mathrm{Im}\,Z$) are not independent but determine each other is the Kramers–Kronig relation,
+which is causality written in the frequency domain. The Green's function of
+<a class="eqref" href="#e-green"></a> vanishing for $t\lt s$ is the same statement in the time
+domain.</p>
+
+<figure class="fig">
+  <canvas id="fig-res" data-h="300"></canvas>
+  <canvas id="fig-phase" data-h="200"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s-q">quality&nbsp;<i>Q</i></label>
+      <input type="range" id="s-q" min="1.2" max="20" step="0.05" value="6">
+      <output id="o-q"></output>
+    </div>
+    <div class="ctrl"><output id="o-fw"></output></div>
+    <div class="ctrl"><output id="o-tau"></output></div>
+  </div>
+  <figcaption><b>The width is the inverse lifetime.</b> Top: absorbed power
+  <a class="eqref" href="#e-power2"></a>, normalised to its peak, in blue; the Lorentzian
+  approximation <a class="eqref" href="#e-lorentz"></a> dashed in orange. Green marks the measured
+  full width at half maximum, found by scanning the exact curve, not by using the formula — compare
+  it with the printed $2\gamma$ and watch them agree to four decimals at every $Q$. The Lorentzian
+  hugs the peak and departs in the wings, which is exactly what "valid near resonance" means. Bottom:
+  the phase lag, passing through $90^{\circ}$ at $\omega_0$ for every $Q$ and tending to
+  $180^{\circ}$ above. Slide $Q$ up: the peak narrows and the ringdown lengthens, and the last
+  readout — the product of the width and the energy lifetime — stays pinned at $1$. That number is
+  $\Gamma\tau/\hbar$ for the $Z$ boson.</figcaption>
+</figure>
+
+<div class="callout warn">
+  <span class="ct">⚠ Why this isn't obvious</span>
+  <p><b>Set $\gamma=0$ and the steady state does not merely become large — it ceases to exist.</b>
+  Put $\gamma=0$ and $\omega=\omega_0$ in <a class="eqref" href="#e-ampphase2"></a> and you get
+  $A=F_0/0$. The formula has not become large; it has become meaningless, because the assumption
+  behind it — that there is a bounded periodic solution — is false. Here is what actually happens.</p>
+  <p>For $\omega\neq\omega_0$ the undamped equation $\ddot x+\omega_0^{2}x=F_0\cos\omega t$ has the
+  solution starting from rest</p>
+  $$ x(t) = \frac{F_0\left(\cos\omega t - \cos\omega_0 t\right)}{\omega_0^{2}-\omega^{2}}, $$
+  <p>as you can check by differentiating twice. Now let $\omega\to\omega_0$. Numerator and
+  denominator both vanish, so take the limit as a derivative with respect to $\omega$ — the confluent
+  move of §3.4 for the third time:</p>
+  $$ x(t) \;\longrightarrow\; \frac{-t\sin\omega_0 t}{-2\omega_0}\,F_0 \;=\; \frac{F_0}{2\omega_0}\,t\sin\omega_0 t. $$
+  <p>The amplitude grows <em>linearly and without bound</em>. There is no steady state to speak of,
+  and the factor of $t$ is the same $t$ as in $t\ee^{\lambda t}$: at exact resonance the driving
+  frequency has collided with a root of the characteristic polynomial, and a repeated root always
+  costs you a factor of $t$.</p>
+  <p>This never happens in nature, because $\gamma\gt0$ always — every real system leaks energy
+  somewhere. So the honest statement is not "at resonance the amplitude is infinite" but
+  <strong>"the steady state of a driven oscillator exists only because of dissipation, and its peak
+  height $F_0/2\gamma\omega_0$ is set entirely by the loss"</strong>. Resonance is not a property of
+  the oscillator alone. It is a negotiation between the drive and the losses, and the sharper the
+  resonance the more completely the losses are in charge.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.6</span></span>
+  <p>Push on an oscillator at a frequency of your choosing rather than its own, wait for its memory of how it started to fade, and what remains is a steady response whose size depends on how near you came. The shape of that response is universal. Nothing about springs enters it, only that the system has one preferred frequency and that its motion decays at some rate, so any system with those two properties answers with the same curve.</p>
+  <p>The width of the curve is the quantity to watch, because it is exactly twice the decay rate, not approximately. The number that counted radians of ringing therefore also measures the sharpness of the peak, and the two jobs are one job. Read the identity backwards and it becomes an instrument: whatever lasts a short time is obliged to produce a broad bump, so the width of a bump reports a lifetime. Nobody has ever timed an unstable particle with a clock, and nobody could. Their lifetimes are read off the widths of peaks in scattering data.</p>
+  <p>One caution, since the popular account has it backwards. With no losses whatever there is no steady response at all, because the amplitude grows without limit and never settles. Resonance is a negotiation between the driving and the dissipation, and the sharper it is the more completely the dissipation is in charge.</p>
+</div>
+
+<h2>7 · Coupled oscillators, normal modes, and the bridge to fields</h2>
+
+<p>Everything so far has had one degree of freedom. Almost nothing in nature does. This section adds
+a second one, discovers that the added complexity is an illusion, and then adds infinitely many.</p>
+
+<h3>7.1 · Two masses, three springs</h3>
+
+<p>Two equal masses $m$ sit in a line. Each is tied to a wall by a spring of stiffness $k$, and they
+are tied to each other by a spring of stiffness $\kappa$. Let $x_1,x_2$ be their displacements from
+equilibrium. The coupling spring is stretched by $x_1-x_2$, so it pulls mass 1 back with force
+$-\kappa(x_1-x_2)$ and mass 2 with the opposite sign:</p>
+
+<div class="eq" id="e-two1">
+$$ \begin{aligned} m\ddot x_1 &= -k x_1 - \kappa\left(x_1-x_2\right),\\[3pt] m\ddot x_2 &= -k x_2 - \kappa\left(x_2-x_1\right). \end{aligned} $$
+</div>
+
+<p>Neither equation can be solved alone: each contains the other's unknown. That is what "coupled"
+means, and it is why the problem looks harder than §4. Write it as one vector equation with
+$\vv x = (x_1,x_2)^{\mathsf T}$:</p>
+
+<div class="eq" id="e-two2">
+$$ \ddot{\vv x} = -M\vv x, \qquad M = \frac{1}{m}\begin{pmatrix} k+\kappa & -\kappa\\ -\kappa & k+\kappa\end{pmatrix}. $$
+</div>
+
+<p><strong>$M$ is symmetric</strong>, and that is not an accident of this example. The forces came
+from a potential energy</p>
+
+<div class="eq" id="e-twoV">
+$$ V(x_1,x_2) = \tfrac12kx_1^{2} + \tfrac12kx_2^{2} + \tfrac12\kappa\left(x_1-x_2\right)^{2}, \qquad m\ddot x_i = -\pdv{V}{x_i}, $$
+</div>
+
+<p>so $mM_{ij} = \partial_i\partial_j V$ is the <strong>Hessian</strong> of the potential — and
+Chapter 0.6 proved, via Clairaut, that a Hessian is always symmetric. Any system of masses moving in
+a potential near a stable equilibrium has this form, because Chapter 0.6's second-order Taylor
+expansion says $V\approx V_0+\tfrac12\vv x^{\mathsf T}H\vv x$ at a critical point. So the analysis
+below is not about this apparatus. It is about every stable multi-degree-of-freedom system there is.</p>
+
+<h3>7.2 · The spectral theorem does the whole job</h3>
+
+<p>By Chapter 0.5, a real symmetric matrix has real eigenvalues and an <em>orthonormal</em> basis of
+eigenvectors. Call them $\vv u_1,\vv u_2$ with $M\vv u_k = \omega_k^{2}\vv u_k$. (Writing the
+eigenvalue as $\omega_k^{2}$ presumes it is positive; it is, exactly when the equilibrium is a
+minimum rather than a saddle — Chapter 0.6's classification, now doing physical work. A negative
+eigenvalue would give $\omega$ imaginary and $\ee^{\abs\omega t}$ growth: an instability, which is
+what a saddle <em>is</em>.)</p>
+
+<p>Define the <strong>normal coordinates</strong> $q_k = \vv u_k\cdot\vv x$, the components of the
+displacement along the eigenvectors. Differentiate twice and use
+<a class="eqref" href="#e-two2"></a>, remembering that $\vv u_k$ is a constant vector and that $M$ is
+symmetric so it can be moved across the dot product:</p>
+
+<div class="eq" id="e-decouple">
+$$ \ddot q_k = \vv u_k\cdot\ddot{\vv x} = -\vv u_k\cdot M\vv x = -\left(M\vv u_k\right)\cdot\vv x = -\omega_k^{2}\,\vv u_k\cdot\vv x = -\omega_k^{2}q_k. $$
+</div>
+
+<p>Look at what that is. Each $q_k$ obeys $\ddot q_k = -\omega_k^{2}q_k$ — the equation of §4, on its
+own, with no reference to the other coordinate. <strong>The coupled system has been turned into two
+independent harmonic oscillators by a rotation of axes.</strong> The step that made it work is the
+one marked in the middle of <a class="eqref" href="#e-decouple"></a>, and it needed $M^{\mathsf T}=M$;
+without symmetry there is no orthonormal eigenbasis and this manoeuvre fails.</p>
+
+<h3>7.3 · The two modes, explicitly</h3>
+
+<p>Diagonalise $M$ from <a class="eqref" href="#e-two2"></a>. It has the form $aI + b\sigma$ with
+$\sigma=\left(\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right)$, whose eigenvectors are $(1,1)$ and $(1,-1)$
+by inspection — swap the entries and each is unchanged up to a sign. So</p>
+
+<div class="eq" id="e-modes">
+$$ \begin{aligned} \vv u_1 &= \tfrac{1}{\sqrt2}(1,1), \qquad &\omega_1^{2} &= \frac{k}{m},\\[4pt] \vv u_2 &= \tfrac{1}{\sqrt2}(1,-1), \qquad &\omega_2^{2} &= \frac{k+2\kappa}{m}. \end{aligned} $$
+</div>
+
+<p>Verify the eigenvalues directly: $M(1,1)^{\mathsf T} = \tfrac1m(k+\kappa-\kappa)(1,1)^{\mathsf T}$
+and $M(1,-1)^{\mathsf T} = \tfrac1m(k+\kappa+\kappa)(1,-1)^{\mathsf T}$. And note
+$\vv u_1\cdot\vv u_2 = \tfrac12(1-1)=0$: perpendicular, as Chapter 0.5 promised, without our having
+arranged it.</p>
+
+<p>The physical reading is the pleasure of the calculation. In <strong>mode 1</strong> the two masses
+move together, in phase, with equal amplitude. The coupling spring is then never stretched, so it
+exerts no force at all, and the frequency is $\sqrt{k/m}$ — <em>independent of $\kappa$</em>, exactly
+as if the coupling spring were not there. In <strong>mode 2</strong> they move exactly out of phase.
+The midpoint stays fixed, the coupling spring is stretched by $2x_1$, and the restoring force on each
+mass is $-(k+2\kappa)x_1$: stiffer, hence faster. The <em>only</em> two ways this system can move
+sinusoidally are these, and everything else is a superposition of them.</p>
+
+<p>General motion, then, is</p>
+
+<div class="eq" id="e-general2">
+$$ \vv x(t) = \sum_{k=1,2}\left[a_k\cos\omega_kt + \frac{b_k}{\omega_k}\sin\omega_kt\right]\vv u_k, \qquad \begin{aligned} a_k &= \vv u_k\cdot\vv x(0),\\ b_k &= \vv u_k\cdot\dot{\vv x}(0), \end{aligned} $$
+</div>
+
+<p>the coefficients being read off by orthonormality — Chapter 0.5's <em>coordinates have become
+inner products</em>, used here for the first time on a physical problem. Four constants for a
+four-dimensional solution space (two second-order equations), consistent with
+<a class="eqref" href="#e-dimn"></a>.</p>
+
+<h3>7.4 · Beats</h3>
+
+<p>Now the initial condition that makes the structure visible. Pull mass 1 aside by $d$, hold mass 2
+at rest at its equilibrium, and release both from rest: $\vv x(0)=(d,0)$, $\dot{\vv x}(0)=\vv 0$.
+Then $a_1 = d/\sqrt2$, $a_2=d/\sqrt2$, $b_k=0$, and
+<a class="eqref" href="#e-general2"></a> gives</p>
+
+<div class="eq" id="e-beat1">
+$$ x_1(t) = \tfrac{d}{2}\left(\cos\omega_1t+\cos\omega_2t\right), \qquad x_2(t) = \tfrac{d}{2}\left(\cos\omega_1t-\cos\omega_2t\right). $$
+</div>
+
+<p>Apply the sum-to-product identities — which are just Euler's formula rearranged — with
+$\bar\omega=\tfrac12(\omega_1+\omega_2)$ and $\Delta=\omega_2-\omega_1$:</p>
+
+<div class="eq" id="e-beat2">
+$$ x_1(t) = d\,\cos\!\left(\tfrac{\Delta t}{2}\right)\cos\bar\omega t, \qquad x_2(t) = d\,\sin\!\left(\tfrac{\Delta t}{2}\right)\sin\bar\omega t. $$
+</div>
+
+<p>Each mass oscillates fast at the mean frequency $\bar\omega$, inside a slowly changing envelope of
+frequency $\Delta/2$ — and the two envelopes are in quadrature, so when one is at its largest the
+other is zero. <strong>The energy sloshes completely from one mass to the other and back</strong>,
+with envelopes exchanging roles after a time $\pi/\Delta$ and returning after</p>
+
+<div class="eq" id="e-beatT">
+$$ T_{\text{beat}} = \frac{2\pi}{\Delta} = \frac{2\pi}{\omega_2-\omega_1}. $$
+</div>
+
+<p>For weak coupling, expand $\omega_2 = \omega_1\sqrt{1+2\kappa/k}\approx\omega_1(1+\kappa/k)$ by
+Chapter 0.3, so $\Delta\approx\omega_1\kappa/k$ and $T_{\text{beat}}\approx 2\pi k/(\omega_1\kappa)$:
+<em>the weaker the coupling, the longer the beat</em>, diverging as $\kappa\to0$ — which is right,
+since uncoupled masses never exchange anything. This is the mechanism behind two pendulums on a
+shared rail, a photon oscillating between two cavities, and — with the same algebra and different
+words — neutrino oscillation, where the two "masses" are two mass eigenstates with slightly different
+frequencies and the beat is measured in kilometres of flight path.</p>
+
+<figure class="fig">
+  <canvas id="fig-coupled" data-h="152"></canvas>
+  <canvas id="fig-coupled-x" data-h="150"></canvas>
+  <canvas id="fig-coupled-q" data-h="150"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label>preset</label>
+      <button id="b-m1">mode 1 (in phase)</button>
+      <button id="b-m2">mode 2 (out of phase)</button>
+      <button id="b-one" class="on">one mass only</button>
+    </div>
+    <div class="ctrl">
+      <label for="s-kap">coupling&nbsp;<i>κ</i></label>
+      <input type="range" id="s-kap" min="0.05" max="1" step="0.005" value="0.14">
+      <output id="o-kap"></output>
+    </div>
+    <div class="ctrl">
+      <label for="s-d1">start&nbsp;<i>x</i><sub>1</sub></label>
+      <input type="range" id="s-d1" min="-1" max="1" step="0.02" value="1">
+    </div>
+    <div class="ctrl">
+      <label for="s-d2">start&nbsp;<i>x</i><sub>2</sub></label>
+      <input type="range" id="s-d2" min="-1" max="1" step="0.02" value="0">
+    </div>
+    <div class="ctrl"><button id="b-play" class="on">pause</button></div>
+    <div class="ctrl"><output id="o-om"></output></div>
+    <div class="ctrl"><output id="o-amp"></output></div>
+  </div>
+  <figcaption><b>Complicated motion is a superposition of simple motions.</b> Masses $m=1$, wall
+  springs $k=1$, coupling $\kappa$ on the slider. <em>Top:</em> the apparatus. <em>Middle:</em> the
+  displacements $x_1$ (blue) and $x_2$ (purple) — what you would measure. <em>Bottom:</em> the same
+  motion in normal coordinates, $a_1=\tfrac12(x_1+x_2)$ and $a_2=\tfrac12(x_1-x_2)$, so that
+  $x_1=a_1+a_2$ and $x_2=a_1-a_2$. Whatever the middle panel is doing, the bottom panel is always two
+  pure cosines at $\omega_1$ and $\omega_2$ — that is <a class="eqref" href="#e-decouple"></a> drawn.
+  Press <em>mode 1</em>: only the green trace survives, and the coupling slider does nothing to it,
+  because the coupling spring is never stretched. Press <em>mode 2</em>: only the orange trace, and
+  now $\kappa$ moves the frequency. Press <em>one mass only</em>: both modes are excited with equal
+  amplitude, and their interference is <a class="eqref" href="#e-beat2"></a> — energy sloshing from
+  one mass to the other and back. Weaken the coupling and watch the beat period stretch out as
+  <a class="eqref" href="#e-beatT"></a> says it must, while the bottom panel barely changes. The mode
+  energies printed on the right are $\omega_k^{2}a_k(0)^{2}$, and they are separately constant
+  forever: <strong>the modes do not exchange energy, only the masses do.</strong></figcaption>
+</figure>
+
+<h3>7.5 · Normal modes are principal axes</h3>
+
+<p>Pause on what the eigenvectors are. We observed after <a class="eqref" href="#e-twoV"></a> that
+$mM$ is the Hessian of $V$. So the normal-mode directions are the <em>eigenvectors of the Hessian</em>,
+which Chapter 0.6 identified as the <strong>principal axes of curvature</strong> of the potential
+surface, with eigenvalues equal to the curvatures along them. Hence</p>
+
+<p style="text-align:center"><b>squared frequency $=$ curvature of the potential $/$ mass,</b></p>
+
+<p>direction by direction. A stiff direction of the potential valley is a fast mode; a shallow one is
+a slow mode; a flat direction is a zero-frequency mode, which does not oscillate at all but drifts
+(you will meet one in Problem 2). "Normal modes" and "principal axes" are not two ideas that happen
+to use the same theorem. They are the same idea, and Chapter 6.6 will use the flat-direction version
+of it to make a massless particle out of a symmetry.</p>
+
+<details class="grind">
+  <summary>Grind box — $N$ masses in a chain, solved exactly</summary>
+  <div class="grind-body">
+    <p>Nothing above used $n=2$. Take $N$ equal masses in a line, each connected to its neighbours by
+    springs of stiffness $k$, with the chain pinned to walls at both ends. Writing $u_j$ for the
+    displacement of mass $j$ and setting $u_0=u_{N+1}=0$:</p>
+    $$ m\ddot u_j = k\left(u_{j+1}-2u_j+u_{j-1}\right), \qquad j=1,\dots,N. $$
+    <p>The matrix is symmetric — $2$ on the diagonal, $-1$ next to it, zeros elsewhere — so the
+    spectral theorem guarantees $N$ real frequencies and $N$ orthogonal modes before we compute
+    anything. To find them, try $u_j = \sin(j\theta)$ for a constant $\theta$. Then</p>
+    $$ u_{j+1}+u_{j-1} = \sin(j\theta+\theta)+\sin(j\theta-\theta) = 2\cos\theta\,\sin j\theta, $$
+    <p>by the sum-to-product identity, so the right-hand side is
+    $k(2\cos\theta-2)u_j$ — proportional to $u_j$ itself, which is exactly the eigenvector condition.
+    Hence $-m\omega^{2} = 2k(\cos\theta-1)$, and using $1-\cos\theta = 2\sin^{2}(\theta/2)$,</p>
+    $$ \omega(\theta) = 2\sqrt{k/m}\ \left|\sin\frac{\theta}{2}\right|. $$
+    <p>The boundary condition $u_0=0$ is automatic; $u_{N+1}=0$ requires
+    $\sin\big((N+1)\theta\big)=0$, so $\theta_n = n\pi/(N+1)$ with $n=1,\dots,N$ (larger $n$ repeats
+    the same modes). Therefore</p>
+    $$ \omega_n = 2\sqrt{\frac{k}{m}}\,\sin\!\left(\frac{n\pi}{2(N+1)}\right), \qquad u_j^{(n)} = \sin\!\left(\frac{n\pi j}{N+1}\right). $$
+    <p><b>Check against §7.3.</b> Put $N=2$: $\omega_1 = 2\sqrt{k/m}\sin(\pi/6)=\sqrt{k/m}$ and
+    $\omega_2 = 2\sqrt{k/m}\sin(\pi/3)=\sqrt{3k/m}$, matching
+    <a class="eqref" href="#e-modes"></a> at $\kappa=k$. ✓ And $u^{(1)}=(\sin\tfrac\pi3,\sin\tfrac{2\pi}3)\propto(1,1)$,
+    $u^{(2)}=(\sin\tfrac{2\pi}3,\sin\tfrac{4\pi}3)\propto(1,-1)$. ✓</p>
+    <p><b>What to notice.</b> $N$ masses give exactly $N$ modes — one per degree of freedom, which is
+    <a class="eqref" href="#e-dimn"></a> again. The mode shapes are <em>sampled sine waves</em>, with
+    $n$ counting half-wavelengths across the chain. And the frequencies are not evenly spaced: they
+    crowd together near the top of the band at $2\sqrt{k/m}$, because $\sin$ flattens. That crowding
+    is the first hint that a discrete chain and a continuous string are not the same thing at short
+    wavelengths — the subject of §7.6.</p>
+  </div>
+</details>
+
+<h3>7.6 · The limit that makes a field</h3>
+
+<p>Now let the chain become continuous. Give the masses a spacing $a$ and let position along the
+chain be $x=ja$, so that $u_j(t)$ becomes a function $u(x,t)$ of two variables. Expand the neighbours
+by Taylor's theorem (Chapter 0.3):</p>
+
+<div class="eq" id="e-taylorchain">
+$$ u(x\pm a) = u \pm a\,\pdv{u}{x} + \frac{a^{2}}{2}\pdv{^{2}u}{x^{2}} \pm \frac{a^{3}}{6}\pdv{^{3}u}{x^{3}} + \frac{a^{4}}{24}\pdv{^{4}u}{x^{4}} + \cdots $$
+</div>
+
+<p>Add the two. Every odd term cancels — that is the payoff of using both neighbours — and</p>
+
+<div class="eq" id="e-secdiff">
+$$ u(x+a) - 2u(x) + u(x-a) \;=\; a^{2}\,\pdv{^{2}u}{x^{2}} \;+\; \frac{a^{4}}{12}\pdv{^{4}u}{x^{4}} + \cdots $$
+</div>
+
+<p>Substituting into the chain equation and dividing by $m$:</p>
+
+<div class="eq" id="e-tochain">
+$$ \pdv{^{2}u}{t^{2}} = \frac{ka^{2}}{m}\,\pdv{^{2}u}{x^{2}} + O(a^{4}). $$
+</div>
+
+<p>Now take $a\to0$ holding the <em>physical</em> quantities fixed: the mass per unit length
+$\rho = m/a$ and the tension $T = ka$ (the force needed for unit fractional stretch of a spring of
+length $a$). Then $ka^{2}/m = (ka)(a/m) = T/\rho$, a finite limit, and the correction term dies. What
+survives is the <strong>wave equation</strong>:</p>
+
+<div class="eq" id="e-wave">
+$$ \boxed{\;\pdv{^{2}u}{t^{2}} \;=\; v^{2}\,\pdv{^{2}u}{x^{2}}, \qquad v = \sqrt{\frac{T}{\rho}}\;} $$
+</div>
+
+<p>The discrete chain has become a continuous medium; the list of coordinates $u_1,\dots,u_N$ has
+become a <strong>field</strong> $u(x,t)$, one number for every point of space; and the matrix $M$ has
+become the operator $-v^{2}\partial_x^{2}$. Nothing else changed.</p>
+
+<p>The modes survive the limit too. Look for a solution of <a class="eqref" href="#e-wave"></a> in
+which every point oscillates at the same frequency — that is exactly what a normal mode <em>is</em>
+— so put $u(x,t)=X(x)\cos\omega t$. Substituting and cancelling the time factor gives
+$-\omega^{2}X = v^{2}X''$, i.e. $X'' = -(\omega/v)^{2}X$: the oscillator equation again, now in
+space. Its solutions are $\sin$ and $\cos$ of $\omega x/v$, and pinning the ends at $x=0$ and $x=L$
+kills the cosine and quantises the rest:</p>
+
+<div class="eq" id="e-standing">
+$$ X_n(x) = \sin\frac{n\pi x}{L}, \qquad \omega_n = \frac{n\pi v}{L}, \qquad n=1,2,3,\dots $$
+</div>
+
+<p>These are the <strong>standing waves</strong>, and they are the $N\to\infty$ limit of the chain's
+modes: setting $x=ja$ and $L=(N+1)a$ turns $u_j^{(n)}=\sin\big(n\pi j/(N+1)\big)$ into
+$\sin(n\pi x/L)$ exactly, while the grind box's frequency
+$2\sqrt{k/m}\sin\big(n\pi/2(N+1)\big)$ tends to $\sqrt{k/m}\,n\pi a/L = n\pi v/L$ for
+$n\ll N$. The finite chain has $N$ modes; the field has one for every $n$, or equivalently one for
+every wavenumber $k_n=n\pi/L$. And by the argument of §7.2 — which never used the dimension —
+<strong>each mode is an independent harmonic oscillator</strong> with its own frequency $\omega_n$,
+its own amplitude, its own conserved energy.</p>
+
+<div class="callout insight">
+  <span class="ct">The bridge this whole book crosses</span>
+  <p>Assemble the chain of reasoning, because six chapters later you will need every link.</p>
+  <ol>
+    <li>Any system near a stable equilibrium is quadratic in its displacements — Chapter 0.3, and
+    Chapter 0.6's Hessian.</li>
+    <li>A quadratic potential gives linear equations $\ddot{\vv x}=-M\vv x$ with $M$ symmetric —
+    <a class="eqref" href="#e-two2"></a>.</li>
+    <li>A symmetric matrix is diagonalisable in an orthonormal basis — Chapter 0.5's spectral
+    theorem — so the system <em>is</em> a collection of independent harmonic oscillators, one per
+    degree of freedom, and nothing else — <a class="eqref" href="#e-decouple"></a>.</li>
+    <li>Let the number of degrees of freedom go to infinity and the collection becomes a field,
+    <a class="eqref" href="#e-wave"></a>, whose modes are still independent oscillators,
+    <a class="eqref" href="#e-standing"></a>.</li>
+  </ol>
+  <p>Therefore: <strong>a field is the $N\to\infty$ limit of coupled oscillators.</strong> That
+  sentence is the spine of Parts V–VII. It is why quantising a field in Chapter 5.3 amounts to
+  quantising infinitely many harmonic oscillators — you do the single-oscillator calculation of
+  Chapter 4.5 once and then attach a copy of it to every mode. And it is why the
+  <em>particle content</em> of quantum field theory comes out of the ladder operators of Chapter 4.5:
+  the quantum oscillator's energy levels are evenly spaced, $E_n=(n+\tfrac12)\hbar\omega$, so the
+  natural way to describe a mode's state is to say <em>how many quanta of $\hbar\omega$ it holds</em>
+  — and those quanta, which arose as rungs on a ladder in a one-dimensional problem about a mass on
+  a spring, are what we call particles. A photon is an excitation of one mode of the electromagnetic
+  field; the mode is an oscillator; the photon is the integer $n$.</p>
+  <p>The same construction runs the rest of the book. Chapter 5.3 does it for a scalar field.
+  Chapter 7.4 does it for a vibrating string, where the modes' quanta are the particle spectrum of
+  string theory, and the massless spin-2 rung is the graviton. When someone tells you quantum field
+  theory is a bewildering subject, the honest reply is that its skeleton is §7.2 with the index
+  running to infinity.</p>
+</div>
+
+<div class="callout familiar">
+  <span class="ct">Familiar ground</span>
+  <p>You have read a thousand plasma concentration–time curves on semi-log axes and seen the
+  characteristic two-slope shape: a steep early <em>distribution</em> phase, a shallower late
+  <em>elimination</em> phase. The standard reading is that these are two processes happening one
+  after the other. That reading is wrong in an instructive way, and §7 says exactly why.</p>
+  <p>The two-compartment model is a coupled linear system. With $A_1$ the amount in the central
+  (plasma) compartment and $A_2$ in the peripheral tissue compartment,</p>
+  $$ \begin{aligned} \dot A_1 &= -\left(k_{10}+k_{12}\right)A_1 + k_{21}A_2,\\[3pt] \dot A_2 &= k_{12}A_1 - k_{21}A_2, \end{aligned} \qquad \dot{\vv A} = K\vv A. $$
+  <p>This is <a class="eqref" href="#e-two2"></a> with one time derivative instead of two, so §3
+  applies unchanged: seek $\vv A = \vv w\,\ee^{\lambda t}$ and the equation becomes
+  $K\vv w = \lambda\vv w$. <strong>The rate constants of the biexponential curve are the eigenvalues
+  of the rate matrix.</strong> The characteristic polynomial is
+  $\lambda^{2}-(\operatorname{tr}K)\lambda + \det K = 0$ with
+  $\operatorname{tr}K = -(k_{10}+k_{12}+k_{21})$ and $\det K = k_{10}k_{21}$, so writing the decay
+  rates as $\alpha=-\lambda_1$ and $\beta=-\lambda_2$,</p>
+  $$ \alpha+\beta = k_{10}+k_{12}+k_{21}, \qquad \alpha\beta = k_{10}k_{21}. $$
+  <p>Those are the macro-constant relations printed in every pharmacokinetics text, and they are
+  Vieta's formulas for the roots of a quadratic. Nothing pharmacological is involved.</p>
+  <p><b>A concrete case.</b> Take $k_{10}=0.5$, $k_{12}=0.4$, $k_{21}=0.2$, all in $\mathrm{h^{-1}}$.
+  Then</p>
+  $$ K = \begin{pmatrix}-0.9 & 0.2\\ 0.4 & -0.2\end{pmatrix}, \qquad \lambda^{2}+1.1\lambda+0.1=0, $$
+  $$ \lambda = \frac{-1.1\pm\sqrt{1.21-0.4}}{2} = \frac{-1.1\pm0.9}{2} \;=\; -1.0,\ -0.1. $$
+  <p>So $\alpha = 1.0\ \mathrm{h^{-1}}$ and $\beta = 0.1\ \mathrm{h^{-1}}$, with half-lives
+  $\ln2/\alpha = 0.69$ h and $\ln2/\beta = 6.93$ h. The eigenvectors solve $(K-\lambda I)\vv w=0$:
+  for $\lambda=-1.0$, $0.1w_1+0.2w_2=0$ gives $\vv w_\alpha\propto(2,-1)$; for $\lambda=-0.1$,
+  $-0.8w_1+0.2w_2=0$ gives $\vv w_\beta\propto(1,4)$. An intravenous bolus $D$ into the central
+  compartment means $\vv A(0)=(D,0)$, and expanding that in the eigenbasis,
+  $(D,0) = \tfrac{4D}{9}(2,-1)+\tfrac{D}{9}(1,4)$, so</p>
+  $$ A_1(t) = \tfrac{8}{9}D\,\ee^{-\alpha t} + \tfrac19 D\,\ee^{-\beta t}, \qquad A_2(t) = \tfrac49 D\left(\ee^{-\beta t}-\ee^{-\alpha t}\right). $$
+  <p>(Check: $A_1(0)=D$, $A_2(0)=0$, and $\dot A_1(0) = -\tfrac89 D-\tfrac{0.1}{9}D = -0.9D$, which is
+  $-(k_{10}+k_{12})D$ as the model demands. ✓)</p>
+  <p><b>Now the point.</b> Both exponentials are present from $t=0$, with fixed coefficients. Nothing
+  switches on at any time. The curve <em>looks</em> two-phased only because one eigenvalue is ten
+  times the other, so the fast term has essentially vanished by $t\approx3$ h and the log-plot
+  straightens onto the slow one. <strong>Distribution and elimination are not two sequential
+  biological processes. They are the two eigenvalues of one matrix</strong>, both operating at all
+  times, and every fitted "phase" is a normal mode of a linear system. The terminal half-life
+  $\ln2/\beta$ is a property of the whole coupled system, which is exactly why it is not
+  $\ln2/k_{10}$ and why increasing tissue uptake $k_{12}$ prolongs the terminal phase without
+  changing clearance.</p>
+  <p><b>The one structural difference from §7, and it matters.</b> $M$ in <a class="eqref" href="#e-two2"></a>
+  was symmetric because it came from a potential. $K$ is <em>not</em> symmetric — here
+  $K_{12}=0.2\neq0.4=K_{21}$ — because a molecule's chance of leaving plasma for tissue is not the
+  same as its chance of coming back. So the spectral theorem does not apply, and indeed the
+  eigenvectors are not orthogonal: $(2,-1)\cdot(1,4) = -2 \neq 0$, an angle of $102.5^{\circ}$
+  rather than $90^{\circ}$. This is precisely the ⚠ point of Chapter 0.5's figure, where raising the
+  skew tilted the eigen-directions away from perpendicular. The consequences are practical: you
+  cannot read off the mode amplitudes by taking inner products as in
+  <a class="eqref" href="#e-general2"></a> — you must solve a $2\times2$ system, as we did — and
+  the modes are not energetically independent in any natural sense. Push the asymmetry far enough and
+  the eigenvalues can collide, giving a repeated root and a $t\ee^{-\lambda t}$ term
+  (<a class="eqref" href="#e-teltderiv"></a>); the fitted curve then genuinely is not a sum of two
+  exponentials, and software that insists on fitting one will quietly report nonsense.</p>
+</div>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.7</span></span>
+  <p>Two masses joined by a spring look like a harder problem than one mass on a spring, and the appearance is false in a way that matters far beyond two. The forces come from a potential energy, second derivatives are indifferent to their order, so the array governing the motion is symmetric, which is exactly what the spectral theorem asks for.</p>
+  <p>There are therefore directions along which the masses move as one, each combination obeying the single-oscillator equation alone and ignoring the other entirely. The complicated motion in which energy sloshes between the masses is two simple motions added together and watched in an inconvenient description. This collects a promise made when vector spaces were introduced: one theorem, proved once, solving a room full of coupled pendulums without being told what it is looking at.</p>
+  <p>Nothing in the argument cared how many masses there were. Take a chain, let their number grow while their spacing shrinks, and the list of displacements becomes a function of position, the array becomes a differential operator, and what survives is the wave equation. A field is what infinitely many coupled oscillators turn into. That sentence is the spine of the last three parts of this book, because it means quantising a field amounts to quantising infinitely many springs, and the whole number counting one mode's rungs is what we call a particle.</p>
+</div>
+
+<h2>8 · Nonlinearity, briefly and honestly</h2>
+
+<p>Everything above rested on linearity. It is worth one section to see exactly what is lost when it
+goes, because most of the physics in the second half of this book is nonlinear.</p>
+
+<h3>8.1 · The pendulum, exactly</h3>
+
+<p>A bob of mass $m$ on a rigid massless rod of length $L$, at angle $\theta$ from vertical. The
+restoring torque is $-mgL\sin\theta$ and the moment of inertia is $mL^{2}$, so</p>
+
+<div class="eq" id="e-pend">
+$$ \ddot\theta = -\frac{g}{L}\sin\theta \;\equiv\; -\omega_0^{2}\sin\theta. $$
+</div>
+
+<p>This is not linear: $\sin(\theta_1+\theta_2)\neq\sin\theta_1+\sin\theta_2$. Chapter 0.3's move is
+to expand, $\sin\theta = \theta - \theta^{3}/6+\cdots$, and keep the first term, giving
+$\ddot\theta=-\omega_0^{2}\theta$ and $T_0=2\pi\sqrt{L/g}$. The question worth asking is not
+<em>whether</em> that is an approximation — obviously it is — but <em>how good</em>, and where it
+stops being good at all.</p>
+
+<p>The energy first integral of §4.3 still works, because multiplying by $\dot\theta$ does not care
+about linearity: multiply <a class="eqref" href="#e-pend"></a> by $\dot\theta$ and integrate,</p>
+
+<div class="eq" id="e-pendE">
+$$ \tfrac12\dot\theta^{2} - \omega_0^{2}\cos\theta \;=\; \mathcal E \;=\; \text{constant}. $$
+</div>
+
+<p>Releasing from rest at $\theta_0$ fixes $\mathcal E = -\omega_0^{2}\cos\theta_0$, and the grind box
+turns this into an exact period. The answer is $T = T_0\cdot\tfrac2\pi K\!\left(\sin\tfrac{\theta_0}{2}\right)$
+with $K$ the complete elliptic integral, and expanding it,</p>
+
+<div class="eq" id="e-pendT">
+$$ \frac{T}{T_0} = 1 + \frac{\theta_0^{2}}{16} + \frac{11\,\theta_0^{4}}{3072} + \cdots $$
+</div>
+
+<p><strong>The period depends on amplitude.</strong> That single fact is the death of superposition:
+two solutions of different sizes have different frequencies, so their sum is not a solution of
+anything. Numerically, the correction is $+0.19\%$ at $\theta_0=10^{\circ}$, $+1.74\%$ at
+$30^{\circ}$, and $+18.0\%$ at $90^{\circ}$ — which is why a pendulum clock has a small amplitude and
+why Huygens had to think hard about escapements.</p>
+
+<h3>8.2 · The phase portrait and the separatrix</h3>
+
+<p>Plot the state $(\theta,\dot\theta)$, as in §4.4. From <a class="eqref" href="#e-pendE"></a> the
+trajectories are the level curves of $\mathcal E$, and there are two qualitatively different
+families. For $\mathcal E\lt\omega_0^{2}$ the curve closes: the bob swings back and forth, and near
+the origin the closed curve is the ellipse of §4.4, slightly distorted. For
+$\mathcal E\gt\omega_0^{2}$ there is enough energy to pass over the top, $\dot\theta$ never vanishes,
+and the trajectory runs off to $\theta\to\infty$ — the pendulum whirls.</p>
+
+<p>Between them sits the single curve $\mathcal E = \omega_0^{2}$, on which the bob arrives at the
+inverted position with exactly zero speed. Substituting into
+<a class="eqref" href="#e-pendE"></a> and using $1+\cos\theta = 2\cos^{2}(\theta/2)$:</p>
+
+<div class="eq" id="e-separatrix">
+$$ \dot\theta = \pm2\omega_0\cos\frac{\theta}{2}. $$
+</div>
+
+<p>This is the <strong>separatrix</strong>, and it does something the linear oscillator cannot: it
+takes infinite time to complete. Near $\theta=\pi$ the right-hand side vanishes linearly in
+$(\pi-\theta)$, so the approach is exponential and the destination is never reached. The inverted
+position is an unstable equilibrium — a maximum of the potential, a negative Hessian eigenvalue in
+Chapter 0.6's classification, and hence an $\ee^{+\omega_0 t}$ in §3's language rather than an
+oscillation. Linearising about the <em>top</em> of the potential gives you exponential growth, which
+is the correct local answer; there is nothing wrong with linearisation except that it is local.</p>
+
+<h3>8.3 · Chaos, in one paragraph</h3>
+
+<p>Add a drive and damping to <a class="eqref" href="#e-pend"></a> and it becomes possible for
+trajectories to be bounded, aperiodic, and exponentially sensitive to initial conditions: two
+starting points a distance $\epsilon$ apart separate like $\epsilon\,\ee^{\Lambda t}$ for some
+positive $\Lambda$. Picard–Lindelöf is untouched — the solution still exists and is still unique —
+but predicting the state at time $t$ to fixed accuracy now requires knowing the initial state to
+accuracy $\ee^{-\Lambda t}$, so every factor of $\ee$ in your instruments buys one more unit of
+$1/\Lambda$ in forecast horizon. That is the entire content of "chaos": determinism and
+predictability are different properties, and only the first is guaranteed. It cannot happen in a
+linear system, where solutions are sums of $\ee^{\lambda_i t}$ and neighbouring trajectories either
+converge, or diverge in a fixed direction, or wind around each other forever, but never explore.</p>
+
+<div class="callout warn">
+  <span class="ct">⚠ Why this isn't obvious</span>
+  <p><strong>Superposition is a privilege, not a law of nature.</strong> Every technique in this
+  chapter that felt like the natural way to think — decompose into modes, solve each separately, add
+  the answers; expand a source into sinusoids and treat them one at a time; write the general
+  solution as a basis with arbitrary coefficients — rests on
+  <a class="eqref" href="#e-superpos"></a>, one line of algebra that is true only because $L$ is
+  linear. The habit is so ingrained that it is easy to forget it can fail. It fails constantly.</p>
+  <p><b>General relativity is nonlinear</b> (Chapter 3.6). The Einstein equations relate curvature to
+  energy, and gravitational fields carry energy, so <em>gravity gravitates</em>: the field is a source
+  for itself. You may not add the field of two stars to get the field of the pair. The equations are
+  not merely algebraically messier — the superposition principle is simply unavailable, which is why
+  the two-body problem in general relativity required supercomputers and a half-century of work while
+  in Newtonian gravity it is an exercise.</p>
+  <p><b>Yang–Mills theory is nonlinear</b> (Chapter 6.4). A photon carries no electric charge, so
+  electromagnetism is linear and light beams pass through each other. A gluon <em>does</em> carry
+  colour charge, so gluons interact with gluons directly. That one difference is the reason the
+  strong force confines and the electromagnetic force does not, and the reason nobody can write down
+  the spectrum of QCD in closed form.</p>
+  <p>What replaces superposition when it is gone? Almost always <strong>perturbation theory</strong>:
+  find a linear problem nearby, solve it exactly, and treat the nonlinearity as a small correction
+  computed order by order. Chapter 5.6 builds that machinery, and Feynman diagrams are its
+  bookkeeping — each vertex in a diagram is one factor of the nonlinear term. So the harmonic
+  oscillator is not merely the first system we can solve; it is the system every hard problem is
+  expanded around. That is why this chapter is long, and it is why the small-oscillations result of
+  Chapter 0.3 is arguably the most-used theorem in physics.</p>
+</div>
+
+<details class="grind">
+  <summary>Grind box — the exact pendulum period</summary>
+  <div class="grind-body">
+    <p>From <a class="eqref" href="#e-pendE"></a> with $\mathcal E=-\omega_0^{2}\cos\theta_0$,</p>
+    $$ \dot\theta = \omega_0\sqrt{2\left(\cos\theta-\cos\theta_0\right)}. $$
+    <p>A quarter period is the time from $\theta=0$ to $\theta=\theta_0$, so separating variables,</p>
+    $$ \frac{T}{4} = \int_0^{\theta_0}\frac{\dd\theta}{\omega_0\sqrt{2(\cos\theta-\cos\theta_0)}}. $$
+    <p>Use $\cos\theta = 1-2\sin^{2}(\theta/2)$ to write
+    $\cos\theta-\cos\theta_0 = 2\big(s^{2}-\sin^{2}(\theta/2)\big)$ where $s\equiv\sin(\theta_0/2)$.
+    Then substitute $\sin(\theta/2) = s\sin\varphi$, which maps $\theta:0\to\theta_0$ onto
+    $\varphi:0\to\pi/2$ and gives
+    $\tfrac12\cos(\theta/2)\,\dd\theta = s\cos\varphi\,\dd\varphi$ with
+    $\cos(\theta/2)=\sqrt{1-s^{2}\sin^{2}\varphi}$. The square root in the denominator becomes
+    $2s\cos\varphi$, and it cancels against the numerator exactly:</p>
+    $$ \frac{T}{4} = \frac{1}{\omega_0}\int_0^{\pi/2}\frac{\dd\varphi}{\sqrt{1-s^{2}\sin^{2}\varphi}} \;\equiv\; \frac{K(s)}{\omega_0}. $$
+    <p>$K$ is the complete elliptic integral of the first kind — a function defined by this integral,
+    which cannot be reduced to elementary ones. Since $T_0 = 2\pi/\omega_0$,
+    $T/T_0 = 2K(s)/\pi$, and $K(0)=\pi/2$ recovers $T=T_0$. ✓</p>
+    <p><b>The expansion.</b> Expand the integrand by the binomial series (Chapter 0.3),
+    $(1-u)^{-1/2} = 1+\tfrac12u+\tfrac38u^{2}+\cdots$ with $u=s^{2}\sin^{2}\varphi$, and integrate
+    term by term using $\int_0^{\pi/2}\sin^{2}\varphi\,\dd\varphi = \pi/4$ and
+    $\int_0^{\pi/2}\sin^{4}\varphi\,\dd\varphi = 3\pi/16$:</p>
+    $$ K(s) = \frac\pi2\left(1+\frac{s^{2}}{4}+\frac{9s^{4}}{64}+\cdots\right). $$
+    <p>Finally put $s = \sin(\theta_0/2) = \tfrac{\theta_0}{2}-\tfrac{\theta_0^{3}}{48}+\cdots$, so
+    $s^{2} = \tfrac{\theta_0^{2}}{4}-\tfrac{\theta_0^{4}}{48}+\cdots$ and
+    $s^{4}=\tfrac{\theta_0^{4}}{16}+\cdots$, and collect:</p>
+    $$ \frac{T}{T_0} = 1 + \frac{\theta_0^{2}}{16} + \left(\frac{9}{64\cdot16}-\frac{1}{4\cdot48}\right)\theta_0^{4} + \cdots = 1+\frac{\theta_0^{2}}{16}+\frac{11\theta_0^{4}}{3072}+\cdots $$
+    <p>since $\tfrac{9}{1024}-\tfrac{1}{192} = \tfrac{27-16}{3072} = \tfrac{11}{3072}$, confirming
+    <a class="eqref" href="#e-pendT"></a>. At $\theta_0=1$ rad the series gives $1.06608$ against the
+    exact $1.06633$ — the next term is doing $2\times10^{-4}$ of work, as an $O(\theta_0^{6})$ term
+    should.</p>
+  </div>
+</details>
+
+<div class="callout plain">
+  <span class="ct">In plain terms <span class="pnum">0.8.8</span></span>
+  <p>Losing linearity costs more than heavier algebra, and being exact about what goes is worth a moment. Every habit acquired so far, whether breaking a problem into modes, or expanding a disturbance into pure tones and treating them separately, rests on one line of algebra true only because the equation was linear. A pendulum swung wide is already outside it, since the period then depends on amplitude, so two solutions of different sizes keep different time and their sum solves nothing.</p>
+  <p>The consequences are not academic. Gravity is nonlinear because the gravitational field carries energy and energy gravitates, so the field of two stars is not one star's field added to the other's, which is why a problem that is an exercise in Newton's theory took half a century in Einstein's. The strong force is nonlinear for the same reason, which is why beams of light pass through one another and beams of gluons do not.</p>
+  <p>What replaces superposition is the strategy named at the start of the toolkit: find a linear problem nearby, solve it exactly, and treat the difference as a correction computed term by term. The oscillator is not merely the first system anybody can solve; it is the system every hard problem gets expanded around, which is why the next thing worth having is a way of writing any disturbance whatever as a sum of oscillations.</p>
+</div>
+
+<h2>9 · Worked examples</h2>
+
+<div class="worked">
+  <span class="ct">Worked example 1 — two masses, from matrix to beats</span>
+  <p><em>Two masses $m=1\,\mathrm{kg}$, wall springs $k=1\,\mathrm{N/m}$, coupling
+  $\kappa=0.1\,\mathrm{N/m}$. Mass 1 is displaced $10\,\mathrm{cm}$ and both are released from rest.
+  Find everything.</em></p>
+  <p><b>The matrix.</b> From <a class="eqref" href="#e-two2"></a>,</p>
+  $$ M = \begin{pmatrix}1.1 & -0.1\\ -0.1 & 1.1\end{pmatrix}\ \mathrm{s^{-2}}. $$
+  <p><b>Eigenvalues.</b> $\det(M-\lambda I) = (1.1-\lambda)^{2}-0.01=0$ gives
+  $1.1-\lambda=\pm0.1$, so $\lambda = 1.0$ and $1.2\ \mathrm{s^{-2}}$ — real, as the spectral theorem
+  guarantees for a symmetric matrix. Hence</p>
+  $$ \omega_1 = 1.0000\ \mathrm{s^{-1}}, \qquad \omega_2 = \sqrt{1.2}=1.0954\ \mathrm{s^{-1}}. $$
+  <p>Check against <a class="eqref" href="#e-modes"></a>: $\omega_1^{2}=k/m=1$ ✓ and
+  $\omega_2^{2}=(k+2\kappa)/m = 1.2$ ✓.</p>
+  <p><b>Eigenvectors.</b> For $\lambda=1.0$: $(M-I)\vv w = \begin{pmatrix}0.1&-0.1\\-0.1&0.1\end{pmatrix}\vv w=0$
+  gives $w_1=w_2$, so $\vv u_1=\tfrac1{\sqrt2}(1,1)$. For $\lambda=1.2$: $-0.1w_1-0.1w_2=0$ gives
+  $w_1=-w_2$, so $\vv u_2=\tfrac1{\sqrt2}(1,-1)$. Their dot product is $\tfrac12(1-1)=0$:
+  orthogonal, unbidden.</p>
+  <p><b>General solution.</b> By <a class="eqref" href="#e-general2"></a>,</p>
+  $$ \vv x(t) = \left(a_1\cos\omega_1t+\tfrac{b_1}{\omega_1}\sin\omega_1t\right)\vv u_1 + \left(a_2\cos\omega_2t+\tfrac{b_2}{\omega_2}\sin\omega_2t\right)\vv u_2. $$
+  <p><b>Initial conditions.</b> $\vv x(0)=(0.1,0)\,\mathrm{m}$, $\dot{\vv x}(0)=\vv 0$. So
+  $b_k=0$ and</p>
+  $$ a_1 = \vv u_1\cdot\vv x(0) = \frac{0.1}{\sqrt2}, \qquad a_2 = \vv u_2\cdot\vv x(0) = \frac{0.1}{\sqrt2}. $$
+  <p>Equal amplitudes in both modes — which is the content of "displace one mass": in the mode basis,
+  a single-mass displacement is an equal superposition. Assembling components,</p>
+  $$ x_1(t) = 0.05\left(\cos\omega_1t+\cos\omega_2t\right), \qquad x_2(t) = 0.05\left(\cos\omega_1t-\cos\omega_2t\right) \ \mathrm{m}. $$
+  <p><b>The beat.</b> With $\Delta = \omega_2-\omega_1 = 0.09544\ \mathrm{s^{-1}}$ and
+  $\bar\omega = 1.04772\ \mathrm{s^{-1}}$, <a class="eqref" href="#e-beat2"></a> gives</p>
+  $$ \begin{aligned} x_1 &= 0.1\,\cos(0.04772\,t)\,\cos(1.04772\,t),\\[3pt] x_2 &= 0.1\,\sin(0.04772\,t)\,\sin(1.04772\,t). \end{aligned} $$
+  <p>Mass 1 is momentarily still and mass 2 has all the motion at $t=\pi/\Delta = 32.9\ \mathrm{s}$,
+  and the pattern repeats with</p>
+  $$ T_{\text{beat}} = \frac{2\pi}{\Delta} = 65.8\ \mathrm{s}, $$
+  <p>against the individual oscillation period $2\pi/\bar\omega = 6.00\ \mathrm{s}$ — eleven fast
+  cycles per exchange. The weak-coupling estimate $2\pi k/(\omega_1\kappa)=62.8$ s is $5\%$ low,
+  which is the size of the next term in $\sqrt{1+2\kappa/k}$, as it should be.</p>
+  <p><b>Energy accounting.</b> Total energy is
+  $\tfrac12k x_1^{2}+\tfrac12kx_2^{2}+\tfrac12\kappa(x_1-x_2)^{2}$ evaluated at $t=0$, which is
+  $\tfrac12(1)(0.01)+\tfrac12(0.1)(0.01) = 5.50\ \mathrm{mJ}$. In the mode picture it is
+  $\tfrac12\omega_1^{2}q_1(0)^{2}+\tfrac12\omega_2^{2}q_2(0)^{2}$ with
+  $q_k(0)=0.1/\sqrt2$, giving $\tfrac12(1.0+1.2)(0.005) = 5.50\ \mathrm{mJ}$ ✓ — split $45.5\%$ /
+  $54.5\%$ between the modes, and those two numbers never change, no matter how violently the energy
+  moves between the two <em>masses</em>.</p>
+</div>
+
+<div class="worked">
+  <span class="ct">Worked example 2 — a driven damped oscillator, peak and width</span>
+  <p><em>Take $\omega_0 = 1\ \mathrm{s^{-1}}$ and $\gamma=0.05\ \mathrm{s^{-1}}$, so $Q=10$. Locate
+  the amplitude peak, the power peak, and the width; compare the Lorentzian.</em></p>
+  <p><b>Amplitude.</b> From <a class="eqref" href="#e-peak"></a>,</p>
+  $$ \omega_{\text{peak}} = \sqrt{1-2(0.05)^{2}} = \sqrt{0.995} = 0.99750\ \mathrm{s^{-1}}, $$
+  <p>which is <em>below</em> $\omega_0$ by $0.25\%$ — and below the damped free frequency
+  $\omega_{\mathrm d}=\sqrt{1-0.0025}=0.99875$ as well. Three different "resonant frequencies", all
+  distinct, all correct answers to different questions. The peak amplitude is</p>
+  $$ A_{\max} = \frac{F_0}{2(0.05)\sqrt{1-0.0025}} = 10.0125\,F_0, $$
+  <p>versus the static response $A(0)=F_0/\omega_0^{2}=F_0$. The system amplifies by very nearly $Q$,
+  which is <a class="eqref" href="#e-peak"></a> in the limit $\gamma\ll\omega_0$:
+  $A_{\max}\to F_0/(2\gamma\omega_0) = Q\,A(0)$.</p>
+  <p><b>Power.</b> By <a class="eqref" href="#e-powerform"></a> the power peak is at
+  $\omega=\omega_0=1$ exactly, with $\bar P = F_0^{2}/4\gamma = 5F_0^{2}$. The half-power points from
+  <a class="eqref" href="#e-halfpower"></a>:</p>
+  $$ \omega_\pm = \sqrt{1+0.0025}\pm0.05 = 1.00125\pm0.05 = 1.05125,\ 0.95125, $$
+  <p>so $\text{FWHM} = 0.10000 = 2\gamma$ exactly, and
+  $\omega_+\omega_- = 1.05125\times0.95125 = 1.00000 = \omega_0^{2}$ ✓. Note that the centre of the
+  half-power interval is $1.00125$, not $\omega_0=1$ — the curve is very slightly asymmetric, and the
+  correct recipe for extracting $\omega_0$ from data is the geometric mean, not the arithmetic one.</p>
+  <p><b>The Lorentzian.</b> Near resonance <a class="eqref" href="#e-lorentz"></a> reads</p>
+  $$ \frac{\bar P(\omega)}{\bar P(\omega_0)} \approx \frac{0.0025}{(\omega-1)^{2}+0.0025}. $$
+  <p>Compare it with the exact <a class="eqref" href="#e-power2"></a> at three places. At
+  $\omega=1.05$, just inside the half-power point, the Lorentzian gives $0.5000$ against the exact
+  $0.5120$ — $2.4\%$ low. At $\omega=1.5$ it gives $0.0099$ against $0.0142$, now $30\%$ low. And at
+  $\omega=0.5$ it gives $0.0099$ again — because a Lorentzian is exactly symmetric about $\omega_0$ —
+  while the true answer is $0.0044$, less than half. <strong>The real resonance is asymmetric and the
+  Lorentzian is not</strong>, which is another reading of $\omega_+\omega_-=\omega_0^{2}$: the true
+  curve is symmetric in $\log\omega$, not in $\omega$. So the Lorentzian is a statement about the
+  neighbourhood of the peak and nothing else — which is exactly the regime in which particle physics
+  uses it, and exactly why a Breit–Wigner fit is quoted with a fit window.</p>
+  <p><b>Width and lifetime.</b> Free ringdown has energy $\ee^{-2\gamma t}$, an energy lifetime
+  $\tau = 1/2\gamma = 10\ \mathrm{s}$. Multiply by the width: $\text{FWHM}\times\tau = 0.1\times10=1$.
+  Reading that with $E=\hbar\omega$ turns it into $\Gamma\tau=\hbar$. Everything in this example is a
+  laboratory-bench version of how a resonance mass and width are quoted in a particle data table.</p>
+</div>
+
+<h2>10 · Your turn</h2>
+
+<div class="problems">
+
+<div class="prob">
+  <p class="pnum">Problem 1 — why critical damping is forced to grow a $t$</p>
+  <p>Solve $\ddot x + 2\gamma\dot x + \omega_0^{2}x = 0$ in the critically damped case
+  $\gamma=\omega_0$. Show that $\ee^{-\gamma t}$ alone cannot be the general solution, produce the
+  second solution without guessing it, and verify it satisfies the equation.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>Why one solution is not enough.</b> The equation is second order, so by
+    <a class="eqref" href="#e-dimn"></a> its solution space is two-dimensional. The multiples of
+    $\ee^{-\gamma t}$ form a one-dimensional subspace. Something is missing, and it is not optional:
+    with only $x=C\ee^{-\gamma t}$ available you could not satisfy the perfectly ordinary initial
+    conditions $x(0)=0$, $\dot x(0)=v_0\neq0$, since $x(0)=0$ forces $C=0$.</p>
+    <p><b>Producing it.</b> The characteristic equation is
+    $\lambda^{2}+2\gamma\lambda+\gamma^{2}=(\lambda+\gamma)^{2}=0$, a double root at $-\gamma$. In
+    operator form, $(D+\gamma)^{2}x=0$. Set $N = D+\gamma$. We need a function with $Nw\neq0$ but
+    $N^{2}w=0$, i.e. one that $N$ maps <em>onto</em> the eigenfunction rather than to zero. From
+    <a class="eqref" href="#e-teltderiv"></a>,</p>
+    $$ N\big(t\ee^{-\gamma t}\big) = \dv{}{t}\big(t\ee^{-\gamma t}\big)+\gamma t\ee^{-\gamma t} = \ee^{-\gamma t}-\gamma t\ee^{-\gamma t}+\gamma t\ee^{-\gamma t} = \ee^{-\gamma t}, $$
+    <p>and applying $N$ again gives $N\ee^{-\gamma t}=0$. So $t\ee^{-\gamma t}$ is annihilated by
+    $N^{2}$ and is the second solution. Independence is clear since their ratio $t$ is not
+    constant.</p>
+    <p><b>Direct check.</b> With $x=t\ee^{-\gamma t}$: $\dot x = (1-\gamma t)\ee^{-\gamma t}$ and
+    $\ddot x = (-2\gamma+\gamma^{2}t)\ee^{-\gamma t}$. Then</p>
+    $$ \ddot x + 2\gamma\dot x + \gamma^{2}x = \left[-2\gamma+\gamma^{2}t + 2\gamma-2\gamma^{2}t+\gamma^{2}t\right]\ee^{-\gamma t} = 0. \ ✓ $$
+    <p><b>Why it had to happen.</b> Two routes, both in §3.4. Algebraically, $N$ restricted to the
+    solution space satisfies $N^{2}=0\neq N$, so it is nilpotent and cannot be diagonalised; its
+    matrix is the Jordan block <a class="eqref" href="#e-jordanD"></a> and $t\ee^{-\gamma t}$ is the
+    generalised eigenvector. Analytically, take the underdamped solution and let
+    $\omega_{\mathrm d}\to0$: $\sin(\omega_{\mathrm d}t)/\omega_{\mathrm d}\to t$, so the second basis
+    vector does not vanish, it degenerates into $t\ee^{-\gamma t}$. The factor of $t$ is the
+    fingerprint of two eigenvalues colliding, and it appears for the same reason at exact resonance
+    in §6.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 2 — three free masses, and a mode that does not oscillate</p>
+  <p>Three equal masses $m$ lie in a line, joined by two springs of stiffness $k$, with
+  <em>nothing</em> attached to any wall. Write the equations of motion, find the three normal modes
+  and frequencies, and interpret the mode with $\omega=0$. What conservation law is it?</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>Equations.</b> Only the two springs act, each pulling its two neighbours together:</p>
+    $$ m\ddot x_1 = k(x_2-x_1), \quad m\ddot x_2 = k(x_1-x_2)+k(x_3-x_2), \quad m\ddot x_3 = k(x_2-x_3), $$
+    $$ \ddot{\vv x} = -\frac{k}{m}C\vv x, \qquad C = \begin{pmatrix}1&-1&0\\-1&2&-1\\0&-1&1\end{pmatrix}. $$
+    <p>$C$ is symmetric, so §7.2 applies: three real eigenvalues, three orthogonal modes.</p>
+    <p><b>Eigenvalues.</b> Guess the symmetric candidates and verify, which is faster than expanding
+    a cubic. $C(1,1,1)^{\mathsf T}=(0,0,0)^{\mathsf T}$, so $\mu=0$.
+    $C(1,0,-1)^{\mathsf T} = (1,0,-1)^{\mathsf T}$, so $\mu=1$.
+    $C(1,-2,1)^{\mathsf T}=(3,-6,3)^{\mathsf T}=3(1,-2,1)^{\mathsf T}$, so $\mu=3$. Three eigenvalues
+    of a $3\times3$ matrix, and their sum $0+1+3=4$ matches $\operatorname{tr}C = 1+2+1$ ✓. The three
+    vectors are mutually orthogonal, as promised. Hence</p>
+    $$ \omega_1 = 0, \qquad \omega_2 = \sqrt{k/m}, \qquad \omega_3 = \sqrt{3k/m}. $$
+    <p><b>Shapes.</b> Mode 2, $(1,0,-1)$: the ends move oppositely and the centre stays still, so it
+    is a node — the centre mass feels equal and opposite pulls. Mode 3, $(1,-2,1)$: the ends move
+    together against the centre, stretching both springs, hence the highest frequency; note the
+    centre moves twice as far, which is exactly what keeps the centre of mass fixed
+    ($1-2+1=0$).</p>
+    <p><b>The zero mode.</b> $\omega=0$ means $\ddot q_1 = 0$, so $q_1 = a+bt$: not an oscillation but
+    a <em>drift</em>. The mode shape $(1,1,1)$ is uniform translation — sliding the whole chain
+    sideways. It costs no potential energy because no spring changes length, so the potential is
+    perfectly flat in that direction, and a flat direction has zero Hessian eigenvalue (Chapter 0.6's
+    fourth case, where the second-derivative test goes silent).</p>
+    <p><b>The conservation law.</b> $q_1 \propto x_1+x_2+x_3$ is the centre-of-mass coordinate, so
+    $\dot q_1 = $ constant says the <strong>total momentum is conserved</strong>. And the reason the
+    potential is flat along $(1,1,1)$ is that $V$ depends only on the differences $x_{j+1}-x_j$ —
+    that is, $V$ is unchanged by translating the whole system. So: <em>a symmetry of the potential
+    (translation invariance) produced a flat direction, which produced a zero-frequency mode, which
+    is a conservation law (momentum).</em> That chain is <strong>Noether's theorem</strong>, and
+    Chapter 1.4 proves it in general. Here you have met it in a $3\times3$ matrix. Zero modes from
+    symmetry recur throughout the book, most consequentially in Chapter 6.6, where the flat
+    directions of the Higgs potential are massless particles and the entire drama is what happens to
+    them.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 3 — a biexponential curve is an eigenvalue problem</p>
+  <p>A two-compartment model has $k_{10}=1.0$, $k_{12}=0.75$, $k_{21}=0.5$, all in
+  $\mathrm{h^{-1}}$. Find $\alpha$ and $\beta$ and the two half-lives; find the eigenvectors and
+  check they are not orthogonal; and write $A_1(t)$ after an intravenous bolus $D$.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>The matrix and its spectrum.</b></p>
+    $$ K = \begin{pmatrix}-(k_{10}+k_{12}) & k_{21}\\ k_{12} & -k_{21}\end{pmatrix} = \begin{pmatrix}-1.75 & 0.5\\ 0.75 & -0.5\end{pmatrix}. $$
+    <p>$\operatorname{tr}K = -2.25$ and $\det K = 0.875-0.375=0.5$ — which is $k_{10}k_{21}$, as the
+    general identity says. So $\lambda^{2}+2.25\lambda+0.5=0$ and</p>
+    $$ \lambda = \frac{-2.25\pm\sqrt{5.0625-2}}{2} = \frac{-2.25\pm1.75}{2} = -2.00,\ -0.25\ \mathrm{h^{-1}}. $$
+    <p>Hence $\alpha = 2.00\ \mathrm{h^{-1}}$, $\beta = 0.25\ \mathrm{h^{-1}}$. Sanity check on the
+    macro-constant relations: $\alpha+\beta = 2.25 = k_{10}+k_{12}+k_{21}$ ✓ and
+    $\alpha\beta = 0.5 = k_{10}k_{21}$ ✓. Half-lives:</p>
+    $$ t_{1/2}^{\alpha} = \frac{\ln2}{2.00} = 0.347\ \mathrm{h} = 20.8\ \mathrm{min}, \qquad t_{1/2}^{\beta} = \frac{\ln2}{0.25} = 2.77\ \mathrm{h}. $$
+    <p>Note $t_{1/2}^{\beta}$ is not $\ln2/k_{10} = 0.69$ h. The terminal half-life is a property of
+    the coupled pair, four times longer than elimination alone would suggest, because drug that went
+    into tissue has to come back before it can leave.</p>
+    <p><b>Eigenvectors.</b> For $\lambda=-2$: $(K+2I)\vv w = \begin{pmatrix}0.25&0.5\\0.75&1.5\end{pmatrix}\vv w=0$
+    gives $w_1=-2w_2$, so $\vv w_\alpha\propto(2,-1)$. For $\lambda=-0.25$:
+    $\begin{pmatrix}-1.5&0.5\\0.75&-0.25\end{pmatrix}\vv w=0$ gives $w_2=3w_1$, so
+    $\vv w_\beta\propto(1,3)$. Their dot product is $2-3=-1\neq0$: <strong>not orthogonal</strong>
+    (the angle is $98.1^{\circ}$), because $K$ is not symmetric — $k_{21}=0.5$ while $k_{12}=0.75$.
+    Chapter 0.5's spectral theorem simply does not apply, so we must solve for the coefficients
+    rather than take inner products.</p>
+    <p><b>Bolus.</b> $\vv A(0) = (D,0)$. Write $(D,0) = a(2,-1)+b(1,3)$: from the second component
+    $a=3b$, and the first gives $6b+b=D$, so $b=D/7$ and $a=3D/7$. Therefore</p>
+    $$ A_1(t) = \tfrac67 D\,\ee^{-2t} + \tfrac17 D\,\ee^{-0.25t}, \qquad A_2(t) = \tfrac37 D\left(\ee^{-0.25t}-\ee^{-2t}\right). $$
+    <p>Checks: $A_1(0)=D$ ✓, $A_2(0)=0$ ✓, and
+    $\dot A_1(0) = -\tfrac{12}7D-\tfrac{0.25}7D = -1.75D = -(k_{10}+k_{12})D$ ✓.</p>
+    <p><b>Reading it.</b> $86\%$ of the initial plasma amount decays with the fast eigenvalue and
+    $14\%$ with the slow one, both starting at $t=0$. Plot $\ln A_1$ and you see a steep segment
+    bending onto a shallow line whose back-extrapolated intercept is $D/7$ — which is how the
+    classical "method of residuals" recovers the coefficients by hand. It is peeling eigenvectors off
+    one at a time, starting with the one that survives longest.</p>
+  </div></details>
+</div>
+
+<div class="prob">
+  <p class="pnum">Problem 4 — anything can be a wave, and what that says about causality</p>
+  <p>Show that $u(x,t) = f(x-vt)$ solves the wave equation <a class="eqref" href="#e-wave"></a> for
+  <em>any</em> twice-differentiable $f$. Show the same for $g(x+vt)$, and argue that the general
+  solution is the sum. Then say what this implies about how information travels.</p>
+  <details><summary>Solution</summary><div class="sol">
+    <p><b>Direct substitution.</b> Write $s = x-vt$. By the chain rule (Chapter 0.6),
+    $\partial u/\partial x = f'(s)$ and $\partial^{2}u/\partial x^{2} = f''(s)$, while
+    $\partial u/\partial t = -v f'(s)$ and $\partial^{2}u/\partial t^{2} = v^{2}f''(s)$. Hence</p>
+    $$ \pdv{^{2}u}{t^{2}} - v^{2}\pdv{^{2}u}{x^{2}} = v^{2}f''(s) - v^{2}f''(s) = 0 \ ✓ $$
+    <p>for every $f$. The sign of $v$ never mattered, so $g(x+vt)$ works identically, and sums work
+    because the equation is linear.</p>
+    <p><b>Why that is everything.</b> Change variables to $\xi = x-vt$, $\eta=x+vt$. Then
+    $\partial_x = \partial_\xi+\partial_\eta$ and $\partial_t = v(\partial_\eta-\partial_\xi)$, so</p>
+    $$ \pdv{^{2}}{t^{2}} - v^{2}\pdv{^{2}}{x^{2}} = v^{2}\left(\partial_\eta-\partial_\xi\right)^{2} - v^{2}\left(\partial_\xi+\partial_\eta\right)^{2} = -4v^{2}\,\partial_\xi\partial_\eta, $$
+    <p>because the squared terms cancel and the cross terms add. So the wave equation is simply
+    $\partial_\xi\partial_\eta u = 0$, whose solutions are exactly $u = f(\xi)+g(\eta)$: integrate in
+    $\eta$ to get $\partial_\xi u = $ (function of $\xi$ alone), then integrate in $\xi$. This is
+    <strong>d'Alembert's solution</strong>, and the count is right — two arbitrary functions for a
+    second-order equation, the field-theoretic version of two arbitrary constants.</p>
+    <p><b>What it means.</b> The shape $f$ is completely arbitrary and it moves rigidly to the right
+    at speed $v$, undistorted. So a disturbance made here and now is felt <em>there</em> exactly at
+    the moment $\abs{x-x_0}/v$ later — not sooner, and with no precursor. The wave equation carries
+    information at exactly one speed, and that speed is a property of the medium
+    ($v=\sqrt{T/\rho}$), not of the source or the observer.</p>
+    <p>That last clause is the entire crisis of 1900. Chapter 2.1 will derive a wave equation for the
+    electromagnetic field straight out of Maxwell's equations, with
+    $v = 1/\sqrt{\varepsilon_0\mu_0} = c$ — a speed built from two laboratory constants and referring
+    to no medium anybody could find. Combined with the argument above, that forces the conclusion
+    that $c$ is the same for every observer, which is Einstein's second postulate. And the structure
+    $f(x-vt)$ is why Chapter 2.3 draws light cones: the set of events reachable from here is exactly
+    the set the solutions of <a class="eqref" href="#e-wave"></a> can reach. Causality, in this book,
+    is a statement about which arguments a function is allowed to depend on.</p>
+  </div></details>
+</div>
+
+</div>
+
+<div class="callout brick">
+  <span class="ct">The brick you just laid</span>
+  <p>You can now solve every linear differential equation with constant coefficients, and you know
+  why the method works: <strong>$\ee^{\lambda t}$ is the eigenfunction of $\dd/\dd t$</strong>, so a
+  linear ODE is an eigenvalue problem and its solution set is a vector space whose dimension is the
+  order. Repeated roots are defective matrices; $t\ee^{\lambda t}$ is a generalised eigenvector and
+  the Jordan block of Chapter 0.5 is where it lives. You solved the harmonic oscillator three ways,
+  read its phase-space ellipse as energy conservation, and computed the area that Chapter 4.5 will
+  quantise. You classified damping by a discriminant, defined $Q$ twice — radians per $\ee$-fold of
+  energy, and centre frequency over width — and proved those two definitions are the same number.
+  You derived the resonance curve, showed the power peak is exactly at $\omega_0$ with width exactly
+  $2\gamma$, and recognised the Lorentzian. And you diagonalised a coupled system into normal modes,
+  watched a general motion resolve into two simple ones, and took $N\to\infty$ to get a field.</p>
+  <p><b>Where this gets spent.</b></p>
+  <ul>
+    <li><b>Eigenfunctions of $\dd/\dd t$</b> → Chapter 0.9, where diagonalising the derivative on the
+    whole line <em>is</em> the Fourier transform; Chapter 4.5, where energy eigenstates are the same
+    construction for $\hat H$; Chapter 5.3, where field modes are the same construction again.</li>
+    <li><b>The harmonic oscillator</b> → Chapter 4.5 (ladder operators, and the $\tfrac12\hbar\omega$
+    that will not go away), Chapter 5.3 (one oscillator per field mode), Chapter 7.4 (one oscillator
+    per string mode, whose quanta are the particle spectrum).</li>
+    <li><b>The Lorentzian and $Q$</b> → Chapter 5.7, where the same curve is the Breit–Wigner
+    formula and the width of a bump in a cross-section <em>is</em> the inverse lifetime of a particle
+    nobody could ever watch decay.</li>
+    <li><b>Normal modes</b> → Chapter 1.3 (small oscillations in phase space), Chapter 5.3 and
+    Chapter 7.4 (infinitely many of them), Chapter 6.6 (a zero-frequency mode is a massless
+    particle).</li>
+    <li><b>The wave equation</b> → Chapter 2.1, where Maxwell's equations produce it with $v=c$ and
+    special relativity becomes unavoidable; Chapter 2.3 (light cones); Chapter 4.4, where adding an
+    $\ii$ turns it into the Schrödinger equation.</li>
+    <li><b>Duhamel and the Green's function</b> → Chapter 0.9 (convolution and $\delta$),
+    Chapter 5.6 (propagators, which are this integral with four-vectors in it).</li>
+    <li><b>Nonlinearity</b> → Chapter 3.6 (gravity gravitates), Chapter 6.4 (gluons carry colour),
+    Chapter 5.6 (perturbation theory, the only general tool once superposition is gone).</li>
+  </ul>
+  <p>One sentence to carry above all others: <em>a field is infinitely many coupled oscillators, and
+  the spectral theorem is what lets you treat them one at a time.</em> Everything from Chapter 5.3
+  onward is that sentence being cashed. Chapter 0.9 supplies the last piece — how to expand an
+  arbitrary function in modes when there is a continuum of them — and Part 0 is finished.</p>
+</div>
+
+<!--SCRIPT-->
+(function () {
+"use strict";
+
+/* =====================================================================
+   FIGURE A — two coupled oscillators and their normal modes
+   m = 1, wall springs k = 1, coupling kappa on the slider.
+   x1 = a1 + a2,  x2 = a1 - a2   with   a_k(t) = a_k(0) cos(w_k t)
+   ===================================================================== */
+
+var sK   = document.getElementById('s-kap'),
+    sD1  = document.getElementById('s-d1'),
+    sD2  = document.getElementById('s-d2'),
+    bM1  = document.getElementById('b-m1'),
+    bM2  = document.getElementById('b-m2'),
+    bOne = document.getElementById('b-one'),
+    bPl  = document.getElementById('b-play'),
+    oKap = document.getElementById('o-kap'),
+    oOm  = document.getElementById('o-om'),
+    oAmp = document.getElementById('o-amp');
+
+var simT = 0, playing = true, lastMs = null, rafId = null;
+
+function P() {
+  var kap = parseFloat(sK.value),
+      d1  = parseFloat(sD1.value),
+      d2  = parseFloat(sD2.value),
+      w1  = 1,
+      w2  = Math.sqrt(1 + 2 * kap),
+      dw  = w2 - w1;
+  var win = Math.min(165, Math.max(42, 1.15 * 2 * Math.PI / dw));
+  return { kap: kap, w1: w1, w2: w2, dw: dw, Tb: 2 * Math.PI / dw, win: win,
+           A1: 0.5 * (d1 + d2), A2: 0.5 * (d1 - d2) };
+}
+function a1of(p, t) { return p.A1 * Math.cos(p.w1 * t); }
+function a2of(p, t) { return p.A2 * Math.cos(p.w2 * t); }
+
+/* ---------- the apparatus ---------- */
+function zig(g, x1, x2, y, n, amp) {
+  var dir = (x2 >= x1) ? 1 : -1,
+      lead = Math.min(9, Math.abs(x2 - x1) * 0.16),
+      s = x1 + lead * dir, e = x2 - lead * dir,
+      seg = (e - s) / (2 * n), i;
+  g.beginPath();
+  g.moveTo(x1, y); g.lineTo(s, y);
+  for (i = 0; i < 2 * n; i++) g.lineTo(s + seg * (i + 0.5), y + (i % 2 ? amp : -amp));
+  g.lineTo(e, y); g.lineTo(x2, y);
+  g.stroke();
+}
+
+function drawMech(c) {
+  var p = P(), a1 = a1of(p, simT), a2 = a2of(p, simT),
+      x1 = a1 + a2, x2 = a1 - a2;
+  var pl = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: -0.5, ymax: 0.5,
+                             pad: { l: 6, r: 6, t: 6, b: 6 }, grid: false });
+  var g = pl.g;
+  g.clearRect(0, 0, pl.w, pl.h);
+  g.fillStyle = NMT.css('--paper'); g.fillRect(0, 0, pl.w, pl.h);
+
+  var acc = NMT.css('--accent'), fam = NMT.css('--familiar'),
+      ins = NMT.css('--insight'), rule = NMT.css('--rule'),
+      faint = NMT.css('--ink-faint'), soft = NMT.css('--ink-soft');
+
+  var y0 = pl.Y(0.06),
+      WL = pl.X(-0.96), WR = pl.X(0.96),
+      E1 = pl.X(-0.40), E2 = pl.X(0.40),
+      S  = pl.X(0.16) - pl.X(0),
+      c1 = E1 + S * x1, c2 = E2 + S * x2,
+      bw = 20, bh = 32;
+
+  /* walls + floor */
+  g.strokeStyle = rule; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(WL, y0 - 30); g.lineTo(WL, y0 + 30); g.stroke();
+  g.beginPath(); g.moveTo(WR, y0 - 30); g.lineTo(WR, y0 + 30); g.stroke();
+  g.lineWidth = 1;
+  for (var h = -28; h <= 22; h += 9) {
+    g.beginPath(); g.moveTo(WL, y0 + h); g.lineTo(WL - 7, y0 + h + 7); g.stroke();
+    g.beginPath(); g.moveTo(WR, y0 + h); g.lineTo(WR + 7, y0 + h + 7); g.stroke();
+  }
+  g.strokeStyle = NMT.css('--rule-soft'); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(WL, y0 + bh / 2 + 3); g.lineTo(WR, y0 + bh / 2 + 3); g.stroke();
+
+  /* equilibrium markers */
+  g.strokeStyle = faint; g.setLineDash([3, 3]); g.lineWidth = 1;
+  [E1, E2].forEach(function (X) {
+    g.beginPath(); g.moveTo(X, y0 - bh / 2 - 9); g.lineTo(X, y0 + bh / 2 + 9); g.stroke();
+  });
+  g.setLineDash([]);
+
+  /* springs */
+  g.strokeStyle = soft; g.lineWidth = 1.6;
+  zig(g, WL, c1 - bw, y0, 7, 8);
+  zig(g, c2 + bw, WR, y0, 7, 8);
+  g.strokeStyle = ins; g.lineWidth = 2.2;
+  zig(g, c1 + bw, c2 - bw, y0, 9, 9);
+
+  /* blocks */
+  function block(cx, col, lab) {
+    g.fillStyle = col;
+    g.beginPath(); g.rect(cx - bw, y0 - bh / 2, 2 * bw, bh); g.fill();
+    g.fillStyle = NMT.css('--paper');
+    g.font = '600 13px ' + NMT.css('--sans');
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(lab, cx, y0);
+  }
+  block(c1, acc, 'm₁'); block(c2, fam, 'm₂');
+
+  /* labels */
+  g.font = '11px ' + NMT.css('--sans');
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillStyle = ins;
+  g.fillText('κ = ' + p.kap.toFixed(2), (c1 + c2) / 2, y0 + bh / 2 + 8);
+  g.fillStyle = acc;
+  g.fillText('x₁ = ' + x1.toFixed(3), E1, y0 - bh / 2 - 26);
+  g.fillStyle = fam;
+  g.fillText('x₂ = ' + x2.toFixed(3), E2, y0 - bh / 2 - 26);
+  g.fillStyle = faint; g.textAlign = 'right'; g.textBaseline = 'bottom';
+  g.fillText('t = ' + simT.toFixed(1) + ' s', WR, y0 - 34);
+}
+
+/* ---------- shared trace drawing ---------- */
+function tracePlot(c, ylab) {
+  var p = P(), t1 = Math.max(p.win, simT), t0 = t1 - p.win;
+  var pl = new NMT.Plot(c, { xmin: t0, xmax: t1, ymin: -1.22, ymax: 1.22,
+                             xlabel: 't', ylabel: ylab,
+                             pad: { l: 46, r: 14, t: 10, b: 26 } });
+  pl.axes({ nx: 6, ny: 4 });
+  return pl;
+}
+
+function drawX(c) {
+  var p = P(), pl = tracePlot(c, 'displacement');
+  pl.fn(function (t) { return a1of(p, t) + a2of(p, t); },
+        { color: NMT.css('--accent'), width: 1.9, N: 900 });
+  pl.fn(function (t) { return a1of(p, t) - a2of(p, t); },
+        { color: NMT.css('--familiar'), width: 1.9, N: 900 });
+  var a1 = a1of(p, simT), a2 = a2of(p, simT);
+  pl.dot(simT, a1 + a2, { color: NMT.css('--accent'), ring: true, r: 4 });
+  pl.dot(simT, a1 - a2, { color: NMT.css('--familiar'), ring: true, r: 4 });
+  var g = pl.g;
+  g.font = '600 11px ' + NMT.css('--sans');
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillStyle = NMT.css('--accent'); g.fillText('x₁', pl.o.pad.l + 6, 10);
+  g.fillStyle = NMT.css('--familiar'); g.fillText('x₂', pl.o.pad.l + 26, 10);
+}
+
+function drawQ(c) {
+  var p = P(), pl = tracePlot(c, 'normal modes');
+  pl.fn(function (t) { return a1of(p, t); },
+        { color: NMT.css('--insight'), width: 1.9, N: 900 });
+  pl.fn(function (t) { return a2of(p, t); },
+        { color: NMT.css('--warn'), width: 1.9, N: 900 });
+  pl.dot(simT, a1of(p, simT), { color: NMT.css('--insight'), ring: true, r: 4 });
+  pl.dot(simT, a2of(p, simT), { color: NMT.css('--warn'), ring: true, r: 4 });
+  var g = pl.g;
+  g.font = '600 11px ' + NMT.css('--sans');
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillStyle = NMT.css('--insight');
+  g.fillText('a₁  (1,1) at ω₁', pl.o.pad.l + 6, 10);
+  g.fillStyle = NMT.css('--warn');
+  g.fillText('a₂  (1,−1) at ω₂', pl.o.pad.l + 104, 10);
+
+  /* readouts live here so they update once per frame */
+  var E1 = p.w1 * p.w1 * p.A1 * p.A1, E2 = p.w2 * p.w2 * p.A2 * p.A2, ET = E1 + E2;
+  oKap.textContent = 'κ = ' + p.kap.toFixed(3);
+  oOm.textContent  = 'ω₁ = ' + p.w1.toFixed(4) + '   ω₂ = ' + p.w2.toFixed(4) +
+                     '   Δω = ' + p.dw.toFixed(4) + '   T_beat = ' + p.Tb.toFixed(1) + ' s';
+  oAmp.textContent = 'a₁ = ' + a1of(p, simT).toFixed(3) +
+                     '   a₂ = ' + a2of(p, simT).toFixed(3) +
+                     '   mode energies ' +
+                     (ET > 1e-12 ? (100 * E1 / ET).toFixed(1) : '0.0') + '% / ' +
+                     (ET > 1e-12 ? (100 * E2 / ET).toFixed(1) : '0.0') + '%';
+}
+
+var runMech = NMT.figure('fig-coupled',   drawMech),
+    runX    = NMT.figure('fig-coupled-x', drawX),
+    runQ    = NMT.figure('fig-coupled-q', drawQ);
+
+/* ---------- animation: one loop, cancelled and restarted cleanly ---------- */
+function frame(ms) {
+  rafId = window.requestAnimationFrame(frame);
+  if (lastMs === null) lastMs = ms;
+  var dt = (ms - lastMs) / 1000;
+  lastMs = ms;
+  if (!(dt > 0)) dt = 0;
+  if (dt > 0.05) dt = 0.05;           /* backgrounded tab: never jump */
+  if (playing) {
+    var p = P();
+    simT += dt * Math.min(8, Math.max(3, p.win / 14));
+    if (simT > 1e6) simT = 0;
+  }
+  try { runMech(); runX(); runQ(); } catch (e) { /* keep the loop alive */ }
+}
+function startLoop() {
+  if (rafId !== null) { window.cancelAnimationFrame(rafId); rafId = null; }
+  lastMs = null;
+  rafId = window.requestAnimationFrame(frame);
+}
+startLoop();
+document.addEventListener('visibilitychange', function () { lastMs = null; });
+
+/* ---------- controls ---------- */
+function preset(d1, d2, btn) {
+  sD1.value = d1; sD2.value = d2; simT = 0;
+  [bM1, bM2, bOne].forEach(function (b) { b.className = ''; });
+  btn.className = 'on';
+  NMT.redrawAll();
+}
+bM1.addEventListener('click',  function () { preset(1, 1, bM1); });
+bM2.addEventListener('click',  function () { preset(1, -1, bM2); });
+bOne.addEventListener('click', function () { preset(1, 0, bOne); });
+[sK, sD1, sD2].forEach(function (s) {
+  s.addEventListener('input', function () { simT = 0; NMT.redrawAll(); });
+});
+bPl.addEventListener('click', function () {
+  playing = !playing;
+  bPl.className = playing ? 'on' : '';
+  bPl.textContent = playing ? 'pause' : 'play';
+  lastMs = null;
+  NMT.redrawAll();
+});
+
+/* =====================================================================
+   FIGURE B — resonance width and the lifetime
+   ===================================================================== */
+
+var sQ = document.getElementById('s-q'),
+    oQ = document.getElementById('o-q'),
+    oF = document.getElementById('o-fw'),
+    oT = document.getElementById('o-tau');
+
+var W0 = 1;
+function gamOf() { return W0 / (2 * parseFloat(sQ.value)); }
+function Pow(w, g) {
+  var d = (W0 * W0 - w * w);
+  return g * w * w / (d * d + 4 * g * g * w * w);
+}
+
+NMT.figure('fig-res', function (c) {
+  var Q = parseFloat(sQ.value), g = gamOf(), Pk = Pow(W0, g);
+  var pl = new NMT.Plot(c, { xmin: 0, xmax: 2, ymin: 0, ymax: 1.16,
+                             xlabel: 'ω / ω₀', ylabel: 'absorbed power (÷ peak)' });
+  pl.axes({ nx: 8, ny: 4 });
+
+  pl.fn(function (w) { return Pow(w, g) / Pk; },
+        { color: NMT.css('--accent'), width: 2.4, N: 1400 });
+  pl.fn(function (w) { return g * g / ((w - W0) * (w - W0) + g * g); },
+        { color: NMT.css('--warn'), width: 1.7, dash: [5, 4], N: 1400 });
+  pl.seg(0, 0.5, 2, 0.5, { color: NMT.css('--ink-faint'), dash: [3, 3] });
+
+  /* measure the width off the plotted curve, do not assume it */
+  var N = 60000, lo = null, hi = null, i, w;
+  for (i = 0; i <= N; i++) {
+    w = 0.02 + (3 - 0.02) * i / N;
+    if (Pow(w, g) / Pk >= 0.5) { if (lo === null) lo = w; hi = w; }
+  }
+  var ins = NMT.css('--insight');
+  pl.seg(lo, 0, lo, 0.5, { color: ins, width: 1.3 });
+  pl.seg(hi, 0, hi, 0.5, { color: ins, width: 1.3 });
+  pl.seg(lo, 0.5, hi, 0.5, { color: ins, width: 3 });
+  pl.dot(W0, 1, { color: NMT.css('--accent'), ring: true, r: 4.5 });
+  pl.text(W0, 1, 'ω₀', { color: NMT.css('--accent'), dx: 7, dy: -4 });
+
+  oQ.textContent = 'Q = ' + Q.toFixed(2) + '   γ = ' + g.toFixed(5);
+  oF.textContent = 'measured FWHM = ' + (hi - lo).toFixed(4) +
+                   '   (2γ = ' + (2 * g).toFixed(4) + ')';
+  oT.textContent = 'energy lifetime τ = 1/2γ = ' + (1 / (2 * g)).toFixed(2) +
+                   '   →   FWHM × τ = ' + ((hi - lo) / (2 * g)).toFixed(3);
+});
+
+NMT.figure('fig-phase', function (c) {
+  var g = gamOf();
+  var pl = new NMT.Plot(c, { xmin: 0, xmax: 2, ymin: 0, ymax: 182,
+                             xlabel: 'ω / ω₀', ylabel: 'phase lag δ (°)',
+                             pad: { l: 46, r: 14, t: 10, b: 30 } });
+  pl.axes({ nx: 8, ny: 4 });
+  pl.seg(0, 90, 2, 90, { color: NMT.css('--ink-faint'), dash: [3, 3] });
+  pl.seg(W0, 0, W0, 182, { color: NMT.css('--ink-faint'), dash: [3, 3] });
+  pl.fn(function (w) {
+    return Math.atan2(2 * g * w, W0 * W0 - w * w) * 180 / Math.PI;
+  }, { color: NMT.css('--familiar'), width: 2.4, N: 1400 });
+  pl.dot(W0, 90, { color: NMT.css('--familiar'), ring: true, r: 4.5 });
+});
+
+sQ.addEventListener('input', NMT.redrawAll);
+
+})();
+<!--/SCRIPT-->
