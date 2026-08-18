@@ -3,6 +3,12 @@
 
 *Version 2.0 — 15 Aug 2026 — math foundation deepened*
 
+> **Superseded forward of Chapter 3.7.** This document remains the plan of record for Chapters 0.1
+> to 3.6, all of which are written. From 3.7 onward it is superseded by
+> [`PLAN-FORWARD.md`](PLAN-FORWARD.md), which revises the curriculum from 59 chapters to 67 after
+> the review of August 2026, and by [`GAPS.md`](GAPS.md), the standing register of what the book has
+> used but not built. Read those two before writing anything after 3.6.
+
 ---
 
 ## 0. The premise
@@ -193,7 +199,7 @@ quantitative work you already do.*
 | 3.1 | The Equivalence Principle | Gravity as the odd one out; **tidal forces** as the part you cannot transform away |
 | 3.2 | Manifolds ※ | Charts; tangent spaces; vectors as directional derivatives; one-forms; what an index has *actually* meant all along |
 | 3.3 | Metric and Connection ※ | Metric tensor; the problem of comparing vectors at different points; covariant derivative; Christoffels; parallel transport; **geodesic equation from an action** |
-| 3.4 | Curvature ※ | Riemann tensor from the commutator of covariant derivatives; geodesic deviation; Ricci; scalar curvature; Bianchi identities |
+| 3.4 | Curvature ※ | Riemann tensor from the commutator of covariant derivatives; geodesic deviation; Ricci; the Ricci scalar; Bianchi identities |
 | 3.5 | Forms, Lie Derivatives, Killing Vectors ※ | Differential forms and the exterior derivative; integration on manifolds; Lie derivative; **Killing vectors ⇒ conserved quantities** (Noether, geometrized) |
 | 3.6 | The Einstein Field Equations | Motivated, then **derived from the Einstein–Hilbert action**; stress-energy tensor; Newtonian limit recovers Poisson |
 | 3.7 | Schwarzschild | Solution derived in full; orbits and the ISCO; perihelion precession; light bending; redshift; what a horizon really is |

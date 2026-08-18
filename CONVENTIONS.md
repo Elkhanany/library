@@ -22,3 +22,74 @@
 - **Cross-part links**: forward-reference by chapter number only (e.g. "Chapter 3.3"), and link with
   `<a href="ch3-3.html">` only if that file exists in `src/`; otherwise write the reference as plain
   text so no dead links ship.
+
+---
+
+# Book-wide conventions, fixed by the review of August 2026
+
+The five-agent review over Parts 0–III found that most drift was vocabulary rather than physics.
+These are now binding for every chapter, written and unwritten.
+
+## Spelling and naming
+
+- **British spelling.** `-ise`, `-isation` throughout: *linearise, quantise, renormalise,
+  normalise, generalise, diagonalise, parametrise*. (The book had 482 British forms against 40
+  American, all of the latter in Parts 0–I; they are now regularised.)
+- **energy–momentum tensor**, en-dash, never "stress-energy". Chapters 3.4 and 3.6 cite 2.6 by that
+  name and a reader following the pointer must find the same object.
+- **Minkowski spacetime**, one word, one object. Never "Minkowski space".
+- **Worked example N**, lowercase *e*, in the label and in every reference to it.
+- **one-form** spelled out; every higher degree in numerals — `$2$-form`, `$3$-form`.
+- **Rapidity is $\phi$** in Part II, where the scalar potential has not yet appeared, and
+  **$\varphi$** from Chapter 2.6 onward, where it has. The clash is flagged in place at 2.6 §2.
+- A **local inertial frame** is a region; **locally inertial coordinates** are the coordinates
+  adapted to it. Fixed in 3.4 §6 and used consistently after.
+- In the plain-terms boxes, $\Gamma$ is **the comparison coefficients**, named in full at 3.3.5.
+
+## Structure, per chapter
+
+Every chapter carries, without exception:
+
+- an opening `where` callout, and exactly one closing `brick` whose last paragraph is led by the
+  bolded **Where this gets spent.**
+- at least one `familiar` callout. This is the device that connects new machinery to something the
+  reader already knows, and it is the highest-value device in the book for this reader; Part II
+  went six chapters without one and that was a defect, not a style.
+- at least one `warn` callout, opening with ⚠ or ⚑. The title is free — *"⚠ The belief this section
+  exists to prevent"* is as good as *"⚠ Why this isn't obvious"*, and bespoke titles are now the
+  pattern rather than the exception.
+- numbered sub-headings, `N.M · Title`, restarting inside each `<h2>`.
+
+## The ⚑ contract
+
+⚑ marks a result the book **uses but does not derive**. It is not decoration and it is not a
+severity rating: a chapter with no ⚑ is claiming to have built everything it spends, and that claim
+must be true. The review found eight unmarked imports in Part 0 alone — Heine–Cantor, Fubini,
+Liouville on antiderivatives, the fundamental theorem of algebra, the implicit function theorem,
+Picard–Lindelöf, generalised Stokes, the Poincaré lemma — several announcing themselves in words
+while carrying no mark. Every one is now flagged, and `GAPS.md` is the standing register.
+
+Forbidden, everywhere: *it can be shown*, *one can show*, *it turns out that*, *obviously*,
+*clearly*, *of course*, *simply*, *just*, *trivially* — with two exceptions that are technical
+terms rather than hedges, *simply connected* and *simply false*.
+
+Address the reader in the **second person**. Never "the reader".
+
+## Referring to sections and chapters
+
+- **`§N` mid-sentence, `Section N` sentence-initially.** Part III already does this; Parts 0 and I
+  open sentences with `§N`. The rule, not the count, is what is binding from here.
+- **Link a chapter once, in the `Tools you'll need` line; plain text thereafter.** Every chapter
+  already follows this. Never link a chapter that does not yet exist in `src/`.
+- **Cite the statement, not the step it is read off from.** A result derived over four equations is
+  cited at the one that states it.
+
+## Two decisions the review asked for, made
+
+- **Local `c = 1` is permitted inside a figure or a problem, where it is declared at the point of
+  use** — "in units where $c=1$", "inside this figure only". Seven places in Part II already do this
+  and all seven declare it. The convention above ("SI throughout Part II, with $c$ written
+  explicitly") governs the running text, not a self-contained figure.
+- **"is just X" stays where its job is to deflate intimidating notation** ("a Hermitian matrix is
+  just a symmetric matrix with complex entries") and **goes where the thing being deflated is
+  something the book worked for**. A result that cost three pages is not "just" anything.

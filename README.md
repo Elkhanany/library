@@ -74,5 +74,23 @@ Binding throughout, and enforced by review:
 - Every equation numbered at build time; cross-references resolved at build time.
 - Every quoted-not-derived step marked ⚑.
 
-`CONVENTIONS.md` has the full list. `PLAN.md` is the curriculum. `PLAIN-TERMS-PLAN.md` is the
-specification the plain-language passages are written against.
+`CONVENTIONS.md` has the full list.
+
+## The documents
+
+| | |
+|---|---|
+| `PLAN.md` | The curriculum. Plan of record through Chapter 3.6. |
+| `PLAN-FORWARD.md` | The revised curriculum from 3.7 to the end — 59 chapters to 67, with the argument for each addition and, for every piece of mathematics the remaining physics needs, an explicit decision to build it or to flag it. |
+| `GAPS.md` | The standing register of what the book has used but not built: every ⚑ in one table, the unstated assumptions that are worse than a ⚑ because the reader cannot see them, the promises not yet collected, and the gaps that will never close. |
+| `CONVENTIONS.md` | Notation, spelling, callout obligations, the ⚑ contract. |
+| `PLAIN-TERMS-PLAN.md` | The specification the plain-language passages are written against. |
+| `MATHPLAN-3.md` | The derivation-by-derivation plan Part III was written to, and the model for the ones after it. |
+| `reports/` | The August 2026 review — five independent agents over Parts 0–III. `reports/README.md` says what they found. |
+
+## Reviewing
+
+An agent that writes a chapter cannot review it. Each part gets an independent pass before the next
+part begins: one agent per concern (mathematics, language, narrative), each re-deriving rather than
+reading, each reporting to `reports/` rather than editing, so their findings can be applied in one
+serialized pass and nothing is silently clobbered.
