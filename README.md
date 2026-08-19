@@ -79,17 +79,24 @@ They cross-reference each other, so you can move between them at any point.
 [2.5](https://elkhanany.github.io/newton-to-mtheory/ch2-5.html) Relativistic Dynamics ·
 [2.6](https://elkhanany.github.io/newton-to-mtheory/ch2-6.html) Electromagnetism Is Relativity
 
-**Part III · General Relativity** — 6 of 8; 3.7 Schwarzschild and 3.8 Cosmology are next
+**Part III · General Relativity** — complete, nine chapters
 
 [3.1](https://elkhanany.github.io/newton-to-mtheory/ch3-1.html) The Equivalence Principle ·
 [3.2](https://elkhanany.github.io/newton-to-mtheory/ch3-2.html) Manifolds ·
 [3.3](https://elkhanany.github.io/newton-to-mtheory/ch3-3.html) Metric and Connection ·
 [3.4](https://elkhanany.github.io/newton-to-mtheory/ch3-4.html) Curvature ·
 [3.5](https://elkhanany.github.io/newton-to-mtheory/ch3-5.html) Forms, Lie Derivatives, Killing Vectors ·
-[3.6](https://elkhanany.github.io/newton-to-mtheory/ch3-6.html) The Einstein Field Equations
+[3.6](https://elkhanany.github.io/newton-to-mtheory/ch3-6.html) The Einstein Field Equations ·
+[3.7](https://elkhanany.github.io/newton-to-mtheory/ch3-7.html) Schwarzschild: The Solution and Its Orbits ·
+[3.8](https://elkhanany.github.io/newton-to-mtheory/ch3-8.html) Light, Redshift, and What a Horizon Is ·
+[3.9](https://elkhanany.github.io/newton-to-mtheory/ch3-9.html) Cosmology, and a Loose Thread
 
-**Parts IV–VII** — quantum mechanics, quantum field theory, the Standard Model, string theory.
-Not started. [`PLAN-FORWARD.md`](PLAN-FORWARD.md) is the curriculum.
+**Part IV · Quantum Mechanics** — eleven chapters, next to be written. The derivation-by-derivation
+plan is [`MATHPLAN-4.md`](MATHPLAN-4.md); Chapters 4.1 and 4.2 are the next batch.
+
+**Parts V–VII** — quantum field theory, the Standard Model, strings and M-theory. The curriculum is
+[`PLAN-FORWARD.md`](PLAN-FORWARD.md): **67 chapters, 23 of them mathematics**, each addition argued
+for, and every piece of mathematics the remaining physics needs marked build-it or flag-it.
 
 ## Building
 
@@ -125,7 +132,7 @@ branch → `main` / `/docs`**. The `.nojekyll` file in `docs/` stops Jekyll from
 begin with an underscore. Publishing a new chapter is then:
 
 ```bash
-python3 webbuild.py && git add -A && git commit -m "Chapter 3.7" && git push
+python3 webbuild.py && git add -A && git commit -m "Chapter 4.1" && git push
 ```
 
 `docs/` is committed deliberately rather than built by an Action: the published site is exactly
@@ -153,6 +160,8 @@ throughline.py        regenerates src/_throughline.html by extraction
 inject_plain.py       inserts "In plain terms" boxes into a chapter, idempotently
 verify.py             audits every built page with all network blocked
 overflow_check.py     measures real horizontal overflow of typeset maths
+debts.py              extracts each chapter's forward debts from GAPS.md into its brief
+tagcheck.py           checks the ⚑ marks against the register
 ```
 
 ## Conventions
@@ -177,8 +186,9 @@ Binding throughout, and enforced by review:
 | [`GAPS.md`](GAPS.md) | The standing register of what the book has used but not built: every ⚑ in one table, the unstated assumptions that are worse than a ⚑ because the reader cannot see them, the promises not yet collected, and the gaps that will never close. |
 | [`CONVENTIONS.md`](CONVENTIONS.md) | Notation, spelling, callout obligations, the ⚑ contract. |
 | [`PLAIN-TERMS-PLAN.md`](PLAIN-TERMS-PLAN.md) | The specification the plain-language passages are written against. |
-| [`MATHPLAN-3.md`](MATHPLAN-3.md) | The derivation-by-derivation plan Part III was written to, and the model for the ones after it. |
-| [`reports/`](reports/) | The August 2026 review — five independent agents over Parts 0–III. `reports/README.md` says what they found. |
+| [`MATHPLAN-3.md`](MATHPLAN-3.md) | The derivation-by-derivation plan Part III was written to, and the model for the ones after it. [`MATHPLAN-3.7-3.9.md`](MATHPLAN-3.7-3.9.md) covers the chapters that closed the part. |
+| [`MATHPLAN-4.md`](MATHPLAN-4.md) | The binding plan for all eleven chapters of Part IV — 313 numbered build steps, written before a word of the part. |
+| [`reports/`](reports/) | The independent verification passes — Parts 0–III, then each batch as it landed. `reports/README.md` says what they found. |
 
 ## How it is reviewed
 
@@ -187,7 +197,14 @@ next part begins: one agent per concern (mathematics, language, narrative), each
 rather than reading, each reporting to `reports/` rather than editing, so their findings can be
 applied in one serialized pass and nothing is silently clobbered.
 
-The August 2026 review found no wrong result in twenty-five chapters — about ninety symbolic
-identities and forty numerical values re-derived from scratch and agreed. The material finding was
-editorial, and it is why [`GAPS.md`](GAPS.md) now exists: the ⚑ convention had not been applied at
-all in Chapters 0.1–0.7, which import eight named theorems and marked none.
+The August 2026 review of Parts 0–III found no wrong result in twenty-five chapters — about ninety
+symbolic identities and forty numerical values re-derived from scratch and agreed. The material
+finding was editorial, and it is why [`GAPS.md`](GAPS.md) now exists: the ⚑ convention had not been
+applied at all in Chapters 0.1–0.7, which import eight named theorems and marked none.
+
+Every batch since has gone through the same gate. The pass over Chapter 3.9 reproduced every
+symbolic result exactly and still returned the most valuable finding of the batch — a logical one.
+The chapter's central argument had run Noether's theorem backwards, arguing *no symmetry, therefore
+no conserved energy*, which is denying the antecedent and licenses nothing. The book had already
+proved the converse it actually needed, back in Chapter 1.4, and the chapter had simply not picked
+it up. It now runs that way round.
