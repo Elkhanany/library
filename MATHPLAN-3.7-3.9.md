@@ -236,3 +236,20 @@ $r_{s}$, and $G_{00}$ for FLRW giving Friedmann I.
 **The chapters must be checked again independently after they are written**, by an agent that did
 not write them, per the standing rule in `reports/README.md`. Three of the errors caught in this
 build were in a plan, not in a chapter.
+
+---
+
+## Addendum · 3.9 verified before writing (18 August 2026)
+
+Computed from the FLRW metric in the book's own conventions, with $x^{0}=ct$:
+
+- $G_{00}=3(k+a'^{2})/a^{2}$, giving **Friedmann I** $(\dot a/a)^{2}=8\pi G\rho/3-kc^{2}/a^{2}$ exactly.
+- The $11$ component gives $a''$ in terms of $a'^{2}$ and $k$, and becomes the acceleration equation
+  $\ddot a/a = -\tfrac{4\pi G}{3}(\rho+3p/c^{2})$ **only after Friedmann I is substituted**. That is
+  not a nuisance, it is the point of §3: the two equations are not independent.
+- $\dd/\dd T(\mathrm{I}) - 2a'(\mathrm{II})$ is exactly $-\tfrac{8\pi G a^{2}}{3c^{2}}$ times the
+  fluid equation $\dot\rho+3\tfrac{\dot a}{a}(\rho+p/c^{2})=0$. **So the fluid equation is what makes
+  the two field equations consistent, and it is the contracted Bianchi identity of 3.6 §3 wearing
+  cosmological clothes.** Say so — it is the same structural fact twice, and the reader has met it.
+- $\rho\propto a^{-3(1+w)}$: $a^{-3}$ for dust, $a^{-4}$ for radiation, constant for $\Lambda$; and
+  $a\propto t^{2/3}$, $t^{1/2}$, $\ee^{Ht}$.

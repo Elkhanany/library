@@ -94,7 +94,7 @@ potential, everything in 3.8 is null or about causal structure.
 |---|---|
 | **3.7** | Schwarzschild: The Solution and Its Orbits — 15,800 words, 73 equations |
 | **3.8** | Light, Redshift, and What a Horizon Is — 17,900 words, 71 equations |
-| **3.9** | Cosmology, and a Loose Thread — **next**, plus the Part III reunification pass |
+| **3.9** | Cosmology, and a Loose Thread — 18,500 words, 62 equations |
 
 All 393 forward references were re-aimed in the same pass, and the section numbers those references
 cite are fixed by `MATHPLAN-3.7-3.9.md`. The debt load on the old 3.7 is now 22 and 12.
@@ -141,3 +141,73 @@ nine.
 
 That is now **five planning errors caught by writing or reviewing agents across this build**, and
 zero errors that reached a reader. The pipeline is the product.
+
+---
+
+# Batch F2 — Chapter 3.9, and Part III closed (19 August 2026)
+
+**Part III is complete: nine chapters, 28 of 60 written.** 360,000 words, 22,616 typeset
+expressions, 210 plain-language passages.
+
+Chapter 3.9 derives the FLRW metric from the cosmological principle stated as a Killing-vector
+condition, gets Friedmann I from $G_{00}$, and then makes the point the chapter exists for: the
+acceleration equation follows from the $11$ component **only after Friedmann I is substituted**, and
+differentiating I and subtracting II leaves exactly the fluid equation. That is the contracted
+Bianchi identity of 3.6 in cosmological clothes — the same structural fact the reader has already
+met once.
+
+Its thesis is §6: **energy is not conserved in an expanding universe**, presented as a consequence of
+a theorem the reader proved himself rather than as a curiosity. It collects the oldest promise in the
+book, made in Chapter 1.1 and repeated in 1.4 §4.3 and 3.5 §9.
+
+## What the independent verification found
+
+0 BLOCKERs, 4 MAJORs, 16 MINORs. Every symbolic result reproduced exactly — thirteen FLRW
+Christoffels, Friedmann I with every factor of $c$ intact, the Bianchi combination including its
+sign, an honest separable ODE for the constant-curvature classification, the Einstein-static
+perturbation, and all three worked constructions with residual exactly zero.
+
+**The most important finding is a logical one.** §6.3 — the chapter's central argument — ran Noether's
+theorem in the direction it does not run: *no symmetry, therefore no conserved energy* is denying the
+antecedent, and licenses nothing. The book proves the converse it actually needs, at Chapter 1.4
+§7.2, and the chapter never picked it up. A conserved energy would *generate* a time translation,
+that translation would be a timelike Killing vector, and §6.2 proves there is none. The section now
+runs that way, with a scope note that the converse is a statement about Hamiltonian systems and that
+what rules out a global energy is §6.5's later tiers.
+
+Also: an age bound applied to a universe that violates its own stated hypothesis ($p\ge0$, in a
+universe that is 68.5% cosmological term); a figure caption naming a slider preset that produces a
+different curve from the one described; and a wrong printed integrand.
+
+## The Part III reunification pass
+
+72 plain-language passages read end to end with no chapters. **Part III holds as one essay**, and the
+three new chapters read as the same hand — they clear all four of the tells that caught Chapter 2.4
+earlier in this build. Nineteen repairs applied. The three that mattered:
+
+- **The 3.6→3.7 seam** — the point where the part stops building machinery and starts spending it,
+  and no passage said so. 3.6 closes by saying exact solutions are rare; 3.7 immediately produces
+  one, unremarked.
+- **The plain layer never said the universe is observed to expand.** Every passage from 3.9.3 on
+  assumed it. A reader of the plain layer alone got all of cosmology's machinery and its conclusion
+  without ever being told that distant spectra arrive reddened.
+- **3.8.8 promised to name the assumption carrying the weight and then named it only in the main
+  text**, losing the sentence that ties 3.8 to 3.9.
+
+Two motifs were revived in their canonical words, and the Through-Line's closing passage — which
+still said Part III stopped at six chapters of eight — now closes the part properly.
+
+## Next
+
+**Batch F3: Chapters 4.1 and 4.2**, the first of Part IV. Before it starts, three things
+`PLAN-FORWARD.md` §11 says must happen first, not during:
+
+1. **Write `MATHPLAN-4.md`.** The Part III experience is the evidence: the plan is why it came out well.
+2. **Renumber Parts IV–VII in `build.py`** to the revised curriculum, and **remap the forward
+   references** — roughly half of the 393 are invalidated by it. One scripted pass with a
+   hand-checked mapping table, before Part IV is written rather than after.
+3. **Extract the per-chapter debt list** from `GAPS.md` §4 into each chapter's brief. Five-line
+   script, and the highest-value process change available.
+
+And one decision to make in print before Part V: from Chapter 5.8 the ⚑ changes meaning, from *"I
+chose not to prove this"* to *"nobody has proved this, and physics uses it anyway."*

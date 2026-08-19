@@ -179,9 +179,9 @@ magnetism stop being two fields and become one object, sliced differently by obs
 states of motion. And there is a gravity that is not a force but the shape of the arena, cornered
 into its final form by the demand that the geometry side of the equation impose no condition on
 matter that matter has never been observed to obey.</p>
-<p>What is owed is larger than what has been delivered. Part III stops at six chapters of eight, so
-the account of gravity has not yet been run against a star or against the universe, which is what
-the two missing chapters do. Nothing here has said what happens when a thing has no definite state,
+<p>What is owed is larger than what has been delivered. Part III is finished, so the account of gravity
+has now been run against a star, against light and against the universe, and the last of those
+returned the news that a growing universe has no conserved energy for anything to belong to. Nothing here has said what happens when a thing has no definite state,
 though the mathematics that answers it was built in Part 0 for reasons with no physics in them.
 Nothing has said why there are the particular forces there are, though the shape of the answer has
 been visible since the redundancy in the electromagnetic potentials was noticed and deliberately
@@ -233,7 +233,7 @@ def build():
     span = ("Part %s only" % first) if first == last else ("Parts %s to %s of eight" % (first, last))
     hdr = ('<p style="color:var(--ink-soft);font-size:.95rem">'
            '<b>%d passages</b> &nbsp;·&nbsp; about %s words &nbsp;·&nbsp; '
-           '%s, complete through the field equations &nbsp;·&nbsp; '
+           '%s, complete through cosmology &nbsp;·&nbsp; '
            'reads start to finish as one essay &nbsp;·&nbsp; '
            '<a href="ledger.html">Math Ledger</a></p>' % (total, f"{words:,}", span))
     out.append('<div class="callout plain bridge tl-closing">%s</div>' % CLOSING)
