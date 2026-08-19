@@ -16,8 +16,8 @@ the Standard Model and string theory — derived, not asserted.**
 [Conventions](CONVENTIONS.md) ·
 [Gaps](GAPS.md)
 
-<sub>25 of 59 chapters · 311,000 words · 19,993 typeset expressions ·
-187 plain-language passages · 0 network requests</sub>
+<sub>28 of 67 chapters · 360,000 words · 22,616 typeset expressions ·
+210 plain-language passages · 0 network requests</sub>
 
 </div>
 

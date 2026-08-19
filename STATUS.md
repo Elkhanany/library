@@ -211,3 +211,72 @@ still said Part III stopped at six chapters of eight — now closes the part pro
 
 And one decision to make in print before Part V: from Chapter 5.8 the ⚑ changes meaning, from *"I
 chose not to prove this"* to *"nobody has proved this, and physics uses it anyway."*
+
+---
+
+# Before Part IV — the three prerequisites (19 August 2026)
+
+`PLAN-FORWARD.md` §11 said these had to happen before batch F3, not during it. They are done.
+
+## 1 · `MATHPLAN-4.md`
+
+The binding derivation plan for all eleven chapters of Part IV: 17,500 words, **313 numbered build
+items**, a fixed section list per chapter so forward references can be pinned to it, and an explicit
+⚑ budget per chapter — 51 for the part, of which exactly one is a substantial mathematical flag.
+
+That one is the spectral theorem for unbounded self-adjoint operators, and `GAPS.md` G1's proposal
+is taken: state it in multiplication-operator form and then **verify it by hand on the only three
+operators the book ever applies it to** — position, momentum via Fourier, and the oscillator
+Hamiltonian via Hermite completeness. The reader ends holding a quoted theorem they have personally
+checked everywhere it is used, which is the best available outcome.
+
+**G1 and G3 close entirely** in Part IV. **G2 is explicitly declined** — the plan found a route to
+Hermite completeness needing only dominated convergence and Plancherel, so no contour integral
+appears anywhere in Part IV and complex analysis waits for 5.4, where it is built properly.
+
+The plan verified its own physics before specifying it — the ladder algebra, su(2) and the 720°
+spinor sign, the hydrogen spectrum and its $n^2$ degeneracy, **all five Runge–Lenz identities
+symbolically**, Rayleigh–Schrödinger to second order, the fine structure against the measured
+10.969 GHz, and the CHSH bound. On that last one it caught its own first draft: the commonly quoted
+angles $(0°, 90°, 45°, -45°)$ give **exactly zero**, not $2\sqrt2$. Independently confirmed here.
+
+## 2 · Parts IV–VII renumbered, and 360 forward references re-aimed
+
+`build.py` now carries the revised curriculum: **67 chapters, 23 of them mathematics.**
+
+The remap was the delicate part, because **two pairs of chapters exchange places** — the path
+integral and the Feynman rules (old 5.8 and 5.6), and conformal symmetry and the bosonic string
+(old 7.2 and 7.3) — and four old chapters split in two. A mechanical find-and-replace would have
+produced plausible-looking nonsense in every one of those cases. Each of the 187 changed references
+was read in its own sentence and decided on content: old 4.3 split 8/9 between the new 4.3 and 4.4,
+old 4.5 split 17/3/2 across 4.6, 4.9 and 4.10, old 5.9 split 7/10 between 5.10 and 5.11. Nine
+references promising contour integration or the $i\epsilon$ prescription were pulled into the new
+5.4, which is `GAPS.md` G2's hole finally getting an owner.
+
+Census conserved exactly: **360 before, 360 after**, no reference naming a chapter outside the
+curriculum.
+
+## 3 · `debts.py`
+
+`python3 debts.py 4.3` prints every sentence in the written book that names Chapter 4.3.
+`--census` counts them all. Each writing brief from here on carries its chapter's extracted debt
+list, which turns 360 hopes into 360 requirements — `GAPS.md` §7 called this the highest-value
+process change available, and it is nine lines of code.
+
+## Corrections found along the way
+
+Both agents found errors in my own planning, which is now the norm rather than the exception:
+
+- **The particle in a box does not have a one-parameter family of self-adjoint extensions.** Its
+  deficiency indices are $(2,2)$, so the extensions form $U(2)$ — four real parameters. The
+  one-parameter family belongs to *momentum on an interval*, indices $(1,1)$. Confirmed here.
+- **The book has never defined a Cauchy sequence** — `grep` across 28 chapters finds only
+  Cauchy–Schwarz, the Cauchy distribution and Cauchy's functional equation. 4.3 must define
+  completeness from scratch rather than cite it.
+- **The canonical commutator was routed to 4.7 but is needed by 4.5, 4.6 and 4.8.** It is introduced
+  in 4.2, as a postulate in its own box.
+- Batch F8 was two chapters; 4.10 is the largest chapter in the part and now runs alone.
+
+## Next
+
+**Batch F3: Chapters 4.1 and 4.2.** Everything they need is in place.

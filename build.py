@@ -59,42 +59,49 @@ PARTS = [
  ("Part IV · Quantum Mechanics", "Linear algebra, taken absolutely seriously.", [
   ("4.1","ch4-1","What Classical Physics Cannot Do",False),
   ("4.2","ch4-2","The Linear Algebra of Quantum States",True),
-  ("4.3","ch4-3","Function Spaces and Infinite Dimensions",True),
-  ("4.4","ch4-4","The Schrödinger Equation",False),
-  ("4.5","ch4-5","Systems You Can Solve",False),
-  ("4.6","ch4-6","Commutators, Uncertainty, the Classical Limit",False),
-  ("4.7","ch4-7","Angular Momentum and Spin",False),
-  ("4.8","ch4-8","Entanglement and Measurement",False),
+  ("4.3","ch4-3","Function Spaces: Measure, L², and Completeness",True),
+  ("4.4","ch4-4","Operators in Infinite Dimensions",True),
+  ("4.5","ch4-5","The Schrödinger Equation",False),
+  ("4.6","ch4-6","Systems You Can Solve in One Dimension",False),
+  ("4.7","ch4-7","Symmetry, Commutators, and the Classical Limit",False),
+  ("4.8","ch4-8","Angular Momentum and Spin",False),
+  ("4.9","ch4-9","The Hydrogen Atom",False),
+  ("4.10","ch4-10","Perturbation Theory and Transitions",False),
+  ("4.11","ch4-11","Identical Particles, Entanglement, and Measurement",False),
  ]),
  ("Part V · Quantum Field Theory", "Particles stop being fundamental.", [
-  ("5.1","ch5-1","Why QM + SR Forces Fields",False),
+  ("5.1","ch5-1","Why Quantum Mechanics and Relativity Force Fields",False),
   ("5.2","ch5-2","Classical Field Theory",False),
-  ("5.3","ch5-3","Quantizing a Field",False),
-  ("5.4","ch5-4","The Dirac Equation",False),
-  ("5.5","ch5-5","Gaussian and Functional Integrals",True),
-  ("5.6","ch5-6","Interactions and Feynman Rules",False),
-  ("5.7","ch5-7","A Real Calculation",False),
-  ("5.8","ch5-8","The Path Integral",False),
-  ("5.9","ch5-9","Loops, Infinities, and the RG",False),
+  ("5.3","ch5-3","Quantising a Field",False),
+  ("5.4","ch5-4","Distributions, Contours, and the Propagator",True),
+  ("5.5","ch5-5","The Dirac Equation",False),
+  ("5.6","ch5-6","The Path Integral",False),
+  ("5.7","ch5-7","Gaussian and Grassmann Integration",True),
+  ("5.8","ch5-8","Interactions, Wick's Theorem, and the Feynman Rules",False),
+  ("5.9","ch5-9","A Real Calculation",False),
+  ("5.10","ch5-10","Loops, Divergences, and Regularisation",False),
+  ("5.11","ch5-11","Renormalisation and the Renormalisation Group",False),
  ]),
  ("Part VI · Gauge Theory and the Standard Model", "Symmetry, made local, generates every force.", [
   ("6.1","ch6-1","Lie Groups and Lie Algebras",True),
-  ("6.2","ch6-2","Representation Theory",True),
+  ("6.2","ch6-2","Representations",True),
   ("6.3","ch6-3","The Gauge Principle",False),
   ("6.4","ch6-4","Yang–Mills",False),
-  ("6.5","ch6-5","QCD",False),
-  ("6.6","ch6-6","Symmetry Breaking and the Higgs",False),
-  ("6.7","ch6-7","The Standard Model, Assembled",False),
+  ("6.5","ch6-5","QCD and Asymptotic Freedom",False),
+  ("6.6","ch6-6","Spontaneous Symmetry Breaking and the Higgs Mechanism",False),
+  ("6.7","ch6-7","The Electroweak Theory",False),
+  ("6.8","ch6-8","The Standard Model, and What It Does Not Explain",False),
  ]),
  ("Part VII · Strings and M-Theory", "Where gravity stops being an add-on and starts being unavoidable.", [
   ("7.1","ch7-1","Why Quantum Gravity Is Hard",False),
-  ("7.2","ch7-2","Conformal Symmetry in Two Dimensions",True),
-  ("7.3","ch7-3","The Bosonic String",False),
-  ("7.4","ch7-4","Quantizing the String",False),
+  ("7.2","ch7-2","The Bosonic String",False),
+  ("7.3","ch7-3","Conformal Symmetry and the Virasoro Algebra",True),
+  ("7.4","ch7-4","Quantising the String, and D = 26",False),
   ("7.5","ch7-5","The Spectrum",False),
-  ("7.6","ch7-6","Superstrings",False),
-  ("7.7","ch7-7","Branes, Dualities, M-Theory",False),
-  ("7.8","ch7-8","Holography and Honest Accounting",False),
+  ("7.6","ch7-6","Superstrings and D = 10",False),
+  ("7.7","ch7-7","T-Duality and D-Branes",False),
+  ("7.8","ch7-8","Compactification, Dualities, M-Theory",False),
+  ("7.9","ch7-9","Black Hole Entropy, Holography, and the Accounting",False),
  ]),
 ]
 
@@ -219,7 +226,7 @@ theory, the Standard Model, and string theory — derived, not asserted.</p>
 action invariant under it, quantize</b>. Nothing is stated that hasn't been built. Where a step is
 quoted rather than derived, it is marked <b>⚑</b> so you always know what you're standing on.</p>
 <p style="color:var(--ink-soft);font-size:.95rem">
-<b>{done} of {total}</b> chapters built &nbsp;·&nbsp; 21 of them dedicated math chapters
+<b>{done} of {total}</b> chapters built &nbsp;·&nbsp; 23 of them dedicated math chapters
 &nbsp;·&nbsp; <a href="ledger.html">Math Ledger</a></p>
 </div>
 {''.join(rows)}
