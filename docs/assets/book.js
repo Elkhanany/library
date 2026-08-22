@@ -79,32 +79,187 @@ var NMT = (function () {
     });
   }
 
-  /* ---------- sidebar TOC ---------- */
-  function buildTOC() {
-    var box = document.getElementById('sb-toc');
-    if (!box) return;
-    var hs = document.querySelectorAll('.main h2, .main h3');
-    var made = 0;
-    hs.forEach(function (h, i) {
-      if (!h.id) h.id = 'sec-' + i;
-      var a = document.createElement('a');
-      a.href = '#' + h.id;
-      a.textContent = h.textContent;
-      if (h.tagName === 'H3') a.className = 'lvl3';
-      box.appendChild(a);
-      made++;
-    });
-    if (!made) return;
+  /* ---------- section headings ---------- */
+  /* Both navigations hang off these, and both need the ids to agree with the ones
+     the build already wrote into the page, so the numbering is derived the same
+     way in every case: position in the h2/h3 sequence. */
+  function sectionHeadings() {
+    var hs = Array.prototype.slice.call(document.querySelectorAll('.main h2, .main h3'));
+    hs.forEach(function (h, i) { if (!h.id) h.id = 'sec-' + i; });
+    return hs;
+  }
+
+  /* Highlight the entry for whichever heading was last scrolled past. */
+  function spy(box, headings) {
     var links = Array.prototype.slice.call(box.querySelectorAll('a'));
+    if (!links.length) return;
     var obs = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
-        links.forEach(function (l) { l.classList.remove('active'); });
         var m = box.querySelector('a[href="#' + e.target.id + '"]');
-        if (m) m.classList.add('active');
+        if (!m) return;
+        links.forEach(function (l) { l.classList.remove('active'); });
+        m.classList.add('active');
       });
     }, { rootMargin: '0px 0px -75% 0px' });
-    hs.forEach(function (h) { obs.observe(h); });
+    headings.forEach(function (h) { obs.observe(h); });
+  }
+
+  /* ---------- sidebar TOC ---------- */
+  function buildTOC(hs) {
+    var box = document.getElementById('sb-toc');
+    if (!box) return;
+    /* The built pages ship with this list already rendered — webbuild.py captures
+       #sb-toc and writes it into the file — so filling it again in the reader's
+       browser would list every section twice. */
+    if (!box.children.length) {
+      hs.forEach(function (h) {
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        if (h.tagName === 'H3') a.className = 'lvl3';
+        box.appendChild(a);
+      });
+    }
+    if (!box.children.length) return;
+    spy(box, hs);
+  }
+
+  /* ---------- mobile section drawer ---------- */
+  /* Below 1000px the sidebar is hidden, which leaves a sixty-thousand-pixel
+     chapter with no way through it but the scrollbar. This is the way in: a
+     thumb-reachable button, the top-level sections only, and the theme control
+     that the topnav then no longer has to reserve a gutter for.
+
+     It is appended to <body>, like #themer, so it is never captured by the
+     build — the page ships without it and every reader builds their own, which
+     is what keeps the handlers attached to the markup they belong to. */
+  function buildMobileNav(hs) {
+    if (document.getElementById('mnav')) return;
+    if (!document.querySelector('.main')) return;
+    var h2s = hs.filter(function (h) { return h.tagName === 'H2'; });
+    if (h2s.length < 2) return;          /* nothing worth jumping between */
+
+    var btn = document.createElement('button');
+    btn.id = 'mnav-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-controls', 'mnav');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-label', 'Sections in this chapter');
+    btn.innerHTML = '<span id="mnav-ico"><i></i><i></i><i></i></span>';
+
+    var scrim = document.createElement('div');
+    scrim.id = 'mnav-scrim';
+
+    var panel = document.createElement('nav');
+    panel.id = 'mnav';
+    panel.tabIndex = -1;
+    panel.setAttribute('aria-label', 'Sections in this chapter');
+    panel.setAttribute('aria-hidden', 'true');
+
+    var sbTitle = document.querySelector('.sb-title');
+    var h1 = document.querySelector('.main h1');
+    var head = document.createElement('div');
+    head.className = 'mn-head';
+    head.innerHTML = '<p class="mn-kicker"></p><p class="mn-title"></p>';
+    head.querySelector('.mn-kicker').textContent = sbTitle ? sbTitle.textContent : 'Sections';
+    head.querySelector('.mn-title').textContent = h1 ? h1.textContent : document.title;
+
+    var list = document.createElement('div');
+    list.className = 'mn-list';
+    var links = h2s.map(function (h) {
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      list.appendChild(a);
+      return a;
+    });
+
+    var home = document.querySelector('.sb-home');
+    var back = document.createElement('a');
+    back.href = home ? home.getAttribute('href') : 'contents.html';
+    back.textContent = '← All chapters';
+
+    var themeBtn = document.createElement('button');
+    themeBtn.id = 'mn-theme';
+    themeBtn.type = 'button';
+
+    var foot = document.createElement('div');
+    foot.className = 'mn-foot';
+    foot.appendChild(back);
+    foot.appendChild(themeBtn);
+
+    panel.appendChild(head);
+    panel.appendChild(list);
+    panel.appendChild(foot);
+    document.body.appendChild(scrim);
+    document.body.appendChild(panel);
+    document.body.appendChild(btn);
+    /* tells the stylesheet a drawer exists here, so the floating theme toggle can
+       stand down — on a page that builds no drawer it has to stay */
+    document.documentElement.classList.add('has-mnav');
+
+    /* The toggle itself stays where it was; this is a second handle on it, so
+       the theme is stored and redrawn in exactly one place. */
+    function syncTheme() {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      themeBtn.textContent = dark ? 'Light mode' : 'Dark mode';
+    }
+    syncTheme();
+    themeBtn.addEventListener('click', function () {
+      var themer = document.getElementById('themer');
+      if (themer) themer.click();
+      else {
+        var nxt = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nxt);
+        try { localStorage.setItem('nmt-theme', nxt); } catch (e) {}
+        if (window.NMT && NMT.redrawAll) NMT.redrawAll();
+      }
+      syncTheme();
+    });
+
+    function isOpen() { return panel.classList.contains('open'); }
+    function setOpen(on) {
+      btn.classList.toggle('open', on);
+      panel.classList.toggle('open', on);
+      scrim.classList.toggle('open', on);
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      panel.setAttribute('aria-hidden', on ? 'false' : 'true');
+      btn.setAttribute('aria-label', on ? 'Close sections' : 'Sections in this chapter');
+      if (on) {
+        var act = list.querySelector('a.active');
+        if (act) act.scrollIntoView({ block: 'nearest' });
+        panel.focus({ preventScroll: true });
+      } else {
+        btn.focus({ preventScroll: true });
+      }
+    }
+
+    btn.addEventListener('click', function () { setOpen(!isOpen()); });
+    scrim.addEventListener('click', function () { setOpen(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && isOpen()) setOpen(false);
+    });
+    window.addEventListener('resize', function () {
+      if (isOpen() && window.innerWidth > 1000) setOpen(false);
+    });
+
+    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    links.forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var id = a.getAttribute('href').slice(1);
+        var t = document.getElementById(id);
+        setOpen(false);
+        if (!t) return;
+        t.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+        /* replace rather than push: tapping a section is a scroll, not a
+           navigation, and it should not take over the back button. */
+        if (history.replaceState) history.replaceState(null, '', '#' + id);
+      });
+    });
+
+    spy(list, h2s);
   }
 
   /* ============================================================
@@ -327,7 +482,9 @@ var NMT = (function () {
   /* ---------- boot ---------- */
   window.addEventListener('DOMContentLoaded', function () {
     /* numbered at build time */
-    buildTOC();
+    var hs = sectionHeadings();
+    buildTOC(hs);
+    buildMobileNav(hs);
     });
 
   return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, typeset: typeset };
