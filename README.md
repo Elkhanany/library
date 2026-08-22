@@ -16,8 +16,8 @@ the Standard Model and string theory — derived, not asserted.**
 [Conventions](CONVENTIONS.md) ·
 [Gaps](GAPS.md)
 
-<sub>28 of 67 chapters · 360,000 words · 22,616 typeset expressions ·
-210 plain-language passages · 0 network requests</sub>
+<sub>30 of 67 chapters · 400,000 words · 24,898 typeset expressions ·
+227 plain-language passages · 0 network requests</sub>
 
 </div>
 
@@ -31,6 +31,13 @@ quantise. Each part is that sentence wearing different clothes.
 
 The book is written for someone who can grasp anything but wants the bricks laid one at a time.
 It starts at the definition of a derivative and does not skip.
+
+From Part IV the prose changes register, on the reader's own instruction: the motive for a step now
+comes in front of the step rather than behind it, and the reader's working quantitative fluency may
+be drawn on where the mathematics is genuinely identical. It is not a licence to soften the
+mathematics or to merge the main text into the warmer voice of the plain-terms boxes — those exist
+precisely so the main text does not have to do that job. [`CONVENTIONS.md`](CONVENTIONS.md) makes
+the distinction exact, because it is an easy instruction to over-execute.
 
 ## The rule
 
@@ -91,8 +98,12 @@ They cross-reference each other, so you can move between them at any point.
 [3.8](https://elkhanany.github.io/newton-to-mtheory/ch3-8.html) Light, Redshift, and What a Horizon Is ·
 [3.9](https://elkhanany.github.io/newton-to-mtheory/ch3-9.html) Cosmology, and a Loose Thread
 
-**Part IV · Quantum Mechanics** — eleven chapters, next to be written. The derivation-by-derivation
-plan is [`MATHPLAN-4.md`](MATHPLAN-4.md); Chapters 4.1 and 4.2 are the next batch.
+**Part IV · Quantum Mechanics** — 2 of 11; 4.3 is next
+
+[4.1](https://elkhanany.github.io/newton-to-mtheory/ch4-1.html) What Classical Physics Cannot Do ·
+[4.2](https://elkhanany.github.io/newton-to-mtheory/ch4-2.html) The Linear Algebra of Quantum States
+
+The derivation-by-derivation plan for the whole part is [`MATHPLAN-4.md`](MATHPLAN-4.md).
 
 **Parts V–VII** — quantum field theory, the Standard Model, strings and M-theory. The curriculum is
 [`PLAN-FORWARD.md`](PLAN-FORWARD.md): **67 chapters, 23 of them mathematics**, each addition argued
@@ -208,6 +219,13 @@ The chapter's central argument had run Noether's theorem backwards, arguing *no 
 no conserved energy*, which is denying the antecedent and licenses nothing. The book had already
 proved the converse it actually needed, back in Chapter 1.4, and the chapter had simply not picked
 it up. It now runs that way round.
+
+The pass over Part IV's first two chapters caught the new register's predicted casualty, which is
+the reason to keep the gate exactly where it is. An analogy reached for the reader's own field and
+mismapped the one coefficient its section exists to introduce — it set Einstein's two $B$
+coefficients against a binding rate on and off, when the exact correspondence leaves $B_{21}$ with
+no counterpart at all, *which is precisely why* the two-process balance fails to close and a third
+process is forced. The analogy had quietly dismantled the argument it was there to illuminate.
 
 
 ## Applying a batch
