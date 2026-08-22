@@ -320,3 +320,69 @@ New. It loads every built chapter at 1280 px and 390 px, in light and dark, exer
 at three positions and clicks every button**, and then confirms every canvas on the page still has
 ink in it and no error reached the console. 28 chapters, 52 canvases, 0 failures. A figure that
 throws on load is worse than no figure, and neither the page audit nor the source checks can see it.
+
+---
+
+# Batch F3 — Part IV begins (22 August 2026)
+
+**30 of 67 chapters.** 400,875 words, 24,898 typeset expressions, 227 plain-language passages.
+
+## A change of register, from here on
+
+Set by the reader after twenty-eight chapters: *"the language remains fairly dry. I am OK with that,
+but just slightly make it more approachable — run it through the lens of an oncologist with a robust
+mathematical background at this point, but still building these concepts from scratch."*
+
+`CONVENTIONS.md` now closes with a section that makes this precise, because the instruction is easy
+to over-execute. It is **not** licence to soften the mathematics, add analogies, or merge the main
+text into the warmer voice of the plain-terms boxes — those exist so the main text does not have to
+do that job, and the two-register structure stays. Four things change: the **motive for each step
+goes in front of the step** rather than behind it; connectives replace clipped declaratives; the
+reader's daily quantitative fluency may be drawn on **in the main text** where the mathematics is
+genuinely identical; and a hard step is named as hard. The forbidden hedges, the ⚑ contract, terse
+grind boxes and second person all stand.
+
+The independent review measured it: connective density up to 11.6 per thousand words against about
+9 through Part III, motive-before-step throughout, no forbidden hedge in either chapter, grind boxes
+still terse. **The instruction's one predicted casualty did materialise** — two clinical analogies
+in the main text claimed an identity that was not exact, which is precisely the failure mode this
+reader would catch. Both are fixed and both are recorded, because they are the pattern to watch for
+in every chapter from here.
+
+## The chapters
+
+| | |
+|---|---|
+| **4.1** What Classical Physics Cannot Do | ~17,500 words. Four classical failures made *quantitative*. The Planck spectrum by Einstein's A and B coefficients — a route needing no quantum statistics, which do not exist in this book until 4.11. **Stimulated emission is forced by the argument, not added to it**, and the Rayleigh–Jeans law is used as a boundary condition, which is why the classical failure has to be derived in full first |
+| **4.2** The Linear Algebra of Quantum States | ~22,000 words. The chapter Part 0 was built for. A 22-row renaming table, each row citing a numbered result in 0.5, plus seven postulates — P1 to P7, each announced in its own box before anything leans on it. The Born rule is named as the first thing in the book posited rather than cornered |
+
+## What the independent verification found
+
+0 BLOCKERs, 4 MAJORs, 14 MINORs, 1 gap in the chain — all applied.
+
+Both chapters survive re-derivation, and the two claims flagged as highest-risk both hold exactly:
+$g_1B_{12}=g_2B_{21}$ really does follow from the $T\to\infty$ limit once degeneracies are carried,
+and 4.2's own addition — that $\lVert[\hat x,\hat p]-\ii\hbar\hat I\rVert_F \ge \hbar\sqrt{n}$ with
+equality **only** for commuting pairs — is correct including the equality condition. That is the
+cleanest signal in the part that infinite dimensions are forced rather than chosen.
+
+The four MAJORs are worth recording because two are register failures rather than arithmetic:
+
+- **The mass-action analogy mismapped the one coefficient its section exists to introduce.** It set
+  Einstein's $B$ coefficients against $k_{\text{on}}$ and $k_{\text{off}}$; the exact map is
+  $B_{12}\leftrightarrow k_{\text{on}}$ and $A_{21}\leftrightarrow k_{\text{off}}$, and $B_{21}$ has
+  no mass-action counterpart at all — which is *precisely why* the two-process balance fails to
+  close and the third process is forced. In front of a reader who computes $K_D$ for a living.
+- **"A rate matrix has real eigenvalues"** — false in general; a three-state cyclic generator has
+  complex ones. True for the two-state case the box was discussing, which is now what it says.
+- A three-magnet Stern–Gerlach comparison quoting a branch-restricted $\tfrac14$ against a marginal
+  $0$, comparing unlike quantities.
+- Probability conservation listed on the *proved* side of the chapter's own ledger when §7.1 imposes
+  it as a hypothesis and derives unitarity from it.
+
+## Next
+
+**Batch F4: Chapter 4.3**, alone — `PLAN-FORWARD.md` §11 calls it the 3.3 of Part IV. It builds the
+space: measure, $L^2$, completeness, and the Fourier basis as an honest orthonormal basis at last.
+Then **F5: 4.4**, also alone, which builds the operators on it and is where `GAPS.md` G1's seven
+promises finally come due.

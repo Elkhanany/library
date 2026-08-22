@@ -104,3 +104,54 @@ but these are precisely the numbers a reader checks against a measurement, and t
 claim is that its arithmetic can be reproduced.
 
 The same applies to $GM_{\oplus} = 3.986004418\times10^{14}\ \mathrm{m^{3}s^{-2}}$.
+
+---
+
+# Register, from Part IV onward
+
+Set by the reader, 22 August 2026, after twenty-eight chapters: *"the language remains fairly dry.
+I am OK with that, but just slightly make it more approachable — run it through the lens of an
+oncologist with a robust mathematical background at this point, but still building these concepts
+from scratch."*
+
+Read that carefully. It is **not** a request to soften the mathematics, add analogies, or merge the
+main text into the warm register of the plain-terms boxes. Those boxes exist precisely so the main
+text does not have to do that job, and the two-register structure stays. What changes is the
+sentence-level texture of the derivations, in four specific ways.
+
+**1 · Say why before what.** The dry failure mode is a correct step with its motive withheld until
+after it lands. *"Differentiate under the integral sign"* becomes *"We want the derivative of the
+whole integral, and the only thing in it that depends on the parameter is the integrand — so
+differentiate under the sign."* Same step, same rigour, one clause of motive in front. This is the
+single highest-yield change and it costs almost nothing in length.
+
+**2 · Connectives, not asyndeton.** *because, so that, which means, and therefore, the reason is.*
+Twenty-eight chapters of clipped declaratives read as a wall even when every sentence is clear. Let
+a thought finish before the next begins. One long connected sentence often beats three short ones.
+
+**3 · Address a colleague who does quantitative work daily.** He fits survival models, reads
+Kaplan–Meier curves, thinks in hazard ratios and confidence intervals, and reasons about
+dose–response every week. That fluency is a resource the main text may draw on directly, not only
+inside a `familiar` callout — *"the same structure as a hazard that varies with time"* can sit in a
+derivation where it is exactly right. **Only where the mathematics is genuinely identical**, and say
+what breaks when it is not. A loose clinical analogy is worse here than no analogy, because he will
+check it against what he knows.
+
+**4 · Name the difficulty out loud when there is one.** *"This is the step where the finite-dimensional
+argument stops working, and it is worth slowing down."* Not reassurance and not apology — an honest
+signal about terrain, which a reader building from scratch has no other way to get.
+
+## What does not change
+
+- Nothing asserted that is not derived. The ⚑ contract is untouched.
+- No hedges: the forbidden list stands — *obviously, clearly, of course, simply, just, it turns out
+  that, it can be shown*.
+- No chattiness. No *let's*, no exclamation marks, no rhetorical questions, no *imagine that*.
+- Second person, as before. Not *we* as a stand-in for *you*, though *we* for genuinely shared work
+  — "we now have two routes and they must agree" — is fine and always was.
+- Grind boxes stay terse. They hold algebra; warmth there is noise.
+- The plain-terms boxes keep their own voice, unchanged, and their own specification.
+
+**The test.** Read a section aloud. If it sounds like a competent colleague working through
+something at a whiteboard with you, it is right. If it sounds like a reference manual, apply items
+1 and 2. If it sounds like a popular-science article, you have gone too far — go back.

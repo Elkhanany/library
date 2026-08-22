@@ -146,6 +146,16 @@ Per pacing item 11. One per chapter, in the running text, with the arithmetic vi
 
 ---
 
+## Register
+
+`CONVENTIONS.md`'s closing section, **Register, from Part IV onward**, is binding on every chapter in
+this part and was written for it. Read it before writing a line. In short: the mathematics does not
+soften, but the motive for each step goes in front of the step rather than behind it, connectives
+replace clipped declaratives, the reader's daily quantitative fluency may be drawn on in the main
+text where the mathematics is genuinely identical, and a hard step gets named as hard.
+
+---
+
 ## Conventions (binding, extending `CONVENTIONS.md`)
 
 `CONVENTIONS.md` governs in full: British spelling, second person, the forbidden hedges, the
@@ -273,8 +283,8 @@ formula (item 18). **Nothing else** — the Planck law is derived, and the mode 
 # 4.2 · The Linear Algebra of Quantum States ※
 
 **What this chapter exists to do:** show that Chapter 0.5 was quantum mechanics with the physics
-stripped off, and put the physics back — as a table of renamings plus five postulates, and nothing
-else.
+stripped off, and put the physics back — as a table of renamings plus seven postulates (P1–P7, as §0.1
+lists them), and nothing else.
 
 **Sections (fixed):**
 
