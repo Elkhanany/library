@@ -280,3 +280,43 @@ Both agents found errors in my own planning, which is now the norm rather than t
 ## Next
 
 **Batch F3: Chapters 4.1 and 4.2.** Everything they need is in place.
+
+---
+
+# Seven interactive figures (19 August 2026)
+
+An audit of all 28 written chapters for places where an **additional** interactive figure would
+genuinely illuminate something. Every chapter already had one, so the bar was five conditions, all
+required: the insight must live in the *change*; the figure must be **computed, not drawn**; it must
+target a difficulty the chapter itself documents (a ⚠ box, or a plain-terms passage visibly
+straining); it must not duplicate the existing figure; and it must repay a minute of fiddling with
+something durable.
+
+**Twenty-seven candidates were considered and eight survived.** Seven are built. The rejections are
+recorded in `reports/figures-part0.md`, `reports/figures-part1-2.md` and `reports/figures-part3.md`,
+because the list of what did not clear the bar is the evidence that the bar was applied.
+
+| chapter | figure | what it makes visible |
+|---|---|---|
+| 0.4 §4.2 | `fig-comm` | The commutator, drawn. A four-leg loop closes at order $\epsilon^{2}$, and the residual over $\epsilon^{2}$ climbs onto $\lvert[A,B]x\rvert$ — 1.9269, 2.0708, 2.0863 against 2.0881. A commuting pair closes to $2\times10^{-16}$ at every $\epsilon$ |
+| 0.5 §8 | `fig-joint` | Drive $\lVert[A,B]\rVert$ to **exactly zero** and a standard solver still returns incompatible states, with the spread in $B$ pinned at 0.600000 — because it handed back *an* eigenbasis of $A$ rather than the one $B$ prefers. That is why simultaneous diagonalisation needs a proof |
+| 0.7 §2.4 | `fig-wind` | Circulation 6.2831853 round any lopsided loop enclosing the puncture, $-1.9\times10^{-10}$ the moment it does not, with the curl reading zero throughout |
+| 1.2 §5 | `fig-conj` | The conjugate point. The number of negative directions equals the number of Jacobi zeros inside the interval — 1 and 1, then 3 and 3 as the trip lengthens. **Morse's theorem, measured** |
+| 2.6 §7 | `fig-forbit` | The invariant is not a number that fails to move; it is **the hyperbola the configuration cannot leave**. Set the light-wave preset and the marker slides down the 45° line forever without arriving |
+| 3.3 §2.2 | `fig-tworules` | One integrator, two spaces. On the plane the polar components swing from $+0.25$ to $-0.78$ with the Christoffel symbols printed live — and the arrow does not move, closing to $4\times10^{-15}$ degrees. On the sphere the same code returns 45.059816966°, the enclosed area to twelve figures |
+| 3.8 §4 | `fig-half` | The deflection integrated three ways against speed. The time-only curve falls towards the space-only curve, which never moves, and they meet at exactly $v=c$. The factor of two is a falling line meeting a flat one |
+
+The 3.3 figure was ranked first for a reason the audit found by grepping: **no script anywhere in
+Part III contained the string `Gamma`.** The connection — the central object of the part — had never
+been switched on and made to do anything on screen.
+
+The 1.2 figure fixes something worse than an omission. The chapter warns twice that "least action"
+is the wrong phrase, and its existing figure demonstrates stationarity on free fall, where the
+extremal genuinely *is* a minimum. The reader was told one thing and shown its opposite.
+
+## `figcheck.py`
+
+New. It loads every built chapter at 1280 px and 390 px, in light and dark, exercises **every slider
+at three positions and clicks every button**, and then confirms every canvas on the page still has
+ink in it and no error reached the console. 28 chapters, 52 canvases, 0 failures. A figure that
+throws on load is worse than no figure, and neither the page audit nor the source checks can see it.

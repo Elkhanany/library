@@ -319,6 +319,66 @@ $$ \oint_{C}\vv F\cdot\dd\vv r \;=\; \int_{S}(\nabla\times\vv F)\cdot\dd\vv A \;
 <p>For the punctured plane there is no such $S$: any surface spanning a loop around the origin must
 contain the origin, where $\vv F$ does not exist. The theorem does not fail; its hypothesis does.</p>
 
+<p>The circle above was centred on the hole, and the factors of $R$ cancelling looks like the sort of
+luck a symmetrical choice buys you. The figure below hands you the loop.</p>
+
+<figure class="fig">
+  <canvas id="fig-wind" data-h="440"></canvas>
+  <canvas id="fig-pot" data-h="196" style="margin-top:.6rem"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="w-r">radius&nbsp;<i>R</i></label>
+      <input type="range" id="w-r" min="0.30" max="2.10" step="0.005" value="1.00">
+      <output id="o-w-r"></output>
+    </div>
+    <div class="ctrl">
+      <label for="w-l">lumpiness</label>
+      <input type="range" id="w-l" min="0" max="0.50" step="0.005" value="0.30">
+      <output id="o-w-l"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label>field</label>
+      <button id="w-fv" class="on">the vortex</button>
+      <button id="w-fg">&nabla;(<i>xy</i>)</button>
+    </div>
+    <div class="ctrl"><button id="w-t2">two turns</button></div>
+    <div class="ctrl"><button id="w-rs">reset</button></div>
+  </div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-w-a" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-w-b" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-w-c" style="min-width:0;white-space:normal"></output></div></div>
+  <figcaption><b>The circulation that does not care about the loop.</b> Upper panel: the punctured
+  plane, with the deleted point ringed in
+  <span style="color:var(--warn)"><b>orange</b></span> and the field drawn as unit arrows so that only
+  its <em>direction</em> is shown. The <span style="color:var(--accent)"><b>blue</b></span> loop is
+  $r(\theta)=R\,(1+\lambda\cos3\theta+0.667\lambda\sin5\theta)$ about a centre you drag; the
+  circulation $\oint_{C}\vv F\cdot\dd\vv r$ is a midpoint sum over $20\,000$ segments of that exact
+  polygon, and the winding number underneath it is that same sum divided by $2\pi$ — nothing is read
+  off <a class="eqref" href="#e-twopi"></a>. The curl is computed by the definition §4.1 is about to
+  give: the circulation of the same field round a square of side $10^{-5}$, divided by its area,
+  evaluated at $200$ points along the loop. Lower panel: the running potential
+  $\phi(s)=\int_{0}^{s}\vv F\cdot\dd\vv r$ against the fraction of the way round, with the
+  <span style="color:var(--warn)"><b>orange</b></span> bracket measuring how far it is from closing.
+  <b>Maul the loop.</b> Drag the centre, run the radius over its whole range, crank the lumpiness
+  until the shape is grotesque: as long as the hole stays inside, the readout says $6.2831853$ and
+  will not move a digit — $2\pi$ is $6.2831853$ — while the curl along that loop reads $2\times10^{-9}$
+  at its very worst and $10^{-10}$ on average. That residue is the little square's own truncation
+  error and falls by four whenever you halve its side; push the loop right up against the deleted
+  point and it climbs like $1/r^{4}$, which is a difference quotient straining on a field that is
+  genuinely steep there, not the field acquiring a curl.
+  <b>There is no local measurement that can tell.</b>
+  Now drag the loop clear of the hole. The lower trace snaps shut, the circulation falls in one step
+  to a couple of parts in $10^{10}$ — the sum's own arithmetic, with nothing underneath it — and the
+  winding number goes from $1.000000$ to $-0.000000$ with nothing in between: the quantity is an
+  integer because it is counting something. <b>Two turns</b>
+  gives $12.566371 = 4\pi$. And <b>$\nabla(xy)$</b> is the control: a field that is curl-free on the
+  <em>whole</em> plane, with no hole in its domain, whose trace closes on every loop you can draw and
+  whose circulation is $10^{-15}$ everywhere. The two fields are locally indistinguishable. What
+  separates them is that one of them has had a point taken out from under it.</figcaption>
+</figure>
+
 <h3>2.5 · Why a physicist should care: the potential knows more than the field</h3>
 
 <p>It is tempting to file §2.4 as a curiosity about a contrived function. It is not. It is the
@@ -2043,5 +2103,270 @@ metric perturbation. Poisson's equation is what general relativity looks like wh
     window.addEventListener('mousemove', function (e) { if (dragging) place(e); });
     window.addEventListener('mouseup', function () { dragging = false; });
   }
+})();
+
+/* ================================================================
+   fig-wind / fig-pot — the circulation that does not care about the loop.
+
+   One routine does all the integrating.  Given a closed polygon it
+   forms the midpoint sum  sum F(midpoint) . (P_{k+1} - P_k).  Run on
+   the reader's loop with 20000 segments it returns the circulation;
+   run on a square of side 1e-5 it returns (curl) x (area), which is
+   the definition of curl that section 4.1 is about to give.  Same
+   code, two scales, two answers.  The running potential is the same
+   sum left un-totalled.
+   ================================================================ */
+(function () {
+  var cvW = document.getElementById('fig-wind');
+  if (!cvW) return;
+
+  var sR = document.getElementById('w-r'), sL = document.getElementById('w-l'),
+      oR = document.getElementById('o-w-r'), oL = document.getElementById('o-w-l'),
+      oA = document.getElementById('o-w-a'), oB = document.getElementById('o-w-b'),
+      oC = document.getElementById('o-w-c'),
+      bFv = document.getElementById('w-fv'), bFg = document.getElementById('w-fg'),
+      bT2 = document.getElementById('w-t2'), bRs = document.getElementById('w-rs');
+
+  var CX = 0.30, CY = -0.20, TURNS = 1, FIELD = 'v';
+  var NSEG = 20000, NTRACE = 600, HCURL = 1e-5;
+
+  /* ---- the two fields ---- */
+  function F(x, y, out) {
+    if (FIELD === 'v') {
+      var r2 = x*x + y*y;
+      if (r2 < 1e-300) r2 = 1e-300;          /* the one point that is not in the domain */
+      out[0] = -y/r2; out[1] = x/r2;
+    } else {                       /* grad(xy) = (y, x): curl-free on all of R^2 */
+      out[0] = y; out[1] = x;
+    }
+    return out;
+  }
+
+  /* ---- the loop, as a closed polygon of N segments ---- */
+  function loopPt(t, R, lam, out) {          /* t in [0,1] */
+    var th = 2*Math.PI*TURNS*t, r;
+    if (TURNS === 1) r = R*(1 + lam*Math.cos(3*th) + 0.667*lam*Math.sin(5*th));
+    else             r = R*(1 + 0.28*Math.sin(th/2));
+    out[0] = CX + r*Math.cos(th); out[1] = CY + r*Math.sin(th);
+    return out;
+  }
+
+  /* ---- midpoint circulation over an arbitrary closed polygon ---- */
+  function circPoly(pts) {
+    var s = 0, f = [0, 0], i, n = pts.length - 1;
+    for (i = 0; i < n; i++) {
+      var dx = pts[i+1][0] - pts[i][0], dy = pts[i+1][1] - pts[i][1];
+      F(0.5*(pts[i][0] + pts[i+1][0]), 0.5*(pts[i][1] + pts[i+1][1]), f);
+      s += f[0]*dx + f[1]*dy;
+    }
+    return s;
+  }
+
+  /* curl at (x,y) = circulation round a square of side h, over its area */
+  function curlAt(x, y, h) {
+    var a = h/2;
+    return circPoly([[x-a, y-a], [x+a, y-a], [x+a, y+a], [x-a, y+a], [x-a, y-a]]) / (h*h);
+  }
+
+  function state() {
+    var R = parseFloat(sR.value), lam = parseFloat(sL.value);
+    var p = [0, 0], q = [0, 0], f = [0, 0];
+    var tot = 0, run = [], dmin = 1e9, i, keep = Math.round(NSEG/NTRACE);
+    loopPt(0, R, lam, p);
+    var poly = [[p[0], p[1]]];                        /* drawn outline, coarse */
+    run.push([0, 0]);
+    for (i = 0; i < NSEG; i++) {
+      loopPt((i + 1)/NSEG, R, lam, q);
+      var mx = 0.5*(p[0] + q[0]), my = 0.5*(p[1] + q[1]);
+      F(mx, my, f);
+      tot += f[0]*(q[0] - p[0]) + f[1]*(q[1] - p[1]);
+      var d = Math.sqrt(p[0]*p[0] + p[1]*p[1]); if (d < dmin) dmin = d;
+      if ((i + 1) % keep === 0) {
+        run.push([(i + 1)/NSEG, tot]);
+        poly.push([q[0], q[1]]);
+      }
+      p[0] = q[0]; p[1] = q[1];
+    }
+    poly.push([poly[0][0], poly[0][1]]);
+
+    /* the local test, at 200 stations along the same loop */
+    var cmax = 0, cmean = 0, NC = 200;
+    for (i = 0; i < NC; i++) {
+      loopPt(i/NC, R, lam, p);
+      var cc = Math.abs(curlAt(p[0], p[1], HCURL));
+      if (cc > cmax) cmax = cc;
+      cmean += cc;
+    }
+    cmean /= NC;
+
+    return { R: R, lam: lam, tot: tot, run: run, poly: poly,
+             dmin: dmin, cmax: cmax, cmean: cmean };
+  }
+
+  var CUR = null, WP = null;
+  function compute() { CUR = state(); return CUR; }
+
+  function arrow(pl, x0, y0, x1, y1, col, w, head) {
+    var g = pl.g, X0 = pl.X(x0), Y0 = pl.Y(y0), X1 = pl.X(x1), Y1 = pl.Y(y1);
+    g.save();
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(X0, Y0); g.lineTo(X1, Y1); g.stroke();
+    var a = Math.atan2(Y1 - Y0, X1 - X0), s = head || 7;
+    g.beginPath(); g.moveTo(X1, Y1);
+    g.lineTo(X1 - s*Math.cos(a - 0.42), Y1 - s*Math.sin(a - 0.42));
+    g.lineTo(X1 - s*Math.cos(a + 0.42), Y1 - s*Math.sin(a + 0.42));
+    g.closePath(); g.fill(); g.restore();
+  }
+  function clipped(pl, fn) {
+    var g = pl.g, pa = pl.o.pad;
+    g.save(); g.beginPath();
+    g.rect(pa.l, pa.t, pl.w - pa.l - pa.r, pl.h - pa.t - pa.b);
+    g.clip(); fn(); g.restore();
+  }
+
+  /* ==================== upper panel ==================== */
+  NMT.figure('fig-wind', function (c) {
+    var S = compute();
+    var p = new NMT.Plot(c, { xmin: -2.6, xmax: 2.6, ymin: -2.6, ymax: 2.6,
+                              xlabel: 'x', ylabel: 'y', equal: true });
+    WP = p;
+    p.axes({ nx: 7, ny: 7 });
+
+    var acc = NMT.css('--accent'), wrn = NMT.css('--warn'), ins = NMT.css('--insight');
+
+    clipped(p, function () {
+      /* the field, direction only */
+      var f = [0, 0], gx, gy;
+      for (gx = -4.5; gx <= 4.501; gx += 0.75) {
+        for (gy = -3; gy <= 3.001; gy += 0.75) {
+          if (Math.hypot(gx, gy) < 0.3) continue;
+          F(gx, gy, f);
+          var m = Math.hypot(f[0], f[1]);
+          if (!(m > 1e-12)) continue;
+          arrow(p, gx - 0.13*f[0]/m, gy - 0.13*f[1]/m,
+                   gx + 0.20*f[0]/m, gy + 0.20*f[1]/m, NMT.css('--ink-faint'), 1.1, 5);
+        }
+      }
+
+      /* the puncture */
+      if (FIELD === 'v') {
+        var g = p.g;
+        g.beginPath(); g.arc(p.X(0), p.Y(0), 6.5, 0, 7);
+        g.strokeStyle = wrn; g.lineWidth = 2.2; g.stroke();
+        p.text(0, 0, 'the deleted point ', { color: wrn, align: 'right', dx: -9, dy: -7,
+                                             font: '11px ' + NMT.css('--sans') });
+      }
+
+      /* the loop, with a few direction arrows on it */
+      p.path(S.poly, { color: acc, width: 2.4 });
+      var k, n = S.poly.length - 1;
+      for (k = 0; k < 8; k++) {
+        var i0 = Math.round(k*n/8), i1 = i0 + 1;
+        if (i1 > n) continue;
+        arrow(p, S.poly[i0][0], S.poly[i0][1], S.poly[i1][0], S.poly[i1][1], acc, 2.4, 8);
+      }
+      p.dot(CX, CY, { color: NMT.css('--ink'), r: 5, ring: true });
+      p.text(CX, CY, 'drag', { color: NMT.css('--ink-faint'), dx: 9, dy: 16,
+                               font: '11px ' + NMT.css('--sans') });
+
+      /* a microscopic loop, drawn as the ring the curl is measured on */
+      var q0 = [0, 0];
+      loopPt(0.125, S.R, S.lam, q0);
+      var g2 = p.g;
+      g2.beginPath(); g2.arc(p.X(q0[0]), p.Y(q0[1]), 5, 0, 7);
+      g2.strokeStyle = ins; g2.lineWidth = 1.8; g2.stroke();
+      var rt = q0[0] > p.o.xmax - 1.4;   /* keep the label inside the frame */
+      p.text(q0[0], q0[1], rt ? 'curl here ' : ' curl here',
+             { color: ins, align: rt ? 'right' : 'left', dx: rt ? -8 : 8, dy: -6,
+               font: '11px ' + NMT.css('--sans') });
+    });
+    readouts(S);
+  });
+
+  /* ==================== lower panel ==================== */
+  NMT.figure('fig-pot', function (c) {
+    var S = CUR || compute();
+    var lo = 0, hi = 0, i;
+    for (i = 0; i < S.run.length; i++) {
+      if (S.run[i][1] < lo) lo = S.run[i][1];
+      if (S.run[i][1] > hi) hi = S.run[i][1];
+    }
+    var pad = Math.max(0.18*(hi - lo), 0.35);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 1.10, ymin: lo - pad, ymax: hi + pad,
+                              xlabel: 'fraction of the way round', ylabel: 'φ(s)',
+                              pad: { l: 46, r: 52, t: 12, b: 32 } });
+    p.axes({ nx: 5, ny: 4 });
+    var acc = NMT.css('--accent'), wrn = NMT.css('--warn');
+    p.path(S.run, { color: acc, width: 2.4 });
+    p.dot(0, 0, { color: NMT.css('--ink'), r: 4, ring: true });
+    p.dot(1, S.tot, { color: acc, r: 4, ring: true });
+    /* the bracket: how far short of closing */
+    p.seg(1.05, 0, 1.05, S.tot, { color: wrn, width: 2 });
+    p.seg(1.028, 0, 1.072, 0, { color: wrn, width: 2 });
+    p.seg(1.028, S.tot, 1.072, S.tot, { color: wrn, width: 2 });
+    p.text(1.05, 0.5*S.tot, (Math.abs(S.tot) < 1e-6 ? ' closes' : ' ' + S.tot.toFixed(4)),
+           { color: wrn, dx: 12, dy: 4, font: '11px ' + NMT.css('--sans') });
+  });
+
+  /* ---------------------- readouts ---------------------- */
+  function readouts(S) {
+    oR.textContent = 'R = ' + S.R.toFixed(2);
+    oL.textContent = 'λ = ' + S.lam.toFixed(2);
+    var w = S.tot/(2*Math.PI);
+    oA.textContent = '∮ F·dr = ' + (Math.abs(S.tot) < 1e-6 ? S.tot.toExponential(3)
+                                                           : S.tot.toFixed(7)) +
+                     '        2π = 6.2831853        winding ∮/2π = ' + w.toFixed(6);
+    oB.textContent = 'curl along the loop (square of side 1e-5):  max ' +
+                     S.cmax.toExponential(3) + '   mean ' + S.cmean.toExponential(3) +
+                     '   — no local test detects anything';
+    oC.textContent = 'loop centre (' + CX.toFixed(3) + ', ' + CY.toFixed(3) + ')' +
+                     '   closest approach to the origin ' + S.dmin.toFixed(4) +
+                     ((FIELD === 'v' && S.dmin < 0.05)
+                        ? '  ⚠ the loop is grazing the deleted point; the sum is unreliable there'
+                        : '');
+  }
+
+  /* ---------------------- wiring ---------------------- */
+  function mark() {
+    bFv.classList.toggle('on', FIELD === 'v');
+    bFg.classList.toggle('on', FIELD === 'g');
+    bT2.classList.toggle('on', TURNS === 2);
+  }
+  sR.addEventListener('input', NMT.redrawAll);
+  sL.addEventListener('input', NMT.redrawAll);
+  bFv.addEventListener('click', function () { FIELD = 'v'; mark(); NMT.redrawAll(); });
+  bFg.addEventListener('click', function () { FIELD = 'g'; mark(); NMT.redrawAll(); });
+  bT2.addEventListener('click', function () {
+    TURNS = TURNS === 2 ? 1 : 2;
+    if (TURNS === 2) { CX = 0; CY = 0; sL.value = 0; }
+    mark(); NMT.redrawAll();
+  });
+  bRs.addEventListener('click', function () {
+    CX = 0.30; CY = -0.20; TURNS = 1; FIELD = 'v';
+    sR.value = 1.00; sL.value = 0.30; mark(); NMT.redrawAll();
+  });
+
+  /* ---- drag the loop centre ---- */
+  var drag = false;
+  cvW.style.cursor = 'crosshair';
+  function place(e) {
+    if (!WP) return;
+    var r = cvW.getBoundingClientRect();
+    CX = Math.max(-4.2, Math.min(4.2, WP.invX(e.clientX - r.left)));
+    CY = Math.max(-2.4, Math.min(2.4, WP.invY(e.clientY - r.top)));
+    NMT.redrawAll();
+  }
+  cvW.addEventListener('mousedown', function (e) { drag = true; place(e); });
+  window.addEventListener('mousemove', function (e) { if (drag) place(e); });
+  window.addEventListener('mouseup', function () { drag = false; });
+  cvW.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1) { drag = true; place(e.touches[0]); e.preventDefault(); }
+  }, { passive: false });
+  cvW.addEventListener('touchmove', function (e) {
+    if (drag && e.touches.length === 1) { place(e.touches[0]); e.preventDefault(); }
+  }, { passive: false });
+  cvW.addEventListener('touchend', function () { drag = false; });
+
+  mark();
 })();
 <!--/SCRIPT-->

@@ -1129,6 +1129,72 @@ eigenspace.</p>
   </div>
 </details>
 
+<p>The theorem promises that a common eigenbasis exists. It does not promise that the one your
+solver just handed you is it, and the figure below is that distinction, driven to the point where it
+bites.</p>
+
+<figure class="fig">
+  <canvas id="fig-joint" data-h="430"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="j-d">gap&nbsp;<i>&delta;</i>&nbsp;in&nbsp;<i>A</i></label>
+      <input type="range" id="j-d" min="0" max="1" step="0.005" value="0.60">
+      <output id="o-j-d"></output>
+    </div>
+    <div class="ctrl">
+      <label for="j-c">off-diagonal&nbsp;<i>c</i>&nbsp;in&nbsp;<i>B</i></label>
+      <input type="range" id="j-c" min="0" max="1.2" step="0.005" value="0.60">
+      <output id="o-j-c"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><button id="j-ch">let <i>B</i> choose inside the eigenspace</button></div>
+    <div class="ctrl"><button id="j-c3">add a third operator <i>C</i></button></div>
+    <div class="ctrl"><button id="j-rs">reset</button></div>
+  </div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-m" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-k" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-1" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-2" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-3" style="min-width:0;white-space:normal"></output></div></div>
+  <div class="ctrls"><div class="ctrl" style="flex:1 1 100%;min-width:0"><output id="o-j-n" style="min-width:0;white-space:normal"></output></div></div>
+  <figcaption><b>The joint spectrum, and the choice inside a degeneracy.</b> The two operators are
+  $A=\operatorname{diag}(1+\delta,\,1,\,-1)$ and $B$ with the block $\left(\begin{smallmatrix}0&amp;c\\
+  c&amp;0\end{smallmatrix}\right)$ on the first two coordinates and $2$ on the third — both real
+  symmetric, which §6.5 says is the case worth drawing. Each is diagonalised in the browser by
+  cyclic Jacobi rotations, sweeping until the off-diagonal sum of squares reaches machine zero; no
+  characteristic polynomial is solved anywhere, because solving one is the numerical instability
+  this figure is about. The plane is the <em>label</em> plane: horizontally the value of $A$,
+  vertically the value of $B$. <span style="color:var(--accent)"><b>Blue</b></span> dots are the
+  three eigenvectors <em>of $A$</em>, placed at $(a_i,\ \langle v_i,Bv_i\rangle)$ with a vertical bar
+  of half-length $\Delta B_i=\lVert (B-\langle B\rangle)v_i\rVert$; <span
+  style="color:var(--familiar)"><b>purple</b></span> dots are the eigenvectors <em>of $B$</em>, with
+  horizontal bars $\Delta A_j$. A state is a joint eigenstate exactly when a blue dot and a purple
+  dot sit on top of each other with no bars, and those get a
+  <span style="color:var(--insight)"><b>green</b></span> ring. $\lVert[A,B]\rVert_F$ is computed from
+  the product matrices.
+  <b>Start by pulling $c$ to zero.</b> The bars vanish, the two families land on each other, and the
+  operators commute: this is §8.1, and it is the easy half. Put $c$ back to $0.6$ and
+  <b>drive $\delta$ to zero instead.</b> $\lVert[A,B]\rVert_F$ falls as $\sqrt2\,c\,\delta$ —
+  $0.8485$, $0.1697$, $0.0085$ — and reaches <em>exactly</em> $0$ at the left stop. The blue bars do
+  not move. They read $0.600$ at every setting, $\delta=0$ included. The operators now commute, the
+  theorem says a common eigenbasis exists, and the solver has handed you three states in which $B$ is
+  not sharp — because inside the plane where $A$ gave both directions the same number, any
+  orthonormal pair is an eigenbasis of $A$, and the solver returned the one it happened to start
+  with. The <span style="color:var(--insight)"><b>shaded band</b></span>, drawn once the gap in $A$
+  falls below $0.05$, is the whole interval of $\langle B\rangle$ values some legitimate eigenbasis of
+  $A$ would report; its ends are the eigenvalues $\pm c$ of $B$ restricted to that plane. Now press
+  <b>let $B$ choose</b>. The blue dots swing to $\pm0.600$ without $A$ noticing — their $a$ labels do
+  not move at all — the bars collapse to $8\times10^{-17}$, and three joint labels snap into
+  place. That is Step 4 of the grind box, and it is the only thing standing between you and
+  $\ket{n,\ell,m}$. Finally set $c=0$ <em>and</em> $\delta=0$, where $A$ and $B$ are both blind to the
+  plane and two states share the label $(1,\,0)$: the readout says <b>2 of 3</b>, and adding the third
+  commuting operator $C$ makes it <b>3 of 3</b>. That is what <em>complete</em> means in "complete set
+  of commuting observables" — and if you then push $\delta$ back up with $C$ still on, the readout
+  reports that $C$ has stopped commuting with $A$ and withdraws the claim, because a set of labels
+  is only worth having when the operators handing them out commute.</figcaption>
+</figure>
+
 <div class="callout insight">
   <span class="ct">This theorem is the structure of quantum numbers</span>
   <p>An orthonormal basis of simultaneous eigenvectors is a way of <em>labelling</em> every state by
@@ -1633,5 +1699,324 @@ eigenspace.</p>
   });
 
   setButtons();
+})();
+
+/* ================================================================
+   fig-joint — the joint spectrum, and the choice inside a degeneracy.
+
+   A = diag(1+d, 1, -1),  B = [[0,c,0],[c,0,0],[0,0,2]],  C = [[0,1,0],[1,0,0],[0,0,5]].
+   Both A and B are diagonalised here by cyclic Jacobi rotations
+   (symmetric, machine precision, no characteristic polynomial).
+   Everything plotted is then an inner product taken against the
+   eigenvectors the solver actually returned:
+
+       <B>_i = v_i . B v_i,     dB_i = |(B - <B>_i) v_i|
+
+   which is the numerically stable form of sqrt(<B^2> - <B>^2) —
+   the naive difference loses half its digits to cancellation and
+   would report a spread of 1e-8 where the true one is 1e-16.
+   ================================================================ */
+(function () {
+  var cv = document.getElementById('fig-joint');
+  if (!cv) return;
+
+  var sD = document.getElementById('j-d'), sC = document.getElementById('j-c'),
+      oD = document.getElementById('o-j-d'), oC = document.getElementById('o-j-c'),
+      oM = document.getElementById('o-j-m'), oK = document.getElementById('o-j-k'),
+      o1 = document.getElementById('o-j-1'), o2 = document.getElementById('o-j-2'),
+      o3 = document.getElementById('o-j-3'), oN = document.getElementById('o-j-n'),
+      bCh = document.getElementById('j-ch'), bC3 = document.getElementById('j-c3'),
+      bRs = document.getElementById('j-rs');
+
+  var CHOOSE = false, THIRD = false;
+  var DEGTOL = 0.05;          /* gap below which the eigenvectors are treated as unresolved */
+
+  /* ---------------- small dense linear algebra ---------------- */
+  function zeros(n) { var M = [], i, j;
+    for (i = 0; i < n; i++) { M.push([]); for (j = 0; j < n; j++) M[i].push(0); } return M; }
+  function eye(n) { var M = zeros(n); for (var i = 0; i < n; i++) M[i][i] = 1; return M; }
+  function matmul(P, Q) {
+    var n = P.length, m = Q[0].length, k = Q.length, R = zeros(n), i, j, t, s;
+    for (i = 0; i < n; i++) for (j = 0; j < m; j++) {
+      s = 0; for (t = 0; t < k; t++) s += P[i][t]*Q[t][j]; R[i][j] = s;
+    }
+    return R;
+  }
+  function matvec(M, v) {
+    var n = M.length, out = [], i, j, s;
+    for (i = 0; i < n; i++) { s = 0; for (j = 0; j < v.length; j++) s += M[i][j]*v[j]; out.push(s); }
+    return out;
+  }
+  function frob(M) {
+    var s = 0, i, j;
+    for (i = 0; i < M.length; i++) for (j = 0; j < M[i].length; j++) s += M[i][j]*M[i][j];
+    return Math.sqrt(s);
+  }
+  function commutator(P, Q) {
+    var R = matmul(P, Q), S = matmul(Q, P), n = R.length, i, j, O = zeros(n);
+    for (i = 0; i < n; i++) for (j = 0; j < n; j++) O[i][j] = R[i][j] - S[i][j];
+    return O;
+  }
+
+  /* ---- cyclic Jacobi for a real symmetric matrix: returns sorted (lam, V) ---- */
+  function symEig(M0) {
+    var n = M0.length, A = M0.map(function (r) { return r.slice(); }), V = eye(n);
+    var sweep, p, q, k, off, tot, th, t, c, s, akp, akq, apk, aqk, vkp, vkq;
+    for (sweep = 0; sweep < 60; sweep++) {
+      off = 0; tot = 0;
+      for (p = 0; p < n; p++) for (q = 0; q < n; q++) {
+        tot += A[p][q]*A[p][q];
+        if (q > p) off += A[p][q]*A[p][q];
+      }
+      if (off <= 1e-32*(tot + 1e-300)) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (A[p][q] === 0) continue;
+        th = (A[q][q] - A[p][p]) / (2*A[p][q]);
+        t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th*th + 1));
+        c = 1/Math.sqrt(t*t + 1); s = t*c;
+        for (k = 0; k < n; k++) { akp = A[k][p]; akq = A[k][q];
+          A[k][p] = c*akp - s*akq; A[k][q] = s*akp + c*akq; }
+        for (k = 0; k < n; k++) { apk = A[p][k]; aqk = A[q][k];
+          A[p][k] = c*apk - s*aqk; A[q][k] = s*apk + c*aqk; }
+        for (k = 0; k < n; k++) { vkp = V[k][p]; vkq = V[k][q];
+          V[k][p] = c*vkp - s*vkq; V[k][q] = s*vkp + c*vkq; }
+      }
+    }
+    var idx = [], lam = [];
+    for (k = 0; k < n; k++) { idx.push(k); lam.push(A[k][k]); }
+    idx.sort(function (a, b) { return lam[a] - lam[b]; });
+    var L = [], W = [];
+    for (k = 0; k < n; k++) {
+      L.push(lam[idx[k]]);
+      var col = []; for (p = 0; p < n; p++) col.push(V[p][idx[k]]);
+      W.push(col);                                  /* W[k] is the k-th eigenvector */
+    }
+    return { lam: L, vec: W };
+  }
+
+  /* mean and stable spread of M in the state v */
+  function stat(M, v) {
+    var Mv = matvec(M, v), m = 0, i, s = 0, d;
+    for (i = 0; i < v.length; i++) m += v[i]*Mv[i];
+    for (i = 0; i < v.length; i++) { d = Mv[i] - m*v[i]; s += d*d; }
+    return { m: m, d: Math.sqrt(s) };
+  }
+
+  /* ---------------- the model ---------------- */
+  function Aop(d) { return [[1 + d, 0, 0], [0, 1, 0], [0, 0, -1]]; }
+  function Bop(c) { return [[0, c, 0], [c, 0, 0], [0, 0, 2]]; }
+  function Cop()  { return [[0, 1, 0], [1, 0, 0], [0, 0, 5]]; }
+
+  /* replace the basis of each cluster of near-equal labels by one that
+     diagonalises the next operator restricted to that cluster */
+  function refine(vecs, keys, M, tol) {
+    var n = vecs.length, used = [], i, j, k, out = vecs.map(function (v) { return v.slice(); });
+    for (i = 0; i < n; i++) used.push(false);
+    for (i = 0; i < n; i++) {
+      if (used[i]) continue;
+      var grp = [i]; used[i] = true;
+      for (j = i + 1; j < n; j++) {
+        if (used[j]) continue;
+        var same = true;
+        for (k = 0; k < keys[i].length; k++) if (Math.abs(keys[i][k] - keys[j][k]) > tol) same = false;
+        if (same) { grp.push(j); used[j] = true; }
+      }
+      if (grp.length < 2) continue;
+      var g = grp.length, R = zeros(g), a, b, p;
+      for (a = 0; a < g; a++) for (b = 0; b < g; b++) {
+        var Mv = matvec(M, out[grp[b]]), s = 0;
+        for (p = 0; p < 3; p++) s += out[grp[a]][p]*Mv[p];
+        R[a][b] = s;
+      }
+      var E = symEig(R);
+      var fresh = [];
+      for (a = 0; a < g; a++) {
+        var nv = [0, 0, 0];
+        for (b = 0; b < g; b++) for (p = 0; p < 3; p++) nv[p] += E.vec[a][b]*out[grp[b]][p];
+        fresh.push(nv);
+      }
+      for (a = 0; a < g; a++) out[grp[a]] = fresh[a];
+    }
+    return out;
+  }
+
+  function state() {
+    var d = parseFloat(sD.value), c = parseFloat(sC.value);
+    var A = Aop(d), B = Bop(c), C = Cop();
+    var EA = symEig(A), EB = symEig(B);
+
+    var vecs = EA.vec, keys = EA.lam.map(function (l) { return [l]; });
+    if (CHOOSE) {
+      vecs = refine(vecs, keys, B, DEGTOL);
+      if (THIRD) {
+        var k2 = vecs.map(function (v) { return [stat(A, v).m, stat(B, v).m]; });
+        vecs = refine(vecs, k2, C, 1e-7);
+      }
+    }
+
+    var rowsA = vecs.map(function (v) {
+      var sa = stat(A, v), sb = stat(B, v), sc2 = stat(C, v);
+      return { a: sa.m, b: sb.m, db: sb.d, da: sa.d, c: sc2.m, dc: sc2.d, v: v };
+    });
+    var rowsB = EB.vec.map(function (w) {
+      var sa = stat(A, w), sb = stat(B, w);
+      return { a: sa.m, b: sb.m, da: sa.d, db: sb.d };
+    });
+
+    /* the band: A's near-degenerate cluster, and B's range across it */
+    var band = null, i, j;
+    for (i = 0; i < 3 && !band; i++) for (j = i + 1; j < 3; j++) {
+      if (Math.abs(EA.lam[i] - EA.lam[j]) <= DEGTOL) {
+        var Q = [EA.vec[i], EA.vec[j]], R = zeros(2), a, b, p;
+        for (a = 0; a < 2; a++) for (b = 0; b < 2; b++) {
+          var Bv = matvec(B, Q[b]), s = 0;
+          for (p = 0; p < 3; p++) s += Q[a][p]*Bv[p];
+          R[a][b] = s;
+        }
+        var E2 = symEig(R);
+        band = { a: 0.5*(EA.lam[i] + EA.lam[j]), lo: E2.lam[0], hi: E2.lam[1],
+                 gap: Math.abs(EA.lam[i] - EA.lam[j]) };
+        break;
+      }
+    }
+
+    /* how many of the three states carry distinct labels? */
+    var labs = rowsA.map(function (r) { return THIRD ? [r.a, r.b, r.c] : [r.a, r.b]; });
+    var dist = 0;
+    for (i = 0; i < 3; i++) {
+      var seen = false;
+      for (j = 0; j < i; j++) {
+        var same = true;
+        for (var k = 0; k < labs[i].length; k++)
+          if (Math.abs(labs[i][k] - labs[j][k]) > 1e-7) same = false;
+        if (same) seen = true;
+      }
+      if (!seen) dist++;
+    }
+    var maxdb = 0;
+    rowsA.forEach(function (r) {
+      maxdb = Math.max(maxdb, r.db, THIRD ? r.dc : 0);
+    });
+    var cbad = THIRD && Math.max(frob(commutator(A, C)), frob(commutator(B, C))) > 1e-9;
+
+    return { d: d, c: c, A: A, B: B, C: C, EA: EA, rowsA: rowsA, rowsB: rowsB,
+             band: band, dist: dist, maxdb: maxdb, cbad: cbad,
+             kAB: frob(commutator(A, B)), kAC: frob(commutator(A, C)),
+             kBC: frob(commutator(B, C)) };
+  }
+
+  /* ---------------- drawing ---------------- */
+  NMT.figure('fig-joint', function (c) {
+    var S = state();
+    var p = new NMT.Plot(c, { xmin: -1.8, xmax: 2.7, ymin: -2.1, ymax: 3.0,
+                              xlabel: 'value of A', ylabel: 'value of B' });
+    p.axes({ nx: 6, ny: 6 });
+
+    var acc = NMT.css('--accent'), fam = NMT.css('--familiar'),
+        ins = NMT.css('--insight'), wrn = NMT.css('--warn');
+
+    var g = p.g, pa = p.o.pad;
+    g.save(); g.beginPath();
+    g.rect(pa.l, pa.t, p.w - pa.l - pa.r, p.h - pa.t - pa.b); g.clip();
+
+    /* the band of values a legitimate eigenbasis of A could report */
+    if (S.band) {
+      var hw = 0.075;
+      p.path([[S.band.a - hw, S.band.lo], [S.band.a + hw, S.band.lo],
+              [S.band.a + hw, S.band.hi], [S.band.a - hw, S.band.hi]],
+             { close: true, fill: NMT.css('--insight-soft'), color: null });
+      p.seg(S.band.a - hw, S.band.lo, S.band.a + hw, S.band.lo, { color: ins, width: 1.4 });
+      p.seg(S.band.a - hw, S.band.hi, S.band.a + hw, S.band.hi, { color: ins, width: 1.4 });
+      p.text(S.band.a + hw, S.band.hi, ' any eigenbasis of A',
+             { color: ins, dx: 2, dy: -4, font: '11px ' + NMT.css('--sans') });
+    }
+
+    /* B's eigenvectors: horizontal bars */
+    S.rowsB.forEach(function (r) {
+      if (r.da > 1e-9) {
+        p.seg(r.a - r.da, r.b, r.a + r.da, r.b, { color: fam, width: 2 });
+        p.seg(r.a - r.da, r.b - 0.07, r.a - r.da, r.b + 0.07, { color: fam, width: 2 });
+        p.seg(r.a + r.da, r.b - 0.07, r.a + r.da, r.b + 0.07, { color: fam, width: 2 });
+      }
+      p.dot(r.a, r.b, { color: fam, r: 5, ring: true });
+    });
+
+    /* A's eigenvectors: vertical bars */
+    S.rowsA.forEach(function (r) {
+      if (r.db > 1e-9) {
+        p.seg(r.a, r.b - r.db, r.a, r.b + r.db, { color: acc, width: 2 });
+        p.seg(r.a - 0.06, r.b - r.db, r.a + 0.06, r.b - r.db, { color: acc, width: 2 });
+        p.seg(r.a - 0.06, r.b + r.db, r.a + 0.06, r.b + r.db, { color: acc, width: 2 });
+      }
+      p.dot(r.a, r.b, { color: acc, r: 4, ring: true });
+    });
+
+    /* joint eigenstates: a blue dot and a purple dot on the same point, no bars */
+    S.rowsA.forEach(function (r) {
+      if (r.db > 1e-7 || (THIRD && r.dc > 1e-7)) return;
+      var hit = S.rowsB.some(function (q) {
+        return Math.abs(q.a - r.a) < 1e-6 && Math.abs(q.b - r.b) < 1e-6 && q.da < 1e-7;
+      });
+      if (!hit) return;
+      var gg = p.g;
+      gg.beginPath(); gg.arc(p.X(r.a), p.Y(r.b), 9.5, 0, 7);
+      gg.strokeStyle = ins; gg.lineWidth = 2.2; gg.stroke();
+      if (THIRD) p.text(r.a, r.b, 'C = ' + r.c.toFixed(3),
+                        { color: ins, dx: 13, dy: -8, font: '11px ' + NMT.css('--sans') });
+    });
+
+    if (S.maxdb > 1e-7 && S.kAB < 1e-9) {
+      p.text(-1.75, 2.78, 'the operators commute — and these states are still not shared',
+             { color: wrn, font: '11.5px ' + NMT.css('--sans') });
+    }
+    g.restore();
+
+    /* ---------------- readouts ---------------- */
+    oD.textContent = 'δ = ' + S.d.toFixed(3);
+    oC.textContent = 'c = ' + S.c.toFixed(3);
+    oM.textContent = 'eigenvalues of A: ' + S.EA.lam.map(function (l) { return l.toFixed(6); }).join(',  ') +
+                     '   ·   gap = ' + Math.abs(S.EA.lam[2] - S.EA.lam[1]).toExponential(3);
+    oK.textContent = '‖[A,B]‖_F = ' + (S.kAB < 1e-12 ? S.kAB.toExponential(3) : S.kAB.toFixed(8)) +
+                     (THIRD ? '   ‖[A,C]‖_F = ' + (S.kAC < 1e-12 ? S.kAC.toExponential(3) : S.kAC.toFixed(6)) +
+                              '   ‖[B,C]‖_F = ' + (S.kBC < 1e-12 ? S.kBC.toExponential(3) : S.kBC.toFixed(6)) : '');
+    [o1, o2, o3].forEach(function (el, i) {
+      var r = S.rowsA[i];
+      el.textContent = 'v' + (i + 1) + ' = (' +
+        r.v.map(function (t) { return (t >= 0 ? ' ' : '') + t.toFixed(4); }).join(', ') +
+        ')   a = ' + (r.a >= 0 ? ' ' : '') + r.a.toFixed(6) +
+        '   ⟨B⟩ = ' + (r.b >= 0 ? ' ' : '') + r.b.toFixed(6) +
+        '   ΔB = ' + (r.db < 1e-9 ? r.db.toExponential(1) : r.db.toFixed(6)) +
+        (THIRD ? '   ⟨C⟩ = ' + (r.c >= 0 ? ' ' : '') + r.c.toFixed(4) : '');
+    });
+    var tail;
+    if (S.cbad) {
+      tail = 'C does not commute with A here — the three operators have no common eigenbasis at all. ' +
+             'Send δ back to zero.';
+    } else if (S.maxdb > 1e-7) {
+      tail = 'not a common eigenbasis: largest spread ' + S.maxdb.toFixed(6) +
+             (S.kAB < 1e-9 ? '  —  yet ‖[A,B]‖ is zero. Press “let B choose”.' : '');
+    } else {
+      tail = 'common eigenbasis reached (largest spread ' + S.maxdb.toExponential(1) + ').  ' +
+             'labels distinct: ' + S.dist + ' of 3' +
+             (S.dist === 3 ? ' — a complete set' : ' — one label pair is shared; the set is incomplete');
+    }
+    oN.textContent = tail;
+  });
+
+  /* ---------------- wiring ---------------- */
+  function mark() {
+    bCh.classList.toggle('on', CHOOSE);
+    bC3.classList.toggle('on', THIRD);
+  }
+  sD.addEventListener('input', NMT.redrawAll);
+  sC.addEventListener('input', NMT.redrawAll);
+  bCh.addEventListener('click', function () { CHOOSE = !CHOOSE; mark(); NMT.redrawAll(); });
+  bC3.addEventListener('click', function () {
+    THIRD = !THIRD; if (THIRD) CHOOSE = true; mark(); NMT.redrawAll();
+  });
+  bRs.addEventListener('click', function () {
+    CHOOSE = false; THIRD = false; sD.value = 0.60; sC.value = 0.60; mark(); NMT.redrawAll();
+  });
+  mark();
 })();
 <!--/SCRIPT-->

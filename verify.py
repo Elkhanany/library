@@ -9,6 +9,7 @@ from playwright.async_api import async_playwright
 _spec = importlib.util.spec_from_file_location("tagcheck", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tagcheck.py"))
 _tc = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_tc)
 _TAGFAIL = _tc.main(sorted(glob.glob("src/ch*.html")))
+print()
 
 F=[f[:-5] for f in sorted(os.listdir("build")) if f.endswith(".html")]
 OVF="""(()=>{let bad=0;document.querySelectorAll('.eq').forEach(eq=>{const box=eq.getBoundingClientRect().width;
