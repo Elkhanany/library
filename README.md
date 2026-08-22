@@ -208,3 +208,20 @@ The chapter's central argument had run Noether's theorem backwards, arguing *no 
 no conserved energy*, which is denying the antecedent and licenses nothing. The book had already
 proved the converse it actually needed, back in Chapter 1.4, and the chapter had simply not picked
 it up. It now runs that way round.
+
+
+## Applying a batch
+
+Cowork sessions cannot push to this repository — the git proxy refuses any repo not in the
+session's authorized set, and no control to add one exists yet
+([anthropics/claude-code#76248](https://github.com/anthropics/claude-code/issues/76248), open).
+So each batch of work arrives as a **git bundle**: the commits themselves, with their messages
+and authorship, not a zip of loose files.
+
+```bash
+./apply-batch.sh          # newest .bundle in ~/Downloads, then push
+```
+
+It refuses to run if the bundle does not sit exactly on the commit you are on, so a stale bundle
+cannot quietly turn into a merge.
+
