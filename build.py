@@ -207,6 +207,11 @@ def build():
         rows.append('<ul class="clist">')
         for num, slug, title, ismath in chs:
             tag = '<span class="tag">math</span>' if ismath else ''
+            # The plain-language tag is read out of the chapter file rather than
+            # kept in a list here, so it can only ever say what is actually true.
+            src_f = os.path.join(ROOT, "src", slug + ".html")
+            if os.path.exists(src_f) and "<!--REGISTER:clear-->" in open(src_f, encoding="utf-8").read(1000):
+                tag += '<span class="tag clear">clear</span>'
             if slug in built:
                 rows.append(f'<li><span class="cnum">{num}</span>'
                             f'<span><a href="chapters/{slug}.html">{html.escape(title)}</a>'

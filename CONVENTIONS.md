@@ -155,3 +155,56 @@ signal about terrain, which a reader building from scratch has no other way to g
 **The test.** Read a section aloud. If it sounds like a competent colleague working through
 something at a whiteboard with you, it is right. If it sounds like a reference manual, apply items
 1 and 2. If it sounds like a popular-science article, you have gone too far — go back.
+
+---
+
+# The plain-language register (the `clear` tag)
+
+Set by the reader, 24 August 2026: *"the language remains fairly dry… very dense and theatrical
+without classical simplicity that can make deep understanding clear."*
+
+He was right, and it was measurable. The main text carried **12 em-dashes and 5 semicolons per
+thousand words**; the "In plain terms" boxes, which he reads comfortably, carry **0.9 and 2.0**.
+Sentence *length* was never the problem — the boxes are longer. The problem was interruption:
+premise, algebraic action and physical consequence packed into one breath with dashes holding them
+together, alternating with clipped aphorisms.
+
+**The fix is in place, not layered over.** There is no second copy of any chapter. An overlay would
+be a second source of truth, and every one of the sixty-odd corrections verification has produced so
+far would have needed applying twice.
+
+## What the register is
+
+The binding sample is the reader's own rewrite of Chapter 2.1 §1, kept in
+`reports/register-sample.md`. Where any rule here disagrees with that sample, the sample wins.
+
+1. **One idea per sentence.** Split at the dash rather than writing through it.
+2. **Motive before the mathematics.** *"We want a scalar statement out of a vector equation, so dot
+   both sides with $\vv v$."* Never the operation first.
+3. **Signpost each section** in plain English before entering it.
+4. **Pause on what matters.** *"Let's pause and look at that final equation."*
+5. **Point forward concretely** rather than ominously.
+6. **Bullets** where a two-sided comparison would tangle in prose.
+7. **Everyday anchors** only where they are exact.
+8. **Breathe** — short paragraphs.
+9. **"We", "let's" and "you" are permitted here**, and this register deliberately overrides the
+   second-person-only rule and the ban on *let's*. The forbidden **hedges** still stand:
+   *obviously, clearly, of course, it turns out that, it can be shown*, and *simply* used to wave
+   past work rather than to mean *in a simple way*.
+
+## What it must never touch
+
+Equations, headings and their numbering, ids, `eqref` anchors, the figure script, ⚑ marks and what
+they attach to, and **every "In plain terms" box, verbatim** — those already work and the reader has
+said so. No claim, number, hypothesis or derivation step changes. This is re-delivery, not revision.
+
+`registercheck.py old new` verifies all of it and enforces the targets: em-dashes ≤ 1.0/kw,
+semicolons ≤ 2.5/kw, sentences over 35 words ≤ 14%, length within 85–140%. Headings, callout titles
+and figure labels are excluded from the counts, because a dash in a title is a separator rather than
+an interruption.
+
+## The tag
+
+A rewritten chapter carries `<!--REGISTER:clear-->` as its first line, and `build.py` reads that
+marker out of the file to print a **clear** tag beside the chapter in the contents list. The tag is
+derived, never declared, so it cannot claim something untrue.
