@@ -214,6 +214,18 @@ an interruption.
 
 ## The tag
 
-A rewritten chapter carries `<!--REGISTER:clear-->` as its first line, and `build.py` reads that
-marker out of the file to print a **clear** tag beside the chapter in the contents list. The tag is
-derived, never declared, so it cannot claim something untrue.
+A chapter in this register carries `<!--REGISTER:clear-->` as its first line, and `build.py` reads
+that marker out of the file rather than trusting a list, so the contents list cannot claim something
+untrue.
+
+**As of 24 August 2026 all thirty written chapters carry it, so the tag no longer appears.** A badge
+on every row is decoration rather than information, and `build.py` suppresses it whenever every
+written chapter has the marker. It comes back on its own the moment one does not. Keep writing the
+marker into new chapters: it costs one line and it is what makes the suppression honest.
+
+## This is now the book's register, not a variant
+
+Chapters 4.3 onward are written in it from the start. There is no second voice to convert to, and
+nothing in this section is optional for new work. `registercheck.py` still exists for the case it was
+built for — proving that a rewrite of an existing chapter changed the prose and nothing else — and
+for spot-checking a new chapter against the four targets before it ships.

@@ -1,14 +1,16 @@
 # From Newton to M-Theory — status
 
-*Last updated 24 August 2026, after Parts 0, I and II were converted to the plain-language register.*
+*Last updated 24 August 2026. **Every written chapter is now in the plain-language register.***
 
 ## Where the book stands
 
 **30 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
-**Nineteen chapters carry the `clear` tag** — Parts 0, I and II are entirely in the plain-language
-register.
+**All thirty written chapters are in the plain-language register.** The `clear` tag has therefore
+disappeared from the contents list — `build.py` suppresses it once every written chapter carries the
+marker, since a badge on every row is decoration rather than information. It returns on its own if
+one ever does not.
 
-- 418,061 words · 25,474 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
+- 424,014 words · 25,559 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
 - Every page verified at desktop and phone widths **with all network requests blocked**: zero
   KaTeX errors, zero unresolved cross-references, zero overflow, zero external requests.
 
@@ -607,4 +609,97 @@ makes it fire.
 
 ## Remaining
 
-11 chapters unconverted: Part III (9), 4.1 and 4.2.
+None. The conversion is finished.
+
+---
+
+# Batch F5 — Part III, 4.1 and 4.2, and the conversion finished (24 August 2026)
+
+Eleven chapters, 163,688 words of main prose, converted in place by eleven agents in parallel. **The
+whole written book is now in the plain-language register.**
+
+| | em-dash/kw | semicolon/kw | >35w | abrupt bridges | length |
+|---|---|---|---|---|---|
+| 3.1 | 7.98 → 0.59 | 3.94 → 0.20 | 11.8% → 4.7% | 9% → 0 | 106% |
+| 3.2 | 8.13 → 0.78 | 2.98 → 0.22 | 9.1% → 4.8% | 3% → 0 | 103% |
+| 3.3 | 5.66 → 0.81 | 4.49 → 0.72 | 10.0% → 6.1% | 7% → 0 | 108% |
+| 3.4 | 7.11 → 0.83 | 4.23 → 0.37 | 9.7% → 4.9% | 7% → 0 | 104% |
+| 3.5 | 8.32 → 0.66 | 3.77 → 0.59 | 10.2% → 4.5% | 5% → 0 | 106% |
+| 3.6 | 7.43 → 0.62 | 4.38 → 0.27 | 9.8% → 2.6% | 8% → 0 | 107% |
+| 3.7 | 8.25 → 0.68 | 5.58 → 0.38 | 13.3% → 7.2% | 3% → 0 | 101% |
+| 3.8 | 7.52 → 0.57 | 5.04 → 0.95 | **18.5% → 7.7%** | 3% → 0 | 103% |
+| 3.9 | 7.45 → 0.44 | 5.03 → 0.31 | 12.6% → 4.7% | 3% → 0 | 102% |
+| 4.1 | 8.10 → 0.13 | 5.22 → 0.07 | **16.7% → 4.7%** | 10% → 0 | 101% |
+| 4.2 | 8.78 → 0.74 | 6.21 → 0.53 | **18.2% → 3.9%** | 0% → 0 | 102% |
+
+The three chapters with the worst long-sentence rates in the book were 3.8, 4.1 and 4.2 — all
+between 16.7% and 18.5% of sentences over 35 words. All three are now under 8%.
+
+**4.1 and 4.2 were different from the rest.** They were written under the earlier, intermediate
+instruction — *"slightly more approachable, through the lens of an oncologist with a robust
+mathematical background"* — so they already put the motive before the step in many places and
+already drew on clinical fluency in the main text. The brief told both agents not to undo any of
+that: punctuation and equation bridges only, no change of stance, and above all **no new clinical
+analogy and no extension of an existing one by so much as a clause**, since the failure mode there
+is an analogy that is nearly right in front of a reader who computes $K_D$ for a living. Both held
+the line; 4.1 came out at 0.13 em-dashes per thousand words, the lowest figure in the book.
+
+## The tag has retired itself
+
+`build.py` now suppresses the **clear** tag whenever every written chapter carries the marker, and
+brings it back the moment one does not. A badge on all thirty rows is decoration rather than
+information. Chapters keep writing `<!--REGISTER:clear-->` as line 1 — it costs one line and it is
+what makes the suppression honest. `CONVENTIONS.md` now states that this is the book's register
+rather than a variant, and that 4.3 onward are written in it from the start.
+
+## Twenty-three corrections
+
+In `reports/part3-4-corrections.md`, together with the nineteen items examined and deliberately left
+alone. Forty-two were reported; each was re-verified before anything was touched. The ones worth
+knowing:
+
+- **3.1's electron charge-to-mass ratio lost its minus sign**, in a list that is otherwise signed and
+  in a chapter whose own §8.1 table gives it correctly as $-1.7588	imes10^{11}$.
+- **3.2 §8.4 contradicted its own Worked example 2** about where the centrifugal term comes from.
+  The worked example is right: the term survives the change of basis, because $\partial_r$ and
+  $\partial_	heta$ commute, and its real source is the connection.
+- **3.4's Weyl box stated conformal invariance for the wrong index placement.** It holds for
+  $C^{ho}{}_{\sigma\mu
+u}$; the fully lowered form picks up $\Omega^2$.
+- **3.6 could not agree how many sign traps it has** — the opening announces two, §5 calls one "the
+  second of the two" and mentions a third, and §6.1's box is titled "The third sign trap".
+- **3.8 gave a time the units of a distance.** The Rindler characteristic time $c/a$ is about a
+  *year* at $a=g$; the light-year is $c^2/g$, which is where the horizon sits, and which is what
+  Chapter 3.1 §6.1 actually says.
+- **3.9's counterexample for homogeneous-but-not-isotropic was a cone**, which is flat away from its
+  apex — as this book uses it elsewhere — hence locally isotropic, and is not homogeneous in the
+  section's own sense either. Now the infinite cylinder.
+- **4.1's Problem 1(d) named the wrong one of its two ingredients**, which inverted the conclusion
+  its own parts (a) and (b) had set up.
+
+**One flag was a false positive**, and it is recorded as such so nobody re-spends the hour: 3.8's
+`fig-half` caption uses coefficients $1.18$ and $pprox3$ for two quantities that genuinely differ
+— the residual in a ratio, and the gap in the total deflection. Both are right.
+
+## Where the errors were, across all three conversion batches
+
+| batch | items fixed | cross-refs & section numbers | counts in prose | arithmetic | logic |
+|---|---|---|---|---|---|
+| Part 0 | 15 | 5 | 3 | 2 | 5 |
+| 1.4 + Part II | 17 | 5 | 4 | 4 | 4 |
+| Part III + 4.1–4.2 | 23 | 3 | 5 | 5 | 10 |
+
+**Fifty-five corrections across 383,000 words**, none catchable by a build error, and almost none
+changing a final answer. That is the signature of the class: they survive because the derivation is
+right and the sentence about it is wrong, and no reviewer looks at both at once. It is also the
+argument for reading a chapter closely enough to re-say it — which is what a register pass is, and
+what no review had previously required.
+
+## Next
+
+**Batch F6: Chapter 4.3**, alone — `PLAN-FORWARD.md` §11 calls it the 3.3 of Part IV. Measure, $L^2$,
+completeness, and the Fourier basis as an honest orthonormal basis at last. It is the first chapter
+written in the plain-language register from the start, so `registercheck.py`'s four targets should be
+checked against it before it ships rather than after.
+
+Then **F7: 4.4**, also alone, where `GAPS.md` G1's seven promises come due.

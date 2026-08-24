@@ -199,6 +199,18 @@ def build():
     # ---- index hub ----
     total = len(FLAT)
     done = len(built)
+
+    # Which written chapters are in the plain-language register. While the
+    # conversion is partial the tag tells the reader something; once every
+    # written chapter carries it, it tells them nothing, so it goes away by
+    # itself rather than by anyone remembering to remove it.
+    clear = set()
+    for _l, _s, _chs in PARTS:
+        for _n, _slug, _t, _m in _chs:
+            _f = os.path.join(ROOT, "src", _slug + ".html")
+            if os.path.exists(_f) and "<!--REGISTER:clear-->" in open(_f, encoding="utf-8").read(1000):
+                clear.add(_slug)
+    show_clear = bool(clear) and not clear >= built
     rows = []
     for label, sub, chs in PARTS:
         rows.append('<section class="part">')
@@ -209,8 +221,9 @@ def build():
             tag = '<span class="tag">math</span>' if ismath else ''
             # The plain-language tag is read out of the chapter file rather than
             # kept in a list here, so it can only ever say what is actually true.
-            src_f = os.path.join(ROOT, "src", slug + ".html")
-            if os.path.exists(src_f) and "<!--REGISTER:clear-->" in open(src_f, encoding="utf-8").read(1000):
+            # It is also suppressed once it stops distinguishing anything: a badge
+            # on every written row is decoration, not information.
+            if show_clear and slug in clear:
                 tag += '<span class="tag clear">clear</span>'
             if slug in built:
                 rows.append(f'<li><span class="cnum">{num}</span>'
