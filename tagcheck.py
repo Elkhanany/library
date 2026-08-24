@@ -19,6 +19,14 @@ KNOWN = {
     "button","select","option","img","svg","path","g","circle","line","rect","text","dl","dt","dd",
 }
 
+# Elements this book always closes explicitly. HTML5 lets you omit </p>, </li> and </td>, and the
+# parser recovers silently, so an unclosed one renders correctly and no rendered-page audit can see
+# it. One had been sitting in Chapter 2.6's §5 grind box since it was written. Counting opens against
+# closes is cheap and catches it.
+BALANCED = ("p", "div", "details", "summary", "ul", "ol", "li", "table", "tr", "td", "th",
+            "figure", "figcaption", "h1", "h2", "h3", "h4", "em", "strong", "b", "i", "a", "span")
+
+
 class Scan(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True); self.bad = []
@@ -26,8 +34,19 @@ class Scan(HTMLParser):
         if tag not in KNOWN:
             self.bad.append((self.getpos()[0], tag))
 
+
+def unbalanced(t):
+    """(tag, opens, closes) for every element whose counts disagree."""
+    out = []
+    for tag in BALANCED:
+        o = len(re.findall(r"<" + tag + r"(?:\s[^>]*)?>", t))
+        c = len(re.findall(r"</" + tag + r">", t))
+        if o != c:
+            out.append((tag, o, c))
+    return out
+
 def main(paths):
-    total = 0
+    total = unclosed = 0
     for f in sorted(paths):
         raw = open(f, encoding="utf-8").read()
         # JavaScript legitimately contains < and >
@@ -40,9 +59,13 @@ def main(paths):
             for ln, tag in s.bad:
                 print(f"   line {ln}: <{tag}…  ::  {lines[ln-1].strip()[:120]}")
                 total += 1
-    print(f"tagcheck: {len(list(paths))} files, {total} unescaped '<' "
-          + ("— FIX THESE" if total else "— clean"))
-    return 1 if total else 0
+        for tag, o, c in unbalanced(t):
+            print(f"{f}:  <{tag}> {o} open / {c} close")
+            unclosed += 1
+    n = len(list(paths))
+    print(f"tagcheck: {n} files, {total} unescaped '<', {unclosed} unbalanced element(s) "
+          + ("— FIX THESE" if total or unclosed else "— clean"))
+    return 1 if (total or unclosed) else 0
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:] or glob.glob("src/ch*.html")))

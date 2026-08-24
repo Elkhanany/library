@@ -1,14 +1,14 @@
 # From Newton to M-Theory — status
 
-*Last updated 24 August 2026, after Part 0's conversion to the plain-language register.*
+*Last updated 24 August 2026, after Parts 0, I and II were converted to the plain-language register.*
 
 ## Where the book stands
 
 **30 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
-**Twelve chapters carry the `clear` tag** — Part 0 and Chapters 1.1–1.3 are in the plain-language
+**Nineteen chapters carry the `clear` tag** — Parts 0, I and II are entirely in the plain-language
 register.
 
-- 411,782 words · 25,368 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
+- 418,061 words · 25,474 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
 - Every page verified at desktop and phone widths **with all network requests blocked**: zero
   KaTeX errors, zero unresolved cross-references, zero overflow, zero external requests.
 
@@ -528,3 +528,83 @@ looks at whether a promise is about the right thing.
 ## Remaining
 
 18 chapters unconverted: 1.4, Part II (6), Part III (9), 4.1 and 4.2.
+
+---
+
+# Batch F4 — Chapter 1.4 and Part II converted, and seventeen more corrections (24 August 2026)
+
+Seven chapters, 112,531 words of main prose. **Parts 0, I and II are now entirely in the
+plain-language register** — nineteen of the thirty written chapters carry the `clear` tag.
+
+| | em-dash/kw | semicolon/kw | >35w | abrupt bridges | length |
+|---|---|---|---|---|---|
+| 1.4 | 10.95 → 0.88 | 4.44 → 0.18 | 12.8% → 3.5% | 7% → 0 | 103% |
+| 2.1 | 11.61 → 0.89 | 3.69 → 0.25 | 13.8% → 4.4% | 8% → 0 | 103% |
+| 2.2 | 14.34 → 0.15 | 4.20 → 0.52 | 10.1% → 3.3% | **16% → 0** | 106% |
+| 2.3 | 10.38 → 0.92 | 5.12 → 0.79 | 10.4% → 5.7% | 5% → 0 | 107% |
+| 2.4 | 10.98 → 0.90 | 4.16 → 0.18 | 8.9% → 2.5% | 0% → 0 | 105% |
+| 2.5 | 11.93 → 0.73 | 5.40 → 0.53 | 11.7% → 3.2% | 8% → 0 | 106% |
+| 2.6 | 11.00 → 0.62 | 3.54 → 0.34 | 10.6% → 3.9% | 10% → 0 | 110% |
+
+**Chapter 2.1 §1 is the reader's own prose.** `reports/register-sample.md` is his rewrite of that
+section, and it is the specification the whole register was calibrated against. Rather than
+paraphrase it, the converting agent installed his text, put the real equations back where his
+`[EQUATION]` placeholders were, and restored the eleven things his version passed over — he was
+demonstrating a voice, not auditing content. Among them: *"and it is correct"*; Newton's own words
+for absolute time; the flag that $t'=t$ is *"put in explicitly so that we can watch it die"*; and the
+simultaneity clause inside the physical claim.
+
+**Chapter 2.2 had the worst equation-bridge score in the book** — 16% of consecutive display
+equations had nothing said between them. It is one long derivation, two postulates in and the
+transformation out, which is exactly the shape where the algebra can be complete and the thread still
+drop. Now 0 of 51.
+
+**Chapter 2.4 was the one chapter an earlier review found did not read as the same hand as its
+neighbours.** Converting it was the chance to fix that rather than preserve it, and the four tells
+are gone: *obviously*, *simply* used to wave past work, the clipped aphorisms (*"Six. Not four…"*,
+*"Short section, high yield."*), and the doubled-dash paragraphs.
+
+## Seventeen corrections
+
+In `reports/part1-2-corrections.md`. Four are arithmetic that survived every earlier pass because
+the final answer was right anyway or nothing downstream used the number:
+
+- **A satellite number computed at the wrong speed.** 2.2 §2.5 fixes $v=30\ \mathrm{km\,s^{-1}}$,
+  then scales $x$ to orbit and reports $0.9\ \mathrm{\mu s}$. Scaling $x$ alone gives
+  $6.7\ \mathrm{\mu s}$. The quoted pair is self-consistent but requires a GPS satellite's own
+  orbital speed, silently substituted mid-sentence.
+- **A factor of $c$ inside one equation.** 2.5 §8.2 defines
+  $\vv\beta_{\rm cm}=\vv Pc/P^{0}=c\sum\vv p_i/\sum E_i$; the two halves differ by $c$, and the
+  left one is a velocity, not a $\beta$. The right-hand form is what the rest of the section uses,
+  which is why it survived.
+- **A term count off by sixteen.** 2.4's Problem 3 says relabelling leaves "the same $256$ terms";
+  a double sum over two four-valued indices has $16$, which is the $n^2$ the same paragraph claims
+  two sentences later. $256=4^4$ belongs to the rank-4 $\epsilon$ in §8.1.
+- **"Twelve-odd scalar equations."** Maxwell's four expand to eight. 2.6 §3.2 establishes that itself,
+  one section earlier.
+
+Two more were arguments that cited machinery the book does not have. 2.2's §2 preamble said a fourth
+condition came from "an overall rescaling of both frames", and no rescaling argument appears anywhere
+in the chapter — what actually happens is that condition (ii) yields two equations, because a light
+pulse can go either way along $x$. And 2.1 attributed Michelson's 1886 drag measurement,
+$0.434\pm0.02$, to Fizeau in 1851, who agreed with Fresnel only to within a few per cent.
+
+The same two categories dominate as last batch: **five cross-references or section numbers**, and
+**four counts stated in prose about equations that are themselves correct**. Both survive a
+mathematics review, which checks the derivation, and a language review, which checks the sentence,
+because they live in the seam between them.
+
+## `tagcheck.py` now checks block balance
+
+An unclosed `<p>` had been sitting in Chapter 2.6's §5 grind box since it was written. HTML5 closes
+it implicitly at the next `<p>`, so the page rendered correctly and no rendered-page audit could see
+it — the same invisibility as the unescaped `<` that produced `tagcheck.py` in the first place. It
+was found only because a converting agent counted opens against closes as a private self-check.
+
+That count is now in `tagcheck.py`, across twenty-three element types. The whole corpus balances
+exactly, so it is enforcing rather than advisory from the start, and putting the missing `</p>` back
+makes it fire.
+
+## Remaining
+
+11 chapters unconverted: Part III (9), 4.1 and 4.2.
