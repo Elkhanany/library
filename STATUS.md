@@ -1,13 +1,14 @@
 # From Newton to M-Theory — status
 
-*Last updated 18 August 2026, after the review of Parts 0–III.*
+*Last updated 24 August 2026, after Part 0's conversion to the plain-language register.*
 
 ## Where the book stands
 
-**25 of 59 chapters written** (67 under the revised plan). Parts 0, I and II complete; Part III
-complete through the field equations — 6 of 8.
+**30 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
+**Twelve chapters carry the `clear` tag** — Part 0 and Chapters 1.1–1.3 are in the plain-language
+register.
 
-- 311,000 words · 19,993 typeset expressions · 187 "In plain terms" passages · 126 ⚑ marks
+- 411,782 words · 25,368 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
 - Every page verified at desktop and phone widths **with all network requests blocked**: zero
   KaTeX errors, zero unresolved cross-references, zero overflow, zero external requests.
 
@@ -16,8 +17,9 @@ complete through the field equations — 6 of 8.
 | 0 · The Toolkit | 0.1–0.9 | complete |
 | I · The Action Principle | 1.1–1.4 | complete |
 | II · Special Relativity | 2.1–2.6 | complete |
-| III · General Relativity | 3.1–3.6 | 6 of 8 — **3.7 Schwarzschild and 3.8 Cosmology are next** |
-| IV–VII | — | not started |
+| III · General Relativity | 3.1–3.9 | complete |
+| IV · Quantum Mechanics | 4.1–4.2 | 2 of 11 — **4.3 is next** |
+| V–VII | — | not started |
 
 ## Where it lives
 
@@ -461,3 +463,68 @@ original did.
 ## Remaining
 
 27 chapters unconverted: Part 0 (9), 1.4, Part II (6), Part III (9), 4.1 and 4.2.
+
+
+---
+
+# Batch F3 — Part 0 in the plain-language register, and thirty-one corrections (24 August 2026)
+
+Nine chapters, 106,718 words of main prose, converted in place by nine agents in parallel. Twelve of
+the thirty written chapters now carry the `clear` tag.
+
+| | em-dash/kw | semicolon/kw | >35w | abrupt bridges | length |
+|---|---|---|---|---|---|
+| 0.1 | 12.21 → 0.72 | 3.28 → 0.96 | 7.6% → 2.5% | 10% → 0 | 124% |
+| 0.2 | 9.63 → 0.60 | 4.69 → 0.36 | 10.5% → 6.9% | 8% → 0 | 106% |
+| 0.3 | 9.85 → 0.59 | 5.91 → 0.24 | 11.6% → 4.1% | 4% → 0 | 104% |
+| 0.4 | 12.11 → 0.19 | 4.76 → 0.19 | 12.3% → 3.7% | 0% → 0 | 110% |
+| 0.5 | 10.86 → 0.95 | 4.56 → 0.86 | 8.2% → 4.1% | 2% → 0 | 113% |
+| 0.6 | 10.46 → 0.89 | 5.23 → 0.56 | 12.7% → 4.2% | 6% → 0 | 114% |
+| 0.7 | 8.78 → 0.42 | 4.57 → 0.14 | 11.6% → 5.1% | 3% → 0 | 103% |
+| 0.8 | 12.86 → 0.62 | 4.34 → 0.69 | 10.6% → 3.1% | 0% → 0 | 106% |
+| 0.9 | 10.70 → 0.70 | 3.12 → 0.26 | 10.5% → 3.3% | 3% → 0 | 109% |
+
+## The finding that matters more than the register
+
+Converting a chapter means reading every sentence of it closely, and that keeps turning up content
+errors eight verification passes did not. **Thirty-one this batch**, all in `reports/part0-corrections.md`.
+
+Fifteen came out of the conversion itself: a tangent triangle placed inside the circle it necessarily
+pokes out of; *"both go to zero at the same rate"*, false wherever $f'(a)=0$; a duplicated section
+number with two live cross-references to it; twelve significant figures called thirteen; two matrices
+said to share no entry that share one; the Cauchy–Schwarz phase chosen with the wrong sign; the Higgs
+flat direction placed at the symmetric point, where the Hessian is strictly negative, rather than at
+the minimum; a 3×3 Jacobian decomposed into eleven numbers; $Q$ asserted to be exactly what it is
+only approximately; a carrier whose sign flipped between a problem and its solution.
+
+Five of those fifteen were **cross-references that resolved to a real chapter about the wrong
+subject** — the free-particle propagator attributed to *The Path Integral*, contour integration
+attributed to *Vector Spaces and Linear Maps*. That is a class no build error can catch, and it is
+invisible to a math review (which checks the derivation) and to a language review (which checks the
+sentence), because it lives in the seam between them.
+
+**So `xrefcheck.py` was written**, and pointed at all thirty chapters. It proves every "Chapter N.M"
+resolves and prints the 590 distinct source–target pairs beside the title each actually lands on.
+Three agents scanned that page and found **sixteen more**, of which the largest was one shared wrong
+belief: four chapters sent the reader to 3.3 for the invariant volume element, and `src/ch3-3.html`
+contains no $\sqrt{-g}$ and does not use the word "volume". Chapter 3.5 has twenty-three, and 3.5
+§6.2 already said *"Chapter 0.6 §8.3 told you this was coming."* `GAPS.md` had even recorded that
+debt as paid in 3.5 §6.4 without noticing 0.7's prose still named 3.3.
+
+Two of the sixteen were worse than reader-facing. `debts.py` hands every promise to whoever writes
+the target chapter, so **7.1's brief was carrying a requirement to derive the Born–Infeld action**
+and **4.5's was carrying a tunnelling barrier**, neither of which belongs in those chapters.
+
+One finding was not a reference error at all. Chapter 1.3 invokes *"the inverse function theorem of
+Chapter 0.6"* twice and rests its whole Legendre-transform argument on it; Chapter 0.6 states only
+the **implicit** function theorem. The right chapter was named — the theorem was simply never stated
+anywhere in the book. It is now stated in 0.6 §8, ⚑-marked, noting its equivalence to the implicit
+version quoted in §7.
+
+**The standing recommendation this produces:** run `xrefcheck.py --all` and scan it whenever a part
+is finished. It costs about one agent-hour per part, and it is the only check in the pipeline that
+looks at whether a promise is about the right thing.
+
+## Remaining
+
+18 chapters unconverted: 1.4, Part II (6), Part III (9), 4.1 and 4.2.
