@@ -187,7 +187,16 @@ The binding sample is the reader's own rewrite of Chapter 2.1 §1, kept in
 6. **Bullets** where a two-sided comparison would tangle in prose.
 7. **Everyday anchors** only where they are exact.
 8. **Breathe** — short paragraphs.
-9. **"We", "let's" and "you" are permitted here**, and this register deliberately overrides the
+9. **Bridge every equation to the next one.** This is the one the first pilot missed. Never hand the
+   reader a second display equation straight after the first with nothing said in between. State the
+   goal of the next step *before* taking it: *"Now that we have the potential energy, our next goal
+   is to isolate the velocity, so differentiate both sides."* The algebra being all present is not
+   the same as the thread being followable, and this is the commonest place the thread drops.
+   `registercheck.py` counts transitions carrying eight words or fewer and requires under 3%; grind
+   boxes are exempt, since they hold algebra the reader opens deliberately.
+10. **Translate the fine print.** When the text hits a technical caveat or a warning, say why it
+   matters — in the real world, or in a later chapter — rather than stating it as a dry rule.
+11. **"We", "let's" and "you" are permitted here**, and this register deliberately overrides the
    second-person-only rule and the ban on *let's*. The forbidden **hedges** still stand:
    *obviously, clearly, of course, it turns out that, it can be shown*, and *simply* used to wave
    past work rather than to mean *in a simple way*.

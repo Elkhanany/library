@@ -386,3 +386,78 @@ The four MAJORs are worth recording because two are register failures rather tha
 space: measure, $L^2$, completeness, and the Fourier basis as an honest orthonormal basis at last.
 Then **F5: 4.4**, also alone, which builds the operators on it and is where `GAPS.md` G1's seven
 promises finally come due.
+
+
+---
+
+# The plain-language register — Part I converted (24 August 2026)
+
+The reader's verdict after twenty-eight chapters: *"very dense and theatrical without classical
+simplicity that can make deep understanding clear."* He was right, and it was measurable.
+
+| | main text, before | the plain-terms boxes he reads comfortably |
+|---|---|---|
+| em-dashes / 1,000 words | 12 | 0.9 |
+| semicolons / 1,000 words | 5 | 2.0 |
+| sentences over 35 words | 11% | 14% |
+
+Sentence *length* was never the problem — the boxes are longer. The problem was **interruption**:
+premise, algebraic action and physical consequence packed into one breath with dashes holding them
+together, alternating with clipped aphorisms. Plus a second fault the first pilot missed and a
+later measurement caught: **8–10% of consecutive equations had no bridging prose at all**, so the
+algebra was complete and the thread was not.
+
+## Chapters 1.1, 1.2, 1.3 — converted
+
+| | em-dash/kw | semicolon/kw | >35w | abrupt bridges | length |
+|---|---|---|---|---|---|
+| 1.1 | 11.9 → **0.2** | 5.2 → **0.3** | 11.0% → **2.8%** | 8% → **0** | 107% |
+| 1.2 | 11.7 → **0.5** | 3.8 → **0.2** | 11.4% → **3.8%** | 10% → **0** | 104% |
+| 1.3 | 11.9 → **0.5** | 4.3 → **0.1** | 10.9% → **6.2%** | 2% → **0** | 108% |
+
+**The fix is in place, not layered over.** No second copy of any chapter exists. An overlay would be
+a second source of truth, and every one of the sixty-odd corrections verification has produced would
+then need applying twice.
+
+## The machinery
+
+**`registercheck.py old new`** proves a rewrite changed the prose and nothing else. It compares
+equations, headings, ids, `eqref` anchors, canvases, the figure script, ⚑ marks and every
+"In plain terms" box byte for byte, then enforces four targets: em-dashes ≤ 1.0/kw, semicolons ≤
+2.5/kw, sentences over 35 words ≤ 14%, and abrupt equation bridges ≤ 3%. Headings, callout titles
+and figure labels are excluded from the dash count, since a dash in a title is a separator rather
+than an interruption.
+
+**The `clear` tag is derived, never declared.** A converted chapter carries `<!--REGISTER:clear-->`
+as its first line and `build.py` reads that marker out of the file, so the contents list cannot claim
+a chapter was converted when it wasn't.
+
+**`reports/register-sample.md`** holds the reader's own rewrite of Chapter 2.1 §1. It is the binding
+specification, and it outranks any rule in `CONVENTIONS.md` that disagrees with it.
+
+## Five real errors surfaced by rewriting
+
+Re-delivering an argument means reading it very closely, which turns things up:
+
+- **1.1** closing summary said failures "(a) and (b)" where the paragraph above contrasts (b) and (c).
+- **1.1** Worked example 2 computed escape velocity from $G$ and $M$ separately, which
+  `CONVENTIONS.md` forbids. Now uses $GM_{\oplus}$.
+- **1.2** §8.1's table put the Dirac action in 5.4 (Distributions and the Propagator) and the
+  Polyakov action in 7.3 (Conformal Symmetry). They are 5.5 and 7.2.
+- **1.3** attributed the Groenewold–van Hove obstruction to "cubic order" and then illustrated it
+  with $\{q^{2},p^{2}\}$, which is quartic. Now says "beyond quadratic", which is what its own
+  summary sentence already said.
+
+## Where the register fights the material
+
+Recorded because it decides how the remaining chapters go. Grind boxes carry a third of some
+chapters' em-dashes and get **dash-and-semicolon surgery only** — no added warmth, no resequencing,
+since they hold algebra the reader opens deliberately. Dense figure captions that inventory several
+numerical computations keep their parenthetical rhythm; unpacking every dash there made them longer
+and no clearer. And a few equations are pure notation-introduction with genuinely nothing to say
+between them, where the bridge has to be built by stating the motive one step earlier than the
+original did.
+
+## Remaining
+
+27 chapters unconverted: Part 0 (9), 1.4, Part II (6), Part III (9), 4.1 and 4.2.

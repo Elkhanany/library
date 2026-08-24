@@ -24,6 +24,29 @@ def flags(t):    return t.count("⚑")
 def figs(t):     return re.findall(r'<canvas[^>]*id="([^"]+)"', t)
 def refs(t):     return sorted(set(re.findall(r'href="#(e-[^"]+)"', t)))
 
+def transitions(t):
+    """Consecutive display equations with no bridging prose between them.
+
+    Handing the reader a second equation straight after the first, with nothing
+    said in between, is the commonest way a derivation stops being followable —
+    the algebra is all present and the thread is not. Grind boxes are exempt:
+    they hold algebra deliberately.
+    """
+    t = re.sub(r'<!--SCRIPT-->.*?<!--/SCRIPT-->', ' ', t, flags=re.S)
+    t = re.sub(r'<details.*?</details>', ' GRIND ', t, flags=re.S)
+    tot = abrupt = 0
+    for m in re.finditer(r'</div>\s*(.*?)\s*<div class="eq"', t, re.S):
+        seg = m.group(1)
+        if '<div class="eq"' in seg or 'GRIND' in seg:
+            continue
+        before = t[:m.start()]
+        if not before.rstrip().endswith("$$") and 'class="eq"' not in before[-400:]:
+            continue
+        tot += 1
+        if len(re.sub(r'<[^>]+>', ' ', seg).split()) <= 8:
+            abrupt += 1
+    return abrupt, tot
+
 def prose(t):
     t = re.sub(r'<!--SCRIPT-->.*?<!--/SCRIPT-->', ' ', t, flags=re.S)
     t = re.sub(r'<div class="callout plain">.*?</div>', ' ', t, flags=re.S)
@@ -80,9 +103,17 @@ def main(a, b):
     print("\nPROSE")
     m0 = metrics(A, "before"); m1 = metrics(B, "after")
 
+    a0, n0 = transitions(A); a1, n1 = transitions(B)
+    pct0 = 100*a0/n0 if n0 else 0
+    pct1 = 100*a1/n1 if n1 else 0
+    print(f"  {'equation bridges':<12} {a1} of {n1} transitions carry 8 words or fewer "
+          f"({pct1:.0f}%, was {pct0:.0f}%)")
+
     print("\nTARGETS  (the plain-terms boxes' own numbers, since those read well)")
+    m1["abrupt"] = pct1; m0["abrupt"] = pct0
     for key, lim, name in (("emdash", 1.0, "em-dashes/kw"), ("semi", 2.5, "semicolons/kw"),
-                           ("long", 14.0, "sentences >35w")):
+                           ("long", 14.0, "sentences >35w"),
+                           ("abrupt", 3.0, "abrupt eq bridges %")):
         got = m1[key]
         ok = got <= lim
         if not ok: bad += 1
