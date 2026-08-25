@@ -42,6 +42,13 @@ var NMT = (function () {
         '\\dd': '\\mathrm{d}',
         '\\ee': '\\mathrm{e}',
         '\\ii': '\\mathrm{i}',
+        /* \dv and \pdv take an optional order, as the physics package does, because
+           \dv[2]{u}{\varphi} is what anyone writing a second derivative reaches for.
+           Without this KaTeX reads "[" as the first argument and renders d[ over d2
+           with "]u\varphi" trailing — no error, just a silently wrong equation. Six
+           of those sat in Chapter 3.7, one inside its boxed orbit equation. */
+        '\\dvn': '\\frac{\\mathrm{d}^{#1}#2}{\\mathrm{d}#3^{#1}}',
+        '\\pdvn': '\\frac{\\partial^{#1}#2}{\\partial #3^{#1}}',
         '\\dv': '\\frac{\\mathrm{d}#1}{\\mathrm{d}#2}',
         '\\pdv': '\\frac{\\partial #1}{\\partial #2}',
         '\\abs': '\\left|#1\\right|',

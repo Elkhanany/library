@@ -18,6 +18,28 @@ import os, re, sys, html, collections
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC  = os.path.join(ROOT, "src")
 
+LEDGER_CELL = re.compile(r'<td[^>]*>(.*?)</td>', re.S)
+
+
+def ledger_refs(path):
+    """Every bare N.M inside a ledger table cell, with the line it sits on."""
+    if not os.path.exists(path):
+        return []
+    t = open(path, encoding='utf-8').read()
+    out = []
+    for m in LEDGER_CELL.finditer(t):
+        cell = re.sub(r'\$[^$]*\$', ' ', m.group(1))     # a chapter number is never inside maths
+        cell = html.unescape(re.sub(r'<[^>]+>', ' ', cell))
+        line = t[:m.start()].count('\n') + 1
+        # A chapter number here is a bare N.M with N a part (0-7) and M not
+        # zero-padded — which keeps measured values like 2.04 out — and is never
+        # preceded by a section sign, since "4.3 §8.4" is one chapter and one
+        # section, not two chapters.
+        for num in sorted(set(re.findall(r'(?<![\d.$§])(?<!§ )([0-7]\.[1-9]\d?)(?![\d.])', cell))):
+            out.append((line, num, re.sub(r'\s+', ' ', cell).strip()))
+    return out
+
+
 def curriculum():
     import build as bp
     t = {}
@@ -84,14 +106,32 @@ def main():
           f"{len(set(counts))} distinct targets")
     if selfref:
         print(f"  {len(selfref)} self-reference(s) — run --self")
+    # The ledger, by its own bare-number convention. It writes "4.5", never
+    # "Chapter 4.5", and lives outside the ch*-*.html glob — so neither half of
+    # this checker could see it. It missed the Part IV–VII renumbering entirely
+    # and carried about 170 references to a curriculum that no longer existed,
+    # through four commits, unnoticed.
+    led = os.path.join(SRC, "_ledger.html")
+    lrefs = ledger_refs(led)
+    lbad = [(ln, num, cell) for ln, num, cell in lrefs if num not in table]
+
     if dangling:
         print(f"\n  {len(dangling)} DANGLING:")
         for own, num, sent in dangling:
             print(f"    {own} cites Chapter {num}, which is not in the curriculum")
             print(f"        …{sent[:220]}")
-        return 1
-    print("  no dangling references")
-    return 0
+    else:
+        print("  no dangling references")
+
+    if lbad:
+        print(f"\n  {len(lbad)} DANGLING in _ledger.html:")
+        for ln, num, cell in lbad[:20]:
+            print(f"    line {ln} cites {num}, which is not in the curriculum")
+            print(f"        …{cell[:180]}")
+    else:
+        print(f"  _ledger.html: {len(lrefs)} bare references, all in the curriculum")
+
+    return 1 if (dangling or lbad) else 0
 
 if __name__ == '__main__':
     sys.exit(main())
