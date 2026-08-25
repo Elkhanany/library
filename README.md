@@ -16,8 +16,8 @@ the Standard Model and string theory — derived, not asserted.**
 [Conventions](CONVENTIONS.md) ·
 [Gaps](GAPS.md)
 
-<sub>30 of 67 chapters · 400,000 words · 24,898 typeset expressions ·
-227 plain-language passages · 0 network requests</sub>
+<sub>31 of 67 chapters · 446,000 words · 26,000 typeset expressions ·
+235 plain-language passages · 0 network requests</sub>
 
 </div>
 
@@ -98,10 +98,11 @@ They cross-reference each other, so you can move between them at any point.
 [3.8](https://elkhanany.github.io/newton-to-mtheory/ch3-8.html) Light, Redshift, and What a Horizon Is ·
 [3.9](https://elkhanany.github.io/newton-to-mtheory/ch3-9.html) Cosmology, and a Loose Thread
 
-**Part IV · Quantum Mechanics** — 2 of 11; 4.3 is next
+**Part IV · Quantum Mechanics** — 3 of 11; 4.4 is next
 
 [4.1](https://elkhanany.github.io/newton-to-mtheory/ch4-1.html) What Classical Physics Cannot Do ·
-[4.2](https://elkhanany.github.io/newton-to-mtheory/ch4-2.html) The Linear Algebra of Quantum States
+[4.2](https://elkhanany.github.io/newton-to-mtheory/ch4-2.html) The Linear Algebra of Quantum States ·
+[4.3](https://elkhanany.github.io/newton-to-mtheory/ch4-3.html) Function Spaces: Measure, L², and Completeness
 
 The derivation-by-derivation plan for the whole part is [`MATHPLAN-4.md`](MATHPLAN-4.md).
 
@@ -168,9 +169,7 @@ build.py              stage 1 — assembles fragments into whole pages
 make.py               the offline build   → build/   (self-contained, one file per chapter)
 webbuild.py           the website build   → docs/    (shared assets, GitHub Pages)
 throughline.py        regenerates src/_throughline.html by extraction
-inject_plain.py       inserts "In plain terms" boxes into a chapter, idempotently
 verify.py             audits every built page with all network blocked
-overflow_check.py     measures real horizontal overflow of typeset maths
 debts.py              extracts each chapter's forward debts from GAPS.md into its brief
 tagcheck.py           checks the ⚑ marks against the register
 ```
@@ -230,16 +229,17 @@ process is forced. The analogy had quietly dismantled the argument it was there 
 
 ## Applying a batch
 
-Cowork sessions cannot push to this repository — the git proxy refuses any repo not in the
-session's authorized set, and no control to add one exists yet
-([anthropics/claude-code#76248](https://github.com/anthropics/claude-code/issues/76248), open).
-So each batch of work arrives as a **git bundle**: the commits themselves, with their messages
-and authorship, not a zip of loose files.
+The machine that writes the chapters cannot push to this repository, so each batch arrives as a
+**git patch** carrying the commit itself — its message and its diff — rather than a zip of loose
+files:
 
 ```bash
-./apply-batch.sh          # newest .bundle in ~/Downloads, then push
+git am --3way <batch>.patch && git push
 ```
 
-It refuses to run if the bundle does not sit exactly on the commit you are on, so a stale bundle
-cannot quietly turn into a merge.
+Two things reliably go wrong and are worth knowing before they do. A patch is cut with LF endings,
+so a working tree left in CRLF by `core.autocrlf` fails every hunk on context alone: keep
+`core.autocrlf false`. And this folder lives in Dropbox, which holds `.git` directories open long
+enough that `git am` can finish its work and still leave an empty `.git/rebase-apply` behind, which
+git then reports as an interrupted rebase. Removing the empty directory clears it.
 
