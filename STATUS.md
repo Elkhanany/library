@@ -1,16 +1,16 @@
 # From Newton to M-Theory — status
 
-*Last updated 24 August 2026. **Every written chapter is now in the plain-language register.***
+*Last updated 25 August 2026, after Chapter 4.3 — the first chapter written in the plain-language register from the start.*
 
 ## Where the book stands
 
-**30 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
+**31 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
 **All thirty written chapters are in the plain-language register.** The `clear` tag has therefore
 disappeared from the contents list — `build.py` suppresses it once every written chapter carries the
 marker, since a badge on every row is decoration rather than information. It returns on its own if
 one ever does not.
 
-- 424,014 words · 25,559 typeset expressions · 227 "In plain terms" passages · 176 ⚑ marks
+- 445,635 words · 26,796 typeset expressions · 235 "In plain terms" passages · 178 ⚑ marks
 - Every page verified at desktop and phone widths **with all network requests blocked**: zero
   KaTeX errors, zero unresolved cross-references, zero overflow, zero external requests.
 
@@ -20,7 +20,7 @@ one ever does not.
 | I · The Action Principle | 1.1–1.4 | complete |
 | II · Special Relativity | 2.1–2.6 | complete |
 | III · General Relativity | 3.1–3.9 | complete |
-| IV · Quantum Mechanics | 4.1–4.2 | 2 of 11 — **4.3 is next** |
+| IV · Quantum Mechanics | 4.1–4.3 | 3 of 11 — **4.4 is next** |
 | V–VII | — | not started |
 
 ## Where it lives
@@ -664,7 +664,8 @@ knowing:
   The worked example is right: the term survives the change of basis, because $\partial_r$ and
   $\partial_	heta$ commute, and its real source is the connection.
 - **3.4's Weyl box stated conformal invariance for the wrong index placement.** It holds for
-  $C^{ho}{}_{\sigma\mu
+  $C^{
+ho}{}_{\sigma\mu
 u}$; the fully lowered form picks up $\Omega^2$.
 - **3.6 could not agree how many sign traps it has** — the opening announces two, §5 calls one "the
   second of the two" and mentions a third, and §6.1's box is titled "The third sign trap".
@@ -703,3 +704,101 @@ written in the plain-language register from the start, so `registercheck.py`'s f
 checked against it before it ships rather than after.
 
 Then **F7: 4.4**, also alone, where `GAPS.md` G1's seven promises come due.
+
+
+---
+
+# Batch F6 — Chapter 4.3, and the writing pipeline tested (25 August 2026)
+
+**Chapter 4.3, Function Spaces: Measure, $L^{2}$, and Completeness.** ~19,300 words of main prose,
+54 numbered equations, 4 grind boxes, 3 worked examples, 5 problems, one two-canvas interactive,
+plain-terms boxes 4.3.1–4.3.8, exactly two ⚑.
+
+This is **the first chapter written in the plain-language register from the start** rather than
+converted into it, so it is also the first test of `reports/writing-brief.md` and of the flow-review
+pass. Both worked. The chapter came in at 0.36 em-dashes and 0.10 semicolons per thousand words —
+better than any converted chapter — with 0% abrupt equation bridges and 7.4% of sentences over 35
+words, all on the first draft.
+
+It collects the oldest outstanding promise in the book. Chapter 0.2 said the integral would be
+thrown away and rebuilt; 0.5 said its abstraction was "the entire reason Chapter 4.3 is possible";
+0.9 flagged completeness as quoted. Fifteen promises from six chapters named this chapter and all
+fifteen are paid, one of them in a weaker form than its wording, with the shortfall stated in print.
+
+## The writer found three errors in my plan
+
+The most important is **build item 3**, which would have hollowed out the chapter's central payoff.
+The plan said to use Chapter 0.2's own sequence $f_n$ — equal to 1 at $q_1,\dots,q_n$ — as the
+Cauchy sequence with no Riemann-integrable limit. But $f_n$ and $f_m$ differ on a **finite** set, so
+$\lVert f_n-f_m\rVert_2=0$: every $f_n$ is the same vector in $L^{2}$, namely zero, which the
+Riemann class already contains. It shows the seminorm failure and the non-closure failure and **not
+incompleteness at all**, so item 12's "watch the exact sequence from item 3 now converge" would have
+been a payoff with nothing behind it.
+
+The chapter as written uses 0.2's sequence for the two failures it genuinely shows, says out loud
+that it is too thin for the third, and then *thickens* 0.2's own enumeration into indicators of small
+intervals around each rational — whose limit $\mathbf 1_U$, with $\abs U\le\tfrac14$, is genuinely
+not Riemann integrable. The reader still recognises 0.2's construction, which was the point.
+
+Also: **item 13's stated source is impossible** (no non-zero polynomial is in $L^{2}(\R)$, so
+polynomials cannot be dense in it — that is Weierstrass on a compact interval, a different space),
+and **item 17's instruction to strike Chapter 0.9's flag contradicts the book's own convention**,
+which is that a ⚑ stays at the point of use and names the chapter that proves it. Chapter 0.7 §7.3's
+Poincaré lemma is still flagged today and was proved in 3.5. All three are now recorded in
+`MATHPLAN-4.md` beside the items that were wrong.
+
+**That is eight planning errors caught by agents across this build, and still zero errors reaching a
+reader.**
+
+## What the three verification passes found
+
+Per the standing rule, none of them wrote the chapter.
+
+**Mathematics — 2 BLOCKERs, 0 MAJORs, 11 MINORs.** Both blockers were real and both were confirmed
+here at 30 digits before being fixed:
+
+- Worked example 2(d) printed $E(N)\sqrt{N+1}$ while claiming $E(N)\sqrt N$ — and the figure computes
+  $E\sqrt N$, so a reader moving the slider to the quoted $N$ would have seen different numbers than
+  the worked example claimed. The passage now gives the right numbers and names the
+  $\sqrt{N/(N+1)}$ deficit, which is still half a per cent at $N=101$.
+- Worked example 3(d) claimed a window $[-R,2R]$ makes the Cauchy mean diverge. It gives
+  $\tfrac{a}{\pi}\ln 2$, finite. Every linear family $[-R,cR]$ gives the finite $\tfrac a\pi\ln c$;
+  divergence needs a super-linear family such as $[-R,R^{2}]$. Both facts are now in the text, and
+  the point being made is stronger for it.
+
+**Narrative flow — the new pass, run for the first time, and it earned its place.** Thirteen findings,
+of which two were things no other check could have caught: §6.2 stated a true claim and then
+supported it with a pointer to §8.4 that says the opposite, and §8.5's heading and body asserted
+"two orthonormal bases" three lines above a ⚠ box saying "they are not, and nothing above claims they
+are". It also caught a physics error inside an analogy — that $\abs\psi^{2}$ "determines everything
+measurable" about $\psi$, which the same chapter's §8.5 refutes by building $\abs{\tilde\psi}^{2}$.
+
+**Cross-references — 4 wrong out of 151 outbound, 54 cross-chapter section pointers and 158 internal
+ones.** All four were section- or equation-level: Cauchy–Schwarz cited as (0.5.9) when it is (0.5.6),
+the triangle inequality attributed to 0.5 §1.3 rather than §1.4, a verbatim quotation located in a
+grind box when it lives in a problem solution, and one internal pointer naming §4.2 for work done in
+§4.1.
+
+## Three document reconciliations, adjudicated with evidence
+
+- **`GAPS.md`'s Fubini row** routed Chapter 0.2's mark to 4.3. It should not: Fubini needs *product*
+  measure, a second construction beyond the one 4.3 quotes, and 4.3 §4.1 declines it in print. Now
+  **Permanent, correctly**, which is the same status the register already gives 0.6's implicit
+  function theorem and 0.8's Picard–Lindelöf.
+- **`MATHPLAN-4.md`'s Part IV debt table was stale in all eleven rows** — 119 promises when written,
+  **242** now. Subtracting the contributions of 4.1, 4.2 and 4.3 reproduces every original number
+  exactly, creditor breakdown included, so the table was right and simply never regenerated. It now
+  says to regenerate it after every batch. Worth knowing before 4.11 is written: it was planned as a
+  light-debt chapter at 2 and is now carrying **25**, nineteen of them from 4.2 alone.
+- **`xrefcheck.py` could not see ranges.** Its separator list omitted *to*, so "Chapters 4.5 to 4.7"
+  counted as one reference to 4.5 and the 4.7 was invisible. Fixed, and the census moved by 12.
+
+## Next
+
+**Chapter 4.4, Operators in Infinite Dimensions**, alone. It is where `GAPS.md` G1's seven promises
+come due, and it now carries 25 inbound promises rather than the 9 the plan recorded — seven of them
+from 4.3, written this batch. Run `python3 debts.py 4.4` into the writing brief before starting.
+
+The one decision still outstanding, and it should be made in print before Part V: from Chapter 5.8
+the ⚑ changes meaning, from *"I chose not to prove this"* to *"nobody has proved this, and physics
+uses it anyway."*

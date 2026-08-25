@@ -35,11 +35,12 @@ def prose(t):
     t = re.sub(r'<[^>]+>', ' ', t)
     return html.unescape(t)
 
-REF = re.compile(r'\bChapters?\s+(\d+\.\d+)(?:\s*(?:,|and|to|–|-)\s*(\d+\.\d+))*')
-
 def refs(text):
     """Yield (number, surrounding sentence) for every chapter reference."""
-    for m in re.finditer(r'\bChapters?\s+((?:\d+\.\d+)(?:\s*(?:,\s*|\s+and\s+|\s*[–-]\s*)\d+\.\d+)*)', text):
+    # "Chapters 4.5 to 4.7" is one reference to each end, not one reference to the
+    # first — the separator list has to carry "to" and "through" or the second
+    # number is invisible to the census.
+    for m in re.finditer(r'\bChapters?\s+((?:\d+\.\d+)(?:\s*(?:,\s*|\s+and\s+|\s+to\s+|\s+through\s+|\s*[–-]\s*)\d+\.\d+)*)', text):
         lo = text.rfind('.', 0, m.start())
         hi = text.find('.', m.end())
         sent = re.sub(r'\s+', ' ', text[lo+1 if lo >= 0 else 0 : hi if hi >= 0 else len(text)]).strip()

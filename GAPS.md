@@ -401,7 +401,7 @@ review found unmarked in Chapters 0.2, 0.4, 0.6 and 0.7 — the ones the reader 
 | Ch | What was quoted | Class | Derivable with what the book has? | Cost to close | Status |
 |---|---|---|---|---|---|
 | 0.2 | Heine–Cantor: a continuous function on a closed bounded interval is uniformly continuous | M | No — needs compactness, which Part 0 does not build | ~1 section, or leave it | Permanent, correctly |
-| 0.2 | Fubini: a product of integrals is a double integral | M | No | Needs measure theory; Ch 4.3 | → Ch 4.3 |
+| 0.2 | Fubini: a product of integrals is a double integral | M | No | Needs **product** measure and Fubini–Tonelli, a second quoted construction beyond the one 4.3 §2.3 makes; 4.3 §4.1 declines it in print | **Permanent, correctly** |
 | 0.2 | Liouville: $\ee^{-x^{2}}$ and its relatives have no elementary antiderivative | M | No — differential Galois theory, and nothing else in the book touches it | Will not be paid | Permanent, correctly |
 | 0.4 | The fundamental theorem of algebra | M | No — the honest proofs are Liouville's theorem or a winding number | Becomes a 3-line corollary once 5.4 builds complex analysis | → Ch 5.4 (see G4) |
 | 0.6 | The implicit function theorem | M | No — needs the contraction mapping principle | ~1 section, after 4.3 | Permanent, correctly |
@@ -425,7 +425,7 @@ of algebra (0.4) and the implicit function theorem (0.6) — are candidly labell
 | 1.1 | The Lorentz force law, and the field of a uniformly moving charge | E / F | The covariant form, yes (2.6); the retarded field of an accelerating charge, no | The retarded field needs Green's functions of $\Box$ — available after 5.4 | Partly → **Ch 2.6** |
 | 1.1 | The dropped radiation term in the moving-charge field | M | It is justified in place by an order-of-magnitude estimate | — | Adequately handled |
 | 1.1 | Observables are self-adjoint operators on a Hilbert space | F | No | — | → Ch 4.2, 4.4 |
-| 1.2 | Interchanging $\dv{}{\epsilon}$ with $\int\dd t$ in the first variation | M | No — needs dominated convergence | 1 section of 4.3 | → Ch 4.3 would close it |
+| 1.2 | Interchanging $\dv{}{\epsilon}$ with $\int\dd t$ in the first variation | M | No — needs dominated convergence | **The tool now exists**: 4.3 §4.3 proves differentiation under the integral sign | Not collected by name. 1.2 discharges its own mark in place under a continuity-and-compactness hypothesis, and never says "Chapter 4.3", so `debts.py` cannot see it. Closable in one sentence whenever 1.2 is next touched |
 | 1.2 | Ostrogradsky's theorem: a Lagrangian depending on $\ddot q$ has an unbounded-below energy | M | Yes, in principle — it is 1.3's Hamiltonian machinery applied to a case 1.3 skipped | ~1 section | Re-flagged in 3.6; needed by 7.1 |
 | 1.2 | The preview paragraph on the path integral | F | No | — | → Ch 5.6 |
 | 1.2 | Jacobi's theorem: the second variation is positive definite exactly up to the first conjugate point | M | Partially — the geometric example is worked | ~2 sections | → Ch 3.7/3.8 for the lensing application |

@@ -94,22 +94,25 @@ mathematics, and it is checkable.
 
 ### 0.2 · What Part IV owes — the debt map
 
-`python3 debts.py 4` returns **119 sentences** in the written text that name a Part IV chapter.
+`python3 debts.py 4` returns **242 sentences** in the written text that name a Part IV chapter.
+**Regenerate this table after every batch.** It was accurate at 119 when written and went stale the moment
+4.1, 4.2 and 4.3 were written, because those chapters cite each other and everything before them. Every row
+below moved, and subtracting the three new chapters' contributions reproduces the original numbers exactly.
 Every one is a requirement. Counts, and the collector:
 
 | Ch | Debts | The heaviest creditors |
 |---|---|---|
-| 4.1 | 5 | 2.5 (five times: Compton as evidence for photon momentum; $p^\mu=\hbar k^\mu$ "promoted from a structural suspicion to a law") |
-| 4.2 | 22 | 0.5 (12), 0.4 (6), 1.3 (2). The largest single block in the part |
-| 4.3 | 7 | 0.2 (2), 0.5 (2), 0.9 (2), 1.1 (1) |
-| 4.4 | 9 | 0.5 (3), 0.9 (3), 0.2 (2), 0.6 (1) |
-| 4.5 | 22 | 0.7 (5), 0.5 (4), 0.2 (4), 0.9 (3) |
-| 4.6 | 14 | 0.8 (8), 1.3 (3), 0.5 (2), 0.3 (1) |
-| 4.7 | 23 | 1.3 (9), 0.9 (6), 0.5 (4), 0.4 (2) — **the heaviest in the part** |
-| 4.8 | 10 | 1.4 (4), 0.5 (3), 1.3 (2), 3.9 (1) |
-| 4.9 | 3 | 1.4's ⚑ ("And the payoff arrives in Chapter 4.9"), 0.3, 0.4 |
-| 4.10 | 2 | 2.5 §3.3 (the fine structure), 1.3 (the adiabatic theorem) |
-| 4.11 | 2 | 0.8, 0.9 |
+| 4.1 | 23 | 4.2 (12), 4.3 (6), 2.5 (5) |
+| 4.2 | 33 | 0.5 (12), 4.3 (7), 0.4 (6), 4.1 (4) |
+| 4.3 | 15 | 4.2 (6), 0.2 (2), 0.5 (2), 0.9 (2) |
+| 4.4 | 25 | 4.2 (9), 4.3 (7), 0.5 (3), 0.9 (3) |
+| 4.5 | 30 | 0.7 (5), 4.2 (5), 0.2 (4), 0.5 (4) |
+| 4.6 | 17 | 0.8 (8), 1.3 (3), 0.5 (2), 4.2 (2) |
+| 4.7 | 41 | 4.2 (13), 1.3 (9), 0.9 (6), 0.5 (4) |
+| 4.8 | 16 | 4.2 (6), 1.4 (4), 0.5 (3), 1.3 (2) |
+| 4.9 | 7 | 4.1 (2), 4.2 (2), 0.3 (1), 0.4 (1) |
+| 4.10 | 10 | 4.2 (6), 1.3 (1), 2.5 (1), 4.1 (1) |
+| 4.11 | 25 | 4.2 (19), 4.1 (4), 0.8 (1), 0.9 (1) |
 
 **Run `python3 debts.py 4.N` and paste the output into the writing brief for chapter N.** It is the
 chapter's requirements list, not background reading.
@@ -378,7 +381,7 @@ completeness ⚑ in one chapter.
 | 14 | Bessel, Parseval, and the equivalence of four statements of completeness | **0.5** §2 | Prove the equivalence; it is what makes item 16 checkable |
 | 15 | **Continuous functions are dense in $L^{2}$** | derived from the regularity quoted in item 4 | Do **not** flag this separately — say explicitly that it is being cashed out of item 4's package, so the reader can see the flag is doing exactly the work it claimed |
 | 16 | **Fejér's theorem: the Cesàro means of a Fourier series converge uniformly for continuous $f$** | built, constructively, from the Fejér kernel — a positive kernel, integrating to one, concentrating at zero, which is **0.9** §5.2's delta-sequence argument re-used | The good route: Fejér is elementary, constructive, and reuses machinery the reader owns |
-| 17 | **The Fourier basis is an orthonormal basis of $L^{2}$** | items 14, 15, 16 | Verified. **This closes `GAPS.md` G1's sixth promise and the ⚑ of 0.9 §1.3** — *"Both facts are proved in Chapter 4.3, where the space of square-integrable functions gets its proper name (a Hilbert space) and completeness stops being an assumption."* Strike the flag in 0.9 in the same commit |
+| 17 | **The Fourier basis is an orthonormal basis of $L^{2}$** | items 14, 15, 16 | Verified. **This closes `GAPS.md` G1's sixth promise and the ⚑ of 0.9 §1.3** — *"Both facts are proved in Chapter 4.3, where the space of square-integrable functions gets its proper name, a Hilbert space, and completeness stops being an assumption."* **Do not strike the flag in 0.9.** The book's convention, applied twice already at Chapter 0.7 §7.3 (Poincaré) and §7.1 (generalised Stokes), is that a ⚑ stays at the point of use and names the chapter that proves it; both are still flagged today and both were collected in 3.5. Record the payment in `GAPS.md` instead |
 | 18 | $L^{2}$ convergence is not pointwise convergence | items 16–17; **0.9** §1.4's Gibbs example, revisited | Verified: $\norm{f-S_N}_2\sim N^{-1/2}$ for the square wave while the overshoot sits permanently at $8.95\%$ of the jump. **Two different convergences, one picture.** This is §0.3's numerical confirmation |
 | 19 | Position and momentum representations are two bases for one space | item 17 and **0.9** §2.3 | **Collects 0.9's "Where this gets spent" line** naming 4.3 for exactly this |
 
@@ -386,6 +389,24 @@ completeness ⚑ in one chapter.
 the partial sum, the $L^{2}$ error and the pointwise error together. **Test:** the $L^{2}$ error
 falls like $N^{-1/2}$ over two decades of $N$ while the displayed maximum error stays at
 $0.0895\times$ the jump — the two curves visibly doing different things.
+
+**Three errors in this 4.3 plan, caught by the writing and verification agents. Recorded because the
+same mistakes are easy to make again in 4.4:**
+
+1. **Item 3 does not work as specified.** Chapter 0.2's $f_n$ differs from $f_m$ on a *finite* set, so
+   $\lVert f_n-f_m\rVert_2=0$ and every $f_n$ is the same vector in $L^2$, namely zero — which the
+   Riemann class already contains. It exhibits the seminorm failure and the non-closure failure but
+   **not incompleteness**, so item 12's payoff would have had nothing behind it. The chapter as
+   written uses 0.2's sequence for the two failures it genuinely shows, says out loud that it is too
+   thin for the third, and then *thickens* 0.2's own enumeration into indicators of small intervals
+   around each rational. That limit, $\mathbf 1_U$ with $\abs U\le\tfrac14$, is genuinely not
+   Riemann integrable, and the reader still recognises 0.2's construction.
+2. **Item 13's stated source is impossible.** No non-zero polynomial is in $L^2(\R)$, so polynomials
+   with rational coefficients cannot be dense in it. That argument is Weierstrass on a compact
+   interval, which is not this space. The chapter uses step functions with rational values on
+   rational-endpoint intervals, out of the same regularity clause the plan wanted spent.
+3. **Item 17's instruction to strike 0.9's flag contradicts the book's convention** — see the item's
+   own row, now corrected.
 
 **⚑ permitted in 4.3:** the construction of Lebesgue measure, quoted as a package (item 4); the
 proof of Riesz–Fischer (item 12). **Nothing else.** **Two** — and it should be said in the closing
