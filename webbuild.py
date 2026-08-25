@@ -152,6 +152,10 @@ async def main():
             pg = await b.new_page(viewport={"width": 1280, "height": 1000})
             await pg.goto("file://" + src)
             await pg.wait_for_timeout(2400)
+            # Rewind any animated figure before the DOM is saved, so two builds of
+            # identical source produce identical files.
+            await pg.evaluate("() => { if (window.NMT && NMT.resetForSnapshot) NMT.resetForSnapshot(); }")
+            await pg.wait_for_timeout(60)
             body = await pg.evaluate("document.querySelector('.main .col').innerHTML")
             # prose word count: the maths is stripped, so a \(\gamma\) counts once, not
             # once per KaTeX span plus its MathML shadow

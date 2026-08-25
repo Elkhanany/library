@@ -479,6 +479,19 @@ var NMT = (function () {
 
   function redrawAll() { redraws.forEach(function (f) { try { f(); } catch (e) {} }); }
 
+  /* An animated figure writes live values into its readouts, and the build saves
+     the finished DOM to disk — so whatever the animation happened to reach in the
+     moment before the snapshot gets baked into the file. That made ch0-8 differ
+     between two builds of identical source, which is why it turned up in every
+     batch. A figure that animates registers a reset here; the build calls it
+     before saving, so the file on disk always shows the t = 0 state. */
+  var snapshots = [];
+  function onSnapshot(f) { snapshots.push(f); }
+  function resetForSnapshot() {
+    snapshots.forEach(function (f) { try { f(); } catch (e) {} });
+    redrawAll();
+  }
+
   /* ---------- boot ---------- */
   window.addEventListener('DOMContentLoaded', function () {
     numberEquations();
@@ -494,5 +507,6 @@ var NMT = (function () {
     }
   });
 
-  return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, typeset: typeset };
+  return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, typeset: typeset,
+           onSnapshot: onSnapshot, resetForSnapshot: resetForSnapshot };
 })();

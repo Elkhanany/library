@@ -4,7 +4,7 @@
 
 ## Where the book stands
 
-**31 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 2 of 11.
+**31 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 3 of 11.
 **All thirty written chapters are in the plain-language register.** The `clear` tag has therefore
 disappeared from the contents list — `build.py` suppresses it once every written chapter carries the
 marker, since a badge on every row is decoration rather than information. It returns on its own if

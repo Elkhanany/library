@@ -2114,6 +2114,16 @@ function startLoop() {
 startLoop();
 document.addEventListener('visibilitychange', function () { lastMs = null; });
 
+/* The build saves the finished DOM, so the readouts must not carry whatever
+   instant the animation happened to be at when it did. Stop the loop and rewind
+   to t = 0 — stopping matters as much as rewinding, since a loop left running
+   advances simT again between the reset and the moment the DOM is read. */
+if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(function () {
+  playing = false;
+  if (rafId !== null) { window.cancelAnimationFrame(rafId); rafId = null; }
+  simT = 0;
+});
+
 /* ---------- controls ---------- */
 function preset(d1, d2, btn) {
   sD1.value = d1; sD2.value = d2; simT = 0;

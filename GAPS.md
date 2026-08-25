@@ -37,7 +37,9 @@ reader — who was told a chapter number — has no way to know.
 
 ### The census, as of 25 chapters
 
-- **126 ⚑ marks**, across 21 of the 25 chapters. (This was 117 when the register was first written;
+- **178 ⚑ marks**, across 28 of the 31 chapters (recount with
+`sum of ⚑ over src/ch*.html` after every batch — this line fed forward into chapter briefs while it
+said 126). (This was 117 when the register was first written;
   the review pass of August 2026 added nine, eight of them in Part 0 — see the note below.)
 - **Four chapters carry none**: 0.1, 0.3, 0.5 and — as a real fact rather than an oversight — no
   chapter in Parts I to III. Chapter 3.5 carried none until the review found that its general-$p$
