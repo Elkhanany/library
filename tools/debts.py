@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Extract every forward reference naming a given chapter, with its context.
+
+The point of `GAPS.md` §7: 393 references to unwritten chapters were each
+written in good faith by an author who knew what the later chapter was going
+to say. The risk is not that they are wrong — it is that the agent writing
+that chapter does not know eight earlier chapters have already told the reader
+what it will do. Run this and paste the output into the writing brief, and 393
+hopes become 393 requirements.
+
+    python3 debts.py 4.3          one chapter
+    python3 debts.py 4            a whole part
+    python3 debts.py --census     how many debts each unwritten chapter carries
+"""
+import re, sys, glob, os, collections, html
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import library
+BOOK = library.book(os.environ.get("NMT_BOOK", "newton-to-mtheory"))
+
+
+def strip(s):
+    s = re.sub(r"<[^>]+>", "", s)
+    return " ".join(html.unescape(s).split())
+
+# "Chapters 4.5, 4.6 and 4.8" names three chapters. The original pattern required
+# the singular word "Chapter" immediately before the number, so every plural run
+# was invisible — 99 references, across the chapters and the ledger, that the
+# census counted as zero. This matches the run and then asks whether the target
+# is in it.
+RUN = re.compile(r"Chapters?\s+((?:\d+\.\d+)(?:\s*(?:,\s*|and\s+|to\s+|through\s+|[–-]\s*)\d+\.\d+)*)")
+
+
+def mentions(txt, target, whole_part):
+    """(start, end) for every place the target is named, plural runs included."""
+    for m in RUN.finditer(txt):
+        for mm in re.finditer(r"\d+\.\d+", m.group(1)):
+            num = mm.group(0)
+            hit = num.startswith(target + ".") if whole_part else num == target
+            if hit:
+                s = m.start(1) + mm.start()
+                yield s, s + len(num)
+
+
+def sentences_naming(path, pat):
+    """Return (line number, the whole sentence) for each mention."""
+    raw = open(path, encoding="utf-8").read()
+    txt = strip(raw)
+    out = []
+    for m in re.finditer(pat, txt):
+        a = txt.rfind(". ", 0, max(0, m.start() - 1))
+        a = 0 if a < 0 else a + 2
+        b = txt.find(". ", m.end())
+        b = len(txt) if b < 0 else b + 1
+        # locate the line in the source, for editing
+        needle = txt[m.start():m.end()]
+        ln = raw[:raw.find(needle)].count("\n") + 1 if needle in raw else 0
+        out.append((ln, txt[a:b].strip()))
+    return out
+
+def census():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("bp", "build.py")
+    bp = importlib.util.module_from_spec(spec); spec.loader.exec_module(bp)
+    written = {n for n, slug, *_ in bp.FLAT if os.path.exists(BOOK.chapter_path(slug))}
+    planned = [n for n, *_ in bp.FLAT]
+    c = collections.Counter()
+    for p in glob.glob(os.path.join(BOOK.src, "ch*.html")):
+        for m in re.findall(r"Chapter (\d\.\d+)", strip(open(p, encoding="utf-8").read())):
+            c[m] += 1
+    print(f"{sum(v for k, v in c.items() if k not in written)} forward references "
+          f"to unwritten chapters\n")
+    unknown = [k for k in c if k not in planned]
+    for n in planned:
+        if n not in written and c[n]:
+            print(f"  {n:5s} {c[n]:3d}")
+    if unknown:
+        print("\n  !! naming chapters that do not exist in the curriculum: "
+              + ", ".join(sorted(unknown)))
+
+def report(target):
+    whole_part = "." not in target
+    pat = (r"Chapter %s\.\d+" % re.escape(target)) if whole_part \
+          else (r"Chapter %s(?!\d)" % re.escape(target))
+    total = 0
+    # The ledger is included because its "Spent in" column is a promise like any
+    # other — 84 of them pointed into Part IV and no census had ever seen them,
+    # since it globbed ch*.html only.
+    for p in sorted(glob.glob(os.path.join(BOOK.src, "ch*.html"))) + [os.path.join(BOOK.src, "_ledger.html")]:
+        if not os.path.exists(p):
+            continue
+        raw = open(p, encoding="utf-8").read()
+        if p.endswith("_ledger.html"):
+            # The ledger writes bare numbers in its cells, never "Chapter 4.5".
+            hits = []
+            for m in re.finditer(r"<td[^>]*>(.*?)</td>", raw, re.S):
+                cell = re.sub(r"\$[^$]*\$", " ", m.group(1))
+                cell = strip(cell)
+                for num in set(re.findall(r"(?<![\d.§])([0-7]\.[1-9]\d?)(?![\d])(?!\.\d)", cell)):
+                    ok = num.startswith(target + ".") if whole_part else num == target
+                    if ok and cell not in hits:
+                        hits.append(cell)
+            if hits:
+                print(f"\n### ledger — {len(hits)}")
+                for s in hits:
+                    print(f"  · {s[:300]}")
+                    total += 1
+            continue
+        txt = strip(raw)
+        seen, hits = set(), []
+        for a, b in mentions(txt, target, whole_part):
+            lo = txt.rfind(". ", 0, max(0, a - 1))
+            lo = 0 if lo < 0 else lo + 2
+            hi = txt.find(". ", b)
+            hi = len(txt) if hi < 0 else hi + 1
+            s = txt[lo:hi].strip()
+            if s not in seen:
+                seen.add(s); hits.append(s)
+        if not hits:
+            continue
+        print(f"\n### {os.path.basename(p)[:-5]} — {len(hits)}")
+        for s in hits:
+            print(f"  · {s}")
+            total += 1
+    print(f"\n{total} promises name Chapter {target}. Every one is a requirement.")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] == "--census":
+        census()
+    else:
+        report(sys.argv[1])
