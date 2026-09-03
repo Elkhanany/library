@@ -52,17 +52,22 @@ expanded from 4 chapters to 9 for exactly that reason, and Parts I–III move fa
 | Part | `PLAN.md` v2.0 | Revised | Δ | The one-line reason |
 |---|---|---|---|---|
 | III · General Relativity | 8 | **9** | +1 | Schwarzschild is carrying six separate promises from four earlier chapters and cannot hold them in one chapter |
-| IV · Quantum Mechanics | 8 | **11** | +3 | Chapter 4.3 alone is currently owed six distinct mathematical debts by Part 0; and hydrogen is scheduled *before* the angular momentum it needs |
+| IV · Quantum Mechanics | 8 | **20** | +12 | Chapter 4.3 alone is owed six distinct mathematical debts by Part 0; hydrogen is scheduled *before* the angular momentum it needs; and the eight chapters that remained were carrying eleven new objects each, against a book that runs at five or six. See §5 |
 | V · Quantum Field Theory | 9 | **11** | +2 | Complex analysis and distributions have never been built anywhere in the book; and one chapter cannot both regulate a loop and run the renormalisation group |
 | VI · Gauge Theory & the SM | 7 | **8** | +1 | "The Standard Model, assembled" as written is a tabulation; splitting off electroweak lets the structure be derived instead |
 | VII · Strings & M-Theory | 8 | **9** | +1 | T-duality and D-branes are genuinely derivable and are wasted as a third of a survey chapter |
-| **Total** | **59** | **67** | **+8** | |
+| **Total** | **59** | **76** | **+17** | |
 
-Remaining to write: **42 chapters** (was 34).
+Remaining to write: **51 chapters** (was 34).
 
 For comparison: Part 0's expansion was 4 → 9, a 125% increase in that part and 34% in the book.
-This is 14%. I have looked hard for merges and cuts to offset it; §§4–8 record the three I found
-and why I rejected two of them.
+This is 29% — but it is two decisions, not one, and only the first is an addition of content. The
++8 argued in §§4–8 (59 → 67) is new material: complex analysis, distributions, perturbation theory,
+electroweak. The further +9 is Part IV alone, re-cut from eleven chapters into twenty by
+`reports/part4-replan.md` with **no material added and none dropped**, because the chapters as
+planned were carrying twice the objects a sitting holds. On content the expansion is still 14%. I
+have looked hard for merges and cuts to offset it; §§4–8 record the three I found and why I
+rejected two of them.
 
 ### Where I would *not* add
 
@@ -135,12 +140,12 @@ it on.
 | Completeness of the Fourier basis | **BUILD** | 4.3 | 1 section | Closes 0.9's ⚑ directly. Given L² and Riesz–Fischer this is Parseval plus a density argument, and the density argument (trigonometric polynomials are dense) can be done by Fejér's theorem, which is elementary and constructive |
 | Unbounded operators and domains | **BUILD** | 4.4 | 2 sections | Cheap, essential, and *concrete*: the momentum operator is not defined on all of L², the adjoint's domain is not the operator's domain, and the boundary term Chapter 0.2 waved through when it made $-\ii\hbar\partial_x$ Hermitian is exactly where the domain lives. Chapter 0.6 already promised this: *"In infinite dimensions linear maps can be unbounded, $\dv{}{x}$ being the standard offender"* |
 | Hermitian ≠ self-adjoint | **BUILD** | 4.4 | 2 sections | This is the payoff of the whole chapter and `PLAN.md` §2 already advertises it. Do it on the two examples that make it bite: (i) the particle in a box, whose Hamiltonian has deficiency indices $(2,2)$ and therefore a $U(2)$ — four-real-parameter — family of self-adjoint extensions, so the *boundary condition is a physical choice*, not a technicality (the familiar one-parameter family belongs to **momentum** on an interval, whose indices are $(1,1)$; do not conflate them); (ii) momentum on the half-line, which is symmetric and has **no** self-adjoint extension, so "momentum of a particle on a half-line" is not an observable. Deficiency indices may be ⚑'d; these two cases can be worked in full |
-| Spectral theorem, infinite dimensions | **⚑, then verify in every case used** | 4.4 | 1 section + 3 verifications | The general proof (Cayley transform → bounded case → continuous functional calculus → Riesz representation) is three chapters of analysis and is the one place I would spend a flag without hesitation. But state it in the *multiplication-operator* form — every self-adjoint operator is multiplication by a real function on some L²(μ) — say plainly that this is the infinite-dimensional reading of Chapter 0.5's $A=UDU^{\dagger}$, and then verify it by hand for the only three operators the book ever uses it on: $\hat x$ (already multiplication), $\hat p$ (multiplication after Fourier transform, which is 0.9), and $\hat H_{\text{osc}}$ (discrete spectrum, Hermite completeness). The reader then has the theorem *and* has checked it wherever it matters. This closes 0.5's *"Chapter 4.3 pays this bill in full"* honestly |
-| Stone's theorem | **BUILD one direction, ⚑ the other** | 4.4 | ½ section | $H$ self-adjoint ⇒ $\ee^{-\ii Ht/\hbar}$ unitary is three lines given the functional calculus. The converse (every strongly continuous one-parameter unitary group has a self-adjoint generator) is the hard half and is ⚑'d. This is what makes "time evolution is unitary" and "the Hamiltonian is self-adjoint" the same statement, which is the sentence Chapter 0.5 has been pointing at since §7 |
-| Rigged Hilbert space / Gelfand triple | **⚑, with the concrete content stated** | 4.4 | 1 section | The reader does not need the triple. They need to know precisely one thing: $\ket{x}$ and $\ket{p}$ are not vectors in the space, they are continuous functionals on a smaller space of well-behaved functions, and every manipulation using them is shorthand for a wave-packet statement. Give the honest version (box normalisation, then the limit) so the reader has a crutch that always works, quote Gelfand–Maurin, and move on. Full distribution theory arrives in 5.4, where the physics genuinely forces it |
-| Quantum statistics (Bose/Fermi distributions) | **BUILD**, but not where you would expect | 4.1 and 4.11 | 1 section each | 4.1 needs the Planck spectrum on page one, and Bose–Einstein statistics is not available that early — the symmetrisation postulate is 4.11. Resolution: derive the Planck law **Einstein's way**, from the A and B coefficients plus detailed balance plus 0.6's Boltzmann distribution. That is fully derivable with what the book has, and it is better physics besides, because it derives stimulated emission on the way. The occupation-number distributions then arrive properly in 4.11 once exchange symmetry exists |
-| Special functions (Hermite, Legendre, Laguerre, spherical harmonics) | **BUILD, algebraically — never by series** | 4.6, 4.8, 4.9 | absorbed | The book has no theory of special functions and does not need one. Hermite functions come out of the ladder operators; spherical harmonics come out of the $\mathfrak{su}(2)$ raising/lowering algebra; the hydrogen radial functions come out of a factorisation (the same ladder trick, with an $\ell$-dependent shift). All three are *algebra*, they reuse the one technique, and they are far better teaching than a Frobenius series. This is a real saving: it is why 4.9 fits in one chapter |
-| Measurement / the Born rule | **POSTULATE, said out loud** | 4.2, revisited 4.11 | — | Not derivable. Say so in the box where it enters, and say so again in 4.11 with a fair account of what decoherence does and does not explain. `GAPS.md` §7 |
+| Spectral theorem, infinite dimensions | **⚑, then verify in every case used** | 4.5 | 1 section + 3 verifications | The general proof (Cayley transform → bounded case → continuous functional calculus → Riesz representation) is three chapters of analysis and is the one place I would spend a flag without hesitation. But state it in the *multiplication-operator* form — every self-adjoint operator is multiplication by a real function on some L²(μ) — say plainly that this is the infinite-dimensional reading of Chapter 0.5's $A=UDU^{\dagger}$, and then verify it by hand for the only three operators the book ever uses it on: $\hat x$ (already multiplication), $\hat p$ (multiplication after Fourier transform, which is 0.9), and $\hat H_{\text{osc}}$ (discrete spectrum, Hermite completeness). The reader then has the theorem *and* has checked it wherever it matters. This closes 0.5's *"Chapter 4.5 pays this bill in full"* honestly |
+| Stone's theorem | **BUILD one direction, ⚑ the other** | 4.5 §9 | ½ section | $H$ self-adjoint ⇒ $\ee^{-\ii Ht/\hbar}$ unitary is three lines given the functional calculus. The converse (every strongly continuous one-parameter unitary group has a self-adjoint generator) is the hard half and is ⚑'d. This is what makes "time evolution is unitary" and "the Hamiltonian is self-adjoint" the same statement, which is the sentence Chapter 0.5 has been pointing at since §7 |
+| Rigged Hilbert space / Gelfand triple | **⚑, with the concrete content stated** | 4.5 §6 | 1 section | The reader does not need the triple. They need to know precisely one thing: $\ket{x}$ and $\ket{p}$ are not vectors in the space, they are continuous functionals on a smaller space of well-behaved functions, and every manipulation using them is shorthand for a wave-packet statement. Give the honest version (box normalisation, then the limit) so the reader has a crutch that always works, quote Gelfand–Maurin, and move on. Full distribution theory arrives in 5.4, where the physics genuinely forces it |
+| Quantum statistics (Bose/Fermi distributions) | **BUILD**, but not where you would expect | 4.1 and 4.18 | 1 section each | 4.1 needs the Planck spectrum on page one, and Bose–Einstein statistics is not available that early — the symmetrisation postulate is 4.18. Resolution: derive the Planck law **Einstein's way**, from the A and B coefficients plus detailed balance plus 0.6's Boltzmann distribution. That is fully derivable with what the book has, and it is better physics besides, because it derives stimulated emission on the way. The occupation-number distributions then arrive properly in 4.18 once exchange symmetry exists |
+| Special functions (Hermite, Legendre, Laguerre, spherical harmonics) | **BUILD, algebraically — never by series** | 4.8, 4.12, 4.13 | absorbed | The book has no theory of special functions and does not need one. Hermite functions come out of the ladder operators; spherical harmonics come out of the $\mathfrak{su}(2)$ raising/lowering algebra; the hydrogen radial functions come out of a factorisation (the same ladder trick, with an $\ell$-dependent shift). All three are *algebra*, they reuse the one technique, and they are far better teaching than a Frobenius series. This is a real saving: it is why 4.13 fits in one chapter |
+| Measurement / the Born rule | **POSTULATE, said out loud** | 4.2, revisited 4.20 | — | Not derivable. Say so in the box where it enters, and say so again in 4.20 with a fair account of what decoherence does and does not explain. `GAPS.md` §7 |
 
 **Net for Part IV: build almost all of it.** The one substantial ⚑ is the spectral theorem, and it
 is discharged into three explicit verifications. This is the right call because Part 0 has already
@@ -153,7 +158,7 @@ infinite-dimensional case is waved through.
 | Machinery | Decision | Where | Cost | Argument |
 |---|---|---|---|---|
 | **Complex analysis** — Cauchy's theorem, residues, contour deformation, analytic continuation | **BUILD** | 5.4, ~½ chapter | 6–7k words | This is the largest genuinely *invisible* hole in the book. It has never been built anywhere, it has already been used once without a flag (0.9 quotes the Cauchy characteristic function as "a contour integral"), and 0.3 has promised in writing that Chapter 5.9 will read poles as particles, poles off the axis as resonances and branch cuts as thresholds. Without it, the Feynman propagator, the $\ii\epsilon$ prescription, dimensional regularisation and Wick rotation are all assertions. It is also cheap — Cauchy's theorem follows from Green's theorem, which is Chapter 0.7 — and it pays for itself immediately by evaluating the four contours that give the four Green's functions of the Klein–Gordon operator |
-| Distributions, properly | **BUILD** | 5.4 | ~⅓ chapter | Chapter 0.9 handled the delta by what it does, which was right then. Field theory needs more: $\delta^{4}(x-y)$, derivatives of distributions, the distributional identity $1/(x\pm\ii\epsilon)=\mathrm{P}(1/x)\mp\ii\pi\delta(x)$ (which *is* the optical theorem in embryo), and the Fourier transform on tempered distributions. Given 0.9, this is a short build, and it closes the rigged-Hilbert-space ⚑ from 4.4 retrospectively |
+| Distributions, properly | **BUILD** | 5.4 | ~⅓ chapter | Chapter 0.9 handled the delta by what it does, which was right then. Field theory needs more: $\delta^{4}(x-y)$, derivatives of distributions, the distributional identity $1/(x\pm\ii\epsilon)=\mathrm{P}(1/x)\mp\ii\pi\delta(x)$ (which *is* the optical theorem in embryo), and the Fourier transform on tempered distributions. Given 0.9, this is a short build, and it closes the rigged-Hilbert-space ⚑ from 4.5 retrospectively |
 | Saddle point / stationary phase | **BUILD** | 5.4 | 1 section | Used implicitly from 1.2 on ("stationary phase is the only place a wildly oscillating sum can leave a residue" — 1.2, unflagged), and the classical limit of the path integral is nothing else. It is one Gaussian integral and one Taylor expansion, both from Part 0 |
 | Wigner's classification (particles = irreps of the Poincaré group) | **⚑, but state it and use it** | 5.1 | 1 section | The proof is a serious piece of representation theory. But the *statement* is the single most illuminating thing that can be said at the Part IV / Part V seam — that "particle" means an irreducible unitary representation of the symmetry group of spacetime, labelled by mass and spin, and therefore that Part II and Part IV together already dictate what kinds of particle can exist. Quote it, verify the massive and massless little groups by hand (SO(3) and ISO(2) — both elementary), and let the reader see helicity fall out |
 | Canonical quantisation of the free field | **BUILD in full** | 5.3 | 1 chapter | This is 0.8's coupled oscillators with the limit taken, and the book has been advertising it since Chapter 0.8. No shortcuts |
@@ -173,9 +178,9 @@ has not solved*, and pretending otherwise would be the first genuine dishonesty 
 
 | Machinery | Decision | Where | Cost | Argument |
 |---|---|---|---|---|
-| Lie groups, Lie algebras, the exponential map | **BUILD** | 6.1 | 1 chapter | Already planned, and by the time the reader arrives they will have met one-parameter groups five times (2.2's boosts, 2.3's rapidity, 0.5's $\ee^{\ii A}$, 1.3's generators-generate-flows, 4.8's angular momentum). 6.1's job is to notice that these were the same thing |
+| Lie groups, Lie algebras, the exponential map | **BUILD** | 6.1 | 1 chapter | Already planned, and by the time the reader arrives they will have met one-parameter groups five times (2.2's boosts, 2.3's rapidity, 0.5's $\ee^{\ii A}$, 1.3's generators-generate-flows, 4.11's angular momentum). 6.1's job is to notice that these were the same thing |
 | Baker–Campbell–Hausdorff | **BUILD to second order, ⚑ the full series** | 6.1 | ½ section | 2.2 already ⚑'d it forward. Second order is all that is ever used (it is what produces the Thomas–Wigner rotation and the structure constants) and it is a direct computation |
-| Representation theory: Schur, weights, roots, Casimirs | **BUILD, at reduced cost** | 6.2 | 1 chapter | This is only affordable because Part IV pays a large deposit: 4.8 builds all of $\mathfrak{su}(2)$'s representation theory as *physics* (the ladder, the $(2j+1)$-fold multiplets, Clebsch–Gordan). 6.2 then has to do SU(3) only, and can do it by the concrete tensor method (upper and lower indices, symmetrise, remove traces) rather than by Dynkin diagrams. $\mathbf 3\otimes\bar{\mathbf 3}=\mathbf 8\oplus\mathbf 1$ becomes an index computation the reader can do. **Dynkin diagrams and the classification of simple Lie algebras: ⚑, and not used** |
+| Representation theory: Schur, weights, roots, Casimirs | **BUILD, at reduced cost** | 6.2 | 1 chapter | This is only affordable because Part IV pays a large deposit: 4.11 and 4.12 build all of $\mathfrak{su}(2)$'s representation theory as *physics* (the ladder and the $(2j+1)$-fold multiplets in 4.11, Clebsch–Gordan in 4.12). 6.2 then has to do SU(3) only, and can do it by the concrete tensor method (upper and lower indices, symmetrise, remove traces) rather than by Dynkin diagrams. $\mathbf 3\otimes\bar{\mathbf 3}=\mathbf 8\oplus\mathbf 1$ becomes an index computation the reader can do. **Dynkin diagrams and the classification of simple Lie algebras: ⚑, and not used** |
 | **Fibre bundles** | **BUILD the definition, ⚑ the classification** | 6.3 | 1 section | This is the decision the brief asks about, and the answer is that the book has already built the honest substitute and does not know it. A connection is "the thing that lets you compare at two nearby points" (3.3); its curvature is the commutator of covariant derivatives (3.4); $F=\dd A$ and $\dd^{2}=0$ are 3.5. Gauge theory is that construction with an *internal* index in place of a spacetime index, and every formula the reader needs — $D_\mu=\partial_\mu-\ii g A_\mu$, $F_{\mu\nu}=(\ii/g)[D_\mu,D_\nu]$, the Bianchi identity, the inhomogeneous transformation law of $A_\mu$ — is derivable by copying Part III's derivations with one substitution. That is not an analogy; it is the same computation. What bundles add is *global* structure, and given 3.2's charts and transition maps the definition of a principal bundle costs one page: it is an atlas whose transition functions take values in a group. Build that much, because it makes instantons, the $\theta$-vacuum and Dirac's monopole quantisation *statable*. ⚑ the classification (characteristic classes, $\pi_3(G)=\Z$) |
 | Anomalies and the triangle diagram | **BUILD** | 6.7 | 2 sections | This is the change that turns "the Standard Model, tabulated" into "the Standard Model, cornered". The hypercharge assignments of the quarks and leptons are not arbitrary: they are the unique solution of the anomaly-cancellation conditions given the gauge group and the representation content. That is *the* structural fact about the Standard Model, and it is derivable — the triangle diagram is a one-loop calculation of exactly the kind 5.10 will have already done in full. Without it, 6.7 is a table |
 | Lattice gauge theory, confinement | **⚑** | 6.5 | 1 section | Confinement is not proved. Say so plainly — it is a Millennium Prize problem — and give the reader the two things that *can* be shown: the strong-coupling expansion on a lattice, which gives an area law in three lines, and the numerical evidence. Do not let "quarks are confined" pass as a derived statement |
@@ -187,7 +192,7 @@ has not solved*, and pretending otherwise would be the first genuine dishonesty 
 
 | Machinery | Decision | Where | Cost | Argument |
 |---|---|---|---|---|
-| Conformal field theory: OPE, radial quantisation, primaries, modular invariance | **⚑ almost all of it — build only the Virasoro algebra** | 7.3 | 1 chapter, narrowed | This is where the biggest single saving is, and `PLAN.md` v2.0's 7.2 is scoped for a subject the book cannot afford. But $D=26$ does not need CFT. It needs: the residual symmetry left after conformal gauge fixing, the mode expansion, the Virasoro generators as bilinears in oscillators, and the central term computed by normal-ordering a commutator. All of that is *direct algebra* on the modes, using only 4.6's ladder operators and 5.3's field quantisation. Build that. ⚑ the operator formalism, the OPE and modular invariance, and note which later statements depend on them |
+| Conformal field theory: OPE, radial quantisation, primaries, modular invariance | **⚑ almost all of it — build only the Virasoro algebra** | 7.3 | 1 chapter, narrowed | This is where the biggest single saving is, and `PLAN.md` v2.0's 7.2 is scoped for a subject the book cannot afford. But $D=26$ does not need CFT. It needs: the residual symmetry left after conformal gauge fixing, the mode expansion, the Virasoro generators as bilinears in oscillators, and the central term computed by normal-ordering a commutator. All of that is *direct algebra* on the modes, using only 4.8's ladder operators and 5.3's field quantisation. Build that. ⚑ the operator formalism, the OPE and modular invariance, and note which later statements depend on them |
 | Faddeev–Popov, ghosts, BRST | **⚑, with the $c=-26$ counted** | 7.4 | 1 section | The reader can be shown the *arithmetic* — $26$ bosonic coordinates at $c=1$ each against a ghost system at $c=-26$ — without the full machinery, provided the ghost central charge is quoted and flagged. The alternative (light-cone gauge) gets $D=26$ with no ghosts at all and *is* fully derivable. **Recommendation: derive $D=26$ in light-cone gauge, where every step is available, and give the covariant/BRST count as the flagged cross-check.** That way the headline result of Part VII is genuinely the reader's own |
 | Worldsheet supersymmetry | **BUILD** | 7.6 | ~½ chapter | Two-dimensional $\mathcal N=(1,1)$ supersymmetry is tractable: two anticommuting worldsheet fields, a super-Virasoro algebra whose central charge is computed the same way as 7.4's, and $D=10$ falls out by the identical arithmetic. Grassmann numbers are already built in 5.7. This is the most satisfying possible use of that investment |
 | Spacetime supersymmetry, the 4D SUSY algebra, the MSSM | **⚑** | 7.6, 7.8 | 1 box | A different subject. The reader gets: what the algebra says, why it forces equal numbers of bosons and fermions, and why it is the standard motivation for the hierarchy problem — all quoted. `GAPS.md` §7 |
@@ -195,7 +200,7 @@ has not solved*, and pretending otherwise would be the first genuine dishonesty 
 | D-branes | **BUILD the origin, ⚑ the dynamics** | 7.7 | 2 sections | Apply T-duality to an open string with Neumann conditions and the conditions become Dirichlet — the endpoints are stuck to a hyperplane, which was not put in. That derivation is available. The Dirac–Born–Infeld action, brane tension and brane bound states are ⚑ |
 | Calabi–Yau compactification | **⚑** | 7.8 | 1 section | Algebraic geometry. State the requirement (Ricci-flat, SU(3) holonomy, from requiring an unbroken supersymmetry) and why it fixes the generation count topologically; ⚑ everything else |
 | S-duality, M-theory, 11D supergravity | **⚑** | 7.8 | — | Conjectural. This is where the ledger of §10 does its work |
-| Cardy formula and black-hole microstate counting | **BUILD** | 7.9 | 2 sections | The single most important "build it" decision in Part VII. The Cardy formula is usually derived from modular invariance, which has just been ⚑'d — but it can also be obtained by a **saddle-point count of oscillator states**, using only the partition function of a collection of harmonic oscillators (0.8, 4.6, 5.3) and the saddle-point method (5.4). The reader then counts the states of a D1–D5 system and gets $S=A/4$ — the number Chapter 3.9 will have quoted and left dangling. That closes the longest-running deliberate loose thread in the book, *by a calculation the reader performs*. It is worth reorganising 7.9 around |
+| Cardy formula and black-hole microstate counting | **BUILD** | 7.9 | 2 sections | The single most important "build it" decision in Part VII. The Cardy formula is usually derived from modular invariance, which has just been ⚑'d — but it can also be obtained by a **saddle-point count of oscillator states**, using only the partition function of a collection of harmonic oscillators (0.8, 4.8, 5.3) and the saddle-point method (5.4). The reader then counts the states of a D1–D5 system and gets $S=A/4$ — the number Chapter 3.9 will have quoted and left dangling. That closes the longest-running deliberate loose thread in the book, *by a calculation the reader performs*. It is worth reorganising 7.9 around |
 | AdS/CFT | **⚑** | 7.9 | 1 section | A conjecture. Say so, state what evidence there is, and put it in the ledger's middle column |
 
 ---
@@ -247,7 +252,18 @@ until 7.1 — and *why* that is not a cheat but the actual state of physics.
 
 ---
 
-## 5 · Part IV — Quantum Mechanics, 11 chapters
+## 5 · Part IV — Quantum Mechanics, 20 chapters
+
+**Two revisions, and both are recorded here.** §§5.1–5.2 argue Part IV up from `PLAN.md` v2.0's
+eight chapters to eleven, and the argument is about *content*: debts Part 0 wrote that 4.3 cannot
+pay alone, an ordering bug that puts hydrogen before the angular momentum it needs, and a missing
+perturbation-theory chapter that three chapters have already promised.
+`reports/part4-replan.md` then takes the eleven to **twenty**, and that argument is about *pacing*
+rather than content: measured against the written 4.1–4.3, the eight chapters still unwritten were
+carrying eleven new objects each where the book's own rate is five or six, so 4.4–4.11 are cut into
+4.4–4.20 with **nothing dropped anywhere**. Three objects are added, two of them things the written
+text had already promised and the old plan had no build item for — the rotating-wave reduction and
+the selection rules, both in 4.17. §5.3 is the twenty-chapter table; §11 carries the batches.
 
 ### 5.1 · The three arguments for expanding
 
@@ -267,16 +283,21 @@ Written into the text of Part 0, by name, are the following promises to Chapter 
 
 Seven, in fact. Chapter 0.5 spent 13,100 words on the *finite-dimensional* spectral theorem alone.
 One chapter cannot do the infinite-dimensional case plus measure theory plus the Fourier debts.
+*(The seven sentences are quoted as they stood on 18 August 2026, when every one of them named
+Chapter 4.3. Three were paid by 4.3 as written; the other four have since been re-aimed to 4.4 and
+4.5, and `GAPS.md` G1 carries the current table.)*
 
 The split follows the precedent the book has already set and which worked: **0.4 built the space,
 0.5 built the operators on it.** 4.3 builds the space (L², completeness, the Fourier basis as an
-honest orthonormal basis at last); 4.4 builds the operators (unbounded, domains, self-adjointness,
-the spectral theorem, Stone). A reader who has done 0.4 and 0.5 will recognise the shape
-immediately, which is itself worth something.
+honest orthonormal basis at last); **4.4 and 4.5** build the operators — 4.4 the domains, the
+adjoint's own domain and the difference between symmetric and self-adjoint, 4.5 the spectrum, the
+spectral theorem, the meaning of $\ket x$ and $\ket p$, and Stone. A reader who has done 0.4 and 0.5
+will recognise the shape immediately, which is itself worth something.
 
 **(b) There is an ordering bug: hydrogen is scheduled before the angular momentum it requires.**
 
-`PLAN.md` puts "hydrogen in full" in 4.5 and "angular momentum and spin, SU(2), the algebra" in 4.7.
+`PLAN.md` v2.0 puts "hydrogen in full" in 4.5 and "angular momentum and spin, SU(2), the algebra"
+in 4.7 — v2.0's numbering, in which those are now **4.13** and **4.11**–**4.12**.
 The hydrogen atom cannot be solved without separating the angular part, and separating the angular
 part *is* the representation theory of $\mathfrak{su}(2)$. Under any other book's rules this would
 be a scheduling inconvenience. Under this book's rule — nothing asserted that hasn't been built —
@@ -287,13 +308,15 @@ Once it does, hydrogen deserves its own chapter, because with the algebra in han
 properly: the radial equation, the factorisation that produces the radial ladder, the exact
 spectrum, the degeneracy, and then the collection of Chapter 1.4's SO(4) promise — *the accidental
 degeneracy of hydrogen is the quantum shadow of the closed Kepler orbit, and 1.4 ⚑'d it forward
-by name.* That is a chapter with a thesis, not a worked example.
+by name.* That is a chapter with a thesis, not a worked example — two of them, in the end:
+**4.13** derives the spectrum and leaves the degeneracy as a question, and **4.14** answers it by
+deriving the same spectrum a second time from $\mathfrak{so}(4)$.
 
 **(c) Perturbation theory is absent, and three chapters have already promised it.**
 
 `PLAN.md` has no perturbation theory anywhere. But: 0.3's Worked Example 2 flags the relativistic
-$p^{4}/8m^{3}c^{2}$ correction and says "Chapter 4.5 computes the full splitting"; 2.5 §3.3 repeats
-the promise; 1.3 ⚑'s the adiabatic theorem forward to Part IV. And structurally, Part V's Dyson
+$p^{4}/8m^{3}c^{2}$ correction and cannot yet explain it; 2.5 §3.3 repeats the flag and says
+"Chapter 4.16 computes the full splitting"; 1.3 ⚑'s the adiabatic theorem forward to Part IV. And structurally, Part V's Dyson
 series is time-dependent perturbation theory in a relativistic costume — the reader who meets the
 interaction picture for the first time in 5.8, in a field theory, with Haag's theorem hanging over
 it, has been set up to fail. They should meet it first in ordinary quantum mechanics, where the
@@ -301,12 +324,13 @@ Hilbert space is concrete and Fermi's golden rule can be checked against a real 
 
 This is also where `PLAN.md`'s best Familiar Ground row finally lands: the survival function
 $S(t)=\exp(-\int_0^t h(\tau)\dd\tau)$ and the Dyson series are the same object, and the reader
-should meet that identity in 4.10 — in ordinary quantum mechanics — so that when it recurs in 5.8
+should meet that identity in 4.17 — in ordinary quantum mechanics — so that when it recurs in 5.8
 it is a recognition rather than an introduction.
 
 ### 5.2 · The one restructuring, not an addition
 
-`PLAN.md`'s 4.6 ("Commutators, Uncertainty, the Classical Limit") is thinner than it looks, and the
+`PLAN.md` v2.0's 4.6 ("Commutators, Uncertainty, the Classical Limit" — v2.0's numbering; the
+material is now split between **4.9** and **4.10**) is thinner than it looks, and the
 book says so itself. Chapter 0.5, having proved Cauchy–Schwarz, states: *"That inequality, applied
 to two particular vectors assembled from a state and a pair of measurements, is the uncertainty
 principle… nothing is added to it afterwards except an interpretation of the letters."* Chapter 0.9
@@ -329,22 +353,38 @@ uncertainty material is *spent* in twenty minutes rather than re-derived.**
 | 4.1 | `ch4-1` | What Classical Physics Cannot Do | Make the failures quantitative, so that quantisation is forced rather than proposed | Boltzmann distribution and the partition function (**0.6** WE1); mode counting in a box (**0.7**, **0.8** §7); Rayleigh–Jeans from equipartition; Compton kinematics (**2.5** WE1) | **The Planck spectrum, derived Einstein's way** — A and B coefficients plus detailed balance plus 0.6's Boltzmann weights — with the ultraviolet catastrophe shown to be a divergent integral, not a metaphor |
 | 4.2 | `ch4-2` | The Linear Algebra of Quantum States | Show that Chapter 0.5 was quantum mechanics with the physics stripped off, and put the physics back | Everything in **0.5**: inner products, adjoints, Hermitian and unitary, the spectral theorem, projections, commuting observables, $\ee^{\ii A}$; tensor products (**0.4**) | **The postulates, as a table of renamings** — plus the one genuinely new input, the Born rule, announced as a postulate in its own box and not smuggled |
 | 4.3 | `ch4-3` | Function Spaces: Measure, L², and Completeness ※ | Rebuild the integral so that the space of states is actually a space | Riemann integral and its failure on $\chi_{\Q}$ (**0.2** §1); **note that Cauchy sequences have never been defined anywhere in this book — `grep` finds only Cauchy–Schwarz, the Cauchy distribution and Cauchy's functional equation — so 4.3 must define completeness from scratch rather than cite it**; inner product on function spaces (**0.5** §1); Fourier series and the completeness ⚑ (**0.9** §1.3); Cauchy sequences and convergence (**0.3**) | **L² is complete, and the Fourier basis is a basis** — closing 0.9's ⚑ and 0.2's promise in one chapter |
-| 4.4 | `ch4-4` | Operators in Infinite Dimensions ※ | Say exactly which of Chapter 0.5's theorems survive, which need repair, and which are false | All of **4.3**; the finite-dimensional spectral theorem and its proof (**0.5** §6); integration by parts and its boundary term (**0.2** §3.2); Fourier transform as a unitary map (**0.9** §2.3); the delta (**0.9** §5) | **A symmetric operator need not be self-adjoint** — worked on the particle in a box (a one-parameter family of extensions, so the boundary condition is physics) and on momentum on a half-line (no extension at all, so it is not an observable) |
-| 4.5 | `ch4-5` | The Schrödinger Equation | Get the equation from the two things already built — a unitary flow with a Hermitian generator, and de Broglie's identification | Stone and $\ee^{-\ii Ht/\hbar}$ (**4.4**, **0.5** §7); continuity equation (**0.7** §6); Fourier transform and group velocity (**0.9** §3); Gaussian integral (**0.2** §4); dispersion (**0.8** §7.6) | **The probability current and $\partial_t\rho+\nabla\cdot\vv j=0$** — the same continuity equation as 0.7, which is what makes "the wavefunction stays normalised" a theorem rather than a hope |
-| 4.6 | `ch4-6` | Systems You Can Solve in One Dimension | Do the oscillator twice, because the second way is the whole of Parts V and VII | Second-order linear ODEs and the defective case (**0.8** §3); adjoints and ladder algebra (**0.5**); boundary conditions as domain choices (**4.4**); phase-space area (**1.3** §4.4) | **$E_n=(n+\half)\hbar\omega$ from the ladder algebra alone**, with no differential equation solved — collecting 0.8's phase-space-area calculation and 1.3's Bohr–Sommerfeld ⚑ |
-| 4.7 | `ch4-7` | Symmetry, Commutators, and the Classical Limit | Spend the uncertainty relation rather than re-derive it, and say honestly how classical mechanics emerges | Cauchy–Schwarz and the uncertainty inequality, already proved (**0.5** §1, **0.9** §6); Poisson brackets and generators (**1.3** §6–7); Hamilton–Jacobi (**1.3** §8.2); asymptotic series (**0.3** §4); stationary phase | **The Hamilton–Jacobi equation as the $\hbar\to0$ limit of Schrödinger** — collecting 1.3's ⚑ — followed by the Groenewold–van Hove theorem, which says the correspondence cannot be made exact |
-| 4.8 | `ch4-8` | Angular Momentum and Spin | Build the reader's first Lie algebra from a commutator they can compute, and find a representation with no classical counterpart | $[\hat L_i,\hat L_j]=\ii\hbar\epsilon_{ijk}\hat L_k$ from canonical commutators (**4.2**); the classical bracket version already computed (**1.3** Problem 2, **1.4** §7.3); ladder technique (**4.6**); $\ee^{\ii\theta\sigma_x}$ (**0.5** WE2) | **The spectrum $j=0,\half,1,\ldots$ from the algebra alone**, and with it the half-integer representations that force the $720^{\circ}$ rotation — the fact 0.5 said was "already visible coming" |
-| 4.9 | `ch4-9` | The Hydrogen Atom | Solve the one system whose exact solution built the subject, and explain a degeneracy no one asked for | Separation of variables; spherical harmonics **from 4.8's algebra, not from a series**; radial factorisation (the ladder trick again, **4.6**); reduced mass (**1.1**); the LRL vector and its SO(4) algebra, computed classically (**1.4** WE2) | **$E_n=-13.6\,\mathrm{eV}/n^{2}$, and the fact that it depends on $n$ alone** — the accidental degeneracy, collected from 1.4's ⚑ as the quantum shadow of the closed Kepler orbit |
-| 4.10 | `ch4-10` | Perturbation Theory and Transitions | Build the approximation scheme that the rest of the book runs on, in a setting where it can be checked | Small-parameter expansion and asymptotic series (**0.3**); degenerate eigenvalue problems (**0.5** §6); the interaction picture; the delta as a limit (**0.9** §5); the Dirac comb and $\sin^{2}$ kernel | **Fermi's golden rule**, derived and then checked against a numerically integrated two-level system — and the **Dyson series recognised as the survival function** $S(t)=\exp(-\int h)$ with time-ordering as the only new ingredient |
-| 4.11 | `ch4-11` | Identical Particles, Entanglement, and Measurement | Show what quantum mechanics says about *two* things, which is where all the strangeness lives | Tensor products (**0.4**, **4.2**); the symmetric group on two letters; density matrices as $\mathrm{tr}(A^{\dagger}B)$ (**0.5** §1 table); probability and correlation (**0.9** §7); Boltzmann statistics to contrast with (**0.6**) | **Bell's inequality, derived and then violated** — with the quantum correlation $-\cos\theta$ computed from 4.8's spin algebra and set against the classical bound, and an honest statement of what is and is not thereby settled |
+| 4.4 | `ch4-4` | Domains, and the Adjoint's Domain ※ | Show that in infinite dimensions an operator is not a formula but a formula *together with a domain*, and that the domain is forced rather than chosen | All of **4.3**; the finite-dimensional spectral theorem and its proof (**0.5** §6); integration by parts and its boundary term (**0.2** §3.2); the closed graph theorem, ⚑, for Hellinger–Toeplitz | **A symmetric operator need not be self-adjoint** — worked on the particle in a box, whose deficiency indices $(2,2)$ give a $U(2)$ of extensions, so the boundary condition is physics; and on momentum on a half-line, which has no extension at all, so it is not an observable |
+| 4.5 | `ch4-5` | The Spectral Theorem in Infinite Dimensions ※ | Replace 0.5's $A=UDU^{\dagger}$ with the statement that survives, verify it everywhere the book will use it, and give $\ket x$ and $\ket p$ a meaning | **4.4**'s domains and adjoints; Fourier transform as a unitary map (**0.9** §2.3); the delta (**0.9** §5); dominated convergence (**4.3** §4.3) | **The spectral theorem in multiplication-operator form, ⚑ and then checked by hand on $\hat x$, $\hat p$ and $\hat H_{\text{osc}}$** — with the Hermite functions *proved* complete rather than quoted, and Stone's forward direction built. This is the one substantial mathematical flag of Part IV |
+| 4.6 | `ch4-6` | The Schrödinger Equation | Get the equation from two things already built — a unitary flow with a self-adjoint generator, and one physical identification | Stone and $\ee^{-\ii\hat Ht/\hbar}$ (**4.5** §9, **0.5** §7); continuity equation (**0.7** §6); Fourier transform and group velocity (**0.9** §3); Gaussian integral (**0.2** §4); dispersion (**0.8** §7.6) | **The probability current and $\partial_t\rho+\nabla\cdot\vv J=0$** — the same continuity equation as 0.7, which is what makes "the wavefunction stays normalised" a theorem rather than a hope |
+| 4.7 | `ch4-7` | Wells, Barriers, and Tunnelling | Turn the equation into numbers on the problems that matching conditions solve exactly, and show that the boundary condition is a choice the reader watched being made | Boundary conditions as domain choices (**4.4** §7); second-order linear ODEs (**0.8** §3); the delta (**0.9** §5); the probability current (**4.6** §8) | **$T+R=1$ from the current, not from hand-waving**, with the transmission through a 1 eV barrier computed exactly — and parity introduced as the first *symmetry ⇒ commuting observable ⇒ label* move, which 4.11 then runs on rotations |
+| 4.8 | `ch4-8` | The Oscillator, and the Ladder | Do the oscillator by algebra, because that method — not the answer — is the whole of Parts V and VII | Adjoints and the ladder algebra (**0.5**); Hermite completeness, cited not re-proved (**4.5** §4); phase-space area (**0.8** §4.4, **1.3** §4.4); the Gaussian bound (**0.9** §6.5) | **$E_n=(n+\half)\hbar\omega$ from the ladder algebra alone**, with no differential equation solved — collecting 0.8's phase-space-area calculation and 1.3's Bohr–Sommerfeld ⚑ |
+| 4.9 | `ch4-9` | Commutators, Uncertainty, and Symmetry | *Spend* the uncertainty relation rather than re-derive it, and show that the commutator which bounds a product of spreads also generates the motion | Cauchy–Schwarz and the uncertainty inequality, already proved (**0.5** §1, **0.9** §6); Poisson brackets and generators (**1.3** §§6–7); the canonical commutator (**4.2** §8) | **$\Delta A\,\Delta B\ge\half\lvert\langle[\hat A,\hat B]\rangle\rvert$ in one line, then the Heisenberg equation and Ehrenfest's theorem** — the largest single block of debts in Part IV, most of them paid in a sentence each, which is the point |
+| 4.10 | `ch4-10` | The Classical Limit | Say honestly how classical mechanics emerges, recover Bohr–Sommerfeld from a real approximation scheme, and then prove the correspondence cannot be exact | Hamilton–Jacobi (**1.3** §8.2); asymptotic series (**0.3** §4); stationary phase, ⚑ until **5.4**; phase-space area (**4.8**) | **The Hamilton–Jacobi equation as the $\hbar\to0$ limit of Schrödinger** — collecting 1.3's ⚑ — followed by Groenewold–van Hove with the $\tfrac13\hbar^{2}$ obstruction computed on the page rather than quoted |
+| 4.11 | `ch4-11` | The Angular Momentum Algebra | Build the reader's first Lie algebra from a commutator they can compute, and derive the whole spectrum from it and nothing else | $[\hat L_i,\hat L_j]=\ii\hbar\epsilon_{ijk}\hat L_k$ from the canonical commutators (**4.2** §8); the classical bracket version already computed (**1.3** Problem 2, **1.4** §7.3); the ladder technique (**4.8**) | **$2j$ a whole number, $\hat{\vv J}^{2}=j(j+1)\hbar^{2}$, $2j+1$ states — from the algebra alone.** The chapter carries no ⚑ at all, which is 1.4's *"from nothing but that algebra"* met literally |
+| 4.12 | `ch4-12` | Spin, Orbitals, and Adding Angular Momenta | Find out which of 4.11's representations nature uses, discover one with no wavefunction at all, and learn to add two of them | **4.11**'s multiplets and matrix elements; $\ee^{\ii\theta\sigma_x}$ (**0.5** WE2); tensor products (**0.4**, **4.2**) | **The spherical harmonics from $\hat L_+Y_\ell^{\ell}=0$ and no series anywhere**, and with them the half-integer representations that force the $720^{\circ}$ rotation — the fact 0.5 said was "already visible coming" |
+| 4.13 | `ch4-13` | The Hydrogen Atom | Solve the one system whose exact solution built the subject, using the ladder for the third time | Separation of variables; spherical harmonics from **4.12**, not from a series; radial factorisation (the ladder trick again, **4.8**); reduced mass (**1.1**) | **$E_n=-13.6\,\mathrm{eV}/n^{2}$, and the fact that it depends on $n$ alone** — derived, and then left as a puzzle, because the rotational symmetry used to derive it cannot explain the degeneracy it produces |
+| 4.14 | `ch4-14` | The Degeneracy, and $SO(4)$ | Answer the question 4.13 ended on, and derive the same spectrum a second time from an algebra | The LRL vector and its $SO(4)$ algebra, computed classically (**1.4** WE2); **4.11** applied twice; addition of angular momenta (**4.12** §5) | **$n=2j+1$ and a degeneracy of $(2j+1)^{2}=n^{2}$, as a dimension count** — the accidental degeneracy as the quantum shadow of the closed Kepler orbit, collecting 1.4's ⚑ by name |
+| 4.15 | `ch4-15` | Perturbation Theory | Build the approximation scheme the rest of the book runs on, in the one setting where it can be checked against an exact diagonalisation | Small-parameter and asymptotic series (**0.3** §4); degenerate eigenvalue problems (**0.5** §6); the spectral decomposition (**4.5** §5) | **$E_a^{(2)}=\sum_{b\ne a}\lvert V_{ab}\rvert^{2}/(E_a-E_b)$, with the residual against exact diagonalisation scaling as $\lambda^{3}$** — and the series then shown to be asymptotic, by Dyson's argument, which pre-pays `GAPS.md` G12 |
+| 4.16 | `ch4-16` | The Fine Structure of Hydrogen | Compute the three corrections of relative order $\alpha^{2}$ and print the residual against measurement | **4.15**'s degenerate machinery; $\hat{\vv L}\cdot\hat{\vv S}$ (**4.12**); the relativistic expansion (**0.3** WE2, **2.5** §3.3); the radial expectation values (**4.13**) | **$E_{n,j}$ — three separate corrections combining into one formula that depends on $j$ and not on $\ell$**, collecting 0.3's and 2.5's promise of the full splitting |
+| 4.17 | `ch4-17` | Transitions | Do perturbation theory when the Hamiltonian depends on time, where the group law fails and the exponential becomes a series | The interaction picture; the delta as a limit (**0.9** §5); the Dirac comb and $\sin^{2}$ kernel; $B_{12}=B_{21}$ and detailed balance (**4.1**); parity (**4.7**) | **Fermi's golden rule**, derived and then checked against a numerically integrated two-level system — and the **Dyson series recognised as the survival function** $S(t)=\exp(-\int h)$, with time-ordering as the only new ingredient |
+| 4.18 | `ch4-18` | Identical Particles | Show that "these two are the same kind of thing" is a statement with arithmetic consequences | Tensor products (**0.4**, **4.2**); the symmetric group on two letters; Boltzmann statistics to contrast with (**0.6** WE1); the mode count of **4.1** | **The Pauli principle as a corollary of the Slater determinant, and the Planck law a second time** — from occupation numbers, closing the loop 4.1 opened by deriving it Einstein's way instead |
+| 4.19 | `ch4-19` | Density Matrices and Entanglement | Build the object that answers "what is the state of *this half*", and show by computation that it transmits nothing | The trace inner product $\operatorname{tr}(A^{\dagger}B)$ (**0.5** §1 table); projections and P7 (**4.2**); probability and correlation (**0.9** §7) | **Half a singlet is $\half\hat I$, and no-signalling proved rather than asserted** — with entanglement *defined* by $\operatorname{tr}\hat\rho_A^{2}<1$ rather than described. The chapter carries no ⚑ |
+| 4.20 | `ch4-20` | Bell, Decoherence, and What Is Settled | Turn "could they have had definite values all along" into a number, and close Part IV by saying precisely what has and has not been explained | **4.19**'s reduced states; the spin algebra (**4.12**); Cauchy–Schwarz (**0.5** §1); correlation of two measurements (**0.9** §7) | **Bell's inequality, derived and then violated** — with the singlet correlation $-\cos\theta$, the Tsirelson bound $2\sqrt2$ derived rather than quoted, and an honest statement of what is and is not thereby settled |
 
-### 5.4 · Fallback if 11 is too many
+### 5.4 · Fallback if the count is too many
 
-If Part IV must hold at 10: merge 4.9 and 4.10 into one chapter, "The Hydrogen Atom and Its
-Corrections", grind-boxing the radial factorisation and treating perturbation theory as the tool
-that produces the fine structure rather than as a subject. The cost is that Fermi's golden rule
-loses its own section and the survival-function identity has to be made in passing. I would accept
-that trade before I would accept merging 4.3 and 4.4.
+*Written against the eleven-chapter plan, and superseded by `reports/part4-replan.md`, which caps
+every chapter at about six new objects and finds no merge that survives the cap — and which points
+out that the renumbering cost is paid in full at the first split, so there is no saving in splitting
+less. Kept because the trade it names is still the first one to make if the count ever has to come
+down.*
+
+If Part IV must hold at 10: merge 4.9 and 4.10 — now **4.13**/**4.14** and **4.15**–**4.17** — into
+one chapter, "The Hydrogen Atom and Its Corrections", grind-boxing the radial factorisation and
+treating perturbation theory as the tool that produces the fine structure rather than as a subject.
+The cost is that Fermi's golden rule loses its own section and the survival-function identity has to
+be made in passing. I would accept that trade before I would accept merging 4.3 and 4.4 — now 4.3
+and the pair **4.4** + **4.5**.
 
 ---
 
@@ -373,6 +413,9 @@ the reader can inspect.
 canonical-quantisation promises to 4.7, but 4.5, 4.6 and 4.8 all need the commutator before then —
 and §5.3's own 4.8 row already assumes the earlier delivery. **The canonical commutator is
 introduced in 4.2, as a postulate in its own box.** 4.7 then spends it rather than introducing it.
+*(Numbers as they stood on 19 August 2026. Under the twenty-chapter Part IV the spender is **4.9**,
+and the three chapters needing the commutator first are **4.6**, **4.7**–**4.8** and
+**4.11**–**4.12**. The decision itself stands: P6 is stated in 4.2 §8, and 4.9 spends it.)*
 
 Revised order: canonical quantisation first (because it makes "a field is infinitely many
 oscillators" concrete and cashes Chapter 0.8), then Dirac, then the path integral as the language,
@@ -392,14 +435,14 @@ headline result becomes a quoted number, and Part VI loses its best derivation.
 
 | # | Slug | Title | The chapter exists to | Mathematical prerequisites (supplier) | The one result derived |
 |---|---|---|---|---|---|
-| 5.1 | `ch5-1` | Why Quantum Mechanics and Relativity Force Fields | Show that the two theories already built are jointly inconsistent unless particle number is allowed to change | Four-momentum and the mass shell (**2.5** §4); the Schrödinger equation's asymmetry between $\partial_t$ and $\nabla^{2}$ (**4.5**); probability current (**0.7** §6, **4.5**); light cones and spacelike separation (**2.3** §4) | **The Klein–Gordon negative-probability problem, and its resolution** — plus the localisation argument: confining a particle to $\Delta x<\hbar/mc$ costs enough energy to make another one. Wigner's classification stated (⚑) with the massive and massless little groups verified by hand |
+| 5.1 | `ch5-1` | Why Quantum Mechanics and Relativity Force Fields | Show that the two theories already built are jointly inconsistent unless particle number is allowed to change | Four-momentum and the mass shell (**2.5** §4); the Schrödinger equation's asymmetry between $\partial_t$ and $\nabla^{2}$ (**4.6**); probability current (**0.7** §6, **4.6**); light cones and spacelike separation (**2.3** §4) | **The Klein–Gordon negative-probability problem, and its resolution** — plus the localisation argument: confining a particle to $\Delta x<\hbar/mc$ costs enough energy to make another one. Wigner's classification stated (⚑) with the massive and massless little groups verified by hand |
 | 5.2 | `ch5-2` | Classical Field Theory | Run Chapter 1.2 and Chapter 1.4 again with a continuous index, and get a stress-energy tensor that Part III had to assume | Euler–Lagrange and the fundamental lemma (**1.2** §3); Noether's theorem (**1.4** §2, §6); the continuity equation (**0.7** §6); the field-theoretic $T^{\mu\nu}$ already built once for electromagnetism (**2.6** §10) | **The Noether current for a general field symmetry, and $\partial_\mu T^{\mu\nu}=0$** — the object Chapter 3.6 put on the right-hand side of Einstein's equations, now derived rather than assembled |
-| 5.3 | `ch5-3` | Quantising a Field | Take Chapter 0.8's coupled-oscillator limit seriously and discover that its quanta are particles | Normal modes and the $N\to\infty$ limit (**0.8** §7); ladder operators (**4.6**); Fourier expansion in a box (**0.9**); canonical quantisation (**1.3** §6.4) | **$a^{\dagger}_{\vv k}$ creates a particle of momentum $\hbar\vv k$** — with the vacuum energy $\half\hbar\omega$ per mode summed, shown to diverge, and the Casimir force extracted from the *difference*, which is finite and measured |
+| 5.3 | `ch5-3` | Quantising a Field | Take Chapter 0.8's coupled-oscillator limit seriously and discover that its quanta are particles | Normal modes and the $N\to\infty$ limit (**0.8** §7); ladder operators (**4.8**); Fourier expansion in a box (**0.9**); canonical quantisation (**1.3** §6.4) | **$a^{\dagger}_{\vv k}$ creates a particle of momentum $\hbar\vv k$** — with the vacuum energy $\half\hbar\omega$ per mode summed, shown to diverge, and the Casimir force extracted from the *difference*, which is finite and measured |
 | 5.4 | `ch5-4` | Distributions, Contours, and the Propagator ※ | Build the two pieces of mathematics the book has been using on credit, and cash them immediately | Green's theorem (**0.7** §5) → Cauchy's theorem; the delta as a functional (**0.9** §5); Fourier transforms (**0.9**); Gaussian integrals (**0.2** §4); asymptotic expansion (**0.3** §4) | **The four Green's functions of the Klein–Gordon operator as four contours around the same two poles** — retarded, advanced, Feynman, Dyson — with the $\ii\epsilon$ prescription derived as a contour choice rather than announced as a rule |
-| 5.5 | `ch5-5` | The Dirac Equation | Take the square root of the Klein–Gordon operator and be forced into antiparticles | Clifford algebra from $\{\gamma^\mu,\gamma^\nu\}=2\eta^{\mu\nu}$; $\mathfrak{su}(2)$ and half-integer representations (**4.8**); Lorentz generators as antisymmetric matrices (**2.3**, **2.2** ⚑); the mass shell (**2.5**) | **Antiparticles fall out of the negative-energy solutions, and the electron's $g=2$** — the latter derived, not quoted, which is the cleanest single victory in Part V. Spin-statistics: the general theorem ⚑, both physical failures computed |
-| 5.6 | `ch5-6` | The Path Integral | Replace the operator formalism with a sum over histories, and recover everything so far | Stationary action (**1.2**); Hamilton–Jacobi and $\ee^{\ii S/\hbar}$ (**1.3** §8.2, **4.7**); Gaussian integrals in many variables (**0.2** §4, **0.6** §8); saddle point (**5.4**); the Kaplan–Meier-style product of conditionals (Familiar Ground) | **$\braket{x_f,t_f\,\vert\,x_i,t_i}=\int\mathcal Dx\,\ee^{\ii S/\hbar}$ from time-slicing**, with the free-particle propagator computed exactly and shown to agree with 4.5. The non-existence of the measure ⚑'d in place |
+| 5.5 | `ch5-5` | The Dirac Equation | Take the square root of the Klein–Gordon operator and be forced into antiparticles | Clifford algebra from $\{\gamma^\mu,\gamma^\nu\}=2\eta^{\mu\nu}$; $\mathfrak{su}(2)$ and half-integer representations (**4.11**, **4.12**); Lorentz generators as antisymmetric matrices (**2.3**, **2.2** ⚑); the mass shell (**2.5**) | **Antiparticles fall out of the negative-energy solutions, and the electron's $g=2$** — the latter derived, not quoted, which is the cleanest single victory in Part V. Spin-statistics: the general theorem ⚑, both physical failures computed |
+| 5.6 | `ch5-6` | The Path Integral | Replace the operator formalism with a sum over histories, and recover everything so far | Stationary action (**1.2**); Hamilton–Jacobi and $\ee^{\ii S/\hbar}$ (**1.3** §8.2, **4.10**); Gaussian integrals in many variables (**0.2** §4, **0.6** §8); saddle point (**5.4**); the Kaplan–Meier-style product of conditionals (Familiar Ground) | **$\braket{x_f,t_f\,\vert\,x_i,t_i}=\int\mathcal Dx\,\ee^{\ii S/\hbar}$ from time-slicing**, with the free-particle propagator computed exactly and shown to agree with 4.6. The non-existence of the measure ⚑'d in place |
 | 5.7 | `ch5-7` | Gaussian and Grassmann Integration ※ | Build the algebra of anticommuting numbers at the moment fermions need it | Multidimensional Gaussians and $\det$ (**0.4** §5, **0.2** §4); parameter differentiation as a source (**0.2** §4.4); determinants as signed volume (**0.4** §5) | **$\int\dd\theta\,\dd\bar\theta\,\ee^{-\bar\theta A\theta}=\det A$** — the determinant upstairs rather than downstairs, which is the entire reason fermion loops carry a minus sign |
-| 5.8 | `ch5-8` | Interactions, Wick's Theorem, and the Feynman Rules | Derive the rules rather than receive them, and be honest about the foundation | Generating functional $Z[J]$ (**5.6**, **5.7**); parameter differentiation (**0.2** §4.4); convolution and Green's functions (**0.9** §4); the Dyson series as a time-ordered survival function (**4.10**) | **Every Feynman rule, read off $Z[J]$ by functional differentiation** — with Wick's theorem proved combinatorially and Haag's theorem flagged in place |
+| 5.8 | `ch5-8` | Interactions, Wick's Theorem, and the Feynman Rules | Derive the rules rather than receive them, and be honest about the foundation | Generating functional $Z[J]$ (**5.6**, **5.7**); parameter differentiation (**0.2** §4.4); convolution and Green's functions (**0.9** §4); the Dyson series as a time-ordered survival function (**4.17**) | **Every Feynman rule, read off $Z[J]$ by functional differentiation** — with Wick's theorem proved combinatorially and Haag's theorem flagged in place |
 | 5.9 | `ch5-9` | A Real Calculation | Take one process from Lagrangian to number, with nothing skipped and nothing quoted | Everything above; Mandelstam $s$ and the centre-of-momentum frame (**2.5** §8); the Lorentz-invariant phase-space measure; the Breit–Wigner curve, already derived as a driven oscillator (**0.8** §6.4) | **One differential cross section, computed and compared with data** — $\ee^{+}\ee^{-}\to\mu^{+}\mu^{-}$, chosen because every ingredient is available and the answer is measured to four figures |
 | 5.10 | `ch5-10` | Loops, Divergences, and Regularisation | Compute a divergent integral honestly and isolate exactly what diverges | Contour integration and Wick rotation (**5.4**); Feynman parametrisation; $\Gamma$-function analytic continuation (**5.4**); power counting and dimensional analysis (**0.3** §5) | **One loop integral evaluated in full in $d=4-\epsilon$ dimensions**, with dimensional regularisation *derived* — the $d$-dimensional Gaussian is 0.2's integral with a different exponent — rather than declared |
 | 5.11 | `ch5-11` | Renormalisation and the Renormalisation Group | Explain why physics is possible without knowing everything | **5.10**'s divergence; asymptotic and divergent series (**0.3** §4); scaling and dimensional analysis (**0.3** §5); the flow picture from phase space (**1.3** §4) | **The running coupling $\alpha(\mu)$ from the Callan–Symanzik equation**, plotted for QED and QCD on the same axes — the plot that is the whole punchline of Part VI. Dyson's argument that the series has zero radius of convergence, derived |
@@ -442,8 +485,8 @@ a Lagrangian printed in small type.
 
 | # | Slug | Title | The chapter exists to | Mathematical prerequisites (supplier) | The one result derived |
 |---|---|---|---|---|---|
-| 6.1 | `ch6-1` | Lie Groups and Lie Algebras ※ | Name the structure the reader has met five times without being told what it was | One-parameter families and $\ee^{\phi K}$ (**2.2** ⚑, **2.3** §3.1); generators generating flows (**1.3** §7); $\ee^{\ii A}$ Hermitian ⇒ unitary (**0.5** §7); $\det\ee^{A}=\ee^{\mathrm{tr}A}$ (**0.4** §6); Poisson-bracket and commutator algebras (**1.4** §7.3, **4.8**) | **$\mathfrak{su}(N)$ has $N^{2}-1$ generators** — collecting 0.4's traceless-generator count and delivering the eight gluons as an arithmetic consequence rather than a fact |
-| 6.2 | `ch6-2` | Representations ※ | Explain why matter comes in the multiplets it does | Irreducibility and Schur's lemma; $\mathfrak{su}(2)$ representation theory, **already built as physics** (**4.8**); tensors with upper and lower indices (**2.4** §5); Casimirs from commuting operators (**0.5** §8) | **$\mathbf 3\otimes\bar{\mathbf 3}=\mathbf 8\oplus\mathbf 1$, by index gymnastics the reader can do** — and with it the meson octet, which is why the hadrons of the 1960s organised themselves |
+| 6.1 | `ch6-1` | Lie Groups and Lie Algebras ※ | Name the structure the reader has met five times without being told what it was | One-parameter families and $\ee^{\phi K}$ (**2.2** ⚑, **2.3** §3.1); generators generating flows (**1.3** §7); $\ee^{\ii A}$ Hermitian ⇒ unitary (**0.5** §7); $\det\ee^{A}=\ee^{\mathrm{tr}A}$ (**0.4** §6); Poisson-bracket and commutator algebras (**1.4** §7.3, **4.11**) | **$\mathfrak{su}(N)$ has $N^{2}-1$ generators** — collecting 0.4's traceless-generator count and delivering the eight gluons as an arithmetic consequence rather than a fact |
+| 6.2 | `ch6-2` | Representations ※ | Explain why matter comes in the multiplets it does | Irreducibility and Schur's lemma; $\mathfrak{su}(2)$ representation theory, **already built as physics** (**4.11**, **4.12**); tensors with upper and lower indices (**2.4** §5); Casimirs from commuting operators (**0.5** §8) | **$\mathbf 3\otimes\bar{\mathbf 3}=\mathbf 8\oplus\mathbf 1$, by index gymnastics the reader can do** — and with it the meson octet, which is why the hadrons of the 1960s organised themselves |
 | 6.3 | `ch6-3` | The Gauge Principle | Demand a symmetry locally and watch a force appear to enforce it | The global U(1) current (**1.4** §6.2, **2.6** ⚑); the covariant derivative as the repair for a non-tensorial derivative — **the identical argument, with an internal index** (**3.3** §4–5); $F=\dd A$ and $\dd^{2}=0$ (**3.5** §2–3); minimal coupling from the Legendre transform (**1.3** WE1) | **Electromagnetism, generated** — $D_\mu=\partial_\mu-\ii eA_\mu$ forced by demanding local phase invariance, and $\vv p\to\vv p-e\vv A$ recognised as the thing 1.3 derived classically. Aharonov–Bohm phase derived, closing 0.7's and 1.3's ⚑s |
 | 6.4 | `ch6-4` | Yang–Mills | Do the same with a group whose elements do not commute, and find that the force carries its own charge | **6.1**, **6.2**, **6.3**; the curvature of a connection as a commutator (**3.4** §2 — the same computation, index for index); the Bianchi identity (**3.4** §7) | **$F_{\mu\nu}^{a}$ with its quadratic term, and the self-interaction that follows** — the structural difference between a photon and a gluon, derived from one commutator |
 | 6.5 | `ch6-5` | QCD and Asymptotic Freedom | Compute the sign that changes everything | One-loop integrals in full (**5.10**); the running coupling and Callan–Symanzik (**5.11**); Casimirs of SU(3) (**6.2**); non-analytic terms $\ee^{-1/g^{2}}$ (**0.3** §4) | **$\beta(g)<0$, with the coefficient $11-\tfrac23 n_f$ computed** — the gluon self-coupling of 6.4 overwhelming the fermion screening, and the plot of 5.11 explained. Confinement ⚑'d honestly, with the strong-coupling area law as the one thing that can be shown |
@@ -487,13 +530,13 @@ failure Part VII is supposed to avoid. Split them, and the split does the honest
 |---|---|---|---|---|---|
 | 7.1 | `ch7-1` | Why Quantum Gravity Is Hard | Diagnose the failure precisely, by counting, rather than gesturing at it | Power counting and dimensional analysis (**0.3** §5, where $\ell_P$ was already computed); the nonlinearity of $G_{\mu\nu}$ (**3.6** §7.3); renormalisation by power counting (**5.10**, **5.11**); Ostrogradsky's theorem (**1.2** ⚑, **3.6** ⚑) | **$[G]=\mathrm{length}^{2}$ ⇒ a new counterterm at every order**, computed — and then the reason the obvious repair fails: higher-derivative terms buy a ghost, which is the Ostrogradsky flag now collected |
 | 7.2 | `ch7-2` | The Bosonic String | Write the most general action for a one-dimensional object and gauge-fix it | Reparametrisation-invariant actions and the relativistic point particle $S=-mc^{2}\!\int\!\dd\tau$ (**2.5** §5, **3.3** §3); induced metrics (**3.3**); constrained systems (**1.3** ⚑); the volume element $\sqrt{-g}$ (**3.5** §6) | **Polyakov's action, and the mode expansion in conformal gauge** — with the demonstration that Weyl plus diffeomorphism invariance is *just* enough freedom to reach the flat worldsheet metric, and not quite all of it is used |
-| 7.3 | `ch7-3` | Conformal Symmetry and the Virasoro Algebra ※ | Answer the question 7.2 asked: what freedom is left after gauge fixing | **7.2**'s residual symmetry; Lie algebras and central extensions (**6.1**); ladder operators (**4.6**); normal ordering (**5.3**) | **$[L_m,L_n]=(m-n)L_{m+n}+\frac{c}{12}m(m^{2}-1)\delta_{m+n,0}$, with the central term computed by hand** from the oscillator commutators — no operator-product expansion required. OPE, radial quantisation and modular invariance ⚑'d and their uses named |
+| 7.3 | `ch7-3` | Conformal Symmetry and the Virasoro Algebra ※ | Answer the question 7.2 asked: what freedom is left after gauge fixing | **7.2**'s residual symmetry; Lie algebras and central extensions (**6.1**); ladder operators (**4.8**); normal ordering (**5.3**) | **$[L_m,L_n]=(m-n)L_{m+n}+\frac{c}{12}m(m^{2}-1)\delta_{m+n,0}$, with the central term computed by hand** from the oscillator commutators — no operator-product expansion required. OPE, radial quantisation and modular invariance ⚑'d and their uses named |
 | 7.4 | `ch7-4` | Quantising the String, and D = 26 | Let the reader produce the most famous number in the subject themselves | **7.3**; light-cone gauge; the zero-point sum $\sum n$ and its $\zeta$-regularisation, set against the honest cut-off computation; Lorentz algebra closure (**6.1**) | **$D=26$**, derived in light-cone gauge where every step is available, from the requirement that the Lorentz algebra close — with the covariant/BRST ghost count given as the flagged cross-check |
 | 7.5 | `ch7-5` | The Spectrum | Show that gravity was not put in | **7.4**'s mass formula; representations of the little group (**5.1**'s Wigner ⚑, now spent); massless field content (**2.6**, **3.6**) | **A massless spin-2 state in the closed-string spectrum** — identified as a graviton because a massless spin-2 field has only one possible low-energy action, which is Chapter 3.6's. This is the chapter the book exists for |
 | 7.6 | `ch7-6` | Superstrings and D = 10 | Remove the tachyon, and get fermions, by the same arithmetic that gave 26 | Grassmann numbers (**5.7**); worldsheet fermions; super-Virasoro (**7.3**'s method again); GSO projection | **$D=10$, by the identical central-charge count as 7.4** — the most satisfying possible reuse of 7.3's machinery. Spacetime supersymmetry ⚑'d and kept out of the derivation |
 | 7.7 | `ch7-7` | T-Duality and D-Branes | Derive two things nobody would have guessed, using only the mode expansion | **7.2**'s mode expansion; compactification on a circle; winding number as a topological label (**0.7** §2.4's counterexample, **3.5** §4.3) | **$R\leftrightarrow\alpha'/R$ with momentum and winding exchanged, and the spectra shown identical** — followed by the observation that T-dualising an open string turns Neumann into Dirichlet, so a D-brane is not postulated, it is forced |
 | 7.8 | `ch7-8` | Compactification, Dualities, M-Theory | Present the structure honestly, with every step's status marked | **7.7**; Kaluza–Klein towers, derivable; Calabi–Yau conditions, stated; S-duality, quoted | **The Kaluza–Klein tower, derived in full** — the one thing in this chapter that is a calculation — with everything else placed in the §10 ledger by name. This chapter's honesty ratio is the test of whether Part VII works |
-| 7.9 | `ch7-9` | Black Hole Entropy, Holography, and the Accounting | Count the states of a black hole, and then state exactly where the building ends | **7.7**'s D-branes; the microcanonical count $S=\ln W$ (**0.6** WE1); saddle point (**5.4**); the oscillator partition function (**4.6**, **5.3**); $S=A/4$ as quoted in **3.9** | **$S=A/4$, obtained by counting oscillator states** via a saddle-point evaluation of the D1–D5 degeneracy — closing the loose thread 3.9 deliberately left. Then the ledger of §10, in full |
+| 7.9 | `ch7-9` | Black Hole Entropy, Holography, and the Accounting | Count the states of a black hole, and then state exactly where the building ends | **7.7**'s D-branes; the microcanonical count $S=\ln W$ (**0.6** WE1); saddle point (**5.4**); the oscillator partition function (**4.8**, **5.3**); $S=A/4$ as quoted in **3.9** | **$S=A/4$, obtained by counting oscillator states** via a saddle-point evaluation of the D1–D5 degeneracy — closing the loose thread 3.9 deliberately left. Then the ledger of §10, in full |
 
 ---
 
@@ -522,7 +565,7 @@ Chapter 3.9's closing section is the handoff, and it has four jobs.
 3. **Hand forward the symmetry machinery.** Killing vectors give conserved quantities along
    geodesics (3.5 §9); commuting Hermitian operators give simultaneous quantum numbers (0.5 §8).
    Both are "symmetry ⇒ label". Part IV should be told in advance that its quantum numbers are
-   Part III's Killing vectors in a different costume, so that 4.8's $\mathfrak{su}(2)$ arrives as a
+   Part III's Killing vectors in a different costume, so that 4.11's $\mathfrak{su}(2)$ arrives as a
    recognition.
 
 4. **Leave $S=A/4$ visibly unpaid.** This is already in `MATHPLAN-3.md` and is the right decision.
@@ -548,7 +591,7 @@ between them, determined what kinds of particle can exist. Quote the theorem, ve
 groups, and the seam becomes the payoff rather than the join.
 
 The second stitch is technical and belongs in 5.3: the field operator $\hat\phi(\vv x)$ is not an
-operator, it is an operator-valued distribution, and Chapter 4.4's rigged-Hilbert-space flag is
+operator, it is an operator-valued distribution, and Chapter 4.5's rigged-Hilbert-space flag is
 where that was foreseen. Collect it.
 
 ### 9.3 · V → VI — how the Standard Model gets motivated rather than tabulated
@@ -637,44 +680,60 @@ material is light or continuous:
 | **F2** | 3.9 + Part III reunification pass | 1 | Plain-terms continuity pass across all of Part III (per `PLAIN-TERMS-PLAN.md` §7) |
 | **F3** | 4.1 + 4.2 | 2 | The crisis, and the translation of Chapter 0.5 |
 | **F4** | 4.3 | 1 | **Alone.** The measure-theory chapter is the 3.3 of Part IV |
-| **F5** | 4.4 | 1 | **Alone.** The 3.4 of Part IV — the chapter Part 0 has been writing cheques against |
-| **F6** | 4.5 + 4.6 | 2 | Schrödinger and the solvable systems |
-| **F7** | 4.7 + 4.8 | 2 | Classical limit, then the first Lie algebra |
-| **F8** | 4.9 | 1 | **Alone.** Hydrogen with the algebra in hand — the radial ladder, the exact spectrum, and 1.4's SO(4) promise collected |
-| **F8b** | 4.10 | 1 | **Alone.** `MATHPLAN-4.md` finds this the largest chapter in the part: two perturbation schemes, the fine structure, the adiabatic theorem and the golden rule |
-| **F9** | 4.11 + Part IV reunification | 1 | |
-| **F10** | 5.1 + 5.2 | 2 | |
-| **F11** | 5.3 + 5.4 | 2 | 5.4 is a math chapter; consider splitting the batch if it runs long |
-| **F12** | 5.5 + 5.6 | 2 | Dirac, then the path integral |
-| **F13** | 5.7 + 5.8 | 2 | Grassmann, then the Feynman rules |
-| **F14** | 5.9 | 1 | **Alone.** The full calculation must not be rushed |
-| **F15** | 5.10 + 5.11 | 2 | |
-| **F16** | 6.1 + 6.2 | 2 | Part V reunification pass runs alongside |
-| **F17** | 6.3 + 6.4 | 2 | |
-| **F18** | 6.5 + 6.6 | 2 | |
-| **F19** | 6.7 + 6.8 | 2 | |
-| **F20** | 7.1 + 7.2 | 2 | Part VI reunification pass runs alongside. Start `LEDGER-VII.md` |
-| **F21** | 7.3 + 7.4 | 2 | **The hardest batch in the book.** Consider one per agent |
-| **F22** | 7.5 + 7.6 | 2 | |
-| **F23** | 7.7 + 7.8 | 2 | |
-| **F24** | 7.9 + full reunification + final `GAPS.md` regeneration | 1 | |
+| **F5** | 4.4 + 4.5 | 2 | The two halves of one repair — the domains, then the spectrum. One agent: item 1 of each is the same sentence split |
+| **F6** | 4.6 + 4.7 | 2 | The equation, then the first systems it solves |
+| **F7** | 4.8 + 4.9 | 2 | The ladder, then the commutator that generates it |
+| **F8** | 4.10 + 4.11 | 2 | The classical limit, then the first Lie algebra |
+| **F9** | 4.12 + 4.13 | 2 | Spin and addition, then the atom that needs both |
+| **F10** | 4.14 | 1 | **Alone.** Five symbolic identities and a representation-theoretic argument — the 3.4 of this stretch |
+| **F11** | 4.15 + 4.16 | 2 | The tool, then the case that decides it |
+| **F12** | 4.17 + 4.18 | 2 | |
+| **F13** | 4.19 + 4.20 + Part IV reunification | 2 | Plain-terms continuity pass across all of Part IV (per `PLAIN-TERMS-PLAN.md` §7) |
+| **F14** | 5.1 + 5.2 | 2 | |
+| **F15** | 5.3 + 5.4 | 2 | 5.4 is a math chapter; consider splitting the batch if it runs long |
+| **F16** | 5.5 + 5.6 | 2 | Dirac, then the path integral |
+| **F17** | 5.7 + 5.8 | 2 | Grassmann, then the Feynman rules |
+| **F18** | 5.9 | 1 | **Alone.** The full calculation must not be rushed |
+| **F19** | 5.10 + 5.11 | 2 | |
+| **F20** | 6.1 + 6.2 | 2 | Part V reunification pass runs alongside |
+| **F21** | 6.3 + 6.4 | 2 | |
+| **F22** | 6.5 + 6.6 | 2 | |
+| **F23** | 6.7 + 6.8 | 2 | |
+| **F24** | 7.1 + 7.2 | 2 | Part VI reunification pass runs alongside. Start `LEDGER-VII.md` |
+| **F25** | 7.3 + 7.4 | 2 | **The hardest batch in the book.** Consider one per agent |
+| **F26** | 7.5 + 7.6 | 2 | |
+| **F27** | 7.7 + 7.8 | 2 | |
+| **F28** | 7.9 + full reunification + final `GAPS.md` regeneration | 1 | |
 
-**42 chapters, 24 batches**, numbered `F1`–`F24` so as not to collide with `PLAN.md` §7's original
-sixteen. Dedicated mathematics chapters in the remainder: 4.2, 4.3, 4.4, 5.4, 5.7, 6.1, 6.2, 7.3 —
-eight, against fifteen already written, bringing the book's total to **23 of 67**, or 34% — the same
-ratio `PLAN.md` §0 committed to (21 of 59, 36%) and which Parts I–III vindicate.
+**51 chapters, 28 batches**, numbered `F1`–`F28` so as not to collide with `PLAN.md` §7's original
+sixteen. **The Part IV batches were renumbered when the part was re-cut from eleven chapters to
+twenty**: the old `F5`–`F9` (and `F8b`) become `F5`–`F13`, and every batch from Part V onward moves
+up by four. The batches do not double — sixteen chapters of 9,000–12,000 words pair naturally where
+the old plan's twenty-thousand-word chapters could not, so three extra batches carry nine extra
+chapters. Dedicated mathematics chapters in the remainder: 4.2, 4.3, 4.4, 4.5, 5.4, 5.7, 6.1, 6.2,
+7.3 — nine, against fifteen already written, bringing the book's total to **24 of 76**, or 32% —
+close to the ratio `PLAN.md` §0 committed to (21 of 59, 36%) and which Parts I–III vindicate.
 
-**Three mechanical tasks that must happen before batch F3, not during it:**
+**Three mechanical tasks that had to happen before batch F3, not during it** — all three were done
+in August 2026, and the Part IV re-plan required the first two a second time:
 
 1. **Update `build.py`'s `PARTS` list**, which is the authoritative curriculum and which the index
    hub, the chapter navigation and the progress count all read from. The renumbering of Parts IV–VII
    touches every entry from `ch4-1` onward.
-2. **Remap the forward references.** `GAPS.md` §4 counts 390 references in the written text to
-   chapters that do not exist, and the renumbering invalidates roughly half of them. This is a
+2. **Remap the forward references.** `GAPS.md` §4 counted 390 references in the written text to
+   chapters that did not exist, and the renumbering invalidates roughly half of them. This is a
    single scripted pass with a hand-checked mapping table, and it must be done before Part IV is
    written rather than after, because new chapters will immediately add more.
 3. **Extract the debt list per chapter and put it in that chapter's brief.** See `GAPS.md` §7 — this
-   is the highest-value process change available, and it is a five-line script.
+   is the highest-value process change available, and it is a five-line script. It exists:
+   `debts.py`.
+
+**And the first two again before batch F5**, per `reports/part4-replan.md`: apply the promise remap
+of its Deliverable 2 in one commit; regenerate `python3 debts.py 4.N` for every N from 4 to 20; and
+confirm `build.py`'s `PARTS` list carries the twenty Part IV titles. The remap surface is larger
+than `debts.py` alone reports — `src/_ledger.html`'s "spent in" cells, the plural runs
+(*"Chapters 4.6, 4.8 and 4.11"*), `GAPS.md` and `STATUS.md` are all outside the per-chapter report,
+and the ledger is the one most easily forgotten because nothing in the toolchain reads it.
 
 **Two further process changes, both cheap:**
 
@@ -701,7 +760,8 @@ Recorded so that these are read as judgements rather than findings.
    Lebesgue integral is built. If the author decides instead to ⚑ the integral wholesale and work
    with $L^{2}$ as a completion (which is defensible, and which is what most physics texts do), then
    one chapter suffices — but three explicit promises in Part 0 would then need to be revisited and
-   the ⚑ made prominent. I would not make that choice silently.
+   the ⚑ made prominent. I would not make that choice silently. *(Settled: two. And the operators
+half has since become two chapters of its own, 4.4 and 4.5 — see `reports/part4-replan.md` §1.)*
 
 3. **The light-cone route to $D=26$** gives the reader a complete derivation but hides where the
    $-26$ actually comes from. The covariant route shows the structure but needs Faddeev–Popov. My

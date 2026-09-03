@@ -18,6 +18,25 @@ def strip(s):
     s = re.sub(r"<[^>]+>", "", s)
     return " ".join(html.unescape(s).split())
 
+# "Chapters 4.5, 4.6 and 4.8" names three chapters. The original pattern required
+# the singular word "Chapter" immediately before the number, so every plural run
+# was invisible — 99 references, across the chapters and the ledger, that the
+# census counted as zero. This matches the run and then asks whether the target
+# is in it.
+RUN = re.compile(r"Chapters?\s+((?:\d+\.\d+)(?:\s*(?:,\s*|and\s+|to\s+|through\s+|[–-]\s*)\d+\.\d+)*)")
+
+
+def mentions(txt, target, whole_part):
+    """(start, end) for every place the target is named, plural runs included."""
+    for m in RUN.finditer(txt):
+        for mm in re.finditer(r"\d+\.\d+", m.group(1)):
+            num = mm.group(0)
+            hit = num.startswith(target + ".") if whole_part else num == target
+            if hit:
+                s = m.start(1) + mm.start()
+                yield s, s + len(num)
+
+
 def sentences_naming(path, pat):
     """Return (line number, the whole sentence) for each mention."""
     raw = open(path, encoding="utf-8").read()
@@ -59,12 +78,43 @@ def report(target):
     pat = (r"Chapter %s\.\d+" % re.escape(target)) if whole_part \
           else (r"Chapter %s(?!\d)" % re.escape(target))
     total = 0
-    for p in sorted(glob.glob("src/ch*.html")):
-        hits = sentences_naming(p, pat)
+    # The ledger is included because its "Spent in" column is a promise like any
+    # other — 84 of them pointed into Part IV and no census had ever seen them,
+    # since it globbed ch*.html only.
+    for p in sorted(glob.glob("src/ch*.html")) + ["src/_ledger.html"]:
+        if not os.path.exists(p):
+            continue
+        raw = open(p, encoding="utf-8").read()
+        if p.endswith("_ledger.html"):
+            # The ledger writes bare numbers in its cells, never "Chapter 4.5".
+            hits = []
+            for m in re.finditer(r"<td[^>]*>(.*?)</td>", raw, re.S):
+                cell = re.sub(r"\$[^$]*\$", " ", m.group(1))
+                cell = strip(cell)
+                for num in set(re.findall(r"(?<![\d.§])([0-7]\.[1-9]\d?)(?![\d])(?!\.\d)", cell)):
+                    ok = num.startswith(target + ".") if whole_part else num == target
+                    if ok and cell not in hits:
+                        hits.append(cell)
+            if hits:
+                print(f"\n### ledger — {len(hits)}")
+                for s in hits:
+                    print(f"  · {s[:300]}")
+                    total += 1
+            continue
+        txt = strip(raw)
+        seen, hits = set(), []
+        for a, b in mentions(txt, target, whole_part):
+            lo = txt.rfind(". ", 0, max(0, a - 1))
+            lo = 0 if lo < 0 else lo + 2
+            hi = txt.find(". ", b)
+            hi = len(txt) if hi < 0 else hi + 1
+            s = txt[lo:hi].strip()
+            if s not in seen:
+                seen.add(s); hits.append(s)
         if not hits:
             continue
         print(f"\n### {os.path.basename(p)[:-5]} — {len(hits)}")
-        for ln, s in hits:
+        for s in hits:
             print(f"  · {s}")
             total += 1
     print(f"\n{total} promises name Chapter {target}. Every one is a requirement.")

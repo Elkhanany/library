@@ -226,6 +226,100 @@ marker into new chapters: it costs one line and it is what makes the suppression
 ## This is now the book's register, not a variant
 
 Chapters 4.3 onward are written in it from the start. There is no second voice to convert to, and
-nothing in this section is optional for new work. `registercheck.py` still exists for the case it was
-built for — proving that a rewrite of an existing chapter changed the prose and nothing else — and
-for spot-checking a new chapter against the four targets before it ships.
+nothing in this section is optional for new work.
+
+**`reports/writing-brief.md` is the brief every chapter-writing agent gets**, and it leads with
+narrative flow rather than with punctuation, because that is the order the reader cares about.
+`reports/register-brief.md` remains what it was: the brief for converting an existing chapter, whose
+whole subject is what must not change.
+
+`registercheck.py --new <chapter>` checks a chapter written in the register against the four targets,
+skipping the invariants since there is no earlier version to hold.
+
+## Flow is reviewed, not measured — and that is a finding, not a gap
+
+The four targets are necessary and nowhere near sufficient. A chapter can pass all of them and still
+drop its thread on every page.
+
+Two further metrics were built for exactly that and both were discarded, which is worth recording so
+nobody builds them again. **Cold section openings** counted a display equation arriving within
+twenty-five words of a heading; across the thirty converted chapters it fires at a median of 17%, and
+inspection showed most of those are definitional displays where a short lead-in is correct.
+**Unread equations** counted a display with twelve words or fewer after it; median 4%, and most are
+results stated inside a sentence that runs through them. Gating on either would have taught the
+writer to pad, which is the opposite of the point.
+
+So flow is checked by a reader. `reports/flow-review-brief.md` is that pass: one agent, one chapter,
+read start to finish in order, reporting where the thread breaks and what the reader needed at that
+point — and forbidden from proposing wording, since a reviewer who supplies prose gets prose accepted
+uncritically.
+
+
+# Pace: the unit is a sitting, not a chapter
+
+Set by the reader, 26 August 2026, after reading Part IV: *"I value now slow (very slow one by one)
+pace than intense pace that feels like running around."*
+
+He was right, and it was measurable. Counting new objects introduced per chapter — an object being
+what earns a row in the Math Ledger:
+
+| | new objects/chapter | words per object |
+|---|---|---|
+| Part 0 | 5–8 | ~2,100 |
+| Parts I–III | 3–10 | ~2,800 |
+| **Part IV as written** | **12–13** | **~1,600** |
+
+Chapter 4.3 introduces measure, σ-algebras, the Lebesgue integral, monotone convergence, dominated
+convergence, $L^{2}$, the a.e. quotient, completeness, separability, Bessel and Parseval, Fejér, the
+Fourier basis and Plancherel. Thirteen things, 22,600 words, one sitting. The chapters were not
+badly written. They were too big, and there was no place to stop.
+
+## The cap
+
+**About six new objects per chapter.** Not a hard limit — a seventh that takes three lines is fine,
+a tenth is not. A chapter that exceeds it splits. `MATHPLAN` blocks state the count explicitly so
+the number is decided in the plan rather than discovered afterwards.
+
+Two things the cap must never buy:
+
+- **A derivation split across a chapter boundary.** The thread is this book's most fragile asset. If
+  a split would cut a derivation in half, the boundary moves.
+- **Padding.** Fewer objects per chapter means fewer objects, not more words about the same ones.
+
+## Sitting breaks
+
+Inside a chapter, `<p class="pause"><span>…</span></p>` draws a quiet rule across the column saying
+this is a place to stop and what the next stretch is about. Two or three per chapter, at the real
+seams. It is a road sign, not a section: no number, no entry in the sidebar, nothing depends on it.
+
+Chapters 4.2 and 4.3 carry them retroactively, since they measure worst and splitting them would
+cost a renumbering they do not justify.
+
+# Annotated equations
+
+`\ann{expression}{label}` writes a label in small type under a brace:
+
+    $$ \ann{R_{\mu\nu}-\tfrac12 R\,g_{\mu\nu}}{curvature of spacetime} \;=\;
+       \ann{\frac{8\pi G}{c^4}}{how stiff spacetime is}\;
+       \ann{T_{\mu\nu}}{energy and momentum present} $$
+
+Adopted from Schwichtenberg's *No-Nonsense* books, which is the one device they have that this book
+lacked. It answers, at the moment of first meeting, the question that otherwise sends a reader
+scrolling back — and "symbol out of reach" is already one of the six failure modes the flow review
+looks for.
+
+**Use it on the equation that defines something or states a headline result, and nowhere else.** An
+annotation under every display is noise, and the device works only while it is rare. One or two per
+chapter is the right frequency. Never annotate a step in the middle of a derivation: if the reader
+needs the symbols explained there, the prose bridge is what is missing.
+
+Labels are prose, not notation: *how stiff spacetime is*, not *coupling constant*.
+
+# Bird's Eye View pages
+
+One per part, as a standalone page like the Ledger and the Through-Line rather than a chapter, so it
+disturbs no numbering. It tells the whole part in plain English, with two or three annotated
+equations and **no derivations at all**, before the machinery starts. It is what a reader should be
+able to read in ten minutes and come away knowing what the part is for and roughly how it goes.
+
+It is not a summary written afterwards. It is written to be read first.

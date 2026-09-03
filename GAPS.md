@@ -64,12 +64,16 @@ said 126). (This was 117 when the register was first written;
 
 ### How to maintain this file
 
-Regenerate it at the end of every batch. The two greps that matter:
+Regenerate it at the end of every batch. The two commands that matter:
 
 ```bash
 grep -c '⚑' src/ch*.html                       # the flag census
-grep -o 'Chapter [4-7]\.[0-9]' src/ch*.html     # every debt naming an unwritten chapter
+python3 debts.py --census                      # every debt naming an unwritten chapter
 ```
+
+Use the script, not a bare grep. Since Part IV runs to 4.20, `grep -o 'Chapter [4-7]\.[0-9]'` reads
+*Chapter 4.20* as *Chapter 4.2* and files the debt against a written chapter; and it cannot see the
+plural form — *"Chapters 4.6, 4.8 and 4.11"* — at all. `debts.py` handles both.
 
 When a chapter ships, check §4 for every debt naming it and strike or re-file each one. **A debt
 that quietly expires is worse than one that was never incurred**, because the reader remembers being
@@ -83,7 +87,7 @@ Ranked by **what the gap costs the reader** — how much of what they have been 
 not by how hard it would be to close. A gap that is trivial to fix and load-bearing outranks a gap
 that is impossible to fix and decorative.
 
-### G1 · The spectral theorem in infinite dimensions — seven promises, all due at once
+### G1 · The spectral theorem in infinite dimensions — seven promises, four still due
 
 **Cost: severe. This is the largest outstanding debt in the book.**
 
@@ -98,27 +102,29 @@ Every word of that is true in finite dimensions and none of it is proved in infi
 which is where quantum mechanics happens. Chapter 0.5's closing paragraph says so directly:
 *"Every proof above used finite dimension — in the induction, in rank–nullity, in the interchange of
 sums, in the claim that an injective map is surjective. Quantum mechanics happens in infinite
-dimensions. Chapter 4.3 is where the bill comes due."*
+dimensions. Chapters 4.4 and 4.5 are where the bill comes due."*
 
-Seven separate promises, made in writing, are payable at Chapter 4.3:
+Seven separate promises were made in writing. **Chapter 4.3, now written, paid three of them; the
+remaining four fall to Chapters 4.4 and 4.5**, and every one of the quoted sentences has been
+re-aimed in the text to say so:
 
-| Promised in | The promise |
-|---|---|
-| 0.2 §1 | *"In Chapter 4.3 we will throw away and rebuild the integral from scratch (the Lebesgue integral)"* |
-| 0.2 §4.4 | Dominated convergence *"proved properly in Chapter 4.3"* |
-| 0.5 §6 | The projection form $A=\sum_k\lambda_kP_k$ *"is the one that survives to infinite dimensions in Chapter 4.3"* |
-| 0.5 §6 | Continuous spectra, $\int\lambda\,\dd P(\lambda)$ over projection-valued measures, completeness re-proved — *"Chapter 4.3 pays this bill in full"* |
-| 0.6 §2 | Unbounded operators, *"$\dv{}{x}$ being the standard offender"* |
-| 0.9 §1.3 | Completeness of the Fourier basis — the ⚑ |
-| 0.9 §5.3 | $\ee^{\ii kx}\notin L^{2}$: *"this is precisely the difficulty that Chapter 4.3 has to work to make legitimate"* |
+| Promised in | The promise | Due at |
+|---|---|---|
+| 0.2 §1 | *"In Chapter 4.3 we will throw away and rebuild the integral from scratch (the Lebesgue integral)"* | **Paid, 4.3** |
+| 0.2 §4.4 | Dominated convergence *"proved properly in Chapter 4.3"* | **Paid, 4.3** |
+| 0.5 §6 | The projection form $A=\sum_k\lambda_kP_k$ *"is the one that survives to infinite dimensions in Chapter 4.5"* | **4.5** |
+| 0.5 §6 | Continuous spectra, $\int\lambda\,\dd P(\lambda)$ over projection-valued measures, completeness re-proved — *"Chapter 4.5 pays this bill in full"* | **4.5** |
+| 0.6 §2 | Unbounded operators, *"$\dv{}{x}$ being the standard offender"* | **4.4** |
+| 0.9 §1.3 | Completeness of the Fourier basis — the ⚑ | **Paid, 4.3** |
+| 0.9 §5.3 | $\ee^{\ii kx}\notin L^{2}$: *"the difficulty Chapter 4.5 has to work to make legitimate"* | **4.5** |
 
 **Can it be closed with the tools the book has?** Partly. L², completeness of an orthonormal system,
 unbounded operators, domains and the distinction between symmetric and self-adjoint are all fully
 derivable from Part 0 plus one quoted measure. The spectral theorem for unbounded self-adjoint
 operators is not — its proof is three or four chapters of analysis.
 
-**Cost to close:** two chapters (see `PLAN-FORWARD.md` §5). The residual ⚑ should be the spectral
-theorem itself, stated in multiplication-operator form and then *verified by hand* on the only three
+**Cost to close:** two chapters — **4.4** for the domains and the adjoint, **4.5** for the spectrum
+(see `PLAN-FORWARD.md` §5). The residual ⚑ should be the spectral theorem itself, stated in multiplication-operator form and then *verified by hand* on the only three
 operators the book ever applies it to — $\hat x$, $\hat p$ (via Fourier), and the oscillator
 Hamiltonian (via Hermite completeness). That leaves the reader holding a quoted theorem they have
 personally checked everywhere it is used, which is the best available outcome.
@@ -191,9 +197,9 @@ of Part IV.
 Derive the Planck law **Einstein's way** — A and B coefficients, detailed balance, and Chapter 0.6's
 Boltzmann weights. That uses only what the book has, needs no quantum statistics at all, and
 produces stimulated emission as a by-product. The occupation-number distributions then arrive
-properly in 4.11 once exchange symmetry exists.
+properly in 4.18 once exchange symmetry exists.
 
-**Cost to close:** one section in 4.1, one in 4.11. No new chapter. See `PLAN-FORWARD.md` §3.1.
+**Cost to close:** one section in 4.1, one in 4.18. No new chapter. See `PLAN-FORWARD.md` §3.1.
 
 **Downstream:** the whole black-hole entropy thread — $S=A/4$ quoted in 3.9, counted in 7.9 — is a
 statistical-mechanics calculation, and 0.6's $S=\ln W$ is the only foothold the book currently has
@@ -357,11 +363,12 @@ which Part V cannot avoid.
 
 Chapter 0.9 is candid about the specific hole it leaves: the plane waves that serve as a basis for
 $L^{2}$ *"do not belong to the space they are supposed to be a basis of"*, and *"that gap is real.
-Chapter 4.3 closes it."*
+Chapter 4.5 closes it."*
 
 **Cost to close:** one third of Chapter 5.4 (see `PLAN-FORWARD.md` §6), with a partial payment in
-4.4 (the rigged-Hilbert-space flag). Note that the debt is currently addressed to 4.3, and 4.3 will
-not fully pay it — this is exactly the kind of quiet reassignment this register exists to catch.
+4.5 (box normalisation worked in full, then the rigged-Hilbert-space flag behind it). The debt was
+addressed to 4.3 when this register was compiled and 4.3 does not pay it; it has since been re-aimed
+to 4.5 — this is exactly the kind of quiet reassignment this register exists to catch.
 
 ### G12 · Convergence of perturbation series
 
@@ -382,10 +389,10 @@ should be presented as if they might.
 |---|---|
 | **Universality of free fall** ($m_G=m_I$) — 3.1 | An experimental fact, flagged nine times in one chapter. Chapter 3.1 says it plainly: *"It is not derivable from anything in this book, and in the theory as it stands it is not derivable at all."* Everything in Part III rests on it |
 | **Maxwell's equations** — 2.1, 2.6 | Empirical input. The book derives their relativistic *form* (2.6) and will derive them from a symmetry principle (6.3), but the symmetry principle is chosen to reproduce them |
-| **The Born rule** — Part IV | Not derivable. Decoherence explains why the interference terms become unobservable; it does not explain why the probabilities are $\lvert\psi\rvert^{2}$. Chapter 4.11 must say so |
+| **The Born rule** — Part IV | Not derivable. Decoherence explains why the interference terms become unobservable; it does not explain why the probabilities are $\lvert\psi\rvert^{2}$. Chapter 4.20 must say so |
 | **Confinement** — 6.5 | Not proved. A Millennium Prize problem. The strong-coupling lattice argument and the numerical evidence are what can be shown |
 | **The cosmological constant's value** — 3.6 | Chapter 3.6 already says it: *"Nothing in this book explains it, and nothing anywhere else does either"* |
-| **The measurement problem** — 4.11 | Unresolved in physics, not merely in this book |
+| **The measurement problem** — 4.20 | Unresolved in physics, not merely in this book |
 | **Everything in Part VII from 7.8 onward** | `PLAN.md` §6 already commits to this. `PLAN-FORWARD.md` §9.4 gives it a three-column ledger |
 
 ---
@@ -403,7 +410,7 @@ review found unmarked in Chapters 0.2, 0.4, 0.6 and 0.7 — the ones the reader 
 | Ch | What was quoted | Class | Derivable with what the book has? | Cost to close | Status |
 |---|---|---|---|---|---|
 | 0.2 | Heine–Cantor: a continuous function on a closed bounded interval is uniformly continuous | M | No — needs compactness, which Part 0 does not build | ~1 section, or leave it | Permanent, correctly |
-| 0.2 | Fubini: a product of integrals is a double integral | M | No | Needs **product** measure and Fubini–Tonelli, a second quoted construction beyond the one 4.3 §2.3 makes; 4.3 §4.1 declines it in print | **Permanent, correctly** |
+| 0.2 | Fubini: a product of integrals is a double integral | M | No | Needs **product** measure and Fubini–Tonelli, a second quoted construction beyond the one 4.3 §2.3 makes; 4.3 §4.1 declines it in print. **Spent, not repaid, in 4.4 §5.2** — identifying $\operatorname{dom}(\hat p^{\dagger})$ needs the du Bois-Reymond interchange, and 4.4 cites this mark where it stands rather than raising a third flag of its own | **Permanent, correctly** |
 | 0.2 | Liouville: $\ee^{-x^{2}}$ and its relatives have no elementary antiderivative | M | No — differential Galois theory, and nothing else in the book touches it | Will not be paid | Permanent, correctly |
 | 0.4 | The fundamental theorem of algebra | M | No — the honest proofs are Liouville's theorem or a winding number | Becomes a 3-line corollary once 5.4 builds complex analysis | → Ch 5.4 (see G4) |
 | 0.6 | The implicit function theorem | M | No — needs the contraction mapping principle | ~1 section, after 4.3 | Permanent, correctly |
@@ -437,14 +444,14 @@ of algebra (0.4) and the implicit function theorem (0.6) — are candidly labell
 | 1.3 | Invertibility of the Legendre transform for non-convex $f$ | M | Yes, with effort | ~1 section | Permanent, correctly |
 | 1.3 | The Aharonov–Bohm effect (Chambers 1960; Tonomura 1986) | E + F | The measurement, no; the phase, yes | — | → Ch 6.3 for the phase |
 | 1.3 | **Dirac's formalism for constrained systems** | **D** | Yes — it is Hamiltonian mechanics | ~2 sections | **See G5. Nothing owes it, and everything needs it** |
-| 1.3 | The Bohr–Sommerfeld quantisation condition | F | No, not classically | — | → Ch 4.6 |
-| 1.3 | Adiabatic invariance of the action variable | F | Partially | — | → Ch 4.10 |
+| 1.3 | The Bohr–Sommerfeld quantisation condition | F | No, not classically | — | → Ch 4.8 (the oscillator case, exactly), 4.10 §6 (in general) |
+| 1.3 | Adiabatic invariance of the action variable | F | Partially | — | → Ch 4.17 §8 |
 | 1.3 | Poincaré's recurrence theorem | D | Yes — it is Liouville plus pigeonhole | ~1 section | Permanent |
-| 1.3 | Groenewold–van Hove: no exact quantisation map exists | D / M | No | — | → Ch 4.7 should collect it as the honest limit of the correspondence |
+| 1.3 | Groenewold–van Hove: no exact quantisation map exists | D / M | No | — | → Ch 4.10 §8 should collect it as the honest limit of the correspondence |
 | 1.3 | $\det M=+1$ for canonical transformations, via a Pfaffian argument | M | Yes, with the Pfaffian built | ~1 section | Permanent, correctly |
-| 1.3 | The WKB substitution giving Hamilton–Jacobi as the $\hbar\to0$ limit | F | No | — | → Ch 4.7 |
+| 1.3 | The WKB substitution giving Hamilton–Jacobi as the $\hbar\to0$ limit | F | No | — | → Ch 4.10 |
 | 1.3 | KAM theory | D | No | — | Permanent |
-| 1.4 | Bloch's theorem / crystal momentum | D | Partially, after 4.5 | ~1 section | Permanent |
+| 1.4 | Bloch's theorem / crystal momentum | D | Partially, after 4.6 | ~1 section | Permanent |
 | 1.4 | The FLRW scale factor $a(t)$ | F | Yes | — | → Ch 3.9 |
 | 1.4 | No time-translation symmetry in a general curved spacetime ⇒ no total energy | F | Yes | — | **Collected, Ch 3.5** (Killing vectors); completes in 3.9 |
 | 1.4 | The local statement $\nabla_\mu T^{\mu\nu}=0$ | F | Yes | — | **Collected, Ch 3.6** |
@@ -453,7 +460,7 @@ of algebra (0.4) and the implicit function theorem (0.6) — are candidly labell
 | 1.4 | The CPT theorem | M / D | No — needs analyticity and locality | — | Permanent |
 | 1.4 | **Noether's second theorem** — symmetries with function-valued parameters give identities, not conservation laws | F | Yes | ~1 section | → **Ch 6.3.** This is why 6.3 cannot simply repeat 1.4 §6, and it is tied to G5 |
 | 1.4 | The LRL vector's algebra closes on $\mathfrak{so}(4)$ | F | Yes — the brackets are computed in place | — | → Ch 6.1 for the naming |
-| 1.4 | Hydrogen's degeneracy in $\ell$ inherits that same $SO(4)$ | F | Yes | — | → Ch 4.9 |
+| 1.4 | Hydrogen's degeneracy in $\ell$ inherits that same $SO(4)$ | F | Yes | — | → Ch 4.14 |
 | 1.4 | Conformal invariance of the $1/r^{2}$ Lagrangian, $SL(2,\R)$ | F | Partially | — | → Ch 7.3 |
 | 1.4 | The two signs of the Noether charge become particle and antiparticle | F | Yes | — | → Ch 5.5 |
 
@@ -592,25 +599,38 @@ where it is still implicit:
 
 ## 4 · Promised, and not yet delivered
 
-Every reference in the written text to a chapter that does not exist. Counted by `grep`:
+Every reference in the written text to a chapter that does not exist. Counted by
+`python3 debts.py --census`:
 
 | Owed to | Debts | Owed to | Debts | Owed to | Debts |
 |---|---|---|---|---|---|
-| 3.7 | 22 | 5.1 | 3 | 6.4 | 11 |
-| 3.8 | 12 | 5.2 | 16 | 6.5 | 9 |
-| 3.9 | 17 | | | | |
-| 4.1 | 4 | 5.3 | 17 | 6.6 | 10 |
-| 4.2 | 19 | 5.4 | 5 | 6.7 | 5 |
-| 4.3 | 16 | 5.5 | 12 | 7.1 | 7 |
-| 4.4 | 22 | 5.6 | 14 | 7.2 | 7 |
-| 4.5 | 19 | 5.7 | 5 | 7.3 | 1 |
-| 4.6 | 23 | 5.8 | 19 | 7.4 | 4 |
-| 4.7 | 9 | 5.9 | 17 | 7.5 | 0 |
-| 4.8 | 2 | 6.1 | 22 | 7.6 | 0 |
-| | | 6.2 | 1 | 7.7 | 3 |
-| | | 6.3 | **33** | 7.8 | 5 |
+| 4.4 | 8 | 5.1 | 4 | 6.1 | 23 |
+| 4.5 | 12 | 5.2 | 18 | 6.2 | 1 |
+| 4.6 | **32** | 5.3 | 16 | 6.3 | **35** |
+| 4.7 | 2 | 5.4 | 16 | 6.4 | 11 |
+| 4.8 | 14 | 5.5 | 5 | 6.5 | 9 |
+| 4.9 | **32** | 5.6 | 17 | 6.6 | 11 |
+| 4.10 | 9 | 5.7 | 10 | 6.7 | 0 |
+| 4.11 | 9 | 5.8 | 9 | 6.8 | 5 |
+| 4.12 | 7 | 5.9 | 5 | 7.1 | 11 |
+| 4.13 | 6 | 5.10 | 7 | 7.2 | 3 |
+| 4.14 | 1 | 5.11 | 11 | 7.3 | 5 |
+| 4.15 | 2 | | | 7.4 | 4 |
+| 4.16 | 1 | | | 7.5 | 1 |
+| 4.17 | 8 | | | 7.6 | 0 |
+| 4.18 | 7 | | | 7.7 | 2 |
+| 4.19 | 6 | | | 7.8 | 2 |
+| 4.20 | 13 | | | 7.9 | 10 |
 
-**Total: 393 forward references to unwritten chapters.**
+**Total: 420 forward references to unwritten chapters.**
+
+> **Updated 28 August 2026.** Recounted after the Part IV re-plan
+> (`reports/part4-replan.md`), which cuts the eight unwritten chapters 4.4–4.11 into seventeen,
+> 4.4–4.20, each capped at about six new objects. The previous edition of this table read
+> **393** and was two renumberings out of date. The two totals are not comparable: 3.7–3.9 and
+> 4.1–4.3 have been written and have left the table, three chapters of new text have entered it,
+> and `debts.py` now matches the plural form — *"Chapters 4.6, 4.8 and 4.11"* — which the old
+> `grep 'Chapter 4\.N'` could not see at all.
 
 > **Updated 18 August 2026.** Chapter 3.7 has been split — 3.7 now carries the Schwarzschild
 > solution and its timelike orbits, 3.8 carries light, redshift and horizons, and cosmology moves to
@@ -653,25 +673,34 @@ writes."* What is owed:
 Chapter 6.3 is the convergence point of the entire book's structure. **It should not be written by
 an agent who has not read the eight chapters that promised it.**
 
-**Chapter 4.4 — 22 debts, Chapter 4.6 — 23 debts.** Note that these are debts to `PLAN.md`'s
-*numbering*. Under the revised curriculum in `PLAN-FORWARD.md` §5, Part IV renumbers, and **every one
-of these 390 references will need remapping.** That is a mechanical but non-trivial task and should
-be done as a single scripted pass before Part IV is written, not chapter by chapter afterwards.
+**Chapter 4.6 — 32 debts, Chapter 4.9 — 32 debts.** These two now carry the Part IV load. 4.6 is
+the Schrödinger equation, which Part 0 has been writing cheques against since 0.2 and which 4.2
+names five times; 4.9 is the uncertainty relation and its neighbours, which 0.5 and 0.9 built in
+full and deliberately did not spend, so almost every one of its debts is paid in a sentence rather
+than a section. Both are collection chapters rather than construction chapters, and neither should
+be written without `python3 debts.py 4.6` and `python3 debts.py 4.9` in the brief.
 
-### The debts that name a chapter which will not pay them
+The remapping this entry used to call for has now been done twice — in August 2026 when Part IV
+went from eight chapters to eleven, and again in the re-plan that took it from eleven to twenty.
+The lesson stands as written: it is a single scripted pass with a hand-checked mapping table, done
+before the batch rather than chapter by chapter afterwards.
 
-Under the revised plan, three current promises land in the wrong place and must be re-addressed:
+### The debts that named a chapter which would not pay them
 
-| Promise | Currently names | Should name |
+All of these have been re-aimed in the text. The middle column records what the sentences said when
+this register was compiled; the right-hand column is where each promise lands under the
+twenty-chapter Part IV, and is the live target.
+
+| Promise | Named, 18 Aug 2026 | Now names, and pays |
 |---|---|---|
-| The Lebesgue integral, dominated convergence, completeness of L² | 4.3 | 4.3 (unchanged) |
-| The infinite-dimensional spectral theorem, continuous spectra, self-adjointness | 4.3 | **4.4** |
-| Plane waves not being in $L^{2}$; the rigged-Hilbert-space repair | 4.3 | **4.4**, completing in **5.4** |
+| The Lebesgue integral, dominated convergence, completeness of L² | 4.3 | **4.3** — written, and paid |
+| The infinite-dimensional spectral theorem, continuous spectra, self-adjointness | 4.3 | self-adjointness **4.4**; the spectrum and the theorem **4.5** |
+| Plane waves not being in $L^{2}$; the rigged-Hilbert-space repair | 4.3 | **4.5**, completing in **5.4** |
 | Poles as particles, branch cuts as thresholds (0.3 §3) | 5.9 | **5.11**, with the machinery in **5.4** |
-| The fine structure of hydrogen (0.3 WE2, 2.5 §3.3) | 4.5 | **4.10** |
-| Ladder operators and $E_n=(n+\half)\hbar\omega$ | 4.5 | **4.6** |
-| The adiabatic theorem (1.3) | 4.5 | **4.10** |
-| Hydrogen's $SO(4)$ degeneracy (1.4) | 4.5 | **4.9** |
+| The fine structure of hydrogen (0.3 WE2, 2.5 §3.3) | 4.5 | **4.16** |
+| Ladder operators and $E_n=(n+\half)\hbar\omega$ | 4.5 | **4.8** |
+| The adiabatic theorem (1.3) | 4.5 | **4.17** §8 |
+| Hydrogen's $SO(4)$ degeneracy (1.4) | 4.5 | **4.14** |
 
 ---
 
@@ -707,8 +736,8 @@ until Chapter 5.4 at the earliest.
 | Noether's second theorem | 1.4 §6 | 6.3 | Owed, and tied to the above |
 | The Unruh effect / Rindler thermodynamics | 2.3 Problem 3 | *nobody explicitly* | Natural home is 7.9, alongside the entropy count |
 | Lebesgue integration | 0.2 §1 | 4.3 | Explicitly promised |
-| The classical limit and Hamilton–Jacobi | 1.3 §8.2 | 4.7 | |
-| Bohr–Sommerfeld, derived properly | 0.8 §4.4, 1.3 §4.4 | 4.6 | Promised twice with the arithmetic already done |
+| The classical limit and Hamilton–Jacobi | 1.3 §8.2 | **4.10** | |
+| Bohr–Sommerfeld, derived properly | 0.8 §4.4, 1.3 §4.4 | **4.8**, then **4.10** §6 | Promised twice with the arithmetic already done. 4.8 does the oscillator, where it is exact; 4.10 §6 recovers it from WKB in general and scores it |
 
 ---
 
@@ -739,10 +768,10 @@ the only chapter in the book whose flags are mostly *"we are not going to do thi
 *"here is the measurement"* or *"here is the chapter that will"*. It is also the chapter whose
 deferral matters most downstream (G5).
 
-**The forward debts are the real exposure.** 390 references to unwritten chapters, 33 of them to
+**The forward debts are the real exposure.** 420 references to unwritten chapters, 35 of them to
 Chapter 6.3 alone. Every one of those was written in good faith by an author who knew what the later
 chapter was going to say. The risk is not that they are wrong; it is that a later agent, writing
 6.3 with a different plan in front of them, does not know that eight earlier chapters have told the
 reader precisely what 6.3 will do. **The single most valuable process change this register suggests
 is that each chapter's brief should carry the extracted list of every debt naming it.** That is a
-five-line script, and it would convert 390 hopes into 390 requirements.
+five-line script — it now exists, as `debts.py` — and it converts 420 hopes into 420 requirements.

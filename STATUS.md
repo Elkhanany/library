@@ -1,16 +1,16 @@
 # From Newton to M-Theory — status
 
-*Last updated 25 August 2026, after Chapter 4.3 — the first chapter written in the plain-language register from the start.*
+*Last updated 29 August 2026, after Chapters 4.8 and 4.9 — Part IV is now nine chapters deep.*
 
 ## Where the book stands
 
-**31 of 67 chapters written.** Parts 0, I, II and III complete; Part IV under way at 3 of 11.
-**All thirty written chapters are in the plain-language register.** The `clear` tag has therefore
+**37 of 76 chapters written.** Parts 0, I, II and III complete; Part IV under way at 9 of 20.
+**All thirty-seven written chapters are in the plain-language register.** The `clear` tag has therefore
 disappeared from the contents list — `build.py` suppresses it once every written chapter carries the
 marker, since a badge on every row is decoration rather than information. It returns on its own if
 one ever does not.
 
-- 445,635 words · 26,796 typeset expressions · 235 "In plain terms" passages · 178 ⚑ marks
+- 564,115 words · 32,077 typeset expressions · 278 "In plain terms" passages · 189 ⚑ marks
 - Every page verified at desktop and phone widths **with all network requests blocked**: zero
   KaTeX errors, zero unresolved cross-references, zero overflow, zero external requests.
 
@@ -20,8 +20,109 @@ one ever does not.
 | I · The Action Principle | 1.1–1.4 | complete |
 | II · Special Relativity | 2.1–2.6 | complete |
 | III · General Relativity | 3.1–3.9 | complete |
-| IV · Quantum Mechanics | 4.1–4.3 | 3 of 11 — **4.4 is next** |
+| IV · Quantum Mechanics | 4.1–4.9 | 9 of 20 — **4.10 is next** |
 | V–VII | — | not started |
+
+## The batch of 29 August: 4.5, 4.6, 4.7
+
+Three chapters, ~59,000 words, written under the six-object cap and then reviewed by five agents that
+did not write them: one mathematics pass over 4.7 re-deriving every result in sympy, and one
+narrative-flow pass over each of the three.
+
+| | 4.5 · The Spectral Theorem in Infinite Dimensions | 4.6 · The Schrödinger Equation | 4.7 · Wells, Barriers, and Tunnelling |
+|---|---|---|---|
+| words | 20,300 | 19,200 | 20,100 |
+| sections | 11 | 12 | 8 |
+| objects | 6 | 7 | 6 |
+| ⚑ | 3 | 3 | 1 |
+| flow findings | 10 | 14 | 15 |
+| maths findings | — | — | 2 BLOCKER · 4 MAJOR · 15 MINOR |
+
+**The two blockers, both in 4.7's worked examples, both confirmed independently before they were
+touched.** Worked example 2(b) had the standing-wave displacement as $\theta/k$; it is
+$(\pi/2-\theta)/k$. The two agree at $E=V_0/2$ and nowhere else, which is why the error survived: the
+chapter's version *diverges* as $E\to0$ where the correct one goes to zero. Worked example 3(b) said
+the delta limit is approached with a correction of order $\kappa w$ rather than $(\kappa w)^2$; it is
+the other way round, the correction is first order in the width, and the chapter's own three printed
+transmissions refute the sentence standing above them.
+
+**The four majors are all of one kind — a true statement standing where nothing proves it.** §1.6's
+self-adjointness sweep claimed to cover every potential in §§4–6 and missed the delta, which is the
+one Hamiltonian in the chapter whose domain condition best illustrates the chapter's thesis; the
+check is now there and is the third of three. §4.4's two-dimensional binding claim was an unflagged
+import and is deleted, because the chapter's flag budget is one and it is spent on the experiments.
+§2.4's Wronskian argument for non-degeneracy breaks at the nodes of every excited state, which is the
+generic case, not a pathology; the missing line is in. And §5.2's wave-packet statement was cited to
+`ch4-6` §10, which treats a free particle and never sends one at a step, so it now stands as an
+interpretation of the ratio rather than as a result derived here.
+
+**The flow reviews found what no checker can count.** The worst stall in 4.7 was a symbol: $\kappa$
+means the decay *inside* the barrier through the whole of §6, and then silently means the decay
+*outside* a well in the subordinate clause that opens the chapter's best result. In 4.6 it was the
+arrival — the equation the chapter is named after was produced by the last two clauses of a paragraph
+about passing a limit through a bounded operator, and nothing read it. In 4.5 it was $\hat U$ carrying
+two jobs in the sentence that points at the equation using the other one.
+
+**Three figure defects, none of which any script could see.** The finite-well figure drew odd states
+at up to 3.2× their intended height, so at the "six states" preset a wavefunction crossed several
+neighbouring levels. Three slider `value` attributes were not aligned to their `step`, so browsers
+rounded them and the button marked "on a resonance" landed off resonance; it now reads
+$T=1.000000000$. And the highlighted preset at load said "one state" while the readout underneath it
+said two.
+
+**The Math Ledger** gained nineteen rows and the last pending entry was discharged: Part IV now
+carries 63 objects across seven chapters.
+
+## The batch of 4.8 and 4.9
+
+Written concurrently, then reviewed by four agents that wrote neither: a mathematics pass and a
+narrative-flow pass over each.
+
+| | 4.8 · The Oscillator, and the Ladder | 4.9 · Commutators, Uncertainty, and Symmetry |
+|---|---|---|
+| words | 16,000 | 15,100 |
+| sections | 9 | 8 |
+| objects | 6 | 5 |
+| ⚑ | 1 | 1 |
+| maths | 0 BLOCKER · 2 MAJOR · 16 MINOR | 2 BLOCKER · 5 MAJOR · 17 MINOR |
+| flow | 10 findings | 24 findings |
+
+**The best catch was in the plan, not the prose, and it was the writer who made it.** The plan's
+numerical confirmation for 4.8 was to diagonalise the oscillator on a 60-state truncation and check
+the levels come out equally spaced. That test is vacuous: build $\hat H=\half(\hat X^{2}+\hat P^{2})$
+out of truncated ladder matrices and the matrix is *identically diagonal* with entries $n+\half$,
+because the $\hat a^{2}$ and $\hat a^{\dagger2}$ pieces cancel exactly whatever the truncation. I
+confirmed it: the largest off-diagonal entry is $3.6\times10^{-15}$, and the only wrong level is the
+top one. The check measured floating-point addition. What 4.8 does instead is a position-space grid
+Hamiltonian containing no ladder operator, no Hermite function and no generating function.
+**The lesson generalises and is now recorded in the plan: a numerical check built out of the same
+algebra as the result is not a check.**
+
+**4.9's two blockers were both in one callout, and both were inferences rather than assertions.** The
+box said the product of two spreads "has a floor that no state gets under" — true for position and
+momentum, where the commutator is $\ii\hbar\hat I$, and false in general. For spin-1 $\hat L_x,\hat
+L_y$ in the $m=0$ state both spreads are $1$ and the floor is exactly zero, which the chapter's own §3.1
+and §6.3 rely on. The second was subtler: the box argued that *if* each system carried a true pair
+$(x,p)$ *then* some preparation could narrow both marginals, and the next sentence denied the
+consequent — handing the reader, by modus tollens, precisely the strong claim the following paragraph
+disowned. The conditional is false, and Bohmian mechanics is the standing counterexample. An earlier
+pass had removed the assertion and left the inference.
+
+**A third false claim, and a true conclusion resting on it.** Chapter 4.9 §6.5 said there is no
+one-parameter family of which parity is a member. There is: let $\hat P_-$ project onto the odd
+subspace, and $\varepsilon\mapsto\ee^{\ii\pi\varepsilon\hat P_-}$ is a strongly continuous unitary
+group passing through $\hat\Pi$ at $\varepsilon=1$. Verified. The conclusion the section wanted is
+sound and now rests on the true reason: the generator is itself a function of parity, so the family
+produces no observable that was not already there.
+
+**Two seams were fixed at both ends rather than one.** Chapter 4.5's familiar-ground box asserted in
+passing that two observables have no joint distribution beneath them; 4.9 correctly refuses to derive
+that from an inequality, so 4.5 now raises the question and leaves it open, and 4.9's three references
+to it were brought into line. And Chapter 1.3's Bohr–Sommerfeld ⚑ pointed all of itself at 4.8, which
+proves only the oscillator case — exactly, not semiclassically — so it now names 4.10 for the general
+statement.
+
+**The Math Ledger** gained eleven rows. Part IV carries 74 objects across nine chapters.
 
 ## Where it lives
 
@@ -802,3 +903,161 @@ from 4.3, written this batch. Run `python3 debts.py 4.4` into the writing brief 
 The one decision still outstanding, and it should be made in print before Part V: from Chapter 5.8
 the ⚑ changes meaning, from *"I chose not to prove this"* to *"nobody has proved this, and physics
 uses it anyway."*
+
+---
+
+# Batch F7 — Part IV re-planned at six objects per chapter (26 August 2026)
+
+**Part IV goes from 11 chapters to 20; the curriculum from 67 to 76.** Nothing is dropped and nothing
+is added but three objects the written text had already promised and no build item covered.
+
+The reader, after reading 4.1–4.3: *"I value now slow (very slow one by one) pace than intense pace
+that feels like running around."* Counting new objects per chapter — an object being what earns a
+Math Ledger row — Part 0 runs 5–8, Parts I–III run 3–10, and Part IV as written runs **12–13**.
+Chapter 4.3 alone introduces thirteen. The chapters were not badly written. They were too big.
+
+| old | objects | becomes | objects each |
+|---|---|---|---|
+| 4.4 Operators in Infinite Dimensions | 12 | 4.4 Domains, and the Adjoint's Domain · 4.5 The Spectral Theorem in Infinite Dimensions | 6 · 6 |
+| 4.5 The Schrödinger Equation | 8 | 4.6, unsplit | 7 |
+| 4.6 Systems You Can Solve in One Dimension | 11 | 4.7 Wells, Barriers, and Tunnelling · 4.8 The Oscillator, and the Ladder | 6 · 6 |
+| 4.7 Symmetry, Commutators, and the Classical Limit | 9 | 4.9 Commutators, Uncertainty, and Symmetry · 4.10 The Classical Limit | 5 · 5 |
+| 4.8 Angular Momentum and Spin | 12 | 4.11 The Angular Momentum Algebra · 4.12 Spin, Orbitals, and Adding Angular Momenta | 6 · 6 |
+| 4.9 The Hydrogen Atom | 10 | 4.13 The Hydrogen Atom · 4.14 The Degeneracy, and $SO(4)$ | 6 · 4 |
+| 4.10 Perturbation Theory and Transitions | 12 | 4.15 Perturbation Theory · 4.16 The Fine Structure of Hydrogen · 4.17 Transitions | 4 · 4 · 6 |
+| 4.11 Identical Particles, Entanglement, and Measurement | 14 | 4.18 Identical Particles · 4.19 Density Matrices and Entanglement · 4.20 Bell, Decoherence, and What Is Settled | 5 · 5 · 4 |
+
+Mean 5.4, and the only seven is 4.6, whose seventh object is three lines from 4.5's spectral theorem.
+⚑ budget unchanged at 51. Every one of the seventeen carries inbound promises; none is orphaned.
+
+## The re-aim, and what my own premise got wrong
+
+I proposed splitting so that **the first piece keeps its number**, expecting that to protect most of
+the 171 promises naming 4.4–4.11. It protects **six**. A shift renumbers every chapter after the
+first split whether it split or not, so 165 of 171 needed an edit — my estimate was out by a factor
+of eight. The bill was still worth paying, and the corollary is the useful part: **the renumbering
+cost is paid in full at the first split**, so there is no reason to split conservatively. That is why
+the plan takes seventeen chapters rather than the fourteen I guessed.
+
+The real cost was **23 sentences rewritten** — thirteen widened to name two chapters, six split so
+different clauses point at different ones, four re-aimed to a different subject. The other 142 were
+decided substitutions. Six agents worked disjoint file groups so no two touched the same file, each
+locating every span against the original text and applying in descending offset order, because
+old 4.5 → 4.6 and old 4.6 → 4.7 in the same pass and a sequential replace would have silently sent
+everything that was 4.5 to 4.7.
+
+## Four kinds of reference no checker could see
+
+Each had already produced a real error that survived an earlier renumbering.
+
+1. **A number ending a sentence.** `xrefcheck`'s ledger pattern ended `(?![\d.])`, which rejects a
+   following full stop — so *"…cannot be written down until 4.11."* was invisible. Three real
+   references sat in that blind spot. The lookahead is now `(?![\d])(?!\.\d)`, and the ledger's
+   visible reference count went 809 → 859.
+2. **A bare number in chapter prose.** *"Density matrices (4.11)"* in a table cell, *"re-derived in
+   4.11 from the other side"* in a closing brick. `debts.py` requires the literal word "Chapter";
+   `xrefcheck` read bare numbers only in the ledger. Three found and re-aimed.
+3. **A plural run.** *"Chapters 4.5, 4.6 and 4.8"* — `debts.py` saw only the first. This was found
+   yesterday and fixed; it accounts for much of why the census moved 242 → 372 → **420**.
+4. **"Section 4.5".** Neither the word Chapter nor a §. Both instances turned out to be genuine
+   own-chapter references, but nothing in the toolchain could have told the difference.
+
+`xrefcheck.py --bare` now lists every cross-part bare number in chapter prose for a human — 56 of
+them, all real chapter references written without the word "Chapter". It is advisory, because it
+cannot decide which are pointers and which are measured values, and a check that guesses is worse
+than one that lists.
+
+## GAPS.md was carrying two numbering schemes at once
+
+Commit `f8006d2` renumbered Part IV from eight chapters to eleven and re-aimed 360 references across
+55 files. It never touched `GAPS.md` or `PLAN-FORWARD.md`. So `GAPS.md` §2's column was on the
+eleven-chapter numbering while §4's census was still on the eight-chapter one, and each hit had to be
+identified before it could be remapped.
+
+Worse: **G1, the book's largest single debt, pointed all seven of its promises at Chapter 4.3, which
+is written and pays three of them.** The spectral theorem, continuous spectra and the plane-wave gap
+are not 4.3's and never were. Three/four split, now recorded with a *Due at* column. G11 had the
+same defect.
+
+And §0's maintenance instruction was `grep -o 'Chapter [4-7]\.[0-9]'` — one digit. Against a Part IV
+running to 4.20 that silently truncates *Chapter 4.20* to *Chapter 4.2* and files the debt against a
+written chapter. Replaced with `python3 debts.py --census`, which is what the register should have
+been regenerated from all along. Current census: **420**.
+
+## Next
+
+**Chapter 4.4, Domains, and the Adjoint's Domain** — six objects, ※ mathematics, and the first
+chapter written under the cap. `reports/writing-brief.md` carries the cap, the sitting breaks and
+`\ann`. Run `python3 debts.py 4.4` into the brief; it now returns 18, not the 9 the old plan
+recorded.
+
+---
+
+# Batch F8 — Chapter 4.4, and the cap tested (28 August 2026)
+
+**Chapter 4.4, Domains, and the Adjoint's Domain.** ~15,600 words, nine sections, two ⚑, six new
+objects — the first chapter written under the pacing cap.
+
+**The cap worked, and the measurement says so.** Six objects at about 2,600 words each, against
+Part IV-as-written's twelve and thirteen at 1,600. The flow review, which reads the chapter cold
+against 4.3, put it plainly: §5 spends 3,098 words asking one question of one operator three times,
+and *"the reader is never asked to hold two unfamiliar things at once."*
+
+The chapter's pedagogical bet is the ordering. §5 takes $\hat p=-\ii\hbar\,\dd/\dd x$ on three
+intervals and gets three different answers from integration by parts alone — nothing quoted anywhere
+in the section. Only then does §6 state von Neumann's classification, so the flag is discharged into
+arithmetic the reader has already done, and the three cases come out $(0,0)$, $(1,1)$, $(1,0)$,
+matching §5 exactly. The review's verdict: *"the moment the bet visibly wins is §6.3's final
+paragraph, where the theorem stops being quoted and becomes something the reader owns."*
+
+## What the cap nearly bought instead
+
+The flow review found the failure mode `CONVENTIONS.md` had warned about in the abstract, and it was
+real. **Scaffolding — roadmaps, plain-terms boxes, the brick — reached 25.2% of the chapter against
+4.3's 21.1%.** The body shrank 30% and the restatement apparatus only 12%, so a quarter of the
+chapter had become the chapter talking about itself. The three-interval result was stated **nine
+times**, and the chapter explained its own pedagogical strategy three separate times. Trimmed to
+22.8%.
+
+**And the slack was unevenly spent.** §5 makes about six moves in 3,098 words; §7 made about
+fourteen in 2,073 — four times the density, after the last sitting break, thirteen thousand words in.
+Three of the review's other findings all fell in that stretch. §7 was given room and a sitting break
+added at §6|§7, which is the chapter's largest change of subject.
+
+That is the lesson for the remaining sixteen chapters of Part IV: **the cap counts objects, and
+objects can crowd into one section while the chapter's average looks fine.** Density per section is
+what the flow review should keep measuring.
+
+## What the two independent passes found
+
+**Mathematics — 1 BLOCKER, 2 MAJORs, 5 MINORs**, all applied.
+
+- **The blocker.** Problem 3(d) said the phase relabelling $\hat U\psi=\ee^{\ii\theta x/L}\psi$
+  *"does not commute with position, so it changes what the state says about where the particle is."*
+  Both clauses are false, and I confirmed all three facts in sympy: $\hat U$ and $\hat x$ are both
+  multiplication by a function, so $[\hat U,\hat x]=0$ exactly; $\abs{\hat U\psi}^2=\abs\psi^2$
+  pointwise, so it changes *nothing* about position; and it is **momentum** that fails to commute,
+  which is what part (c) had just proved. A reader who checked the one-line commutator — which this
+  chapter trains them to do — would have found the book asserting something false.
+- **§7.2 never said which operator it was extending**, in a chapter whose §6.3 insists, in bold, that
+  you must. The only prior meaning of "minimal" was §5.4's, and that operator is Dirichlet, which
+  §7.2's own bullet list calls self-adjoint — so the reader reached a flat contradiction four lines
+  later. The operator that actually works needs all four boundary values zero, and that domain was
+  never written down.
+- **Worked example 2(d) contradicted §5.4** — it claimed no momentum observable exists on half a box,
+  where §5.4 proves a whole circle of them exists on any bounded interval.
+
+**Flow — 13 findings**, including that the second `\ann` did not earn its place (the label repeated
+a sentence the reader had read sixty words earlier, on a display with nothing to disambiguate) and
+that §6.3's endpoint heuristic was silently broken by §7 and never repaired. One annotation now, not
+two, which is the intended frequency for the device on its first outing.
+
+The review also confirmed the chapter reads as the same hand as 3.6 and 4.2, and singled out §5.5's
+closing paragraph — which pays off §1's fourth item after eight thousand words and re-glosses its
+symbol in the same breath — as the best writing in it.
+
+## Next
+
+**Chapter 4.5, The Spectral Theorem in Infinite Dimensions** — six objects, ※ mathematics, and where
+`GAPS.md` G1's four remaining promises come due. `python3 debts.py 4.5` returns 29. It also owes the
+other half of 0.5's *"the bill comes due"*, which 4.4 §1 announced as a two-chapter payment.

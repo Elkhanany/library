@@ -16,8 +16,8 @@ the Standard Model and string theory — derived, not asserted.**
 [Conventions](CONVENTIONS.md) ·
 [Gaps](GAPS.md)
 
-<sub>31 of 67 chapters · 446,000 words · 26,000 typeset expressions ·
-235 plain-language passages · 0 network requests</sub>
+<sub>37 of 76 chapters · 564,000 words · 32,000 typeset expressions ·
+278 plain-language passages · 0 network requests</sub>
 
 </div>
 
@@ -98,16 +98,22 @@ They cross-reference each other, so you can move between them at any point.
 [3.8](https://elkhanany.github.io/newton-to-mtheory/ch3-8.html) Light, Redshift, and What a Horizon Is ·
 [3.9](https://elkhanany.github.io/newton-to-mtheory/ch3-9.html) Cosmology, and a Loose Thread
 
-**Part IV · Quantum Mechanics** — 3 of 11; 4.4 is next
+**Part IV · Quantum Mechanics** — 9 of 20; 4.10 is next
 
 [4.1](https://elkhanany.github.io/newton-to-mtheory/ch4-1.html) What Classical Physics Cannot Do ·
 [4.2](https://elkhanany.github.io/newton-to-mtheory/ch4-2.html) The Linear Algebra of Quantum States ·
-[4.3](https://elkhanany.github.io/newton-to-mtheory/ch4-3.html) Function Spaces: Measure, L², and Completeness
+[4.3](https://elkhanany.github.io/newton-to-mtheory/ch4-3.html) Function Spaces: Measure, L², and Completeness ·
+[4.4](https://elkhanany.github.io/newton-to-mtheory/ch4-4.html) Domains, and the Adjoint's Domain ·
+[4.5](https://elkhanany.github.io/newton-to-mtheory/ch4-5.html) The Spectral Theorem in Infinite Dimensions ·
+[4.6](https://elkhanany.github.io/newton-to-mtheory/ch4-6.html) The Schrödinger Equation ·
+[4.7](https://elkhanany.github.io/newton-to-mtheory/ch4-7.html) Wells, Barriers, and Tunnelling ·
+[4.8](https://elkhanany.github.io/newton-to-mtheory/ch4-8.html) The Oscillator, and the Ladder ·
+[4.9](https://elkhanany.github.io/newton-to-mtheory/ch4-9.html) Commutators, Uncertainty, and Symmetry
 
 The derivation-by-derivation plan for the whole part is [`MATHPLAN-4.md`](MATHPLAN-4.md).
 
 **Parts V–VII** — quantum field theory, the Standard Model, strings and M-theory. The curriculum is
-[`PLAN-FORWARD.md`](PLAN-FORWARD.md): **67 chapters, 23 of them mathematics**, each addition argued
+[`PLAN-FORWARD.md`](PLAN-FORWARD.md): **76 chapters, 23 of them mathematics**, each addition argued
 for, and every piece of mathematics the remaining physics needs marked build-it or flag-it.
 
 ## Building

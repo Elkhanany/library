@@ -47,6 +47,13 @@ var NMT = (function () {
            Without this KaTeX reads "[" as the first argument and renders d[ over d2
            with "]u\varphi" trailing — no error, just a silently wrong equation. Six
            of those sat in Chapter 3.7, one inside its boxed orbit equation. */
+        /* \ann{expression}{label} writes the label in small type under a brace,
+           so a reader meeting an equation for the first time can see what each
+           piece of it is without scrolling back for the symbol. Use it on the
+           equation that defines something or states a headline result, and
+           nowhere else — an annotation under every display is noise, and the
+           device only works while it is rare. */
+        '\\ann': '\\underbrace{#1}_{\\;\\text{\\scriptsize #2}\\;}',
         '\\dvn': '\\frac{\\mathrm{d}^{#1}#2}{\\mathrm{d}#3^{#1}}',
         '\\pdvn': '\\frac{\\partial^{#1}#2}{\\partial #3^{#1}}',
         '\\dv': '\\frac{\\mathrm{d}#1}{\\mathrm{d}#2}',

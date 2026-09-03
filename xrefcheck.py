@@ -31,11 +31,15 @@ def ledger_refs(path):
         cell = re.sub(r'\$[^$]*\$', ' ', m.group(1))     # a chapter number is never inside maths
         cell = html.unescape(re.sub(r'<[^>]+>', ' ', cell))
         line = t[:m.start()].count('\n') + 1
+        # The trailing lookahead is (?![\d])(?!\.\d), not (?![\d.]): the simpler
+        # form rejects a number followed by a full stop, so any reference ending a
+        # sentence — "…cannot be written down until 4.11." — was invisible to this
+        # check and to debts.py. Three real ones were sitting in that blind spot.
         # A chapter number here is a bare N.M with N a part (0-7) and M not
         # zero-padded — which keeps measured values like 2.04 out — and is never
         # preceded by a section sign, since "4.3 §8.4" is one chapter and one
         # section, not two chapters.
-        for num in sorted(set(re.findall(r'(?<![\d.$§])(?<!§ )([0-7]\.[1-9]\d?)(?![\d.])', cell))):
+        for num in sorted(set(re.findall(r'(?<![\d.$§])(?<!§ )([0-7]\.[1-9]\d?)(?![\d])(?!\.\d)', cell))):
             out.append((line, num, re.sub(r'\s+', ' ', cell).strip()))
     return out
 
@@ -69,6 +73,41 @@ def refs(text):
         for num in re.findall(r'\d+\.\d+', m.group(1)):
             yield num, sent
 
+def bare_in_prose(path):
+    """Bare chapter numbers in a chapter's prose, which nothing else can see.
+
+    Three forms have each already produced a real error that survived a
+    renumbering: a parenthesised number in a table cell — "Density matrices
+    (4.11)"; a number with no "Chapter" in front of it — "re-derived in 4.11 from
+    the other side"; and "Section 4.5", which carries neither the word Chapter nor
+    a §. This cannot decide which are chapter pointers, since most bare numbers
+    are the file's own section numbers or measured values, so it lists the
+    cross-part ones for a human. Advisory, never a build failure.
+    """
+    t = open(path, encoding="utf-8").read()
+    own_part = os.path.basename(path)[2:3]
+    t = re.sub(r"<!--SCRIPT-->.*?<!--/SCRIPT-->", " ", t, flags=re.S)
+    t = re.sub(r"<h[1-4][^>]*>.*?</h[1-4]>", " ", t, flags=re.S)
+    t = re.sub(r"\$\$.*?\$\$", " ", t, flags=re.S)            # displays first, or $$..$$ leaks
+    t = re.sub(r"\$[^$]*\$", " ", t)
+    t = re.sub(r"\(\d+\.\d+\.\d+\)", " ", t)              # equation numbers
+    t = html.unescape(re.sub(r"<[^>]+>", " ", t))
+    out = []
+    for m in re.finditer(r"(?<![\d.§])([0-7]\.[1-9]\d?)(?![\d])(?!\.\d)", t):
+        num = m.group(1)
+        if num.split(".")[0] == own_part:
+            continue                                        # own part: almost always a section
+        before = t[max(0, m.start() - 70):m.start()]
+        if re.search(r"Chapters?\s+(?:\d+\.\d+|[,\s]|and |to |through )*$", before):
+            continue                                        # already visible to the main check
+        if re.search(r"\bSections?\s+$", before):
+            continue    # "Section 7.4" is this book's way of naming its OWN section,
+                        # whatever part number it happens to share. Another chapter's
+                        # section is always written "Chapter X §Y".
+        out.append((num, re.sub(r"\s+", " ", t[max(0, m.start() - 75):m.start() + 45]).strip()))
+    return out
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else ''
     table = curriculum()
@@ -88,6 +127,19 @@ def main():
                 selfref.append((own, num, sent))
             else:
                 rows.append((own, num, table[num][1], sent))
+
+    if mode == '--bare':
+        n = 0
+        for f in files:
+            hits = bare_in_prose(os.path.join(SRC, f))
+            if hits:
+                print(f"\n{f}")
+                for num, ctx in hits:
+                    print(f"   {num}  …{ctx}")
+                    n += 1
+        print(f"\n{n} bare cross-part number(s) in chapter prose — each needs an eye, "
+              f"since no other check can see them")
+        return 0
 
     if mode == '--all':
         # One line per distinct (source, target) pair. 2,800 references collapse to a few hundred,
