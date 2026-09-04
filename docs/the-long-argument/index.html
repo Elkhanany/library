@@ -282,6 +282,17 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
 .more:hover{text-decoration:underline}
 .empty{font-size:13px;color:var(--ink-3);font-style:italic;font-family:var(--f-disp)}
 
+
+/* ---------- drag to pan ----------
+   The timeline is a long horizontal surface and a scrollbar is a poor handle for
+   it. Anything with .grabbable can be pushed with the mouse. Touch already pans
+   natively, so this binds pointer types that cannot. A drag past a few pixels
+   swallows the click that would otherwise follow, or panning would keep opening
+   whatever you happened to start the drag on. */
+.grabbable{cursor:grab}
+.grabbable.dragging{cursor:grabbing;user-select:none}
+.grabbable.dragging *{pointer-events:none}
+
 /* ---------- influence view ---------- */
 .netwrap{flex:1;min-height:0;display:flex;background:var(--paper)}
 .netrail{flex:none;width:118px;border-right:1px solid var(--rule);background:var(--surface);
@@ -315,7 +326,7 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
 
 /* ---------- threads view ---------- */
 .scroller{flex:1;min-height:0;overflow-y:auto;background:var(--paper)}
-.wrap{max-width:1180px;margin:0 auto;padding:28px 26px 70px}
+.wrap{max-width:min(1560px,94vw);margin:0 auto;padding:28px 34px 70px}
 .lede{max-width:62ch;font-family:var(--f-disp);font-size:16px;line-height:1.6;color:var(--ink-2);margin:0 0 30px}
 .lede strong{color:var(--ink);font-weight:600}
 .thread{margin-bottom:34px;padding-bottom:8px}
@@ -376,6 +387,35 @@ h2.vh{font-family:var(--f-disp);font-size:26px;font-weight:600;margin:0 0 6px;le
   .drawer{width:100vw;top:0}
   .toolbar{gap:9px;padding:6px 10px}
 }
+
+/* ---------- quieter chrome ----------
+   The toolbar carried four labelled control groups and nine bordered tradition
+   pills, which wrapped onto a second row and put more outlines above the
+   timeline than the timeline itself contained. Nothing is removed here — the
+   filters still work exactly as before — but the pills lose their borders and
+   keep only their colour, the group labels stop shouting, and the bar gets a
+   little air. The subject of the page should be the 2,600 years, not its
+   controls. */
+.toolbar{gap:16px;padding:9px 18px;background:var(--surface);row-gap:8px}
+.grp{gap:7px}
+.grp>label{font-size:9.5px;letter-spacing:.13em;color:var(--ink-4);font-weight:600;opacity:.85}
+
+/* tradition filters: colour and word, nothing else */
+#streamChips{gap:2px;margin-left:2px;padding-left:14px;border-left:1px solid var(--rule-2)}
+#streamChips .chip{border:0;background:transparent;padding:3px 7px;border-radius:5px;
+  font-size:11px;color:var(--ink-3);transition:color .15s,background .15s}
+#streamChips .chip:hover{background:var(--surface-2);color:var(--ink)}
+#streamChips .chip[aria-pressed="true"],#streamChips .chip.on{color:var(--ink);background:var(--surface-2)}
+#streamChips .chip .sw{width:8px;height:8px;border-radius:50%}
+
+/* the two selects and the segmented control were competing with the chips */
+.seg{border-color:var(--rule-2)}
+.seg button{font-size:11.5px;padding:4px 11px}
+.sel{border-color:var(--rule-2);font-size:11.5px}
+
+/* let the timeline breathe under the chrome */
+.tlhead{box-shadow:0 1px 0 var(--rule-2),0 8px 14px -12px rgba(0,0,0,.22)}
+.evwrap{border-top-width:1px}
 </style>
 </head>
 <body>
@@ -1420,6 +1460,105 @@ const EV = [
 {y:1989,y2:1991,c:"pow",t:"Berlin Wall falls; the Soviet Union dissolves",r:1,rg:"Global",d:"The end of the arrangement that had structured political philosophy for seventy years, and of Marxism's status as a governing programme."},
 {y:1991,c:"sci",t:"The World Wide Web opens to the public",rg:"Global",d:"Within twenty years the conditions of publication, argument and attention that philosophy had operated under since Gutenberg change again."},
 {y:2001,c:"pow",t:"11 September attacks",rg:"Global",d:"Habermas and Derrida, long antagonists, published a joint dialogue on terror and tolerance in response, and appeared together in public for the first time."}
+,
+/* --- added: broader world coverage, each entry fact-checked --- */
+{y:-800,c:"sci",t:"Greeks add vowels to the Phoenician alphabet",rg:"Aegean",d:"Borrowing a consonant script from Phoenician traders, Greek scribes gave the leftover signs to vowels, producing an alphabet of two dozen letters learnable without a scribal apprenticeship. Argument became something a private man could write down and a stranger could read back exactly."},
+{y:-700,c:"rel",t:"The earliest Upanishads",rg:"India",d:"The Brihadaranyaka and Chandogya turned from how to perform the sacrifice to what the self is, whether it is identical with the ground of everything, and what survives death. Karma and rebirth entered Indian thought as problems to be argued rather than rites to be kept."},
+{y:-668,c:"cul",t:"Ashurbanipal's library at Nineveh",rg:"Assyria",d:"The Assyrian king had scribes copy and confiscate tablets from temples across Mesopotamia and shelve them by subject: omens, medicine, mathematics, Gilgamesh. Some thirty thousand tablets and fragments survived the sack of the city because clay bakes rather than burns."},
+{y:-652,c:"sci",t:"The Babylonian astronomical diaries begin",rg:"Babylonia",d:"Scribes in Babylon began recording, night after night, the positions of the moon and planets alongside the weather, the river level and the price of barley. Kept up for nearly six centuries, it is the longest continuous observational record ever made, and the data Hipparchus and Ptolemy later reasoned from."},
+{y:-600,c:"sci",t:"The first coins struck in Lydia",rg:"Anatolia",d:"Lydian kings stamped lumps of electrum to certify their weight, and the Greek cities of Ionia copied the practice within a generation. Value became a number carried in the hand instead of a quantity weighed out, in the same cities where men first asked what everything is made of."},
+{y:-527,c:"rel",t:"Death of Mahavira, teacher of the Jains",rg:"India",d:"Jain tradition places his death at Pava in Bihar, a contemporary of the Buddha preaching along the same roads. His followers held to nonviolence toward every living thing and to the doctrine that no single standpoint ever states a truth whole."},
+{y:-500,c:"cul",t:"Monte Alb&aacute;n founded above the Oaxaca valley",rg:"Mesoamerica",d:"Zapotecs levelled a mountaintop for a city and lined its plaza with hundreds of carved figures labelled by name and calendar glyphs, among the earliest writing anywhere in the Americas. The 260-day ritual calendar recorded there was still being counted two thousand years later."},
+{y:-500,c:"sci",t:"Iron smelting at Nok in central Nigeria",rg:"West Africa",d:"Furnaces on the Jos plateau were producing iron by about 500 BCE in a society that had never worked bronze, and the same communities modelled near life-size terracotta heads. West Africa reached iron without the sequence of ages European archaeology had assumed was necessary."},
+{y:-403,y2:-221,c:"pow",t:"Jin is partitioned; the Warring States begin",rg:"China",d:"The Zhou king recognized the three houses that had carved up Jin, and seven states settled into two centuries of war for the whole of it. Rulers who needed an advantage hired argument, and Confucians, Mohists, Daoists and Legalists all found patrons in the competition."},
+{y:-295,c:"cul",t:"Ptolemy I founds the Museum and Library at Alexandria",rg:"Egypt",d:"A salaried research institute attached to a collection that aimed at every book written in Greek. For three centuries the mathematicians, astronomers and textual scholars who mattered either worked there or wrote to people who did."},
+{y:-270,c:"sci",t:"Aristarchus puts the Sun at the centre",rg:"Samos & Alexandria",d:"Aristarchus argued that the Earth turns daily and circles the Sun, and tried to fix the Sun's distance by geometry. Almost nobody followed him for eighteen centuries, but Copernicus knew he had been anticipated."},
+{y:-247,c:"rel",t:"Buddhism carried from India to Sri Lanka",rg:"Sri Lanka",d:"Missionaries sent under Ashoka established the Theravada tradition on the island. It gave Buddhism a base outside India that held after the religion faded on the mainland."},
+{y:-240,c:"sci",t:"Eratosthenes measures the Earth",rg:"Alexandria",d:"From the difference in noon shadows at Syene and Alexandria he computed the Earth's circumference to within a few percent. The size of the world turned out to be a question arithmetic could settle."},
+{y:-138,y2:-126,c:"cul",t:"Zhang Qian's embassy opens the routes west",rg:"China & Central Asia",d:"Sent to find allies against the Xiongnu, Zhang Qian returned after thirteen years with the first Chinese accounts of Ferghana, Bactria and India. Han caravans followed, and the road later called the Silk Road carried scripts and religions as well as goods."},
+{y:-129,c:"sci",t:"Hipparchus catalogues the stars and finds precession",rg:"Rhodes",d:"Comparing his measured positions against observations a century and a half older, Hipparchus caught the whole sky sliding slowly against the equinox. Astronomy now had a phenomenon that only accumulated records could reveal."},
+{y:-124,c:"cul",t:"The Han found the Imperial Academy at Chang'an",rg:"China",d:"Fifty students under professors of the Five Classics, and thousands within two centuries. Mastery of a fixed canon became the road into government, and remained so until 1905."},
+{y:-32,c:"sci",t:"The Long Count date on Tres Zapotes Stela C",rg:"Mesoamerica",d:"The earliest securely read Mesoamerican Long Count date, 3 September 32 BCE, counts days from a zero point in 3114 BCE. It is written in a positional notation with a sign for zero, worked out with no contact with the Old World."},
+{y:-29,c:"rel",t:"The Pali Canon written down in Sri Lanka",rg:"Sri Lanka",d:"Monks at Aluvihara committed to palm leaf what had been carried for four centuries by trained memory. Buddhist teaching became a text that could be copied, collated and argued over at a distance."},
+{y:50,c:"cul",t:"The Periplus of the Erythraean Sea",rg:"Indian Ocean",d:"A Greek-speaking merchant's handbook to the ports from Egypt down the African coast and east to India, written by someone who rode the monsoon across open water instead of hugging the shore. Roman coin hoards in south India date from these decades."},
+{y:105,c:"sci",t:"Cai Lun presents paper to the Han court",rg:"China",d:"Bark, hemp and rags beaten into pulp gave a writing surface far cheaper than silk and far lighter than bamboo strips. Books became things one could own in quantity, six centuries before the technique left China."},
+{y:127,c:"cul",t:"Kanishka's Kushan empire spans the Hindu Kush",rg:"Central Asia & India",d:"A single state ran from Bactria to the Ganges plain, astride the routes joining Han China, India and Rome. Its Gandharan workshops produced some of the first images of the Buddha in human form, and its monks took Buddhism north."},
+{y:148,c:"rel",t:"An Shigao begins translating Buddhist texts at Luoyang",rg:"China",d:"A Parthian monk started rendering Indian meditation and doctrinal works into Chinese, forcing Sanskrit terms through a Daoist vocabulary. Chinese Buddhism began as a translation problem and stayed one for centuries."},
+{y:150,c:"sci",t:"Ptolemy's Almagest",rg:"Alexandria",d:"Greek observation and geometry assembled into an astronomy that actually predicted: epicycles, usable tables, a catalogue of a thousand stars. It defined what a finished physical science looked like until Copernicus and Kepler took it apart."},
+{y:240,c:"rel",t:"Mani begins to preach in Sasanian Mesopotamia",rg:"Persia",d:"Mani wrote and illustrated his own scriptures rather than leaving them to disciples, and his dualist church spread from Roman North Africa to China. Augustine was a Manichaean hearer for nine years before he turned to Christianity."},
+{y:263,c:"sci",t:"Liu Hui's commentary on the Nine Chapters",rg:"China",d:"Liu Hui supplied arguments for the answers in China's classic problem manual, inscribing polygons of up to 3,072 sides to fix pi near 3.1416. He treated the manual as something that had to be justified, not merely used."},
+{y:330,c:"rel",t:"Ezana of Aksum turns Christian",rg:"Aksum",d:"Aksum's coinage changed from the crescent and disc to the cross, making the Ethiopian kingdom one of the earliest states to adopt Christianity. Its church went on reading scripture in Ge'ez long after its Mediterranean links thinned."},
+{y:331,c:"sci",t:"Constantine orders fifty Bibles for Constantinople",rg:"Constantinople",d:"Fifty parchment volumes written to order for the new capital's churches mark the codex displacing the papyrus roll: a book you can open at a page, cross-reference, and bind a whole library into. Reading stopped being unrolling."},
+{y:378,c:"pow",t:"Teotihuacan reaches Tikal",rg:"Mesoamerica",d:"Maya scribes recorded the arrival of the stranger Siyaj K'ak' at Tikal to the exact day, and noted that Tikal's king died on it. The Long Count gave the Maya an absolutely dated political history unmatched anywhere else in the Americas."},
+{y:401,c:"rel",t:"Kumarajiva's translation bureau at Chang'an",rg:"China",d:"Kumarajiva and his hundreds of assistants turned Nagarjuna's emptiness, the Lotus Sutra and the Vimalakirti into Chinese that read as Chinese. The vocabulary they settled is the one East Asian philosophy argued in for the next thousand years."},
+{y:405,c:"cul",t:"Mesrop Mashtots devises the Armenian alphabet",rg:"Armenia",d:"A script built to fit Armenian gave the language a complete Bible within thirty years and, soon after, Aristotle's Categories and Porphyry's Isagoge. Several Greek works, including treatises of Philo, survive only in those Armenian versions."},
+{y:427,c:"cul",t:"Nalanda founded in Magadha",rg:"India",d:"Endowed by the Gupta kings, Nalanda became a monastic university teaching logic, grammar, medicine and Buddhist philosophy to students from China, Korea and Tibet. Xuanzang spent years studying there in the seventh century and carried its library home."},
+{y:480,c:"sci",t:"Zu Chongzhi bounds pi to seven decimal places",rg:"China",d:"Zu Chongzhi showed that pi lies between 3.1415926 and 3.1415927 and gave 355/113 as a working fraction. No one anywhere improved on that accuracy for nearly a thousand years."},
+{y:489,c:"cul",t:"The school of Edessa moves east to Nisibis",rg:"Mesopotamia",d:"Expelled from the empire over their Christology, Syriac scholars carried Aristotle's logic and Greek medicine across the Persian frontier and rebuilt their school under Sasanian protection. Their successors would render that inheritance into Arabic at Baghdad."},
+{y:499,c:"sci",t:"Aryabhata writes the Aryabhatiya",rg:"India",d:"Aryabhata dated the book himself to the year we call 499 and packed into it a sine table, a value of pi he was careful to call approximate, and the claim that the nightly turning of the heavens is the earth rotating."},
+{y:531,c:"cul",t:"Seven Athenian philosophers ride to Ctesiphon",rg:"Persia",d:"Damascius, Simplicius and five colleagues left Justinian's empire for Khosrow I's court and came home within the year, protected by a clause of the peace of 532 letting them keep their beliefs. Simplicius then wrote the commentaries that preserve most of what we know of the Presocratics."},
+{y:538,c:"rel",t:"Buddhism arrives in Japan from Baekje",rg:"Japan",d:"The Korean king Seong sent a gilt image and sutras to the Yamato court, and Chinese writing, calendars and continental learning came with them. Japan spent a generation fighting over whether to accept the foreign gods before it did."},
+{y:570,c:"sci",t:"Burzoe brings the Panchatantra from India to Persia",rg:"Persia",d:"Khosrow's physician was sent east for books and returned with Indian stories and medicine; the Middle Persian version became the Arabic Kalila wa-Dimna, among the most copied secular books of the Middle Ages. Chess reached the same court by the same road, and Indian numerals and astronomy would follow it west."},
+{y:629,y2:645,c:"rel",t:"Xuanzang travels to Nalanda and back",rg:"China & India",d:"Leaving Chang'an against an imperial ban, Xuanzang spent years at Nalanda studying Yogacara and returned in 645 with 657 Sanskrit manuscripts. The translation bureau the Tang court gave him put a technical Indian philosophy of mind into Chinese."},
+{y:789,c:"cul",t:"Charlemagne orders schools and corrected books",rg:"Francia",d:"The Admonitio generalis required every monastery and cathedral to teach and to hold accurate copies of its texts. The copying campaign that followed, in the new Caroline minuscule, is the reason most surviving Latin literature survives at all."},
+{y:792,y2:794,c:"rel",t:"The Samye debate decides Tibet's Buddhism",rg:"Tibet",d:"At Samye monastery the Indian scholar Kamalasila argued gradual cultivation against the Chinese monk Moheyan's sudden awakening. The Tibetan court ruled for the Indian side, and Tibetan thought took its logic and epistemology from Nalanda rather than from Chan."},
+{y:845,c:"rel",t:"Emperor Wuzong suppresses Buddhism in China",rg:"China",d:"Some 4,600 monasteries were dissolved and around 260,000 monks and nuns sent back to lay life, with bronze images melted down for coin. The scholastic schools and their libraries never recovered; Chan and Pure Land, which needed neither, did."},
+{y:863,c:"cul",t:"Cyril and Methodius invent an alphabet for Slavonic",rg:"Moravia",d:"Sent from Constantinople to Moravia, the two brothers devised the Glagolitic script and translated scripture into Slavonic, adding a fourth written liturgical language beside Hebrew, Greek and Latin. Its descendant Cyrillic still carries Slavic argument."},
+{y:868,c:"sci",t:"The Diamond Sutra, the oldest dated printed book",rg:"China",d:"A woodblock-printed scroll sealed in a cave at Dunhuang carries a colophon giving its exact date and saying it was made for free distribution. Text could now be multiplied without a copyist, and without a copyist's errors."},
+{y:895,c:"cul",t:"Arethas pays for a copy of Plato",rg:"Constantinople",d:"The manuscript John the Calligrapher wrote for the deacon Arethas is the oldest surviving copy of twenty-four of Plato's dialogues, and its compact minuscule hand made old uncial books cheap to reproduce. Nearly every later Plato descends from that Byzantine effort."},
+{y:909,c:"cul",t:"The last Long Count date is carved at Tonina",rg:"Mesoamerica",d:"A Maya sculptor cut the date 10.4.0.0.0 on a monument, and no one cut another. Within a generation the southern lowland courts that had kept written history and a calendar of great precision for six centuries had stopped writing."},
+{y:932,y2:953,c:"sci",t:"The Confucian classics are cut into printing blocks",rg:"China",d:"At Feng Dao's proposal the imperial academy began carving the Nine Classics with their commentaries, finishing in 953 across 130 volumes. A standard text of the canon could now be bought rather than borrowed and copied by hand."},
+{y:964,c:"sci",t:"Al-Sufi's Book of Fixed Stars",rg:"Persia",d:"Working at Isfahan, al-Sufi checked Ptolemy's catalogue against the sky, corrected magnitudes and identifications, and noted a little cloud in Andromeda, the first record of the galaxy next door. Many stars still carry the Arabic names he set down."},
+{y:987,c:"cul",t:"Ibn al-Nadim catalogues every book in Arabic",rg:"Baghdad",d:"A Baghdad bookseller completed the Fihrist, an index of everything he knew to exist in Arabic, with notes on authors, translators and what had been rendered from Greek, Persian and Sanskrit. It remains the main evidence for hundreds of works now lost."},
+{y:1008,c:"cul",t:"Murasaki Shikibu writes The Tale of Genji",rg:"Japan",d:"A lady of the Heian court produced a long prose fiction about interior life - motive, memory, self-deception - six centuries before the European novel. She wrote it in the vernacular kana script that men at court dismissed as women's writing."},
+{y:1021,c:"sci",t:"Ibn al-Haytham's Book of Optics",rg:"Egypt",d:"Light was shown to travel from objects into the eye rather than out of it, and the case was settled with lenses, mirrors and a darkened room rather than argument. Translated into Latin, the book gave Europe both a theory of vision and the habit of testing one."},
+{y:1030,c:"sci",t:"Al-Biruni's account of India",rg:"Central Asia",d:"Working from Sanskrit sources he had learned to read, al-Biruni set out Indian astronomy, mathematics and religion for readers who knew none of it, comparing each point with its Greek counterpart. One civilisation was made legible to another without being ranked beneath it."},
+{y:1045,c:"sci",t:"Bi Sheng's movable type",rg:"China",d:"A commoner in Song China cut characters into baked clay and set them in an iron frame, so a page could be broken up and its type used again. Woodblocks had already made books cheap in China; type made them quick."},
+{y:1050,c:"cul",t:"Cahokia rises above the Mississippi",rg:"North America",d:"Within a generation a city of some fifteen thousand grew around a plaza and an earthen pyramid with a wider base than the Great Pyramid of Giza. Nothing that large would stand north of Mexico again for seven hundred years."},
+{y:1067,c:"rel",t:"The Nizamiyya madrasa opens in Baghdad",rg:"Iraq",d:"Nizam al-Mulk endowed a chain of colleges across the Seljuk empire with salaried professors, stipends for students and a fixed curriculum in law and theology. Learning acquired an endowment and a payroll two decades before Bologna."},
+{y:1088,c:"sci",t:"Shen Kuo's Dream Pool Essays",rg:"China",d:"Shen Kuo described a magnetised needle that points south, noticed that it misses true south by a small angle, and recorded everything from marine fossils in inland cliffs to Bi Sheng's type. European ships were using the compass he described within a century."},
+{y:1113,y2:1150,c:"rel",t:"Angkor Wat built",rg:"Cambodia",d:"Suryavarman II raised the largest religious structure on earth to Vishnu, at the centre of a Khmer capital whose reservoirs and canals fed several hundred thousand people. Within two centuries the temple had quietly become Buddhist."},
+{y:1150,c:"sci",t:"Bhaskara II's Siddhanta Shiromani",rg:"India",d:"Bhaskara handled zero and negative numbers as ordinary quantities, solved indeterminate equations, and argued that dividing by zero yields a quantity without bound. His treatment of instantaneous motion comes close to a derivative five centuries before Newton."},
+{y:1259,c:"sci",t:"The observatory at Maragha",rg:"Persia",d:"Nasir al-Din al-Tusi persuaded the Mongol conqueror of Baghdad to fund an observatory with a great library and astronomers recruited as far away as China. The geometrical devices invented there to repair Ptolemy turn up again, unattributed, in Copernicus."},
+{y:1313,c:"cul",t:"Zhu Xi's commentaries become the exam canon",rg:"China",d:"The Yuan court restored the civil service examinations and fixed Zhu Xi's readings of the Four Books as the official answer. For six hundred years afterwards, ambition in China ran through one man's interpretation of Confucius."},
+{y:1324,c:"cul",t:"Mansa Musa's pilgrimage to Mecca",rg:"Mali & Egypt",d:"The king of Mali crossed the Sahara giving away so much gold that Cairo's currency was still depressed a decade later. He came back with books and an Andalusian architect, and Timbuktu began its career as a city of copyists and jurists."},
+{y:1325,y2:1354,c:"cul",t:"Ibn Battuta's travels",rg:"Afro-Eurasia",d:"A young jurist left Tangier for Mecca and kept going for twenty-nine years - Mali, the Swahili coast, the Volga, Delhi, the Maldives, China. His account shows a connected Muslim world where a scholar could find employment, and a familiar law, three continents from home."},
+{y:1377,c:"sci",t:"The Jikji printed with metal type in Korea",rg:"Korea",d:"Korean printers cast bronze type and pulled a Buddhist anthology from it seventy-eight years before Gutenberg's Bible; the state had been casting type since 1234. The surviving copy sits in Paris."},
+{y:1408,c:"cul",t:"The Yongle Encyclopedia completed",rg:"China",d:"Two thousand scholars working at Nanjing copied nearly eight thousand earlier books into 11,095 volumes. It was too vast ever to print, so it survived only as a few manuscript copies, most of which are now lost."},
+{y:1424,c:"sci",t:"Ulugh Beg builds the Samarkand observatory",rg:"Central Asia",d:"The great sextant had a radius of forty metres, sunk into a trench cut in the rock. The star catalogue produced there in 1437 was the most accurate since Ptolemy, and nobody bettered it until Tycho Brahe."},
+{y:1446,c:"cul",t:"Sejong promulgates the Korean alphabet",rg:"Korea",d:"Twenty-eight letters whose shapes copy the position of the tongue and lips, published with an explanation of the design. The stated point was that a farmer could learn to write without the years of Chinese characters that literacy had always cost."},
+{y:1501,c:"sci",t:"Nilakantha's Tantrasangraha in Kerala",rg:"India",d:"Nilakantha Somayaji set out the Kerala school's infinite series for sine, cosine and pi, two centuries before Newton and Leibniz arrived at them. He also put the five planets in orbit around a sun that still went round the earth."},
+{y:1550,y2:1551,c:"cul",t:"The Valladolid debate on the conquest",rg:"Spain",d:"Las Casas argued before a royal junta that the peoples of the Americas were rational, free and owed justice; Sepulveda answered that Aristotle's natural slaves were exactly who they were. No verdict was ever announced, and both sides claimed victory."},
+{y:1577,c:"sci",t:"The great comet crosses the spheres",rg:"Denmark",d:"Tycho Brahe could measure no parallax for it, which placed it far beyond the moon on a path running straight through the crystalline spheres supposed to carry the planets. The solid heavens did not survive the argument."},
+{y:1580,c:"sci",t:"Istanbul's observatory razed by order",rg:"Ottoman Empire",d:"Taqi al-Din's instruments had tracked the same comet Tycho did, from a new observatory above the Golden Horn. Three years after it was finished the sultan had it demolished, and nothing comparable was built in Ottoman lands again."},
+{y:1591,c:"cul",t:"Morocco's army takes Timbuktu",rg:"West Africa",d:"A Moroccan force carrying muskets destroyed the Songhai empire at Tondibi, and within two years the scholars of Timbuktu were under arrest. Ahmad Baba was deported to Marrakesh and lost sixteen hundred books, which he said was the smallest library in his family."},
+{y:1607,c:"sci",t:"Euclid translated into Chinese",rg:"China",d:"Matteo Ricci and Xu Guangqi rendered the first six books of the Elements from Clavius's Latin edition. Chinese mathematics was already formidable and superbly algorithmic; what the Elements added was proof from stated postulates, a result you had to earn."},
+{y:1639,c:"cul",t:"Japan closes, keeping one Dutch window",rg:"Japan",d:"The shogunate expelled the Portuguese and two years later confined the Dutch to a fan-shaped artificial island in Nagasaki harbour. For two centuries every European book and instrument entering Japan crossed that one bridge, and the study of them was called rangaku, Dutch learning."},
+{y:1665,c:"sci",t:"Micrographia and the first scientific journals",rg:"England & France",d:"Hooke's engravings of a flea and of the 'cells' he found in cork showed a world below the reach of the eye. In the same year the Journal des Savants and the Royal Society's Philosophical Transactions began printing results as they arrived, which made a discovery something you could date and claim."},
+{y:1729,c:"cul",t:"M&uuml;teferrika's Ottoman press prints its first book",rg:"Ottoman Empire",d:"Arabic-script printing had been closed to the sultan's Muslim subjects for two and a half centuries; the licence granted in 1727 covered history, geography and dictionaries but never scripture or law. Seventeen titles appeared before the press fell silent."},
+{y:1782,c:"cul",t:"The Siku Quanshu completed; banned books destroyed",rg:"China",d:"Qianlong's editors copied some 3,400 works into the largest manuscript library ever assembled, and used the same nationwide search to mark roughly 2,300 titles for burning. The canon of Chinese learning and its censorship were made by one act."},
+{y:1788,c:"sci",t:"Hutton's Theory of the Earth: no vestige of a beginning",rg:"Scotland",d:"Hutton read the rocks as endless cycles of erosion and uplift, with no first moment visible anywhere in them, breaking the few-thousand-year chronology that had framed every European account of the past. The depth of time he opened is what Lyell and Darwin would later need."},
+{y:1791,y2:1804,c:"pow",t:"The enslaved of Saint-Domingue rise against slavery",rg:"Haiti",d:"Half a million enslaved people destroyed slavery in France's richest colony and then French rule itself, founding Haiti in 1804. It put to the philosophers of universal rights the question their declarations had left open: whether all men meant all men."},
+{y:1804,c:"rel",t:"Usman dan Fodio founds the Sokoto Caliphate",rg:"West Africa",d:"A scholars' rising against the Hausa kings built the largest state in nineteenth-century West Africa, governed by men who wrote hundreds of books and poems in Arabic, Fulfulde and Hausa. Quranic schooling and ajami literacy spread across the savannah with it."},
+{y:1821,c:"cul",t:"Sequoyah completes the Cherokee syllabary",rg:"North America",d:"A silversmith who could not read English worked out about eighty-five signs for the syllables of Cherokee, and literacy in it spread through the nation within a few years. The Cherokee Phoenix, printed in both scripts, began in 1828."},
+{y:1824,c:"sci",t:"Carnot's Reflections on the Motive Power of Fire",rg:"France",d:"Asking what sets the limit on a steam engine, Carnot found that the work depends only on the fall of heat between two temperatures, not on the machine or the substance. Out of it came the second law: a physics in which processes run one way only, unlike the reversible mechanics of the Principia."},
+{y:1839,c:"cul",t:"The daguerreotype released to the world",rg:"France",d:"The French state bought Daguerre's process and published it in August, free to anyone outside Britain. An appearance could now be fixed without a hand drawing it, which unsettled painting, evidence and memory at once."},
+{y:1866,c:"sci",t:"The Atlantic telegraph cable holds",rg:"Atlantic",d:"After eight years of broken and failed attempts, London and New York were joined by wire, and news that had taken ten days by steamer arrived in minutes. A message could now travel entirely apart from any object carrying it."},
+{y:1872,c:"cul",t:"Meiji Japan orders schooling for every child",rg:"Japan",d:"The new government divided the country into school districts and required attendance of girls as well as boys, four years after the Restoration. Within a generation Japanese readers had Mill, Spencer and Kant in a philosophical vocabulary invented to hold them."},
+{y:1876,c:"sci",t:"Koch proves a single microbe causes anthrax",rg:"Germany",d:"Koch grew the anthrax bacillus outside any animal, gave the disease to healthy ones with it, and recovered the same organism again. Epidemics ceased to be filth, weather or providence and became something identifiable under a lens."},
+{y:1884,c:"sci",t:"Greenwich fixed as the world's prime meridian",rg:"Global",d:"Twenty-five nations meeting in Washington agreed on one zero of longitude and a universal day counted from midnight there. Railways and telegraphs had already made local sun-time unworkable; time became a single arbitrary grid laid over the earth."},
+{y:1898,c:"cul",t:"Yan Fu's Tianyanlun brings Darwin into Chinese",rg:"China",d:"Yan Fu's version of Huxley, argued in the notes toward Spencer, handed Chinese readers a language of struggle and survival three years after defeat by Japan. Hu Shi took his own name from its phrase for the fittest surviving."},
+{y:1905,c:"cul",t:"China abolishes the imperial examinations",rg:"China",d:"The Qing court ended the system that for thirteen centuries had made mastery of the Confucian classics the only route into office. Within a few years Chinese students were reading Japanese and European philosophy instead, and the classical curriculum lost its hold on educated life."},
+{y:1924,c:"rel",t:"The Ottoman caliphate abolished",rg:"Turkey",d:"Turkey's assembly ended the office that had claimed leadership of Sunni Islam since the seventh century. Muslim thinkers from Cairo to Delhi now had to say what religious authority meant with no caliph to appeal to."},
+{y:1927,c:"sci",t:"Heisenberg's uncertainty principle",rg:"Germany",d:"Position and momentum could not both be sharp, and the new quantum mechanics made that a feature of nature rather than a gap in our measurements. Einstein and Bohr spent the Solvay conference that October arguing about what was left of being real."},
+{y:1942,c:"pow",t:"The Wannsee Conference",rg:"Germany",d:"Fifteen German officials met beside a Berlin lake for ninety minutes to coordinate the murder of Europe's Jews. What followed became the fact that Adorno, Arendt and Levinas each wrote against for the rest of their lives."},
+{y:1948,c:"sci",t:"Shannon's information theory; the transistor",rg:"United States",d:"Shannon showed that any message could be counted in bits and pushed reliably through a noisy channel, and Bell Labs unveiled the solid-state switch that would carry them. Between them they made it thinkable that reasoning was something a machine could do."},
+{y:1957,c:"pow",t:"Ghana's independence",rg:"Ghana",d:"The first sub-Saharan colony to leave a European empire, and within a decade most of Africa had followed. Kwame Nkrumah insisted that African societies needed a philosophy worked out from their own materials, and the new African universities took up the question."},
+{y:1958,c:"sci",t:"The Keeling curve begins at Mauna Loa",rg:"Hawaii",d:"Charles Keeling began measuring carbon dioxide continuously on a Hawaiian volcano, and within a few years the readings were visibly climbing. It was the first hard evidence that human beings were altering the atmosphere as a whole."},
+{y:1960,c:"sci",t:"The contraceptive pill approved",rg:"United States",d:"American regulators cleared Enovid for birth control, separating sex from reproduction by prescription. Questions about women's work, marriage and the body that had been argued in principle became practical within a decade."},
+{y:1962,y2:1965,c:"rel",t:"The Second Vatican Council",rg:"Italy",d:"Rome endorsed religious liberty, replaced Latin with local languages in the Mass, and granted that other faiths hold truth. The largest Christian body stopped treating the modern world as something to be condemned."},
+{y:1966,c:"sci",t:"IR8 rice and the Green Revolution",rg:"Philippines & India",d:"A semi-dwarf rice bred at Los Baños roughly doubled yields across Asia, while imported Mexican wheat transformed the Indian and Pakistani harvests. Famine stopped looking like a permanent condition of poor countries and started looking like a policy failure."},
+{y:1979,c:"rel",t:"The Iranian Revolution",rg:"Iran",d:"A clerical government replaced a modernising monarchy on the argument that religious law could organise a modern state. Secularisation stopped looking like the single direction in which history ran."}
 ];
 /* ========= STREAMS (colour = identity) ========= */
 const TR = {
@@ -2168,6 +2307,51 @@ requestAnimationFrame(()=>{
   scrollMain.scrollLeft=0; syncEv();
   select("aristotle");
 });
+
+/* ---------- drag to pan ---------- */
+(function(){
+  var TH = 4;                        // px before a press becomes a drag
+  function bind(el){
+    if(!el || el.__pan) return; el.__pan = 1;
+    el.classList.add('grabbable');
+    var down=false, moved=false, sx=0, sy=0, l0=0, t0=0, id=null;
+    el.addEventListener('pointerdown', function(e){
+      if(e.pointerType === 'touch') return;          // native touch panning is better
+      if(e.button !== 0) return;
+      if(e.target.closest('input,textarea,select,button,a,[role="button"],.ev,.bar,.pchip')) return;
+      down=true; moved=false; sx=e.clientX; sy=e.clientY;
+      l0=el.scrollLeft; t0=el.scrollTop; id=e.pointerId;
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!down || e.pointerId!==id) return;
+      var dx=e.clientX-sx, dy=e.clientY-sy;
+      if(!moved && Math.abs(dx)<TH && Math.abs(dy)<TH) return;
+      if(!moved){ moved=true; el.classList.add('dragging'); try{el.setPointerCapture(id);}catch(_){} }
+      el.scrollLeft = l0 - dx; el.scrollTop = t0 - dy;
+      e.preventDefault();
+    });
+    function end(e){
+      if(!down) return;
+      down=false;
+      if(moved){
+        el.classList.remove('dragging');
+        try{el.releasePointerCapture(id);}catch(_){}
+        var kill=function(ev){ ev.stopPropagation(); ev.preventDefault(); };
+        el.addEventListener('click', kill, {capture:true, once:true});
+        setTimeout(function(){ el.removeEventListener('click', kill, true); }, 0);
+      }
+      moved=false; id=null;
+    }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('lostpointercapture', end);
+  }
+  function bindAll(){ ['.scrollMain','.netscroll','.trail','.scroller'].forEach(function(sel){
+    document.querySelectorAll(sel).forEach(bind); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAll);
+  else bindAll();
+})();
+
 </script>
 </body>
 </html>
