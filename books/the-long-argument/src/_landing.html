@@ -416,6 +416,48 @@ h2.vh{font-family:var(--f-disp);font-size:26px;font-weight:600;margin:0 0 6px;le
 /* let the timeline breathe under the chrome */
 .tlhead{box-shadow:0 1px 0 var(--rule-2),0 8px 14px -12px rgba(0,0,0,.22)}
 .evwrap{border-top-width:1px}
+
+/* ---------- the world, given room to speak ----------
+   The band ran one track per category and hid any label that collided with
+   the one before it, so the number of legible events was fixed by the width
+   of the canvas — 26 of 224 — and no amount of new material could raise it.
+   Each category now stacks across --evrows rows. Drag the band's top edge to
+   change that number: more rows means more of the world at once, fewer means
+   more room for the thinkers above. */
+.evwrap{--evrows:3;--evrowh:15px;position:relative}
+.evlane{height:calc(var(--evrows) * var(--evrowh) + 6px)}
+.rrow{height:calc(var(--evrows) * var(--evrowh) + 6px);align-items:flex-start;padding:5px 10px 0}
+.ev{height:var(--evrowh)}
+.evgrip{position:absolute;top:-4px;left:0;right:0;height:9px;z-index:14;cursor:ns-resize}
+.evgrip::after{content:"";position:absolute;left:50%;top:3px;width:46px;height:3px;margin-left:-23px;
+  border-radius:2px;background:var(--ink-4);opacity:0;transition:opacity .15s}
+.evgrip:hover::after,.evgrip.on::after{opacity:.55}
+body.evdrag{cursor:ns-resize;user-select:none}
+
+/* ---------- the drawer makes room instead of covering ----------
+   It was position:fixed over the right 470px, so opening a thinker hid a
+   third of the timeline behind it — the widest thing on the page was also the
+   most obscured. Now the view is padded to match, and nothing is lost. */
+@media (min-width:900px){
+  .view{transition:padding-right .22s cubic-bezier(.4,0,.2,1)}
+  body.drawn .view.on{padding-right:min(470px,92vw)}
+}
+@media (prefers-reduced-motion:reduce){.view{transition:none}}
+
+/* ---------- fit the window again ----------
+   `.app` asks for 100vh, but since the restructure it is no longer the first
+   thing in the body — the Library bar sits above it. Asking for the whole
+   window while starting below the top of it made every page taller than the
+   window by exactly that bar. The body divides the space now, so the sum is
+   right whether or not the bar is there. */
+body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+body>nav{flex:none}
+.app{height:auto;flex:1;min-height:0}
+
+/* The drawer hung from a remembered 52px — the header's height before the
+   Library bar existed — so it opened over the header's own corner. It now
+   hangs from wherever the header actually ends. */
+.drawer{top:var(--dtop,52px)}
 </style>
 </head>
 <body>
@@ -1836,6 +1878,10 @@ const nowEl=document.createElement("div"); nowEl.className="nowline"; lanesEl.ap
 
 function estW(s){ return s.length*6.4+16; }
 
+const EVW=$('.evwrap');
+function evRows(){ return parseInt(getComputedStyle(EVW).getPropertyValue('--evrows'))||3; }
+function evRowH(){ return parseFloat(getComputedStyle(EVW).getPropertyValue('--evrowh'))||15; }
+
 function layout(){
   const W=Math.ceil(SC.base*Z)+40;
   canvasMain.style.width=W+"px"; evc.style.width=W+"px";
@@ -1877,13 +1923,27 @@ function layout(){
   });
   nowEl.style.left=xOf(NOW)+"px";
   /* events */
-  const lastEnd={pow:-1e9,rel:-1e9,sci:-1e9,cul:-1e9};
+  /* Each category stacks across several rows instead of one. With a single
+     track the band could only ever show one label per label-width of canvas,
+     so a denser dataset just meant more hidden labels; rows turn that density
+     into something readable. Events that still cannot fit keep their marker
+     and drop only the words, and their marker goes to the emptiest row so the
+     dots spread out instead of piling up on the top line. */
+  const NR=evRows(), RH=evRowH();
+  const ends={pow:null,rel:null,sci:null,cul:null};
+  for(const k in ends) ends[k]=new Array(NR).fill(-1e9);
   EVS.sort((a,b)=>a.e.y-b.e.y).forEach(o=>{
     const x=xOf(o.e.y); o.el.style.left=x+"px";
     const m=o.el.querySelector(".m");
     if(o.e.y2){ m.style.width=Math.max(6,xOf(o.e.y2)-x)+"px"; } else { m.style.width=""; }
-    if(x>lastEnd[o.e.c]+14){ o.el.classList.remove("hide"); lastEnd[o.e.c]=x+o.w; }
-    else o.el.classList.add("hide");
+    const rows=ends[o.e.c]; let r=-1;
+    for(let i=0;i<NR;i++){ if(x>rows[i]+14){ r=i; break; } }
+    if(r>=0){ o.el.classList.remove("hide"); rows[r]=x+o.w; o.el.style.top=(r*RH+3)+"px"; }
+    else {
+      o.el.classList.add("hide");
+      let b=0; for(let i=1;i<NR;i++) if(rows[i]<rows[b]) b=i;
+      rows[b]=Math.max(rows[b],x+11); o.el.style.top=(b*RH+3)+"px";
+    }
   });
   if(SEL) drawBand(SEL);
   $("#zLvl").textContent=Z.toFixed(1)+"\u00d7";
@@ -2001,14 +2061,14 @@ function select(id){
   evc.classList.add("dim");
   drawBand(p);
   renderDrawer(p);
-  drawer.classList.add("on");
+  drawer.classList.add("on"); document.body.classList.add("drawn");
   const x=xOf(p.b);
   if(x<scrollMain.scrollLeft+40 || x>scrollMain.scrollLeft+scrollMain.clientWidth-140)
     scrollMain.scrollTo({left:Math.max(0,x-160),behavior:"smooth"});
   if(NET.built) netFocus(id);
 }
 function deselect(){
-  SEL=null; drawer.classList.remove("on");
+  SEL=null; drawer.classList.remove("on"); document.body.classList.remove("drawn");
   lanesEl.classList.remove("dim"); evc.classList.remove("dim"); clearBand();
   $$(".bar").forEach(b=>b.classList.remove("sel","rel"));
   netFocus(null);
@@ -2091,7 +2151,7 @@ $("#dBody").addEventListener("click",ev=>{
 /* ---------- event & era popovers ---------- */
 function openEvent(i){
   const e=EV[i]; deselect();
-  drawer.classList.add("on");
+  drawer.classList.add("on"); document.body.classList.add("drawn");
   $("#dName").innerHTML=e.t;
   $("#dMeta").innerHTML='<span class="dates">'+evYr(e)+'</span><span class="streamchip">'+CATN[e.c]+'</span>'+
     (e.rg?'<span class="dplace">'+e.rg+'</span>':'');
@@ -2305,7 +2365,6 @@ addEventListener("resize",()=>{ clearTimeout(window._rz); window._rz=setTimeout(
 requestAnimationFrame(()=>{
   setZoom(Math.max(0.55,Math.min(1.6,scrollMain.clientWidth/SC_BAL.base*1.05)));
   scrollMain.scrollLeft=0; syncEv();
-  select("aristotle");
 });
 
 /* ---------- drag to pan ---------- */
@@ -2352,6 +2411,49 @@ requestAnimationFrame(()=>{
   else bindAll();
 })();
 
+
+/* ---------- drag the world band taller ---------- */
+(function(){
+  const w=document.querySelector('.evwrap'); if(!w) return;
+  const g=document.createElement('div');
+  g.className='evgrip'; g.title='Drag to give the world more room';
+  w.appendChild(g);
+  const MIN=1, MAX=8;
+  const rows=()=>parseInt(getComputedStyle(w).getPropertyValue('--evrows'))||3;
+  /* Same shape as the pan handler: an explicit flag holds the drag state and
+     pointer capture is best-effort, because capture is refused often enough
+     (and silently) that it cannot be the thing the drag depends on. */
+  let down=false, y0=0, r0=3, id=null;
+  g.addEventListener('pointerdown',e=>{
+    if(e.button!==0) return;
+    down=true; y0=e.clientY; r0=rows(); id=e.pointerId;
+    try{ g.setPointerCapture(id); }catch(_){}
+    g.classList.add('on'); document.body.classList.add('evdrag'); e.preventDefault();
+  });
+  g.addEventListener('pointermove',e=>{
+    if(!down || e.pointerId!==id) return;
+    const h=parseFloat(getComputedStyle(w).getPropertyValue('--evrowh'))||15;
+    const n=Math.max(MIN,Math.min(MAX, r0+Math.round((y0-e.clientY)/h)));
+    if(n!==rows()){ w.style.setProperty('--evrows',n); layout(); syncEv(); }
+    e.preventDefault();
+  });
+  const end=e=>{ if(!down) return; down=false;
+                 try{ g.releasePointerCapture(id); }catch(_){}
+                 g.classList.remove('on'); document.body.classList.remove('evdrag'); };
+  g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end);
+  /* a short window cannot spare 200px for the band; start it smaller there */
+  if(innerHeight<680) w.style.setProperty('--evrows',2);
+  layout(); syncEv();
+})();
+
+/* ---------- hang the drawer off the real header ---------- */
+(function(){
+  const h=document.querySelector('.top'); if(!h) return;
+  const set=()=>document.documentElement.style.setProperty(
+    '--dtop', Math.round(h.getBoundingClientRect().bottom)+'px');
+  set();
+  addEventListener('resize',()=>{ clearTimeout(window._dt); window._dt=setTimeout(set,120); });
+})();
 </script>
 </body>
 </html>
