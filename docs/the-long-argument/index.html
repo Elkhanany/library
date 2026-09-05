@@ -55,7 +55,8 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);
-     font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+     font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden;
+     -webkit-text-size-adjust:100%;text-size-adjust:100%}
 button,input,select{font:inherit;color:inherit}
 button{background:none;border:0;cursor:pointer;padding:0}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
@@ -380,28 +381,61 @@ h2.vh{font-family:var(--f-disp);font-size:26px;font-weight:600;margin:0 0 6px;le
 .eranote p{font-family:var(--f-disp);font-size:13.5px;line-height:1.55;color:var(--ink-2);margin:0}
 .eranote .x{position:absolute;top:8px;right:10px;color:var(--ink-3);font-size:15px;line-height:1}
 
-@media (max-width:820px){
+@media (max-width:1000px){
   .brand .sub,.hint{display:none}
   .top{gap:10px;padding:0 10px}
   .search input{width:130px}
   .drawer{width:100vw;top:0}
   .toolbar{gap:9px;padding:6px 10px}
 }
-/* Five tabs and a search field do not fit a phone, and the body clips its
-   overflow, so "Reading path" was simply unreachable there. The strip scrolls
-   instead of being cut. */
-@media (max-width:760px){
-  .top{gap:8px;padding:0 8px;min-width:0}
+/* Six tabs and a search field do not fit a phone, and the body clips its
+   overflow, so the last tab was simply unreachable there. The strip scrolls
+   instead of being cut &mdash; and it does so at every width rather than below
+   a breakpoint, because an iPhone in landscape is 844 to 932 CSS pixels and a
+   760px rule turns itself off exactly when the screen is still a phone. Since
+   the strip only scrolls when it has to, this costs a desktop nothing. */
+.top{min-width:0}
+nav.tabs{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:none}
+@media (max-width:1000px){
+  .top{gap:8px;padding:0 8px}
   .brand h1{font-size:16px}
-  nav.tabs{flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;margin-left:0}
-  nav.tabs::-webkit-scrollbar{display:none}
-  nav.tabs button{flex:none;padding:6px 9px}
+  nav.tabs{flex:1 1 auto;margin-left:0}
+  nav.tabs button{padding:6px 9px}
   .spacer{display:none}
   .search{flex:none}
   .search input{width:34px;padding-left:26px;transition:width .18s}
   .search input:focus{width:150px}
   .studybar{padding:0 6px}
   .studybar .lab{display:none}
+}
+
+/* ---------- iOS ----------
+   Safari zooms the page in when a focused control is set below 16px and never
+   zooms back out, which on this page meant tapping the search field or the
+   argument selector left the reader stranded mid-canvas. Coarse pointers get
+   16px; nothing on a desktop changes. The 44px minimum is Apple's, and the
+   safe-area padding keeps the drawer's controls clear of the home indicator. */
+@media (pointer:coarse){
+  .search input,select.sel,input,select,textarea{font-size:16px}
+  .search input{width:40px;padding-left:28px}
+  .search input:focus{width:min(210px,52vw)}
+  nav.tabs button,.seg button,.zoom button,.iconbtn,.stab,select.sel,.search input{min-height:44px}
+  .iconbtn{flex:none;width:44px;height:44px}
+  .zoom button{width:36px}
+  .chip,.thchip,.pchip,.argchip,.cnode{min-height:40px}
+  .tl-list button,.results button,.plate,.nfrow button{min-height:44px}
+  .dhead .close{width:44px;height:44px;top:8px;right:8px}
+  .drawer{padding-bottom:env(safe-area-inset-bottom)}
+  .dbody{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+  .scroller{-webkit-overflow-scrolling:touch}
+}
+@supports (padding:max(0px)){
+  @media (pointer:coarse){
+    .top{padding-left:max(8px,env(safe-area-inset-left));
+         padding-right:max(8px,env(safe-area-inset-right))}
+  }
 }
 
 /* ---------- quieter chrome ----------
@@ -469,6 +503,10 @@ body.evdrag{cursor:ns-resize;user-select:none}
 body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 body>nav{flex:none}
 .app{height:auto;flex:1;min-height:0}
+@media (pointer:coarse){
+  .libbar{padding:0 max(1.1rem,env(safe-area-inset-left)) 0 max(1.1rem,env(safe-area-inset-right))}
+  .libbar a,.libbar span{display:inline-flex;align-items:center;min-height:44px}
+}
 
 
 /* ============================================================
@@ -656,7 +694,7 @@ body>nav{flex:none}
 .tkline .pone{font-family:var(--f-disp);font-size:13.5px;color:var(--ink-2);line-height:1.45}
 .tkline .pmeta{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-4);
   font-weight:600;white-space:nowrap}
-@media (max-width:820px){
+@media (max-width:1000px){
   .tkline{grid-template-columns:15px 1fr}
   .tkline .pone,.tkline .pmeta{display:none}
   .study{padding:0 16px 70px}
@@ -827,7 +865,7 @@ body>nav{flex:none}
 #streamChips .chip:hover{background:var(--surface-2);color:var(--ink)}
 .rnote{margin-top:11px;border-top:1px solid var(--rule-2);padding-top:9px}
 .toolbar{flex-wrap:nowrap;padding:0 18px;gap:18px;height:40px}
-@media (max-width:820px){.toolbar{flex-wrap:wrap;height:auto;padding:6px 10px}}
+@media (max-width:1000px){.toolbar{flex-wrap:wrap;height:auto;padding:6px 10px}}
 
 
 /* ============================================================
@@ -963,7 +1001,7 @@ body>nav{flex:none}
 .nfrow button{text-align:left}
 .nfrow button:hover b{color:var(--rubric)}
 
-@media (max-width:820px){
+@media (max-width:1000px){
   .fmwrap{padding:20px 16px 70px}
   .arg{padding:15px 15px 16px}
   .dline{grid-template-columns:22px minmax(0,1fr);gap:0 9px}
@@ -986,7 +1024,7 @@ body>nav{flex:none}
 </style>
 </head>
 <body>
-<nav style="font:600 .74rem/1 var(--f-ui);letter-spacing:.02em;padding:.7rem 1.1rem;border-bottom:1px solid var(--rule-2);display:flex;gap:1.1rem;align-items:center"><a href="../index.html" style="color:var(--rubric);text-decoration:none">&larr; Library</a><span style="color:var(--ink-3)">The Long Argument</span></nav>
+<nav class="libbar" style="font:600 .74rem/1 var(--f-ui);letter-spacing:.02em;padding:.7rem 1.1rem;border-bottom:1px solid var(--rule-2);display:flex;gap:1.1rem;align-items:center"><a href="../index.html" style="color:var(--rubric);text-decoration:none">&larr; Library</a><span style="color:var(--ink-3)">The Long Argument</span></nav>
 <div class="app">
 <div class="chrome">
 <header class="top">
