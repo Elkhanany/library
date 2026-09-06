@@ -84,6 +84,11 @@ em{font-style:italic;font-family:var(--f-disp);font-size:1.03em}
 .top{display:flex;align-items:center;gap:18px;padding:0 16px;height:52px;flex:none;
      background:var(--surface);border-bottom:1px solid var(--rule);position:relative;z-index:40}
 .brand{display:flex;align-items:baseline;gap:9px;flex:none}
+/* Only ever shown on a phone, where the library bar above it is hidden. It is
+   the sole route back, so it is a full touch target rather than a glyph. */
+.brand .back{display:none;align-items:center;justify-content:center;
+     width:34px;height:44px;margin-left:-8px;flex:none;
+     color:var(--rubric);font-size:19px;text-decoration:none;line-height:1}
 .brand h1{font-family:var(--f-disp);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em}
 .brand .sub{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
      font-weight:500;padding-left:9px;border-left:2px solid var(--rubric)}
@@ -1055,6 +1060,61 @@ body>nav{flex:none}
    Library bar existed — so it opened over the header's own corner. It now
    hangs from wherever the header actually ends. */
 .drawer{top:var(--dtop,52px)}
+
+/* ---------- the phone tier ----------
+   Last in the file on purpose. Several of these override rules that appear
+   later in the stylesheet than the tier they logically belong to (.rail is set
+   again further down), and at equal specificity source order decides. Putting
+   the phone overrides anywhere else means writing them and watching them lose.
+
+   On a phone this page spent 397 of its 844 pixels -- forty-seven per cent of
+   the screen -- on chrome before the timeline began, and gave a third of what
+   was left to a legend. Measured, not guessed: library bar 67, header 102,
+   tabs 45, toolbar 183. What follows takes back about two hundred of them.
+
+   The height condition is not decoration. A phone held sideways is 844 by 390:
+   it sails past any width-only phone rule and keeps the desktop chrome, which
+   on a 390px-tall screen came to 222 pixels -- fifty-seven per cent -- and left
+   the timeline seventy-one pixels to live in. Whichever way the device is
+   turned, the chrome has to get out of the way. 520px catches every phone in
+   landscape and no desktop window anyone actually uses. */
+@media (max-width:700px), (max-height:520px){
+
+  /* The clearest waste: the library bar prints "The Long Argument" directly
+     above a header printing "The Long Argument". Its one useful part, the way
+     back, becomes an arrow in the header that was already there.
+     !important because the bar carries an inline display:flex from the build
+     template, and an inline style beats a stylesheet rule without it. */
+  .libbar{display:none!important}
+  .brand .back{display:flex}
+
+  /* The toolbar wrapped to three labelled rows. In one scrolling row the
+     controls still read for themselves: a segmented pair, a zoom stepper, a
+     named argument. The uppercase labels were naming what the controls say. */
+  .toolbar{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;
+     gap:10px;padding:6px 10px;height:auto;row-gap:0;
+     -webkit-overflow-scrolling:touch;touch-action:pan-x}
+  .toolbar::-webkit-scrollbar{display:none}
+  .toolbar .grp{flex:none}
+  .toolbar .grp>label{display:none}
+
+  /* A legend does not deserve a third of the width of a 390px screen. At 92px
+     the longer tradition names no longer fit on one line, so they wrap instead
+     of being clipped: the rail sets white-space:nowrap inside an overflow:hidden
+     body, which silently cut "Hellenistic & Roman" to "Hellenistic & R". The
+     swatch aligns to the first line rather than centring against two. */
+  .rail{width:92px}
+  #streamChips .chip{white-space:normal;align-items:flex-start;
+     line-height:1.3;padding-top:3.5px;padding-bottom:3.5px;
+     /* "Christendom" is one word longer than 92px, so wrapping alone does not
+        save it; it hyphenates. min-height comes from the coarse-pointer touch
+        rule and would otherwise cap a two-line chip at one line's worth. */
+     hyphens:auto;overflow-wrap:break-word;min-height:0;height:auto;
+     /* a button centres its text by default, which on a wrapped two-line label
+        leaves the second line floating under the middle of the first */
+     text-align:left}
+  #streamChips .chip .sw{margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -1063,6 +1123,7 @@ body>nav{flex:none}
 <div class="chrome">
 <header class="top">
   <div class="brand">
+    <a class="back" href="../index.html" aria-label="Back to the library">&larr;</a>
     <h1>The Long Argument</h1>
     <div class="sub">2,600 years</div>
   </div>

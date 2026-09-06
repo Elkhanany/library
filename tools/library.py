@@ -145,8 +145,13 @@ class Book:
         Math Ledger it does not build."""
         if "shortcuts" in self.pwa:
             return self.pwa["shortcuts"]
-        out = [{"name": "Continue", "url": "../continue.html?b=" + self.slug},
-               {"name": "Chapters", "url": "contents.html"}]
+        out = [{"name": "Continue", "url": "../continue.html?b=" + self.slug}]
+        # Only when there is a chapter index worth opening. A book whose whole
+        # text lives in its landing page still gets a contents.html from the
+        # build, but it is an empty shell -- The Long Argument's has five links,
+        # two of them to itself -- and a shortcut into it is a dead end.
+        if self.written():
+            out.append({"name": "Chapters", "url": "contents.html"})
         if self.has("throughline"):
             out.append({"name": "In Plain Terms", "url": "throughline.html"})
         if self.has("ledger"):
