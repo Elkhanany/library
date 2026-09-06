@@ -14,6 +14,7 @@ from playwright.async_api import async_playwright
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import library
+import pwa
 
 ROOT = library.ROOT
 STAGE = os.path.join(ROOT, ".webstage")
@@ -54,7 +55,7 @@ SHELL = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{title} — {book}</title>
 <meta name="description" content="{desc}">
 {mathcss}
@@ -386,7 +387,7 @@ def hub(results):
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>A Library</title>
 <meta name="description" content="Books built from first principles: {', '.join(html.escape(b.title) for b, _n, _s in results)}.">
 <style>{css}</style>
@@ -515,6 +516,18 @@ async def main():
     shutil.rmtree(STAGE, ignore_errors=True)
 
     hub(results)
+
+    # The app layer goes on last, over the finished tree. It is a text pass and
+    # costs about five seconds on a build that takes a quarter of an hour.
+    #
+    # Emitting it here rather than interpolating the head into SHELL is
+    # deliberate: pwa.py is then the single producer of that block, and the
+    # full-build path and the standalone `python3 tools/pwa.py` path cannot
+    # drift apart because they are the same code. The injector is idempotent
+    # and anchored on the viewport meta, and raises rather than silently
+    # patching nothing if that anchor ever moves.
+    pages = pwa.emit_all([bk for bk, _n, _s in results])
+    print(f"  app layer: {pages} pages, {len(results)} manifests")
 
     tot = sum(os.path.getsize(os.path.join(dp, f))
               for dp, _, fs in os.walk(DOCS) for f in fs)

@@ -19,9 +19,11 @@ Paths are absolute so a tool can be run from anywhere:
     python3 tools/webbuild.py
     cd tools && python3 webbuild.py
 """
+import html
 import io
 import json
 import os
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOOKS = os.path.join(ROOT, "books")
@@ -33,6 +35,22 @@ DOCS = os.path.join(ROOT, "docs")
 # Reading order of the library itself. A book absent from here still builds; it
 # simply sorts after the named ones, so adding a book cannot silently drop it.
 ORDER = ["newton-to-mtheory", "the-long-argument"]
+
+# GitHub Pages serves this repo as a PROJECT page, so every published URL carries
+# this prefix. It is the only absolute path anywhere in the library. A manifest's
+# "id" needs it, because id resolves against the ORIGIN rather than against the
+# manifest's own URL; everything else stays document-relative so the tree can be
+# moved or previewed from a file:// path. Moving to a custom domain changes this
+# one line and nothing else.
+SITE = "/library/"
+
+
+def plain(text):
+    """book.json display strings are HTML fragments -- brand is
+    "Newton&nbsp;&rarr;&nbsp;M-Theory". A manifest name is plain text, so the
+    markup and the non-breaking spaces have to come out."""
+    t = html.unescape(re.sub(r"<[^>]+>", "", text or ""))
+    return " ".join(t.replace("\u00a0", " ").split())
 
 
 def read(path):
@@ -67,6 +85,7 @@ class Book:
         self.shell = cfg.get("shell", "full")
         self.features = cfg.get("features", {})
         self.theme = cfg.get("theme", {})
+        self.pwa = cfg.get("pwa") or {}   # absent from every book written before the PWA
 
         self.src = os.path.join(self.dir, "src")
         self.reports = os.path.join(self.dir, "reports")
@@ -80,6 +99,83 @@ class Book:
             for p in self.parts
             for c in p["chapters"]
         ]
+
+    # ---------- the installable-app face of a book ----------
+    # Every one of these falls back to something the book already declares, so a
+    # book.json written before any of this existed still produces a complete,
+    # correct manifest. A new book only overrides what the derivation gets wrong.
+
+    @property
+    def app_name(self):
+        return self.pwa.get("name") or plain(self.title)
+
+    @property
+    def short_name(self):
+        """What iOS writes under the home-screen icon. It elides at roughly
+        twelve characters, so this is the one key a new book should set by hand;
+        the derivation below is a floor, not an answer."""
+        s = self.pwa.get("short_name")
+        if s:
+            return s
+        out = ""
+        for w in plain(self.brand or self.title).split():
+            cand = (out + " " + w).strip()
+            if out and len(cand) > 12:
+                break
+            out = cand
+        return out.rstrip(" \u2192-\u2013\u2014:,") or plain(self.title)[:12]
+
+    @property
+    def theme_color(self):
+        return self.pwa.get("theme_color") or self.theme.get("paper", "#ffffff")
+
+    @property
+    def background_color(self):
+        return self.pwa.get("background_color") or self.theme.get("paper", "#ffffff")
+
+    @property
+    def icon_spec(self):
+        ic = dict(self.pwa.get("icon", {}))
+        ic.setdefault("bg", self.theme.get("accent", "#333333"))
+        ic.setdefault("fg", self.theme.get("paper", "#ffffff"))
+        return ic
+
+    def shortcuts(self):
+        """Derived from the book's own features, so a book can never advertise a
+        Math Ledger it does not build."""
+        if "shortcuts" in self.pwa:
+            return self.pwa["shortcuts"]
+        out = [{"name": "Continue", "url": "../continue.html?b=" + self.slug},
+               {"name": "Chapters", "url": "contents.html"}]
+        if self.has("throughline"):
+            out.append({"name": "In Plain Terms", "url": "throughline.html"})
+        if self.has("ledger"):
+            out.append({"name": "Math Ledger", "url": "ledger.html"})
+        return out
+
+    def manifest(self, icons):
+        # scope is "../" -- the library root -- rather than this book's own
+        # directory, because every page carries a "Library" link back to the hub.
+        # Scoped to the book, that link would leave the app on iOS and open in a
+        # chrome-less in-app browser with none of the app's caches, so moving
+        # between books would read as falling out of the app. A library must not
+        # do that.
+        return {
+            "id": SITE + self.slug + "/",
+            "name": self.app_name,
+            "short_name": self.short_name,
+            "description": plain(self.tagline),
+            "lang": "en", "dir": "ltr",
+            "start_url": "index.html",
+            "scope": "../",
+            "display": "standalone",
+            "display_override": ["standalone"],
+            "theme_color": self.theme_color,
+            "background_color": self.background_color,
+            "categories": self.pwa.get("categories", ["education", "books"]),
+            "icons": icons,
+            "shortcuts": self.shortcuts(),
+        }
 
     def has(self, feature):
         return bool(self.features.get(feature))
@@ -101,7 +197,11 @@ def slugs():
     found = [d for d in sorted(os.listdir(BOOKS))
              if os.path.exists(os.path.join(BOOKS, d, "book.json"))]
     ranked = [s for s in ORDER if s in found]
-    return ranked + [s for s in found if s not in ranked]
+    # A book absent from ORDER can still place itself with "order" in its
+    # book.json, so adding the twentieth book needs no edit to this file.
+    rest = sorted((s for s in found if s not in ranked),
+                  key=lambda s: (Book(s).cfg.get("order", 10 ** 6), s))
+    return ranked + rest
 
 
 def books():

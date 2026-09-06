@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Continue reading</title>
+<style>
+:root{color-scheme:light dark;--ink:#16181d;--soft:#565b66;--paper:#f4f3f0;--rule:#dcdfe5}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);display:grid;place-items:center;
+  padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));
+  font-family:"Iowan Old Style",Palatino,Georgia,serif;-webkit-text-size-adjust:100%}
+main{max-width:26rem;text-align:center}
+h1{font-size:1.5rem;font-weight:600;margin:0 0 .6rem}
+p{color:var(--soft);line-height:1.6;margin:0 0 1.4rem;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
+a,button{display:inline-block;font:inherit;font-size:14px;font-family:-apple-system,sans-serif;
+  padding:11px 16px;min-height:44px;box-sizing:border-box;border:1px solid var(--rule);
+  border-radius:9px;background:none;color:inherit;text-decoration:none;cursor:pointer}
+ul{list-style:none;padding:0;margin:0;text-align:left}
+li{border-top:1px solid var(--rule)}
+li a{display:block;border:0;border-radius:0;padding:14px 2px}
+</style>
+</head>
+<body>
+<main>
+<h1>Continue reading</h1><p id="m">Looking for where you left off…</p><ul id="l"></ul>
+</main>
+<script>
+(function(){
+  var want=new URLSearchParams(location.search).get('b');
+  var s={};try{s=JSON.parse(localStorage.getItem('library:v1')||'{}')}catch(e){}
+  var last=s.last;
+  if(last&&last.url&&(!want||last.slug===want)){location.replace(last.url);return}
+  // Nothing recorded, or recorded for a different book: offer the shelf rather
+  // than dead-ending on a shortcut the reader deliberately tapped.
+  document.getElementById('m').textContent=
+    'Nothing recorded yet. Pick up a book and this will remember your place.';
+  // Built with DOM calls rather than by concatenating markup: a book title is
+  // author-supplied text, and an href assembled in a string is also something
+  // sitecheck would try to resolve as a real link.
+  fetch('catalog.json').then(function(r){return r.json()}).then(function(c){
+    var ul=document.getElementById('l');
+    (c.books||[]).forEach(function(b){
+      var li=document.createElement('li'), a=document.createElement('a');
+      a.setAttribute('href',b.start); a.textContent=b.name;
+      li.appendChild(a); ul.appendChild(li);
+    });
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>

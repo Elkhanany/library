@@ -41,6 +41,12 @@ tools/                the build system, shared by every book
   build.py            assembles src/ fragments into whole pages
   make.py             the offline build   → build/<book>/   (self-contained)
   webbuild.py         the website build   → docs/           (GitHub Pages)
+  pwa.py              the app layer over docs/: manifests, service worker,
+                      icons, offline manifests. A text pass, no browser, about
+                      five seconds -- so adding a meta tag never costs the
+                      fifteen-minute rebuild. webbuild.py calls it last;
+                      `python3 tools/pwa.py` on its own is the usual way.
+                      `--check` asserts docs/ matches what it would emit now.
   verify.py           audits built pages with all network blocked
   throughline.py      extracts the plain-language layer
   xrefcheck.py        proves every cross-reference resolves
