@@ -56,7 +56,7 @@ def shell(title, body, chapter=None, sidebar_head="Contents", home="index.html",
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{html.escape(title)} — {html.escape(TITLE)}</title>
 <link rel="stylesheet" href="{k}/katex.min.css"
       onerror="this.onerror=null;this.href='{CDN}/katex.min.css'">

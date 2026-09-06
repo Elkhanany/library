@@ -54,7 +54,7 @@ SHELL = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{title} — {book}</title>
 <meta name="description" content="{desc}">
 {mathcss}
@@ -386,7 +386,7 @@ def hub(results):
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>A Library</title>
 <meta name="description" content="Books built from first principles: {', '.join(html.escape(b.title) for b, _n, _s in results)}.">
 <style>{css}</style>
