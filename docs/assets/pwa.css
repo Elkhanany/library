@@ -1,0 +1,167 @@
+/* Presentation for the app layer only.
+ *
+ * Kept out of book.css because that file also ships to the file:// Dropbox
+ * build, where none of this can happen. Everything here is scoped to a .pwa-
+ * class or to html.standalone, so a page that never reaches these states is
+ * rendered exactly as it was before this file existed.
+ *
+ * The colours are taken from each page's own custom properties where they
+ * exist, with a literal fallback, so a toast on a chapter of the physics book
+ * and a toast on the philosophy timeline each look like the page they are on.
+ */
+
+.pwa-toast,
+.pwa-offline {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  font-family: var(--sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* Above the home indicator, and above nothing at all on a device without one:
+ * env() resolves to 0 where there is no inset, so the same rule is correct on
+ * a desktop and on a notched phone. This only works because every page now
+ * carries viewport-fit=cover. */
+.pwa-toast {
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(30rem, calc(100vw - 24px));
+  padding: 11px 12px 11px 15px;
+  border-radius: 10px;
+  background: var(--ink, #1b1b1d);
+  color: var(--paper, #fbfaf7);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, .3);
+}
+
+.pwa-toast button {
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: rgba(255, 255, 255, .14);
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.pwa-toast button:hover { background: rgba(255, 255, 255, .24); }
+
+.pwa-toast button.x {
+  background: none;
+  padding: 4px 6px;
+  font-size: 17px;
+  line-height: 1;
+  opacity: .6;
+}
+
+.pwa-offline {
+  top: 0;
+  width: 100%;
+  max-width: none;
+  left: 0;
+  transform: none;
+  padding: calc(6px + env(safe-area-inset-top)) 12px 6px;
+  text-align: center;
+  background: #6b5119;
+  color: #fff;
+  font-size: 12.5px;
+  letter-spacing: .01em;
+}
+
+/* The install card. Only ever rendered into the hub, and only for an iOS
+ * browser that is not already standalone -- there is no beforeinstallprompt on
+ * iOS, so this is instructions rather than a button that could do the job. */
+.pwa-install {
+  margin: 1.6rem 0 0;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--rule, #dcdfe5);
+  border-radius: 12px;
+  background: rgba(127, 127, 127, .05);
+  font-family: var(--sans, -apple-system, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.pwa-install b { font-weight: 650; }
+.pwa-install p { margin: .45rem 0 .8rem; color: var(--ink-soft, #565b66); }
+
+.pwa-install button,
+.pwa-shelf button {
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 14px;
+  min-height: 44px;          /* Apple's minimum; these are touch targets */
+  border: 1px solid var(--rule, #dcdfe5);
+  border-radius: 8px;
+  background: var(--paper, #fff);
+  color: inherit;
+  cursor: pointer;
+}
+
+.pwa-install button:hover,
+.pwa-shelf button:hover { border-color: currentColor; }
+
+.pwa-shelf button[disabled] { opacity: .5; cursor: default; }
+
+/* The offline shelf on the hub: one row per book, plus what it costs. */
+.pwa-shelf { margin: 2rem 0 0; font-family: var(--sans, -apple-system, sans-serif); }
+.pwa-shelf h2 {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint, #878d99);
+  font-weight: 600;
+  margin: 0 0 .7rem;
+}
+
+.pwa-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: .7rem 0;
+  border-top: 1px solid var(--rule, #dcdfe5);
+  font-size: 13.5px;
+}
+
+.pwa-row .n { flex: 1; min-width: 0; }
+.pwa-row .n b { display: block; font-weight: 600; }
+.pwa-row .n span { color: var(--ink-soft, #565b66); font-size: 12px; }
+
+.pwa-row progress { width: 90px; height: 6px; flex: none; }
+
+.pwa-note {
+  margin: .9rem 0 0;
+  font-size: 12px;
+  color: var(--ink-faint, #878d99);
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------- standalone
+ * Only when actually launched from the Home Screen. Keyed off a class rather
+ * than @media (display-mode: standalone), which is unreliable on iOS; the boot
+ * script sets it from navigator.standalone. */
+
+/* Nothing behind the status bar or the home indicator. With viewport-fit=cover
+ * the page owns the whole screen, which means it also owns keeping content out
+ * of the parts the system draws over. */
+html.standalone body { overscroll-behavior-y: none; }
+
+html.standalone .topnav,
+html.standalone .top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* There is no browser back button in a standalone app, so anything that was
+ * only reachable by the browser's chrome has to be reachable in the page. Both
+ * books already carry a Library link and a Chapters link in their own top bar,
+ * which is why no extra navigation is injected here. */
+
+@media print {
+  .pwa-toast, .pwa-offline, .pwa-install, .pwa-shelf { display: none !important; }
+}
