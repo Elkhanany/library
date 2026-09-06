@@ -79,7 +79,11 @@ def main():
         print(f"  {len(missing)} broken, {len(external)} external dependency — FIX THESE")
         return 1
     print("  every internal link resolves, nothing loaded from off-site")
-    return 0
+
+    # The app layer is one string match away from silently not existing, so it
+    # is checked here rather than left to whoever remembers to look.
+    import pwa
+    return pwa.check()
 
 
 if __name__ == "__main__":

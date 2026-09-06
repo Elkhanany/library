@@ -352,15 +352,24 @@ def offline_json(bk):
     same fix costs one two-megabyte fetch. At two books that is a nicety. At
     twenty, with something changing most weeks, it is the difference between a
     feature people keep switched on and one they turn off."""
+    import gzip
     rels = book_files(bk.slug)
     files = {}
     total = 0
+    wire = 0
     for rel in rels:
         p = os.path.join(DOCS, rel)
         files[rel] = filehash(p)
         total += os.path.getsize(p)
+        # What it costs to fetch, as opposed to what it costs to keep. These
+        # differ by more than tenfold here -- the chapters are pre-rendered
+        # markup and compress to about 8% -- and a reader deciding whether to
+        # download a book on a phone deserves to be told both rather than
+        # whichever number flatters the feature.
+        with io.open(p, "rb") as fh:
+            wire += len(gzip.compress(fh.read(), 6))
     return {"slug": bk.slug, "digest": digest(rels), "bytes": total,
-            "count": len(rels), "files": files}
+            "wire": wire, "count": len(rels), "files": files}
 
 
 def shell_files():
@@ -551,7 +560,55 @@ def emit_sw(bks):
     library.write(os.path.join(DOCS, "sw.js"), hdr + library.read(src))
 
 
+def check():
+    """Assert that what is on disk is what this module would emit now.
+
+    The whole layer rests on one string match. If anyone reformats the viewport
+    meta in any emitter, or a page is written by a path that does not run the
+    injector, the failure is silent -- the tags simply stop being there and the
+    site quietly stops being installable. This is what makes that loud, so it
+    belongs in CI and in verify.py rather than in a comment asking people to
+    remember."""
+    bks = library.books()
+    by_slug = {b.slug: b for b in bks}
+    bad = []
+    for dp, _, fs in os.walk(DOCS):
+        for f in sorted(fs):
+            if not f.endswith(".html"):
+                continue
+            p = os.path.join(dp, f)
+            rel = os.path.relpath(p, DOCS).replace(os.sep, "/")
+            if rel in ("offline.html", "continue.html"):
+                continue
+            text = library.read(p)
+            depth = rel.count("/")
+            want = inject(strip(text), head(owning_book(rel, by_slug) if depth else None,
+                                            depth))
+            if want != text:
+                bad.append(rel)
+    for rel in ("manifest.webmanifest", "catalog.json", "sw.js",
+                "assets/pwa.js", "assets/pwa.css"):
+        if not os.path.exists(os.path.join(DOCS, rel)):
+            bad.append(rel + " (missing)")
+    for b in bks:
+        for rel in ("%s/manifest.webmanifest" % b.slug, "%s/offline.json" % b.slug,
+                    "%s/icons/icon-180.png" % b.slug):
+            if not os.path.exists(os.path.join(DOCS, rel)):
+                bad.append(rel + " (missing)")
+    if bad:
+        print("pwa: %d page(s) do not match what pwa.py would emit:" % len(bad))
+        for r in bad[:12]:
+            print("   ", r)
+        print("    run: python3 tools/pwa.py")
+        return 1
+    print("pwa: every built page carries the current app-layer head; "
+          "manifests, worker and icons all present")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--check" in sys.argv:
+        raise SystemExit(check())
     n = emit_all()
     print("pwa: %d pages injected, %d books, shell of %d files"
           % (n, len(library.books()), len(shell_files())))

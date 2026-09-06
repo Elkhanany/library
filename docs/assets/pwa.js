@@ -197,6 +197,10 @@
 
   async function resident(slug) {
     try {
+      /* caches.open() creates the cache if it is missing, so asking whether a
+       * book is stored would quietly create an empty cache for every book in
+       * the catalogue and make caches.keys() lie about what is downloaded. */
+      if (!(await caches.has(bookCache(slug)))) return null;
       var c = await caches.open(bookCache(slug));
       var r = await c.match('__resident__');
       return r ? await r.json() : null;
@@ -290,6 +294,154 @@
     d.appendChild(b);
     host.appendChild(d);
   }
+
+  /* ------------------------------------------------------------- the shelf
+   * Rendered here rather than emitted by the build, because every word of it
+   * is live: what is stored, how far a download has got, what a rebuild has
+   * changed underneath it. A server-rendered shelf would be wrong the moment
+   * it was painted. Only ever drawn on the hub. */
+
+  async function shelf() {
+    var host = document.querySelector('.wrap');
+    if (!host || SLUG) return;
+
+    var cat;
+    try { cat = await (await fetch('catalog.json')).json(); }
+    catch (e) { return; }                    /* no catalogue, no shelf */
+
+    var sec = document.createElement('section');
+    sec.className = 'pwa-shelf';
+    sec.innerHTML = '<h2>Read offline</h2>';
+
+    for (var i = 0; i < (cat.books || []).length; i++) {
+      sec.appendChild(await row(cat.books[i]));
+    }
+
+    /* Books that have left the library but whose bytes are still here. */
+    (state.orphans || []).forEach(function (slug) {
+      var d = document.createElement('div');
+      d.className = 'pwa-row';
+      var n = document.createElement('div'); n.className = 'n';
+      n.innerHTML = '<b>' + slug + '</b><span>No longer in this library — still on this device</span>';
+      var b = document.createElement('button');
+      b.textContent = 'Delete';
+      b.onclick = async function () {
+        await removeBook(slug);
+        state.orphans = (state.orphans || []).filter(function (s) { return s !== slug; });
+        save(state); d.remove();
+      };
+      d.appendChild(n); d.appendChild(b); sec.appendChild(d);
+    });
+
+    var note = document.createElement('p');
+    note.className = 'pwa-note';
+    sec.appendChild(note);
+    usage().then(function (u) {
+      if (!u || !u.usage) return;
+      note.textContent = 'Using ' + mb(u.usage) +
+        (u.quota ? ' of about ' + mb(u.quota) + ' available' : '') + ' on this device.';
+    });
+
+    /* Quiet, and behind a confirmation. It is the only user-side recovery from
+     * a worker that has gone bad, so it has to be here -- but it throws away
+     * every download, so it must not sit next to Download looking like a peer. */
+    var reset = document.createElement('button');
+    reset.className = 'quiet';
+    reset.textContent = 'Reset offline data';
+    reset.onclick = function () {
+      if (confirm('Remove every downloaded book and reset the offline store?'))
+        window.LibraryPWA.reset();
+    };
+    note.appendChild(document.createTextNode(' '));
+    note.appendChild(reset);
+
+    var foot = host.querySelector('footer');
+    if (foot) host.insertBefore(sec, foot); else host.appendChild(sec);
+    maybeCoach(sec);
+  }
+
+  async function row(book) {
+    var d = document.createElement('div');
+    d.className = 'pwa-row';
+    var n = document.createElement('div'); n.className = 'n';
+    var title = document.createElement('b'); title.textContent = book.name;
+    var sub = document.createElement('span');
+    n.appendChild(title); n.appendChild(sub);
+
+    var btn = document.createElement('button');
+    var bar = document.createElement('progress');
+    bar.max = 1; bar.value = 0; bar.hidden = true;
+
+    d.appendChild(n); d.appendChild(bar); d.appendChild(btn);
+
+    var man = null;
+    try { man = await (await fetch(book.slug + '/offline.json')).json(); }
+    catch (e) { /* offline and never downloaded: leave the row informational */ }
+
+    async function paint() {
+      var res = await resident(book.slug);
+      if (!man) {
+        sub.textContent = res && res.complete ? 'Stored on this device' : 'Unavailable offline';
+        btn.hidden = !(res && res.complete);
+        btn.textContent = 'Remove';
+        btn.onclick = wipe;
+        return;
+      }
+      var stale = res && res.files
+        ? Object.keys(man.files).filter(function (p) { return res.files[p] !== man.files[p]; })
+        : Object.keys(man.files);
+
+      if (res && res.complete && !stale.length) {
+        sub.textContent = 'Stored — ' + man.count + ' files, ' + mb(man.bytes);
+        btn.textContent = 'Remove'; btn.onclick = wipe;
+      } else if (res && stale.length && stale.length < Object.keys(man.files).length) {
+        sub.textContent = 'Updated — ' + stale.length +
+          (stale.length === 1 ? ' file' : ' files') + ' changed';
+        btn.textContent = 'Update'; btn.onclick = pull;
+      } else {
+        /* Both numbers, deliberately. They differ by more than tenfold, and
+         * quoting only the small one would be a way of not telling the reader
+         * what they are agreeing to. */
+        sub.textContent = 'About ' + mb(man.wire) + ' to download, ' +
+                          mb(man.bytes) + ' stored';
+        btn.textContent = 'Download'; btn.onclick = pull;
+      }
+      btn.hidden = false; btn.disabled = false;
+    }
+
+    async function pull() {
+      btn.disabled = true; btn.textContent = 'Downloading…';
+      bar.hidden = false;
+      try {
+        var r = await download(book.slug, function (done, total) {
+          bar.value = done / total;
+          sub.textContent = done + ' of ' + total + ' files';
+        });
+        bar.hidden = true;
+        if (r.failed) {
+          sub.textContent = r.failed + ' file' + (r.failed === 1 ? '' : 's') +
+            ' could not be fetched — try again to finish';
+        }
+      } catch (err) {
+        bar.hidden = true;
+        sub.textContent = (err && err.name === 'QuotaExceededError')
+          ? 'Not enough room on this device — what downloaded is kept'
+          : 'Download interrupted — try again to resume';
+      }
+      await paint();
+    }
+
+    async function wipe() {
+      btn.disabled = true;
+      await removeBook(book.slug);
+      await paint();
+    }
+
+    await paint();
+    return d;
+  }
+
+  if (!SLUG) addEventListener('DOMContentLoaded', function () { shelf(); });
 
   /* What the hub uses to draw the shelf. Everything above is generic. */
   window.LibraryPWA = {
