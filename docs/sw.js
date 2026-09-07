@@ -168,6 +168,32 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  /* A book's own datasets. These used to be inlined in the page, so visiting a
+   * page cached them for free; split out, they are fetched by script and a
+   * script fetch has an empty destination, which would fall past every rule
+   * below and never be stored. A reader who opened a study online and then
+   * went offline would lose the studies. Cache-first, into that book's cache,
+   * exactly like the page that asks for them. */
+  if (url.pathname.indexOf('/data/') !== -1 && file.endsWith('.json')) {
+    e.respondWith((async () => {
+      const hit = await fromAnyCache(req);
+      if (hit) return hit;
+      try {
+        const r = await net(req, NAV_TIMEOUT);
+        if (r && r.ok) {
+          const slug = slugOf(url);
+          const c = await caches.open(slug ? BOOK(slug) : SHELL);
+          c.put(req, r.clone()).catch(() => {});
+        }
+        return r;
+      } catch (err) {
+        return new Response('null', { status: 504,
+          headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
+    return;
+  }
+
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       const hit = await fromAnyCache(req);
