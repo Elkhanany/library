@@ -74,6 +74,29 @@ self.addEventListener('activate', e => e.waitUntil((async () => {
   for (const c of await self.clients.matchAll()) {
     c.postMessage({ type: 'ORPHANS', slugs: orphans });
   }
+
+  /* A worker only ever updates over the network, so this runs at the one
+   * moment we know the reader is online. Every reader who installed an
+   * earlier worker is holding a book landing page that nothing was ever
+   * going to replace; refresh those, and only those, so the reload that
+   * follows this activation shows the new page rather than the stored one.
+   *
+   * Only keys already present are touched, so this never downloads a book
+   * nobody opened, and a failed fetch leaves the old entry exactly where it
+   * was. Chapter HTML is left alone: it is the offline reading itself, and
+   * revalidation on the next visit is the right cost for it. */
+  const base = new URL('./', self.location);
+  for (const slug of SLUGS) {
+    try {
+      const c = await caches.open(BOOK(slug));
+      for (const tail of [slug + '/', slug + '/index.html']) {
+        const key = new URL(tail, base).toString();
+        if (!(await c.match(key))) continue;
+        const r = await net(new Request(key, { cache: 'reload' }), NAV_TIMEOUT);
+        if (r && r.ok) await c.put(key, r.clone());
+      }
+    } catch (err) { /* the stored page stays; never worse than before */ }
+  }
 })()));
 
 /* Which book, if any, owns a path under /library/. */
@@ -107,6 +130,45 @@ async function keepBounded(cache, slug) {
     const keys = (await cache.keys()).filter(k => !k.url.endsWith('__resident__'));
     for (let i = 0; i < keys.length - limit; i++) await cache.delete(keys[i]);
   } catch (err) { /* trimming is housekeeping; never let it break a response */ }
+}
+
+/* Cache-first is what makes a book open instantly and read on a train. On its
+ * own it is also a promise never to change anything again: a book's cache is
+ * deliberately never versioned, so nothing evicts the copy a reader already
+ * has, and a correction shipped today would reach them on no visit at all.
+ * Measured before this was written -- a changed page was invisible on the
+ * second visit and on the third.
+ *
+ * So serve the stored copy, then go and look. The fetched copy replaces the
+ * stored one, and when it genuinely differs the page is told, which raises the
+ * same reload offer an updated worker raises. The reader waits for nothing and
+ * is at worst one tap behind. */
+function revalidate(e, req, cacheName, notify) {
+  e.waitUntil((async () => {
+    try {
+      const r = await net(req, NAV_TIMEOUT);
+      if (!r || !r.ok) return;
+      const c = await caches.open(cacheName);
+      const old = await c.match(req, { ignoreSearch: true });
+      await c.put(req, r.clone());
+      if (notify && old && differs(old, r)) {
+        for (const cl of await self.clients.matchAll()) {
+          cl.postMessage({ type: 'CONTENT_UPDATED', url: req.url });
+        }
+      }
+    } catch (err) { /* offline, and the stored copy has already gone out */ }
+  })());
+}
+
+/* Cheap, and on Pages exact: every response carries an ETag. Fall back to the
+ * modification date, and where neither exists say nothing rather than offer a
+ * reload on every single visit. */
+function differs(a, b) {
+  const ea = a.headers.get('etag'), eb = b.headers.get('etag');
+  if (ea && eb) return ea !== eb;
+  const la = a.headers.get('last-modified'), lb = b.headers.get('last-modified');
+  if (la && lb) return la !== lb;
+  return false;
 }
 
 self.addEventListener('fetch', e => {
@@ -154,7 +216,11 @@ self.addEventListener('fetch', e => {
   if (url.pathname.indexOf('/data/') !== -1 && file.endsWith('.json')) {
     e.respondWith((async () => {
       const hit = await fromAnyCache(req);
-      if (hit) return hit;
+      if (hit) {
+        const slug = slugOf(url);
+        revalidate(e, req, slug ? BOOK(slug) : SHELL, true);
+        return hit;
+      }
       try {
         const r = await net(req, NAV_TIMEOUT);
         if (r && r.ok) {
@@ -174,7 +240,11 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       const hit = await fromAnyCache(req);
-      if (hit) return hit;
+      if (hit) {
+        const slug = slugOf(url);
+        revalidate(e, req, slug ? BOOK(slug) : SHELL, true);
+        return hit;
+      }
       try {
         const r = await net(req, NAV_TIMEOUT);
         if (r && r.ok) {
@@ -199,7 +269,11 @@ self.addEventListener('fetch', e => {
   if (d === 'style' || d === 'script' || d === 'font' || d === 'image') {
     e.respondWith((async () => {
       const hit = await fromAnyCache(req);
-      if (hit) return hit;
+      if (hit) {
+        const slug = slugOf(url);
+        revalidate(e, req, slug ? BOOK(slug) : SHELL, false);
+        return hit;
+      }
       try {
         const r = await net(req, NAV_TIMEOUT);
         if (r && r.ok) {
