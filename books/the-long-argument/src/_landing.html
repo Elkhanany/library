@@ -1158,6 +1158,21 @@ body>nav{flex:none}
   .view.on{animation:none}
   .drawer{transition:none}
 }
+
+/* ---------- skip links ----------
+   Off-screen until focused. A sighted mouse user never sees them; a keyboard
+   user gets them as the first thing after the toolbar, which is exactly where
+   they are needed, because the next 349 tab stops are the chart. */
+.tl-skip{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:80}
+.tl-skip:focus{position:static;left:auto;width:auto;height:auto;overflow:visible;
+     display:inline-block;margin:6px 8px 0;padding:8px 12px;
+     background:var(--rubric);color:var(--surface);border-radius:6px;
+     font-family:var(--f-ui,system-ui);font-size:13px;font-weight:600;text-decoration:none}
+
+/* The pane itself is focusable so it can be scrolled from the keyboard, but it
+   must show that it has focus or the ring is a lie. */
+.scrollMain:focus-visible{outline:2px solid var(--rubric);outline-offset:-2px}
+
 </style>
 </head>
 <body>
@@ -1180,13 +1195,13 @@ body>nav{flex:none}
   </nav>
   <div class="spacer"></div>
   <div class="search">
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+    <svg aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
       <circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4 14 14"/></svg>
     <input id="q" type="search" placeholder="Search thinkers, ideas, events" autocomplete="off" aria-label="Search">
     <div class="results" id="results" role="listbox"></div>
   </div>
   <button class="iconbtn" id="theme" title="Switch light and dark" aria-label="Switch light and dark">
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+    <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
       <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z"/></svg>
   </button>
 </header>
@@ -1216,6 +1231,15 @@ body>nav{flex:none}
       <span class="hint">Click an era to read it; click a thinker to see the world he lived through</span>
     </div>
 
+    <!-- A chart of 117 lifespans and 232 events is 349 tab stops. Without a way
+         past it, reaching the world band below by keyboard means pressing Tab
+         three hundred times, and a screen-reader user hears every name before
+         anything else on the page. The two links below are the way past, and
+         the second is the point: the Thinkers tab is the same 117 people as a
+         list, which for a keyboard or screen-reader user is not a lesser view
+         of this chart but a better one. -->
+    <a class="tl-skip" href="#worldband">Skip the timeline</a>
+    <a class="tl-skip" href="#tab-thinkers" data-goto="thinkers">Read these 117 thinkers as a list instead</a>
     <div class="tl">
       <div class="tlmain">
         <div class="rail">
@@ -1231,7 +1255,8 @@ body>nav{flex:none}
             names that did not fit.</div>
           </div>
         </div>
-        <div class="scrollMain" id="scrollMain">
+        <div class="scrollMain" id="scrollMain" role="group" tabindex="0"
+             aria-label="Timeline of 117 philosophers, 650 BCE to the present. Scroll sideways with the arrow keys.">
           <div class="canvas" id="canvasMain">
             <div class="tlhead">
               <div class="eras" id="eras"></div>
@@ -1243,7 +1268,7 @@ body>nav{flex:none}
           </div>
         </div>
       </div>
-      <div class="evwrap">
+      <div class="evwrap" id="worldband" tabindex="-1">
         <div class="rail evrail">
           <div class="rtop">The world</div>
           <div class="rrow">Power &amp; war</div>
@@ -3993,6 +4018,33 @@ requestAnimationFrame(()=>{
     document.documentElement.classList.add("data-ready");
   });
 })();
+
+/* ---------- keyboard routes through the chart ----------
+   A chart is a poor thing to read one Tab at a time. These give a keyboard or
+   screen-reader user the two exits that matter: past it, or to the same 117
+   people as a list. */
+document.querySelectorAll(".tl-skip").forEach(function(a){
+  a.addEventListener("click", function(ev){
+    var to = a.getAttribute("data-goto");
+    if(to){ ev.preventDefault(); showView(to);
+            var t=document.querySelector('#tabs button[data-v="'+to+'"]'); if(t) t.focus(); }
+  });
+});
+
+/* Arrow keys pan the pane once it has focus. Home and End go to either end of
+   two and a half thousand years, which is otherwise a very long drag. */
+scrollMain.addEventListener("keydown", function(ev){
+  if(ev.target!==scrollMain) return;          /* a focused bar handles its own keys */
+  var step = ev.shiftKey ? scrollMain.clientWidth : 80;
+  var k = ev.key;
+  if(k==="ArrowRight"){ scrollMain.scrollLeft += step; }
+  else if(k==="ArrowLeft"){ scrollMain.scrollLeft -= step; }
+  else if(k==="Home"){ scrollMain.scrollLeft = 0; }
+  else if(k==="End"){ scrollMain.scrollLeft = scrollMain.scrollWidth; }
+  else return;
+  ev.preventDefault();
+  syncEv();
+});
 </script>
 </body>
 </html>
