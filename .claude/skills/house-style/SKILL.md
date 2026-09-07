@@ -161,6 +161,33 @@ rewriter actually did:
   show. Anything revised outside the JSON must be re-rendered and diffed before
   it goes back in.
 
+## Where this guide does not apply: the formal layer
+
+`formal.json` was measured against the target and deliberately **not** rewritten.
+It reads at a mean of 25.1 words a sentence with 59 sentences over 40 words, so
+by the numbers it looks like the worst offender in the library. Reading them
+says otherwise.
+
+- Most of the long ones are `claim` fields, and a claim is the formal statement
+  of one argument's thesis: *"That from 'A belongs to every B' and 'B belongs to
+  every C' it follows of necessity that A belongs to every C, in virtue of the
+  arrangement of the terms and nothing else."* That is a single proposition. Cut
+  it into three sentences and it is no longer the claim; it is three fragments
+  of one.
+- Most of the rest are enumerations separated by commas rather than semicolons,
+  which the mechanical check does not recognise but the guide's own list
+  exception covers: *"The order is the order of the quarrel: Anselm's reductio,
+  Gaunilo's parody of its schema, Descartes' perfection-based restatement…"*
+- The prose fields cross-reference derivation lines by number. Splitting a
+  sentence that carries two such references risks separating a line number from
+  what it is said to show.
+
+So the 15-18 target is a target for **narrative prose about people**, which is
+what it was measured on. It is not a target for the statement of an argument.
+`tools/prosecheck.py` counts these as chains and overstates the work
+accordingly; treat its formal-layer number as a prompt to look, not a defect
+count.
+
 ## What this guide does not yet know
 
 It rests on ten passages, one rewriting model, one prompt. It is strong on

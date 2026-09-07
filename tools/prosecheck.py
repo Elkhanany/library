@@ -10,6 +10,13 @@ for any book so the rule can be checked rather than remembered.
     python3 tools/prosecheck.py                    # every book with prose data
     python3 tools/prosecheck.py the-long-argument  # one
 
+SCOPE. The 15-18 target was measured on narrative prose about people. It does
+not apply to the formal layer, whose `claim` fields state one proposition each
+and are meant to be single sentences however long, and whose prose carries line
+references that must not be separated from what they refer to. This tool counts
+those as chains and will overstate the work in formal.json; the house-style
+skill explains why they are correct as they stand.
+
 Lists are deliberately NOT flagged. A colon introducing a series, and
 semicolons separating items that carry their own commas, are doing work a full
 stop cannot; the rule is about clauses that could stand alone. So a sentence is
