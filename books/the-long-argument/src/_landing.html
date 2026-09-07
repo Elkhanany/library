@@ -1085,6 +1085,28 @@ body>nav{flex:none}
   .toolbar .grp{flex:none}
   .toolbar .grp>label{display:none}
 
+  /* The rail's explanatory note was cut mid-word -- "a bracketed end is an
+     attested year; a f" -- because the rail body clips what it cannot fit.
+     Text stopping mid-word reads as breakage, not as restraint. The rail
+     scrolls instead, so the legend and the note are both reachable and neither
+     is truncated. */
+  .railbody{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+     overscroll-behavior:contain;padding-bottom:10px}
+  /* And the note itself is not shown at all here. Ten-point italic prose in a
+     92px column is not read, it is squinted at, and it was competing with the
+     nine colours it sits under -- which are the thing the rail exists for. The
+     convention it explains is on every bar as a tooltip and in the reading
+     path. A scrolled-away note and a clipped one look equally broken; the
+     honest move is to not print it at this size. */
+  .rnote{display:none}
+
+  /* Same problem in the canvas: the era's sentence faded out three words in on
+     a narrow screen, which looks like a rendering fault rather than a margin
+     note. Below the phone breakpoint it is not drawn at all -- the era's name
+     and dates are in the header strip above, and the note is available by
+     tapping the era. */
+  .eranote-in{display:none}
+
   /* A legend does not deserve a third of the width of a 390px screen. At 92px
      the longer tradition names no longer fit on one line, so they wrap instead
      of being clipped: the rail sets white-space:nowrap inside an overflow:hidden
@@ -1101,6 +1123,40 @@ body>nav{flex:none}
         leaves the second line floating under the middle of the first */
      text-align:left}
   #streamChips .chip .sw{margin-top:4px}
+}
+
+/* ---------- motion ----------
+   Nothing here moves anything that carries data. A view change fades and lifts
+   a few pixels; a drawer slides in from the edge it belongs to; the era bands
+   settle. The timeline's bars, rules and labels never animate -- watching a
+   date slide into place would make the chart feel approximate, which is the
+   one thing it must not be.
+
+   Durations are short enough to read as responsiveness rather than as effect:
+   past about 200ms an interface stops feeling quick and starts feeling
+   choreographed. Everything is transform and opacity, both of which the
+   compositor can run without laying the page out again. */
+@media (prefers-reduced-motion: no-preference){
+  .view.on{animation:v-in .19s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes v-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .drawer{transition:transform .22s cubic-bezier(.2,.7,.3,1),opacity .16s linear}
+
+  /* The plates and rows a reader taps acknowledge the tap. 90ms is under the
+     threshold at which a delay is perceived as lag. */
+  .plate,.tkline,.pchip,.thchip,.argchip{transition:transform .09s ease,
+     border-color .12s ease,background-color .12s ease}
+  .plate:active,.tkline:active{transform:scale(.985)}
+
+  .chip,.stab,nav.tabs button,.seg button{transition:background-color .13s ease,
+     color .13s ease}
+}
+
+/* Explicitly nothing when the reader has asked for nothing. Not merely shorter
+   -- a 0.01s animation still schedules frames and still moves. */
+@media (prefers-reduced-motion: reduce){
+  .view.on{animation:none}
+  .drawer{transition:none}
 }
 </style>
 </head>
