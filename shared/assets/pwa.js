@@ -168,9 +168,19 @@
       location.reload();
     });
 
+    var offeredContent = false;
     navigator.serviceWorker.addEventListener('message', function (e) {
       if (e.data && e.data.type === 'ORPHANS' && e.data.slugs.length) {
         state.orphans = e.data.slugs; save(state);
+      }
+      /* The worker found that a page or dataset this reader has stored is no
+       * longer what the site serves. Offer it once per visit: the page they
+       * are reading is fine, it is simply not the current one. */
+      if (e.data && e.data.type === 'CONTENT_UPDATED' && !offeredContent) {
+        offeredContent = true;
+        toast('This book has been updated.', 'Reload', function () {
+          location.reload();
+        });
       }
     });
 
