@@ -3274,6 +3274,25 @@ qEl.addEventListener("keydown",ev=>{
 });
 document.addEventListener("click",ev=>{ if(!ev.target.closest(".search")) resEl.innerHTML=""; });
 
+/* ---------- views ----------
+   Three views are drawn from data that arrives after the page does, and each
+   was built once at load, when the two datasets were still empty. Whichever
+   view happened to be on screen when the fetch landed got redrawn; the others
+   kept the empty version they were born with, so opening Formal from the
+   timeline showed its frame and none of its fifty arguments.
+
+   Rendering on entry instead removes the ordering question altogether. A view
+   is drawn the first time it is opened after its data exists, and once only:
+   the flag is cleared when data arrives, not set when a view is shown. */
+const BUILDERS = {thinkers:()=>renderThinkers(), formal:()=>renderFormal(),
+                  threads:()=>renderThreads()};
+let BUILT = {};
+function ensureBuilt(v){
+  if(!BUILDERS[v] || BUILT[v]) return;
+  if(!Object.keys(MONO).length && !(FORM.args||[]).length) return;  /* nothing to draw yet */
+  try{ BUILDERS[v](); BUILT[v]=true; }catch(e){ /* leave it unbuilt and retry on next entry */ }
+}
+
 /* ---------- views ---------- */
 function showView(v){
   /* "study" is reached from the strip below the header, not from the main
@@ -3287,6 +3306,7 @@ function showView(v){
   });
   $$(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
   if(v==="influence") buildNet();
+  ensureBuilt(v);
   if(v!=="study"&&typeof sbar!=="undefined"&&sbar)
     $$(".stab",sbar).forEach(b=>b.setAttribute("aria-selected","false"));
   else if(v==="study"&&typeof renderStudyBar==="function") renderStudyBar();
@@ -4020,11 +4040,10 @@ requestAnimationFrame(()=>{
     indexArguments();
     /* Re-render only what is on screen and actually depends on this data. The
        timeline does not, which is the point of the whole change. */
+    BUILT = {};                       /* everything drawn from the empty data is stale */
     const on = document.querySelector(".view.on");
     const v  = on ? on.id.replace(/^v-/, "") : "";
-    if(v==="thinkers") renderThinkers();
-    if(v==="formal")   renderFormal();
-    if(v==="threads" && typeof renderThreads==="function") renderThreads();
+    ensureBuilt(v);                   /* redraw whatever is on screen right now */
     /* An open drawer gains its "read the full study" card. SEL holds the
        person object, not an id. */
     if(SEL) renderDrawer(SEL);
