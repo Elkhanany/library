@@ -1186,6 +1186,39 @@ body>nav{flex:none}
    must show that it has focus or the ring is a lie. */
 .scrollMain:focus-visible{outline:2px solid var(--rubric);outline-offset:-2px}
 
+
+/* ---------- tier ----------
+   The rule is thicker the more the person mattered. It is a second, redundant
+   encoding of what the vertical band already says, which is the point: the
+   banding is only legible once you know it is there, and the weight is legible
+   immediately. Tier four stays a hairline rather than disappearing -- it is the
+   long tail, not a footnote. */
+.bar[data-ti="1"] i{height:calc(var(--bar-h) + 5px)}
+.bar[data-ti="2"] i{height:calc(var(--bar-h) + 2px)}
+.bar[data-ti="3"] i{height:var(--bar-h)}
+.bar[data-ti="4"] i{height:max(3px,calc(var(--bar-h) - 3px));opacity:.82}
+.bar[data-ti="1"] b{font-size:calc(var(--lab-size) + 1.5px);font-weight:700}
+.bar[data-ti="2"] b{font-weight:650}
+.bar[data-ti="4"] b{opacity:.85}
+
+/* The band a tier occupies, tinted just enough to read as a region. */
+.tierband{position:absolute;left:0;right:0;pointer-events:none;z-index:0}
+.tierband.b1{background:rgba(127,127,127,.070)}
+.tierband.b2{background:rgba(127,127,127,.042)}
+.tierband.b3{background:rgba(127,127,127,.018)}
+.tierband.b4{background:transparent}
+.tierband>span{position:sticky;left:6px;top:0;display:inline-block;
+     font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;
+     color:var(--ink-4);padding:2px 0 0}
+
+/* The slider. One control, four stops, and the count of who is on screen. */
+.tierctl{display:flex;align-items:center;gap:9px}
+.tierctl input[type=range]{width:104px;accent-color:var(--rubric);height:26px;margin:0}
+/* the track is 4px of paint; the box around it is what a thumb has to hit */
+.tierctl .tn{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);
+     min-width:8.5em;white-space:nowrap}
+@media (max-width:700px),(max-height:520px){ .tierctl input[type=range]{width:80px} }
+
 </style>
 </head>
 <body>
@@ -1239,6 +1272,11 @@ body>nav{flex:none}
         <button id="zIn" aria-label="Zoom in">+</button>
         <button id="zFit" style="width:auto;padding:0 8px;font-size:11px" aria-label="Fit to width">Fit</button>
       </div>
+      <div class="grp tierctl"><label for="tierRange">Show</label>
+        <input type="range" id="tierRange" min="1" max="4" step="1" value="4"
+               aria-label="How many philosophers to show, by consequence"
+               aria-describedby="tierNote">
+        <span class="tn" id="tierNote">all 117</span></div>
       <div class="grp"><label>Argument</label><select class="sel" id="thSel"><option value="">All eight</option></select></div>
       <div class="spacer"></div>
       <span class="hint">Click an era to read it; click a thinker to see the world he lived through</span>
@@ -1424,110 +1462,110 @@ body>nav{flex:none}
 =============================================================== */
 const P = [
 /* ---------- GREEK: PRESOCRATIC ---------- */
-{id:"thales",n:"Thales of Miletus",b:-624,d:-546,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
+{id:"thales",ti:3,n:"Thales of Miletus",b:-624,d:-546,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
  one:"Water is the <em>arch&#275;</em>, the single stuff everything is made of.",
  ideas:["First to explain nature without invoking the gods, which is why Aristotle calls him the first philosopher.","Held that water is the material principle of all things.","Reputedly predicted the solar eclipse of 585 BCE and measured the pyramids by their shadows."],
  works:["Nothing survives. Everything comes through Aristotle and later doxographers."],
  th:["being"],q:{t:"All things are full of gods.",s:"reported by Aristotle, De Anima"}},
 
-{id:"anaximander",n:"Anaximander",b:-610,d:-546,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
+{id:"anaximander",ti:3,n:"Anaximander",b:-610,d:-546,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
  one:"The source is the <em>apeiron</em>, the boundless, not any one element.",
  ideas:["Rejected a specific element: the origin must be indefinite, or it would be swamped by its own quality.","Opposites (hot and cold, wet and dry) separate out of the boundless and pay each other recompense for injustice.","Gave a proto-evolutionary account in which humans descended from fish-like creatures.","First Greek known to write philosophy in prose, and first to draw a map of the world."],
  works:["On Nature (lost). One sentence survives, the oldest fragment of Western philosophy."],
  th:["being"],q:{t:"They pay penalty and retribution to each other for their injustice according to the assessment of time.",s:"the sole surviving fragment"}},
 
-{id:"anaximenes",n:"Anaximenes",b:-586,d:-526,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
+{id:"anaximenes",ti:4,n:"Anaximenes",b:-586,d:-526,cb:1,cd:1,tr:"greek",sch:"Milesian",pl:"Miletus, Ionia",
  one:"Air, thinned and thickened, becomes everything else.",
  ideas:["Chose air as the principle, but the real advance was the <em>mechanism</em>: rarefaction and condensation.","Thinning air gives fire; thickening gives wind, cloud, water, earth, stone.","First to explain how the one becomes the many by a process rather than a decree."],
  works:["On Nature (lost, fragments only)."],
  th:["being"]},
 
-{id:"pythagoras",n:"Pythagoras",b:-570,d:-495,cb:1,cd:1,tr:"greek",sch:"Pythagorean",pl:"Samos, then Croton",
+{id:"pythagoras",ti:3,n:"Pythagoras",b:-570,d:-495,cb:1,cd:1,tr:"greek",sch:"Pythagorean",pl:"Samos, then Croton",
  one:"Number is the structure of reality.",
  ideas:["Founded a religious and political brotherhood at Croton with strict rules of life.","Discovered that musical concord tracks whole-number ratios, which suggested that number governs the cosmos.","Taught transmigration of the soul, and that philosophy purifies it.","Because the school attributed everything to its founder, almost nothing can be securely traced to the man."],
  works:["Wrote nothing. The 'Pythagorean' doctrines are a school tradition."],
  th:["being","know"]},
 
-{id:"heraclitus",n:"Heraclitus",b:-535,d:-475,cb:1,cd:1,tr:"greek",sch:"Ephesian",pl:"Ephesus, Ionia",
+{id:"heraclitus",ti:2,n:"Heraclitus",b:-535,d:-475,cb:1,cd:1,tr:"greek",sch:"Ephesian",pl:"Ephesus, Ionia",
  one:"Everything flows, and the flowing is ordered by <em>Logos</em>.",
  ideas:["<em>Panta rhei</em>: reality is process, not stuff. You cannot step into the same river twice.","Fire is the basic element because fire <em>is</em> a process rather than a thing.","Opposites are one: the road up and the road down are the same road. Strife is justice.","Beneath the flux runs the Logos, a rational measure that most people sleep through.","Called 'the Obscure' in antiquity for his deliberately riddling style."],
  works:["On Nature (lost). About 130 fragments survive, an unusually large number for a Presocratic."],
  th:["being","know"],q:{t:"Here we see land; there is no proposition of Heraclitus which I have not adopted in my Logic.",s:"Hegel, Lectures on the History of Philosophy, delivered at Berlin and published posthumously by Michelet, 1833&ndash;36"}},
 
-{id:"parmenides",n:"Parmenides",b:-515,d:-450,cb:1,cd:1,tr:"greek",sch:"Eleatic",pl:"Elea, southern Italy",
+{id:"parmenides",ti:2,n:"Parmenides",b:-515,d:-450,cb:1,cd:1,tr:"greek",sch:"Eleatic",pl:"Elea, southern Italy",
  one:"What is, is. Change and non-being are impossible.",
  ideas:["Argued that you cannot think or speak of what is not, so non-being is unavailable, and with it change, plurality and destruction.","Being is therefore one, ungenerated, indivisible, unchanging and complete.","Split the poem into the Way of Truth and the Way of Opinion, whose status &mdash; deception, or the best account available of appearances &mdash; is disputed.","Invented deductive metaphysics: follow the argument even where it contradicts everything you see."],
  works:["On Nature, a hexameter poem. Substantial fragments survive."],
  th:["being","know"],q:{t:"It is the same thing that can be thought and that can be.",s:"Fragment 3"}},
 
-{id:"zeno-elea",n:"Zeno of Elea",b:-490,d:-430,cb:1,cd:1,tr:"greek",sch:"Eleatic",pl:"Elea, southern Italy",
+{id:"zeno-elea",ti:3,n:"Zeno of Elea",b:-490,d:-430,cb:1,cd:1,tr:"greek",sch:"Eleatic",pl:"Elea, southern Italy",
  one:"Paradoxes showing that motion and plurality lead to absurdity.",
  ideas:["Defended Parmenides indirectly, by showing the <em>opponents'</em> assumptions collapse.","Achilles never catches the tortoise; the arrow in flight is motionless at every instant; you cannot cross a stadium without first crossing half of it, endlessly.","Aristotle called him the inventor of dialectic. The paradoxes were not fully dissolved until modern analysis of infinite series and continuity."],
  works:["A book of arguments (lost). Reconstructed from Aristotle and Simplicius."],
  th:["being"]},
 
-{id:"empedocles",n:"Empedocles",b:-494,d:-434,cb:1,cd:1,tr:"greek",sch:"Pluralist",pl:"Acragas, Sicily",
+{id:"empedocles",ti:4,n:"Empedocles",b:-494,d:-434,cb:1,cd:1,tr:"greek",sch:"Pluralist",pl:"Acragas, Sicily",
  one:"Four roots, mixed and separated by Love and Strife.",
  ideas:["Kept Parmenides' rule that nothing comes from nothing, then saved appearances by making the basic things many: earth, water, air and fire.","Change is rearrangement, driven by two cosmic forces, Love (which combines) and Strife (which separates).","Proposed a cycle in which the cosmos alternates between total mixture and total separation.","Also a healer, orator and religious teacher; legend has him leaping into Etna."],
  works:["On Nature; Purifications. Extensive fragments."],
  th:["being"]},
 
-{id:"anaxagoras",n:"Anaxagoras",b:-500,d:-428,cb:1,cd:1,tr:"greek",sch:"Pluralist",pl:"Clazomenae, then Athens",
+{id:"anaxagoras",ti:4,n:"Anaxagoras",b:-500,d:-428,cb:1,cd:1,tr:"greek",sch:"Pluralist",pl:"Clazomenae, then Athens",
  one:"Everything contains a portion of everything; Mind sets it in order.",
  ideas:["Infinitely divisible 'seeds' of every kind are present in every thing, which is why bread can become flesh.","<em>Nous</em> (Mind) is unmixed and self-ruling, and started the cosmic rotation that sorts the mixture.","First to give mind a cosmic role. Socrates in the Phaedo says he was thrilled and then disappointed, because Anaxagoras used Mind only to start things off.","Brought philosophy to Athens; prosecuted for impiety for saying the sun is a red-hot stone."],
  works:["On Nature (fragments)."],
  th:["being","mind"]},
 
-{id:"protagoras",n:"Protagoras",b:-490,d:-420,cb:1,cd:1,tr:"greek",sch:"Sophist",pl:"Abdera, then Athens",
+{id:"protagoras",ti:3,n:"Protagoras",b:-490,d:-420,cb:1,cd:1,tr:"greek",sch:"Sophist",pl:"Abdera, then Athens",
  one:"Man is the measure of all things.",
  ideas:["The first and most famous of the Sophists, professional teachers of rhetoric and civic excellence.","Relativism about truth: things are to each person as they appear to that person.","Agnostic about the gods, which got his books burned.","Claimed to make the weaker argument the stronger, the charge that later stuck to Socrates."],
  works:["Truth; On the Gods (both lost)."],
  th:["know","good"],q:{t:"Man is the measure of all things: of things that are, that they are; of things that are not, that they are not.",s:"Fragment 1"}},
 
-{id:"gorgias",n:"Gorgias",b:-483,d:-375,cb:1,cd:1,tr:"greek",sch:"Sophist",pl:"Leontini, Sicily",
+{id:"gorgias",ti:4,n:"Gorgias",b:-483,d:-375,cb:1,cd:1,tr:"greek",sch:"Sophist",pl:"Leontini, Sicily",
  one:"Nothing exists; if it did we could not know it; if we knew it we could not communicate it.",
  ideas:["Pushed Eleatic argument to a reductio, in a virtuoso demonstration that argument alone proves nothing.","Master of persuasion: speech is a 'powerful lord' that works on the soul like a drug on the body.","Shifted attention from what is true to what words can do."],
  works:["On Non-Being; Encomium of Helen; Defence of Palamedes."],
  th:["know","lang"]},
 
-{id:"leucippus",n:"Leucippus",b:-460,d:-420,cb:1,cd:1,fl:-440,tr:"greek",sch:"Atomist",pl:"Abdera or Miletus",
+{id:"leucippus",ti:4,n:"Leucippus",b:-460,d:-420,cb:1,cd:1,fl:-440,tr:"greek",sch:"Atomist",pl:"Abdera or Miletus",
  one:"Founded atomism: indivisible bodies moving in empty space.",
  ideas:["Proposed that what is not (the void) does exist after all, which is what makes motion and plurality possible.","So little is known of him that some ancients denied he existed. Dates are floruit only."],
  works:["The Great World-System (attributed)."],
  th:["being"]},
 
-{id:"democritus",n:"Democritus",b:-460,d:-370,cb:1,cd:1,tr:"greek",sch:"Atomist",pl:"Abdera, Thrace",
+{id:"democritus",ti:3,n:"Democritus",b:-460,d:-370,cb:1,cd:1,tr:"greek",sch:"Atomist",pl:"Abdera, Thrace",
  one:"Only atoms and void; everything else is convention.",
  ideas:["Reality is uncuttable particles differing in shape, size and arrangement, moving eternally in empty space.","Sweet, bitter, hot, cold and colour exist by convention. In truth there are only atoms and void.","Explained the soul, perception and thought mechanically, without purpose or design.","Known as the laughing philosopher; wrote extensively on ethics, cheerfulness being the goal."],
  works:["Around 70 titles reported; only ethical fragments survive."],
  th:["being","mind"],q:{t:"By convention sweet, by convention bitter, by convention hot, by convention cold, by convention colour; but in reality atoms and void.",s:"Fragment DK 68B9, preserved by Sextus Empiricus"}},
 
 /* ---------- GREEK: CLASSICAL ---------- */
-{id:"socrates",n:"Socrates",b:-470,d:-399,cb:1,tr:"greek",sch:"Classical Athenian",pl:"Athens",
+{id:"socrates",ti:2,n:"Socrates",b:-470,d:-399,cb:1,tr:"greek",sch:"Classical Athenian",pl:"Athens",
  one:"Turned philosophy from the cosmos to the question of how to live.",
  ideas:["Wrote nothing. Known through Plato, Xenophon and a hostile portrait in Aristophanes' Clouds.","The <em>elenchus</em>: cross-examine someone until their confident definition collapses, so they see they do not know.","Virtue is knowledge. Nobody does wrong willingly, because to see the good clearly is to want it.","Claimed no more than that he did not think he knew what he did not know, which is how he made sense of the Delphic oracle&rsquo;s verdict that no one was wiser.","Tried in 399 BCE for impiety and corrupting the young, condemned, and executed by hemlock. His death made him philosophy's founding martyr and the common ancestor of nearly every Hellenistic school."],
  works:["Nothing. The 'Socratic problem' is deciding which views in Plato are his."],
  th:["good","know"],q:{t:"The unexamined life is not worth living for a human being.",s:"Plato, Apology 38a"}},
 
-{id:"plato",n:"Plato",b:-428,d:-348,cb:1,cd:1,tr:"greek",sch:"Academy",pl:"Athens",
+{id:"plato",ti:1,n:"Plato",b:-428,d:-348,cb:1,cd:1,tr:"greek",sch:"Academy",pl:"Athens",
  one:"Two worlds: the changing things we see, and the eternal Forms we can only think.",
  ideas:["Solved the Heraclitus-Parmenides deadlock by giving each side its own realm. The sensible world flows; the Forms are unchanging Being.","Forms are perfect immaterial archetypes, Justice itself and Beauty itself, grasped by reason and merely imitated by particulars.","The Form of the Good is highest, illuminating the others as the sun illuminates what we see.","The soul has three parts, reason, spirit and appetite, and justice is each part doing its own work. The same structure holds for the city.","Knowledge is recollection: learning is the soul remembering what it saw before birth.","Founded the Academy around 387 BCE, arguably the first institution of higher learning in the West.","Wrote in dialogue and never in his own voice, and turned on his own theory in the Parmenides with the Third Man regress."],
  works:["Apology; Meno; Phaedo; Symposium; Republic; Parmenides; Theaetetus; Timaeus; Laws."],
  th:["being","know","good","univ","just","mind"],q:{t:"The safest general characterization of the European philosophical tradition is that it consists of a series of footnotes to Plato.",s:"A. N. Whitehead, Process and Reality, 1929"}},
 
-{id:"aristotle",n:"Aristotle",b:-384,d:-322,tr:"greek",sch:"Lyceum / Peripatetic",pl:"Stagira, Athens, Macedon",
+{id:"aristotle",ti:1,n:"Aristotle",b:-384,d:-322,tr:"greek",sch:"Lyceum / Peripatetic",pl:"Stagira, Athens, Macedon",
  one:"Form is not in another world; it is in the thing.",
  ideas:["Twenty years in Plato's Academy, then a lifetime of principled disagreement with it.","Rejected separate Forms: they multiply the world needlessly, generate an infinite regress, and cannot explain the change they were invented to explain.","<em>Hylomorphism</em>: every substance is matter and form together, inseparably. Melt the bronze statue into a bowl and the matter persists while the form changes.","Four causes: material, formal, efficient and final. The final cause, the <em>telos</em>, dominated science for two thousand years.","Invented formal logic. The syllogism was the whole of logic until Frege.","Ethics: the human good is <em>eudaimonia</em>, flourishing, reached by performing the human function (rational activity) excellently. Virtue is a mean between extremes, formed by habit and steered by <em>phronesis</em>, practical wisdom.","Man is by nature a political animal.","Tutored Alexander; founded the Lyceum in 335 BCE; fled Athens in 323 so the city would not 'sin twice against philosophy'."],
  works:["Organon; Physics; Metaphysics; De Anima; Nicomachean Ethics; Politics; Poetics."],
  th:["being","know","good","univ","just","mind","free"],q:{t:"Piety requires us to honour truth above our friends.",s:"Nicomachean Ethics I.6. The familiar &lsquo;Plato is dear to me, but dearer still is truth&rsquo; is a later Latin formula, not Aristotle&rsquo;s sentence"}},
 
-{id:"antisthenes",n:"Antisthenes",b:-446,d:-366,cb:1,cd:1,tr:"hellenistic",sch:"Socratic; later claimed for Cynicism",pl:"Athens",
+{id:"antisthenes",ti:4,n:"Antisthenes",b:-446,d:-366,cb:1,cd:1,tr:"hellenistic",sch:"Socratic; later claimed for Cynicism",pl:"Athens",
  one:"Virtue is enough for happiness, and it can be taught.",
  ideas:["A follower of Socrates who kept the asceticism and dropped the metaphysics.","Traditionally counted the founder of Cynicism, and through it an ancestor of Stoicism.","Held that virtue is a matter of deeds, not words or learning."],
  works:["Titles reported by Diogenes Laertius; almost nothing survives."],
  th:["good"]},
 
-{id:"diogenes-sinope",n:"Diogenes of Sinope",b:-412,d:-323,cb:1,cd:1,tr:"hellenistic",sch:"Cynic",pl:"Sinope, then Athens and Corinth",
+{id:"diogenes-sinope",ti:3,n:"Diogenes of Sinope",b:-412,d:-323,cb:1,cd:1,tr:"hellenistic",sch:"Cynic",pl:"Sinope, then Athens and Corinth",
  one:"Live according to nature, and owe nothing to convention.",
  ideas:["Made the Cynic case by performance rather than argument: lived in a storage jar, ate in the marketplace, threw away his cup on seeing a boy drink from his hands.","<em>Autarkeia</em>, self-sufficiency, is the whole of virtue. Shame, property and status are conventions to be defaced.","Called himself a <em>kosmopolites</em>, a citizen of the world, apparently the first person on record to do so.","Told Alexander, who offered him anything, to stand out of his light."],
  works:["Nothing survives; the anecdotes are the philosophy."],
@@ -1535,73 +1573,73 @@ const P = [
 ];
 /* ---------- HELLENISTIC & ROMAN ---------- */
 P.push(
-{id:"pyrrho",n:"Pyrrho of Elis",b:-360,d:-270,cb:1,cd:1,tr:"hellenistic",sch:"Skeptic",pl:"Elis, Greece",
+{id:"pyrrho",ti:3,n:"Pyrrho of Elis",b:-360,d:-270,cb:1,cd:1,tr:"hellenistic",sch:"Skeptic",pl:"Elis, Greece",
  one:"Suspend judgement, and tranquillity follows.",
  ideas:["Travelled east with Alexander's army and reportedly met Indian ascetics.","Things are equally indifferent and unmeasurable, so no belief is better grounded than its opposite.","<em>Epoch&#275;</em>, suspension of judgement, is not a dead end but a therapy: give up the struggle to decide and <em>ataraxia</em> arrives unbidden, like a shadow."],
  works:["Wrote nothing. Transmitted by his pupil Timon, then by Sextus Empiricus."],
  th:["know"]},
 
-{id:"epicurus",n:"Epicurus",b:-341,d:-270,tr:"hellenistic",sch:"Epicurean",pl:"Samos, then Athens",
+{id:"epicurus",ti:2,n:"Epicurus",b:-341,d:-270,tr:"hellenistic",sch:"Epicurean",pl:"Samos, then Athens",
  one:"Pleasure is the absence of pain, and physics is what frees you from fear.",
  ideas:["Founded the Garden around 307 BCE, a community open to women and slaves, unusual for its time.","Took over Democritus' atomism; later sources, chiefly Lucretius and Cicero, credit him with the <em>clinamen</em>, an uncaused swerve, though it appears in nothing that survives in his own words.","Pleasure is the goal, but he meant <em>ataraxia</em>, freedom from disturbance, not indulgence. Bread and water, with a friend, is enough.","The two great fears are groundless: the gods do not intervene, and death is nothing to us, since where death is, we are not.","Friendship is the greatest of the goods that wisdom provides."],
  works:["Letters to Herodotus, Pythocles and Menoeceus; Principal Doctrines."],
  th:["good","being","free","mind"],q:{t:"Death is nothing to us; for that which is dissolved is without sensation.",s:"Principal Doctrines II"}},
 
-{id:"zeno-citium",n:"Zeno of Citium",b:-334,d:-262,tr:"hellenistic",sch:"Stoic",pl:"Citium, Cyprus, then Athens",
+{id:"zeno-citium",ti:3,n:"Zeno of Citium",b:-334,d:-262,tr:"hellenistic",sch:"Stoic",pl:"Citium, Cyprus, then Athens",
  one:"Live in agreement with nature.",
  ideas:["Shipwrecked into philosophy: lost his cargo, wandered into an Athenian bookshop, and read Xenophon on Socrates.","Taught in the Stoa Poikile, the painted porch, which named the school.","Divided philosophy into logic, physics and ethics, and insisted they form one system.","Only virtue is good; only vice is bad. Health, wealth and reputation are 'preferred indifferents'."],
  works:["Republic and others, all lost. Known through later reports."],
  th:["good","free","being"]},
 
-{id:"chrysippus",n:"Chrysippus",b:-279,d:-206,cb:1,cd:1,tr:"hellenistic",sch:"Stoic",pl:"Soli, then Athens",
+{id:"chrysippus",ti:3,n:"Chrysippus",b:-279,d:-206,cb:1,cd:1,tr:"hellenistic",sch:"Stoic",pl:"Soli, then Athens",
  one:"Systematised Stoicism and built its logic.",
  ideas:["'If there had been no Chrysippus, there would have been no Stoa.'","Developed propositional logic, distinct from and in some ways ahead of Aristotle's term logic, then largely lost until the twentieth century.","Worked out the compatibilist response to determinism: our assent is genuinely ours even in a fated world."],
  works:["Over 700 titles reported; fragments only."],
  th:["free","know","lang"]},
 
-{id:"cicero",n:"Cicero",b:-106,d:-43,tr:"hellenistic",sch:"Academic Skeptic / eclectic",pl:"Rome",
+{id:"cicero",ti:3,n:"Cicero",b:-106,d:-43,tr:"hellenistic",sch:"Academic Skeptic / eclectic",pl:"Rome",
  one:"Made Greek philosophy speak Latin.",
  ideas:["Not an original metaphysician, but the reason a Latin philosophical vocabulary exists at all: he coined or fixed <em>qualitas</em>, <em>essentia</em>, <em>moralis</em>.","Surveyed and weighed the Hellenistic schools rather than founding one, in the Academic manner of arguing both sides.","Transmitted natural law into Roman jurisprudence and, through it, into the whole later Western tradition.","His dialogues were the standard classical philosophy of the Latin Middle Ages, and Petrarch's rediscovery of his letters helped start the Renaissance."],
  works:["On the Nature of the Gods; On Duties; Tusculan Disputations; On the Republic."],
  th:["good","just","know"]},
 
-{id:"lucretius",n:"Lucretius",b:-99,d:-55,cb:1,cd:1,tr:"hellenistic",sch:"Epicurean",pl:"Rome",
+{id:"lucretius",ti:3,n:"Lucretius",b:-99,d:-55,cb:1,cd:1,tr:"hellenistic",sch:"Epicurean",pl:"Rome",
  one:"Put Epicurean physics into Latin verse.",
  ideas:["De Rerum Natura is the fullest surviving account of ancient atomism, and a great poem.","Argued that religion, not irreligion, is the source of human cruelty.","The manuscript's rediscovery in 1417 by Poggio Bracciolini fed directly into Renaissance and early modern materialism."],
  works:["On the Nature of Things (De Rerum Natura)."],
  th:["being","mind","good"]},
 
-{id:"seneca",n:"Seneca the Younger",b:-4,d:65,cb:1,tr:"hellenistic",sch:"Stoic",pl:"Corduba, then Rome",
+{id:"seneca",ti:3,n:"Seneca the Younger",b:-4,d:65,cb:1,tr:"hellenistic",sch:"Stoic",pl:"Corduba, then Rome",
  one:"Stoicism as practical consolation, written by a man at the centre of power.",
  ideas:["Tutor and then adviser to Nero, which makes the gap between his essays on clemency and his political life a permanent problem for readers.","Wrote on anger, grief, the shortness of life and the right use of time, in letters rather than treatises.","Ordered to kill himself by Nero in 65 CE, and did so."],
  works:["Letters to Lucilius; On the Shortness of Life; On Anger; On Clemency."],
  th:["good","free"],q:{t:"It is not that we have a short time to live, but that we waste a lot of it.",s:"On the Shortness of Life"}},
 
-{id:"epictetus",n:"Epictetus",b:50,d:135,cb:1,cd:1,tr:"hellenistic",sch:"Stoic",pl:"Hierapolis, Rome, Nicopolis",
+{id:"epictetus",ti:3,n:"Epictetus",b:50,d:135,cb:1,cd:1,tr:"hellenistic",sch:"Stoic",pl:"Hierapolis, Rome, Nicopolis",
  one:"Some things are up to us; most are not. Freedom is knowing which.",
  ideas:["Born a slave, lame, later freed, expelled from Rome by Domitian, and taught in exile in Greece.","The dichotomy of control is the whole of the discipline: our judgements, impulses and desires are ours; body, reputation and office are not.","We are disturbed not by things but by our opinions about them."],
  works:["Discourses and Enchiridion, both recorded by his student Arrian."],
  th:["good","free"],q:{t:"Men are disturbed not by things, but by the views which they take of things.",s:"Enchiridion 5"}},
 
-{id:"marcus-aurelius",n:"Marcus Aurelius",b:121,d:180,tr:"hellenistic",sch:"Stoic",pl:"Rome and the Danube frontier",
+{id:"marcus-aurelius",ti:3,n:"Marcus Aurelius",b:121,d:180,tr:"hellenistic",sch:"Stoic",pl:"Rome and the Danube frontier",
  one:"Stoic practice written for no reader but himself.",
  ideas:["Roman emperor from 161 to 180, most of it spent on campaign and under plague.","The Meditations are private notebooks in Greek, not a treatise, which is why they read as self-correction rather than doctrine.","Recurring themes: the cosmic perspective that shrinks every grievance, the brevity of fame, and the duty to act well now."],
  works:["Meditations (To Himself)."],
  th:["good","free"],q:{t:"If thou art pained by any external thing, it is not this thing that disturbs thee, but thy own judgment about it. And it is in thy power to wipe out this judgment now.",s:"Meditations VIII.47, tr. George Long. The familiar &lsquo;you have power over your mind, not outside events&rsquo; is a modern paraphrase found in no edition"}},
 
-{id:"sextus",n:"Sextus Empiricus",b:150,d:210,fl:180,cb:1,cd:1,tr:"hellenistic",sch:"Pyrrhonist Skeptic",pl:"Alexandria or Rome",
+{id:"sextus",ti:3,n:"Sextus Empiricus",b:150,d:210,fl:180,cb:1,cd:1,tr:"hellenistic",sch:"Pyrrhonist Skeptic",pl:"Alexandria or Rome",
  one:"Our whole record of ancient scepticism, in one author.",
  ideas:["Catalogued the modes of suspension: for every appearance, an equally strong opposed appearance.","Distinguished Pyrrhonism, which suspends judgement, from Academic scepticism, which asserts that nothing can be known and so overreaches.","Rediscovered and printed in the sixteenth century, where he detonated under Montaigne and then Descartes."],
  works:["Outlines of Pyrrhonism; Against the Mathematicians."],
  th:["know"]},
 
-{id:"plotinus",n:"Plotinus",b:204,d:270,tr:"hellenistic",sch:"Neoplatonist",pl:"Egypt, then Rome",
+{id:"plotinus",ti:3,n:"Plotinus",b:204,d:270,tr:"hellenistic",sch:"Neoplatonist",pl:"Egypt, then Rome",
  one:"All things flow from the One, and the soul can climb back.",
  ideas:["Reworked Plato into a hierarchy: the One, beyond being and description, overflows into <em>Nous</em> (Intellect, which holds the Forms), which overflows into Soul, and finally into matter.","Emanation is not creation. The One does not choose or act; it gives without diminishing, as the sun gives light.","Evil is not a thing but a privation, the fading of good at the far edge of the procession.","The soul ascends by turning inward and upward, ending in union that Porphyry says Plotinus reached four times.","Neoplatonism, not Plato's own text, is the Platonism that reached Augustine, Islam and the Latin Middle Ages."],
  works:["The Enneads, edited posthumously by Porphyry."],
  th:["being","mind","good"]},
 
-{id:"porphyry",n:"Porphyry",b:234,d:305,cb:1,cd:1,tr:"hellenistic",sch:"Neoplatonist",pl:"Tyre, then Rome",
+{id:"porphyry",ti:4,n:"Porphyry",b:234,d:305,cb:1,cd:1,tr:"hellenistic",sch:"Neoplatonist",pl:"Tyre, then Rome",
  one:"Edited Plotinus, and posed the question of universals.",
  ideas:["Arranged his teacher's essays into the six sets of nine that give the Enneads their name.","His Isagoge, an introduction to Aristotle's Categories, asked whether genera and species subsist in reality or only in the mind, and left it open.","Translated by Boethius, that single unanswered question became the medieval problem of universals.","Also wrote a sustained polemic Against the Christians, later burned."],
  works:["Isagoge; Life of Plotinus; Against the Christians (lost)."],
@@ -1610,49 +1648,49 @@ P.push(
 
 /* ---------- LATIN CHRISTENDOM ---------- */
 P.push(
-{id:"augustine",n:"Augustine of Hippo",b:354,d:430,tr:"christian",sch:"Patristic / Christian Platonist",pl:"Thagaste and Hippo, North Africa",
+{id:"augustine",ti:2,n:"Augustine of Hippo",b:354,d:430,tr:"christian",sch:"Patristic / Christian Platonist",pl:"Thagaste and Hippo, North Africa",
  one:"Neoplatonism baptised, and the invention of the inward self.",
  ideas:["Read 'the books of the Platonists', probably Plotinus and Porphyry in Latin translation, and found in them everything but the Incarnation.","Turned philosophy inward: truth is found not by looking out at the cosmos but by entering into oneself.","Evil is not a substance but a privation of good, which lets him answer the Manichaeans without giving evil its own principle.","Analysed time in Confessions XI: past and future have no being; there is only a present of things past (memory), present (attention) and future (expectation), all measured in the mind.","Broke with the Neoplatonists on creation, which for him is a free act of will out of nothing, not an impersonal overflow.","Original sin and the necessity of grace; and in City of God, the first Western philosophy of history."],
  works:["Confessions; City of God; On the Trinity; On Free Choice of the Will."],
  th:["being","mind","good","free","know"],q:{t:"What then is time? If no one asks me, I know; if I wish to explain it to one who asks, I know not.",s:"Confessions XI.14"}},
 
-{id:"boethius",n:"Boethius",b:477,d:526,cb:1,cd:1,tr:"christian",sch:"Christian Platonist / logician",pl:"Rome and Pavia",
+{id:"boethius",ti:3,n:"Boethius",b:477,d:526,cb:1,cd:1,tr:"christian",sch:"Christian Platonist / logician",pl:"Rome and Pavia",
  one:"The last Roman philosopher, and the West's only Aristotle for six centuries.",
  ideas:["Planned to translate all of Plato and Aristotle into Latin and reconcile them. Executed before he got far, but the logical works he did finish were the Latin West's entire access to Aristotle until the twelfth century.","His translation of Porphyry's Isagoge, with two commentaries, handed the medieval world the problem of universals, to which he offered a moderate realism by abstraction.","Wrote the Consolation of Philosophy in prison awaiting execution, without a single Christian reference in it.","Lady Philosophy explains the Wheel of Fortune, and reconciles divine foreknowledge with free will by placing God outside time in an eternal present, so God does not <em>foresee</em> but simply <em>sees</em>.","The Consolation was among the most read books in Europe for a thousand years."],
  works:["The Consolation of Philosophy; commentaries on Porphyry and Aristotle; theological tractates."],
  th:["univ","free","good","being"]},
 
-{id:"anselm",n:"Anselm of Canterbury",b:1033,d:1109,tr:"christian",sch:"Scholastic (early)",pl:"Aosta, Bec, Canterbury",
+{id:"anselm",ti:3,n:"Anselm of Canterbury",b:1033,d:1109,tr:"christian",sch:"Scholastic (early)",pl:"Aosta, Bec, Canterbury",
  one:"Faith seeking understanding, and the ontological argument.",
  ideas:["<em>Fides quaerens intellectum</em>: belief comes first, then reason works out what it must mean. He does not argue anyone into faith; he unfolds it.","The ontological argument: God is that than which nothing greater can be conceived. Something that exists in reality is greater than the same thing existing only in the mind. So God must exist in reality.","The monk Gaunilo replied that the same move would conjure a perfect island. Anselm answered that only the greatest conceivable being has necessary existence.","Revived by Descartes and Leibniz, dismissed by Aquinas, and killed off (or not) by Kant's claim that existence is not a predicate."],
  works:["Monologion; Proslogion; Cur Deus Homo."],
  th:["being","know"]},
 
-{id:"abelard",n:"Peter Abelard",b:1079,d:1142,tr:"christian",sch:"Scholastic / conceptualist",pl:"Paris",
+{id:"abelard",ti:3,n:"Peter Abelard",b:1079,d:1142,tr:"christian",sch:"Scholastic / conceptualist",pl:"Paris",
  one:"Universals are words and concepts, not things.",
  ideas:["The sharpest logician of the twelfth century, and by his own account an insufferable one.","On universals: what is common cannot be a thing, since a thing is one and particular. What is shared is a <em>status</em> that a general word signifies. This is conceptualism, between realism and nominalism.","Sic et Non lined up 158 theological questions with authoritative patristic texts arguing yes on one side and no on the other, and left the reader to resolve them. That method, question then objections then response, became scholasticism.","Ethics of intention: an act is sinful because of the consent of the will, not the deed or its outcome, which anticipates Kant.","His affair with H\u00e9lo\u00efse, his castration, and his condemnations are the reason he is remembered outside philosophy."],
  works:["Sic et Non; Ethics (Know Thyself); Dialectica; Historia Calamitatum."],
  th:["univ","good","lang"]},
 
-{id:"albertus",n:"Albertus Magnus",b:1200,d:1280,cb:1,tr:"christian",sch:"Scholastic (Dominican)",pl:"Cologne and Paris",
+{id:"albertus",ti:4,n:"Albertus Magnus",b:1200,d:1280,cb:1,tr:"christian",sch:"Scholastic (Dominican)",pl:"Cologne and Paris",
  one:"Made the new Aristotle usable, and taught the man who used him.",
  ideas:["Set out to paraphrase the whole Aristotelian corpus for Latin readers, at a moment when much of it was under suspicion.","An empirical naturalist in his own right: 'the aim of natural science is not simply to accept the statements of others, but to investigate the causes at work in nature.'","Taught Thomas Aquinas at Cologne and defended him after his death."],
  works:["Commentaries and paraphrases on nearly all of Aristotle; On Minerals; On Animals."],
  th:["being","know"]},
 
-{id:"aquinas",n:"Thomas Aquinas",b:1225,d:1274,tr:"christian",sch:"Scholastic (Thomism)",pl:"Naples, Paris, Cologne",
+{id:"aquinas",ti:2,n:"Thomas Aquinas",b:1225,d:1274,tr:"christian",sch:"Scholastic (Thomism)",pl:"Naples, Paris, Cologne",
  one:"Aristotle and Christianity, joined without either being dissolved.",
  ideas:["The synthesis was possible only because Aristotle arrived in Latin through Islamic and Jewish hands. Aquinas cites Averroes constantly as 'the Commentator' and Maimonides as 'Rabbi Moses'.","Faith and reason cannot conflict, because both come from God. Reason reaches some truths (that God exists); revelation is needed for others (the Trinity); they overlap but never contradict.","Took hylomorphism from Aristotle and the real distinction between essence and existence from Avicenna: in every creature, what a thing is differs from that it is. Only in God are they identical.","The Five Ways argue from motion, efficient causation, contingency, gradation and the governance of things. All are <em>a posteriori</em>: he rejected Anselm's argument because we do not have God's essence to inspect.","Natural law: the eternal law as it applies to rational creatures, knowable by reason, so ethics does not depend on revelation.","Stopped writing on 6 December 1273 after an experience at Mass; the report that it all seemed like straw comes from testimony taken fifty years later."],
  works:["Summa Theologiae; Summa Contra Gentiles; On Being and Essence; commentaries on Aristotle."],
  th:["being","know","good","just","univ","free","mind"]},
 
-{id:"scotus",n:"John Duns Scotus",b:1266,d:1308,cb:1,tr:"christian",sch:"Scholastic (Franciscan)",pl:"Scotland, Oxford, Paris, Cologne",
+{id:"scotus",ti:3,n:"John Duns Scotus",b:1266,d:1308,cb:1,tr:"christian",sch:"Scholastic (Franciscan)",pl:"Scotland, Oxford, Paris, Cologne",
  one:"Being means the same for God and creatures, and each thing has its own thisness.",
  ideas:["The Subtle Doctor, for arguments of famous density.","Univocity of being: against Aquinas' analogy, 'being' must apply in exactly the same sense to God and to creatures, or no argument could climb from one to the other.","<em>Haecceitas</em>, thisness: what makes Socrates this individual is not his matter but an irreducible individuating positive entity.","The formal distinction: really the same thing can hold formally distinct aspects prior to any act of the mind.","Voluntarism: will takes priority over intellect, in God and in us, so morality is not simply read off necessary essences."],
  works:["Ordinatio; Lectura; Quaestiones Quodlibetales."],
  th:["being","univ","free"]},
 
-{id:"ockham",n:"William of Ockham",b:1287,d:1347,cb:1,cd:1,tr:"christian",sch:"Scholastic (nominalist)",pl:"Oxford, Avignon, Munich",
+{id:"ockham",ti:3,n:"William of Ockham",b:1287,d:1347,cb:1,cd:1,tr:"christian",sch:"Scholastic (nominalist)",pl:"Oxford, Avignon, Munich",
  one:"Only individuals exist; universals are signs in the mind.",
  ideas:["Thoroughgoing nominalism: there is no shared nature out there. A universal is a mental sign that stands for many individuals.","The razor: 'it is futile to do with more what can be done with fewer.' The famous wording, 'entities must not be multiplied beyond necessity', is not in his writings, and his principle licenses declining to <em>posit</em> entities, not asserting that they do not exist.","Divine omnipotence means God could have willed otherwise, so what is knowable by reason shrinks and what must be taken on faith grows. The scholastic synthesis comes apart from the inside.","Fled Avignon in 1328 after a dispute over Franciscan poverty and spent his last years under imperial protection, writing political tracts against papal power."],
  works:["Summa Logicae; Ordinatio; Quodlibetal Questions; Dialogus."],
@@ -1660,43 +1698,43 @@ P.push(
 );
 /* ---------- ISLAMIC & JEWISH ---------- */
 P.push(
-{id:"al-kindi",n:"Al-Kindi",b:801,d:873,cb:1,cd:1,tr:"islamic",sch:"Falsafa",pl:"Basra and Baghdad",
+{id:"al-kindi",ti:4,n:"Al-Kindi",b:801,d:873,cb:1,cd:1,tr:"islamic",sch:"Falsafa",pl:"Basra and Baghdad",
  one:"The first philosopher of the Arabs.",
  ideas:["Directed the translation movement at the House of Wisdom that put Greek philosophy and science into Arabic.","Argued that truth has no nationality: we should not be ashamed to take it from whoever brings it, even a foreign people.","Against Aristotle, defended creation in time and a finite past, on the grounds that an actual infinite cannot be traversed. That argument travels to al-Ghazali and then to modern cosmological arguments."],
  works:["On First Philosophy; some 260 treatises reported, most lost."],
  th:["being","know"]},
 
-{id:"al-farabi",n:"Al-Farabi",b:872,d:950,cb:1,tr:"islamic",sch:"Falsafa (Neoplatonic Aristotelian)",pl:"Central Asia, Baghdad, Damascus",
+{id:"al-farabi",ti:3,n:"Al-Farabi",b:872,d:950,cb:1,tr:"islamic",sch:"Falsafa (Neoplatonic Aristotelian)",pl:"Central Asia, Baghdad, Damascus",
  one:"The Second Teacher, after Aristotle himself.",
  ideas:["Rebuilt Aristotelian logic in Arabic and argued that Plato and Aristotle finally agree.","Emanationist cosmology: from the First a series of intellects proceeds, ending in the Active Intellect that illuminates human minds.","The Virtuous City fuses Plato's Republic with the office of prophet: the ideal ruler is both philosopher and lawgiver, and revelation is the imaginative translation of philosophical truth for those who cannot follow the demonstration.","Also a serious music theorist."],
  works:["The Virtuous City; The Enumeration of the Sciences; The Harmonization of Plato and Aristotle."],
  th:["just","know","being","mind"]},
 
-{id:"avicenna",n:"Avicenna (Ibn Sina)",b:980,d:1037,tr:"islamic",sch:"Falsafa (Avicennism)",pl:"Bukhara and Persia",
+{id:"avicenna",ti:2,n:"Avicenna (Ibn Sina)",b:980,d:1037,tr:"islamic",sch:"Falsafa (Avicennism)",pl:"Bukhara and Persia",
  one:"Essence and existence come apart, and only one being is necessary in itself.",
  ideas:["Distinguished what a thing is from that it is. Knowing perfectly what a horse is tells you nothing about whether any horse exists, so in every creature existence is added to essence.","From that: every contingent being needs a cause, and the series terminates in the Necessary Existent, whose essence just is to exist. Aquinas's third way argues from contingency in the same shape, though how much he took from Avicenna rather than from Maimonides is disputed.","The Floating Man: imagine yourself created in mid-air, blindfolded, limbs apart, with no sensation at all. You would still affirm that you exist. Self-awareness is therefore not derived from the body.","His Canon of Medicine was a standard European medical text into the seventeenth century."],
  works:["The Book of Healing; The Canon of Medicine; Pointers and Reminders."],
  th:["being","mind","know"]},
 
-{id:"al-ghazali",n:"Al-Ghazali",b:1058,d:1111,cb:1,tr:"islamic",sch:"Ash'arite theology and Sufism",pl:"Tus, Baghdad, Nishapur",
+{id:"al-ghazali",ti:3,n:"Al-Ghazali",b:1058,d:1111,cb:1,tr:"islamic",sch:"Ash'arite theology and Sufism",pl:"Tus, Baghdad, Nishapur",
  one:"Attacked the philosophers on their own ground, then left for the Sufi path.",
  ideas:["Mastered falsafa well enough to write a neutral summary of it, then wrote The Incoherence of the Philosophers against twenty of its theses.","On causation: we observe fire and burning cotton together, but observation shows only concomitance, never a necessary connection. What we call causes are habits of God's ordering. Whether this makes him a strict occasionalist is still debated.","A spiritual crisis in 1095 left him unable to lecture; he abandoned the most prestigious chair in the Islamic world for eleven years of wandering.","His argument that necessary connection is never perceived is strikingly close to what Hume would argue seven centuries later, though a direct line of transmission has never been established."],
  works:["The Incoherence of the Philosophers; The Revival of the Religious Sciences; Deliverance from Error."],
  th:["know","being","free"]},
 
-{id:"averroes",n:"Averroes (Ibn Rushd)",b:1126,d:1198,tr:"islamic",sch:"Falsafa (Aristotelian)",pl:"C&oacute;rdoba, Marrakesh",
+{id:"averroes",ti:2,n:"Averroes (Ibn Rushd)",b:1126,d:1198,tr:"islamic",sch:"Falsafa (Aristotelian)",pl:"C&oacute;rdoba, Marrakesh",
  one:"The Commentator. Aristotle, defended and explained.",
  ideas:["Wrote epitomes and middle commentaries on almost the whole Aristotelian corpus, and five long commentaries besides, trying to recover Aristotle from Neoplatonic overlay.","Replied to al-Ghazali with The Incoherence of the Incoherence, defending causal necessity and philosophy itself.","In the Decisive Treatise argued that scripture and demonstration cannot conflict, and that where they seem to, the scriptural text must be read allegorically, but only by those trained to do so.","His Latin translators drew from him the doctrine of a single shared intellect for all humanity, which the bishop of Paris condemned in 1270 and 1277 and which Aquinas wrote a book against.","More influential in Latin Christendom than in the Islamic world after him."],
  works:["Long Commentaries on Aristotle; The Incoherence of the Incoherence; The Decisive Treatise."],
  th:["being","know","mind","univ"]},
 
-{id:"maimonides",n:"Maimonides",b:1138,d:1204,tr:"islamic",sch:"Jewish Aristotelianism",pl:"C&oacute;rdoba, Fez, Cairo",
+{id:"maimonides",ti:3,n:"Maimonides",b:1138,d:1204,tr:"islamic",sch:"Jewish Aristotelianism",pl:"C&oacute;rdoba, Fez, Cairo",
  one:"Aristotle and Torah, for the reader caught between them.",
  ideas:["The Guide is written for someone who has studied philosophy and now finds his religion incoherent. It is deliberately difficult, and says so.","Negative theology: no positive attribute can be predicated of God without compromising divine unity. We can say only what God is not.","Refused to follow Aristotle on the eternity of the world, arguing that neither eternity nor creation is demonstrable, and that scripture therefore decides. This is a rare and careful admission of the limits of proof.","Also a physician to Saladin's court and the codifier of Jewish law in the Mishneh Torah.","Aquinas cites him repeatedly and follows him on several points, including the limits of proof about the world's beginning."],
  works:["The Guide of the Perplexed; Mishneh Torah; Commentary on the Mishnah."],
  th:["being","know","good"]},
 
-{id:"ibn-khaldun",n:"Ibn Khaldun",b:1332,d:1406,tr:"islamic",sch:"Historiography / social theory",pl:"Tunis, Fez, Granada, Cairo",
+{id:"ibn-khaldun",ti:4,n:"Ibn Khaldun",b:1332,d:1406,tr:"islamic",sch:"Historiography / social theory",pl:"Tunis, Fez, Granada, Cairo",
  one:"Invented a science of society to explain why dynasties rise and fall.",
  ideas:["The Muqaddimah proposes that history has causes that can be studied systematically, and that most historians repeat implausible reports without testing them.","<em>Asabiyyah</em>, group solidarity, is the engine: it is strongest among hardy peripheral peoples, carries them to power, then decays over about four generations of urban comfort, and the cycle restarts.","Analysed the effects of taxation, labour and geography on prosperity, centuries before political economy existed as a field."],
  works:["The Muqaddimah (Introduction to History)."],
@@ -1705,85 +1743,85 @@ P.push(
 
 /* ---------- EARLY MODERN ---------- */
 P.push(
-{id:"machiavelli",n:"Niccol&ograve; Machiavelli",b:1469,d:1527,tr:"earlymodern",sch:"Political realism",pl:"Florence",
+{id:"machiavelli",ti:3,n:"Niccol&ograve; Machiavelli",b:1469,d:1527,tr:"earlymodern",sch:"Political realism",pl:"Florence",
  one:"Politics judged by results, not by virtue.",
  ideas:["Wrote The Prince in 1513 while out of office after the Medici restoration, having been imprisoned and tortured.","A ruler who is good in a world that is not will be destroyed. Statecraft therefore needs <em>virt&ugrave;</em>, effectiveness, which is not Christian virtue.","<em>Fortuna</em> governs half of what we do; the other half is ours, and the bold master it more often.","The Discourses, less famous but arguably his real politics, defends republics and holds that civic conflict, properly channelled, strengthens a free state.","Whether The Prince is advice to tyrants or a warning about them has been argued for five hundred years."],
  works:["The Prince; Discourses on Livy; The Art of War."],
  th:["just","good"]},
 
-{id:"bacon",n:"Francis Bacon",b:1561,d:1626,tr:"earlymodern",sch:"Empiricism (method)",pl:"London",
+{id:"bacon",ti:3,n:"Francis Bacon",b:1561,d:1626,tr:"earlymodern",sch:"Empiricism (method)",pl:"London",
  one:"Knowledge comes from organised observation, not from syllogisms.",
  ideas:["The Novum Organum, the 'new instrument', is aimed squarely at Aristotle's Organon: deduction from received premises can only rearrange what you already believe.","Proposed induction by systematic tables of instances, including deliberate search for negative cases, which is closer to experimental design than to simple enumeration.","The four Idols that corrupt the mind: of the Tribe (built into human nature), the Cave (personal quirks), the Marketplace (words misleading us) and the Theatre (inherited systems).","Knowledge is power: the point of science is to relieve the human condition, not to contemplate.","Lord Chancellor, then convicted of taking bribes and removed from office."],
  works:["Novum Organum; The Advancement of Learning; New Atlantis."],
  th:["know"]},
 
-{id:"hobbes",n:"Thomas Hobbes",b:1588,d:1679,tr:"earlymodern",sch:"Materialism / social contract",pl:"England and Paris",
+{id:"hobbes",ti:2,n:"Thomas Hobbes",b:1588,d:1679,tr:"earlymodern",sch:"Materialism / social contract",pl:"England and Paris",
  one:"Without a common power, life is a war of all against all.",
  ideas:["A strict materialist: everything, including thought, is matter in motion. There is no incorporeal substance.","In the state of nature there is no injustice, because there is no law; and there is no law without a power to enforce it. Life there is 'solitary, poor, nasty, brutish, and short'.","Rational agents therefore covenant with one another to transfer their right of self-government to a sovereign, whose authority must be undivided or it will fail.","Wrote Leviathan in exile during the English Civil War, which is the experiment his argument is built on.","Held that the right to resist survives only where the sovereign threatens your life, since self-preservation is the reason the covenant was made."],
  works:["Leviathan; De Cive; De Corpore."],
  th:["just","mind","being","free"],q:{t:"...and the life of man, solitary, poor, nasty, brutish, and short.",s:"Leviathan XIII, 1651"}},
 
-{id:"descartes",n:"Ren&eacute; Descartes",b:1596,d:1650,tr:"earlymodern",sch:"Rationalism",pl:"France, Netherlands, Sweden",
+{id:"descartes",ti:2,n:"Ren&eacute; Descartes",b:1596,d:1650,tr:"earlymodern",sch:"Rationalism",pl:"France, Netherlands, Sweden",
  one:"Doubt everything, and find what cannot be doubted.",
  ideas:["Method: reject as false anything open to the slightest doubt, including the senses, mathematics and the external world, using the dream argument and then the evil demon.","What survives is the doubting itself. <em>Cogito, ergo sum</em>: I cannot doubt that I am thinking, so I exist, at least as a thinking thing.","Rebuilt the world from there, via arguments for God's existence and for God's non-deceiving nature, which is why the circularity of that step is the most discussed objection in the book.","Substance dualism: <em>res cogitans</em>, unextended thinking substance, and <em>res extensa</em>, extended unthinking substance. Bequeathed the mind-body problem to everyone since.","Also devised analytic geometry, independently of Fermat, who had reached an equivalent system in manuscript by 1636; it fused algebra with geometry and made modern physics writable."],
  works:["Discourse on the Method; Meditations on First Philosophy; Principles of Philosophy."],
  th:["know","mind","being"],q:{t:"I think, therefore I am.",s:"Discourse on the Method, 1637"}},
 
-{id:"spinoza",n:"Baruch Spinoza",b:1632,d:1677,tr:"earlymodern",sch:"Rationalism",pl:"Amsterdam and The Hague",
+{id:"spinoza",ti:2,n:"Baruch Spinoza",b:1632,d:1677,tr:"earlymodern",sch:"Rationalism",pl:"Amsterdam and The Hague",
  one:"There is only one substance, and it is God, or Nature.",
  ideas:["Excommunicated from the Amsterdam Jewish community at twenty-three in unusually harsh terms, and never joined another. Ground optical lenses for a living and refused a chair at Heidelberg.","Took Descartes' definition of substance seriously and concluded that there can only be one: a substance depends on nothing else, and two such things could not be related. Mind and body are not two substances but two attributes of the same one.","<em>Deus sive Natura</em>, God or Nature: the divine is not outside the world acting on it, but the world's own necessity. Nothing is contingent; free will is the illusion of a stone that thinks it chose to fall.","Freedom is not exemption from causes but understanding them, which converts passive emotions into active ones.","Wrote the Ethics in the geometrical order, definitions and axioms and propositions, so the reader can check every step.","Called an atheist for a century, then adopted as a hero by Goethe, Hegel and the Romantics."],
  works:["Ethics; Theological-Political Treatise; On the Improvement of the Understanding."],
  th:["being","free","mind","good","just"]},
 
-{id:"locke",n:"John Locke",b:1632,d:1704,tr:"earlymodern",sch:"Empiricism",pl:"England and the Netherlands",
+{id:"locke",ti:2,n:"John Locke",b:1632,d:1704,tr:"earlymodern",sch:"Empiricism",pl:"England and the Netherlands",
  one:"The mind starts empty; experience writes on it.",
  ideas:["Attacked innate ideas: if there were principles everyone is born knowing, children and 'idiots' would know them, and they do not.","All ideas come from sensation or reflection, simple ideas combined by the mind into complex ones.","Primary qualities (extension, shape, motion, number) belong to bodies themselves; secondary qualities (colour, sound, taste) are powers to produce sensations in us.","Personal identity is continuity of consciousness, not of soul or body, which is why the prince and the cobbler thought experiment still gets taught.","Politically: natural rights to life, liberty and estate; government by consent, holding power in trust; and a right of revolution when that trust is broken. The Second Treatise stands behind the American Declaration of Independence, though how directly is still argued over.","Argued for religious toleration, though not for atheists or (in his time) Catholics."],
  works:["An Essay Concerning Human Understanding; Two Treatises of Government; A Letter Concerning Toleration."],
  th:["know","just","mind","univ"]},
 
-{id:"leibniz",n:"G. W. Leibniz",b:1646,d:1716,tr:"earlymodern",sch:"Rationalism",pl:"Leipzig, Paris, Hanover",
+{id:"leibniz",ti:2,n:"G. W. Leibniz",b:1646,d:1716,tr:"earlymodern",sch:"Rationalism",pl:"Leipzig, Paris, Hanover",
  one:"Reality is infinitely many simple minds, agreeing without interacting.",
  ideas:["Co-invented the calculus independently of Newton, and his notation is the one we still use.","Principle of Sufficient Reason: nothing is so without a reason why it is so rather than otherwise. With the principle of contradiction, this is the whole engine of his metaphysics.","Identity of indiscernibles: no two distinct things share all their properties, so there are no perfect duplicates.","Monads are simple, immaterial, indivisible centres of perception and appetite. They are 'windowless': nothing enters or leaves. Their apparent interaction is pre-established harmony, like clocks set once and running in step.","Theodicy: God, choosing among infinitely many possible worlds, actualised the best. Voltaire mocked this in Candide after the Lisbon earthquake.","Dreamed of a <em>characteristica universalis</em>, a formal language in which disputes could be settled by calculation. Frege and modern logic eventually deliver a piece of it."],
  works:["Monadology; Discourse on Metaphysics; Theodicy; New Essays on Human Understanding."],
  th:["being","know","free","mind","lang"]},
 
-{id:"berkeley",n:"George Berkeley",b:1685,d:1753,tr:"earlymodern",sch:"Empiricism (immaterialism)",pl:"Ireland, London, Rhode Island",
+{id:"berkeley",ti:3,n:"George Berkeley",b:1685,d:1753,tr:"earlymodern",sch:"Empiricism (immaterialism)",pl:"Ireland, London, Rhode Island",
  one:"To be is to be perceived. There is no matter.",
  ideas:["Took Locke's empiricism at its word: if all we ever have are ideas, we can never compare an idea with a mind-independent object to check the match. Material substance is not just unknown, it is unintelligible.","<em>Esse est percipi</em>: what exists are minds and their ideas. A stone is a stable bundle of sensations.","This is not scepticism but its opposite. He claimed to be defending common sense: the tree is exactly as real as it looks, it just is not made of an unobservable substrate.","The continuity of unperceived things is secured by God's perceiving them, which is also his argument for God.","Also wrote a sharp critique of the calculus, calling infinitesimals 'the ghosts of departed quantities', a criticism not answered until the nineteenth century."],
  works:["A Treatise Concerning the Principles of Human Knowledge; Three Dialogues; The Analyst."],
  th:["being","know","mind"]},
 
-{id:"montesquieu",n:"Montesquieu",b:1689,d:1755,tr:"earlymodern",sch:"Enlightenment political theory",pl:"Bordeaux and Paris",
+{id:"montesquieu",ti:3,n:"Montesquieu",b:1689,d:1755,tr:"earlymodern",sch:"Enlightenment political theory",pl:"Bordeaux and Paris",
  one:"Liberty is preserved by dividing power against itself.",
  ideas:["Compared constitutions as a naturalist compares species, arguing that laws suit climate, commerce, religion and the temper of a people.","Separation of legislative, executive and judicial power, so that power checks power. Written into the United States Constitution more or less directly.","Distinguished the animating principle of each form of government: virtue in republics, honour in monarchies, fear in despotisms."],
  works:["The Spirit of the Laws; Persian Letters."],
  th:["just"]},
 
-{id:"voltaire",n:"Voltaire",b:1694,d:1778,tr:"earlymodern",sch:"Enlightenment",pl:"Paris, London, Ferney",
+{id:"voltaire",ti:3,n:"Voltaire",b:1694,d:1778,tr:"earlymodern",sch:"Enlightenment",pl:"Paris, London, Ferney",
  one:"Toleration, argued with ridicule.",
  ideas:["Popularised Newton and Locke in France, and made English empiricism and religious toleration into a French political programme.","Campaigned publicly against judicial cruelty, notably in the Calas case, which is closer to modern human-rights advocacy than to philosophy.","Candide is a demolition of Leibniz's best of all possible worlds, written in the shadow of the Lisbon earthquake of 1755.","Deist, not atheist, and no friend of democracy."],
  works:["Candide; Letters on the English; Treatise on Tolerance; Philosophical Dictionary."],
  th:["good","just"]},
 
-{id:"hume",n:"David Hume",b:1711,d:1776,tr:"earlymodern",sch:"Empiricism",pl:"Edinburgh, France, London",
+{id:"hume",ti:1,n:"David Hume",b:1711,d:1776,tr:"earlymodern",sch:"Empiricism",pl:"Edinburgh, France, London",
  one:"Empiricism followed to the end, where it turns sceptical.",
  ideas:["All contents of the mind are impressions (vivid) or ideas (faint copies). Any supposed idea with no impression behind it is empty. This test is the demolition tool for the rest.","Causation: we see one billiard ball move after another, never a necessary connection between them. What we have is constant conjunction plus a habit of expectation. Necessity is a feeling in us, not a link in the world.","Induction: no argument justifies inferring the future from the past without already assuming that nature is uniform, which is what needed justifying.","The self: looking inward I find perceptions, never a self having them. The mind is a bundle, and the theatre has no stage.","Reason is and ought only to be the slave of the passions. Morality is founded on sentiment, and you cannot derive an <em>ought</em> from an <em>is</em>.","Held his Dialogues on natural religion back for publication after his death, and died with a composure that scandalised Boswell."],
  works:["A Treatise of Human Nature; Enquiry Concerning Human Understanding; Dialogues Concerning Natural Religion."],
  th:["know","being","good","mind","free"],q:{t:"It is not contrary to reason to prefer the destruction of the whole world to the scratching of my finger.",s:"A Treatise of Human Nature, II.iii.3"}},
 
-{id:"rousseau",n:"Jean-Jacques Rousseau",b:1712,d:1778,tr:"earlymodern",sch:"Enlightenment / Romantic precursor",pl:"Geneva, Paris, exile",
+{id:"rousseau",ti:2,n:"Jean-Jacques Rousseau",b:1712,d:1778,tr:"earlymodern",sch:"Enlightenment / Romantic precursor",pl:"Geneva, Paris, exile",
  one:"People are born good and are corrupted by society.",
  ideas:["Reversed the usual story: the state of nature is not war but a solitary, unreflective sufficiency. Inequality begins with property and grows with the arts and sciences.","The social contract exchanges natural liberty for civil liberty, with each giving himself to all and so to nobody in particular.","The <em>general will</em> is what the citizen body wills as a body, aiming at the common good, and is not the sum of private preferences. The idea has been read as the root of both democracy and totalitarianism.","Emile transformed European ideas about childhood and education. The Confessions more or less invented modern autobiography.","Fell out with Hume, Voltaire and most of the Enlightenment, largely on his own initiative."],
  works:["The Social Contract; Discourse on Inequality; Emile; Confessions."],
  th:["just","good"],q:{t:"Man is born free, and everywhere he is in chains.",s:"The Social Contract, 1762"}},
 
-{id:"smith",n:"Adam Smith",b:1723,d:1790,tr:"earlymodern",sch:"Scottish Enlightenment",pl:"Glasgow and Edinburgh",
+{id:"smith",ti:3,n:"Adam Smith",b:1723,d:1790,tr:"earlymodern",sch:"Scottish Enlightenment",pl:"Glasgow and Edinburgh",
  one:"Moral sentiments first, then the wealth of nations.",
  ideas:["A moral philosopher by profession. The Theory of Moral Sentiments grounds ethics in sympathy and the judgement of an impartial spectator we internalise.","The Wealth of Nations analyses the division of labour and shows how self-interested exchange can produce unintended public benefit.","The 'invisible hand' appears only three times in his whole body of work, and he was scathing about merchants conspiring against the public.","Close friend of Hume, and his executor."],
  works:["The Theory of Moral Sentiments; An Inquiry into the Nature and Causes of the Wealth of Nations."],
  th:["good","just"]},
 
-{id:"kant",n:"Immanuel Kant",b:1724,d:1804,tr:"earlymodern",sch:"Transcendental idealism",pl:"K&ouml;nigsberg, Prussia",
+{id:"kant",ti:1,n:"Immanuel Kant",b:1724,d:1804,tr:"earlymodern",sch:"Transcendental idealism",pl:"K&ouml;nigsberg, Prussia",
  one:"The mind does not conform to objects. Objects conform to the mind.",
  ideas:["Hume woke him from his 'dogmatic slumber' by showing that empiricism ends in scepticism while rationalism issues claims it cannot cash.","His question: how are <em>synthetic a priori</em> judgements possible? Judgements that are informative about the world yet necessary and known in advance, such as 'every event has a cause'.","The Copernican revolution in philosophy: instead of asking how our knowledge conforms to objects, ask how objects must conform to the conditions of any possible experience.","Space and time are forms of intuition, not features of things in themselves; the categories (substance, causality and the rest) are the rules the understanding brings.","So we know <em>phenomena</em>, appearances as structured by us, and never <em>noumena</em>, things as they are in themselves. This secures Newtonian science and simultaneously limits knowledge 'to make room for faith'.","Ethics: act only on that maxim you could will to become a universal law; and treat humanity, in yourself and others, always as an end and never merely as a means. Moral worth lies in acting from duty, and autonomy is giving the law to oneself.","The third Critique takes up beauty and the sublime, and purposiveness in nature.","Nearly everything after him is a development of Kant or a revolt against him."],
  works:["Critique of Pure Reason; Groundwork of the Metaphysics of Morals; Critique of Practical Reason; Critique of Judgment; Perpetual Peace."],
@@ -1791,79 +1829,79 @@ P.push(
 );
 /* ---------- NINETEENTH CENTURY ---------- */
 P.push(
-{id:"bentham",n:"Jeremy Bentham",b:1748,d:1832,tr:"c19",sch:"Utilitarianism",pl:"London",
+{id:"bentham",ti:3,n:"Jeremy Bentham",b:1748,d:1832,tr:"c19",sch:"Utilitarianism",pl:"London",
  one:"The right act is the one that produces the greatest happiness.",
  ideas:["Nature has placed us under two sovereign masters, pain and pleasure. They determine what we do and also what we ought to do.","The felicific calculus scores a pleasure by intensity, duration, certainty, propinquity, fecundity, purity and extent, so moral questions become, in principle, arithmetic.","Everybody to count for one, nobody for more than one. That impartiality is what made utilitarianism a radical doctrine.","Extended moral standing to animals: the question is not can they reason, nor can they talk, but can they suffer.","A tireless legal reformer: on prisons, poor law, codification, and the decriminalisation of homosexuality, in a manuscript he did not dare publish.","His preserved body still sits in a case at University College London, by his own instruction."],
  works:["An Introduction to the Principles of Morals and Legislation; Fragment on Government; Panopticon."],
  th:["good","just"]},
 
-{id:"fichte",n:"J. G. Fichte",b:1762,d:1814,tr:"c19",sch:"German Idealism",pl:"Jena and Berlin",
+{id:"fichte",ti:3,n:"J. G. Fichte",b:1762,d:1814,tr:"c19",sch:"German Idealism",pl:"Jena and Berlin",
  one:"Everything follows from the self-positing I.",
  ideas:["Held that Kant's thing-in-itself was both unknowable and unnecessary, and cut it out. What remains must be generated from the subject.","The absolute I posits itself, then posits a Not-I over against itself, so that nature is the field on which the self meets resistance and becomes moral.","Made philosophy practical: the theoretical system exists for the sake of moral striving.","His Addresses to the German Nation, delivered under French occupation, made him a founder of German nationalism as well."],
  works:["Science of Knowledge (Wissenschaftslehre); The Vocation of Man; Addresses to the German Nation."],
  th:["being","know","free"]},
 
-{id:"hegel",n:"G. W. F. Hegel",b:1770,d:1831,tr:"c19",sch:"Absolute Idealism",pl:"Stuttgart, Jena, Berlin",
+{id:"hegel",ti:1,n:"G. W. F. Hegel",b:1770,d:1831,tr:"c19",sch:"Absolute Idealism",pl:"Stuttgart, Jena, Berlin",
  one:"Reality is Spirit coming to know itself through history.",
  ideas:["The dialectic is not a formula applied from outside. A position, pressed hard enough, generates its own contradiction, and the resolution preserves what was true in both. Hegel calls this determinate negation. The tidy 'thesis, antithesis, synthesis' label is not his.","The Phenomenology of Spirit traces consciousness through every shape it can take, from sense-certainty to absolute knowing.","The master-slave dialectic: self-consciousness needs recognition from another self-consciousness, so the struggle for recognition, not appetite, is the root of history. The slave, who works on the world, gains the independence the master loses.","World history is the progress of the consciousness of freedom, from one being free, to some, to all.","The rational is the actual and the actual is the rational, a sentence that has been read both as quietism and as a demand.","Finished the Phenomenology as Napoleon's army entered Jena in 1806, and called the emperor, riding out of the city, 'this world-soul'.","His followers split into Right Hegelians, who read him as underwriting the Prussian state and Christianity, and Left or Young Hegelians, who read him as dissolving both."],
  works:["Phenomenology of Spirit; Science of Logic; Philosophy of Right; Lectures on the Philosophy of History."],
  th:["being","know","just","free","good"]},
 
-{id:"schelling",n:"F. W. J. Schelling",b:1775,d:1854,tr:"c19",sch:"German Idealism",pl:"T&uuml;bingen, Jena, Munich, Berlin",
+{id:"schelling",ti:3,n:"F. W. J. Schelling",b:1775,d:1854,tr:"c19",sch:"German Idealism",pl:"T&uuml;bingen, Jena, Munich, Berlin",
  one:"Nature and mind are two faces of one Absolute.",
  ideas:["Objected that Fichte reduces nature to mere material for the ego. Nature must have its own productivity, unconscious spirit on the way to becoming conscious.","In the Absolute, subject and object are identical, which Hegel mocked as 'the night in which all cows are black'.","His late positive philosophy turned toward existence, freedom and the reality of evil, and directly influenced Kierkegaard, who attended his Berlin lectures."],
  works:["Ideas for a Philosophy of Nature; System of Transcendental Idealism; Philosophical Inquiries into the Essence of Human Freedom."],
  th:["being","free","mind"]},
 
-{id:"schopenhauer",n:"Arthur Schopenhauer",b:1788,d:1860,tr:"c19",sch:"Post-Kantian pessimism",pl:"Danzig, Berlin, Frankfurt",
+{id:"schopenhauer",ti:2,n:"Arthur Schopenhauer",b:1788,d:1860,tr:"c19",sch:"Post-Kantian pessimism",pl:"Danzig, Berlin, Frankfurt",
  one:"The thing-in-itself is blind Will, and it makes life suffering.",
  ideas:["Accepted Kant's distinction and then claimed to have found the way in: we know one thing from the inside, our own willing body. Extrapolate, and the inner nature of everything is Will.","The Will is not rational or purposive. It is a blind striving that objectifies itself in everything from gravity to appetite.","Willing is lack. Satisfaction ends it only momentarily, and then either new desire or boredom arrives. Life swings between the two like a pendulum.","Two escapes: aesthetic contemplation, which suspends willing for a while (music most of all, because it copies the Will directly rather than any appearance of it), and the ascetic denial of the will.","Read the Upanishads daily and drew explicitly on Hindu and Buddhist sources, the first major Western philosopher to do so seriously.","Scheduled his Berlin lectures opposite Hegel's out of contempt, and drew about five students before the later courses drew none."],
  works:["The World as Will and Representation; On the Fourfold Root; Parerga and Paralipomena."],
  th:["being","good","free","mind"]},
 
-{id:"comte",n:"Auguste Comte",b:1798,d:1857,tr:"c19",sch:"Positivism",pl:"Montpellier and Paris",
+{id:"comte",ti:4,n:"Auguste Comte",b:1798,d:1857,tr:"c19",sch:"Positivism",pl:"Montpellier and Paris",
  one:"Knowledge passes from theology to metaphysics to positive science.",
  ideas:["The law of three stages: explanation begins with gods, becomes abstract essences and forces, and ends by seeking only observable laws relating phenomena.","Ranked the sciences by decreasing generality and increasing complexity: mathematics, astronomy, physics, chemistry, biology, and finally the new one he named, sociology.","Held that the same developmental sequence applies to an individual mind and to humanity.","Late in life founded a Religion of Humanity, with a calendar and sacraments, which cost him most of his followers."],
  works:["Course in Positive Philosophy; A General View of Positivism."],
  th:["know","just"]},
 
-{id:"mill",n:"John Stuart Mill",b:1806,d:1873,tr:"c19",sch:"Utilitarianism / liberalism",pl:"London",
+{id:"mill",ti:2,n:"John Stuart Mill",b:1806,d:1873,tr:"c19",sch:"Utilitarianism / liberalism",pl:"London",
  one:"Utility, corrected for the quality of pleasures, and liberty as its guard.",
  ideas:["Educated in an extraordinary experiment by his father to make him Bentham's heir. Greek at three, and a nervous breakdown at twenty.","Against Bentham, insisted that pleasures differ in kind, not just amount, and that competent judges who know both prefer the higher. Better to be Socrates dissatisfied than a fool satisfied.","The harm principle: the only purpose for which power can be rightfully exercised over any member of a civilised community against his will is to prevent harm to others. His own good is not sufficient warrant.","Defended free speech on the ground that a silenced opinion may be true, or partly true, and that even a false one keeps a true one from becoming dead dogma.","The Subjection of Women argued for full legal equality in 1869, and he introduced the first parliamentary motion for women's suffrage in 1867.","Credited Harriet Taylor as effectively co-author of On Liberty."],
  works:["On Liberty; Utilitarianism; A System of Logic; The Subjection of Women."],
  th:["good","just","know"],q:{t:"The only freedom which deserves the name is that of pursuing our own good in our own way.",s:"On Liberty, 1859"}},
 
-{id:"kierkegaard",n:"S&oslash;ren Kierkegaard",b:1813,d:1855,tr:"c19",sch:"Proto-existentialism",pl:"Copenhagen",
+{id:"kierkegaard",ti:2,n:"S&oslash;ren Kierkegaard",b:1813,d:1855,tr:"c19",sch:"Proto-existentialism",pl:"Copenhagen",
  one:"Truth is subjectivity, and the individual cannot be absorbed into a system.",
  ideas:["Against Hegel: a system of existence is impossible, because the one doing the systematising is himself an existing individual who cannot be included in it.","Three spheres of existence: the aesthetic (pursuit of the interesting), the ethical (commitment and duty), and the religious (relation to God), and one does not argue one's way from one to the next but leaps.","Fear and Trembling on Abraham: the knight of faith suspends the ethical, and cannot explain himself to anyone, because faith is not a public reason.","Anxiety is 'the dizziness of freedom', the vertigo of possibility. Despair is the misrelation of the self to itself.","Wrote under a crowd of pseudonyms who argue with one another, so that no position is handed over as the author's.","Broke off his engagement to Regine Olsen and wrote about it, obliquely, for the rest of his life. Almost unread outside Denmark until the twentieth century."],
  works:["Either/Or; Fear and Trembling; The Concept of Anxiety; Concluding Unscientific Postscript; The Sickness Unto Death."],
  th:["good","free","know","being"]},
 
-{id:"marx",n:"Karl Marx",b:1818,d:1883,tr:"c19",sch:"Historical materialism",pl:"Trier, Paris, Brussels, London",
+{id:"marx",ti:2,n:"Karl Marx",b:1818,d:1883,tr:"c19",sch:"Historical materialism",pl:"Trier, Paris, Brussels, London",
  one:"Hegel turned right side up: material conditions drive history.",
  ideas:["A Young Hegelian who kept the dialectic and replaced Spirit with the way people produce their means of life.","Historical materialism: the mode of production shapes the legal, political and intellectual superstructure, and it is not consciousness that determines life but life that determines consciousness.","Alienation: under wage labour the worker is estranged from the product, from the act of working, from his species-being and from other people.","Labour theory of value and surplus value: the worker is paid for labour-power, but produces more value than that, and the difference is profit.","Capitalism is dynamic and revolutionary, and its own contradictions, concentration, crisis and the falling rate of profit, drive it toward its supersession.","Spent decades in the British Museum reading room on Capital, in poverty, subsidised by Engels."],
  works:["The Communist Manifesto (with Engels); Capital; Economic and Philosophic Manuscripts of 1844; The German Ideology."],
  th:["just","being","free","good"],q:{t:"The philosophers have only interpreted the world in various ways; the point is to change it.",s:"Theses on Feuerbach, 1845"}},
 
-{id:"peirce",n:"C. S. Peirce",b:1839,d:1914,tr:"c19",sch:"Pragmatism",pl:"Cambridge, Baltimore and Milford, Pennsylvania",
+{id:"peirce",ti:3,n:"C. S. Peirce",b:1839,d:1914,tr:"c19",sch:"Pragmatism",pl:"Cambridge, Baltimore and Milford, Pennsylvania",
  one:"The meaning of an idea is the practical difference it makes.",
  ideas:["The pragmatic maxim: consider what effects with practical bearings you conceive the object of your conception to have; your conception of those effects is the whole of your conception of the object.","Fallibilism: no belief is immune from revision, and inquiry is a self-correcting community enterprise rather than a private search for certainty.","Truth is the opinion fated to be agreed by all who investigate, and the real is what is represented in that opinion.","Founded semiotics, with the triad of icon, index and symbol, and named abduction (inference to the best explanation) as a third mode alongside deduction and induction.","Worked for decades at the Coast Survey, never held a permanent chair, and died poor with most of his work unpublished."],
  works:["The Fixation of Belief; How to Make Our Ideas Clear; Collected Papers (posthumous)."],
  th:["know","lang","being"]},
 
-{id:"james",n:"William James",b:1842,d:1910,tr:"c19",sch:"Pragmatism",pl:"Cambridge, Massachusetts",
+{id:"james",ti:3,n:"William James",b:1842,d:1910,tr:"c19",sch:"Pragmatism",pl:"Cambridge, Massachusetts",
  one:"An idea is true insofar as it works.",
  ideas:["Turned Peirce's maxim, which was about meaning, into a theory of truth, to Peirce's annoyance. Peirce renamed his own view 'pragmaticism', a word ugly enough to be safe from kidnappers.","Truth is not a static relation of copying but something that happens to an idea: it is made true by the process of verification, its 'cash value' in experience.","The Principles of Psychology introduced the stream of consciousness and largely founded American psychology.","The Will to Believe defends the right to adopt a belief on non-evidential grounds where the option is live, forced and momentous and evidence cannot settle it.","The Varieties of Religious Experience studies religion empirically, through first-person accounts, rather than defending or attacking doctrine."],
  works:["Pragmatism; The Principles of Psychology; The Varieties of Religious Experience; The Will to Believe."],
  th:["know","mind","good"]},
 
-{id:"nietzsche",n:"Friedrich Nietzsche",b:1844,d:1900,tr:"c19",sch:"Genealogy / perspectivism",pl:"Basel, Sils-Maria, Turin",
+{id:"nietzsche",ti:1,n:"Friedrich Nietzsche",b:1844,d:1900,tr:"c19",sch:"Genealogy / perspectivism",pl:"Basel, Sils-Maria, Turin",
  one:"God is dead, and we must create new values or fall into nihilism.",
  ideas:["Began as a disciple of Schopenhauer and Wagner and broke with both. Turned Schopenhauer's Will to live, to be denied, into <em>will to power</em>, to be affirmed: life is not self-preservation but growth and overcoming.","'God is dead' is not a boast but a diagnosis. The Christian moral order has lost its foundation, most people have not noticed, and the coming void is nihilism.","Genealogy of morals: our moral vocabulary has a history. 'Good' first meant noble and strong, in master morality. Slave morality, born of <em>ressentiment</em>, reversed it, calling the strong evil and weakness meekness. Nothing follows automatically about which we should keep.","The <em>&Uuml;bermensch</em> is not a biological superior but the one who creates values rather than inheriting them.","Eternal recurrence: if a demon told you that you must live this exact life again, endlessly, would that crush you or would you say yes? A test of affirmation, not a cosmology.","Perspectivism: every knowing is from somewhere, put most sharply in an unpublished notebook of 1886&ndash;87 &mdash; there are no facts, only interpretations.","Collapsed in Turin in 1889 and never recovered. His sister and Peter Gast arranged his abandoned notes into The Will to Power, a book he never wrote, and lent his name to a nationalism he despised."],
  works:["The Birth of Tragedy; Thus Spoke Zarathustra; Beyond Good and Evil; On the Genealogy of Morality; The Gay Science."],
  th:["good","know","being","free"],q:{t:"If we have our own why of life, we shall get along with almost any how.",s:"Twilight of the Idols, &lsquo;Maxims and Arrows&rsquo; 12, written 1888, published 1889. The familiar &lsquo;he who has a why to live&rsquo; is Viktor Frankl&rsquo;s wording"}},
 
-{id:"dewey",n:"John Dewey",b:1859,d:1952,tr:"c19",sch:"Pragmatism / instrumentalism",pl:"Vermont, Chicago, New York",
+{id:"dewey",ti:3,n:"John Dewey",b:1859,d:1952,tr:"c19",sch:"Pragmatism / instrumentalism",pl:"Vermont, Chicago, New York",
  one:"Ideas are instruments for solving problems, and democracy is a way of living.",
  ideas:["Instrumentalism: concepts and theories are tools for reorganising experience, judged by how well they resolve an indeterminate situation, not by how well they mirror reality.","Replaced 'truth' with 'warranted assertibility', to keep the emphasis on inquiry rather than on a finished relation.","Rejected the spectator theory of knowledge inherited from Descartes: knowing is something an organism does in and to its environment.","Education is not preparation for life but life itself. Founded the Laboratory School at Chicago and shaped progressive education worldwide.","Democracy is not just a set of institutions but an associated way of living in which people jointly work out the conditions of their common life.","Chaired the 1937 commission in Mexico that heard Trotsky's defence against the Moscow trial charges."],
  works:["Experience and Nature; Democracy and Education; The Quest for Certainty; Logic: The Theory of Inquiry."],
@@ -1872,127 +1910,127 @@ P.push(
 
 /* ---------- ANALYTIC ---------- */
 P.push(
-{id:"frege",n:"Gottlob Frege",b:1848,d:1925,tr:"analytic",sch:"Logicism",pl:"Jena",
+{id:"frege",ti:2,n:"Gottlob Frege",b:1848,d:1925,tr:"analytic",sch:"Logicism",pl:"Jena",
  one:"Invented modern logic, and with it analytic philosophy.",
  ideas:["The Begriffsschrift of 1879 introduced quantifiers and variables, so that 'every boy loves some girl' finally has a form. This is the first real advance in logic since Aristotle, and it is enormous.","Logicism: arithmetic is not synthetic a priori, as Kant said, but reducible to logic and definitions.","Sense and reference: 'the morning star' and 'the evening star' pick out the same planet but differ in mode of presentation, which is why one identity statement is informative and the other trivial.","The context principle: never ask for the meaning of a word in isolation, but only in the context of a proposition. This is the linguistic turn in one sentence.","Received Russell's letter in 1902, showing his system generated a contradiction, just as volume two of the Grundgesetze went to press, and added an appendix admitting the foundation had given way.","Little understood in his lifetime though not unreviewed; his political diary of spring 1924 records violent antisemitism."],
  works:["Begriffsschrift; The Foundations of Arithmetic; On Sense and Reference; Basic Laws of Arithmetic."],
  th:["lang","know","univ","being"]},
 
-{id:"husserl",n:"Edmund Husserl",b:1859,d:1938,tr:"continental",sch:"Phenomenology",pl:"Halle, G&ouml;ttingen, Freiburg",
+{id:"husserl",ti:2,n:"Edmund Husserl",b:1859,d:1938,tr:"continental",sch:"Phenomenology",pl:"Halle, G&ouml;ttingen, Freiburg",
  one:"Back to the things themselves: describe consciousness as it presents itself.",
  ideas:["Trained as a mathematician under Weierstrass, and his first target was psychologism, the attempt to reduce logical laws to laws of thinking.","Took <em>intentionality</em> from his teacher Brentano: consciousness is always consciousness <em>of</em> something. There is no bare awareness.","The <em>epoch&#275;</em> or phenomenological reduction: bracket the question of whether the world exists, not to doubt it but to set it aside, so that the structures of experience can be described without smuggling in assumptions.","Later introduced the <em>Lebenswelt</em>, the lifeworld of pre-scientific experience on which science is built and which it forgets.","Removed from the University of Freiburg under the Nazi race laws in 1933; his successor Heidegger did not intervene.","His forty thousand pages of shorthand manuscripts were smuggled to Leuven in 1938 by a Franciscan, Herman Van Breda."],
  works:["Logical Investigations; Ideas I; Cartesian Meditations; The Crisis of the European Sciences."],
  th:["know","mind","being"]},
 
-{id:"bergson",n:"Henri Bergson",b:1859,d:1941,tr:"continental",sch:"Process philosophy / vitalism",pl:"Paris",
+{id:"bergson",ti:4,n:"Henri Bergson",b:1859,d:1941,tr:"continental",sch:"Process philosophy / vitalism",pl:"Paris",
  one:"Lived time is duration, not the spatialised time of clocks.",
  ideas:["<em>Dur&eacute;e</em>: real time is a continuous qualitative flow that cannot be broken into instants without being falsified. Science measures the falsification.","Intuition grasps duration from within; intellect analyses by dividing and freezing, which is useful for action and useless for life.","<em>&Eacute;lan vital</em>: evolution is a creative surge, not the mere unfolding of a program.","The most famous philosopher alive around 1910, then eclipsed after a public dispute with Einstein about the nature of time in 1922. Nobel Prize in Literature in 1927.","Reportedly stood in line in occupied Paris in 1940 to register as a Jew rather than accept an exemption, and died shortly after."],
  works:["Time and Free Will; Matter and Memory; Creative Evolution."],
  th:["being","mind","free","know"]},
 
-{id:"whitehead",n:"Alfred North Whitehead",b:1861,d:1947,tr:"analytic",sch:"Process philosophy",pl:"Cambridge, London, Harvard",
+{id:"whitehead",ti:4,n:"Alfred North Whitehead",b:1861,d:1947,tr:"analytic",sch:"Process philosophy",pl:"Cambridge, London, Harvard",
  one:"Reality is made of events and processes, not enduring substances.",
  ideas:["Co-wrote Principia Mathematica with Russell, his former student, over ten years of daily labour.","Then turned to metaphysics, arguing that the basic units of reality are 'actual occasions', momentary events of experience, not bits of matter persisting through time.","The fallacy of misplaced concreteness: mistaking an abstraction, such as a point-instant or a simple location, for the concrete reality it was drawn from.","His process theology, in which God is affected by the world rather than immutable, became a school of its own."],
  works:["Principia Mathematica (with Russell); Science and the Modern World; Process and Reality."],
  th:["being","know"]},
 
-{id:"russell",n:"Bertrand Russell",b:1872,d:1970,tr:"analytic",sch:"Logical atomism",pl:"Cambridge and London",
+{id:"russell",ti:2,n:"Bertrand Russell",b:1872,d:1970,tr:"analytic",sch:"Logical atomism",pl:"Cambridge and London",
  one:"Analyse language into logical form and the puzzles dissolve.",
  ideas:["Found the paradox in 1901 that broke Frege's system: consider the set of all sets that are not members of themselves.","Principia Mathematica, with Whitehead, spent hundreds of pages reaching a proof that 1 + 1 = 2. G&ouml;del showed in 1931 that the programme could not be completed.","The theory of descriptions, in 'On Denoting' (1905): 'the present King of France is bald' is not about a mysterious non-existent king. It says there is exactly one thing that is king of France and it is bald, which is simply false. Ramsey called it a paradigm of philosophy.","Logical atomism: the world is a plurality of facts, and a correct logical language would mirror their structure.","Sentenced to six months in 1918 for anti-war writing and served four and a half; later campaigned against nuclear weapons into his nineties. Nobel Prize in Literature, 1950.","Recognised Wittgenstein's ability immediately, then was largely displaced by him."],
  works:["The Principles of Mathematics; On Denoting; Principia Mathematica; The Problems of Philosophy; A History of Western Philosophy."],
  th:["lang","know","being","univ"]},
 
-{id:"moore",n:"G. E. Moore",b:1873,d:1958,tr:"analytic",sch:"Common-sense realism / metaethics",pl:"Cambridge",
+{id:"moore",ti:3,n:"G. E. Moore",b:1873,d:1958,tr:"analytic",sch:"Common-sense realism / metaethics",pl:"Cambridge",
  one:"Good is indefinable, and here is one hand.",
  ideas:["With Russell, revolted against the British Idealism of Bradley and McTaggart and restored a realist common sense.","The naturalistic fallacy: any attempt to define 'good' as some natural property (pleasant, desired, conducive to survival) leaves the open question 'but is that good?' still intelligible, which shows the definition failed.","Good is therefore a simple, unanalysable, non-natural quality, known by intuition. This launched metaethics as a distinct field.","'Here is one hand, and here is another' was his answer to scepticism about the external world: the premises of the sceptical argument are less certain than the conclusion it denies.","Principia Ethica shaped the Bloomsbury Group's view of what matters, personal affection and aesthetic enjoyment."],
  works:["Principia Ethica; Proof of an External World; A Defence of Common Sense."],
  th:["good","know","being"]},
 
-{id:"wittgenstein",n:"Ludwig Wittgenstein",b:1889,d:1951,tr:"analytic",sch:"Logical atomism, then ordinary language",pl:"Vienna, Cambridge, Norway",
+{id:"wittgenstein",ti:2,n:"Ludwig Wittgenstein",b:1889,d:1951,tr:"analytic",sch:"Logical atomism, then ordinary language",pl:"Vienna, Cambridge, Norway",
  one:"Two philosophies, the second a refutation of the first.",
  ideas:["Born into one of the wealthiest families in Vienna, gave away his entire inheritance, and spent years as a village schoolteacher, a gardener and a hospital porter.","Early, in the Tractatus, written partly in the trenches: a proposition is a picture of a possible state of affairs, sharing logical form with what it depicts. What can be said at all can be said clearly, and the rest, ethics, aesthetics, the meaning of life, shows itself but cannot be stated.","Believing he had solved the problems of philosophy, he left the field for a decade.","Later, in the Investigations, he dismantled his own picture theory. Meaning is not a relation to an object but a role in a practice: <em>meaning is use</em>, within <em>language-games</em> embedded in <em>forms of life</em>.","There can be no private language, since without a public criterion nothing separates using a word correctly from believing one has; whether that requires an actual community is disputed.","Philosophical problems are not solved but dissolved. They arise 'when language goes on holiday', and the job is therapeutic: to show the fly the way out of the fly-bottle.","The Tractatus fathered logical positivism; the Investigations fathered ordinary language philosophy. Few thinkers have founded two movements, still fewer by contradicting themselves."],
  works:["Tractatus Logico-Philosophicus; Philosophical Investigations; On Certainty; Blue and Brown Books."],
  th:["lang","know","mind","being"],q:{t:"Whereof one cannot speak, thereof one must be silent.",s:"Tractatus Logico-Philosophicus 7, tr. C. K. Ogden, 1922; the German text appeared in 1921"}},
 
-{id:"carnap",n:"Rudolf Carnap",b:1891,d:1970,tr:"analytic",sch:"Logical positivism / Vienna Circle",pl:"Vienna, Prague, Chicago, Los Angeles",
+{id:"carnap",ti:3,n:"Rudolf Carnap",b:1891,d:1970,tr:"analytic",sch:"Logical positivism / Vienna Circle",pl:"Vienna, Prague, Chicago, Los Angeles",
  one:"The leading builder of logical empiricism.",
  ideas:["Central figure of the Vienna Circle, which met around Moritz Schlick from 1924 and dissolved after Schlick was murdered in 1936 and the members scattered, most of them to America.","The verification principle: a sentence is cognitively meaningful only if it is analytic or empirically verifiable. Metaphysics, theology and ethics come out not false but meaningless.","'The Elimination of Metaphysics through Logical Analysis of Language' takes Heidegger's 'the nothing itself nothings' as its worked example.","Later replaced the crude criterion with the distinction between internal questions, asked inside a linguistic framework, and external ones, which are practical choices of framework rather than factual claims.","Principle of tolerance: in logic there are no morals, everyone is free to build their own language, provided they state its rules clearly."],
  works:["The Logical Structure of the World; The Logical Syntax of Language; Meaning and Necessity."],
  th:["know","lang","being"]},
 
-{id:"popper",n:"Karl Popper",b:1902,d:1994,tr:"analytic",sch:"Critical rationalism",pl:"Vienna, New Zealand, London",
+{id:"popper",ti:3,n:"Karl Popper",b:1902,d:1994,tr:"analytic",sch:"Critical rationalism",pl:"Vienna, New Zealand, London",
  one:"Science advances by trying to refute its own theories.",
  ideas:["Rejected verification and induction alike. No number of white swans verifies 'all swans are white', but one black swan refutes it, so the logic of science is falsification.","Demarcation: what separates science from pseudo-science is not proof but risk. A scientific theory forbids things, so it can fail. Marxism and psychoanalysis explained everything and forbade nothing.","Theories are never proved, only corroborated so far. Knowledge grows by conjectures and refutations.","The Open Society and Its Enemies, written in exile during the war, attacks Plato, Hegel and Marx as historicists whose claim to know history's laws licenses tyranny.","The paradox of tolerance: unlimited tolerance leads to the disappearance of tolerance, since the intolerant will not reciprocate."],
  works:["The Logic of Scientific Discovery; Conjectures and Refutations; The Open Society and Its Enemies."],
  th:["know","just"]},
 
-{id:"ryle",n:"Gilbert Ryle",b:1900,d:1976,tr:"analytic",sch:"Ordinary language philosophy",pl:"Oxford",
+{id:"ryle",ti:4,n:"Gilbert Ryle",b:1900,d:1976,tr:"analytic",sch:"Ordinary language philosophy",pl:"Oxford",
  one:"The mind is not a ghost in a machine.",
  ideas:["Named Cartesian dualism 'the dogma of the ghost in the machine' and argued it rests on a category mistake.","A category mistake is like being shown the colleges, libraries and playing fields and then asking where the university is. Mind is not a further thing alongside behaviour and capacities; it is a way of describing them.","Distinguished knowing how from knowing that: skill is not the internal rehearsal of propositions.","Edited Mind for twenty-five years and shaped a generation of Oxford philosophy."],
  works:["The Concept of Mind; Dilemmas."],
  th:["mind","lang"]},
 
-{id:"austin",n:"J. L. Austin",b:1911,d:1960,tr:"analytic",sch:"Ordinary language philosophy",pl:"Oxford",
+{id:"austin",ti:4,n:"J. L. Austin",b:1911,d:1960,tr:"analytic",sch:"Ordinary language philosophy",pl:"Oxford",
  one:"Saying something is usually doing something.",
  ideas:["Speech act theory: 'I promise', 'I name this ship', 'I do' are not descriptions that can be true or false but performances that can succeed or misfire.","Distinguished the locutionary act (what is said), the illocutionary act (what is done in saying it) and the perlocutionary effect (what it brings about).","Argued that the vast stock of distinctions embedded in ordinary language has survived because it is useful, and is a better starting point than a philosopher's invented terminology.","Sense and Sensibilia dismantles the argument from illusion and the sense-datum theory."],
  works:["How to Do Things with Words; Sense and Sensibilia; Philosophical Papers."],
  th:["lang","know"]},
 
-{id:"quine",n:"W. V. O. Quine",b:1908,d:2000,tr:"analytic",sch:"Naturalised epistemology",pl:"Harvard",
+{id:"quine",ti:3,n:"W. V. O. Quine",b:1908,d:2000,tr:"analytic",sch:"Naturalised epistemology",pl:"Harvard",
  one:"There is no sharp line between analytic and synthetic, and no belief faces experience alone.",
  ideas:["'Two Dogmas of Empiricism' (1951) took apart logical positivism from the inside. The first dogma is the analytic-synthetic distinction, which he argued cannot be defined without circling through synonymy and back again.","The second is reductionism, the idea that each statement has its own confirming experiences. Instead our beliefs 'face the tribunal of experience' as a corporate body: a web of belief, with logic and mathematics at the centre and observation at the edge, and any statement can be held true if we revise enough elsewhere.","Ontological relativity and the indeterminacy of translation: 'gavagai' might mean rabbit, or undetached rabbit part, and no amount of behavioural evidence decides.","'To be is to be the value of a bound variable' made ontology a question about what our best theories quantify over.","Naturalised epistemology: give up the search for foundations and study knowing as a chapter of psychology."],
  works:["Two Dogmas of Empiricism; Word and Object; From a Logical Point of View; Ontological Relativity."],
  th:["know","lang","being","univ"]},
 
-{id:"ayer",n:"A. J. Ayer",b:1910,d:1989,tr:"analytic",sch:"Logical positivism",pl:"Oxford and London",
+{id:"ayer",ti:4,n:"A. J. Ayer",b:1910,d:1989,tr:"analytic",sch:"Logical positivism",pl:"Oxford and London",
  one:"Brought logical positivism to Britain, at twenty-four.",
  ideas:["Went to Vienna in 1933, sat in on the Circle, and wrote Language, Truth and Logic in 1936.","Argued that metaphysical statements are literally senseless, being neither analytic nor verifiable.","Emotivism: moral judgements express feelings and seek to influence, rather than state facts. 'Stealing is wrong' says no more than 'stealing' in a tone of disapproval.","Later conceded the book was almost entirely wrong, while remaining glad he wrote it."],
  works:["Language, Truth and Logic; The Problem of Knowledge."],
  th:["know","good","lang"]},
 
-{id:"anscombe",n:"G. E. M. Anscombe",b:1919,d:2001,tr:"analytic",sch:"Action theory / virtue ethics",pl:"Cambridge and Oxford",
+{id:"anscombe",ti:4,n:"G. E. M. Anscombe",b:1919,d:2001,tr:"analytic",sch:"Action theory / virtue ethics",pl:"Cambridge and Oxford",
  one:"Restarted virtue ethics, and made intention a philosophical subject.",
  ideas:["'Modern Moral Philosophy' (1958) argued that the concepts of moral obligation and duty are survivals from a law conception of ethics that has lost its lawgiver, and are therefore incoherent without it. She urged a return to Aristotle, and coined 'consequentialism' as a term of criticism.","Intention: what makes an event an action is that a certain sense of the question 'why?' applies to it, one that asks for a reason rather than a cause.","Wittgenstein's student, literary executor and translator of the Philosophical Investigations.","Publicly protested Oxford's honorary degree for Truman in 1956, on the ground that he had ordered the deliberate killing of civilians."],
  works:["Intention; Modern Moral Philosophy; An Introduction to Wittgenstein's Tractatus."],
  th:["good","mind","free"]},
 
-{id:"kuhn",n:"Thomas Kuhn",b:1922,d:1996,tr:"analytic",sch:"History and philosophy of science",pl:"Harvard, Berkeley, Princeton, MIT",
+{id:"kuhn",ti:3,n:"Thomas Kuhn",b:1922,d:1996,tr:"analytic",sch:"History and philosophy of science",pl:"Harvard, Berkeley, Princeton, MIT",
  one:"Science alternates between routine puzzle-solving and revolution.",
  ideas:["A physicist who, while teaching a history course, tried to understand Aristotle's physics and realised it was not bad Newton but a coherent scheme with different questions.","Normal science works inside a <em>paradigm</em>, an accepted framework of theory, method and exemplary problem-solutions. Most scientists spend their lives solving puzzles it defines.","Anomalies accumulate, a crisis develops, and a new paradigm replaces the old in a shift that is not a simple accumulation of truth.","Paradigms are <em>incommensurable</em>: terms shift meaning across the divide, and there is no neutral observation language to adjudicate, because observation is theory-laden.","Structure is among the most cited academic books ever written, and Kuhn spent much of his later life resisting the relativist readings of it."],
  works:["The Structure of Scientific Revolutions; The Copernican Revolution; The Essential Tension."],
  th:["know","lang"]},
 
-{id:"lakatos",n:"Imre Lakatos",b:1922,d:1974,tr:"analytic",sch:"Philosophy of science",pl:"Hungary, then London",
+{id:"lakatos",ti:4,n:"Imre Lakatos",b:1922,d:1974,tr:"analytic",sch:"Philosophy of science",pl:"Hungary, then London",
  one:"Between Popper and Kuhn: research programmes, progressive or degenerating.",
  ideas:["Imprisoned in Stalinist Hungary, fled after 1956, and became Popper's most interesting critic.","The unit of appraisal is not a single theory but a research programme, with a hard core held immune by decision and a protective belt of auxiliary hypotheses that absorb refutations.","A programme is progressive if its modifications predict novel facts that are then found, and degenerating if they only patch failures after the event. That keeps Popper's rationality without his naive falsificationism.","Proofs and Refutations shows mathematics itself growing by conjecture, counterexample and the reworking of concepts, using the history of Euler's polyhedron formula."],
  works:["Proofs and Refutations; The Methodology of Scientific Research Programmes."],
  th:["know"]},
 
-{id:"feyerabend",n:"Paul Feyerabend",b:1924,d:1994,tr:"analytic",sch:"Epistemological anarchism",pl:"Vienna, Bristol, Berkeley",
+{id:"feyerabend",ti:4,n:"Paul Feyerabend",b:1924,d:1994,tr:"analytic",sch:"Epistemological anarchism",pl:"Vienna, Bristol, Berkeley",
  one:"There is no single scientific method. Anything goes.",
  ideas:["Argued from case studies, especially Galileo, that every methodological rule has been broken at some point by scientists who turned out to be right, and that progress required breaking it.","'Anything goes' is not advice but the only rule that survives the historical record, offered with deliberate provocation.","Counter-induction: sometimes you should develop hypotheses inconsistent with well-established facts, since the facts may be artefacts of the theory being challenged.","Held that science should not have a privileged place in a free society, a position most philosophers of science rejected and which he pressed anyway."],
  works:["Against Method; Science in a Free Society; Farewell to Reason."],
  th:["know"]},
 
-{id:"rawls",n:"John Rawls",b:1921,d:2002,tr:"analytic",sch:"Political liberalism",pl:"Harvard",
+{id:"rawls",ti:3,n:"John Rawls",b:1921,d:2002,tr:"analytic",sch:"Political liberalism",pl:"Harvard",
  one:"Justice is what we would choose if we did not know who we would be.",
  ideas:["A Theory of Justice (1971) revived normative political philosophy, which had been widely declared dead by the positivists.","The original position: parties choose principles for their society behind a <em>veil of ignorance</em> that hides their class, talents, race, sex and conception of the good. Whatever they choose is fair, because nobody can rig it in their own favour.","They would choose, first, equal basic liberties for all, and second, that social and economic inequalities be attached to offices open to all and arranged to the greatest benefit of the least advantaged, the <em>difference principle</em>.","Liberty has lexical priority: you cannot trade basic freedoms for economic gains.","Later, in Political Liberalism, asked how a just society is possible when citizens hold irreconcilable but reasonable comprehensive doctrines, and answered with overlapping consensus and public reason.","Fought in the Pacific in the Second World War, and refused most honours afterwards."],
  works:["A Theory of Justice; Political Liberalism; The Law of Peoples."],
  th:["just","good"]},
 
-{id:"nozick",n:"Robert Nozick",b:1938,d:2002,tr:"analytic",sch:"Libertarianism",pl:"Harvard",
+{id:"nozick",ti:4,n:"Robert Nozick",b:1938,d:2002,tr:"analytic",sch:"Libertarianism",pl:"Harvard",
  one:"Justice is about how holdings came about, not how they are distributed.",
  ideas:["Anarchy, State, and Utopia (1974) was written as a reply to Rawls, and opened by conceding that political philosophers must now work within Rawls' theory or explain why not.","Entitlement theory: a distribution is just if everyone is entitled to what they hold, through just original acquisition or just voluntary transfer, plus rectification of past injustice. There is no separate pattern to match.","The Wilt Chamberlain argument: start from any distribution you consider just, let a million people each freely pay a quarter to watch him play, and the pattern is destroyed by nothing but voluntary acts. Preserving a pattern therefore requires continuous interference with free exchange.","Taxation of earnings from labour is on a par with forced labour.","Only a minimal state, limited to protection against force, theft and fraud and to enforcing contracts, is justified.","The experience machine argument against hedonism: most people would not plug into a machine giving perfect simulated pleasure, so pleasure is not all we want."],
  works:["Anarchy, State, and Utopia; Philosophical Explanations; The Examined Life."],
  th:["just","good"]},
 
-{id:"kripke",n:"Saul Kripke",b:1940,d:2022,tr:"analytic",sch:"Modal logic / metaphysics of reference",pl:"Princeton and New York",
+{id:"kripke",ti:4,n:"Saul Kripke",b:1940,d:2022,tr:"analytic",sch:"Modal logic / metaphysics of reference",pl:"Princeton and New York",
  one:"Names refer through causal chains, and some necessary truths are discovered.",
  ideas:["Published a completeness proof for modal logic, giving possible-world semantics, while still a teenager.","Naming and Necessity (1970, delivered as lectures without notes) attacked the description theory of names: 'Aristotle' does not abbreviate 'the teacher of Alexander', since Aristotle might never have taught him and would still have been Aristotle.","Names are <em>rigid designators</em>, picking out the same individual in every possible world where that individual exists, and reference is fixed by an initial baptism and passed down a causal-historical chain of use.","Prised apart necessity, an metaphysical notion, from the a priori, an epistemic one. 'Water is H2O' is necessarily true if true at all, yet was discovered by experiment: a <em>necessary a posteriori</em> truth. And there are contingent a priori truths too.","This made essentialism respectable again in analytic philosophy after decades of positivist hostility.","Wittgenstein on Rules and Private Language proposed a sceptical paradox about rule-following that is now discussed as 'Kripkenstein', whoever it belongs to."],
  works:["Naming and Necessity; Wittgenstein on Rules and Private Language; Semantical Considerations on Modal Logic."],
  th:["lang","being","know","univ"]},
 
-{id:"macintyre",n:"Alasdair MacIntyre",b:1929,d:2025,tr:"analytic",sch:"Virtue ethics / communitarianism",pl:"Britain, then the United States",
+{id:"macintyre",ti:4,n:"Alasdair MacIntyre",b:1929,d:2025,tr:"analytic",sch:"Virtue ethics / communitarianism",pl:"Britain, then the United States",
  one:"Modern moral language is the wreckage of a tradition it no longer has.",
  ideas:["After Virtue (1981) opens with a thought experiment: imagine science destroyed and later reconstructed from fragments, so people use its terms without the framework that made them intelligible. That, he argues, is the state of our moral vocabulary.","Without Aristotle's teleology, a conception of what humans are for, moral claims lose their ground, and disagreement becomes interminable. Emotivism is then a correct description of what moral talk has become.","Rebuilt virtue ethics through practices, which have internal goods and standards of excellence, the narrative unity of a human life, and the traditions that carry both.","Rationality itself is tradition-constituted: there is no view from nowhere from which to adjudicate between rival traditions, but traditions can still be compared by how well each handles its own crises."],
  works:["After Virtue; Whose Justice? Which Rationality?; Dependent Rational Animals."],
@@ -2000,97 +2038,97 @@ P.push(
 );
 /* ---------- CONTINENTAL ---------- */
 P.push(
-{id:"heidegger",n:"Martin Heidegger",b:1889,d:1976,tr:"continental",sch:"Fundamental ontology",pl:"Messkirch, Marburg, Freiburg",
+{id:"heidegger",ti:2,n:"Martin Heidegger",b:1889,d:1976,tr:"continental",sch:"Fundamental ontology",pl:"Messkirch, Marburg, Freiburg",
  one:"We forgot the question of Being. Start again from the being that asks it.",
  ideas:["Turned Husserl's phenomenology from a description of consciousness into an inquiry into Being itself, which he says the whole tradition since Plato has covered over by treating Being as if it were just another being.","<em>Dasein</em>, literally being-there, is his name for us, chosen to avoid 'subject', 'mind' and 'person', all of which smuggle in Cartesian assumptions.","We are <em>being-in-the-world</em>, not subjects contemplating objects. The primary way we meet a hammer is by hammering; it becomes an object of theoretical inspection only when it breaks.","<em>Thrownness</em>: we always find ourselves already in a situation, a language and a history we did not choose. And we are <em>care</em>, always ahead of ourselves in projects.","Mostly we live as <em>das Man</em>, the anonymous 'they' that decides what one does. Anxiety strips this away by making the world uninteresting and confronting us with our own existence.","<em>Being-toward-death</em>: death is my ownmost possibility, non-relational and not to be outstripped. Facing it is what makes an authentic life possible.","Joined the Nazi party in 1933 and served as rector of Freiburg, never clearly repudiated it, and the Black Notebooks published from 2014 show antisemitism woven into his thought. How far this contaminates the philosophy is genuinely unresolved."],
  works:["Being and Time; What is Metaphysics?; The Question Concerning Technology; Letter on Humanism."],
  th:["being","mind","free","good","lang"]},
 
-{id:"horkheimer",n:"Max Horkheimer",b:1895,d:1973,tr:"continental",sch:"Frankfurt School",pl:"Frankfurt, New York, Frankfurt",
+{id:"horkheimer",ti:4,n:"Max Horkheimer",b:1895,d:1973,tr:"continental",sch:"Frankfurt School",pl:"Frankfurt, New York, Frankfurt",
  one:"Built critical theory as a programme with a practical aim.",
  ideas:["Director of the Institute for Social Research from 1930, who moved it to Geneva and then Columbia ahead of the Nazis and brought it back to Frankfurt in 1950.","Distinguished traditional theory, which describes, from critical theory, which aims at emancipation and includes itself in what it explains.","With Adorno wrote Dialectic of Enlightenment in Californian exile: enlightenment reason, in freeing us from myth, turned into pure instrumental calculation of means, and so produced new domination. 'Enlightenment is totalitarian.'","Assembled a genuinely interdisciplinary programme, joining philosophy with empirical social research and psychoanalysis."],
  works:["Traditional and Critical Theory; Dialectic of Enlightenment (with Adorno); Eclipse of Reason."],
  th:["just","know","good"]},
 
-{id:"benjamin",n:"Walter Benjamin",b:1892,d:1940,tr:"continental",sch:"Critical theory / Marxist messianism",pl:"Berlin, Paris, Portbou",
+{id:"benjamin",ti:4,n:"Walter Benjamin",b:1892,d:1940,tr:"continental",sch:"Critical theory / Marxist messianism",pl:"Berlin, Paris, Portbou",
  one:"Read modernity through its discarded objects.",
  ideas:["Argued that mechanical reproduction strips an artwork of its <em>aura</em>, its unique presence in time and place, which changes what art is and can do politically.","The Arcades Project, unfinished, tried to write the prehistory of the nineteenth century out of the debris of Parisian shopping arcades.","'There is no document of civilisation which is not at the same time a document of barbarism.'","The angel of history, taken from a Klee print, is blown backwards into the future by the storm of progress while the wreckage piles up before him.","Took his own life at the Spanish border in 1940, believing his escape from occupied France had failed."],
  works:["The Work of Art in the Age of Mechanical Reproduction; Theses on the Philosophy of History; The Arcades Project."],
  th:["just","good","know"]},
 
-{id:"marcuse",n:"Herbert Marcuse",b:1898,d:1979,tr:"continental",sch:"Frankfurt School",pl:"Berlin, then the United States",
+{id:"marcuse",ti:4,n:"Herbert Marcuse",b:1898,d:1979,tr:"continental",sch:"Frankfurt School",pl:"Berlin, then the United States",
  one:"Advanced industrial society buys consent by satisfying false needs.",
  ideas:["One-Dimensional Man argues that affluence and consumption absorb opposition, so a society can be unfree without needing overt repression.","'Repressive tolerance': formally tolerating all views, in a society with wildly unequal means of being heard, can serve to entrench the status quo.","Eros and Civilization reworks Freud to argue that the level of repression modern society demands is no longer technically necessary.","Became the intellectual figurehead of the New Left and the student movements of 1968, a role he had not sought and did not entirely welcome."],
  works:["One-Dimensional Man; Eros and Civilization; Reason and Revolution."],
  th:["just","good","free"]},
 
-{id:"adorno",n:"Theodor Adorno",b:1903,d:1969,tr:"continental",sch:"Frankfurt School",pl:"Frankfurt, Oxford, Los Angeles",
+{id:"adorno",ti:3,n:"Theodor Adorno",b:1903,d:1969,tr:"continental",sch:"Frankfurt School",pl:"Frankfurt, Oxford, Los Angeles",
  one:"Thought must resist the systems it cannot help building.",
  ideas:["Negative dialectics: the concept never exhausts the object, and philosophy's task is to keep faith with what falls outside it rather than to complete a system.","With Horkheimer, the culture industry: mass culture is industrially produced, standardised, and works to make people fit for the order that produces it.","Minima Moralia, written in exile, is philosophy in aphorisms about damaged life. 'There is no right life in the wrong one.'","Also a trained composer, a student of Alban Berg, and a serious music theorist who championed Schoenberg and attacked jazz.","His 'to write poetry after Auschwitz is barbaric' is almost always quoted without the qualifications he later added.","Confronted by protesting students in 1969 who found his refusal to endorse direct action a betrayal; he died of a heart attack months later."],
  works:["Dialectic of Enlightenment; Negative Dialectics; Minima Moralia; Aesthetic Theory."],
  th:["good","know","just"]},
 
-{id:"sartre",n:"Jean-Paul Sartre",b:1905,d:1980,tr:"continental",sch:"Existentialism",pl:"Paris",
+{id:"sartre",ti:3,n:"Jean-Paul Sartre",b:1905,d:1980,tr:"continental",sch:"Existentialism",pl:"Paris",
  one:"Existence precedes essence. We are what we make of ourselves.",
  ideas:["For a paper knife, essence precedes existence: the design comes before the object. For us there is no designer and no blueprint, so we exist first and define ourselves after.","Consciousness is a nothingness, a hole in being, which is why it can never coincide with itself as a table coincides with itself.","We are <em>condemned to be free</em>: not free to choose our situation, but unable to avoid choosing how to take it up. Even refusing to choose is a choice.","<em>Bad faith</em> is fleeing that freedom by pretending to be a thing with a fixed nature: the waiter playing at being a waiter, the coward telling himself he was born that way.","Others turn me into an object by looking at me, which is why 'hell is other people' in No Exit is about the gaze, not about company.","Turned to Marxism after the war and tried to fuse it with existentialism, arguing that freedom is always exercised within material conditions.","Refused the Nobel Prize in Literature in 1964, on the ground that a writer should not let himself be turned into an institution.","Lifelong partner of Simone de Beauvoir, in an open relationship they both wrote about."],
  works:["Being and Nothingness; Existentialism is a Humanism; Nausea; No Exit; Critique of Dialectical Reason."],
  th:["free","being","good","mind"],q:{t:"Man is condemned to be free; because once thrown into the world, he is responsible for everything he does.",s:"Existentialism is a Humanism, 1946"}},
 
-{id:"beauvoir",n:"Simone de Beauvoir",b:1908,d:1986,tr:"continental",sch:"Existentialism / feminist philosophy",pl:"Paris",
+{id:"beauvoir",ti:3,n:"Simone de Beauvoir",b:1908,d:1986,tr:"continental",sch:"Existentialism / feminist philosophy",pl:"Paris",
  one:"One is not born, but rather becomes, a woman.",
  ideas:["The Second Sex (1949) applies existentialist categories to sex: femininity is not a nature but a situation, produced and enforced.","Woman has been constituted as the Other, defined relative to man as the norm, so that 'he is the Subject, he is the Absolute; she is the Other'.","Two volumes: the first on biology, psychoanalysis and history, the second on lived experience from childhood to old age. It sold twenty-two thousand copies in its first week and was placed on the Vatican's index.","The Ethics of Ambiguity is arguably a better worked-out existentialist ethics than Sartre managed, grounding obligation in the fact that my freedom requires the freedom of others.","Also wrote a serious philosophical treatment of ageing, The Coming of Age, at a time when nobody else did."],
  works:["The Second Sex; The Ethics of Ambiguity; The Mandarins; The Coming of Age."],
  th:["free","good","just","being"],q:{t:"One is not born, but rather becomes, a woman.",s:"The Second Sex, 1949"}},
 
-{id:"merleau-ponty",n:"Maurice Merleau-Ponty",b:1908,d:1961,tr:"continental",sch:"Phenomenology of the body",pl:"Paris",
+{id:"merleau-ponty",ti:4,n:"Maurice Merleau-Ponty",b:1908,d:1961,tr:"continental",sch:"Phenomenology of the body",pl:"Paris",
  one:"We are not minds attached to bodies. We are bodies that perceive.",
  ideas:["Against both intellectualism and empiricism: perception is not a mind interpreting sensations, nor a body receiving stimuli, but a bodily engagement with a world already meaningful.","The lived body is not an object among objects. It is the point of view from which there are objects at all, and I know where my hand is without looking.","Drew heavily on Gestalt psychology and on cases of neurological damage, treating empirical work as philosophically load-bearing.","Perception is always perspectival and never complete, so ambiguity is not a defect to be cleared up but the condition of having a world.","Broke with Sartre over the Korean War and Soviet labour camps, and edited Les Temps Modernes until then.","Prefigured a great deal of later embodied and enactive cognitive science."],
  works:["Phenomenology of Perception; The Structure of Behavior; The Visible and the Invisible."],
  th:["mind","know","being"]},
 
-{id:"camus",n:"Albert Camus",b:1913,d:1960,tr:"continental",sch:"Absurdism",pl:"Algeria and Paris",
+{id:"camus",ti:3,n:"Albert Camus",b:1913,d:1960,tr:"continental",sch:"Absurdism",pl:"Algeria and Paris",
  one:"Life has no given meaning, and the answer is to live anyway.",
  ideas:["The absurd is not a property of the world or of us but the confrontation between the human demand for meaning and the world's silence.","'There is but one truly serious philosophical problem, and that is suicide.' His answer is no: suicide and the leap of faith both dissolve the tension rather than living it.","Sisyphus, condemned to roll his rock forever, is the absurd hero because he is conscious and does not consent to despair. One must imagine Sisyphus happy.","The Rebel argues that rebellion affirms a value and therefore has limits, which is where it parts from revolution that licenses murder. The argument ended his friendship with Sartre.","Rejected the existentialist label. Nobel Prize in Literature 1957, at forty-four. Killed in a car crash three years later with an unused train ticket in his pocket."],
  works:["The Myth of Sisyphus; The Stranger; The Plague; The Rebel."],
  th:["good","free","being"],q:{t:"One must imagine Sisyphus happy.",s:"The Myth of Sisyphus, 1942"}},
 
-{id:"gadamer",n:"Hans-Georg Gadamer",b:1900,d:2002,tr:"continental",sch:"Philosophical hermeneutics",pl:"Marburg, Leipzig, Heidelberg",
+{id:"gadamer",ti:4,n:"Hans-Georg Gadamer",b:1900,d:2002,tr:"continental",sch:"Philosophical hermeneutics",pl:"Marburg, Leipzig, Heidelberg",
  one:"Understanding is a conversation across historical distance.",
  ideas:["Prejudices are not simply errors. They are the pre-judgements handed to us by tradition that make any understanding possible at all; the task is to become aware of them, not to escape them.","Understanding a text is a <em>fusion of horizons</em>, in which my situation and the text's meet and both are altered. There is no reconstructing the author's original intention untouched.","'Effective history': we are shaped by the history of a work's reception before we ever open it.","Debated Habermas, who worried that tradition can transmit domination as easily as insight, and Derrida, who doubted that any fusion occurs.","Lived to 102, publishing into his nineties."],
  works:["Truth and Method; Philosophical Hermeneutics."],
  th:["know","lang","being"]},
 
-{id:"levinas",n:"Emmanuel Levinas",b:1906,d:1995,tr:"continental",sch:"Ethics as first philosophy",pl:"Lithuania, then France",
+{id:"levinas",ti:4,n:"Emmanuel Levinas",b:1906,d:1995,tr:"continental",sch:"Ethics as first philosophy",pl:"Lithuania, then France",
  one:"Ethics comes before ontology. The other person makes a claim on me.",
  ideas:["Introduced Husserl and Heidegger to France, then argued that the whole tradition, in asking first about Being, subordinates the other person to a system that comprehends them.","The face of the other resists being turned into a concept. It commands, before any argument, 'thou shalt not kill'.","Responsibility is not chosen and not symmetrical: I am responsible for the other, and even for the other's responsibility, without expecting return.","Spent the war in a prisoner-of-war camp as a French soldier; most of his Lithuanian family were murdered in the Holocaust, which is the unstated pressure behind the work."],
  works:["Totality and Infinity; Otherwise than Being; Time and the Other."],
  th:["good","being","mind"]},
 
-{id:"arendt",n:"Hannah Arendt",b:1906,d:1975,tr:"continental",sch:"Political theory",pl:"Germany, then New York",
+{id:"arendt",ti:3,n:"Hannah Arendt",b:1906,d:1975,tr:"continental",sch:"Political theory",pl:"Germany, then New York",
  one:"Politics is what happens when plural people act together in public.",
  ideas:["The Origins of Totalitarianism argues that Nazism and Stalinism were a new form of rule, not merely extreme tyranny, resting on ideology, terror and the atomisation of mass society.","In The Human Condition she distinguishes labour (which sustains life), work (which builds a durable world) and action (which discloses who we are among others), and argues that modernity has collapsed the third into the first two.","'Natality', the fact that new beginnings keep entering the world, is her counterweight to Heidegger's being-toward-death.","Reporting on Eichmann's trial, she coined 'the banality of evil' to describe a functionary who did not think rather than a monster. The phrase was widely misread as excusing him, and cost her friendships for life.","Studied under Heidegger, who was also her lover, and under Jaspers; fled Germany in 1933 and France in 1941. Resisted the label 'philosopher', preferring political theorist."],
  works:["The Origins of Totalitarianism; The Human Condition; Eichmann in Jerusalem; The Life of the Mind."],
  th:["just","good","free"]},
 
-{id:"habermas",n:"J&uuml;rgen Habermas",b:1929,d:2026,alive:1,tr:"continental",sch:"Frankfurt School, second generation",pl:"Frankfurt",
+{id:"habermas",ti:3,n:"J&uuml;rgen Habermas",b:1929,d:2026,alive:1,tr:"continental",sch:"Frankfurt School, second generation",pl:"Frankfurt",
  one:"Reason survives, in the structure of communication itself.",
  ideas:["Broke with Horkheimer and Adorno's pessimism. Instrumental reason is not all of reason; there is also <em>communicative rationality</em>, oriented to reaching understanding rather than to control.","Anyone who makes a claim in earnest implicitly commits to redeeming it with reasons if challenged. That commitment is the normative core he builds on.","Discourse ethics: a norm is valid only if all affected could accept it in an unconstrained discussion where only the force of the better argument counts.","The Structural Transformation of the Public Sphere traces the rise of a bourgeois public of coffee houses and journals, and its later hollowing by mass media and public relations.","Defended modernity as an unfinished project against the postmodernists, and has intervened publicly for fifty years on German memory, European integration and bioethics."],
  works:["The Theory of Communicative Action; The Structural Transformation of the Public Sphere; Between Facts and Norms."],
  th:["just","know","good","lang"]},
 
-{id:"deleuze",n:"Gilles Deleuze",b:1925,d:1995,tr:"continental",sch:"Philosophy of difference",pl:"Paris",
+{id:"deleuze",ti:3,n:"Gilles Deleuze",b:1925,d:1995,tr:"continental",sch:"Philosophy of difference",pl:"Paris",
  one:"Difference is prior to identity, and becoming to being.",
  ideas:["Argued that the tradition has always subordinated difference to identity, treating things as different <em>from</em> something. He wants difference in itself.","Wrote a counter-canon of thinkers the mainstream marginalised, Lucretius, Spinoza, Hume, Nietzsche, Bergson, describing his early monographs as taking authors from behind and giving them monstrous children.","With F&eacute;lix Guattari, Anti-Oedipus attacked psychoanalysis for confining desire to the family triangle, and proposed desire as productive rather than lacking.","The <em>rhizome</em>, against the tree: a model of knowledge with no root, no hierarchy and any point connectable to any other.","Philosophy is not reflection or communication but the creation of concepts."],
  works:["Difference and Repetition; Anti-Oedipus and A Thousand Plateaus (with Guattari); What Is Philosophy?"],
  th:["being","free","know"]},
 
-{id:"foucault",n:"Michel Foucault",b:1926,d:1984,tr:"continental",sch:"Genealogy / post-structuralism",pl:"Paris",
+{id:"foucault",ti:2,n:"Michel Foucault",b:1926,d:1984,tr:"continental",sch:"Genealogy / post-structuralism",pl:"Paris",
  one:"Knowledge and power produce each other, and produce us.",
  ideas:["Took Nietzsche's genealogy and applied it to institutions: madness, medicine, punishment, sexuality. Each history shows a category we take as natural being assembled at a particular moment.","<em>Power/knowledge</em>: power is not only repressive but productive. It makes subjects, categories and truths. And every field of knowledge opens a field of control.","Discipline and Punish opens with a public execution and, three pages later, a prison timetable, arguing that punishment moved from the body to the soul, and that Bentham's panopticon is the model of modern power: visibility that makes people police themselves.","The History of Sexuality rejects the 'repressive hypothesis'. The Victorians did not silence sex, they produced an enormous discourse about it, and made it the truth of the self.","Biopower: the modern state governs populations, birth rates, health, life itself, rather than merely threatening death.","Late work turned to the care of the self and ancient practices of freedom. Died of AIDS in 1984."],
  works:["Madness and Civilization; The Order of Things; Discipline and Punish; The History of Sexuality."],
  th:["just","know","good","free"]},
 
-{id:"derrida",n:"Jacques Derrida",b:1930,d:2004,tr:"continental",sch:"Deconstruction",pl:"Algeria, then Paris",
+{id:"derrida",ti:3,n:"Jacques Derrida",b:1930,d:2004,tr:"continental",sch:"Deconstruction",pl:"Algeria, then Paris",
  one:"Meaning is never fully present, and every text undoes its own hierarchy.",
  ideas:["Deconstruction is not demolition. It shows that a text's governing opposition (speech over writing, presence over absence, nature over culture) is unstable, and that the privileged term depends on the one it excludes.","The <em>metaphysics of presence</em>: the tradition has treated meaning as something fully present in the moment of speech, with writing as a fallen copy. He argues the features blamed on writing are true of language as such.","<em>Diff&eacute;rance</em>, spelled with an a and audible only in writing, names both differing and deferring: a sign means by its difference from others and by endlessly postponing a final meaning.","'There is nothing outside the text' is not the claim that reality is unreal but that there is no access to meaning from outside all contexts.","Later work on hospitality, forgiveness, the gift and justice, which he called undeconstructible.","A Cambridge honorary degree in 1992 was opposed by an open letter from analytic philosophers, which captures how deep the two streams' mutual incomprehension ran."],
  works:["Of Grammatology; Writing and Difference; Speech and Phenomena; Specters of Marx."],
@@ -2099,49 +2137,49 @@ P.push(
 
 /* ---------- PARALLEL TRADITIONS ---------- */
 P.push(
-{id:"laozi",n:"Laozi",b:-580,d:-500,cb:1,cd:1,fl:-550,tr:"eastern",sch:"Daoism",pl:"Zhou China",
+{id:"laozi",ti:3,n:"Laozi",b:-580,d:-500,cb:1,cd:1,fl:-550,tr:"eastern",sch:"Daoism",pl:"Zhou China",
  one:"The Way that can be spoken is not the constant Way.",
  ideas:["Traditionally a keeper of the Zhou archives and an older contemporary of Confucius, but his historicity is doubtful and the text is now usually dated later, to the fourth or third century BCE.","The <em>Dao</em> is the source and pattern of everything, and it is ineffable. Naming it already misses it.","<em>Wu wei</em>, non-action, is not passivity but action without forcing, in accord with the grain of things. Water is the model: it yields and wears away stone.","Political counsel by inversion: the sage rules by not interfering, and the empty space is what makes a room useful."],
  works:["Daodejing (Tao Te Ching)."],
  th:["being","good","just","know"]},
 
-{id:"confucius",n:"Confucius",b:-551,d:-479,cb:1,tr:"eastern",sch:"Confucianism",pl:"State of Lu, China",
+{id:"confucius",ti:3,n:"Confucius",b:-551,d:-479,cb:1,tr:"eastern",sch:"Confucianism",pl:"State of Lu, China",
  one:"Cultivate character through ritual, and govern by example.",
  ideas:["Lived through the disorder of the late Spring and Autumn period, and read it as a collapse of the proper relations between people.","<em>Ren</em>, humaneness or benevolence, is the central virtue, expressed toward those close to us first and extended outward.","<em>Li</em>, ritual propriety, covers ceremony, manners and the whole form of civilised conduct. It is not empty formality but the practice through which character is shaped.","The <em>junzi</em>, the exemplary person, replaces the hereditary aristocrat: nobility becomes a matter of cultivation, not birth.","'Do not impose on others what you do not wish for yourself', stated in the Analects centuries before its Western parallels.","Rule by virtue rather than by punishment: the ruler who is upright is followed without commands.","Failed as a political adviser in his lifetime, and shaped Chinese civil life for two and a half millennia after it."],
  works:["The Analects, compiled by his students after his death."],
  th:["good","just"]},
 
-{id:"buddha",n:"The Buddha (Siddhartha Gautama)",b:-480,d:-400,cb:1,cd:1,tr:"eastern",sch:"Early Buddhism",pl:"Magadha, northern India",
+{id:"buddha",ti:3,n:"The Buddha (Siddhartha Gautama)",b:-480,d:-400,cb:1,cd:1,tr:"eastern",sch:"Early Buddhism",pl:"Magadha, northern India",
  one:"Suffering has a cause, and the cause can be removed.",
  ideas:["Four Noble Truths: there is suffering (<em>dukkha</em>); it arises from craving; it can cease; and there is a path, the Eightfold Path of right view, intention, speech, action, livelihood, effort, mindfulness and concentration.","<em>Anicca</em>, impermanence: nothing persists unchanged, so clinging to anything guarantees loss.","<em>Anatta</em>, non-self: there is no unchanging soul underneath experience, only five aggregates in process. Compare Hume's bundle theory, arrived at independently two millennia later.","Dependent origination: everything arises in dependence on conditions, which is the metaphysical basis for both impermanence and non-self.","The middle way avoids both indulgence and self-mortification, both of which he tried first.","Traditional dates are about 563 to 483 BCE; most current scholarship favours a later range, roughly 480 to 400."],
  works:["Taught orally. The Pali Canon was written down some centuries later."],
  th:["being","good","mind","know"]},
 
-{id:"mozi",n:"Mozi",b:-470,d:-391,cb:1,cd:1,tr:"eastern",sch:"Mohism",pl:"China",
+{id:"mozi",ti:4,n:"Mozi",b:-470,d:-391,cb:1,cd:1,tr:"eastern",sch:"Mohism",pl:"China",
  one:"Impartial care for everyone, tested by consequences.",
  ideas:["Attacked the Confucian emphasis on graded love and elaborate ritual as wasteful and partial.","<em>Jian ai</em>, impartial concern: we should care for others' parents as for our own, because partiality is the root of conflict.","Judged doctrines by their consequences for the material welfare of the people, which makes Mohism the earliest systematic consequentialism anywhere.","The Mohists also developed logic, optics, geometry and defensive fortification, and were the main rival to Confucianism until the Han."],
  works:["The Mozi."],
  th:["good","just","know"]},
 
-{id:"mencius",n:"Mencius",b:-372,d:-289,cb:1,cd:1,tr:"eastern",sch:"Confucianism",pl:"China",
+{id:"mencius",ti:3,n:"Mencius",b:-372,d:-289,cb:1,cd:1,tr:"eastern",sch:"Confucianism",pl:"China",
  one:"Human nature is good, and needs only cultivation.",
  ideas:["Anyone who saw a child about to fall into a well would feel alarm and compassion, without calculation. That reaction shows the sprout of benevolence is already there.","Four sprouts: compassion, shame, deference and the sense of right and wrong, which grow into the four cardinal virtues if nourished.","Held that a ruler who fails the people forfeits the Mandate of Heaven, and that removing such a ruler is not regicide, a strikingly bold position for the fourth century BCE.","His rival Xunzi held the opposite, that human nature is bad and virtue is the achievement of deliberate effort. The debate ran for two thousand years."],
  works:["The Mengzi (Mencius)."],
  th:["good","just"]},
 
-{id:"zhuangzi",n:"Zhuangzi",b:-369,d:-286,cb:1,cd:1,tr:"eastern",sch:"Daoism",pl:"China",
+{id:"zhuangzi",ti:3,n:"Zhuangzi",b:-369,d:-286,cb:1,cd:1,tr:"eastern",sch:"Daoism",pl:"China",
  one:"Perspectives are relative, and the sage moves freely among them.",
  ideas:["Wrote in parables and jokes rather than doctrine, and mocked the earnestness of the other schools.","The butterfly dream: he dreamt he was a butterfly, then woke, and could not say whether he was a man who dreamt he was a butterfly or a butterfly now dreaming he is a man.","Skill stories, such as the cook whose blade never dulls because it finds the spaces in the joints, present mastery as responsiveness rather than technique.","'Free and easy wandering': the sage is useless by conventional measures, which is exactly how the gnarled tree survives the axe.","A radical perspectivism: what counts as right depends on where you stand, and the sage does not insist."],
  works:["The Zhuangzi."],
  th:["know","being","good","free"]},
 
-{id:"nagarjuna",n:"N&#257;g&#257;rjuna",b:150,d:250,cb:1,cd:1,tr:"eastern",sch:"Madhyamaka Buddhism",pl:"South India",
+{id:"nagarjuna",ti:3,n:"N&#257;g&#257;rjuna",b:150,d:250,cb:1,cd:1,tr:"eastern",sch:"Madhyamaka Buddhism",pl:"South India",
  one:"Everything is empty of intrinsic nature, including emptiness.",
  ideas:["Widely held to be the most important Buddhist philosopher after the Buddha; Tibetan tradition calls him a second Buddha.","<em>Sunyata</em>, emptiness: nothing has <em>svabhava</em>, own-being or intrinsic nature. Everything is what it is only in dependence on conditions and on other things.","This is not nihilism. Emptiness is itself empty, and treating it as an ultimate substance is the error he warns against most.","Two truths: conventional truth, in which chariots and persons function perfectly well, and ultimate truth, in which no such thing has independent existence. Both are needed; conventional truth is not a lie.","The method is almost entirely negative, a tetralemma that refutes each of four possible positions, which has invited comparison with Pyrrhonism and with Wittgenstein."],
  works:["Mulamadhyamakakarika (Fundamental Verses on the Middle Way)."],
  th:["being","know","univ"]},
 
-{id:"shankara",n:"&#346;a&#7749;kara",b:700,d:750,cb:1,cd:1,tr:"eastern",sch:"Advaita Vedanta",pl:"Kerala and across India",
+{id:"shankara",ti:4,n:"&#346;a&#7749;kara",b:700,d:750,cb:1,cd:1,tr:"eastern",sch:"Advaita Vedanta",pl:"Kerala and across India",
  one:"Only Brahman is real; the self and Brahman are not two.",
  ideas:["Advaita, non-dualism: the individual self (<em>atman</em>) is identical with ultimate reality (<em>Brahman</em>), and the appearance of separateness is ignorance.","<em>Maya</em>: the world is not a hallucination but is dependently real, real at the empirical level and not at the ultimate one, a two-level scheme comparable to Nagarjuna's two truths and to Kant's phenomena and noumena.","Liberation (<em>moksha</em>) is therefore not an achievement but the recognition of what was always the case.","Travelled India debating rival schools and founding monastic centres, in a life traditionally said to have lasted only thirty-two years."],
  works:["Commentaries on the Brahma Sutras, the Upanishads and the Bhagavad Gita."],
@@ -2639,18 +2677,52 @@ function yAt(px,S,z){ S=S||SC; z=z===undefined?Z:z; const v=px/z;
    the opposite: it is whatever the window can spare, worked out in fitLanes()
    below. Nineteen pixels was a floor that behaved like a ceiling. */
 let LANE_H=19, BAR_H=13, SUBLAB=false;
-function packLanes(S){
-  const GAP=7, items=P.slice().sort((a,b)=>a.b-b.b||a.d-b.d);
-  const ends=[], last=[], assign={}, nxt={};
-  items.forEach(p=>{
-    const x1=xOf(p.b,S,1), x2=Math.max(xOf(p.d,S,1), x1+10);
-    let i=0; for(;i<ends.length;i++) if(ends[i]<=x1-GAP) break;
-    if(i===ends.length){ ends.push(0); last.push(null); }
-    if(last[i]) nxt[last[i]]=x1;
-    ends[i]=x2; last[i]=p.id; assign[p.id]=i;
-  });
-  last.forEach(id=>{ if(id) nxt[id]=Infinity; });
-  return {assign,nxt,n:ends.length};
+/* Which tiers are drawn. The slider widens this from [1] out to [1,2,3,4]:
+   the six who matter most, then twenty-four more, then the long tail. It is
+   the declutter control -- 117 lifespans is a lot to meet at once. */
+let TIERS=[1,2,3,4];
+const TIER_N={1:'The six',2:'Major',3:'Substantial',4:'The rest'};
+/* Lanes used to be pure collision avoidance: a lifespan went into the first row
+   with space for it, so vertical position meant nothing at all. It now means
+   consequence. The chart bands by tier, most consequential at the top, and
+   packs lanes only WITHIN a band -- which is still necessary, because six
+   tier-one philosophers is not six non-overlapping ones: Plato and Aristotle
+   share half a century, and so do Hume and Kant.
+
+   So x is time, y is weight, and a reader can now find the people who matter
+   most by looking at the top of the chart rather than by reading all of it. */
+function packLanes(S, vis){
+  /* vis is passed in, never reached for. This runs twice at module load, above
+     the declarations of HIDDEN and TIERS, and a let read inside its temporal
+     dead zone throws -- it does not read undefined. Defaulting to "everything
+     is visible" is also the correct answer for those two calls, which exist to
+     establish the base scale. */
+  vis = vis || function(){ return true; };
+  const GAP=7;
+  const assign={}, nxt={}, bandOf={}, bandRows={};
+  let base=0;
+  for(const tier of TIERS){
+    const items=P.filter(p=>(p.ti||4)===tier && vis(p))
+                 .sort((a,b)=>a.b-b.b||a.d-b.d);
+    const ends=[], last=[];
+    items.forEach(p=>{
+      const x1=xOf(p.b,S,1), x2=Math.max(xOf(p.d,S,1), x1+10);
+      let i=0; for(;i<ends.length;i++) if(ends[i]<=x1-GAP) break;
+      if(i===ends.length){ ends.push(0); last.push(null); }
+      if(last[i]) nxt[last[i]]=x1;
+      ends[i]=x2; last[i]=p.id;
+      assign[p.id]=base+i; bandOf[p.id]=tier;
+    });
+    last.forEach(id=>{ if(id) nxt[id]=Infinity; });
+    bandRows[tier]={start:base,rows:ends.length};
+    base += ends.length;
+    /* a blank row between bands, so the boundary reads without a rule */
+    if(ends.length) base += 1;
+  }
+  /* Anyone filtered out still needs a lane number, or the label pass and the
+     skyline clamp read undefined and place them at the top of the chart. */
+  P.forEach(p=>{ if(assign[p.id]===undefined){ assign[p.id]=base; nxt[p.id]=Infinity; } });
+  return {assign,nxt,n:base+1,bands:bandRows};
 }
 const LN={bal:packLanes(SC_BAL), lin:packLanes(SC_LIN)};
 let L=LN.bal;
@@ -2680,7 +2752,8 @@ P.forEach(p=>{
   const el=document.createElement("div");
   el.className="bar"+(p.fl?" fl":((p.cb?" ub":"")+(p.cd?" ud":"")));
   el.style.setProperty("--c",SCOL[p.tr]);
-  el.dataset.id=p.id; el.tabIndex=0; el.setAttribute("role","button");
+  el.dataset.id=p.id; el.dataset.ti=String(p.ti||4);
+  el.tabIndex=0; el.setAttribute("role","button");
   el.setAttribute("aria-label",p.n+", "+span(p));
   el.innerHTML='<i></i><b>'+p.n+'</b>';
   lanesEl.appendChild(el); BARS[p.id]=el;
@@ -2748,7 +2821,8 @@ const PTIME=P.slice().sort((a,b)=>a.b-b.b);
 
 /* is this thinker currently passing the tradition and thread filters? */
 let THSET=null;
-function hiddenP(p){ return HIDDEN.has(p.tr) || (THSET && !THSET.has(p.id)); }
+function hiddenP(p){ return HIDDEN.has(p.tr) || (THSET && !THSET.has(p.id))
+                            || TIERS.indexOf(p.ti||4) < 0; }
 
 /* ---------- how far down the lanes actually go, at each point in time ----------
    Lane count is the maximum number of people alive at once, which is 37 and
@@ -2825,6 +2899,36 @@ function layout(){
      appear or vanish. Zooming can, which is a rule a reader learns in one
      gesture. */
   lanesEl.style.height=(L.n*LANE_H+14)+"px";
+  /* One tinted region per tier, so the banding reads as a region rather than
+     as a coincidence of where the rules happen to sit. Drawn from the row
+     counts packLanes returned, so it cannot disagree with the layout. */
+  $$(".tierband",lanesEl).forEach(n=>n.remove());
+  if(L.bands){
+    const bf=document.createDocumentFragment();
+    TIERS.forEach(t=>{
+      const b=L.bands[t]; if(!b||!b.rows) return;
+      const d=document.createElement("div");
+      d.className="tierband b"+t;
+      d.style.top=(b.start*LANE_H-3)+"px";
+      d.style.height=(b.rows*LANE_H+2)+"px";
+      d.innerHTML="<span>"+TIER_N[t]+"</span>";
+      bf.appendChild(d);
+    });
+    lanesEl.insertBefore(bf, lanesEl.firstChild);
+  }
+  /* With the slider near "the six" the chart is a few rows tall inside a pane
+     sized for a hundred and seventeen, which leaves a field of nothing between
+     the last philosopher and the world band. Give the surplus back: the pane
+     shrinks to its content when the content is shorter, and returns to filling
+     the space when it is not. The world band takes up the slack, which is the
+     right place for it to go. */
+  const tlmain = scrollMain.parentElement;          /* the row: rail + chart */
+  const tl = tlmain && tlmain.parentElement;        /* the column: chart + world */
+  if(tl){
+    const need = L.n*LANE_H + 56 + 16;              /* rows, header, scrollbar */
+    const room = tl.clientHeight - (EVW ? EVW.offsetHeight : 0);
+    tlmain.style.flex = (room > 0 && need < room - 40) ? ("0 0 " + need + "px") : "";
+  }
   const f=labelFont();
   if(f!==_wfont){ _wfont=f; _mc.font=f; _wcache=Object.create(null); }
   THSET = THREAD ? new Set(TH[THREAD].seq) : null;
@@ -3079,6 +3183,10 @@ thSel.onchange=()=>{ THREAD=thSel.value; applyFilter(); };
 
 function applyFilter(){
   THSET = THREAD ? new Set(TH[THREAD].seq) : null;
+  /* The packing itself now depends on who is visible: bands close up when a
+     tier is switched off, so the rows have to be dealt again rather than
+     merely hidden. */
+  L = packLanes(SC===SC_LIN ? SC_LIN : SC_BAL, p=>!hiddenP(p));
   P.forEach(p=>{ BARS[p.id].style.display = hiddenP(p) ? "none" : ""; });
   /* Names are allocated against the bars actually drawn, so narrowing the
      field has to re-run the allocation. Without this the chips were a dimmer;
@@ -3274,6 +3382,25 @@ qEl.addEventListener("keydown",ev=>{
 });
 document.addEventListener("click",ev=>{ if(!ev.target.closest(".search")) resEl.innerHTML=""; });
 
+/* ---------- views ----------
+   Three views are drawn from data that arrives after the page does, and each
+   was built once at load, when the two datasets were still empty. Whichever
+   view happened to be on screen when the fetch landed got redrawn; the others
+   kept the empty version they were born with, so opening Formal from the
+   timeline showed its frame and none of its fifty arguments.
+
+   Rendering on entry instead removes the ordering question altogether. A view
+   is drawn the first time it is opened after its data exists, and once only:
+   the flag is cleared when data arrives, not set when a view is shown. */
+const BUILDERS = {thinkers:()=>renderThinkers(), formal:()=>renderFormal(),
+                  threads:()=>renderThreads()};
+let BUILT = {};
+function ensureBuilt(v){
+  if(!BUILDERS[v] || BUILT[v]) return;
+  if(!Object.keys(MONO).length && !(FORM.args||[]).length) return;  /* nothing to draw yet */
+  try{ BUILDERS[v](); BUILT[v]=true; }catch(e){ /* leave it unbuilt and retry on next entry */ }
+}
+
 /* ---------- views ---------- */
 function showView(v){
   /* "study" is reached from the strip below the header, not from the main
@@ -3287,6 +3414,7 @@ function showView(v){
   });
   $$(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
   if(v==="influence") buildNet();
+  ensureBuilt(v);
   if(v!=="study"&&typeof sbar!=="undefined"&&sbar)
     $$(".stab",sbar).forEach(b=>b.setAttribute("aria-selected","false"));
   else if(v==="study"&&typeof renderStudyBar==="function") renderStudyBar();
@@ -4020,11 +4148,10 @@ requestAnimationFrame(()=>{
     indexArguments();
     /* Re-render only what is on screen and actually depends on this data. The
        timeline does not, which is the point of the whole change. */
+    BUILT = {};                       /* everything drawn from the empty data is stale */
     const on = document.querySelector(".view.on");
     const v  = on ? on.id.replace(/^v-/, "") : "";
-    if(v==="thinkers") renderThinkers();
-    if(v==="formal")   renderFormal();
-    if(v==="threads" && typeof renderThreads==="function") renderThreads();
+    ensureBuilt(v);                   /* redraw whatever is on screen right now */
     /* An open drawer gains its "read the full study" card. SEL holds the
        person object, not an id. */
     if(SEL) renderDrawer(SEL);
@@ -4058,6 +4185,27 @@ scrollMain.addEventListener("keydown", function(ev){
   ev.preventDefault();
   syncEv();
 });
+
+/* ---------- the tier slider ----------
+   Widens the visible set from the six who matter most out to all 117. It is a
+   filter, not a zoom: the people it removes are gone from the layout, so the
+   bands close up and the chart genuinely thins rather than merely dimming.
+   That is the difference between this and the tradition chips, which dim. */
+(function(){
+  const R=$("#tierRange"), NOTE=$("#tierNote");
+  if(!R) return;
+  function apply(){
+    const upto=+R.value;
+    TIERS=[1,2,3,4].filter(t=>t<=upto);
+    const n=P.filter(p=>TIERS.indexOf(p.ti||4)>=0).length;
+    NOTE.textContent = upto===4 ? "all "+n
+                     : n+" of "+P.length+" \u00b7 "+TIER_N[upto];
+    applyFilter();
+    syncEv();
+  }
+  R.addEventListener("input", apply);
+  apply();
+})();
 </script>
 </body>
 </html>
