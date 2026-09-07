@@ -142,6 +142,19 @@ def landing_page(bk, stats):
 
     tpl = library.read(tplf)
 
+    # A book may ship datasets beside its landing page rather than inside it.
+    # The philosophy book's studies and formalised arguments are a megabyte
+    # between them and are needed only when a reader opens one, so they are
+    # fetched at runtime instead of parsed on every visit. Copied verbatim:
+    # they are already minified ASCII JSON and the build has no opinion on
+    # their contents.
+    datadir = os.path.join(bk.src, "data")
+    if os.path.isdir(datadir):
+        for f in sorted(os.listdir(datadir)):
+            if f.endswith(".json"):
+                library.write(os.path.join(bk.out, "data", f),
+                              library.read(os.path.join(datadir, f)))
+
     built = {}          # part index -> (chapters written, chapters planned)
     for i, (_pt, _blurb, chs) in enumerate(bp.PARTS):
         done = sum(1 for c in chs if os.path.exists(bk.chapter_path(c[1])))
