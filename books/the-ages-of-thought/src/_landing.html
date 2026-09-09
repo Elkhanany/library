@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Ages of Thought</title>
+<meta name="description" content="An atlas of philosophy: ten ages, 117 thinkers, and a line wherever one taught, read or argued with another.">
+<style>
+/* ============================================================
+   THE AGES OF THOUGHT
+
+   A warm-ground atlas. Where The Long Argument is a critical
+   edition -- cool paper, ink blue, rubric red -- this is the
+   plate that faces it: parchment, sienna, and one colour per
+   age, ordered cold to warm and back so that the run of ten
+   reads as a passage of time rather than a set of labels.
+
+   Every age's picture is drawn here in code. There is not one
+   raster image in the book, which is why it weighs what a page
+   of text weighs and works with the network off.
+   ============================================================ */
+:root{
+  color-scheme: light;
+  --paper:#efe7d9;    --surface:#faf5ec;   --surface-2:#f3ebdd;  --sunk:#e4d9c6;
+  --ink:#241f18;      --ink-2:#544a3c;     --ink-3:#877a67;      --ink-4:#b0a48f;
+  --rule:#d8ccb6;     --rule-2:#e7ddcb;
+  --accent:#a8562a;   --accent-soft:#c47645; --accent-wash:rgba(168,86,42,.10);
+  --surround:#1a1713;
+  --shadow-1:0 1px 2px rgba(36,31,24,.06), 0 6px 18px -10px rgba(36,31,24,.22);
+  --shadow-2:0 2px 6px rgba(36,31,24,.10), 0 18px 44px -18px rgba(36,31,24,.34);
+  --focus:#2f6ea8;
+
+  /* One hue per age. Cold Aegean at the start, warming through
+     Rome and Baghdad, cooling again into the modern grey. */
+  --e0:#2f5d78; --e1:#37718f; --e2:#b06038; --e3:#6a4570; --e4:#2c7a66;
+  --e5:#a37c26; --e6:#9c3a47; --e7:#3f4d8f; --e8:#5c6f38; --e9:#4a4f57;
+
+  --f-disp:"Spectral",Georgia,"Times New Roman",serif;
+  --f-ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+
+  --rail-w:248px; --panel-w:326px;
+  --lane-h:64px;          /* a card row */
+  --top-h:60px;
+}
+html[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#191510;    --surface:#221d16;   --surface-2:#2a241c;  --sunk:#120f0b;
+  --ink:#f0e7d8;      --ink-2:#c3b6a1;     --ink-3:#94876f;      --ink-4:#6b6152;
+  --rule:#3a3226;     --rule-2:#2e2820;
+  --accent:#d0824c;   --accent-soft:#e09d6c; --accent-wash:rgba(208,130,76,.14);
+  --surround:#0b0906;
+  --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 6px 18px -10px rgba(0,0,0,.7);
+  --shadow-2:0 2px 6px rgba(0,0,0,.55), 0 18px 44px -18px rgba(0,0,0,.8);
+  --focus:#6fa8dc;
+  --e0:#5b90ad; --e1:#63a0c0; --e2:#d68a5e; --e3:#9b74a1; --e4:#4fae95;
+  --e5:#cfa74a; --e6:#c9636f; --e7:#7683c4; --e8:#8ba05e; --e9:#8b909a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--surround); color:var(--ink);
+  font-family:var(--f-ui); font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%; text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+button{font:inherit; color:inherit}
+
+/* ---------------------------------------------------------- the frame
+   The surround is not decoration. It is what stops a chart that runs to
+   every edge of the glass from reading as a document that has overflowed. */
+.atlas{
+  position:fixed; inset:0; display:flex; flex-direction:column;
+  background:var(--paper); overflow:hidden;
+  padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+}
+@media (min-width:1180px) and (min-height:760px){
+  .atlas{ inset:14px; border-radius:16px; box-shadow:var(--shadow-2); }
+}
+
+/* ---------------------------------------------------------- top bar */
+.top{
+  height:var(--top-h); flex:none; display:flex; align-items:center; gap:18px;
+  padding:0 16px; border-bottom:1px solid var(--rule); background:var(--surface);
+  position:relative; z-index:40;
+}
+.mark{ display:flex; align-items:center; gap:11px; text-decoration:none; color:inherit; flex:none }
+.mark .sig{
+  width:34px; height:34px; flex:none; border-radius:9px; background:var(--accent);
+  display:grid; place-items:center; box-shadow:var(--shadow-1);
+}
+.mark .sig svg{ width:20px; height:20px; display:block }
+.mark h1{
+  margin:0; font-family:var(--f-disp); font-size:16.5px; font-weight:600;
+  letter-spacing:.055em; text-transform:uppercase; line-height:1.1;
+}
+.mark .sub{
+  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600; line-height:1.1; margin-top:2px;
+}
+.readout{ display:flex; align-items:center; gap:22px; padding-left:20px;
+          border-left:1px solid var(--rule); height:34px }
+.ro{ display:flex; align-items:center; gap:8px; min-width:0 }
+.ro .dot{ width:15px; height:15px; flex:none; opacity:.85 }
+.ro .k{ font-size:8.5px; letter-spacing:.16em; text-transform:uppercase;
+        color:var(--ink-4); font-weight:700; display:block; line-height:1.2 }
+.ro .v{ font-family:var(--f-disp); font-size:13.5px; font-weight:600;
+        letter-spacing:.03em; white-space:nowrap; overflow:hidden;
+        text-overflow:ellipsis; display:block; line-height:1.25 }
+.top .spacer{ flex:1 }
+.tbtn{
+  height:32px; padding:0 13px; border:1px solid var(--rule); border-radius:8px;
+  background:var(--surface-2); font-size:12px; font-weight:600; cursor:pointer;
+  display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+}
+.tbtn:hover{ background:var(--paper); border-color:var(--ink-4) }
+.tbtn.icon{ padding:0; width:32px; justify-content:center }
+.tbtn svg{ width:15px; height:15px }
+
+/* ---------------------------------------------------------- three columns */
+.body{ flex:1; min-height:0; display:flex }
+
+/* ---------------------------------------------------------- the ages rail */
+.rail{
+  width:var(--rail-w); flex:none; border-right:1px solid var(--rule);
+  background:var(--surface); display:flex; flex-direction:column; min-height:0;
+  position:relative; z-index:30;
+}
+.railhead{ padding:13px 15px 10px; border-bottom:1px solid var(--rule-2); flex:none }
+.railhead .t{ font-size:9.5px; letter-spacing:.17em; text-transform:uppercase;
+              font-weight:700; color:var(--ink-2) }
+.railhead .s{ font-size:11px; color:var(--ink-3); margin-top:2px; font-style:italic;
+              font-family:var(--f-disp) }
+.rails{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:8px }
+
+/* One age. The picture is an SVG drawn from the age's own motif over its own
+   colour; the name sits on it under a scrim, the way a plate is captioned. */
+.age{
+  display:block; width:100%; text-align:left; padding:0; margin:0 0 8px;
+  border:1px solid var(--rule-2); border-radius:11px; background:var(--surface-2);
+  cursor:pointer; overflow:hidden; position:relative;
+  transition:border-color .16s, transform .16s, box-shadow .16s;
+}
+.age:hover{ border-color:var(--ink-4); transform:translateY(-1px); box-shadow:var(--shadow-1) }
+.age.on{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), var(--shadow-1) }
+.age:focus-visible{ outline:2px solid var(--focus); outline-offset:2px }
+.age .plate{ display:block; position:relative; height:74px; background:var(--eg);
+              overflow:hidden }
+.age .plate svg{ position:absolute; inset:0; width:100%; height:100% }
+.age .plate::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 34%,rgba(0,0,0,.62) 100%);
+}
+.age .cap{ position:absolute; left:11px; right:11px; bottom:7px; z-index:2 }
+.age .nm,.age .yr{ display:block }
+.age .nm{
+  font-family:var(--f-disp); font-size:15.5px; font-weight:600; line-height:1.12;
+  color:#fff; letter-spacing:.012em; text-shadow:0 1px 3px rgba(0,0,0,.55);
+  display:block;
+}
+.age .yr{
+  font-family:var(--f-mono); font-size:9.5px; color:rgba(255,255,255,.82);
+  letter-spacing:.06em; margin-top:2px; display:block; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
+/* A long age name is allowed two lines and no more. Past that it would climb
+   out of the plate it is captioning, which is what a third line did. */
+.age .nm{
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.age .foot{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:6px 11px 7px; font-size:10.5px; color:var(--ink-3);
+}
+.age .cnt{ font-family:var(--f-mono); font-size:10px; color:var(--ink-2); font-weight:600 }
+/* An age with nobody in it yet. The reference calls this beyond the fog and
+   it is exactly right: the age is real, we have simply not been shown it. */
+.age.fog .plate{ filter:grayscale(.86) brightness(.72) }
+.age.fog .nm{ color:rgba(255,255,255,.6) }
+.age.fog .foot{ color:var(--ink-4); font-style:italic }
+.age.fog:hover{ transform:none }
+.railfoot{
+  flex:none; border-top:1px solid var(--rule-2); padding:10px 14px 12px;
+  font-family:var(--f-disp); font-size:10.5px; font-style:italic; color:var(--ink-4);
+  line-height:1.45;
+}
+
+/* ---------------------------------------------------------- the stage */
+.stage{ flex:1; min-width:0; display:flex; flex-direction:column; position:relative;
+        background:var(--paper) }
+.tools{
+  flex:none; height:44px; display:flex; align-items:center; gap:14px;
+  padding:0 14px; border-bottom:1px solid var(--rule-2); background:var(--surface-2);
+  overflow-x:auto; scrollbar-width:none;
+}
+.tools::-webkit-scrollbar{ display:none }
+.grp{ display:flex; align-items:center; gap:8px; flex:none }
+.grp>label{ font-size:9px; letter-spacing:.15em; text-transform:uppercase;
+            font-weight:700; color:var(--ink-4) }
+.tools .sep{ width:1px; height:20px; background:var(--rule); flex:none }
+input[type=range]{ accent-color:var(--accent); height:26px; margin:0; width:104px }
+.note{ font-family:var(--f-mono); font-size:10.5px; color:var(--ink-2);
+       white-space:nowrap; min-width:8.5em }
+/* Edge-kind switches. Each carries its own line as a swatch, so the legend and
+   the control are the same object rather than two things to keep in step. */
+.kind{
+  display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 9px;
+  border:1px solid var(--rule); border-radius:7px; background:var(--surface);
+  font-size:11px; cursor:pointer; white-space:nowrap;
+}
+.kind:hover{ border-color:var(--ink-4) }
+.kind[aria-pressed="false"]{ opacity:.45 }
+.kind svg{ width:22px; height:8px; flex:none; overflow:visible }
+.zoom{ display:flex; align-items:center; gap:2px }
+.zoom button{ width:26px; height:26px; border:1px solid var(--rule); background:var(--surface);
+              border-radius:7px; cursor:pointer; font-size:15px; line-height:1;
+              display:grid; place-items:center }
+.zoom button:hover{ background:var(--paper) }
+.zoom .lvl{ font-family:var(--f-mono); font-size:10.5px; color:var(--ink-3);
+            min-width:36px; text-align:center }
+
+.scroll{ flex:1; min-height:0; overflow:auto; position:relative;
+         overscroll-behavior:contain }
+.scroll:focus-visible{ outline:2px solid var(--focus); outline-offset:-2px }
+.canvas{ position:relative; transform-origin:0 0 }
+
+/* The ground. A faint laid-paper rule, and one tinted column per age so the
+   rail on the left and the chart in the middle are visibly the same ten
+   things. */
+.ages-bg{ position:absolute; inset:0; z-index:0; pointer-events:none }
+.ageband{ position:absolute; top:0; bottom:0; overflow:hidden }
+.ageband i{ position:absolute; inset:0; background:var(--eg); opacity:.055 }
+html[data-theme="dark"] .ageband i{ opacity:.10 }
+.ageband.on i{ opacity:.13 }
+html[data-theme="dark"] .ageband.on i{ opacity:.20 }
+.ageband u{ position:absolute; left:0; top:0; bottom:0; width:1px;
+            background:var(--rule); text-decoration:none }
+.ageband b{
+  position:sticky; top:0; display:block; padding:7px 10px 0;
+  font-family:var(--f-disp); font-size:11px; font-weight:600; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink-4);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* Below about this width the name is more ellipsis than word, so the band
+   keeps only its years and the rail on the left carries the name. */
+.ageband.tight b span{ display:none }
+.ageband em{ display:block; font-family:var(--f-mono); font-size:9px; font-style:normal;
+             letter-spacing:.05em; color:var(--ink-4); opacity:.8; padding-left:10px }
+
+/* Tier bands: the y-axis says how much a person mattered, since the x-axis is
+   already spoken for by time. */
+.tierband{ position:absolute; left:0; right:0; z-index:0; pointer-events:none }
+.tierband i{ position:absolute; inset:0; background:currentColor; opacity:.05; color:var(--ink) }
+.tierband.t1 i{ opacity:.075 }
+.tierband.t2 i{ opacity:.045 }
+.tierband.t3 i{ opacity:.02 }
+.tierband.t4 i{ opacity:0 }
+.tierband b{
+  position:sticky; left:8px; display:inline-block; margin-top:5px;
+  font-size:8.5px; letter-spacing:.17em; text-transform:uppercase; font-weight:700;
+  color:var(--ink-4);
+}
+
+/* edges */
+.wires{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible }
+.wire{ fill:none; stroke:var(--ink-3); vector-effect:non-scaling-stroke }
+.wire.taught{ stroke:var(--accent); stroke-width:1.7; opacity:.75 }
+.wire.read{ stroke:var(--ink-3); stroke-width:1; opacity:.34 }
+.wire.reacted{ stroke:var(--ink-2); stroke-width:1.3; opacity:.5; stroke-dasharray:4 3.5 }
+.wire.transmitted{ stroke:var(--e4); stroke-width:1.4; opacity:.6; stroke-dasharray:1 3;
+                   stroke-linecap:round }
+.wires.sel .wire{ opacity:.07 }
+.wires.sel .wire.lit{ opacity:1; stroke-width:2.1 }
+.wires .head{ fill:var(--accent); opacity:.75 }
+.wires.sel .head{ opacity:.07 }
+.wires.sel .head.lit{ opacity:1 }
+
+/* ---------------------------------------------------------- a philosopher */
+.who{
+  position:absolute; z-index:2; padding:0; margin:0; border:0; background:none;
+  text-align:left; cursor:pointer; font:inherit; color:inherit;
+}
+.who:focus-visible{ outline:2px solid var(--focus); outline-offset:3px; border-radius:9px }
+/* the lifespan: the one mark in the book that is strictly to scale */
+.who .rule{
+  position:absolute; left:0; height:5px; border-radius:3px; background:var(--eg);
+  bottom:0; opacity:.9;
+}
+.who .rule.circa{ background:repeating-linear-gradient(90deg,var(--eg) 0 5px,transparent 5px 9px) }
+.who .card{
+  position:absolute; left:0; bottom:9px; border:1px solid var(--rule);
+  background:var(--surface); border-radius:9px; box-shadow:var(--shadow-1);
+  padding:6px 10px 7px; min-width:0; transition:border-color .14s, box-shadow .14s;
+}
+.who:hover .card{ border-color:var(--eg); box-shadow:var(--shadow-2) }
+.who .card::before{
+  content:""; position:absolute; left:-1px; top:8px; bottom:8px; width:3px;
+  border-radius:3px; background:var(--eg);
+}
+.who .n{
+  display:block; font-family:var(--f-disp); font-weight:600; line-height:1.16;
+  letter-spacing:.008em; white-space:nowrap;
+}
+/* Only the tail elides. For anyone the reader is meant to be reading, a name
+   that does not fit is a layout bug, not something to hide behind an ellipsis. */
+.who[data-ti="3"] .n,.who[data-ti="4"] .n{ overflow:hidden; text-overflow:ellipsis }
+.who .meta{
+  display:block; font-family:var(--f-mono); font-size:9px; color:var(--ink-3);
+  letter-spacing:.03em; margin-top:1px; white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis;
+}
+.who .sch{ display:block; font-size:10px; color:var(--ink-2); margin-top:2px;
+           white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+/* Four weights of presence, and they are the tiers. A card for the six, a
+   smaller card for the major, a chip for the substantial, a mark for the tail.
+   Nothing is deleted at any setting -- the tail is a hairline, not a footnote. */
+.who[data-ti="1"] .n{ font-size:15px }
+.who[data-ti="1"] .card{ padding:7px 12px 8px }
+.who[data-ti="1"] .rule{ height:6px }
+.who[data-ti="2"] .n{ font-size:13px }
+.who[data-ti="3"] .n{ font-size:11.5px }
+.who[data-ti="3"] .card{ padding:4px 8px 5px; border-radius:7px }
+.who[data-ti="3"] .sch{ display:none }
+.who[data-ti="4"] .n{ font-size:10.5px; font-family:var(--f-ui); font-weight:500 }
+.who[data-ti="4"] .card{ padding:3px 7px 4px; border-radius:6px; background:var(--surface-2) }
+.who[data-ti="4"] .sch,.who[data-ti="4"] .meta{ display:none }
+.who[data-ti="4"] .rule{ height:3px }
+.who.on .card{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), var(--shadow-2) }
+.who.dim{ opacity:.26 }
+.who.dim .card{ box-shadow:none }
+
+/* ---------------------------------------------------------- the panel */
+.panel{
+  width:var(--panel-w); flex:none; border-left:1px solid var(--rule);
+  background:var(--surface); display:flex; flex-direction:column; min-height:0;
+  position:relative; z-index:30;
+}
+.hero{ flex:none; position:relative; height:132px; background:var(--eg); overflow:hidden }
+.hero svg{ position:absolute; inset:0; width:100%; height:100% }
+.hero::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.05) 30%,rgba(0,0,0,.72) 100%) }
+.hero .cap{ position:absolute; left:16px; right:16px; bottom:11px; z-index:2 }
+.hero .who-n{
+  font-family:var(--f-disp); font-size:25px; font-weight:600; color:#fff;
+  line-height:1.06; letter-spacing:.01em; text-shadow:0 1px 5px rgba(0,0,0,.6);
+  margin:0;
+}
+.hero .who-s{
+  font-size:11px; color:rgba(255,255,255,.86); margin-top:3px;
+  text-shadow:0 1px 4px rgba(0,0,0,.7); font-family:var(--f-disp); font-style:italic;
+}
+.tallies{ flex:none; display:flex; border-bottom:1px solid var(--rule) }
+.tally{ flex:1; padding:9px 6px 10px; text-align:center; border-right:1px solid var(--rule-2) }
+.tally:last-child{ border-right:0 }
+.tally .v{ font-family:var(--f-disp); font-size:19px; font-weight:600; line-height:1 }
+.tally .k{ font-size:8px; letter-spacing:.15em; text-transform:uppercase;
+           color:var(--ink-4); font-weight:700; margin-top:3px }
+.pscroll{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+          padding:14px 16px 20px }
+.sec{ margin-bottom:17px }
+.sec>h3{
+  margin:0 0 7px; font-size:8.5px; letter-spacing:.17em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-4);
+  padding-bottom:5px; border-bottom:1px solid var(--rule-2);
+}
+.one{
+  font-family:var(--f-disp); font-size:15px; line-height:1.42; color:var(--ink);
+  margin:0 0 15px; font-style:italic;
+}
+.sec ul{ margin:0; padding:0; list-style:none }
+.sec li{ font-size:12.5px; line-height:1.5; color:var(--ink-2); margin-bottom:7px;
+         padding-left:12px; position:relative }
+.sec li::before{ content:""; position:absolute; left:0; top:8px; width:4px; height:4px;
+                 border-radius:50%; background:var(--ink-4) }
+.sec li em{ color:var(--ink); font-style:italic }
+.works{ font-family:var(--f-disp); font-size:12.5px; line-height:1.5; color:var(--ink-2) }
+/* who this person taught, read and argued with -- the panel version of the
+   lines on the chart, and the way to walk them without a mouse */
+.links{ display:flex; flex-direction:column; gap:5px }
+.link{
+  display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+  padding:6px 9px; border:1px solid var(--rule-2); border-radius:8px;
+  background:var(--surface-2); cursor:pointer; font-size:12px;
+}
+.link:hover{ border-color:var(--ink-4); background:var(--paper) }
+.link:focus-visible{ outline:2px solid var(--focus); outline-offset:1px }
+.link .rel{
+  font-family:var(--f-mono); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); flex:none; width:66px;
+}
+.link .nm{ flex:1; min-width:0; font-family:var(--f-disp); font-weight:600;
+           white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.link .yr{ font-family:var(--f-mono); font-size:9.5px; color:var(--ink-4); flex:none }
+.quote{
+  border-left:2px solid var(--accent); padding:2px 0 2px 12px; margin:0;
+  font-family:var(--f-disp); font-size:12.5px; font-style:italic; line-height:1.45;
+  color:var(--ink-2);
+}
+.quote cite{ display:block; font-style:normal; font-size:10px; color:var(--ink-4);
+             margin-top:5px; letter-spacing:.02em }
+.empty{
+  font-family:var(--f-disp); font-style:italic; font-size:13px; color:var(--ink-4);
+  line-height:1.5; padding:26px 4px; text-align:center;
+}
+
+/* ---------------------------------------------------------- narrow
+   The three columns become one. The rail turns into a strip of plates you
+   swipe, the panel into a sheet that rises when you choose someone. */
+.sheetbar{ display:none }
+@media (max-width:1080px){
+  :root{ --rail-w:206px; --panel-w:286px }
+}
+@media (max-width:900px){
+  .body{ flex-direction:column }
+  .rail{
+    width:auto; border-right:0; border-bottom:1px solid var(--rule);
+    flex:none; max-height:none;
+  }
+  .railhead,.railfoot{ display:none }
+  .rails{ display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; padding:9px 10px }
+  .age{ width:132px; flex:none; margin:0 }
+  .age .plate{ height:64px }
+  .age .nm{ font-size:11.5px; line-height:1.1 }
+  .age .yr{ font-size:8.5px; margin-top:1px }
+  .age .foot{ padding:5px 9px 6px; font-size:9.5px }
+  .stage{ flex:1; min-height:0 }
+  .panel{
+    position:fixed; left:0; right:0; bottom:0; width:auto; z-index:60;
+    max-height:76dvh; border-left:0; border-top:1px solid var(--rule);
+    border-radius:16px 16px 0 0; box-shadow:var(--shadow-2);
+    transform:translateY(101%); transition:transform .26s cubic-bezier(.32,.72,0,1);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .panel.up{ transform:none }
+  .sheetbar{
+    display:flex; align-items:center; justify-content:center; flex:none;
+    height:22px; cursor:pointer; position:relative;
+  }
+  .sheetbar::before{ content:""; width:38px; height:4px; border-radius:2px;
+                     background:var(--rule) }
+  .hero{ height:112px }
+  .readout{ display:none }
+}
+@media (max-width:560px){
+  .mark h1{ font-size:14px } .mark .sub{ display:none }
+  .tools{ gap:11px; padding:0 11px }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ transition-duration:.01ms !important; animation-duration:.01ms !important }
+  .scroll{ scroll-behavior:auto }
+}
+</style>
+</head>
+<body>
+<div class="atlas">
+
+  <header class="top">
+    <a class="mark" href="../index.html">
+      <span class="sig" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/>
+          <path d="M12 3.4c2.6 2.7 3.9 5.6 3.9 8.6s-1.3 5.9-3.9 8.6"/>
+          <path d="M12 3.4c-2.6 2.7-3.9 5.6-3.9 8.6s1.3 5.9 3.9 8.6"/>
+        </svg>
+      </span>
+      <span>
+        <h1>The Ages of Thought</h1>
+        <span class="sub">An atlas &middot; the library</span>
+      </span>
+    </a>
+
+    <div class="readout" aria-live="polite">
+      <div class="ro">
+        <span class="dot" id="roAgeArt" aria-hidden="true"></span>
+        <span><span class="k">Age</span><span class="v" id="roAge">All ten</span></span>
+      </div>
+      <div class="ro">
+        <span><span class="k">Now reading</span><span class="v" id="roWho">Nobody yet</span></span>
+      </div>
+    </div>
+
+    <span class="spacer"></span>
+    <button class="tbtn" id="btnReset">Clear</button>
+    <button class="tbtn icon" id="btnTheme" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="body">
+
+    <nav class="rail" aria-label="The ten ages">
+      <div class="railhead">
+        <div class="t">The ten ages</div>
+        <div class="s">Choose one to go there</div>
+      </div>
+      <div class="rails" id="rails"></div>
+      <div class="railfoot">
+        An age holds whoever died inside it, so a man belongs to the age his
+        work belongs to rather than the one he was born into.
+      </div>
+    </nav>
+
+    <main class="stage">
+      <div class="tools">
+        <div class="grp">
+          <label for="tier">Show</label>
+          <input type="range" id="tier" min="1" max="4" step="1" value="1"
+                 aria-label="How many philosophers to show, by consequence"
+                 aria-describedby="tierNote">
+          <span class="note" id="tierNote">the six</span>
+        </div>
+        <span class="sep"></span>
+        <div class="grp" role="group" aria-label="Which lines to draw">
+          <label>Lines</label>
+          <button class="kind" id="kTaught"  aria-pressed="true" data-k="taught">
+            <svg viewBox="0 0 22 8" aria-hidden="true"><path d="M0 4h16" stroke="var(--accent)"
+              stroke-width="1.7"/><path d="M16 1.4 21 4l-5 2.6z" fill="var(--accent)"/></svg>taught</button>
+          <button class="kind" id="kRead"    aria-pressed="true" data-k="read">
+            <svg viewBox="0 0 22 8" aria-hidden="true"><path d="M0 4h21" stroke="var(--ink-3)"
+              stroke-width="1"/></svg>read</button>
+          <button class="kind" id="kReacted" aria-pressed="true" data-k="reacted">
+            <svg viewBox="0 0 22 8" aria-hidden="true"><path d="M0 4h21" stroke="var(--ink-2)"
+              stroke-width="1.3" stroke-dasharray="4 3.5"/></svg>argued with</button>
+        </div>
+        <span class="sep"></span>
+        <div class="grp zoom">
+          <button id="zOut" aria-label="Zoom out">&minus;</button>
+          <span class="lvl" id="zLvl">1.0&times;</span>
+          <button id="zIn" aria-label="Zoom in">+</button>
+          <button class="tbtn" id="zFit" style="height:26px;padding:0 10px">Fit</button>
+        </div>
+      </div>
+
+      <div class="scroll" id="scroll" tabindex="0" role="group"
+           aria-label="An atlas of philosophy. Time runs left to right across ten ages. Scroll sideways with the arrow keys, or use the ages listed to the left.">
+        <div class="canvas" id="canvas">
+          <div class="ages-bg" id="agesbg"></div>
+          <svg class="wires" id="wires" aria-hidden="true"></svg>
+          <div id="folk"></div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="panel" id="panel" aria-label="The philosopher you have chosen">
+      <div class="sheetbar" id="sheetbar" role="button" tabindex="0"
+           aria-label="Close this philosopher"></div>
+      <div id="panelBody">
+        <div class="empty" id="panelEmpty">
+          Choose a philosopher.<br>The lines out of him are what he read,
+          who taught him, and whom he argued with.
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==============================================================
+   THE AGES OF THOUGHT
+
+   Three things are laid out here and it is worth naming them
+   before the code starts, because each owns a different axis:
+
+     x   time, but not linearly. Each age gets width in
+         proportion to how many people are visible in it, so
+         antiquity is not a smear and the twentieth century is
+         not a wall. Within an age, time is straight.
+     y   consequence. The six sit in the top band, the tail in
+         the bottom one, and lanes are packed inside a band --
+         which is still needed, since Plato and Aristotle
+         overlap and so do Hume and Kant.
+     the lines  what actually passed between two people:
+         taught, read, argued with.
+
+   Nothing here is fetched from anywhere. The ten pictures are
+   drawn below in about a hundred lines of geometry.
+   ============================================================== */
+
+var $  = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
+var SVGNS = "http://www.w3.org/2000/svg";
+
+/* ---------------------------------------------------------- the ten plates
+   One motif per age, drawn as strokes on the age's own colour. They are
+   emblems rather than illustrations: a thing the age made, or a shape it
+   argued in. Each returns SVG markup for a 160x74 field and is scaled by
+   preserveAspectRatio to whatever box it is put in. */
+var W = 160, H = 74;
+function frame(inner, o) {
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" ' +
+         'aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,' +
+         ((o && o.a) || .55) + ')" stroke-width="' + ((o && o.w) || 1.1) +
+         '" stroke-linecap="round" stroke-linejoin="round">' + inner + "</g></svg>";
+}
+function ring(cx, cy, r) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'; }
+function line(x1, y1, x2, y2) {
+  return '<path d="M' + x1 + " " + y1 + "L" + x2 + " " + y2 + '"/>';
+}
+
+var PLATES = {
+  /* Miletus: a sun coming up over the sea, and the wave-meander the Greeks
+     put round everything. Myth on one side of the horizon, logos on the other. */
+  logos: function () {
+    var s = ring(80, 52, 21) + line(44, 52, 116, 52);
+    for (var i = 0; i < 7; i++) {
+      var a = Math.PI + (i + .5) * (Math.PI / 7);
+      s += line(80 + Math.cos(a) * 26, 52 + Math.sin(a) * 26,
+                80 + Math.cos(a) * 33, 52 + Math.sin(a) * 33);
+    }
+    var d = "M0 66";
+    for (var x = 0; x < W; x += 16)
+      d += "h4v-7h8v7h4";
+    return frame(s + '<path d="' + d + '" opacity=".55"/>');
+  },
+  /* Athens: a colonnade. Five columns, an architrave, and the stylobate. */
+  classical: function () {
+    var s = line(18, 26, 142, 26) + line(18, 31, 142, 31) + line(14, 66, 146, 66);
+    for (var i = 0; i < 5; i++) {
+      var x = 28 + i * 26;
+      s += line(x, 31, x, 62) + line(x - 6, 62, x + 6, 62) + line(x - 5, 31, x + 5, 31);
+      s += line(x - 2.2, 34, x - 2.2, 60) + line(x + 2.2, 34, x + 2.2, 60);
+    }
+    s += '<path d="M18 26 80 12 142 26"/>';
+    return frame(s);
+  },
+  /* Hellenistic and Roman: a laurel, the schools' promise of a life you can
+     actually get through. */
+  therapy: function () {
+    var s = "";
+    [-1, 1].forEach(function (k) {
+      s += '<path d="M80 68 C' + (80 + k * 40) + ' 62 ' + (80 + k * 46) + ' 30 80 16"/>';
+      for (var i = 0; i < 7; i++) {
+        var t = .12 + i * .12;
+        var x = 80 + k * (44 * Math.sin(t * Math.PI)) * .92;
+        var y = 68 - t * 52;
+        s += '<ellipse cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) +
+             '" rx="6.5" ry="2.8" transform="rotate(' + (k * (58 - i * 9)) + " " +
+             x.toFixed(1) + " " + y.toFixed(1) + ')"/>';
+      }
+    });
+    return frame(s, { a: .5 });
+  },
+  /* Late antiquity: Plotinus. Everything flows out of the One in rings and
+     is trying to get back. */
+  emanation: function () {
+    var s = '<circle cx="80" cy="37" r="3.4" fill="rgba(255,255,255,.85)" stroke="none"/>';
+    [9, 17, 25, 33, 41].forEach(function (r, i) {
+      s += '<circle cx="80" cy="37" r="' + r + '" opacity="' + (.85 - i * .13).toFixed(2) + '"/>';
+    });
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4;
+      s += line((80 + Math.cos(a) * 6).toFixed(1), (37 + Math.sin(a) * 6).toFixed(1),
+                (80 + Math.cos(a) * 43).toFixed(1), (37 + Math.sin(a) * 43).toFixed(1));
+    }
+    return frame(s, { a: .38 });
+  },
+  /* Transmission: the eight-point star of the Baghdad and Andalusian
+     geometers, in whose libraries the Greek corpus survived. */
+  transmission: function () {
+    function star(cx, cy, r, rot) {
+      var p = [];
+      for (var i = 0; i < 16; i++) {
+        var a = rot + i * Math.PI / 8, rr = i % 2 ? r * .46 : r;
+        p.push((cx + Math.cos(a) * rr).toFixed(1) + " " + (cy + Math.sin(a) * rr).toFixed(1));
+      }
+      return '<path d="M' + p.join("L") + 'z"/>';
+    }
+    var s = "";
+    for (var i = 0; i < 4; i++) s += star(20 + i * 40, 37, 21, i % 2 ? .39 : 0);
+    s += star(0, 37, 21, .39) + star(160, 37, 21, .39);
+    return frame(s, { a: .45 });
+  },
+  /* The universities: a rose window, the age's own diagram of an ordered
+     whole with everything in its station. */
+  rose: function () {
+    var s = ring(80, 37, 32) + ring(80, 37, 26) + ring(80, 37, 9);
+    for (var i = 0; i < 12; i++) {
+      var a = i * Math.PI / 6;
+      s += line((80 + Math.cos(a) * 9).toFixed(1), (37 + Math.sin(a) * 9).toFixed(1),
+                (80 + Math.cos(a) * 26).toFixed(1), (37 + Math.sin(a) * 26).toFixed(1));
+      var b = a + Math.PI / 12;
+      s += '<circle cx="' + (80 + Math.cos(b) * 17.5).toFixed(1) + '" cy="' +
+           (37 + Math.sin(b) * 17.5).toFixed(1) + '" r="4.6"/>';
+    }
+    return frame(s, { a: .45 });
+  },
+  /* Renaissance: one-point perspective, which is the period's discovery that
+     where you stand decides what you see. And the rupture through it. */
+  rupture: function () {
+    var s = "";
+    for (var i = 0; i <= 10; i++) {
+      s += line(i * 16, 0, 80, 37) + line(i * 16, 74, 80, 37);
+    }
+    s += ring(80, 37, 4);
+    s += '<path d="M96 0 L70 30 L88 40 L58 74" stroke="rgba(255,255,255,.9)" stroke-width="2"/>';
+    return frame(s, { a: .3 });
+  },
+  /* The age of method: an orbit, and a prism opening a ray. Newton twice. */
+  method: function () {
+    var s = '<ellipse cx="80" cy="37" rx="52" ry="20"/>' +
+            '<ellipse cx="80" cy="37" rx="30" ry="11.5" transform="rotate(-24 80 37)"/>' +
+            '<circle cx="80" cy="37" r="5" fill="rgba(255,255,255,.85)" stroke="none"/>' +
+            '<circle cx="132" cy="37" r="3"/>';
+    s += '<path d="M18 58 L30 36 L42 58 z"/>' + line(2, 52, 18, 52);
+    for (var i = 0; i < 4; i++) s += line(42, 50 + i * 1.6, 74, 40 + i * 5.5);
+    return frame(s, { a: .45 });
+  },
+  /* After Kant: the spiral. The system completes itself, is inverted, is
+     refused, and comes back round at a different height. */
+  spiral: function () {
+    var d = "M80 37", a = 0, r = 2;
+    for (var i = 0; i < 92; i++) {
+      a += .26; r += .43;
+      d += "L" + (80 + Math.cos(a) * r).toFixed(1) + " " + (37 + Math.sin(a) * r * .62).toFixed(1);
+    }
+    return frame('<path d="' + d + '"/>', { a: .5, w: 1.2 });
+  },
+  /* Two streams: one line out of Frege and Husserl, parting and running on,
+     with the beginnings of a way back across. */
+  streams: function () {
+    var s = '<path d="M0 37 C34 37 42 37 56 37"/>' +
+            '<path d="M56 37 C86 37 96 12 160 8" stroke-width="1.6"/>' +
+            '<path d="M56 37 C86 37 96 62 160 66" stroke-width="1.6"/>' +
+            '<circle cx="56" cy="37" r="3.6" fill="rgba(255,255,255,.85)" stroke="none"/>';
+    for (var i = 0; i < 3; i++) {
+      var x = 108 + i * 20;
+      s += '<path d="M' + x + ' 22 L' + (x + 6) + ' 52" opacity=".38" stroke-dasharray="2 3"/>';
+    }
+    return frame(s, { a: .5 });
+  }
+};
+var PLATE_ORDER = ["logos", "classical", "therapy", "emanation", "transmission",
+                   "rose", "rupture", "method", "spiral", "streams"];
+
+/* ---------------------------------------------------------- state */
+var D = null;                     /* the atlas dataset */
+var BY = {};                      /* id -> person */
+var OUT = {}, IN = {};            /* id -> edges leaving / arriving */
+var TIER = 1;                     /* how far the slider is open */
+var KINDS = { taught: true, read: true, reacted: true, transmitted: true };
+var SEL = null;                   /* the chosen philosopher's id */
+var AGE = null;                   /* the chosen age's index */
+var Z = 1;                        /* zoom */
+var SCALE = null;                 /* the x-scale: one band per age */
+var LAY = null;                   /* the y-layout: bands and rows */
+var NODE = {};                    /* id -> the button in the DOM */
+
+var TIERNAME = { 1: "the six", 2: "the major", 3: "the substantial", 4: "everyone" };
+var RELNAME = { taught: "taught", read: "read", reacted: "argued with",
+                transmitted: "carried" };
+var RELBACK = { taught: "taught by", read: "read by", reacted: "argued with",
+                transmitted: "carried by" };
+
+function egVar(i) { return "var(--e" + i + ")"; }
+function visible(p) { return p.ti <= TIER; }
+
+/* A year as a reader says it. */
+function yr(y, circa) {
+  var s = y < 0 ? Math.abs(y) + " BCE" : String(y);
+  return circa ? "c. " + s : s;
+}
+function span(p) {
+  if (p.fl) return "fl. " + yr(p.fl);
+  return yr(p.b, p.cb) + " \u2013 " + yr(p.d, p.cd);
+}
+
+/* ---------------------------------------------------------- text metrics
+   Cards are as wide as the name in them, so the packer needs the width before
+   anything is in the document. One canvas, one cache. */
+var _mc = document.createElement("canvas").getContext("2d");
+var _wcache = Object.create(null);
+function textW(s, font) {
+  var k = font + " " + s;
+  if (_wcache[k] === undefined) { _mc.font = font; _wcache[k] = _mc.measureText(s).width; }
+  return _wcache[k];
+}
+var CARDFONT = { 1: '600 15px "Spectral",Georgia,serif',
+                 2: '600 13px "Spectral",Georgia,serif',
+                 3: '600 11.5px "Spectral",Georgia,serif',
+                 4: '500 10.5px system-ui,sans-serif' };
+var METAFONT = '9px "IBM Plex Mono",monospace';
+var SCHFONT  = '10px system-ui,sans-serif';
+var CARDPAD  = { 1: 34, 2: 30, 3: 24, 4: 20 };
+/* A card is as wide as its widest line. Sizing it by the name alone is what
+   turned Immanuel Kant into "Immanuel K..." with his dates cut off under it:
+   the school line is routinely the longest of the three. */
+var _cw = Object.create(null);
+function cardW(p) {
+  if (_cw[p.id] !== undefined) return _cw[p.id];
+  var w = textW(p.n, CARDFONT[p.ti]);
+  if (p.ti < 4) w = Math.max(w, textW(span(p), METAFONT));
+  if (p.ti < 3 && p.sch) w = Math.max(w, textW(p.sch, SCHFONT));
+  return (_cw[p.id] = Math.ceil(Math.min(w, 230) + CARDPAD[p.ti]));
+}
+
+/* ---------------------------------------------------------- the x-scale
+   Each age is a band. Its width is a floor plus a share for every visible
+   person in it, so an age nobody is shown in stays on the map as a thin
+   column rather than vanishing, and the crowded twentieth century gets the
+   room it needs. Inside a band, a year is a year. */
+var BAND_MIN = 104, BAND_FOG = 62, PER_HEAD = 34, BAND_MAX = 1500;
+function buildScale() {
+  var count = {};
+  D.people.forEach(function (p) { if (visible(p)) count[p.ep] = (count[p.ep] || 0) + 1; });
+  var raw = D.epochs.map(function (e, i) {
+    var n = count[i] || 0;
+    return n ? Math.min(BAND_MAX, BAND_MIN + n * PER_HEAD) : BAND_FOG;
+  });
+  /* With only the six shown the ten ages come to less than the window, and
+     zooming to fit would only make the type small. Give the surplus back to
+     the bands instead, so the columns always reach both edges. */
+  var sum = raw.reduce(function (a, b) { return a + b; }, 0);
+  var room = ($("#scroll") ? $("#scroll").clientWidth : 0) - 2;
+  if (room > 240 && sum < room) {
+    var k = room / sum;
+    raw = raw.map(function (w) { return w * k; });
+    sum = room;
+  }
+  var bands = [], x = 0;
+  D.epochs.forEach(function (e, i) {
+    bands.push({ i: i, a: e.a, b: e.b, x0: x, w: raw[i], n: count[i] || 0 });
+    x += raw[i];
+  });
+  return { bands: bands, total: x };
+}
+/* A year to an x. Years outside every band clamp to the nearest edge, which
+   only matters for a birth before the first age begins. */
+function xOf(y, sc) {
+  sc = sc || SCALE;
+  var bs = sc.bands;
+  for (var i = 0; i < bs.length; i++) {
+    var b = bs[i];
+    if (y < b.a) return b.x0;
+    if (y < b.b) return b.x0 + (y - b.a) / (b.b - b.a) * b.w;
+  }
+  return sc.total;
+}
+
+/* ---------------------------------------------------------- the y-layout
+   Band by tier, most consequential at the top, and pack lanes only inside a
+   band. Packing is still needed there: six tier-one philosophers is not six
+   non-overlapping ones. Plato and Aristotle overlap by twenty-six years, and
+   so, at the other end, do Hume and Kant. */
+var GAP = 14;
+function buildLayout() {
+  var row = {}, bands = {}, base = 0;
+  for (var t = 1; t <= 4; t++) {
+    if (t > TIER) break;
+    var folk = D.people.filter(function (p) { return p.ti === t; })
+                       .sort(function (a, b) { return a.b - b.b || a.d - b.d; });
+    var ends = [];
+    folk.forEach(function (p) {
+      var x1 = xOf(p.fl || p.b), x2 = Math.max(xOf(p.d), x1 + 12);
+      var need = Math.max(x2, x1 + cardW(p));
+      var i = 0;
+      for (; i < ends.length; i++) if (ends[i] <= x1 - GAP) break;
+      if (i === ends.length) ends.push(0);
+      ends[i] = need;
+      row[p.id] = base + i;
+    });
+    bands[t] = { start: base, rows: ends.length };
+    base += ends.length;
+    if (ends.length) base += 0.35;          /* a breath between bands */
+  }
+  return { row: row, bands: bands, rows: base };
+}
+
+/* ---------------------------------------------------------- rendering
+   Three passes over the same layout: the ground (age columns and tier
+   bands), the wires, then the people. Nothing measures the DOM, so nothing
+   here can be made slow by having put something in it. */
+var LANE = 64;
+var TOPPAD = 34, BOTPAD = 30;
+var PAD = TOPPAD;                 /* the live top padding, set by fitPad() */
+
+function laneY(r) { return PAD + r * LANE; }
+
+function fitPad(rows) {
+  var sc = $("#scroll");
+  var room = sc ? (sc.clientHeight - 2) / Z : 0;
+  var need = rows * LANE + TOPPAD + BOTPAD;
+  PAD = (room > need) ? Math.max(TOPPAD, (room - rows * LANE) / 2 - 10) : TOPPAD;
+}
+
+function renderGround() {
+  var bg = $("#agesbg"), s = "";
+  fitPad(LAY.rows);
+  /* The chart may be four rows tall and the window forty. The ten columns
+     still run the whole height, because they are the ground the chart sits
+     on rather than a decoration attached to its last row. */
+  var sc = $("#scroll");
+  var h = Math.max(laneY(LAY.rows) + BOTPAD, sc ? (sc.clientHeight - 2) / Z : 0);
+  SCALE.bands.forEach(function (b) {
+    var e = D.epochs[b.i];
+    s += '<div class="ageband' + (AGE === b.i ? " on" : "") +
+         (b.w * Z < 168 ? " tight" : "") + '" data-i="' + b.i +
+         '" style="left:' + b.x0 + "px;width:" + b.w + "px;--eg:" + egVar(b.i) + '">' +
+         '<i></i><u></u><b><span>' + esc(e.n) + "</span>" +
+         "<em>" + yr(e.a) + " \u2013 " + yr(e.b) + "</em></b></div>";
+  });
+  for (var t = 1; t <= 4; t++) {
+    var bd = LAY.bands[t];
+    if (!bd || !bd.rows) continue;
+    s += '<div class="tierband t' + t + '" style="top:' + (laneY(bd.start) - 20) +
+         "px;height:" + (bd.rows * LANE + 6) + 'px"><i></i><b>' +
+         esc(TIERNAME[t]) + "</b></div>";
+  }
+  bg.innerHTML = s;
+  $("#canvas").style.width = SCALE.total + "px";
+  $("#canvas").style.height = h + "px";
+  return h;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+/* The data carries <em> for emphasis inside a sentence. Keep exactly that and
+   nothing else, so a study written with markup reads as written and a stray
+   angle bracket still cannot open a tag. */
+function rich(s) {
+  return esc(s).replace(/&lt;em&gt;/g, "<em>").replace(/&lt;\/em&gt;/g, "</em>");
+}
+
+function renderFolk() {
+  var frag = document.createDocumentFragment();
+  NODE = {};
+  D.people.forEach(function (p) {
+    if (!visible(p)) return;
+    var x1 = xOf(p.fl || p.b), x2 = Math.max(xOf(p.d), x1 + 12);
+    var b = document.createElement("button");
+    b.className = "who";
+    b.tabIndex = -1;               /* see ORDER below: the chart is one stop */
+    b.dataset.id = p.id;
+    b.dataset.ti = String(p.ti);
+    b.style.cssText = "left:" + x1 + "px;top:" + laneY(LAY.row[p.id]) +
+                      "px;width:" + Math.max(x2 - x1, cardW(p)) + "px;height:" +
+                      (LANE - 10) + "px;--eg:" + egVar(p.ep);
+    b.setAttribute("aria-label", p.n + ", " + span(p) +
+                   (p.sch ? ", " + p.sch : "") + ". " + p.one);
+    var w = Math.max(x2 - x1, 10);
+    b.innerHTML =
+      '<span class="card" style="max-width:' + Math.max(cardW(p), 84) + 'px">' +
+        '<span class="n">' + esc(p.n) + "</span>" +
+        '<span class="meta">' + esc(span(p)) + "</span>" +
+        (p.sch ? '<span class="sch">' + esc(p.sch) + "</span>" : "") +
+      "</span>" +
+      '<span class="rule' + (p.cb || p.cd ? " circa" : "") + '" style="width:' + w + 'px"></span>';
+    frag.appendChild(b);
+    NODE[p.id] = b;
+  });
+  var host = $("#folk");
+  host.innerHTML = "";
+  host.appendChild(frag);
+  ORDER = D.people.filter(visible).slice().sort(function (a, b) {
+    return (LAY.row[a.id] - LAY.row[b.id]) || (a.b - b.b);
+  });
+  rove(SEL && NODE[SEL] ? SEL : (ORDER[0] || {}).id);
+}
+
+/* One tab stop, not a hundred and seventeen.
+   A chart of 117 buttons is 117 presses of Tab between the toolbar and the
+   panel, and a screen reader reads every name before anything else on the
+   page. So exactly one card is tabbable at a time and the arrow keys move
+   between them: left and right along the row in time order, up and down
+   between rows. This is the roving-tabindex pattern, and it is the difference
+   between the chart being usable from a keyboard and being a wall. */
+var ORDER = [], ROVE = null;
+function rove(id) {
+  if (!id || !NODE[id]) { ROVE = null; return; }
+  if (ROVE && NODE[ROVE]) NODE[ROVE].tabIndex = -1;
+  ROVE = id;
+  NODE[id].tabIndex = 0;
+}
+function roveBy(dRow, dCol, focus) {
+  if (!ORDER.length) return;
+  var i = 0;
+  for (var k = 0; k < ORDER.length; k++) if (ORDER[k].id === ROVE) { i = k; break; }
+  var cur = ORDER[i], want;
+  if (dCol) {
+    want = ORDER[Math.max(0, Math.min(ORDER.length - 1, i + dCol))];
+  } else {
+    /* the nearest person in the next row along, measured in time */
+    var row = LAY.row[cur.id] + dRow, best = null, bd = Infinity;
+    ORDER.forEach(function (p) {
+      if (Math.round(LAY.row[p.id]) !== Math.round(row)) return;
+      var d = Math.abs(p.b - cur.b);
+      if (d < bd) { bd = d; best = p; }
+    });
+    want = best;
+  }
+  if (!want) return;
+  rove(want.id);
+  if (focus) { NODE[want.id].focus(); reveal(want.id); }
+}
+
+/* Zooming changes how tall a screenful is, which changes where the chart is
+   centred, which moves every row. Nothing about the cards themselves changes,
+   so move them rather than build them again. */
+function placeFolk() {
+  D.people.forEach(function (p) {
+    var el = NODE[p.id];
+    if (el) el.style.top = laneY(LAY.row[p.id]) + "px";
+  });
+}
+
+/* Where a line leaves a person and where it arrives. Out of the end of a
+   life and into the start of one: influence runs forwards, and the picture
+   should say so without a legend. */
+function anchor(p, side) {
+  var x1 = xOf(p.fl || p.b), x2 = Math.max(xOf(p.d), x1 + 12);
+  return { x: side === "out" ? x2 : x1, y: laneY(LAY.row[p.id]) + LANE - 12 };
+}
+
+function renderWires() {
+  var svg = $("#wires"), s = "";
+  svg.setAttribute("width", SCALE.total);
+  svg.setAttribute("height", laneY(LAY.rows) + BOTPAD);
+  svg.setAttribute("viewBox", "0 0 " + SCALE.total + " " + (laneY(LAY.rows) + BOTPAD));
+  D.edges.forEach(function (e) {
+    if (!KINDS[e.k]) return;
+    var a = BY[e.f], b = BY[e.t];
+    if (!a || !b || !visible(a) || !visible(b)) return;
+    var p = anchor(a, "out"), q = anchor(b, "in");
+    var dx = Math.max(30, Math.abs(q.x - p.x) * 0.36);
+    s += '<path class="wire ' + e.k + '" data-f="' + e.f + '" data-t="' + e.t +
+         '" d="M' + p.x.toFixed(1) + "," + p.y.toFixed(1) +
+         " C" + (p.x + dx).toFixed(1) + "," + p.y.toFixed(1) +
+         " " + (q.x - dx).toFixed(1) + "," + q.y.toFixed(1) +
+         " " + q.x.toFixed(1) + "," + q.y.toFixed(1) + '"/>';
+    if (e.k === "taught") {
+      s += '<path class="head" data-f="' + e.f + '" data-t="' + e.t + '" d="M' +
+           (q.x - 7).toFixed(1) + "," + (q.y - 3.4).toFixed(1) + "L" +
+           q.x.toFixed(1) + "," + q.y.toFixed(1) + "L" +
+           (q.x - 7).toFixed(1) + "," + (q.y + 3.4).toFixed(1) + 'z"/>';
+    }
+  });
+  svg.innerHTML = s;
+}
+
+/* A transform does not change what a scroll container thinks it contains, so
+   the scaled size has to be handed to it as margin. It has to be measured off
+   the canvas box rather than off the chart, because the canvas is deliberately
+   taller than the chart whenever the chart is short: the age columns run the
+   whole height of the window and would otherwise be cut. */
+function syncBox() {
+  var c = $("#canvas");
+  var w = parseFloat(c.style.width) || 0, h = parseFloat(c.style.height) || 0;
+  c.style.transform = "scale(" + Z + ")";
+  c.style.marginRight = (w * (Z - 1)) + "px";
+  c.style.marginBottom = (h * (Z - 1)) + "px";
+}
+
+function draw() {
+  SCALE = buildScale();
+  LAY = buildLayout();
+  renderGround();
+  renderWires();
+  renderFolk();
+  applySelection();
+  syncBox();
+}
+
+/* ---------------------------------------------------------- the ages rail */
+function renderRail() {
+  var host = $("#rails"), s = "";
+  D.epochs.forEach(function (e, i) {
+    var shown = SCALE.bands[i].n, fog = shown === 0;
+    s += '<button class="age' + (fog ? " fog" : "") + (AGE === i ? " on" : "") +
+         '" data-i="' + i + '" style="--eg:' + egVar(i) + '"' +
+         ' aria-pressed="' + (AGE === i) + '">' +
+         '<span class="plate">' + PLATES[PLATE_ORDER[i]]() +
+           '<span class="cap"><span class="nm">' + esc(e.n) + "</span>" +
+           '<span class="yr">' + yr(e.a) + " \u2013 " + yr(e.b) + "</span></span>" +
+         "</span>" +
+         '<span class="foot"><span>' +
+         (fog ? "beyond the fog" : shown + " of " + e.n_all +
+                (shown === 1 ? " thinker" : " thinkers")) +
+         "</span><span class=\"cnt\">" + e.n_all + "</span></span>" +
+         "</button>";
+  });
+  host.innerHTML = s;
+}
+
+/* ---------------------------------------------------------- the panel */
+/* The works field is one string of titles divided by semicolons, which is how
+   a bibliography line is written and not how it is counted. */
+function nWorks(p) {
+  return p.works.reduce(function (n, line) {
+    return n + line.split(";").filter(function (t) { return t.trim().length > 1; }).length;
+  }, 0);
+}
+
+function renderPanel() {
+  var host = $("#panelBody");
+  if (!SEL) {
+    host.innerHTML = '<div class="empty">Choose a philosopher.<br>The lines out of him ' +
+      "are what he read, who taught him, and whom he argued with.</div>";
+    $("#roWho").textContent = "Nobody yet";
+    return;
+  }
+  var p = BY[SEL];
+  var out = OUT[p.id] || [], inn = IN[p.id] || [];
+  var links = 0;
+  [].concat(out, inn).forEach(function (e) {
+    var other = BY[e.f === p.id ? e.t : e.f];
+    if (other && visible(other)) links++;
+  });
+
+  function linkRow(e, back) {
+    var other = BY[back ? e.f : e.t];
+    if (!other) return "";
+    return '<button class="link" data-go="' + other.id + '">' +
+      '<span class="rel">' + (back ? RELBACK[e.k] : RELNAME[e.k]) + "</span>" +
+      '<span class="nm">' + esc(other.n) + "</span>" +
+      '<span class="yr">' + (other.b < 0 ? Math.abs(other.b) + " BCE" : other.b) +
+      "</span></button>";
+  }
+  var rowsOut = out.map(function (e) { return linkRow(e, false); }).join("");
+  var rowsIn  = inn.map(function (e) { return linkRow(e, true); }).join("");
+
+  host.innerHTML =
+    '<div class="hero" style="--eg:' + egVar(p.ep) + '">' +
+      PLATES[PLATE_ORDER[p.ep]]() +
+      '<div class="cap"><h2 class="who-n">' + esc(p.n) + "</h2>" +
+      '<div class="who-s">' + esc(span(p)) + (p.pl ? " &middot; " + esc(p.pl) : "") +
+      "</div></div></div>" +
+    '<div class="tallies">' +
+      '<div class="tally"><div class="v">' + p.ideas.length + '</div><div class="k">Ideas</div></div>' +
+      '<div class="tally"><div class="v">' + (out.length + inn.length) +
+        '</div><div class="k">Lines</div></div>' +
+      '<div class="tally"><div class="v">' + nWorks(p) + '</div><div class="k">Works</div></div>' +
+    "</div>" +
+    '<div class="pscroll">' +
+      (p.one ? '<p class="one">' + rich(p.one) + "</p>" : "") +
+      (p.sch ? '<div class="sec"><h3>School</h3><div class="works">' + esc(p.sch) +
+               "</div></div>" : "") +
+      '<div class="sec"><h3>What he held</h3><ul>' +
+        p.ideas.map(function (t) { return "<li>" + rich(t) + "</li>"; }).join("") +
+      "</ul></div>" +
+      (p.works.length ? '<div class="sec"><h3>Works</h3><div class="works">' +
+        p.works.map(rich).join(" ") + "</div></div>" : "") +
+      (rowsOut ? '<div class="sec"><h3>Reached forward to</h3><div class="links">' +
+        rowsOut + "</div></div>" : "") +
+      (rowsIn ? '<div class="sec"><h3>Came down from</h3><div class="links">' +
+        rowsIn + "</div></div>" : "") +
+      (p.q ? '<div class="sec"><h3>Said of him</h3><blockquote class="quote">' +
+        rich(p.q.t) + "<cite>" + esc(p.q.s) + "</cite></blockquote></div>" : "") +
+    "</div>";
+  $("#roWho").textContent = p.n;
+}
+
+/* ---------------------------------------------------------- selection */
+function applySelection() {
+  var wires = $("#wires");
+  $$(".who").forEach(function (b) { b.classList.remove("on", "dim"); });
+  $$(".wire,.head", wires).forEach(function (w) { w.classList.remove("lit"); });
+  if (!SEL) { wires.classList.remove("sel"); return; }
+  wires.classList.add("sel");
+  var near = {};
+  near[SEL] = 1;
+  $$('.wire[data-f="' + SEL + '"],.wire[data-t="' + SEL + '"],' +
+     '.head[data-f="' + SEL + '"],.head[data-t="' + SEL + '"]', wires)
+    .forEach(function (w) {
+      w.classList.add("lit");
+      near[w.dataset.f] = 1; near[w.dataset.t] = 1;
+    });
+  $$(".who").forEach(function (b) {
+    if (b.dataset.id === SEL) b.classList.add("on");
+    else if (!near[b.dataset.id]) b.classList.add("dim");
+  });
+}
+
+function select(id, opts) {
+  SEL = id && BY[id] ? id : null;
+  if (SEL && !visible(BY[SEL])) {          /* reaching someone the slider hides */
+    setTier(BY[SEL].ti);
+  }
+  renderPanel();
+  applySelection();
+  if (SEL) {
+    setAge(BY[SEL].ep, true);
+    if (!opts || !opts.quiet) reveal(SEL);
+    if (window.matchMedia("(max-width:900px)").matches) $("#panel").classList.add("up");
+  } else {
+    $("#panel").classList.remove("up");
+  }
+}
+
+/* Bring a person into view without yanking the page about. */
+function reveal(id) {
+  var el = NODE[id];
+  if (!el) return;
+  var sc = $("#scroll");
+  var x = parseFloat(el.style.left) * Z, w = parseFloat(el.style.width) * Z;
+  var y = parseFloat(el.style.top) * Z;
+  if (x < sc.scrollLeft + 30 || x + w > sc.scrollLeft + sc.clientWidth - 30) {
+    sc.scrollTo({ left: Math.max(0, x - sc.clientWidth * 0.36), behavior: "smooth" });
+  }
+  if (y < sc.scrollTop || y > sc.scrollTop + sc.clientHeight - 90) {
+    sc.scrollTo({ top: Math.max(0, y - sc.clientHeight * 0.35), behavior: "smooth" });
+  }
+}
+
+function setAge(i, quiet) {
+  AGE = i;
+  $$(".age").forEach(function (b) {
+    var on = +b.dataset.i === i;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+  $$(".ageband").forEach(function (b) { b.classList.toggle("on", +b.dataset.i === i); });
+  var e = i === null ? null : D.epochs[i];
+  $("#roAge").textContent = e ? e.n : "All ten";
+  $("#roAgeArt").style.background = e ? egVar(i) : "transparent";
+  $("#roAgeArt").style.borderRadius = "4px";
+  if (!quiet && e) {
+    var b = SCALE.bands[i];
+    $("#scroll").scrollTo({ left: Math.max(0, b.x0 * Z - 24), behavior: "smooth" });
+  }
+}
+
+function setTier(t) {
+  TIER = Math.max(1, Math.min(4, t));
+  $("#tier").value = String(TIER);
+  var n = D.people.filter(visible).length;
+  $("#tierNote").textContent = TIER === 4 ? "all " + n : n + " · " + TIERNAME[TIER];
+  draw();
+  renderRail();
+}
+
+/* ---------------------------------------------------------- zoom */
+function setZoom(z, anchorPx) {
+  var sc = $("#scroll");
+  var old = Z;
+  Z = Math.max(0.4, Math.min(2.2, z));
+  var cx = anchorPx === undefined ? sc.clientWidth / 2 : anchorPx;
+  var at = (sc.scrollLeft + cx) / old;
+  renderGround();          /* the columns are sized in screenfuls, so they
+                              have to be redrawn when a screenful changes */
+  renderWires();
+  placeFolk();
+  syncBox();
+  sc.scrollLeft = at * Z - cx;
+  $("#zLvl").textContent = Z.toFixed(1) + "×";
+}
+function fit() {
+  var sc = $("#scroll");
+  setZoom(Math.min(1, Math.max(0.4, sc.clientWidth / SCALE.total)));
+  sc.scrollLeft = 0;
+}
+
+/* ---------------------------------------------------------- wiring up */
+function bind() {
+  $("#rails").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".age");
+    if (b) setAge(AGE === +b.dataset.i ? null : +b.dataset.i);
+  });
+  $("#folk").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".who");
+    if (b) { rove(b.dataset.id); select(b.dataset.id === SEL ? null : b.dataset.id); }
+  });
+  $("#folk").addEventListener("focusin", function (ev) {
+    var b = ev.target.closest(".who");
+    if (b) rove(b.dataset.id);
+  });
+  $("#folk").addEventListener("keydown", function (ev) {
+    if (!ev.target.closest(".who")) return;
+    var k = ev.key;
+    if (k === "ArrowRight") roveBy(0, 1, true);
+    else if (k === "ArrowLeft") roveBy(0, -1, true);
+    else if (k === "ArrowDown") roveBy(1, 0, true);
+    else if (k === "ArrowUp") roveBy(-1, 0, true);
+    else if (k === "Home") { rove((ORDER[0] || {}).id); if (ROVE) { NODE[ROVE].focus(); reveal(ROVE); } }
+    else if (k === "End") { rove((ORDER[ORDER.length - 1] || {}).id);
+                            if (ROVE) { NODE[ROVE].focus(); reveal(ROVE); } }
+    else return;
+    ev.preventDefault();
+  });
+  $("#panelBody").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".link");
+    if (b) select(b.dataset.go);
+  });
+  $("#tier").addEventListener("input", function () { setTier(+this.value); });
+  $$(".kind").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var k = b.dataset.k;
+      KINDS[k] = !KINDS[k];
+      if (k === "read") KINDS.transmitted = KINDS.read;
+      b.setAttribute("aria-pressed", String(KINDS[k]));
+      renderWires();
+      applySelection();
+    });
+  });
+  $("#zIn").onclick = function () { setZoom(Z * 1.25); };
+  $("#zOut").onclick = function () { setZoom(Z / 1.25); };
+  $("#zFit").onclick = fit;
+  $("#btnReset").onclick = function () { select(null); setAge(null); };
+  $("#sheetbar").onclick = function () { $("#panel").classList.remove("up"); };
+  $("#sheetbar").onkeydown = function (ev) {
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); this.click(); }
+  };
+
+  /* Ctrl/pinch zooms; a plain wheel scrolls, which is what a trackpad user
+     means by a plain wheel. */
+  $("#scroll").addEventListener("wheel", function (ev) {
+    if (!ev.ctrlKey && !ev.metaKey) return;
+    ev.preventDefault();
+    var r = this.getBoundingClientRect();
+    setZoom(Z * (ev.deltaY < 0 ? 1.1 : 1 / 1.1), ev.clientX - r.left);
+  }, { passive: false });
+
+  /* The chart is a scroll region before it is a list of buttons: someone
+     arriving on it by keyboard should be able to move it. */
+  $("#scroll").addEventListener("keydown", function (ev) {
+    if (ev.target !== this) return;
+    var step = ev.shiftKey ? this.clientWidth : 90;
+    if (ev.key === "ArrowRight") this.scrollLeft += step;
+    else if (ev.key === "ArrowLeft") this.scrollLeft -= step;
+    else if (ev.key === "ArrowDown") this.scrollTop += 70;
+    else if (ev.key === "ArrowUp") this.scrollTop -= 70;
+    else if (ev.key === "Home") this.scrollLeft = 0;
+    else if (ev.key === "End") this.scrollLeft = this.scrollWidth;
+    else return;
+    ev.preventDefault();
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && SEL) { select(null); }
+  });
+
+  /* theme, shared with the rest of the library */
+  $("#btnTheme").onclick = function () {
+    var next = document.documentElement.getAttribute("data-theme") === "dark"
+             ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      var st = JSON.parse(localStorage.getItem("library:v1") || "{}");
+      st.theme = next;
+      localStorage.setItem("library:v1", JSON.stringify(st));
+    } catch (e) { /* private browsing; the choice lasts this visit */ }
+  };
+
+  var t;
+  addEventListener("resize", function () {
+    clearTimeout(t);
+    t = setTimeout(function () { draw(); }, 140);
+  });
+}
+
+/* ---------------------------------------------------------- start */
+function start(data) {
+  D = data;
+  BY = {};
+  D.people.forEach(function (p) { BY[p.id] = p; });
+  OUT = {}; IN = {};
+  D.edges.forEach(function (e) {
+    (OUT[e.f] = OUT[e.f] || []).push(e);
+    (IN[e.t] = IN[e.t] || []).push(e);
+  });
+  bind();
+  setTier(1);
+  renderRail();
+  setAge(null, true);
+  fit();
+  renderPanel();
+}
+
+fetch("data/atlas.json")
+  .then(function (r) {
+    if (!r.ok) throw new Error("atlas.json " + r.status);
+    return r.json();
+  })
+  .then(start)
+  .catch(function (err) {
+    $("#panelBody").innerHTML =
+      '<div class="empty">The atlas could not be loaded.<br>' + esc(String(err)) + "</div>";
+    $("#folk").innerHTML =
+      '<div style="padding:40px;font-family:var(--f-disp);font-style:italic;' +
+      'color:var(--ink-3)">The atlas could not be loaded. If you are offline and ' +
+      "have not opened this book before, it is not stored yet.</div>";
+  });
+</script>
+</body>
+</html>
