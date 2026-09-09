@@ -3,7 +3,7 @@
    BUILD is a content digest of the shell file set, so a deploy that
    changes nothing produces the same worker and no reader is asked to
    reload for a build that would give them identical bytes. */
-const BUILD  = "814147bfd16b";
+const BUILD  = "4b092bb063b7";
 const FILES  = [
   "index.html",
   "manifest.webmanifest",
@@ -18,8 +18,8 @@ const FILES  = [
   "icons/icon-512-maskable.png",
   "icons/icon-512.png"
 ];
-const SLUGS  = ["newton-to-mtheory", "the-long-argument"];
-const CASUAL = {"newton-to-mtheory": 12, "the-long-argument": 0};
+const SLUGS  = ["newton-to-mtheory", "the-long-argument", "the-ages-of-thought"];
+const CASUAL = {"newton-to-mtheory": 12, "the-ages-of-thought": 0, "the-long-argument": 0};
 
 /* The library's service worker.
  *
