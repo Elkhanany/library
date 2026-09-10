@@ -148,9 +148,21 @@ def main():
 
     people = js_array_of_objects(people_source(s))
     eras = js_array_of_objects(block(s, "const ERAS = [", "\n];"))
+    # ED is a JSON array once it is wrapped in brackets. An earlier version of
+    # this script matched entries with a regex that allowed exactly two or
+    # three strings, and thirty-seven of the hundred and eighty-three carry a
+    # fourth: a sentence about the edge. Those thirty-seven were dropped
+    # without a word, and among them was Plato teaching Aristotle. The notes
+    # are the only per-edge prose in the dataset, so they are kept.
     ed_src = block(s, "const ED = [", "\n];")
-    edges = [{"f": a, "t": b, "k": k or "read"}
-             for a, b, k in re.findall(r'\["([^"]+)","([^"]+)"(?:,"([^"]+)")?\]', ed_src)]
+    edges = []
+    for e in json.loads("[" + ed_src + "]"):
+        d = {"f": e[0], "t": e[1], "k": e[2] if len(e) > 2 else "read"}
+        if len(e) > 3 and e[3]:
+            d["note"] = html.unescape(e[3])
+        edges.append(d)
+    if len(edges) < 180:
+        raise SystemExit("atlas: only %d edges parsed; the source has over 180" % len(edges))
     tr = json_ish("{" + block(s, "const TR = {", "\n};") + "}")
 
     if len(people) != len(set(p["id"] for p in people)):
@@ -222,7 +234,9 @@ def main():
     kinds = {}
     for e in edges:
         kinds[e["k"]] = kinds.get(e["k"], 0) + 1
-    print("atlas: %d people, %d edges, %d epochs" % (len(out_people), len(edges), len(eras)))
+    noted = sum(1 for e in edges if e.get("note"))
+    print("atlas: %d people, %d edges (%d with a note), %d epochs"
+          % (len(out_people), len(edges), noted, len(eras)))
     print("  tier 1: " + ", ".join(six))
     print("  edges: " + ", ".join("%s %d" % (k, v) for k, v in sorted(kinds.items())))
     print("  people per epoch: " + " ".join(str(counts.get(i, 0)) for i in range(len(eras))))
