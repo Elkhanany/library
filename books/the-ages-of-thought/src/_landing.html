@@ -76,7 +76,9 @@ button,input{font:inherit; color:inherit}
 
 /* ---------------------------------------------------------- the frame */
 .atlas{
-  position:fixed; inset:0; display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; right:0;
+  height:100vh; height:100dvh;          /* dvh, or the address bar steals the foot */
+  display:flex; flex-direction:column;
   background:var(--paper); overflow:hidden;
   padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
 }
@@ -86,7 +88,8 @@ button,input{font:inherit; color:inherit}
 }
 html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
 @media (min-width:1180px) and (min-height:760px){
-  .atlas{ inset:14px; border-radius:16px; box-shadow:var(--shadow-2) }
+  .atlas{ top:14px; left:14px; right:14px; height:calc(100dvh - 28px);
+          border-radius:16px; box-shadow:var(--shadow-2) }
 }
 .atlas>*{ position:relative; z-index:1 }
 
@@ -164,6 +167,7 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
           color:var(--ink-2); margin-top:2px; white-space:nowrap }
 .age .ct{ display:block; font-size:10.5px; color:var(--ink-3); margin-top:1px; white-space:nowrap;
           overflow:hidden; text-overflow:ellipsis }
+.age .ct .brief{ display:none }
 /* An age with nobody shown at this setting is still an age. It is quieter,
    and its row says what widening would show, and pressing it widens. */
 .age.quiet .thumb{ filter:saturate(.55) brightness(.92) }
@@ -422,15 +426,12 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 
 /* ---------------------------------------------------------- narrow */
 @media (max-width:1100px){ :root{ --rail-w:222px; --panel-w:300px } }
-@media (max-width:900px){
-  .body{ flex-direction:column }
-  .rail{ width:auto; border-right:0; border-bottom:1px solid var(--rule); flex:none }
-  .railhead,.railfoot{ display:none }
-  .rails{ display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; padding:8px 10px }
-  .age{ width:190px; flex:none; margin:0; grid-template-columns:40px 1fr; gap:8px; padding:5px 8px 5px 5px }
-  .age .thumb{ width:40px; height:40px }
-  .age .nm{ font-size:12.5px }
-  .stage{ flex:1; min-height:0 }
+
+/* ---------------------------------------------------------- the tool row
+   Below this it will not fit on one line, so the line switches fold into a
+   menu, the little uppercase labels go, and the search field takes up the
+   slack. Keyed on the room available, not on the shape of the layout. */
+@media (max-width:1100px), (max-height:600px){
   .tools{ gap:8px; padding:6px 10px }
   .search{ flex:1 1 120px; max-width:none; order:1 }
   .tools .zoom{ margin-left:0; order:2 }
@@ -448,6 +449,19 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
               border-radius:10px; box-shadow:var(--shadow-2) }
   .lines .kind{ justify-content:flex-start } .lines .kind span{ display:inline }
   #btnReset{ padding:0 10px }
+  /* it may still take two lines on the narrowest screens; wrapping is
+     always better than a row that runs off the edge */
+  .search{ flex:1 1 90px; min-width:0 }
+}
+@media (max-width:900px), (max-width:1100px) and (max-height:600px){
+  .body{ flex-direction:column }
+  .rail{ width:auto; border-right:0; border-bottom:1px solid var(--rule); flex:none }
+  .railhead,.railfoot{ display:none }
+  .rails{ display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; padding:8px 10px }
+  .age{ width:190px; flex:none; margin:0; grid-template-columns:40px 1fr; gap:8px; padding:5px 8px 5px 5px }
+  .age .thumb{ width:40px; height:40px }
+  .age .nm{ font-size:12.5px }
+  .stage{ flex:1; min-height:0 }
   .panel{ position:fixed; left:0; right:0; bottom:0; width:auto; z-index:60; max-height:78dvh;
           border-left:0; border-top:1px solid var(--rule); border-radius:16px 16px 0 0;
           box-shadow:var(--shadow-2); transform:translateY(102%);
@@ -463,11 +477,66 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
   .hero{ height:110px }
   .readout{ display:none }
 }
-@media (max-width:900px) and (max-height:480px){ .panel{ max-height:100%; border-radius:0 } }
-@media (max-width:560px){
+/* ---------------------------------------------------------- sideways
+   A phone on its side has width to spare and no height at all. The map keeps
+   the full width -- it is a time axis, and width is what it is made of --
+   and everything above and below it gets shorter: a lower bar, a strip of
+   ages one line tall, a smaller picture over the dossier.
+
+   And the dossier comes in from the RIGHT. A sheet rising from the foot of a
+   390px screen covers the map completely; a drawer down one side leaves the
+   thinker you chose still on it. */
+@media (max-width:1100px) and (max-height:600px) and (orientation:landscape){
+  :root{ --top-h:46px; --drawer-w:min(56vw,340px) }
+  .mark .sub{ display:none }
+  .mark h1{ font-size:14.5px }
+  .mark .sig{ width:28px; height:28px; border-radius:7px }
+  .mark .sig svg{ width:17px; height:17px }
+  .rails{ padding:5px 9px; gap:5px }
+  .age{ width:158px; grid-template-columns:28px 1fr; gap:7px; padding:4px 7px 4px 4px;
+        border-radius:8px }
+  .age .thumb{ width:28px; height:28px; border-radius:6px }
+  .age .nm{ font-size:11.5px }
+  .age .yr{ font-size:8.5px; display:inline }
+  .age .ct{ display:inline; font-size:8.5px }
+  .age .ct .full{ display:none }
+  .age .ct .brief{ display:inline }
+  .age .ct::before{ content:" · " }
+
+  /* the app gives the drawer its room instead of being covered by it */
+  .atlas.drawer>.top,.atlas.drawer>.body{ padding-right:var(--drawer-w) }
+  .atlas.drawer>.top,.atlas.drawer>.body{ transition:padding-right .26s cubic-bezier(.32,.72,0,1) }
+  .panel{
+    --drawer-w:min(56vw,340px);
+    left:auto; right:0; top:var(--top-h); bottom:0; width:var(--drawer-w);
+    max-height:none; border-radius:0; border-top:0; border-left:1px solid var(--rule);
+    transform:translateX(102%);
+    padding-bottom:env(safe-area-inset-bottom);
+    padding-right:env(safe-area-inset-right);
+  }
+  .panel.up{ transform:none }
+  .sheethead{ padding:5px 8px 5px 13px }
+  .sheethead .grab{ display:none }        /* nothing to drag down any more */
+  .hero{ height:74px }
+  .hero .who-n{ font-size:19px }
+  .hero .sl{ font-size:10px }
+  .tally{ padding:6px 4px 7px }
+  .tally .v{ font-size:15px }
+  .pscroll{ padding:11px 13px 18px }
+  .sec{ margin-bottom:13px }
+  .one-l{ font-size:14px; margin-bottom:11px }
+}
+@media (max-width:700px){
   .mark h1{ font-size:14px } .mark .sub{ display:none }
   .seg button{ padding:0 8px } .seg button i{ display:none }
 }
+/* A finger is a finger whatever the screen is: anything it presses is at
+   least thirty-four points tall. */
+@media (pointer:coarse){
+  .tbtn,.more button,.kind,.seg button,.zoom button{ min-height:34px }
+  .link{ min-height:38px }
+}
+
 @media (prefers-reduced-motion:reduce){
   *{ transition-duration:.01ms !important; animation-duration:.01ms !important }
 }
@@ -1105,11 +1174,14 @@ function renderRail() {
          '<span class="thumb">' + SCENE(i) + "</span>" +
          '<span class="txt"><span class="nm">' + esc(e.n) + "</span>" +
          '<span class="yr">' + yrs(e.a, e.b) + "</span>" +
-         '<span class="ct">' +
+         "" +
+         '<span class="ct"><span class="full">' +
          (quiet ? e.n_all + " " + plural(e.n_all, "thinker") + " · press to widen"
                 : (shown === e.n_all ? shown + " " + plural(shown, "thinker")
                                      : shown + " of " + e.n_all + " shown")) +
-         "</span></span></button>";
+         '</span><span class="brief">' +
+         (quiet ? "0 of " + e.n_all : (shown === e.n_all ? String(shown) : shown + " of " + e.n_all)) +
+         "</span></span></span></button>";
   });
   host.innerHTML = s;
 }
@@ -1298,9 +1370,14 @@ function reveal(id) {
   if (!el) return;
   var sc = $("#scroll");
   var x = parseFloat(el.style.left), w = parseFloat(el.style.width), y = parseFloat(el.style.top);
+  var h = el.offsetHeight || 100;
   var left = sc.scrollLeft, top = sc.scrollTop;
   if (x < left + 30 || x + w > left + sc.clientWidth - 30) left = Math.max(0, x - sc.clientWidth * 0.36);
-  if (y < top + 10 || y > top + sc.clientHeight - 100) top = Math.max(0, y - sc.clientHeight * 0.35);
+  /* A chosen card grows, and on a phone held sideways it is most of the
+     height there is. Measure it: a fixed hundred-point allowance left the
+     foot of one four points below the edge and called that visible. */
+  if (y < top + 10 || y + h > top + sc.clientHeight - 6)
+    top = Math.max(0, y - Math.max(10, (sc.clientHeight - h) * 0.4));
   if (left !== sc.scrollLeft || top !== sc.scrollTop) sc.scrollTo({ left: left, top: top, behavior: "smooth" });
 }
 
@@ -1390,19 +1467,29 @@ function overview() { setZoom(overviewZ()); $("#scroll").scrollTo({ left: 0, top
    marks the sheet inert so a hidden dossier is not a hundred hidden tab
    stops. On a wide screen it is a column and none of this applies. */
 var SHEET_FROM = null, SHEET_FROM_ID = null;
-function narrow() { return window.matchMedia("(max-width:900px)").matches; }
+function narrow() {
+  var b = $(".body");
+  return b ? getComputedStyle(b).flexDirection === "column"
+           : window.matchMedia("(max-width:900px)").matches;
+}
 function openSheet(fromEl) {
   var p = $("#panel");
   if (!narrow()) return;
   SHEET_FROM = fromEl || document.activeElement;
   SHEET_FROM_ID = SHEET_FROM && SHEET_FROM.dataset ? SHEET_FROM.dataset.id || null : null;
+  var was = SEL;
   p.classList.add("up"); p.inert = false; p.removeAttribute("aria-hidden");
+  $(".atlas").classList.add("drawer");
   setTimeout(function () { var c = $("#sheetClose"); if (c) c.focus({ preventScroll: true }); }, 60);
+  setTimeout(function () {
+    if (SEL && SEL === was && p.classList.contains("up")) reveal(SEL);
+  }, 300);
 }
 function closeSheet(refocus) {
   var p = $("#panel");
   if (!narrow()) return;
   p.classList.remove("up"); p.inert = true; p.setAttribute("aria-hidden", "true");
+  $(".atlas").classList.remove("drawer");
   if (!refocus) return;
   var back = SHEET_FROM_ID && NODE[SHEET_FROM_ID] ? NODE[SHEET_FROM_ID]
            : (SHEET_FROM && SHEET_FROM.isConnected ? SHEET_FROM : null);
@@ -1412,7 +1499,8 @@ function syncSheet() {
   var p = $("#panel");
   $("#lines").open = !narrow();
   if (narrow()) { if (!p.classList.contains("up")) { p.inert = true; p.setAttribute("aria-hidden", "true"); } }
-  else { p.classList.remove("up"); p.inert = false; p.removeAttribute("aria-hidden"); }
+  else { p.classList.remove("up"); p.inert = false; p.removeAttribute("aria-hidden");
+         $(".atlas").classList.remove("drawer"); }
 }
 
 /* ---------------------------------------------------------- the address
