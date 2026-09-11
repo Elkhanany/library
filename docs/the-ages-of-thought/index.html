@@ -52,7 +52,7 @@
   --f-disp:"Spectral",Georgia,"Times New Roman",serif;
   --f-ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
-  --rail-w:262px; --panel-w:344px; --top-h:56px;
+  --rail-w:262px; --panel-w:344px; --panel-w-open:428px; --top-h:56px;
   --lane-h:66px;
   /* The paper. A little turbulence at seven percent is all it takes to stop
      a flat fill from looking like a screen. */
@@ -145,9 +145,13 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
 /* ---------------------------------------------------------- columns */
 .body{ flex:1; min-height:0; display:flex }
 
+.atlas.reading>.body>.panel{ width:var(--panel-w-open) }
+@media (prefers-reduced-motion:reduce){ .panel{ transition:none } }
+
 /* ---------------------------------------------------------- the ages rail
    Ten rows, a square picture beside each name, all ten on screen at once.
    The picture is the age's own scene; the row is a button. */
+.atlas.norail>.body>.rail{ display:none }
 .rail{
   width:var(--rail-w); flex:none; border-right:1px solid var(--rule);
   background:var(--surface); display:flex; flex-direction:column; min-height:0; z-index:30;
@@ -265,6 +269,10 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
 .zoom button[aria-pressed="true"]{ background:var(--ink); color:var(--surface); border-color:var(--ink) }
 
 .scroll{ flex:1; min-height:0; overflow:auto; position:relative; overscroll-behavior:contain }
+/* the map answers to the hand that holds it */
+@media (hover:hover){ .scroll{ cursor:grab } }
+.scroll.grabbing{ cursor:grabbing; user-select:none }
+.scroll.grabbing .who{ cursor:grabbing }
 .scroll:focus-visible{ outline:2px solid var(--focus); outline-offset:-2px }
 .canvas{ position:relative }
 
@@ -362,7 +370,10 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .who.dim{ opacity:.3 } .who.dim .card{ box-shadow:none }
 
 /* ---------------------------------------------------------- the dossier */
+/* Reading takes more room than being offered something to read, so the
+   column widens for a dossier and narrows again for the guide. */
 .panel{ width:var(--panel-w); flex:none; border-left:1px solid var(--rule);
+        transition:width .22s cubic-bezier(.32,.72,0,1);
         background:var(--surface); display:flex; flex-direction:column; min-height:0;
         position:relative; z-index:30 }
 /* This wrapper is the whole reason the dossier scrolls: the panel is a flex
@@ -438,13 +449,19 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .ppl button.off{ color:var(--ink-3); font-weight:500; font-style:italic }
 
 /* ---------------------------------------------------------- narrow */
-@media (max-width:1100px){ :root{ --rail-w:222px; --panel-w:300px } }
+@media (max-width:1100px){ :root{ --rail-w:222px; --panel-w:300px; --panel-w-open:356px } }
 
 /* ---------------------------------------------------------- the tool row
    Below this it will not fit on one line, so the line switches fold into a
    menu, the little uppercase labels go, and the search field takes up the
    slack. Keyed on the room available, not on the shape of the layout. */
-@media (max-width:1100px), (max-height:600px){
+/* ---------------------------------------------------------- the tool row
+   The row folds when it will not fit on one line -- which is a question
+   about the STAGE's width, not the window's. Hiding the ages widens the
+   stage and opening a dossier narrows it, so a rule keyed on the viewport
+   was answering a question nobody asked. */
+.stage{ container-type:inline-size; container-name:stage }
+@container stage (max-width:1250px){
   .tools{ gap:8px; padding:6px 10px }
   .search{ flex:1 1 120px; max-width:none; order:1 }
   .tools .zoom{ margin-left:0; order:2 }
@@ -466,6 +483,35 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
      always better than a row that runs off the edge */
   .search{ flex:1 1 90px; min-width:0 }
 }
+@container stage (max-width:760px){
+  .seg button{ padding:0 8px } .seg button i{ display:none }
+}
+/* Where there are no container queries, the window's width is the best
+   guess available. */
+@supports not (container-type:inline-size){
+  @media (max-width:1100px), (max-height:600px){
+  .tools{ gap:8px; padding:6px 10px }
+  .search{ flex:1 1 120px; max-width:none; order:1 }
+  .tools .zoom{ margin-left:0; order:2 }
+  .tools .grp.show{ order:3 } .tools .grp.linesg{ order:4; margin-left:auto }
+  .tools .grp>.k{ display:none }
+  .zoom button.ov{ padding:0 9px }
+  .lines{ display:block; position:relative }
+  .lines>summary{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 11px;
+                  border:1px solid var(--rule); border-radius:8px; background:var(--surface);
+                  font-size:12px; cursor:pointer; list-style:none; color:var(--ink-2); white-space:nowrap }
+  .lines>summary::-webkit-details-marker{ display:none }
+  .lines[open]>summary{ border-color:var(--brass) }
+  .lines>div{ display:flex; flex-direction:column; gap:5px; position:absolute; right:0; top:38px;
+              z-index:70; padding:6px; background:var(--surface); border:1px solid var(--rule);
+              border-radius:10px; box-shadow:var(--shadow-2) }
+  .lines .kind{ justify-content:flex-start } .lines .kind span{ display:inline }
+  #btnReset{ padding:0 10px }
+  /* it may still take two lines on the narrowest screens; wrapping is
+     always better than a row that runs off the edge */
+  .search{ flex:1 1 90px; min-width:0 }
+}
+}
 @media (max-width:900px), (max-width:1100px) and (max-height:600px){
   .body{ flex-direction:column }
   .rail{ width:auto; border-right:0; border-bottom:1px solid var(--rule); flex:none }
@@ -475,6 +521,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
   .age .thumb{ width:40px; height:40px }
   .age .nm{ font-size:12.5px }
   .stage{ flex:1; min-height:0 }
+  .atlas.reading>.body>.panel{ width:auto }
   .panel{ position:fixed; left:0; right:0; bottom:0; width:auto; z-index:60; max-height:78dvh;
           border-left:0; border-top:1px solid var(--rule); border-radius:16px 16px 0 0;
           box-shadow:var(--shadow-2); transform:translateY(102%);
@@ -519,6 +566,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
   /* the app gives the drawer its room instead of being covered by it */
   .atlas.drawer>.top,.atlas.drawer>.body{ padding-right:var(--drawer-w) }
   .atlas.drawer>.top,.atlas.drawer>.body{ transition:padding-right .26s cubic-bezier(.32,.72,0,1) }
+  .atlas.reading>.body>.panel{ width:var(--drawer-w) }
   .panel{
     --drawer-w:min(56vw,340px);
     left:auto; right:0; top:var(--top-h); bottom:0; width:var(--drawer-w);
@@ -559,6 +607,13 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 <div class="atlas">
 
   <header class="top">
+    <button class="tbtn icon" id="btnRail" aria-expanded="true" aria-controls="rails"
+            aria-label="Hide the ten ages" title="Hide the ten ages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>
+      </svg>
+    </button>
     <a class="mark" href="../index.html">
       <span class="sig" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"
@@ -1360,6 +1415,10 @@ function select(id, opts) {
   if (SEL && !visible(BY[SEL])) setTier(BY[SEL].ti, { quiet: true });
   else if (was !== SEL) draw();               /* the centrepiece changes the packing */
   renderPanel();
+  if (!!SEL !== $(".atlas").classList.contains("reading")) {
+    $(".atlas").classList.toggle("reading", !!SEL);
+    relayout();
+  }
   $("#btnReset").hidden = !SEL && AGE === null;
   if (SEL) {
     setAge(BY[SEL].ep, { quiet: true });
@@ -1473,6 +1532,21 @@ function setZoom(z, anchorPx) {
   $("#zFit").setAttribute("aria-pressed", String(Math.abs(Z - ZMIN) < 1e-6));
 }
 function overview() { setZoom(overviewZ()); $("#scroll").scrollTo({ left: 0, top: 0 }); }
+
+/* Something took room from the map or gave it back. Wait for the width to
+   finish moving, then deal the bands again and bring the chosen thinker back. */
+var _relay;
+function relayout(wait) {
+  clearTimeout(_relay);
+  _relay = setTimeout(function () {
+    var fk = focusKey();
+    var atOv = Math.abs(Z - ZMIN) < 1e-6;
+    ZMIN = overviewZ();
+    if (atOv || Z < ZMIN) setZoom(ZMIN); else draw();
+    restoreFocus(fk);
+    if (SEL) reveal(SEL);
+  }, wait === undefined ? 240 : wait);
+}
 
 /* ---------------------------------------------------------- the sheet
    On a phone the dossier is a sheet that rises from the bottom. Opening it
@@ -1633,14 +1707,65 @@ function bind() {
   $("#zIn").onclick = function () { setZoom(Z * 1.3); };
   $("#zOut").onclick = function () { setZoom(Z / 1.3); };
   $("#zFit").onclick = overview;
-  $("#btnReset").onclick = function () { SEL = null; draw(); setAge(null, { quiet: true }); renderPanel(); closeSheet(true); syncHash(); };
+  $("#btnReset").onclick = function () { select(null); setAge(null, { quiet: true }); };
   $("#sheetClose").onclick = function () { closeSheet(true); };
-  $("#scroll").addEventListener("wheel", function (ev) {
-    if (!ev.ctrlKey && !ev.metaKey) return;
-    ev.preventDefault();
-    var r = this.getBoundingClientRect();
-    setZoom(Z * (ev.deltaY < 0 ? 1.12 : 1 / 1.12), ev.clientX - r.left);
-  }, { passive: false });
+  /* ------------------------------------------------------ the map is a map
+     Press and hold anywhere on it and it follows the pointer; the wheel
+     zooms about whatever is under the cursor. A finger is left alone: a
+     phone already pans by dragging and pinches to zoom, and a second
+     handler on top of that only fights it. */
+  (function () {
+    var sc = $("#scroll"), down = false, moved = false, id = null, x0, y0, l0, t0;
+    sc.addEventListener("pointerdown", function (ev) {
+      if (ev.pointerType === "touch" || ev.button !== 0) return;
+      if (ev.target.closest("a,input,select,textarea")) return;
+      down = true; moved = false; id = ev.pointerId;
+      x0 = ev.clientX; y0 = ev.clientY; l0 = sc.scrollLeft; t0 = sc.scrollTop;
+    });
+    sc.addEventListener("pointermove", function (ev) {
+      if (!down || ev.pointerId !== id) return;
+      var dx = ev.clientX - x0, dy = ev.clientY - y0;
+      /* a few points of slack, so choosing a thinker by clicking one is not
+         read as a drag by a hand that never quite holds still */
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+      if (!moved) {
+        moved = true;
+        sc.classList.add("grabbing");
+        try { sc.setPointerCapture(id); } catch (e) { /* capture is a nicety */ }
+      }
+      sc.scrollLeft = l0 - dx; sc.scrollTop = t0 - dy;
+      ev.preventDefault();
+    });
+    function end(ev) {
+      if (!down || (ev && ev.pointerId !== id)) return;
+      down = false; sc.classList.remove("grabbing");
+      try { sc.releasePointerCapture(id); } catch (e) { }
+      /* a drag that ends over a card must not also choose that card */
+      if (moved) setTimeout(function () { moved = false; }, 0);
+    }
+    sc.addEventListener("pointerup", end);
+    sc.addEventListener("pointercancel", end);
+    sc.addEventListener("click", function (ev) {
+      if (moved) { ev.stopPropagation(); ev.preventDefault(); }
+    }, true);
+
+    sc.addEventListener("wheel", function (ev) {
+      var dy = ev.deltaY * (ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? sc.clientHeight : 1);
+      var dx = ev.deltaX * (ev.deltaMode === 1 ? 16 : 1);
+      /* sideways intent stays sideways: a trackpad swipe, or shift held */
+      if (ev.shiftKey || Math.abs(dx) > Math.abs(dy)) {
+        ev.preventDefault();
+        sc.scrollLeft += ev.shiftKey ? dy : dx;
+        return;
+      }
+      ev.preventDefault();
+      var r = sc.getBoundingClientRect();
+      /* pinch on a trackpad arrives as ctrl+wheel and is already a zoom
+         gesture, so it gets the steeper rate */
+      var k = Math.exp(-dy * ((ev.ctrlKey || ev.metaKey) ? 0.010 : 0.0024));
+      setZoom(Z * Math.max(0.5, Math.min(2, k)), ev.clientX - r.left);
+    }, { passive: false });
+  })();
   $("#scroll").addEventListener("keydown", function (ev) {
     if (ev.target !== this) return;
     var step = ev.shiftKey ? this.clientWidth : 90;
@@ -1685,6 +1810,23 @@ function bind() {
     if (!ev.target.closest("#search")) { $("#hits").classList.remove("open"); q.setAttribute("aria-expanded", "false"); }
   });
 
+  /* The rail folds away when the map wants the room, and stays folded
+     between visits. Folding changes how wide the map is, so the bands are
+     dealt again and whoever is chosen is brought back into view. */
+  function setRail(open, remember) {
+    $(".atlas").classList.toggle("norail", !open);
+    var b = $("#btnRail");
+    b.setAttribute("aria-expanded", String(open));
+    var t = open ? "Hide the ten ages" : "Show the ten ages";
+    b.setAttribute("aria-label", t); b.setAttribute("title", t);
+    if (remember) { try { localStorage.setItem("atlas:rail", open ? "1" : "0"); } catch (e) { } }
+    relayout();
+  }
+  $("#btnRail").onclick = function () {
+    setRail($(".atlas").classList.contains("norail"), true);
+  };
+  try { if (localStorage.getItem("atlas:rail") === "0") setRail(false, false); } catch (e) { }
+
   $("#btnTheme").onclick = function () {
     var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
@@ -1696,9 +1838,7 @@ function bind() {
   addEventListener("resize", function () {
     clearTimeout(t);
     t = setTimeout(function () {
-      var atOv = Math.abs(Z - ZMIN) < 1e-6;
-      ZMIN = overviewZ(); if (atOv || Z < ZMIN) Z = ZMIN;
-      draw(); syncSheet();
+      relayout(0); syncSheet();
     }, 140);
   });
 }
