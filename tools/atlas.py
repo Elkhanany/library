@@ -23,6 +23,19 @@ import library
 
 SRC = os.path.join(library.BOOKS, "the-long-argument", "src", "_landing.html")
 OUT = os.path.join(library.BOOKS, "the-ages-of-thought", "src", "data", "atlas.json")
+WEIGHTS = os.path.join(library.BOOKS, "the-ages-of-thought", "weights.json")
+
+# How much a thinker moved the argument, banded for the chart's vertical axis.
+# The bands are only a coarsening of the same number: they decide how large a
+# card is drawn and which stripe it sits in, and nothing else.
+BANDS = [(80, 1), (62, 2), (42, 3), (0, 4)]
+
+
+def band_of(w):
+    for lo, b in BANDS:
+        if w >= lo:
+            return b
+    return 4
 
 
 def block(text, start, end):
@@ -203,6 +216,20 @@ def main():
             return html.unescape(v)
         return v
 
+    weights = json.loads(library.read(WEIGHTS))["weights"]
+    ids_here = set(p["id"] for p in people)
+    missing = sorted(ids_here - set(weights))
+    unknown = sorted(set(weights) - ids_here)
+    if missing:
+        raise SystemExit("atlas: %d thinker(s) have no weight: %s"
+                         % (len(missing), ", ".join(missing[:8])))
+    if unknown:
+        raise SystemExit("atlas: weights.json names %d id(s) that are not in the "
+                         "book: %s" % (len(unknown), ", ".join(unknown[:8])))
+    bad = [k for k, v in weights.items() if not isinstance(v, int) or not 0 <= v <= 100]
+    if bad:
+        raise SystemExit("atlas: weight out of 0-100: %s" % ", ".join(sorted(bad)[:8]))
+
     out_people = []
     for p in people:
         p = txt(p)
@@ -213,7 +240,15 @@ def main():
             "pl": p.get("pl", ""), "one": p.get("one", ""),
             "ideas": p.get("ideas", []), "works": p.get("works", []),
             "q": p.get("q"), "ep": epoch_of(p),
+            "w": weights[p["id"]],
         })
+    # Rank is the order the slider fills the map in: the heaviest first, and
+    # ties broken by who came earlier, so the same drag always shows the same
+    # people in the same order.
+    by_weight = sorted(out_people, key=lambda p: (-p["w"], p["b"], p["id"]))
+    for i, p in enumerate(by_weight):
+        p["r"] = i + 1
+        p["bd"] = band_of(p["w"])
     out_people.sort(key=lambda p: (p["b"], p["d"]))
 
     counts = {}
@@ -230,6 +265,10 @@ def main():
     }
     library.write(OUT, json.dumps(data, ensure_ascii=False, separators=(",", ":")))
 
+    bands = {}
+    for p in out_people:
+        bands[p["bd"]] = bands.get(p["bd"], 0) + 1
+    top = sorted(out_people, key=lambda p: p["r"])[:6]
     six = [p["n"] for p in out_people if p["ti"] == 1]
     kinds = {}
     for e in edges:
@@ -237,7 +276,9 @@ def main():
     noted = sum(1 for e in edges if e.get("note"))
     print("atlas: %d people, %d edges (%d with a note), %d epochs"
           % (len(out_people), len(edges), noted, len(eras)))
-    print("  tier 1: " + ", ".join(six))
+    print("  heaviest: " + ", ".join("%s %d" % (p["n"], p["w"]) for p in top))
+    print("  bands: " + " ".join("%d:%d" % (b, bands[b]) for b in sorted(bands)))
+    print("  old tier 1: " + ", ".join(six))
     print("  edges: " + ", ".join("%s %d" % (k, v) for k, v in sorted(kinds.items())))
     print("  people per epoch: " + " ".join(str(counts.get(i, 0)) for i in range(len(eras))))
     if dropped:
