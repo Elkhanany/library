@@ -238,12 +238,61 @@ ol.refs li{margin:.55rem 0;padding-left:.15rem}
 ol.refs li:target{background:var(--accent-soft);border-radius:4px}
 ol.refs em{font-style:italic}
 
-/* A numeral is not a touch target. Until a citation opens a sheet of its own,
-   give it the room Apple asks for rather than leaving a 7px digit on a phone. */
+/* A numeral is not a touch target. Give it the room Apple asks for rather than
+   leaving a 7px digit on a phone. */
 @media (pointer:coarse){
   .cite{padding:.35em .45em;margin:0 -.15em}
   .trial,.gloss,.xref{padding:.15em 0}
 }
+
+/* ---------- the reference card ----------
+   A chapter runs twenty thousand words and its reference list is at the foot of
+   it. Following a citation there costs the reader their place, which is the
+   usual way a reference book fails on a phone. So the reference comes to the
+   citation instead: a card on a mouse, a sheet on a thumb. Both read the entry
+   out of the page's own list, so there is nothing to fetch and it works with
+   the network off. */
+.refcard{
+  position:fixed;z-index:70;max-width:24rem;
+  background:var(--paper);color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;
+  padding:.8rem .95rem;font-size:.85rem;line-height:1.5;
+  font-family:var(--serif);
+  box-shadow:0 2px 6px rgba(0,0,0,.08),0 14px 40px -16px rgba(0,0,0,.42);
+  opacity:0;transform:translateY(2px);transition:opacity .13s ease,transform .13s ease;
+  pointer-events:none;
+}
+.refcard.on{opacity:1;transform:none;pointer-events:auto}
+.refcard .rc-n{font-family:var(--sans);font-size:.66rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:.35rem}
+.refcard a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+.refcard a:hover{border-bottom-color:var(--accent)}
+
+/* On a thumb the same card becomes a sheet: full width, at the bottom, above the
+   home indicator, and dismissed by the backdrop. The reader never leaves the
+   paragraph, so there is no scroll position to restore. */
+.refcard.sheet{
+  left:0;right:0;bottom:0;top:auto;max-width:none;
+  border:0;border-top:1px solid var(--rule);border-radius:14px 14px 0 0;
+  padding:1.05rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom));
+  font-size:.95rem;max-height:70vh;max-height:70dvh;overflow-y:auto;
+  overscroll-behavior:contain;
+  transform:translateY(100%);transition:transform .2s ease,opacity .2s ease}
+.refcard.sheet.on{transform:none}
+.refscrim{position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.34);
+  opacity:0;transition:opacity .2s ease;-webkit-tap-highlight-color:transparent}
+.refscrim.on{opacity:1}
+.refcard.sheet .rc-close{display:block;width:2.4rem;height:4px;border-radius:2px;
+  background:var(--rule);margin:-.35rem auto .8rem}
+
+.cite[aria-expanded="true"]{background:var(--accent-soft);border-radius:3px}
+
+@media (prefers-reduced-motion:reduce){
+  .refcard,.refscrim{transition:none}
+  .refcard.sheet{transform:none}
+}
+@media print{.refcard,.refscrim{display:none!important}}
 
 /* ---------- equations ---------- */
 .eq{position:relative;margin:1.5rem 0;padding:0 3.2rem 0 0;overflow-x:auto;overflow-y:hidden}
