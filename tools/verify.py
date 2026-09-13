@@ -13,7 +13,11 @@ from playwright.async_api import async_playwright
 # by the time we measure the page.
 _spec = importlib.util.spec_from_file_location("tagcheck", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tagcheck.py"))
 _tc = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_tc)
-_TAGFAIL = _tc.main(sorted(glob.glob(os.path.join(BOOK.src, "ch*.html"))))
+# The book's own written chapters, not a glob for "ch*.html". Chapter files are
+# named by whatever scheme their book uses -- the clinical book names them for
+# their permanent ids -- and a glob that matches none of them reports a clean
+# source check over nothing at all, which is worse than no check.
+_TAGFAIL = _tc.main([BOOK.chapter_path(f[1]) for f in BOOK.written()])
 print()
 
 BUILD = os.path.join(library.ROOT, "build", BOOK.slug)

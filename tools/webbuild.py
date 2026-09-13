@@ -31,6 +31,53 @@ def mathcss(bk):
             if bk.has("math") else "")
 
 
+# What shared/assets/book.css itself declares. A book whose theme agrees with
+# these adds nothing and its stylesheet stays byte-identical, which is why the
+# physics book -- for whom the house stylesheet was written -- needs no override.
+CSS_DEFAULTS = {"accent": "#1b4b80", "accent_dark": "#7fb0e8",
+                "ink": "#1b1b1d", "paper": "#fbfaf7"}
+
+
+def _mix(a, b, t):
+    """a, moved t of the way toward b. Both are #rrggbb."""
+    x, y = _rgb(a).split(","), _rgb(b).split(",")
+    return "#" + "".join("%02x" % round(int(p) + (int(q) - int(p)) * t)
+                         for p, q in zip(x, y))
+
+
+def themecss(bk):
+    """The book's own colours, appended to the house stylesheet.
+
+    book.css names the physics book's palette because it was written for it,
+    and forty variables is too many for every book to restate. So a book
+    declares the four it actually chooses in book.json and the cascade does the
+    rest. The soft washes behind callouts are derived rather than declared:
+    they have to sit on this book's paper, and a book should not have to hand
+    tune eight tints to change one accent.
+    """
+    t, light, dark = bk.theme, [], []
+    paper = t.get("paper") or CSS_DEFAULTS["paper"]
+    if paper != CSS_DEFAULTS["paper"]:
+        light += ["--bg:" + paper,
+                  "--bg-alt:" + _mix(paper, t.get("ink") or CSS_DEFAULTS["ink"], .045)]
+    if t.get("ink") and t["ink"] != CSS_DEFAULTS["ink"]:
+        light.append("--ink:" + t["ink"])
+    if t.get("accent") and t["accent"] != CSS_DEFAULTS["accent"]:
+        light += ["--accent:" + t["accent"],
+                  "--accent-soft:" + _mix(t["accent"], paper, .90)]
+    if t.get("accent_dark") and t["accent_dark"] != CSS_DEFAULTS["accent_dark"]:
+        dark += ["--accent:" + t["accent_dark"],
+                 "--accent-soft:" + _mix(t["accent_dark"], "#15171b", .90)]
+    if not light and not dark:
+        return ""
+    out = ["\n/* ---------- %s, from book.json ---------- */" % bk.slug]
+    if light:
+        out.append(":root{%s}" % ";".join(light))
+    if dark:
+        out.append('html[data-theme="dark"]{%s}' % ";".join(dark))
+    return "\n".join(out) + "\n"
+
+
 def nav(bk):
     """The book's own top bar, plus the way back to the library.
 
@@ -89,32 +136,11 @@ def runtime_js():
     return js
 
 
-ARC = [
-    ("Part 0",   "The Toolkit",
-     "Numbers describe a thing only relative to a choice. The useful description is the one "
-     "in which a hard problem falls apart into independent pieces."),
-    ("Part I",   "The Action Principle",
-     "Forces are the wrong primitive. Attach one number to each possible history, and nature "
-     "selects the history where that number stops changing."),
-    ("Part II",  "Special Relativity",
-     "The speed limit is built into the geometry, not the materials. Magnetism turns out to be "
-     "electricity, seen from a moving frame."),
-    ("Part III", "General Relativity",
-     "Gravity is not a force but the shape of the arena. Free fall is the straightest available "
-     "motion."),
-    ("Part IV",  "Quantum Mechanics",
-     "\u201cWhat state is this in\u201d stops having a single answer. The mathematics was already "
-     "built in Part\u00a00."),
-    ("Part V",   "Quantum Field Theory",
-     "Particles stop being fundamental. The field is; particles are its excitations, the way "
-     "notes are excitations of a string."),
-    ("Part VI",  "Gauge Theory",
-     "Demand a symmetry hold locally rather than globally, and a force appears to enforce it. "
-     "Every force is that one demand."),
-    ("Part VII", "Strings and M-Theory",
-     "Gravity refuses the treatment that worked for everything else \u2014 followed by an honest "
-     "account of what is known and what is conjecture."),
-]
+# A book's landing page names its parts in longer, reader-facing copy than the
+# curriculum's subtitles. That copy is the book's, not the builder's, so it lives
+# in book.json under "arc" as [kicker, title, blurb] triples.
+def arc(bk):
+    return [tuple(row) for row in (bk.cfg.get("arc") or [])]
 
 
 WORDCOUNT_JS = """() => {
@@ -161,7 +187,7 @@ def landing_page(bk, stats):
         built[i] = (done, len(chs))
 
     rows = []
-    for i, (k, title, blurb) in enumerate(ARC):
+    for i, (k, title, blurb) in enumerate(arc(bk)):
         done, total = built.get(i, (0, 0))
         live = done > 0
         tag = "a" if live else "div"
@@ -448,7 +474,8 @@ async def build_book(bk, browser):
         library.write(os.path.join(out, "assets", "katex.min.css"),
                       library.read(os.path.join(VEND, "katex.min.css")))
         shutil.copytree(os.path.join(VEND, "fonts"), os.path.join(out, "assets", "fonts"))
-    shutil.copy(os.path.join(library.ASSETS, "book.css"), os.path.join(out, "assets"))
+    library.write(os.path.join(out, "assets", "book.css"),
+                  library.read(os.path.join(library.ASSETS, "book.css")) + themecss(bk))
     library.write(os.path.join(out, "assets", "book.js"), runtime_js())
 
     n = 0
