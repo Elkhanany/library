@@ -1,0 +1,96 @@
+<p class="eyebrow">Part XVI · Research methods, evidence, and emerging therapy · Chapter 90</p>
+
+<h1>Data science and precision oncology</h1>
+
+<p class="subtitle">What computation has actually delivered in breast cancer, and the validation burden it has not yet met.</p>
+
+<h2 id="BS-6430">1 · Integrated multi-omics</h2>
+
+<p>Integration is usually presented as an additive exercise in which more layers give a better picture. The more accurate framing is that each layer answers a different question and the layers disagree in informative ways.</p>
+
+<p>Genomics gives what is altered. Transcriptomics gives what is being expressed, averaged over whatever cells were in the sample unless single-cell methods are used. Proteomics gives what is actually present, which is what drugs bind. Phosphoproteomics gives pathway activity state. Epigenomics gives what the cell is permitted to express.</p>
+
+<p>The disagreements are the point. Transcript and protein correlate imperfectly, and the residual is not noise. Proteomics also disagrees with the receptor classification the tumour was assigned. Spatial proteomic analysis across 280 tumour regions found receptor phenotypes co-existing within single tumours, and regional proteomic states that the tumour's immunohistochemical classification does not resolve<sup><a href="#r-mardamshina2025" class="cite">1</a></sup>. Proteomic heterogeneity rose with grade and was independent of genomic heterogeneity. A PIK3CA mutation predicts benefit from a PI3K inhibitor imperfectly, and phosphoproteomic pathway activity is a different measurement of the same question.</p>
+
+<p>The practical constraint is sample. Multi-omic integration on a single core biopsy integrates several measurements of one small piece of tissue. The layers agree about that piece. Whether the piece represents the tumour is a separate question that no amount of integration addresses, and it is the question Part VI raises.</p>
+
+<h2 id="BS-6440">2 · Computational pathology and imaging</h2>
+
+<p>This is where computation has delivered most, and the delivery is narrower than the enthusiasm.</p>
+
+<p>In screening, artificial-intelligence-supported reading has been tested prospectively. In a randomised screening trial, AI-supported single reading against standard double reading detected cancers at a comparable or higher rate while substantially reducing reader workload<sup><a href="#r-lang2023" class="cite">2</a></sup>, with subsequent analysis characterising the cancers detected<sup><a href="#r-hernstrom2025" class="cite">3</a></sup>. This is a real result in a real workflow, and it addresses a resource problem rather than an accuracy ceiling.</p>
+
+<p>In biomarker scoring the story is more instructive, and it corrects a common expectation. Pathologist concordance for HER2 immunohistochemistry at the low end is poor, with overall percent agreement of 25% in a multi-institutional assessment<sup><a href="#r-robbins2023" class="cite">4</a></sup>, which is the measurement problem set out in <a href="BC-110.html" class="xref">Receptor assessment and the measurement problem</a>. The natural expectation is that computation fixes reproducibility.</p>
+
+<p>It has not yet. Across 10 independently developed computational pathology models applied to 1124 whole-slide images from 733 patients, median pairwise overall percent agreement for the four-level HER2 categorical score was 65.1%, with a kappa of 0.51. Agreement was high for HER2 3+ against not 3+ at 97.3% and lowest in the HER2-low categories. Pathologists showed numerically higher concordance than the models<sup><a href="#r-mckelvey2026" class="cite">5</a></sup>.</p>
+
+<div class="callout warn">
+<span class="ct">Caution</span>
+<p>An algorithm is reproducible against itself and not necessarily against another algorithm. Ten models trained on different data with different labels disagree with each other about the same slide. The reproducibility problem in HER2-low scoring has been relocated from observers to models, not solved. What computation can deliver here requires reference standards and benchmark datasets that do not yet exist.</p>
+</div>
+
+<h2 id="BS-6450">3 · Predictive modeling, foundation models, and the validation burden</h2>
+
+<p>Foundation models trained on large unlabelled image or sequence corpora produce general-purpose representations that can be adapted to specific tasks with modest labelled data. That is a genuine change in how models are built, and it lowers the data cost of each new task.</p>
+
+<p>It does not lower the validation cost, and the validation cost is where clinical translation fails. The requirements are unchanged by model architecture. The model must be evaluated on data from institutions, scanners, staining protocols and populations not represented in training. Performance must be reported by subgroup, not only in aggregate, because aggregate accuracy can be maintained while performance collapses in a minority subgroup. The comparison must be against current practice rather than against a weaker model. And the outcome must be clinically meaningful, which means a change in management or outcome rather than an area under the curve.</p>
+
+<p>Two failure modes specific to pathology and radiology deserve naming. Batch effects from scanner and staining differences are learnable, so a model can achieve high accuracy by identifying the site rather than the biology. And label leakage occurs when the ground truth was itself generated with knowledge of the outcome, which makes retrospective performance uninterpretable.</p>
+
+<p>A model that has not been tested prospectively in the workflow where it will be used has not been tested. Retrospective external validation is necessary and is not sufficient.</p>
+
+<h2 id="BS-6460">4 · Longitudinal data and real-world evidence</h2>
+
+<p>Real-world data describe patients who were excluded from trials, which is most patients. Older patients, those with comorbidity, those with poor performance status and those from underrepresented groups appear in registries and electronic records and not in the trials discussed in <a href="BC-740.html#BS-6400" class="xref">Representation, generalizability, and equity by design</a>. That is the case for using these data and it is a strong one.</p>
+
+<p>The limits are specific. Treatment assignment is not random, so any comparison is confounded by indication, and the confounding runs in the direction of making treated patients look better or worse depending on why they were selected. Outcome ascertainment is incomplete, and progression in particular is recorded unsystematically because imaging is done when clinically indicated rather than on schedule. Missingness is informative, since a test not ordered is usually a test not needed or not affordable, and both are related to outcome.</p>
+
+<p>The specific bias that recurs in oncology real-world analyses is immortal time. A patient classified by a treatment they received at three months must have survived three months to receive it. Analyses that do not handle this with time-varying exposure generate survival advantages out of arithmetic.</p>
+
+<p>Real-world evidence is strong for questions randomisation cannot answer: incidence, utilisation patterns, toxicity in unselected populations, adherence and access. It is weak for comparative efficacy, which is the use it is most often put to.</p>
+
+<h2 id="BS-6470">5 · Causal inference, bias, and external validation</h2>
+
+<p>Prediction and causation are different tasks and a model that does one well may do the other badly. A prognostic model estimates outcome under current practice. A predictive model estimates the difference in outcome between two treatments. Only the second supports a treatment decision, and only a randomised comparison or a well-specified causal analysis can establish it.</p>
+
+<p>This is the distinction that separates the genomic assays in <a href="BC-380.html" class="xref">Prognostic and predictive assays and somatic profiling</a> from ordinary prognostic scores. <span class="trial" title="phase 3; early; HR+/HER2-; genomic assay guided chemotherapy omission">TAILORx</span> and <span class="trial" title="phase 3; early; HR+/HER2-; node-positive genomic assay">RxPONDER</span> were run because a prognostic score, however accurate, does not establish that withholding chemotherapy is safe<sup><a href="#r-sparano2018" class="cite">6</a>,<a href="#r-kalinsky2021" class="cite">7</a></sup>. The prognostic information was already available. The trials supplied the predictive claim.</p>
+
+<p>When randomisation is unavailable, the analysis has to be specified as though it were a trial. Define eligibility, the treatment strategies compared, the assignment time, the outcome and the follow-up window before looking at the data. Handle confounding explicitly through propensity methods or instrumental variables, and state the assumptions those methods require. Negative control outcomes are an underused check, since a spurious association with an outcome the exposure cannot affect reveals residual confounding.</p>
+
+<p>External validation is the minimum test that separates a model from a description of its training data. A model validated only by cross-validation within one institution's data has demonstrated internal consistency and nothing about transportability.</p>
+
+<h2 id="BS-6480">6 · Digital twins and in-silico trial simulation</h2>
+
+<p>A digital twin is a patient-specific model updated with that patient's data and used to simulate outcomes under alternative treatments. In oncology the concept remains substantially aspirational, and being precise about why is more useful than either enthusiasm or dismissal.</p>
+
+<p>The versions that work are narrow. Pharmacokinetic and pharmacodynamic models predict exposure under alternative dosing well enough to guide dose adjustment, and they underpin the dose-optimisation work in <a href="BC-740.html#BS-6380" class="xref">Dose optimization and the move away from maximum tolerated dose</a>. Radiotherapy planning has used patient-specific physical simulation for decades. Mathematical models of tumour growth and resistance evolution can predict qualitative behaviour under alternative scheduling, which is the basis of the adaptive strategies in <a href="BC-770.html" class="xref">Emerging treatment strategies</a>.</p>
+
+<p>The version that does not yet work is a model that predicts a specific patient's response to a specific systemic therapy. It requires knowing the tumour's composition and its evolutionary trajectory, and both are the quantities Part VI argues are not measurable from routine sampling. A simulation is not more accurate than the state estimate it starts from.</p>
+
+<p>Synthetic control arms are the nearest application with current traction. Constructing a control arm from historical or real-world data is feasible where the outcome is objective and standard of care is stable. It inherits every limitation in <a href="BC-750.html#BS-6460" class="xref">Longitudinal data and real-world evidence</a>, and it fails exactly where it is most wanted, which is in fast-moving settings where the historical control no longer reflects current practice.</p>
+
+<h2 id="BS-6490">7 · Data governance, privacy, and algorithmic equity</h2>
+
+<p>Genomic data are identifying, and de-identification in the usual sense does not apply to them. A genome is a permanent identifier that also carries information about relatives who did not consent. Governance frameworks built for de-identified clinical data do not transfer.</p>
+
+<p>Algorithmic inequity in health care is documented rather than hypothetical, and the mechanism is usually the choice of label rather than the model. A widely deployed algorithm predicting health care need used cost as a proxy for illness. Because less is spent on Black patients at equal illness severity, the algorithm assigned them lower risk scores at equal sickness. Correcting the label would have raised the proportion of Black patients identified for additional support from 17.7% to 46.5%<sup><a href="#r-obermeyer2019" class="cite">8</a></sup>.</p>
+
+<p>That mechanism generalises directly to oncology. Any model trained on a label shaped by access rather than biology will encode the access disparity as a prediction. Time to treatment initiation, receipt of guideline-concordant therapy, trial enrolment and even recorded stage at diagnosis are all shaped by access, and the disparities are documented in <a href="BC-690.html" class="xref">Disparities across the breast cancer continuum</a> and <a href="BC-700.html" class="xref">Access, affordability, and financial toxicity</a>.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Before deploying any model, ask what the label actually measures and whether it was generated under equal access. Then report performance stratified by race, ethnicity, insurance status and site. Aggregate performance can be preserved while a subgroup's performance degrades, and only stratified reporting detects it.</p>
+</div>
+
+<h2 class="refs-head" id="references">References</h2>
+
+<ol class="refs">
+<li id="r-mardamshina2025">Mardamshina M, Karagach S, Mohan V, et al. Integrated spatial proteomic analysis of breast cancer heterogeneity unravels cancer cell phenotypic plasticity. <em>Nat Commun</em> 2025 16:10482. <a href="https://pubmed.ncbi.nlm.nih.gov/41290667/">PMID&nbsp;41290667</a></li>
+<li id="r-lang2023">Lang K, Josefsson V, Larsson AM, et al. Artificial intelligence-supported screen reading versus standard double reading in the Mammography Screening with Artificial Intelligence trial (MASAI). <em>Lancet Oncol</em> 2023 24:936-944. <a href="https://pubmed.ncbi.nlm.nih.gov/37541274/">PMID&nbsp;37541274</a></li>
+<li id="r-hernstrom2025">Hernstrom V, Josefsson V, Sartor H, et al. Screening performance and characteristics of breast cancer detected in the Mammography Screening with Artificial Intelligence trial (MASAI). <em>Lancet Digit Health</em> 2025 7:e175-e183. <a href="https://pubmed.ncbi.nlm.nih.gov/39904652/">PMID&nbsp;39904652</a></li>
+<li id="r-robbins2023">Robbins CJ, Fernandez AI, Han G, et al. Multi-institutional assessment of pathologist scoring HER2 immunohistochemistry. <em>Mod Pathol</em> 2023 36:100032. <a href="https://pubmed.ncbi.nlm.nih.gov/36788069/">PMID&nbsp;36788069</a></li>
+<li id="r-mckelvey2026">McKelvey B, Torres-Saavedra PA, Li J, et al. Agreement across 10 artificial intelligence models in assessing HER2 expression in breast cancer whole-slide images. <em>Mod Pathol</em> 2026 39:100944. <a href="https://pubmed.ncbi.nlm.nih.gov/41489584/">PMID&nbsp;41489584</a></li>
+<li id="r-sparano2018">Sparano JA, Gray RJ, Makower DF, et al. Adjuvant chemotherapy guided by a 21-gene expression assay in breast cancer. <em>N Engl J Med</em> 2018 379:111-121. <a href="https://pubmed.ncbi.nlm.nih.gov/29860917/">PMID&nbsp;29860917</a></li>
+<li id="r-kalinsky2021">Kalinsky K, Barlow WE, Gralow JR, et al. 21-gene assay to inform chemotherapy benefit in node-positive breast cancer. <em>N Engl J Med</em> 2021 385:2336-2347. <a href="https://pubmed.ncbi.nlm.nih.gov/34914339/">PMID&nbsp;34914339</a></li>
+<li id="r-obermeyer2019">Obermeyer Z, Powers B, Vogeli C, Mullainathan S. Dissecting racial bias in an algorithm used to manage the health of populations. <em>Science</em> 2019 366:447-453. <a href="https://pubmed.ncbi.nlm.nih.gov/31649194/">PMID&nbsp;31649194</a></li>
+</ol>

@@ -3,8 +3,8 @@
 Breast Cancer: outline.yaml and markdown chapters into the shape the library builds.
 
 This book is the first in the library whose structure is data rather than a
-hand-kept list, and the reason is scale. Seventy-nine chapters and six hundred
-and seventy-three sections cannot be renumbered by hand, and they will be
+hand-kept list, and the reason is scale. Ninety-three chapters and seven hundred
+and seventy-eight sections cannot be renumbered by hand, and they will be
 reordered while it is being written. So the book keeps two source formats the
 rest of the library does not have, and this turns them into the two the library
 already understands:
@@ -54,6 +54,15 @@ FENCES = {
     "practice":  ("practice", "In practice"),
     "caution":   ("warn", "Caution"),
 }
+
+# The evidence block is not a callout. It carries only a filter, and the rows are
+# rendered from trials.yaml at build time so a new readout is entered once in the
+# registry and appears in every chapter whose filter matches it. See CONVENTIONS.md.
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import evidence as _ev
+except Exception:                                        # pragma: no cover
+    _ev = None
 
 # The space before the bracket is eaten with it. A citation is comfortable to
 # type as "...mechanism [@ali2020]." and has to set as "...mechanism<sup>1</sup>.",
@@ -306,6 +315,8 @@ class Chapter:
     def fence(self, kind, arg, body):
         if kind == "html":
             return body
+        if kind == "evidence":
+            return self.evidence(arg, body)
         if kind not in FENCES:
             self.fail("unknown fenced block '%s'" % kind)
             return ""
@@ -327,6 +338,38 @@ class Chapter:
                           for p in re.split(r"\n\s*\n", body.strip()) if p.strip())
         return ('<div class="callout %s">\n<span class="ct">%s</span>\n%s\n%s</div>'
                 % (cls, label, paras, see))
+
+    def evidence(self, arg, body):
+        if body.strip():
+            self.fail("an evidence block carries only a filter, not a body")
+        if _ev is None:
+            self.fail("evidence block needs tools/evidence.py")
+            return ""
+        f, bad = _ev.parse_filter(arg.strip())
+        for b in bad:
+            self.fail("evidence filter: %s" % b)
+        if bad:
+            return ""
+        hits = _ev.select(self.m.trials, f)
+        if not hits:
+            self.fail("evidence filter %r matches no trial" % arg.strip())
+            return ""
+        md = _ev.render(hits, f)
+        rows = [r for r in md.splitlines() if r.startswith("|")]
+        cap = [r for r in md.splitlines() if r.startswith("_")]
+        head = [c.strip() for c in rows[0].strip("|").split("|")]
+        out = ["<div class=\"evidence\"><table class=\"trials\"><thead><tr>"]
+        out += ["<th>%s</th>" % esc(h) for h in head]
+        out.append("</tr></thead><tbody>")
+        for r in rows[2:]:
+            cells = [c.strip() for c in r.strip("|").split("|")]
+            out.append("<tr>" + "".join(
+                "<td>%s</td>" % self.inline(c.replace("\\|", "|")) for c in cells) + "</tr>")
+        out.append("</tbody></table>")
+        if cap:
+            out.append("<p class=\"ct-cap\">%s</p>" % self.inline(cap[0].strip("_")))
+        out.append("</div>")
+        return "".join(out)
 
     def heading(self, hashes, sid, text):
         want = self.m.title.get(sid)
@@ -453,9 +496,14 @@ class Chapter:
                                     for s in missing))
         if self.order:
             tail.append('<h2 class="refs-head" id="references">References</h2>')
+            # Only the keys that resolved. An unresolved one is already recorded
+            # as an error by cite(), and a bare refs[k] here raised KeyError on
+            # the first bad key -- before main() could print the error list, so
+            # the one tool meant to name a broken citation died instead of
+            # reporting it. Nothing is written when errs is non-empty anyway.
             tail.append('<ol class="refs">\n%s\n</ol>' % "\n".join(
                 '<li id="r-%s">%s</li>' % (k, format_ref(k, self.m.refs[k]))
-                for k in self.order))
+                for k in self.order if k in self.m.refs))
         return "\n\n".join(head + [body] + tail) + "\n"
 
 
