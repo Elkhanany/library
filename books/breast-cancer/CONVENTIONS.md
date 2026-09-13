@@ -123,6 +123,11 @@ Write a citation with a space before the bracket, the way it is comfortable to t
 `...an adaptive survival mechanism [@ali2020].` The build closes that space, so the mark sets
 against the word it qualifies rather than floating off it.
 
+Every citation gets a reference card for free. Hovering the mark on a mouse opens a card, tapping
+it on a phone opens a sheet, and both read the entry out of the chapter's own reference list, so
+there is nothing to add to a chapter and nothing to keep in step. Never hand-write a tooltip or
+repeat a reference inline to make one appear.
+
 Citations are numbered in order of first appearance within a page, which is the right
 convention when each chapter is its own page. Because the key is permanent, reordering chapters
 changes the printed numeral and nothing else.

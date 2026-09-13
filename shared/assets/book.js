@@ -506,12 +506,143 @@ var NMT = (function () {
     redrawAll();
   }
 
+  /* ---------- the reference card ----------
+     Bring the reference to the citation rather than sending the reader to the
+     foot of a twenty-thousand-word chapter and losing their place.
+
+     The entry is read out of the page's own reference list, so there is no
+     second copy to keep in step, nothing to fetch, and it works with the
+     network off. Books with no citations have no .cite elements and this
+     returns immediately, so nothing is added to a page that cannot use it. */
+  function refCards() {
+    var cites = [].slice.call(document.querySelectorAll('a.cite[href^="#r-"]'));
+    if (!cites.length) return;
+
+    /* A mouse gets a card on hover. A thumb has no hover, so it gets a sheet on
+       tap -- and there the tap must not also jump to the list. */
+    var hoverable = !(window.matchMedia && matchMedia('(hover: none)').matches);
+    var card = null, scrim = null, openFor = null, showT = 0, hideT = 0;
+
+    function build() {
+      if (card) return;
+      card = document.createElement('div');
+      card.className = 'refcard';
+      card.setAttribute('role', 'tooltip');
+      document.body.appendChild(card);
+      card.addEventListener('mouseenter', function () { clearTimeout(hideT); });
+      card.addEventListener('mouseleave', schedHide);
+    }
+
+    function entry(a) {
+      var id = (a.getAttribute('href') || '').slice(1);
+      /* getElementById rather than a selector: a reference key may contain
+         characters that would need escaping in CSS. */
+      var li = id && document.getElementById(id);
+      return li && li.tagName === 'LI' ? li : null;
+    }
+
+    function place(a) {
+      /* Fixed coordinates, so the card is positioned against the viewport and
+         does not need the page's scroll offset. Preferred below the mark;
+         flipped above when the room is not there. Clamped to a 12px gutter so
+         it can never sit half off a narrow screen. */
+      var m = 12, r = a.getBoundingClientRect(), c = card.getBoundingClientRect();
+      var top = r.bottom + 8;
+      if (top + c.height > innerHeight - m) {
+        var above = r.top - c.height - 8;
+        if (above >= m) top = above;
+        else top = Math.max(m, innerHeight - c.height - m);
+      }
+      var left = Math.min(Math.max(m, r.left + r.width / 2 - c.width / 2),
+                          innerWidth - c.width - m);
+      card.style.top = Math.round(top) + 'px';
+      card.style.left = Math.round(left) + 'px';
+    }
+
+    function show(a, asSheet) {
+      var li = entry(a);
+      if (!li) return;
+      build();
+      close(true);
+      openFor = a;
+      card.className = 'refcard' + (asSheet ? ' sheet' : '');
+      card.innerHTML = (asSheet ? '<span class="rc-close"></span>' : '') +
+        '<span class="rc-n">Reference ' + (a.textContent || '').trim() + '</span>' +
+        li.innerHTML;
+      a.setAttribute('aria-expanded', 'true');
+      if (asSheet) {
+        scrim = document.createElement('div');
+        scrim.className = 'refscrim';
+        scrim.addEventListener('click', function () { close(); });
+        document.body.appendChild(scrim);
+        card.style.top = card.style.left = '';
+        requestAnimationFrame(function () {
+          scrim.classList.add('on'); card.classList.add('on');
+        });
+      } else {
+        card.style.visibility = 'hidden';
+        card.classList.add('on');
+        requestAnimationFrame(function () {
+          place(a); card.style.visibility = '';
+        });
+      }
+    }
+
+    function close(immediate) {
+      clearTimeout(showT); clearTimeout(hideT);
+      if (openFor) { openFor.removeAttribute('aria-expanded'); openFor = null; }
+      if (card) card.classList.remove('on');
+      if (scrim) {
+        var s = scrim; scrim = null;
+        s.classList.remove('on');
+        if (immediate) s.remove();
+        else setTimeout(function () { s.remove(); }, 220);
+      }
+    }
+    function schedHide() { clearTimeout(hideT); hideT = setTimeout(close, 180); }
+
+    cites.forEach(function (a) {
+      if (hoverable) {
+        a.addEventListener('mouseenter', function () {
+          clearTimeout(hideT);
+          showT = setTimeout(function () { show(a, false); }, 110);
+        });
+        a.addEventListener('mouseleave', function () {
+          clearTimeout(showT); schedHide();
+        });
+        /* Keyboard reaches the same card: the mark is already a link. */
+        a.addEventListener('focus', function () { show(a, false); });
+        a.addEventListener('blur', schedHide);
+      }
+      a.addEventListener('click', function (e) {
+        /* Only on a touch screen does the tap take over from the jump. With a
+           mouse the click still goes to the list, which is where a reader who
+           clicked rather than hovered was asking to go. */
+        if (hoverable) return;
+        if (!entry(a)) return;
+        e.preventDefault();
+        show(a, true);
+      });
+    });
+
+    addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    /* A card pinned to a viewport coordinate is wrong the moment anything moves
+       under it. Cheaper to dismiss than to follow. Capture, because scroll does
+       not bubble and the citation may sit inside a scroll container of its own
+       -- an evidence table scrolls sideways by design, and without this the card
+       stayed put while the mark it belongs to slid out from under it. */
+    addEventListener('scroll', function () { if (openFor && !scrim) close(); },
+                     { passive: true, capture: true });
+    addEventListener('resize', function () { close(); });
+  }
+
   /* ---------- boot ---------- */
   window.addEventListener('DOMContentLoaded', function () {
     numberEquations();
     var hs = sectionHeadings();
     buildTOC(hs);
     buildMobileNav(hs);
+    refCards();
     if (window.katex) { typeset(); }
     else {
       var iv = setInterval(function () {

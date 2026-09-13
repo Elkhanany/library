@@ -56,11 +56,13 @@ No contradiction in either, so neither is urgent. Both are a pass with the table
 
 None of it blocks reading, and all of it is library-wide rather than specific to this book.
 
-1. **Citation bottom sheets.** Tapping a superscript jumps to the foot of the chapter. It should
-   open a sheet with the reference, its link and its *cited in* list, and dismiss back to the exact
-   scroll position. At 824 cited references this is the largest remaining reading-experience item
-   on a phone.
-2. **Cross-reference preview sheets.** Same shape, for `[[BC-###]]`.
+1. **The *cited in* list on a reference.** The reference card is built: hovering a citation on a
+   mouse opens a card, tapping one on a phone opens a sheet, and both read the entry out of the
+   page's own reference list so they work with the network off. What the card cannot yet show is
+   which *other* chapters cite the same paper, because that needs a cross-chapter index the build
+   does not emit.
+2. **Cross-reference preview sheets.** Same shape, for `[[BC-###]]`: the target's title and opening
+   lines, with a *go there* action.
 3. **Search.** The library has none, for any book. At 236,000 words this book needs it most.
 4. **The generated appendices.** Five of the nine are meant to be generated: trials (`APP-A`),
    glossary (`APP-B`), the interplay map (`APP-F`), the research agenda (`APP-G`) and the full
