@@ -55,7 +55,12 @@ FENCES = {
     "caution":   ("warn", "Caution"),
 }
 
-CITE_GROUP = re.compile(r"\[(@[A-Za-z0-9_\-]+(?:\s*;\s*@[A-Za-z0-9_\-]+)*)\]")
+# The space before the bracket is eaten with it. A citation is comfortable to
+# type as "...mechanism [@ali2020]." and has to set as "...mechanism<sup>1</sup>.",
+# hugging the word it qualifies. Every one of the 591 citations in the first
+# wave was written with that space, so this is the difference between a
+# reference mark and a floating numeral.
+CITE_GROUP = re.compile(r"[ \t]*\[(@[A-Za-z0-9_\-]+(?:\s*;\s*@[A-Za-z0-9_\-]+)*)\]")
 CITE_KEY = re.compile(r"@([A-Za-z0-9_\-]+)")
 TRIAL = re.compile(r"\{\{trial:([A-Za-z0-9_\-]+)\}\}")
 TERM = re.compile(r"\[\[term:([A-Za-z0-9_\-]+)\]\]")
@@ -116,6 +121,16 @@ class Model:
                     self.sections[cid].append(s["id"])
         for a in self.outline.get("appendices") or []:
             self.title[a["id"]] = a["title"]
+
+    def unverified(self, key):
+        """A reference whose identifier is claimed but not yet confirmed.
+
+        Two spellings mean the same thing, because two passes of this book used
+        different ones: `verify: true` marks an entry queued for checking, and
+        `verified: false` marks one that failed. An entry with neither field is
+        one of the originals, carried over already checked."""
+        r = self.refs.get(key) or {}
+        return r.get("verify") is True or r.get("verified") is False
 
     def drafted(self, cid):
         """A chapter is written when its markdown exists. The check is against
@@ -204,7 +219,11 @@ class Chapter:
         self.interplay = []    # (target id, text) — APP-F is built from these
 
     def fail(self, msg):
-        self.errs.append("%s: %s" % (self.cid, msg))
+        # One line per distinct problem. A key cited ten times in a chapter is
+        # one thing to fix, and ten identical lines bury the other nine faults.
+        line = "%s: %s" % (self.cid, msg)
+        if line not in self.errs:
+            self.errs.append(line)
 
     # ---------------------------------------------------------------- inline
     def cite(self, mo):
@@ -214,6 +233,13 @@ class Chapter:
             if k not in self.m.refs:
                 self.fail("citation [@%s] is not in references.yaml" % key)
                 k = key
+            elif self.m.unverified(k):
+                # A reference whose identifier has been claimed but not checked
+                # against the source. In a clinical book that is worse than a
+                # missing citation, because it reads as if someone confirmed it.
+                # Resolve the identifier or drop the sentence.
+                self.fail("citation [@%s] is not verified. Confirm its identifier "
+                          "in references.yaml before it reaches a chapter." % k)
             if k not in self.seen:
                 self.order.append(k)
                 self.seen[k] = len(self.order)
