@@ -111,6 +111,19 @@ Every one goes through `references.yaml`, where the key is the first author's su
 year. **Never rename a key.** Add an alias instead, so links written against the old spelling
 keep resolving.
 
+**A chapter may not cite an unverified reference.** An entry marked `verify: true` is one whose
+identifier has been claimed but not checked against the source, and `bc.py` fails the build on
+any chapter that cites one. This is stricter than it sounds and deliberately so: an unverified
+citation is worse than a missing one, because it reads to a clinician as though someone
+confirmed it. To add a reference, find the paper on PubMed, confirm the hit is the primary
+publication rather than a subgroup analysis or commentary, and record the exact identifier with
+`verified: true`. A trial acronym returns many secondary papers, so read the title before
+accepting one.
+
+Write a citation with a space before the bracket, the way it is comfortable to type:
+`...an adaptive survival mechanism [@ali2020].` The build closes that space, so the mark sets
+against the word it qualifies rather than floating off it.
+
 Citations are numbered in order of first appearance within a page, which is the right
 convention when each chapter is its own page. Because the key is permanent, reordering chapters
 changes the printed numeral and nothing else.
