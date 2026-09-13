@@ -1,7 +1,7 @@
 # How this book is written
 
-A reference on breast cancer for practising medical oncologists and for fellows. Fourteen
-parts, seventy-nine chapters, six hundred and seventy-three sections. It is the first book in
+A reference on breast cancer for practising medical oncologists and for fellows. Sixteen
+parts, ninety-three chapters, seven hundred and seventy-eight sections. It is the first book in
 the library whose structure is data rather than a hand-kept list, because at this size it has
 to be.
 
@@ -112,13 +112,12 @@ year. **Never rename a key.** Add an alias instead, so links written against the
 keep resolving.
 
 **A chapter may not cite an unverified reference.** An entry marked `verify: true` is one whose
-identifier has been claimed but not checked against the source, and `bc.py` fails the build on
-any chapter that cites one. This is stricter than it sounds and deliberately so: an unverified
-citation is worse than a missing one, because it reads to a clinician as though someone
-confirmed it. To add a reference, find the paper on PubMed, confirm the hit is the primary
-publication rather than a subgroup analysis or commentary, and record the exact identifier with
-`verified: true`. A trial acronym returns many secondary papers, so read the title before
-accepting one.
+identifier has been claimed but not checked against the source, and `bc.py` fails the build on any
+chapter that cites one. This is stricter than it sounds and deliberately so: an unverified citation
+is worse than a missing one, because it reads to a clinician as though someone confirmed it. To add
+a reference, find the paper on PubMed, confirm the hit is the primary publication rather than a
+subgroup analysis or commentary, and record the exact identifier with `verified: true`. A trial
+acronym returns many secondary papers, so read the title before accepting one.
 
 Write a citation with a space before the bracket, the way it is comfortable to type:
 `...an adaptive survival mechanism [@ali2020].` The build closes that space, so the mark sets
@@ -168,3 +167,52 @@ clauses, give each its own sentence.** On top of that, three things this book as
 
 The reader already treats this disease. Do not explain what neoadjuvant means. Do explain why a
 convention was chosen, because that is what nobody writes down.
+
+## The evidence block
+
+Parts PT-15 and PT-16 are evidence chapters. They carry the phase II and III trial record for one
+subtype, setting and modality, and they are expected to change as new data read out.
+
+They do not hard-code trial results in prose. They declare a table:
+
+````
+```evidence setting=early subtype=HR+/HER2- line=adjuvant modality=endocrine
+```
+````
+
+The block has no body. The build renders the matching rows from `trials.yaml`. A new readout is
+therefore added once, to the registry, and appears in every chapter whose filter matches it.
+
+Filter keys are ANDed; a comma-separated value is ORed. A trial with `subtype: all` appears in every
+subtype's table, which is correct for an all-comers trial. That wildcard does not extend to `setting`,
+`line` or `modality`.
+
+| Key | Values |
+|---|---|
+| `setting` | early, metastatic, dcis, prevention, mrd, screening, surveillance, recurrence |
+| `subtype` | HR+/HER2-, HER2+, HR+/HER2+, TNBC, HER2-low, BRCA, all |
+| `line` | neoadjuvant, adjuvant, post-neoadjuvant, 1L, 2L, 3L+ |
+| `modality` | endocrine, cdk4-6, chemo, her2, adc, immunotherapy, parp, pi3k-akt, surgery, radiation, bone, supportive |
+| `phase`, `status`, `topic` | filters |
+| `sort`, `cols`, `caption` | directives, not filters |
+
+Validate with `python3 tools/evidence.py --check`. It fails on a filter that matches no trial, on a
+block with a body, and on any registry value outside the controlled vocabulary. `--render "<filter>"`
+previews a table, `--coverage` lists every block with its match count, and `--orphans` lists registry
+trials no block picks up.
+
+**Tables enumerate. Prose argues.** Never restate in prose a number the table already carries. The
+exception is a number you are arguing *from*, where two trials disagree and the comparison is the
+point. A number that lives in two places drifts when one is updated, which is the failure this rule
+exists to prevent.
+
+## Registry fields
+
+`trials.yaml` entries carry `acronym`, `phase`, `setting`, `subtype`, `line`, `modality`,
+`population` (free text entry criteria), `n` (randomised), `arms` (experimental vs control),
+`endpoint`, `result` (primary endpoint with its comparison, never a bare hazard ratio), `os`
+(the overall survival result, or `not reached in either arm`, or `not yet reported` — never blank
+to imply a negative), `year`, `status`, `primary_ref` and `cited_by`.
+
+Adding a trial means filling those fields and verifying `primary_ref` against PubMed. Nothing else
+has to change for it to appear in the book.

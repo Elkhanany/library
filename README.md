@@ -20,7 +20,7 @@ deriving what it uses, and marking what it does not.**
 | **[From Newton to M-Theory](books/newton-to-mtheory/)** | Special relativity through to strings, derived rather than quoted. | 37 of 76 chapters |
 | **[The Long Argument](books/the-long-argument/)** | Eight philosophical questions that opened early and never closed, read as conversations across centuries. | index and 117 studies built, 8 chapters planned |
 | **[The Ages of Thought](books/the-ages-of-thought/)** | The same 2,600 years drawn rather than told: ten ages, and a line between two philosophers whenever one read or argued with the other. | atlas built |
-| **[Breast Cancer](books/breast-cancer/)** | Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both. | 1 of 79 chapters, 673 sections outlined |
+| **[Breast Cancer](books/breast-cancer/)** | Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both. | 93 chapters, 778 sections, complete |
 
 Each book keeps its own conventions, its own register of what it has taken on trust, and its own
 plans and review reports, because those are properties of a book rather than of the machinery. What
@@ -61,6 +61,11 @@ tools/                the build system, shared by every book
                       curriculum, markdown chapters into fragments, and every
                       citation, trial, term and cross-reference resolved or
                       refused. `--check` asserts both outputs are current.
+  evidence.py         renders the clinical book's trial tables from its registry.
+                      A chapter declares a filter, not a table, so a new readout
+                      is entered once and appears in every chapter it bears on.
+                      `--check` validates every block; `--orphans` finds trials
+                      no block picks up.
 
 shared/
   assets/             the house style — book.css, book.js
