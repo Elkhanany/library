@@ -341,15 +341,21 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .who .sch{ display:block; font-size:10px; color:var(--ink-2); margin-top:2px; white-space:nowrap;
            overflow:hidden; text-overflow:ellipsis }
 .who .one{ display:none }
-.who[data-bd="1"] .n{ font-size:15px } .who[data-bd="1"] .card{ padding:7px 12px 8px }
-.who[data-bd="1"] .rule{ height:6px }
-.who[data-bd="2"] .n{ font-size:13px }
-.who[data-bd="3"] .n{ font-size:11.5px } .who[data-bd="3"] .card{ padding:4px 8px 5px; border-radius:7px }
+/* A card is as big as the thinker's weight, on a ramp rather than in steps.
+   Size used to come from the band, so all twelve of the first band were the
+   same 15px and Plato was no larger than Locke. Now --fs and the measures
+   that go with it are set per card from the weight itself, which is the same
+   quantity the rows are cut from: the size says what the height on the page
+   says, only finer. The band still governs what is *shown* -- a school, the
+   dates, the sans face of the long tail -- because that is a decision with no
+   in-between. */
+.who .n{ font-size:var(--fs,11.5px) }
+.who .card{ padding:var(--pt,4px) var(--px,8px) var(--pb,5px); border-radius:var(--br,7px) }
+.who .rule{ height:var(--rh,5px) }
 .who[data-bd="3"] .sch{ display:none }
-.who[data-bd="4"] .n{ font-size:10.5px; font-family:var(--f-ui); font-weight:500 }
-.who[data-bd="4"] .card{ padding:3px 7px 4px; border-radius:6px; background:var(--surface-2) }
+.who[data-bd="4"] .n{ font-family:var(--f-ui); font-weight:500 }
+.who[data-bd="4"] .card{ background:var(--surface-2) }
 .who[data-bd="4"] .sch,.who[data-bd="4"] .meta{ display:none }
-.who[data-bd="4"] .rule{ height:3px }
 .who[data-bd="3"] .n,.who[data-bd="4"] .n{ overflow:hidden; text-overflow:ellipsis }
 /* The one who is chosen becomes the centrepiece: a larger card in its own
    place on the line, with the sentence that sums the thinker up. The layout
@@ -960,19 +966,47 @@ function textW(s, font) {
   if (_wcache[k] === undefined) { _mc.font = font; _wcache[k] = _mc.measureText(s).width; }
   return _wcache[k];
 }
-var CARDFONT = { 1: '600 15px "Spectral",Georgia,serif', 2: '600 13px "Spectral",Georgia,serif',
-                 3: '600 11.5px "Spectral",Georgia,serif', 4: '500 10.5px system-ui,sans-serif' };
 var METAFONT = '9px "IBM Plex Mono",monospace', SCHFONT = '10px system-ui,sans-serif';
-var CARDPAD = { 1: 34, 2: 30, 3: 24, 4: 20 };
 var BIG_W = 250;                     /* the centrepiece card */
+
+/* How big a card is, as a ramp from the lightest thinker in the book to the
+   heaviest. The foot of the ramp is the size the last band used to have, so
+   the long tail is no smaller than it was; the head is a little above the old
+   15px, which costs one row of the sixty-two and buys a gradient you can see.
+   The chosen thinker's card stays larger still, at 18px. */
+var HEFT_LO = null, HEFT_HI = null;
+function heft(p) {
+  if (HEFT_LO === null) {
+    var w = D.people.map(function (q) { return q.w; });
+    HEFT_LO = Math.min.apply(null, w); HEFT_HI = Math.max.apply(null, w);
+  }
+  return HEFT_HI > HEFT_LO ? (p.w - HEFT_LO) / (HEFT_HI - HEFT_LO) : 1;
+}
+function lerp(p, a, b) { return a + heft(p) * (b - a); }
+function nameSize(p) { return Math.round(lerp(p, 10.5, 16) * 100) / 100; }
+/* the measurement font must be the one the card will actually be drawn in,
+   or the packer reserves the wrong width */
+function cardFont(p) {
+  return p.bd === 4 ? '500 ' + nameSize(p) + "px system-ui,sans-serif"
+                    : '600 ' + nameSize(p) + 'px "Spectral",Georgia,serif';
+}
+/* the horizontal room a card needs beyond its longest line: padding, border
+   and the slack the old per-band table allowed */
+function cardPad(p) { return lerp(p, 20, 34); }
+function cardVars(p) {
+  return "--fs:" + nameSize(p) + "px;--rh:" + lerp(p, 3, 6).toFixed(2) +
+         "px;--px:" + lerp(p, 7, 12).toFixed(2) + "px;--pt:" + lerp(p, 3, 7).toFixed(2) +
+         "px;--pb:" + lerp(p, 4, 8).toFixed(2) + "px;--br:" + lerp(p, 6, 9).toFixed(2) + "px";
+}
+
 var _cw = Object.create(null);
 function cardW(p) {
   if (p.id === SEL) return BIG_W;
   if (_cw[p.id] !== undefined) return _cw[p.id];
-  var w = textW(p.n, CARDFONT[p.bd]);
+  var w = textW(p.n, cardFont(p));
   if (p.bd < 4) w = Math.max(w, textW(span(p), METAFONT));
   if (p.bd < 3 && p.sch) w = Math.max(w, textW(p.sch, SCHFONT));
-  return (_cw[p.id] = Math.ceil(Math.min(w, 230) + CARDPAD[p.bd]));
+  return (_cw[p.id] = Math.ceil(Math.min(w, 230) + cardPad(p)));
 }
 
 /* ---------------------------------------------------------- the x-scale
@@ -1175,6 +1209,7 @@ function renderFolk() {
     b.className = "who";
     b.tabIndex = -1;
     b.dataset.id = p.id; b.dataset.bd = String(p.bd);
+    b.style.cssText = cardVars(p);
     b.setAttribute("aria-label", p.n + ", " + span(p) + (p.sch ? ", " + p.sch : "") + ". " + p.one);
     b.innerHTML =
       '<span class="card"><span class="n">' + esc(p.n) + "</span>" +
