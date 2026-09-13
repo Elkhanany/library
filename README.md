@@ -19,6 +19,8 @@ deriving what it uses, and marking what it does not.**
 |---|---|---|
 | **[From Newton to M-Theory](books/newton-to-mtheory/)** | Special relativity through to strings, derived rather than quoted. | 37 of 76 chapters |
 | **[The Long Argument](books/the-long-argument/)** | Eight philosophical questions that opened early and never closed, read as conversations across centuries. | index and 117 studies built, 8 chapters planned |
+| **[The Ages of Thought](books/the-ages-of-thought/)** | The same 2,600 years drawn rather than told: ten ages, and a line between two philosophers whenever one read or argued with the other. | atlas built |
+| **[Breast Cancer](books/breast-cancer/)** | Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both. | 1 of 79 chapters, 673 sections outlined |
 
 Each book keeps its own conventions, its own register of what it has taken on trust, and its own
 plans and review reports, because those are properties of a book rather than of the machinery. What
@@ -55,6 +57,10 @@ tools/                the build system, shared by every book
   debts.py            collects the promises earlier chapters make
   figcheck.py         loads and exercises every interactive figure
   sitecheck.py        every link in the published site resolves, across books
+  bc.py               the clinical book's own front end: outline.yaml into a
+                      curriculum, markdown chapters into fragments, and every
+                      citation, trial, term and cross-reference resolved or
+                      refused. `--check` asserts both outputs are current.
 
 shared/
   assets/             the house style — book.css, book.js
@@ -112,7 +118,15 @@ the navigation and the build all read the manifest.
 
 A book with no equations in it does not inherit KaTeX, equation numbering, the Math Ledger or the
 flag register merely by being a neighbour, and its top bar does not advertise pages it will never
-have. The theme drives the hub: hovering a book on the shelf washes the whole page in its colour.
+have. The theme drives the hub, where hovering a book on the shelf washes the whole page in its
+colour, and it drives the book's own pages: `accent`, `accent_dark`, `ink` and `paper` are appended
+to the shared stylesheet as an override, and the washes behind callouts are derived from them, so
+changing one accent does not mean hand-tuning eight tints. A book whose theme matches what
+`book.css` already declares emits no override at all.
+
+Two other keys are the book's own copy rather than the builder's. `blurb` is what the hub shelf
+shows. `arc` is a list of `[kicker, title, blurb]`, one per part, used for the part list on the
+book's landing page — the builder holds no book's prose.
 
 ## The standard every book is held to
 

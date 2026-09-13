@@ -103,13 +103,25 @@ SHELL = """<!DOCTYPE html>
 
 
 async def main():
-    print("stage 0 — extracting the through-line")
-    tspec = importlib.util.spec_from_file_location("tl", os.path.join(os.path.dirname(os.path.abspath(__file__)), "throughline.py"))
-    tl = importlib.util.module_from_spec(tspec); tspec.loader.exec_module(tl)
-    tl.build()
+    # Only for a book that asked for one. Run unconditionally, this writes an
+    # empty _throughline.html into the src/ of every book in the library, and a
+    # book with no plain-language layer should not acquire an empty one by
+    # being built.
+    if BOOK.has("throughline"):
+        print("stage 0 — extracting the through-line")
+        tspec = importlib.util.spec_from_file_location("tl", os.path.join(os.path.dirname(os.path.abspath(__file__)), "throughline.py"))
+        tl = importlib.util.module_from_spec(tspec); tspec.loader.exec_module(tl)
+        tl.build()
 
     print("stage 1 — assembling fragments")
     shutil.rmtree(STAGE, ignore_errors=True)
+    # build.py points itself at the physics book when it loads, which was right
+    # when there was one. Without this, NMT_BOOK selects the staging directory
+    # and the output directory but not the source, so asking for any other book
+    # quietly assembles the physics one into a folder named for the book you
+    # asked for. webbuild.py has always done this; make.py never did.
+    bp.use(BOOK)
+    bp.OUT = STAGE
     bp.build()
 
     print("stage 2 — rendering maths and inlining assets")
