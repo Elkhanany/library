@@ -95,6 +95,18 @@ python3 tools/verify.py       # audit one book's build, network blocked
 python3 tools/sitecheck.py    # every link across the whole site
 ```
 
+The breast cancer book keeps its trials in a registry and generates its evidence tables from it,
+so it has two more:
+
+```bash
+python3 tools/evidence.py --check   # every table's filter, and the registry's own consistency
+python3 tools/export.py             # the registry as a spreadsheet, offered for download
+```
+
+`pyyaml` is needed for that book; nothing else beyond the standard library is. The spreadsheet is
+written by `tools/xlsx.py` rather than by a library, so a clone can produce it without installing
+anything.
+
 On Windows, run with `PYTHONUTF8=1`. The chapters contain ⚑ and −, and the platform's default
 encoding is cp1252, which cannot read them.
 

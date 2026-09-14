@@ -158,8 +158,17 @@ def render(hits, f):
 BLOCK = re.compile(r"^```evidence[ \t]*([^\n]*)\n(.*?)^```[ \t]*$", re.M | re.S)
 
 
+def blocks_in_text(text):
+    """Every evidence block in a piece of markdown, as (filter, body).
+
+    Split out from blocks_in so a caller that has already cut a chapter into
+    sections can scan one section at a time and know which section a block sits
+    under, which the export needs and the build does not."""
+    return [(m.group(1).strip(), m.group(2)) for m in BLOCK.finditer(text)]
+
+
 def blocks_in(path):
-    return [(m.group(1).strip(), m.group(2)) for m in BLOCK.finditer(open(path).read())]
+    return blocks_in_text(open(path, encoding="utf-8").read())
 
 
 def all_blocks():
