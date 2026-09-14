@@ -89,6 +89,10 @@ def nav(bk):
         links.append('<a href="throughline.html">In Plain Terms</a>')
     if bk.has("ledger"):
         links.append('<a href="ledger.html">Math Ledger</a>')
+    # A page the book declared for itself gets a top-bar link when it names one.
+    for spec in bk.cfg.get("pages") or []:
+        if spec.get("nav"):
+            links.append('<a href="%s">%s</a>' % (spec["out"], html.escape(spec["nav"])))
     links.append('<a href="../index.html">Library</a>')
     return """<nav class="topnav">
   <a class="brand" href="index.html">{brand}</a>
@@ -147,6 +151,31 @@ WORDCOUNT_JS = """() => {
                 const d = document.querySelector('.main .col').cloneNode(true);
                 d.querySelectorAll('.katex, script, style').forEach(e => e.remove());
                 return (d.textContent.match(/[A-Za-z0-9\u2019'-]+/g) || []).length; }"""
+
+
+def extra_pages(bk, stats):
+    """Standalone pages a book declares for itself, beyond the built-in ones.
+
+    webbuild has always known exactly two extra pages, the Math Ledger and the
+    Through-Line, because for a long time there was one book and it wanted both.
+    A book that needs a third -- the clinical book's trial appendix -- had
+    nowhere to put it. So a book names its own in book.json:
+
+        "pages": [{"src": "_trials.html", "out": "trials.html"}]
+
+    The file is copied through with the same stat substitution the landing page
+    gets, so a page can show live counts without the builder knowing what it is.
+    """
+    for spec in bk.cfg.get("pages") or []:
+        src = os.path.join(bk.src, spec["src"])
+        if not os.path.exists(src):
+            raise SystemExit("%s: book.json declares pages[%s] which does not exist"
+                             % (bk.slug, spec["src"]))
+        tpl = library.read(src)
+        for key, val in stats.items():
+            tpl = tpl.replace("{{%s}}" % key, val)
+        library.write(os.path.join(bk.out, spec["out"]), tpl)
+    return len(bk.cfg.get("pages") or [])
 
 
 def landing_page(bk, stats):
@@ -535,6 +564,9 @@ async def build_book(bk, browser):
 
     def human(x):
         return f"{x/1000:.0f}k" if x >= 10000 else f"{x:,}"
+    page_stats = {"CH": f"{n} / {stats['planned']}", "WORDS": human(stats["words"]),
+                  "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"])}
+    extra_pages(bk, page_stats)
     landing_page(bk, {"CH": f"{n} / {stats['planned']}", "WORDS": human(stats["words"]),
                       "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"])})
     return n, stats
