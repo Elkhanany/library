@@ -203,12 +203,21 @@ def landing_page(bk, stats):
     # fetched at runtime instead of parsed on every visit. Copied verbatim:
     # they are already minified ASCII JSON and the build has no opinion on
     # their contents.
+    # A dataset may also be something a reader takes away rather than something
+    # the page fetches. The trial workbook is a binary, so it is copied as bytes
+    # rather than through library.write, which normalises line endings.
     datadir = os.path.join(bk.src, "data")
     if os.path.isdir(datadir):
         for f in sorted(os.listdir(datadir)):
             if f.endswith(".json"):
                 library.write(os.path.join(bk.out, "data", f),
                               library.read(os.path.join(datadir, f)))
+            elif f.endswith((".xlsx", ".csv", ".zip")):
+                dst = os.path.join(bk.out, "data", f)
+                d = os.path.dirname(dst)
+                if not os.path.isdir(d):
+                    os.makedirs(d)
+                shutil.copyfile(os.path.join(datadir, f), dst)
 
     built = {}          # part index -> (chapters written, chapters planned)
     for i, (_pt, _blurb, chs) in enumerate(bp.PARTS):

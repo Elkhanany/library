@@ -298,6 +298,25 @@ A trial the book names but has not tabulated a result for carries `tabulated: fa
 listed in the appendix and deliberately has no filter axes, so it cannot appear in an evidence
 table until someone enters what it showed.
 
+## Taking the registry out of the book
+
+`python3 tools/export.py` writes `src/data/breast-cancer-trials.xlsx`, which the appendix offers
+for download. Five sheets: what the file is, the trials, the publications, one row per
+chapter-and-trial pair, and every generated table in the book with the filter that produces it
+and what it renders today.
+
+It is a working document rather than a report. The **Chapters** sheet filtered to *assigned yes,
+cited blank* is the list of chapters that owe a trial a mention, and the **Evidence tables**
+sheet says what each chapter already tabulates, which is what stops a number being written into
+prose that a table already carries.
+
+The workbook is deterministic and dated by the registry's latest `reviewed` rather than by the
+clock, so two exports of the same data are the same bytes. `tools/sitecheck.py` fails if it has
+drifted from `trials.yaml`, because a stale spreadsheet opens and looks right, which is worse
+than a broken link.
+
+The appendix also exports whatever is currently filtered, as a CSV, in the browser.
+
 **When a trial reports again**, add the publication to `pubs` with `added: <date>`, add its
 reference to `references.yaml` verified, and rebuild. `python3 tools/evidence.py --stale` then
 lists the trial, what is new, and every chapter that cites it and may now be out of date. Update

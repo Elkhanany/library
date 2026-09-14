@@ -38,7 +38,7 @@ absent from the self-contained `build/` tree, where `file://` forbids the fetch.
 
 ## The quick look
 
-296 of the 297 trials with a publication carry a `digest`: the methods and the results of the
+302 of the 303 trials with a publication carry a `digest`: the methods and the results of the
 paper the registry quotes, in the paper's own terms, with the background and the conclusion left
 out. The background restates what the reader already knows and the conclusion is the authors'
 reading rather than the finding, so neither is kept.
@@ -49,6 +49,33 @@ file the first time a reader expands a trial.
 
 The one trial without a digest is the Ahmed phase I study of radiotherapy followed by intrathecal
 trastuzumab and pertuzumab, whose abstract never reached the registry.
+
+## Taking it out of the book
+
+`python3 tools/export.py` writes the registry to a spreadsheet, and the appendix offers it for
+download. Five sheets: what the file is and the rules that govern an edit, the trials, the
+publications, one row per chapter-and-trial pair, and every generated table in the book with its
+filter and what it renders today.
+
+The **Chapters** sheet is the point of it. Its *To do* column says what is owed, and the counts
+are the work:
+
+| | |
+|---|---|
+| 62 | a chapter is meant to discuss a trial, no table carries it, and the prose does not mention it |
+| 110 | a table in the chapter already carries the trial and the prose does not take it up |
+| 184 | a chapter cites a trial the registry does not assign to it, so the registry entry wants extending |
+
+The **Evidence tables** sheet is the guard against the failure this whole layer exists to
+prevent. It says what each chapter already tabulates, so a number is not written into prose that
+a table beside it already carries.
+
+The workbook is deterministic and dated by the registry's latest `reviewed` rather than by the
+clock, so two exports of unchanged data are the same bytes and `tools/sitecheck.py` can fail on a
+stale one. It is written by `tools/xlsx.py`, about a hundred lines of the standard library, so a
+clone produces it without installing anything.
+
+The appendix also exports whatever is currently filtered, as a CSV, in the browser.
 
 ## What the source document is used for
 

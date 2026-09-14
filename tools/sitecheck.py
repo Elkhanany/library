@@ -90,7 +90,14 @@ def main():
     # The app layer is one string match away from silently not existing, so it
     # is checked here rather than left to whoever remembers to look.
     import pwa
-    return pwa.check()
+    rc = pwa.check()
+
+    # A dataset the site offers for download fails worse than a broken link,
+    # because a stale spreadsheet opens and looks right. The link check above
+    # proves the file is there; this proves it still says what the registry
+    # says.
+    import export
+    return rc or export.main_check()
 
 
 if __name__ == "__main__":

@@ -91,6 +91,18 @@ ol.pubs li{margin:.35rem 0}
 ol.pubs .role{font-family:var(--sans);font-size:.63rem;font-weight:700;letter-spacing:.07em;
   text-transform:uppercase;color:var(--accent);margin-right:.4rem}
 ol.pubs a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+/* The snapshot. The registry moves as trials report, and the chapters have to
+   be brought back into line when it does, which is work done with the evidence
+   in front of you rather than at a terminal. */
+.take{font-size:.92rem;color:var(--ink-soft);line-height:1.6;margin:0 0 1.4rem;
+  max-width:44rem}
+.take a,.take button{font-family:inherit;font-size:inherit;color:var(--accent);
+  background:none;border:0;padding:0;cursor:pointer;text-decoration:none;
+  border-bottom:1px solid var(--accent-soft)}
+.take a:hover,.take button:hover{border-bottom-color:var(--accent)}
+@media (pointer:coarse){
+  .take a,.take button{display:inline-block;min-height:34px}
+}
 .chips{display:flex;flex-wrap:wrap;gap:.35rem}
 .chip{font-family:var(--sans);font-size:.76rem;text-decoration:none;color:var(--ink);
   border:1px solid var(--rule);border-radius:4px;padding:.25rem .5rem;background:var(--paper)}
@@ -131,6 +143,13 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
   book follows.</p>
 
   <div class="counts" id="counts"></div>
+
+  <p class="take">Take it with you.
+    <a id="dl-xlsx" href="data/breast-cancer-trials.xlsx" download>Download the whole registry</a>
+    as a spreadsheet, five sheets including the chapters that owe a trial a mention and
+    every generated table in the book. Or
+    <button type="button" id="dl-csv">export what you have filtered</button>
+    as a CSV.</p>
 
   <div class="bar">
     <div class="row">
@@ -353,6 +372,78 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
     if (e.target.open && e.target.classList.contains('trial')) wantDigests();
   }, true);
 
+  /* ------------------------------------------------------------- export
+     The workbook beside this page is the whole registry. This button is the
+     other half of the question: the rows you are actually looking at, after a
+     search and five filters, which is usually the set you want to work from.
+
+     Every field is quoted and a leading =, + or @ is defused with an
+     apostrophe, because a spreadsheet reading a CSV will otherwise treat such a
+     cell as a formula. A registry of clinical results has no business
+     evaluating anything. */
+  var CSV_COLS = [
+    ['Key', 'key'], ['Trial', 'acronym'], ['Phase', 'phase'], ['N', 'n'],
+    ['Setting', 'setting'], ['Subtype', 'subtype'], ['Line', 'line'],
+    ['Modality', 'modality'], ['Status', 'status'], ['Year', 'year'],
+    ['Topic', 'topic'], ['Population', 'population'],
+    ['Experimental vs control', 'arms'], ['Primary endpoint', 'endpoint'],
+    ['Result', 'result'], ['Overall survival', 'os'], ['Read with care', 'note'],
+    ['NCT', 'nct'], ['Last reviewed', 'reviewed']
+  ];
+
+  function csvCell(v) {
+    var s = v == null ? '' : String(v);
+    if (/^[=+@]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+
+  function chapList(cs) {
+    return (cs || []).map(function (c) { return c.num + ' ' + c.title; }).join('; ');
+  }
+
+  function exportCsv() {
+    var hits = current();
+    var head = CSV_COLS.map(function (c) { return c[0]; })
+      .concat(['Has a result', 'Papers', 'Chapters it is assigned to',
+               'Chapters that cite it', 'Methods', 'Results']);
+    var lines = [head.map(csvCell).join(',')];
+    hits.forEach(function (t) {
+      var d = (digests && digests[t.key]) || {};
+      var row = CSV_COLS.map(function (c) { return t[c[1]]; }).concat([
+        t.tabulated === false ? 'no' : 'yes',
+        (t.pubs || []).length || '',
+        chapList(t.chapters), chapList(t.cited_by),
+        d.methods || '', d.results || ''
+      ]);
+      lines.push(row.map(csvCell).join(','));
+    });
+    /* Excel reads a CSV as the system codepage unless the file says otherwise,
+       and this one carries en dashes and Greek letters. */
+    var blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'],
+                        { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'breast-cancer-trials-' + hits.length + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* The Methods and Results columns come from the digest file, which is only
+     fetched when a reader opens a card. Asking for the export is a good enough
+     reason to fetch it, so the two columns are not silently empty. */
+  function onExport() {
+    if (digests) { exportCsv(); return; }
+    var btn = $('dl-csv'), label = btn.textContent;
+    btn.textContent = 'preparing…';
+    fetch('data/digests.json').then(function (r) { return r.json(); })
+      .then(function (d) { digests = d; })
+      .catch(function () { /* export without the two digest columns */ })
+      .then(function () { btn.textContent = label; exportCsv(); });
+  }
+
   function setView(v) {
     view = v;
     $('v-list').setAttribute('aria-pressed', String(v === 'list'));
@@ -374,6 +465,7 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
       FILTERS.forEach(function (r) { $(r[0]).value = ''; });
       draw();
     });
+    $('dl-csv').addEventListener('click', onExport);
     $('v-list').addEventListener('click', function () { setView('list'); });
     $('v-chap').addEventListener('click', function () { setView('chap'); });
     draw();
