@@ -226,6 +226,22 @@ def main():
         pr = t.get("primary_ref")
         if pr and pr not in refs:
             errs.append(f"trials.yaml[{k}].primary_ref={pr!r} not in references.yaml")
+
+    # Two keys for one trial. Parallel writing waves each minted a record for
+    # WSG TP-II, and because both matched the same filters it was listed twice,
+    # identically, in three published tables -- which reads as two trials
+    # agreeing rather than one trial counted twice. Same primary publication and
+    # same enrolment is the signature; nothing else legitimately shares both.
+    seen = {}
+    for k, t in sorted(trials.items()):
+        pr, n = t.get("primary_ref"), t.get("n")
+        if not pr or n is None:
+            continue
+        first = seen.setdefault((pr, n), k)
+        if first != k:
+            errs.append(f"trials.yaml[{k}] and [{first}] look like the same trial: "
+                        f"primary_ref={pr!r}, n={n}. Merge them and keep one key.")
+
     for e in errs:
         print("ERROR:", e)
     print(f"evidence: {nblocks} blocks, {len(trials)} trials, {len(errs)} problems")
