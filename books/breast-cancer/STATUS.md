@@ -2,13 +2,13 @@
 
 **Complete.** 16 parts, 93 chapters, 778 of 778 sections. No chapter is partial.
 
-1,033 references and 325 trials in the registries, every identifier PubMed-verified. 195 caution
+1,036 references and 329 trials in the registries, every identifier PubMed-verified. 195 caution
 blocks, 107 in-practice blocks, 70 interplay edges, 66 evidence tables.
 
 ## Appendix A, the trial registry
 
-`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 325
-trials, 436 publications. The same records generate both the in-chapter evidence tables and the
+`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 329
+trials, 440 publications. The same records generate both the in-chapter evidence tables and the
 appendix, so the two cannot disagree.
 
 The appendix filters on the axes the evidence blocks already use (setting, subtype, line,
@@ -18,19 +18,21 @@ shows the paper's own account of what was done and what was found, any caveat th
 hold, its full publication history with PubMed links, the chapters it is assigned to, and the
 chapters that actually cite it.
 
-Four counts sit at the head of it, and two of them are worklists:
+Five counts sit at the head of it, and three of them are worklists:
 
 | | |
 |---|---|
-| 325 trials, 436 publications | the database |
-| 22 awaiting a tabulated result | named in the book's scope, no result entered, so they cannot appear in an evidence table |
-| 141 not yet cited in the text | in the registry, no chapter mentions them |
+| 329 trials, 440 publications | the database |
+| 254 with a tabulated result | a result field the evidence tables print |
+| 48 extracted, not tabulated | the paper's findings are on the record, nobody has written the one-line result |
+| 27 with no result at all | mostly trials still running, which is the truth rather than a gap |
+| 140 not yet cited in the text | in the registry, no chapter mentions them |
 
 **When a trial reports again**: add the publication to its `pubs` with `added: <date>`, add the
 reference verified, rebuild. `tools/evidence.py --stale` then names the trial, what is new, and
 every chapter citing it that may now be out of date. Update the prose and set `reviewed` to
 today to clear it. `--gaps` reports the other axis: trials assigned to a chapter that never
-mentions them (156 today) and trials a chapter cites that the source document does not list (66).
+mentions them (154 today) and trials a chapter cites that the source document does not list (65).
 
 The appendix is a web page rather than a chapter, because it fetches its data at runtime. It is
 precached like everything else, so it works offline on the published site; it is deliberately
@@ -38,7 +40,7 @@ absent from the self-contained `build/` tree, where `file://` forbids the fetch.
 
 ## The quick look
 
-302 of the 303 trials with a publication carry a `digest`: the methods and the results of the
+306 of the 307 trials with a publication carry a `digest`: the methods and the results of the
 paper the registry quotes, in the paper's own terms, with the background and the conclusion left
 out. The background restates what the reader already knows and the conclusion is the authors'
 reading rather than the finding, so neither is kept.
@@ -90,6 +92,38 @@ an mTOR inhibitor and the vocabulary's slot for it is `pi3k-akt`. The consequenc
 the book. BC-870 says "one pathway, six trials" over a table filtered on `pi3k-akt`, and BOLERO-2
 was missing from it. The other three were the check being too strict, and the expectation table
 carries a comment at each of them saying why.
+
+## What a reviewer found, and what changed
+
+An oncologist reviewed the workbook against the publications. Five findings, all of which held up:
+
+**One record held two trials.** ADAPT is an umbrella, and the entry labelled WSG-ADAPT HER2+/HR+
+carried the hormone receptor-negative sub-trial's two papers alongside the receptor-positive
+primary, while duplicating the separate WSG-ADAPT-TP record. The hand-written entry had described
+the triple-positive trial, and the import then matched the document's "HER2+/HR−" line to it by
+name. The two keys now hold the trials their names claim, and BC-840 cites the one it meant.
+
+**"Has a result" counted eleven ongoing trials as complete**, because it was derived from a flag
+those trials never carried. It is now computed from the record: 254 tabulated, 48 extracted, 27
+with nothing. The claim of 303 was the flag's, not the registry's.
+
+**VIKTORIA-1 read `awaited` with its phase III result already on the record**, and its N of 701
+was the whole trial where the published result belongs to the 392-patient PIK3CA wild-type cohort.
+**NeoTRIP** tabulates a pathological complete response while its primary event-free survival
+endpoint is conference-reported only, which the record now says rather than implies.
+
+**Four generated tables were short**, each for the same reason: `topic` is both prose and a filter
+tag, and four trials never got the tag. aTTom, GIM4, SOLE and lidERA are in their tables now, and
+`tools/evidence.py --topics` reports the next one. Reading its output added ABCSG-8/ARNO 95 and
+FATA-GIM3 to the aromatase-inhibitor-against-tamoxifen table, and BS-6760 and BS-6780 were rewritten
+to match what their tables now hold.
+
+**Four trials were missing** and are in: INSEMA, EA2108, AZURE at ten years, and D-CARE.
+
+Also from the same review: **209 trials now carry a registration identifier**, up from 6, read out
+of the abstracts already on file rather than looked up. Eight are ambiguous because their
+publications name more than one registration, usually because one paper reports two trials, and
+those are deliberately left empty. 111 state none at all, most of them older than the practice.
 
 ## Two open editorial questions
 

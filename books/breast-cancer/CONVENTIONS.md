@@ -211,7 +211,16 @@ Validate with `python3 tools/evidence.py --check`. It fails on a filter that mat
 block with a body, on any registry value outside the controlled vocabulary, on two keys that look like
 one trial, and on a `primary_ref` missing from its own `pubs`. `--render "<filter>"` previews a table,
 `--coverage` lists every block with its match count, `--orphans` lists registry trials no block picks
-up, and `--axes` checks every trial's axes against the heading the source document filed it under.
+up, `--axes` checks every trial's axes against the heading the source document filed it under, and
+`--topics` reports trials that read like the rest of a tag-filtered table but lack its tag.
+
+**`topic` is doing two jobs.** A filter like `topic=platinum` matches the prose; a filter like
+`topic=extended-endocrine` matches a tag appended to it. Both are useful, but a tag only works if
+every trial that belongs gets one, and nothing fails when a trial is missed: the table renders, it
+is simply short. aTTom was absent from the tamoxifen-duration table for exactly this reason, and
+GIM4 and SOLE from the extended-endocrine one, while still appearing in their chapter's overview
+table so nothing looked wrong. Append a tag as its own clause after a comma, because `topic` is
+printed to the reader, and run `--topics` after adding a trial.
 
 **Adding axes to a trial changes published tables.** A table is a filter, so a trial starts appearing
 in one the moment it starts matching. Before merging any batch of axes, render every affected block and
@@ -280,6 +289,19 @@ nothing.
 
 `digest` is generated into `src/data/digests.json` rather than into `trials.json`, because the
 appendix needs the table to draw and needs a digest only when a reader opens a card.
+
+**What a record says about the result is three states, not a flag.** `tools/evidence.py`
+computes it, and both the appendix and the workbook read it from there:
+
+| | |
+|---|---|
+| `tabulated` | the `result` field is filled, and the evidence tables print it |
+| `extracted` | no `result`, but `digest.results` carries what the paper found |
+| `none` | nothing on the record says what the trial showed |
+
+This replaced a single "has a result" derived from `tabulated: false`, which counted eleven
+ongoing trials with nothing entered as complete, because an ongoing trial never had the flag set.
+`none` is the honest state for a trial still running and a gap for one that has reported.
 
 `note` is for the caveat that changes how a row should be read. "The trial enrolled brain
 metastases from any primary tumour, not breast cancer only" belongs here. A number does not.

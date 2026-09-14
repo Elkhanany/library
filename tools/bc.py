@@ -34,6 +34,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import library
+import evidence
 
 try:
     import yaml
@@ -628,6 +629,7 @@ def trialdata(m):
             "note": t.get("note"),
             "reviewed": str(t["reviewed"]) if t.get("reviewed") else None,
             "tabulated": False if t.get("tabulated") is False else True,
+            "result_state": evidence.result_state(t),
             "pubs": pubs,
             "chapters": [chapref(c) for c in (t.get("chapters") or [])
                          if c in m.chapnum],

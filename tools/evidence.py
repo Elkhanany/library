@@ -33,6 +33,7 @@ Usage
     python3 tools/evidence.py --orphans               registry trials no block picks up
     python3 tools/evidence.py --coverage              per-block match counts
     python3 tools/evidence.py --axes                  axes against the source document
+    python3 tools/evidence.py --topics                near misses on a topic-filtered table
 """
 import re, sys, os, argparse
 
@@ -179,6 +180,25 @@ def all_blocks():
                 yield fn[:-3], spec, body
 
 
+# What a registry entry actually holds about what the trial showed. Three
+# states, because "has a result" was one flag doing two jobs and got both
+# wrong: an ongoing trial with nothing entered read the same as a tabulated
+# one, because neither carried `tabulated: false`.
+RESULT_STATES = ("tabulated", "extracted", "none")
+
+
+def result_state(t):
+    """tabulated: a result field the evidence tables print.
+       extracted : no such field, but the paper's own findings are on the record.
+       none      : nothing, which for an ongoing trial is the truth and for a
+                   reported one is a gap."""
+    if str(t.get("result") or "").strip():
+        return "tabulated"
+    if str((t.get("digest") or {}).get("results") or "").strip():
+        return "extracted"
+    return "none"
+
+
 def cited_in(trials):
     """Which chapters actually cite each trial. The registry's cited_by is a
     record; this is the fact, read out of the prose every time it is asked."""
@@ -222,6 +242,91 @@ def stale(trials):
         print("    revisit: %s" % (", ".join(where) if where else
                                    "no chapter cites this trial"))
     print("\nevidence: %d trial(s) with new publications since review" % len(rows))
+    return 0
+
+
+def topic_tags(trials):
+    """The topic= values that behave like tags rather than like prose.
+
+    A tag is appended to the topic as its own trailing clause, so it shows up as
+    the last comma-separated token of at least one trial. `extended-endocrine`
+    qualifies; `platinum`, which is simply a word in the sentence, does not."""
+    tags = set()
+    for _ch, spec, _b in all_blocks():
+        f, bad = parse_filter(spec)
+        v = None if bad else f.get("topic")
+        if not v:
+            continue
+        for t in trials.values():
+            parts = [p.strip() for p in str(t.get("topic") or "").split(",")]
+            if parts and parts[-1] == v:
+                tags.add(v)
+                break
+    return tags
+
+
+STOP = set("a an and the of to in for with without versus vs or after before at by on "
+           "years year versus standard therapy treatment trial trials patients disease "
+           "breast cancer early advanced metastatic adjuvant neoadjuvant further".split())
+
+
+def words(s):
+    return {w for w in re.findall(r"[a-z0-9]+", str(s or "").lower())
+            if len(w) > 2 and w not in STOP}
+
+
+def topics(trials, floor=0.18):
+    """Trials that look like they belong to a table whose tag they lack.
+
+    `topic` is read two ways. `topic=platinum` matches the prose, and
+    `topic=extended-endocrine` matches a tag someone appended to it. The second
+    kind only works if every trial that belongs gets the tag, and nothing
+    notices when one does not: the table renders, it is simply short. aTTom was
+    missing from the tamoxifen-duration table for exactly this reason, and GIM4
+    and SOLE from the extended-endocrine one. Each was still visible in its
+    chapter's overview table, so nothing was unreachable and nothing looked
+    wrong; the per-question table was just quietly incomplete.
+
+    So this compares each untagged trial that the table's other axes admit
+    against the trials already in it, on the words of their topics, and reports
+    the ones that read alike. It is a heuristic and says so: a hit is a prompt
+    to look, never a finding, and this never fails a build."""
+    tags = topic_tags(trials)
+    untagged = {k for k, t in trials.items()
+                if [p.strip() for p in str(t.get("topic") or "").split(",")][-1] not in tags}
+
+    rows = []
+    for ch, spec, _body in all_blocks():
+        f, bad = parse_filter(spec)
+        if bad or f.get("topic") not in tags:
+            continue
+        inside = select(trials, f)
+        vocab = set().union(*[words(t.get("topic")) for t in inside]) if inside else set()
+        if not vocab:
+            continue
+        have = {t["key"] for t in inside}
+        rest = {k: v for k, v in f.items() if k != "topic"}
+        near = []
+        for t in select(trials, rest):
+            if t["key"] in have or t["key"] not in untagged:
+                continue
+            w = words(t.get("topic"))
+            if not w:
+                continue
+            score = len(w & vocab) / len(w | vocab)
+            if score >= floor:
+                near.append((score, t["key"], t.get("topic")))
+        if near:
+            rows.append((ch, f["topic"], len(inside), sorted(near, reverse=True)))
+
+    for ch, topic, n, near in rows:
+        print("%s  topic=%-22s %d in the table" % (ch, topic, n))
+        for score, k, tp in near:
+            print("     %.2f  %-24s %s" % (score, k, (tp or "")[:62]))
+    print("\nevidence: %d table(s) with an untagged trial that reads like the rest of it"
+          % len(rows))
+    print("  A hit either belongs in the table and wants the tag, or belongs elsewhere "
+          "and wants its own. Neither is decided here.")
     return 0
 
 
@@ -478,6 +583,9 @@ def main():
     ap.add_argument("--axes", action="store_true",
                     help="where a trial's setting, subtype, line or modality "
                          "disagrees with the heading it was listed under")
+    ap.add_argument("--topics", action="store_true",
+                    help="for each topic-filtered table, the trials that match its "
+                         "other axes and miss only the topic")
     ap.add_argument("--gaps", action="store_true",
                     help="where the trial document and the prose disagree about "
                          "which chapters discuss a trial")
@@ -488,6 +596,8 @@ def main():
         return stale(trials)
     if a.axes:
         return axes(trials)
+    if a.topics:
+        return topics(trials)
     if a.gaps:
         return gaps(trials)
 

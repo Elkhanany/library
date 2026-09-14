@@ -245,8 +245,10 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
     if (t.pubs && t.pubs.length) meta.push('<i>' + t.pubs.length + ' pub' +
       (t.pubs.length > 1 ? 's' : '') + '</i>');
     var tags = '';
-    if (t.tabulated === false)
-      tags += ' <span class="tag untab" title="In the book\'s scope, but no result has been tabulated yet">no result yet</span>';
+    if (t.result_state === 'none')
+      tags += ' <span class="tag untab" title="Nothing on the record says what this trial showed">no result yet</span>';
+    else if (t.result_state === 'extracted')
+      tags += ' <span class="tag untab" title="The paper\'s own findings are on the record, but no result has been written into the field the evidence tables print">not tabulated</span>';
     if (t.status === 'awaited' || t.status === 'ongoing')
       tags += ' <span class="tag awaited">' + esc(t.status) + '</span>';
     if ((t.pubs || []).some(function (p) { return p.added && t.reviewed && p.added > t.reviewed; }))
@@ -326,10 +328,16 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
   function counts() {
     var n = D.trials.length;
     var pubs = D.trials.reduce(function (a, t) { return a + (t.pubs || []).length; }, 0);
-    var untab = D.trials.filter(function (t) { return t.tabulated === false; }).length;
+    /* Counted from what each record actually holds rather than from a flag. A
+       trial with no result at all read as complete while the flag was doing the
+       counting, because an ongoing trial never had the flag set. */
+    var state = function (v) {
+      return D.trials.filter(function (t) { return t.result_state === v; }).length;
+    };
     var uncited = D.trials.filter(function (t) { return !(t.cited_by || []).length; }).length;
     $('counts').innerHTML =
-      [[n, 'trials'], [pubs, 'publications'], [untab, 'awaiting a tabulated result'],
+      [[n, 'trials'], [pubs, 'publications'], [state('tabulated'), 'with a tabulated result'],
+       [state('extracted') + state('none'), 'still to be tabulated'],
        [uncited, 'not yet cited in the text']]
       .map(function (r) { return '<div><b>' + r[0] + '</b><span>' + r[1] + '</span></div>'; })
       .join('');
