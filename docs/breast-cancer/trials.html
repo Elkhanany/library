@@ -74,6 +74,18 @@ html[data-theme="dark"] .seg button[aria-pressed="true"]{color:var(--bg)}
 .body dl{display:grid;grid-template-columns:9rem 1fr;gap:.25rem .9rem;margin:0}
 .body dt{font-family:var(--sans);font-size:.74rem;color:var(--ink-faint);padding-top:.12rem}
 .body dd{margin:0;color:var(--ink-soft)}
+/* The abstract, minus the parts that argue. Methods and results are what a
+   reader checking a row actually needs; background restates what they know and
+   the conclusion is the authors' reading rather than the finding. */
+.digest{margin:0;border-left:2px solid var(--rule);padding:.1rem 0 .1rem .85rem}
+.digest p{margin:.3rem 0;color:var(--ink-soft)}
+.digest b{font-family:var(--sans);font-size:.63rem;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-faint);display:block;margin-top:.55rem}
+.digest p:first-child b{margin-top:0}
+.tnote{margin:.7rem 0 0;font-size:.87rem;color:var(--ink-soft);
+  border-left:2px solid var(--accent-soft);padding-left:.85rem}
+.tnote::before{content:"Read with care. ";font-family:var(--sans);font-size:.63rem;
+  font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--accent)}
 ol.pubs{margin:0;padding-left:1.3rem;font-size:.87rem;color:var(--ink-soft)}
 ol.pubs li{margin:.35rem 0}
 ol.pubs .role{font-family:var(--sans);font-size:.63rem;font-weight:700;letter-spacing:.07em;
@@ -229,6 +241,8 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
 
     var body = '<div class="body">';
     if (dl.length) body += '<dl>' + dl.join('') + '</dl>';
+    body += '<div class="slot" data-key="' + esc(t.key) + '"></div>';
+    if (t.note) body += '<p class="tnote">' + esc(t.note) + '</p>';
     if (t.pubs && t.pubs.length)
       body += '<h4>Publications</h4><ol class="pubs">' + t.pubs.map(pubLine).join('') + '</ol>';
     if (t.chapters && t.chapters.length)
@@ -301,6 +315,43 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
       .map(function (r) { return '<div><b>' + r[0] + '</b><span>' + r[1] + '</span></div>'; })
       .join('');
   }
+
+  /* The abstract extracts live in their own file. A reader opening one card
+     needs one of them; drawing the table needs none, and the file grows with
+     every trial in the registry while the table row does not. So it is fetched
+     once, on the first card anyone opens, and the slots already on the page are
+     filled in when it lands. */
+  var digests = null, digestPending = false;
+
+  function fillSlot(el) {
+    if (!digests || el.dataset.filled) return;
+    var d = digests[el.dataset.key];
+    if (!d || !(d.methods || d.results)) { el.dataset.filled = '1'; return; }
+    var h = '<h4>What the paper reports</h4><div class="digest">';
+    if (d.methods) h += '<p><b>Methods</b>' + esc(d.methods) + '</p>';
+    if (d.results) h += '<p><b>Results</b>' + esc(d.results) + '</p>';
+    el.innerHTML = h + '</div>';
+    el.dataset.filled = '1';
+  }
+
+  function fillOpenSlots() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll('details.trial[open] .slot'), fillSlot);
+  }
+
+  function wantDigests() {
+    if (digests) { fillOpenSlots(); return; }
+    if (digestPending) return;
+    digestPending = true;
+    fetch('data/digests.json').then(function (r) { return r.json(); })
+      .then(function (d) { digests = d; fillOpenSlots(); })
+      .catch(function () { digestPending = false; });
+  }
+
+  // `toggle` does not bubble, so it is caught on the way down.
+  document.addEventListener('toggle', function (e) {
+    if (e.target.open && e.target.classList.contains('trial')) wantDigests();
+  }, true);
 
   function setView(v) {
     view = v;

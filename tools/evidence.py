@@ -16,7 +16,7 @@ Filter keys are ANDed. A value may be a comma-separated list, which is ORed.
 `sort` and `cols` are directives, not filters.
 
     setting   early | metastatic | dcis | prevention | mrd | screening | surveillance
-              | recurrence | any
+              | recurrence | cns | any
     subtype   HR+/HER2- | HER2+ | HR+/HER2+ | TNBC | HER2-low | BRCA | all
     line      neoadjuvant | adjuvant | post-neoadjuvant | 1L | 2L | 3L+ | any
     phase     2 | 3 | 2/3
@@ -32,6 +32,7 @@ Usage
     python3 tools/evidence.py --render "setting=early subtype=TNBC line=neoadjuvant"
     python3 tools/evidence.py --orphans               registry trials no block picks up
     python3 tools/evidence.py --coverage              per-block match counts
+    python3 tools/evidence.py --axes                  axes against the source document
 """
 import re, sys, os, argparse
 
@@ -44,8 +45,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOOK = os.path.join(ROOT, "books", "breast-cancer")
 
 VOCAB = {
+    # cns is a population, not a place in the disease course: entry required
+    # brain or leptomeningeal disease. It is its own setting because such a
+    # trial otherwise matches every general metastatic filter, and a whole-brain
+    # radiotherapy trial has no business in a first-line chemotherapy table. A
+    # systemic trial that later reported a CNS subgroup stays metastatic.
     "setting": {"early", "metastatic", "dcis", "prevention", "mrd", "screening",
-                "surveillance", "recurrence", "any"},
+                "surveillance", "recurrence", "cns", "any"},
     "subtype": {"HR+/HER2-", "HER2+", "HR+/HER2+", "TNBC", "HER2-low", "BRCA", "all"},
     "line": {"neoadjuvant", "adjuvant", "post-neoadjuvant", "1L", "2L", "3L+", "any"},
     "phase": {"1", "1/2", "2", "2/3", "3"},
@@ -235,6 +241,222 @@ def gaps(trials):
     return 0
 
 
+
+# ---------------------------------------------------------------------------
+# The source document as a second opinion on a trial's axes.
+#
+# `source` on a registry entry records where the pivotal-trials document listed
+# the trial: a section, a numbered chapter, a grouping heading. That path is an
+# assertion. "Ch. 63 - Neoadjuvant therapy in TNBC" says setting, subtype and
+# line; "Platinum" under it says modality. Comparing the two catches a mistyped
+# axis, and more usefully catches a trial filed under a heading that does not
+# match what it actually studied.
+#
+# Each entry lists the values that heading admits. A trial disagrees when its
+# own value shares nothing with that set. `waive` drops an axis the heading
+# deliberately crosses: a cross-subtype chemotherapy foundation listed in an
+# HR+ chapter is not an HR+ trial.
+SECTION_AXES = {
+    "Early nonmetastatic disease": {"setting": ["early", "dcis", "prevention"]},
+    "Metastatic disease": {"setting": ["metastatic", "recurrence"]},
+    "Brain and leptomeningeal metastases": {"setting": ["cns", "metastatic"]},
+}
+
+HRPOS = ["HR+/HER2-", "HR+/HER2+"]
+HER2 = ["HER2+", "HR+/HER2+"]
+LATER = ["2L", "3L+"]
+
+CHAPTER_AXES = {
+    53: {"subtype": HRPOS},
+    54: {"subtype": HRPOS, "line": ["adjuvant"], "modality": ["endocrine"]},
+    55: {"subtype": HRPOS, "line": ["adjuvant", "post-neoadjuvant"],
+         "modality": ["cdk4-6"]},
+    56: {"subtype": HRPOS, "line": ["neoadjuvant"]},
+    57: {"subtype": HER2},
+    58: {"subtype": HER2, "line": ["adjuvant", "post-neoadjuvant"]},
+    59: {"subtype": HER2, "line": ["neoadjuvant"], "modality": ["her2"]},
+    60: {"subtype": ["HR+/HER2+"]},
+    61: {"subtype": ["TNBC"]},
+    62: {"subtype": ["TNBC"], "line": ["adjuvant", "post-neoadjuvant"]},
+    63: {"subtype": ["TNBC"], "line": ["neoadjuvant"]},
+    67: {"subtype": ["HR+/HER2-"]},
+    68: {"subtype": ["HR+/HER2-"], "modality": ["endocrine"]},
+    69: {"subtype": ["HR+/HER2-"], "modality": ["cdk4-6"]},
+    70: {"subtype": ["HR+/HER2-", "HER2-low"]},
+    71: {"subtype": HER2},
+    72: {"subtype": HER2},
+    73: {"subtype": ["HR+/HER2+"]},
+    74: {"subtype": ["TNBC"]},
+    75: {"subtype": ["TNBC"]},
+}
+
+# A grouping heading overrides the chapter where it is more specific, and
+# `waive` releases an axis the chapter asserted.
+GROUP_AXES = {
+    "Genomic assay-guided chemotherapy": {"modality": ["chemo"]},
+    "Assay-validation cohorts / chemotherapy foundations (cross-subtype)":
+        {"modality": ["chemo"], "waive": ["subtype"]},
+    "Tamoxifen foundation": {"modality": ["endocrine"]},
+    "AI vs tamoxifen / switching (postmenopausal)": {"modality": ["endocrine"]},
+    "Ovarian function suppression (premenopausal)": {"modality": ["endocrine"]},
+    "Extended tamoxifen": {"modality": ["endocrine"]},
+    "Extended aromatase inhibition": {"modality": ["endocrine"]},
+    "Interruption for pregnancy": {"modality": ["endocrine"]},
+    "Recent conference report": {},
+    # PENELOPE-B is listed here and gave palbociclib for residual disease after
+    # neoadjuvant chemotherapy, which the registry calls post-neoadjuvant. The
+    # chapter heading is the coarser of the two descriptions, not the truer one.
+    "Adjuvant CDK4/6 inhibition": {"modality": ["cdk4-6"],
+                                   "line": ["adjuvant", "post-neoadjuvant"]},
+    "Neoadjuvant endocrine therapy": {"modality": ["endocrine"], "line": ["neoadjuvant"]},
+    # POETIC and ALTERNATE give endocrine therapy before surgery as treatment.
+    # WSG-ADAPT HR+/HER2- gives three weeks of it as a response window and then
+    # decides adjuvant therapy, so its line is adjuvant and the heading is the
+    # coarser description. Both readings are admitted here.
+    "Endocrine response-adapted / biomarker": {"modality": ["endocrine"],
+                                               "line": ["neoadjuvant", "adjuvant"]},
+    "Neoadjuvant CDK4/6 (phase II)": {"modality": ["cdk4-6"], "line": ["neoadjuvant"]},
+    "Neoadjuvant checkpoint blockade (phase III)":
+        {"modality": ["immunotherapy"], "line": ["neoadjuvant"]},
+    "Adjuvant trastuzumab": {"modality": ["her2"], "line": ["adjuvant"]},
+    "Adjuvant dual blockade": {"modality": ["her2"], "line": ["adjuvant"]},
+    "De-escalation": {"modality": ["her2"], "line": ["adjuvant"]},
+    "Trastuzumab duration": {"modality": ["her2"], "line": ["adjuvant"]},
+    "Extended adjuvant": {"modality": ["her2"], "line": ["adjuvant"]},
+    "Post-neoadjuvant (residual disease)": {"line": ["post-neoadjuvant"]},
+    "Foundational trastuzumab / dual blockade": {"modality": ["her2"], "line": ["neoadjuvant"]},
+    "Anthracycline omission / de-escalation": {"line": ["neoadjuvant"]},
+    "Trials conducted in Asian populations": {"line": ["neoadjuvant"]},
+    "Checkpoint blockade (negative)": {"modality": ["immunotherapy"], "line": ["neoadjuvant"]},
+    "Recent ADC trial": {"modality": ["adc"], "line": ["neoadjuvant"]},
+    "Early triple-positive (HR+/HER2+) disease": {},
+    "Early triple-negative disease (overview)": {},
+    "Residual disease": {"line": ["post-neoadjuvant"]},
+    "Germline BRCA": {"modality": ["parp"], "waive": ["subtype"]},
+    "Adjuvant capecitabine / platinum": {"modality": ["chemo"], "line": ["adjuvant"]},
+    "Adjuvant checkpoint blockade": {"modality": ["immunotherapy"], "line": ["adjuvant"]},
+    "Checkpoint blockade": {"modality": ["immunotherapy"]},
+    "Platinum": {"modality": ["chemo"]},
+    "Taxane formulation / platform": {"modality": ["chemo"]},
+    "Fulvestrant / endocrine sequencing": {"modality": ["endocrine"]},
+    "Oral SERDs / receptor degraders": {"modality": ["endocrine"]},
+    "ctDNA-guided switching": {"modality": ["endocrine"]},
+    "PI3K / AKT / mTOR": {"modality": ["pi3k-akt"]},
+    "First line": {"line": ["1L"]},
+    "Second line / beyond": {"line": LATER},
+    "Second line and beyond (ADCs)": {"modality": ["adc"], "line": LATER},
+    "Timing / comparison / sequencing": {"modality": ["cdk4-6"]},
+    "Post-CDK4/6i (continuation / switch)": {"modality": ["cdk4-6"], "line": LATER},
+    "Antibody-drug conjugates": {"modality": ["adc"]},
+    "Chemotherapy foundations (cross-subtype)": {"modality": ["chemo"], "waive": ["subtype"]},
+    "PARP inhibitors (gBRCA)": {"modality": ["parp"], "waive": ["subtype"]},
+    "PARP inhibitors (gBRCA / HRR)": {"modality": ["parp"], "waive": ["subtype"]},
+    "Historical": {"modality": ["her2"]},
+    "Continued blockade / alternative antibodies": {"modality": ["her2"]},
+    "Tyrosine kinase inhibitors": {"modality": ["her2"]},
+    "Endocrine + HER2 blockade": {"modality": ["endocrine", "her2"]},
+    "CDK4/6 combinations": {"modality": ["cdk4-6"]},
+    "First-line immunotherapy + chemotherapy": {"modality": ["immunotherapy"], "line": ["1L"]},
+    "Later-line checkpoint monotherapy": {"modality": ["immunotherapy"], "line": LATER},
+    "First-line ADC +/- checkpoint": {"modality": ["adc"], "line": ["1L"]},
+    "Later-line ADCs": {"modality": ["adc"], "line": LATER},
+    "AKT inhibition (incl. negative confirmatory)": {"modality": ["pi3k-akt"]},
+    "Exploratory immunotherapy and radiotherapy": {"modality": ["immunotherapy", "radiation"]},
+    "HER2 positive brain metastases and tucatinib":
+        {"subtype": HER2, "modality": ["her2"]},
+    "HER2 positive brain metastases and antibody drug conjugates":
+        {"subtype": HER2, "modality": ["adc"]},
+    "HER2 positive brain metastases and other kinase inhibitors":
+        {"subtype": HER2, "modality": ["her2"]},
+    "HER2 positive brain metastases and antibody combinations":
+        {"subtype": HER2, "modality": ["her2"]},
+    "HER2 directed therapy for leptomeningeal disease":
+        {"subtype": HER2 + ["HER2-low"], "modality": ["her2"]},
+    "TNBC and studies spanning breast cancer subtypes": {"waive": ["subtype"]},
+    "Hormone receptor positive brain metastases": {"subtype": ["HR+/HER2-"]},
+    "Radiotherapy foundations and systemic treatment combinations":
+        {"modality": ["radiation"], "waive": ["subtype"]},
+    "Leptomeningeal disease and radiotherapy":
+        {"modality": ["radiation"], "waive": ["subtype"]},
+    "Intrathecal chemotherapy in breast cancer leptomeningeal disease":
+        {"modality": ["chemo"], "waive": ["subtype"]},
+}
+
+
+def _norm(s):
+    """Headings are typed with en dashes and plus-minus signs; the table is
+    written in ASCII so it stays greppable."""
+    return (s.replace("\u2013", "-").replace("\u2014", "-").replace("\u2212", "-")
+            .replace("\u00b1", "+/-"))
+
+
+def expected(path):
+    """What one source path says a trial's axes should be, and what it waives."""
+    want, waived = {}, set()
+    for layer in (SECTION_AXES.get(path.get("section"), {}),
+                  CHAPTER_AXES.get(path.get("ch"), {}),
+                  GROUP_AXES.get(_norm(path.get("group") or ""), {})):
+        waived |= set(layer.get("waive", ()))
+        for k, v in layer.items():
+            if k != "waive":
+                want[k] = v
+    for k in waived:
+        want.pop(k, None)
+    return want
+
+
+def axes(trials):
+    """Where the registry and the source document disagree about a trial."""
+    unknown, disagree, untabulated = set(), [], []
+    for key, t in sorted(trials.items()):
+        paths = t.get("source") or []
+        if not paths:
+            continue
+        for p in paths:
+            g = _norm(p.get("group") or "")
+            if g and g not in GROUP_AXES and g not in CHAPTER_AXES.values():
+                unknown.add(g)
+        if t.get("tabulated") is False:
+            untabulated.append(key)
+            continue
+        # A trial listed under two headings is claimed by both, so a value
+        # agreeing with either one is agreement, not a disagreement. A path
+        # marked xref is a signpost the document left to another chapter, and
+        # asserts nothing about the trial.
+        paths = [p for p in paths if not p.get("xref")] or paths
+        rows = []
+        for axis in ("setting", "subtype", "line", "modality"):
+            have = {v.strip() for v in str(t.get(axis) or "").split(",") if v.strip()}
+            if not have or (axis == "subtype" and "all" in have):
+                continue
+            allowed, said = set(), False
+            for p in paths:
+                w = expected(p).get(axis)
+                if w:
+                    said = True
+                    allowed |= set(w)
+            if said and not have & allowed:
+                rows.append((axis, ",".join(sorted(have)), ", ".join(sorted(allowed))))
+        if rows:
+            disagree.append((key, t, rows))
+
+    for key, t, rows in disagree:
+        where = "; ".join("%s%s" % ("Ch. %d / " % p["ch"] if p.get("ch") else "",
+                                    p.get("group") or p.get("section"))
+                          for p in t["source"])
+        print("%-26s %s" % (key, where))
+        for axis, have, want in rows:
+            print("    %-9s registry %-28s document implies %s" % (axis, have, want))
+    print()
+    print("axes: %d trial(s) disagree with the source document" % len(disagree))
+    print("      %d listed in the document with no axes yet (tabulated: false)"
+          % len(untabulated))
+    if unknown:
+        print("      %d grouping heading(s) not in the table:" % len(unknown))
+        for g in sorted(unknown):
+            print("        %s" % g)
+    return 0
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
@@ -244,6 +466,9 @@ def main():
     ap.add_argument("--stale", action="store_true",
                     help="trials with a publication newer than their last review, "
                          "and the chapters that cite them")
+    ap.add_argument("--axes", action="store_true",
+                    help="where a trial's setting, subtype, line or modality "
+                         "disagrees with the heading it was listed under")
     ap.add_argument("--gaps", action="store_true",
                     help="where the trial document and the prose disagree about "
                          "which chapters discuss a trial")
@@ -252,6 +477,8 @@ def main():
 
     if a.stale:
         return stale(trials)
+    if a.axes:
+        return axes(trials)
     if a.gaps:
         return gaps(trials)
 
@@ -308,6 +535,13 @@ def main():
         pr = t.get("primary_ref")
         if pr and pr not in refs:
             errs.append(f"trials.yaml[{k}].primary_ref={pr!r} not in references.yaml")
+        # The paper a table quotes is a publication, so it belongs in the
+        # publication history. Without this, a trial can show a result with no
+        # paper behind it in the appendix, and --stale cannot tell whether
+        # anything newer has appeared.
+        if pr and pr not in {p.get("ref") for p in (t.get("pubs") or ())}:
+            errs.append(f"trials.yaml[{k}].primary_ref={pr!r} is not in its pubs; "
+                        f"add it with the role the source gave it")
 
     # Two keys for one trial. Parallel writing waves each minted a record for
     # WSG TP-II, and because both matched the same filters it was listed twice,

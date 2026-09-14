@@ -625,6 +625,7 @@ def trialdata(m):
             "population": t.get("population"), "arms": t.get("arms"),
             "endpoint": t.get("endpoint"), "result": t.get("result"),
             "os": t.get("os"), "nct": t.get("nct"),
+            "note": t.get("note"),
             "reviewed": str(t["reviewed"]) if t.get("reviewed") else None,
             "tabulated": False if t.get("tabulated") is False else True,
             "pubs": pubs,
@@ -641,16 +642,28 @@ def trialdata(m):
                       ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-# curriculum.json and src/data/trials.json: generate()'s outputs that are not
-# chapter fragments, so a count of fragments has to discount them.
-NON_CHAPTER = 2
+def digestdata(m):
+    """books/breast-cancer/src/data/digests.json -- the abstract extracts.
+
+    Methods and results for each trial, taken from the abstract of the paper the
+    registry quotes. Separate from trials.json because the appendix needs the
+    table to draw and needs a digest only when a reader opens one card, and
+    because this file grows with every trial while the table row does not."""
+    out = {k: t["digest"] for k, t in sorted(m.trials.items()) if t.get("digest")}
+    return json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+# curriculum.json, src/data/trials.json and src/data/digests.json: generate()'s
+# outputs that are not chapter fragments, so a count of fragments discounts them.
+NON_CHAPTER = 3
 
 
 def generate(m):
     """Everything this tool owns, as {path: bytes-to-be}. Nothing is written
     here, so --check and the real run cannot disagree about the result."""
     out = {os.path.join(DIR, "curriculum.json"): curriculum(m),
-           os.path.join(DIR, "src", "data", "trials.json"): trialdata(m)}
+           os.path.join(DIR, "src", "data", "trials.json"): trialdata(m),
+           os.path.join(DIR, "src", "data", "digests.json"): digestdata(m)}
     errs = []
     cdir = os.path.join(DIR, "chapters")
     for f in sorted(os.listdir(cdir)) if os.path.isdir(cdir) else []:
@@ -705,7 +718,7 @@ def main():
         if stale or orphans:
             sys.exit("out of date. Run: python3 tools/bc.py")
         nfrag = len(out) - NON_CHAPTER
-        print("bc: curriculum.json, trials.json and %d fragment%s are current"
+        print("bc: curriculum.json, the two data files and %d fragment%s are current"
               % (nfrag, "s" * (nfrag != 1)))
         return
 

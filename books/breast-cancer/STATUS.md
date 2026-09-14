@@ -2,53 +2,67 @@
 
 **Complete.** 16 parts, 93 chapters, 778 of 778 sections. No chapter is partial.
 
-1,033 references and 328 trials in the registries, every identifier PubMed-verified. 195 caution
-blocks, 107 in-practice blocks, 70 interplay edges, 65 evidence tables.
+1,033 references and 325 trials in the registries, every identifier PubMed-verified. 195 caution
+blocks, 107 in-practice blocks, 70 interplay edges, 66 evidence tables.
 
 ## Appendix A, the trial registry
 
-`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 328
-trials, 373 publications. The same records generate both the in-chapter evidence tables and the
+`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 325
+trials, 436 publications. The same records generate both the in-chapter evidence tables and the
 appendix, so the two cannot disagree.
 
 The appendix filters on the axes the evidence blocks already use (setting, subtype, line,
 modality, status) and searches name, topic, population and result. It reads in two ways: one
 list of everything, or grouped under the chapter each trial is assigned to. Expanding a trial
-shows its full publication history with PubMed links, the chapters it is assigned to, and the
+shows the paper's own account of what was done and what was found, any caveat the row cannot
+hold, its full publication history with PubMed links, the chapters it is assigned to, and the
 chapters that actually cite it.
 
-Four counts sit at the head of it, and three of them are worklists:
+Four counts sit at the head of it, and two of them are worklists:
 
 | | |
 |---|---|
-| 328 trials, 373 publications | the database |
-| 123 awaiting a tabulated result | named in the book's scope, no result entered, so they cannot appear in an evidence table |
-| 149 not yet cited in the text | in the registry, no chapter mentions them |
+| 325 trials, 436 publications | the database |
+| 22 awaiting a tabulated result | named in the book's scope, no result entered, so they cannot appear in an evidence table |
+| 141 not yet cited in the text | in the registry, no chapter mentions them |
 
 **When a trial reports again**: add the publication to its `pubs` with `added: <date>`, add the
 reference verified, rebuild. `tools/evidence.py --stale` then names the trial, what is new, and
 every chapter citing it that may now be out of date. Update the prose and set `reviewed` to
 today to clear it. `--gaps` reports the other axis: trials assigned to a chapter that never
-mentions them (165 today, 123 of which are the newly imported) and trials a chapter cites that
-the source document does not list (66).
+mentions them (156 today) and trials a chapter cites that the source document does not list (66).
 
 The appendix is a web page rather than a chapter, because it fetches its data at runtime. It is
 precached like everything else, so it works offline on the published site; it is deliberately
 absent from the self-contained `build/` tree, where `file://` forbids the fetch.
 
-## The evidence layer
+## The quick look
 
-The thing that makes this book maintainable rather than dated. An evidence chapter does not write
-trial results into prose. It declares a filter, the block carries no body, and rows render from
-`trials.yaml` at build time. **A new readout is entered once in the registry and appears in every
-chapter whose filter matches it.** There is no prose to hunt down when data change.
+296 of the 297 trials with a publication carry a `digest`: the methods and the results of the
+paper the registry quotes, in the paper's own terms, with the background and the conclusion left
+out. The background restates what the reader already knows and the conclusion is the authors'
+reading rather than the finding, so neither is kept.
 
-`bc.py` fails the build on a filter matching no trial, or on a block with a body, so a table cannot
-silently go empty. `tools/evidence.py --check`, `--coverage`, `--orphans` and `--render` inspect the
-layer without building.
+The digests are generated into `src/data/digests.json` rather than into `trials.json`, because
+drawing the table needs none of them and opening one card needs one. The appendix fetches the
+file the first time a reader expands a trial.
 
-The rule that keeps the two from drifting: **never restate in prose a number the table carries**,
-unless you are arguing from it, because a number living in two places drifts when one is updated.
+The one trial without a digest is the Ahmed phase I study of radiotherapy followed by intrathecal
+trastuzumab and pertuzumab, whose abstract never reached the registry.
+
+## What the source document is used for
+
+Every trial that came from the pivotal-trials document records where it was listed: the section,
+the numbered chapter, and the grouping heading under it. That path is an independent assertion
+about the trial's axes, because the document groups by modality and its chapter headings name
+setting, subtype and line.
+
+`tools/evidence.py --axes` compares the two and prints every disagreement. It found four, of
+which one was a registry error: BOLERO-2 carried `modality: endocrine,other` when everolimus is
+an mTOR inhibitor and the vocabulary's slot for it is `pi3k-akt`. The consequence was visible in
+the book. BC-870 says "one pathway, six trials" over a table filtered on `pi3k-akt`, and BOLERO-2
+was missing from it. The other three were the check being too strict, and the expectation table
+carries a comment at each of them saying why.
 
 ## Two open editorial questions
 
@@ -76,12 +90,16 @@ No contradiction in either, so neither is urgent. Both are a pass with the table
 
 - **The nine appendices have no inbound references.** `APP-A` through `APP-I` are declared and
   nothing in any chapter points at them.
-- **No ongoing metastatic trials in the registry** for HER2-positive, triple-positive or TNBC. The
-  early-disease chapters have them, so their "what reads out next" sections are generated; the
-  metastatic ones are prose only.
-- **50 registry trials match no evidence block.** Correct rather than a gap: they are the surgical,
-  radiation, screening and prevention trials belonging to the setting-level chapters.
-  `tools/evidence.py --orphans` lists them.
+- **17 CNS trials reach no table.** The radiotherapy foundations, the leptomeningeal radiotherapy
+  trials and the cross-subtype brain metastasis studies are assigned to `BC-600`, which is not an
+  evidence chapter, so nothing generates a table for them. The 20 HER2-directed ones are in
+  `BS-7610`. Either `BC-600` gains a table or those records stay appendix-only.
+- **76 registry trials match no evidence block.** Most are correct rather than a gap: the
+  surgical, radiation, screening, prevention and DCIS trials belong to setting-level chapters
+  that carry no evidence block. `tools/evidence.py --orphans` lists them.
+- **156 trials are assigned to a chapter that does not mention them.** This is the import's
+  editorial intent meeting prose written before it, and it is the worklist for extending the
+  text rather than a defect.
 
 ## What the machinery still does not do
 

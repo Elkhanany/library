@@ -192,9 +192,15 @@ Filter keys are ANDed; a comma-separated value is ORed. A trial with `subtype: a
 subtype's table, which is correct for an all-comers trial. That wildcard does not extend to `setting`,
 `line` or `modality`.
 
+`setting: cns` is a population rather than a point in the disease course. It marks a trial that
+required brain or leptomeningeal disease to enter, which is why such a trial does not appear in a
+general metastatic table: a whole-brain radiotherapy trial has no business under first-line
+chemotherapy. A systemic trial that later reported a CNS subgroup stays `metastatic`, because its
+population was never CNS-restricted.
+
 | Key | Values |
 |---|---|
-| `setting` | early, metastatic, dcis, prevention, mrd, screening, surveillance, recurrence |
+| `setting` | early, metastatic, dcis, prevention, mrd, screening, surveillance, recurrence, cns |
 | `subtype` | HR+/HER2-, HER2+, HR+/HER2+, TNBC, HER2-low, BRCA, all |
 | `line` | neoadjuvant, adjuvant, post-neoadjuvant, 1L, 2L, 3L+ |
 | `modality` | endocrine, cdk4-6, chemo, her2, adc, immunotherapy, parp, pi3k-akt, surgery, radiation, bone, supportive |
@@ -202,9 +208,16 @@ subtype's table, which is correct for an all-comers trial. That wildcard does no
 | `sort`, `cols`, `caption` | directives, not filters |
 
 Validate with `python3 tools/evidence.py --check`. It fails on a filter that matches no trial, on a
-block with a body, and on any registry value outside the controlled vocabulary. `--render "<filter>"`
-previews a table, `--coverage` lists every block with its match count, and `--orphans` lists registry
-trials no block picks up.
+block with a body, on any registry value outside the controlled vocabulary, on two keys that look like
+one trial, and on a `primary_ref` missing from its own `pubs`. `--render "<filter>"` previews a table,
+`--coverage` lists every block with its match count, `--orphans` lists registry trials no block picks
+up, and `--axes` checks every trial's axes against the heading the source document filed it under.
+
+**Adding axes to a trial changes published tables.** A table is a filter, so a trial starts appearing
+in one the moment it starts matching. Before merging any batch of axes, render every affected block and
+read the prose above it: a paragraph that says "four randomised trials" over a table of six is the
+drift this layer exists to prevent, and it is introduced by curating the registry rather than by
+editing the chapter.
 
 **Tables enumerate. Prose argues.** Never restate in prose a number the table already carries. The
 exception is a number you are arguing *from*, where two trials disagree and the comparison is the
@@ -246,6 +259,30 @@ publication history:
 `role` is whatever the source called it. `kind` is the controlled axis: `primary`, `update`,
 `survival`, `follow-up`, `biomarker`, `subgroup`, `endpoint`, `protocol`, `pooled`, `quality`,
 `other`.
+
+Three more fields carry what the record cannot say in a table cell:
+
+```yaml
+  source:                           # where the pivotal-trials document listed it
+    - {section: Metastatic disease, ch: 69, group: First line}
+  digest:                           # the paper's own account, for a quick look
+    methods: One paragraph, from the methods of the abstract.
+    results: One paragraph, from the results. Background and conclusions are not kept.
+  note: One sentence a reader of the row needs and the row cannot hold.
+```
+
+`source` is the document's own filing, and it is a second opinion on the axes rather than a
+citation. The document groups by modality and its chapter headings name setting, subtype and
+line, so `python3 tools/evidence.py --axes` compares the two and prints every trial where they
+disagree. A trial listed under two headings is claimed by both and agreeing with either is
+agreement. A bullet that only points at another chapter is marked `xref: true` and asserts
+nothing.
+
+`digest` is generated into `src/data/digests.json` rather than into `trials.json`, because the
+appendix needs the table to draw and needs a digest only when a reader opens a card.
+
+`note` is for the caveat that changes how a row should be read. "The trial enrolled brain
+metastases from any primary tumour, not breast cancer only" belongs here. A number does not.
 
 **`primary_ref` is not the trial's first paper.** It is the paper the tabulated result is taken
 from, which for a mature trial is usually a long-term report: HERA's is the eleven-year
