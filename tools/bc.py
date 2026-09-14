@@ -582,10 +582,75 @@ def mint(dry=False):
 
 # ------------------------------------------------------------------- the pass
 
+def trialdata(m):
+    """books/breast-cancer/src/data/trials.json -- what the appendix reads.
+
+    Generated, never hand-written, so the appendix cannot disagree with the
+    registry the chapters are built from. It carries three things the registry
+    alone does not: each publication resolved to a real citation, the chapters
+    the trial is assigned to resolved to titles, and the chapters that actually
+    cite it, read out of the prose."""
+    cites = {}
+    cdir = os.path.join(DIR, "chapters")
+    for f in sorted(os.listdir(cdir)) if os.path.isdir(cdir) else []:
+        if f.endswith(".md"):
+            for k in re.findall(r"\{\{trial:([A-Za-z0-9_\-]+)\}\}",
+                                library.read(os.path.join(cdir, f))):
+                cites.setdefault(k, []).append(f[:-3])
+
+    def chapref(cid):
+        return {"id": cid, "num": m.chapnum.get(cid), "title": m.title.get(cid)}
+
+    rows = []
+    for key in sorted(m.trials):
+        t = m.trials[key]
+        pubs = []
+        for p in t.get("pubs") or []:
+            r = m.refs.get(p.get("ref")) or {}
+            pubs.append({k: v for k, v in {
+                "role": p.get("role"), "kind": p.get("kind"), "ref": p.get("ref"),
+                "year": r.get("year"), "journal": r.get("journal"),
+                "authors": r.get("authors"), "title": r.get("title"),
+                "pmid": r.get("pmid"), "doi": r.get("doi"),
+                "added": str(p["added"]) if p.get("added") else None,
+            }.items() if v})
+        pubs.sort(key=lambda x: (x.get("year") or 0))
+        seen = sorted({c for c in cites.get(key, [])})
+        row = {k: v for k, v in {
+            "key": key, "acronym": t.get("acronym") or key,
+            "phase": t.get("phase"), "n": t.get("n"), "year": t.get("year"),
+            "setting": t.get("setting"), "subtype": t.get("subtype"),
+            "line": t.get("line"), "modality": t.get("modality"),
+            "status": t.get("status"), "topic": t.get("topic"),
+            "population": t.get("population"), "arms": t.get("arms"),
+            "endpoint": t.get("endpoint"), "result": t.get("result"),
+            "os": t.get("os"), "nct": t.get("nct"),
+            "reviewed": str(t["reviewed"]) if t.get("reviewed") else None,
+            "tabulated": False if t.get("tabulated") is False else True,
+            "pubs": pubs,
+            "chapters": [chapref(c) for c in (t.get("chapters") or [])
+                         if c in m.chapnum],
+            "cited_by": [chapref(c) for c in seen if c in m.chapnum],
+        }.items() if v not in (None, "", [], {})}
+        rows.append(row)
+
+    parts = [{"label": "Part %s · %s" % (ROMAN[i], p["title"]),
+              "chapters": [c["id"] for c in p["chapters"]]}
+             for i, p in enumerate(m.outline["parts"])]
+    return json.dumps({"trials": rows, "parts": parts},
+                      ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+# curriculum.json and src/data/trials.json: generate()'s outputs that are not
+# chapter fragments, so a count of fragments has to discount them.
+NON_CHAPTER = 2
+
+
 def generate(m):
     """Everything this tool owns, as {path: bytes-to-be}. Nothing is written
     here, so --check and the real run cannot disagree about the result."""
-    out = {os.path.join(DIR, "curriculum.json"): curriculum(m)}
+    out = {os.path.join(DIR, "curriculum.json"): curriculum(m),
+           os.path.join(DIR, "src", "data", "trials.json"): trialdata(m)}
     errs = []
     cdir = os.path.join(DIR, "chapters")
     for f in sorted(os.listdir(cdir)) if os.path.isdir(cdir) else []:
@@ -639,8 +704,9 @@ def main():
             print("  stale  " + os.path.relpath(p, library.ROOT))
         if stale or orphans:
             sys.exit("out of date. Run: python3 tools/bc.py")
-        print("bc: curriculum.json and %d fragment%s are current"
-              % (len(out) - 1, "s" * (len(out) != 2)))
+        nfrag = len(out) - NON_CHAPTER
+        print("bc: curriculum.json, trials.json and %d fragment%s are current"
+              % (nfrag, "s" * (nfrag != 1)))
         return
 
     for p in orphans:
@@ -649,7 +715,7 @@ def main():
         library.write(p, text)
     print("bc: %d parts, %d chapters, %d sections, %d drafted"
           % (len(m.outline["parts"]), len(m.chapnum),
-             len(m.owner), len(out) - 1))
+             len(m.owner), len(out) - NON_CHAPTER))
     for p in stale:
         print("  wrote  " + os.path.relpath(p, library.ROOT))
     for p in orphans:

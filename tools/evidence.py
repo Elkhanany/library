@@ -164,14 +164,96 @@ def all_blocks():
                 yield fn[:-3], spec, body
 
 
+def cited_in(trials):
+    """Which chapters actually cite each trial. The registry's cited_by is a
+    record; this is the fact, read out of the prose every time it is asked."""
+    out = {k: set() for k in trials}
+    d = os.path.join(BOOK, "chapters")
+    for fn in sorted(os.listdir(d)):
+        if not fn.endswith(".md"):
+            continue
+        text = open(os.path.join(d, fn), encoding="utf-8").read()
+        for k in re.findall(r"\{\{trial:([A-Za-z0-9_\-]+)\}\}", text):
+            if k in out:
+                out[k].add(fn[:-3])
+    return out
+
+
+def stale(trials):
+    """A publication added after a trial was last reviewed means the prose that
+    cites it may now be out of date. This is the worklist: what changed, and
+    which chapters to look at.
+
+    A publication with no `added` date was present at the last review. Only the
+    intake stamps that field, so the first import cannot flag itself."""
+    cites = cited_in(trials)
+    rows = []
+    for k, t in sorted(trials.items()):
+        rev = str(t.get("reviewed") or "")
+        fresh = [p for p in (t.get("pubs") or [])
+                 if p.get("added") and str(p["added"]) > rev]
+        if fresh:
+            rows.append((k, rev, fresh, sorted(cites.get(k) or ()),
+                         t.get("chapters") or []))
+    if not rows:
+        print("evidence: nothing new since the last review of any trial")
+        return 0
+    for k, rev, fresh, cited, chaps in rows:
+        print("%s  reviewed %s" % (k, rev or "never"))
+        for p in fresh:
+            print("    + %-10s %-26s added %s" % (p.get("kind", "?"),
+                                                  p.get("ref", "?"), p["added"]))
+        where = cited or chaps
+        print("    revisit: %s" % (", ".join(where) if where else
+                                   "no chapter cites this trial"))
+    print("\nevidence: %d trial(s) with new publications since review" % len(rows))
+    return 0
+
+
+def gaps(trials):
+    """The document says where a trial belongs; the prose says where it is
+    actually discussed. Each direction is a different kind of work."""
+    cites = cited_in(trials)
+    unwritten, unlisted = [], []
+    for k, t in sorted(trials.items()):
+        planned = set(t.get("chapters") or ())
+        actual = cites.get(k) or set()
+        if planned - actual:
+            unwritten.append((k, sorted(planned - actual)))
+        if actual - planned and planned:
+            unlisted.append((k, sorted(actual - planned)))
+    print("assigned to a chapter that never cites it: %d" % len(unwritten))
+    for k, ch in unwritten[:40]:
+        print("   %-26s %s" % (k, ", ".join(ch)))
+    if len(unwritten) > 40:
+        print("   ... and %d more" % (len(unwritten) - 40))
+    print("\ncited by a chapter the document does not list: %d" % len(unlisted))
+    for k, ch in unlisted[:25]:
+        print("   %-26s %s" % (k, ", ".join(ch)))
+    if len(unlisted) > 25:
+        print("   ... and %d more" % (len(unlisted) - 25))
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--render", metavar="FILTER")
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--coverage", action="store_true")
+    ap.add_argument("--stale", action="store_true",
+                    help="trials with a publication newer than their last review, "
+                         "and the chapters that cite them")
+    ap.add_argument("--gaps", action="store_true",
+                    help="where the trial document and the prose disagree about "
+                         "which chapters discuss a trial")
     a = ap.parse_args()
     trials, refs = load()
+
+    if a.stale:
+        return stale(trials)
+    if a.gaps:
+        return gaps(trials)
 
     if a.render:
         f, bad = parse_filter(a.render)

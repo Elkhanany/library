@@ -45,8 +45,15 @@ def main():
     for page in sorted(pages(docs)):
         n_pages += 1
         rel = os.path.relpath(page, docs).replace(os.sep, "/")
-        text = library.read(page)
-        needed = set(NEEDS.findall(text))
+        # Script content is not markup. A page that builds its own links --
+        # the trial appendix assembles href="<chapter id>.html" from data --
+        # otherwise reports the string literal as a broken link, because the
+        # id is only known at runtime. tagcheck strips scripts for the same
+        # reason. Real dependencies a page loads are still caught: those are
+        # <script src=...> attributes, which live in the tag, not the body.
+        text = re.sub(r"<script\b[^>]*>.*?</script>", "", library.read(page),
+                      flags=re.S | re.I)
+        needed = set(NEEDS.findall(library.read(page)))
 
         for raw in REF.findall(text):
             url = raw.strip()

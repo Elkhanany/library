@@ -221,3 +221,47 @@ to imply a negative), `year`, `status`, `primary_ref` and `cited_by`.
 
 Adding a trial means filling those fields and verifying `primary_ref` against PubMed. Nothing else
 has to change for it to appear in the book.
+
+## The trial registry and Appendix A
+
+`trials.yaml` is the book's trial database. Every evidence table in every chapter is generated
+from it, and so is Appendix A, the registry page, so a trial cannot say one thing in a chapter
+and another in the appendix.
+
+Beyond the axes a filter uses (`setting`, `subtype`, `line`, `modality`, `phase`, `status`) and
+the fields a table prints (`n`, `arms`, `endpoint`, `result`, `os`), a record carries its
+publication history:
+
+```yaml
+  cleopatra:
+    primary_ref: swain2020          # the paper the tabulated result comes from
+    pubs:
+      - {role: primary,      kind: primary,  ref: baselga2011}
+      - {role: os,           kind: survival, ref: swain2013}
+      - {role: end-of-study, kind: update,   ref: swain2020}
+    chapters: [BC-570, BC-900]      # where the trial is meant to be discussed
+    reviewed: 2026-09-14            # when the entry was last checked
+```
+
+`role` is whatever the source called it. `kind` is the controlled axis: `primary`, `update`,
+`survival`, `follow-up`, `biomarker`, `subgroup`, `endpoint`, `protocol`, `pooled`, `quality`,
+`other`.
+
+**`primary_ref` is not the trial's first paper.** It is the paper the tabulated result is taken
+from, which for a mature trial is usually a long-term report: HERA's is the eleven-year
+follow-up, not the 2005 original. Both appear in `pubs`. Every `primary_ref` must also appear
+there, so the publication history always contains the paper the table quotes.
+
+`chapters` is editorial intent, and the chapters that actually cite the trial are read out of
+the prose. They are allowed to differ, and `python3 tools/evidence.py --gaps` reports both
+directions: a trial assigned to a chapter that never mentions it is a gap in the text, and the
+reverse is an appendix entry to extend.
+
+A trial the book names but has not tabulated a result for carries `tabulated: false`. It is
+listed in the appendix and deliberately has no filter axes, so it cannot appear in an evidence
+table until someone enters what it showed.
+
+**When a trial reports again**, add the publication to `pubs` with `added: <date>`, add its
+reference to `references.yaml` verified, and rebuild. `python3 tools/evidence.py --stale` then
+lists the trial, what is new, and every chapter that cites it and may now be out of date. Update
+the prose, then set `reviewed` to today to clear it.

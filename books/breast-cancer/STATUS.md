@@ -2,8 +2,39 @@
 
 **Complete.** 16 parts, 93 chapters, 778 of 778 sections. No chapter is partial.
 
-834 references and 206 trials in the registries, every identifier PubMed-verified. 824 references
-are cited. 195 caution blocks, 107 in-practice blocks, 70 interplay edges, 65 evidence tables.
+1,033 references and 328 trials in the registries, every identifier PubMed-verified. 195 caution
+blocks, 107 in-practice blocks, 70 interplay edges, 65 evidence tables.
+
+## Appendix A, the trial registry
+
+`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 328
+trials, 373 publications. The same records generate both the in-chapter evidence tables and the
+appendix, so the two cannot disagree.
+
+The appendix filters on the axes the evidence blocks already use (setting, subtype, line,
+modality, status) and searches name, topic, population and result. It reads in two ways: one
+list of everything, or grouped under the chapter each trial is assigned to. Expanding a trial
+shows its full publication history with PubMed links, the chapters it is assigned to, and the
+chapters that actually cite it.
+
+Four counts sit at the head of it, and three of them are worklists:
+
+| | |
+|---|---|
+| 328 trials, 373 publications | the database |
+| 123 awaiting a tabulated result | named in the book's scope, no result entered, so they cannot appear in an evidence table |
+| 149 not yet cited in the text | in the registry, no chapter mentions them |
+
+**When a trial reports again**: add the publication to its `pubs` with `added: <date>`, add the
+reference verified, rebuild. `tools/evidence.py --stale` then names the trial, what is new, and
+every chapter citing it that may now be out of date. Update the prose and set `reviewed` to
+today to clear it. `--gaps` reports the other axis: trials assigned to a chapter that never
+mentions them (165 today, 123 of which are the newly imported) and trials a chapter cites that
+the source document does not list (66).
+
+The appendix is a web page rather than a chapter, because it fetches its data at runtime. It is
+precached like everything else, so it works offline on the published site; it is deliberately
+absent from the self-contained `build/` tree, where `file://` forbids the fetch.
 
 ## The evidence layer
 
