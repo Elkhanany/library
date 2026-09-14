@@ -128,7 +128,7 @@ def build():
              "Status", "Year", "Topic", "Population", "Experimental vs control",
              "Primary endpoint", "Result", "Overall survival", "Read with care",
              "Methods", "Results", "Result taken from", "PMID", "Papers", "NCT",
-             "Has a result", "Last reviewed", "Chapters it is assigned to",
+             "Result state", "Last reviewed", "Chapters it is assigned to",
              "Chapters that cite it", "Listed in the source document under"]
     trows = []
     for k in sorted(trials):
@@ -143,7 +143,7 @@ def build():
             d.get("methods"), d.get("results"), pr,
             (refs.get(pr) or {}).get("pmid") if pr else None,
             len(t.get("pubs") or []) or None, t.get("nct"),
-            "no" if t.get("tabulated") is False else "yes",
+            evidence.result_state(t),
             str(t["reviewed"]) if t.get("reviewed") else None,
             joined([chref(c) for c in (t.get("chapters") or [])]),
             joined([chref(c) for c in sorted(cites.get(k) or ())]),
@@ -176,7 +176,7 @@ def build():
 
     chead = ["Part", "Chapter", "Chapter id", "Chapter title", "Trial key", "Trial",
              "Assigned here", "Cited in the prose", "In a table here", "To do",
-             "Status", "Has a result", "Result"]
+             "Status", "Result state", "Result"]
     crows = []
     for k in sorted(trials):
         t = trials[k]
@@ -201,7 +201,7 @@ def build():
                           c["title"] if c else "", k, t.get("acronym") or k,
                           "yes" if a else "", "yes" if ct else "",
                           "yes" if intable else "", todo, t.get("status"),
-                          "no" if t.get("tabulated") is False else "yes", t.get("result")])
+                          evidence.result_state(t), t.get("result")])
 
     # ------------------------------------------------------- Evidence tables
     ehead = ["Chapter", "Chapter id", "Chapter title", "Section", "Section title",
@@ -218,15 +218,17 @@ def build():
 
     # ----------------------------------------------------------------- About
     reviewed = sorted(str(t["reviewed"]) for t in trials.values() if t.get("reviewed"))
-    untab = sum(1 for t in trials.values() if t.get("tabulated") is False)
+    state = {s: sum(1 for t in trials.values() if evidence.result_state(t) == s)
+             for s in evidence.RESULT_STATES}
     uncited = sum(1 for k in trials if not cites.get(k))
     ahead = ["Breast Cancer, the trial registry", "A snapshot of the evidence the book stands on"]
     arows = [
         ["Registry last reviewed", reviewed[-1] if reviewed else "never"],
         ["Trials", len(trials)],
         ["Publications", len(prows)],
-        ["Trials with a tabulated result", len(trials) - untab],
-        ["Trials awaiting a result", untab],
+        ["Trials with a tabulated result", state["tabulated"]],
+        ["Trials whose findings are extracted but not tabulated", state["extracted"]],
+        ["Trials with no result on the record", state["none"]],
         ["Trials no chapter cites", uncited],
         ["Generated tables in the book", len(erows)],
         ["", ""],
@@ -236,6 +238,11 @@ def build():
         ["The sheets", ""],
         ["Trials", "One row per trial, every field the registry holds. Methods and Results "
                    "are the paper's own account, with its background and conclusion left out."],
+        ["Result state", "tabulated means the Result field is filled and the evidence tables "
+                         "print it. extracted means the paper's findings are on the record but "
+                         "nobody has written the one-line result yet. none means nothing on the "
+                         "record says what the trial showed, which for an ongoing trial is the "
+                         "truth and for a reported one is a gap."],
         ["Publications", "One row per paper. Sort by Year to find what has reported recently."],
         ["Chapters", "One row per chapter-and-trial pair. Filter to Assigned here = yes and "
                      "Cited in the prose = blank for the chapters that owe a trial a mention."],
