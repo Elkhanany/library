@@ -343,3 +343,64 @@ The appendix also exports whatever is currently filtered, as a CSV, in the brows
 reference to `references.yaml` verified, and rebuild. `python3 tools/evidence.py --stale` then
 lists the trial, what is new, and every chapter that cites it and may now be out of date. Update
 the prose, then set `reviewed` to today to clear it.
+
+## Chapter Stories
+
+The registry says what each trial showed. The evidence table says what else is in the same cell.
+Neither says what we were trying to find out, and that is the thing a chapter actually opens with.
+
+`books/breast-cancer/stories.yaml` is that layer. A **story** is one position in the treatment
+landscape and an ordered list of the **clinical questions** asked there. The hierarchy is
+deliberately shallow:
+
+```
+setting (early | metastatic | cns)
+  subtype (HR+/HER2- | HER2+ | HR+/HER2+ | TNBC | BRCA | all)
+    stage  early: neoadjuvant | adjuvant | post-neoadjuvant
+           metastatic: 1L | later | any
+      question          <- the deepest level, always
+```
+
+The depth belongs in the question, not in the tree. A drug class is not a question: PALOMA-3,
+SERENA-4, PADA-1 and SONIA all carry `cdk4-6,endocrine` and ask whether to **add**, to
+**substitute**, to **select** and to **sequence** respectively. So the last level is always
+something a clinic wants to know, written as a sentence ending in a question mark.
+
+Every question is written in the same five moves, all required:
+
+```
+rationale    why the idea was worth testing
+experiment   what was actually done to test it
+finding      what came back
+limitation   what the design cannot tell you
+next         the question the finding leaves open
+```
+
+A story that cannot fill `limitation` is a story that has not been read properly.
+
+**A story carries no figures.** The number belongs to the registry and is printed by the evidence
+table, so a story and a table can never disagree. A story names trials by registry key and a trial
+appears under every question it speaks to, which is the point.
+
+In a chapter:
+
+```
+​```story ST-010
+​```                        the whole story
+
+​```story SQ-0010,SQ-0020
+​```                        just those questions, in the order written
+```
+
+Ids are permanent. `ST-###` for a position, `SQ-####` for a question, both globally minted and
+never renumbered; a question moves between stories by editing its story, not by changing its id.
+
+`python3 tools/stories.py --check` validates the whole layer and runs inside `tools/sitecheck.py`.
+`--tree` prints the hierarchy, `--orphans` lists registry trials no question names, and `--axes`
+reports questions whose trials disagree with the position they are filed under. A disagreement is
+not automatically wrong — a lobular window study belongs in an adjuvant argument, and a story
+about what to do after CDK4/6 progression legitimately cites the first-line trial that created the
+situation. It is reported so the choice is deliberate rather than accidental.
+
+`docs/breast-cancer/stories.html` draws the whole landscape from `src/data/stories.json`, filtered
+and searchable, with each trial linked into the registry appendix.

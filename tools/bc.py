@@ -65,6 +65,11 @@ try:
 except Exception:                                        # pragma: no cover
     _ev = None
 
+# The story block is the argument the evidence table is evidence for. It carries
+# an ST- or SQ- id rather than a filter, because a story is authored and a table
+# is derived. See tools/stories.py.
+import stories as _st
+
 # The space before the bracket is eaten with it. A citation is comfortable to
 # type as "...mechanism [@ali2020]." and has to set as "...mechanism<sup>1</sup>.",
 # hugging the word it qualifies. Every one of the 591 citations in the first
@@ -89,14 +94,15 @@ def load():
     refs = y("references.yaml")["refs"]
     trials = y("trials.yaml").get("trials") or {}
     terms = y("glossary.yaml").get("terms") or {}
-    return outline, refs, trials, terms
+    stories = y("stories.yaml").get("stories") or {}
+    return outline, refs, trials, terms, stories
 
 
 class Model:
     """Everything the converter needs to resolve a permanent id to a place."""
 
     def __init__(self):
-        self.outline, self.refs, self.trials, self.terms = load()
+        self.outline, self.refs, self.trials, self.terms, self.stories = load()
         # An old spelling of a key still resolves, so links written before a key
         # was regularised do not rot.
         self.alias = {a: k for k, v in self.refs.items()
@@ -318,6 +324,8 @@ class Chapter:
             return body
         if kind == "evidence":
             return self.evidence(arg, body)
+        if kind == "story":
+            return self.story(arg, body)
         if kind not in FENCES:
             self.fail("unknown fenced block '%s'" % kind)
             return ""
@@ -369,6 +377,54 @@ class Chapter:
         out.append("</tbody></table>")
         if cap:
             out.append("<p class=\"ct-cap\">%s</p>" % self.inline(cap[0].strip("_")))
+        out.append("</div>")
+        return "".join(out)
+
+    def story(self, arg, body):
+        """```story ST-010``` or ```story SQ-0010,SQ-0020```.
+
+        A story block renders the argument, not the numbers. Each question comes
+        out as five labelled moves and the trials that carry it, and every trial
+        is the same {{trial:key}} chip a chapter would write by hand, so it
+        links into the registry and counts as a citation of that trial."""
+        if body.strip():
+            self.fail("a story block carries only an id, not a body")
+        ids = [i.strip() for i in arg.strip().split(",") if i.strip()]
+        if not ids:
+            self.fail("a story block needs an ST- or SQ- id")
+            return ""
+        sid, st, qs = None, None, []
+        for i in ids:
+            s2, story, got = _st.find(self.m.stories, i)
+            if not story:
+                self.fail("story block: %s resolves to nothing" % i)
+                return ""
+            if sid and s2 != sid:
+                self.fail("story block: %s is not in %s. One block, one story." % (i, sid))
+                return ""
+            sid, st = s2, story
+            qs += got
+        seen = set()
+        qs = [q for q in qs if not (q["id"] in seen or seen.add(q["id"]))]
+        out = ['<div class="story" id="%s">' % esc(sid if len(ids) == 1 and ids[0] == sid else qs[0]["id"])]
+        out.append('<p class="st-where">%s &middot; %s &middot; %s</p>'
+                   % (esc(_st.SETTING_LABEL[st["setting"]]), esc(st["subtype"]),
+                      esc(st["stage"])))
+        out.append('<p class="st-title">%s</p>' % self.inline(st["title"]))
+        if st.get("premise") and len(ids) == 1 and ids[0] == sid:
+            out.append('<p class="st-premise">%s</p>' % self.inline(st["premise"]))
+        for q in qs:
+            out.append('<div class="sq" id="%s">' % esc(q["id"]))
+            out.append('<p class="sq-ask">%s</p>' % self.inline(q["ask"]))
+            out.append("<dl class=\"sq-moves\">")
+            for mv in _st.MOVES:
+                out.append("<dt>%s</dt><dd>%s</dd>"
+                           % (esc(_st.MOVE_LABEL[mv]), self.inline(q[mv])))
+            out.append("</dl>")
+            out.append('<p class="sq-trials">%s</p>' % " ".join(
+                self.trial(re.match(r"\{\{trial:(.+)\}\}", "{{trial:%s}}" % t))
+                for t in q.get("trials") or []))
+            out.append("</div>")
         out.append("</div>")
         return "".join(out)
 
@@ -655,9 +711,43 @@ def digestdata(m):
     return json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-# curriculum.json, src/data/trials.json and src/data/digests.json: generate()'s
-# outputs that are not chapter fragments, so a count of fragments discounts them.
-NON_CHAPTER = 3
+def storydata(m):
+    """books/breast-cancer/src/data/stories.json -- what the Chapter Stories page reads.
+
+    The whole argument layer in one file: every position in the landscape, every
+    clinical question under it, the five moves, and each trial resolved far
+    enough that the page can draw a chip and link it into the registry without
+    loading the registry itself."""
+    reg = m.trials
+    out = []
+    for sid, st in _st.ordered(m.stories):
+        qs = []
+        for q in st.get("questions") or []:
+            ts = []
+            for k in q.get("trials") or []:
+                t = reg.get(k) or {}
+                ts.append({"key": k, "acronym": t.get("acronym") or k,
+                           "year": t.get("year"), "phase": t.get("phase"),
+                           "status": t.get("status")})
+            qs.append({"id": q["id"], "ask": q["ask"],
+                       **{mv: q[mv] for mv in _st.MOVES}, "trials": ts})
+        out.append({"id": sid, "setting": st["setting"],
+                    "setting_label": _st.SETTING_LABEL[st["setting"]],
+                    "subtype": st["subtype"], "stage": st["stage"],
+                    "title": st["title"], "premise": st.get("premise") or "",
+                    "chapters": [{"id": c, "num": m.chapnum.get(c),
+                                  "title": m.title.get(c),
+                                  "href": m.href(c)}
+                                 for c in (st.get("chapters") or [])
+                                 if c in m.chapnum],
+                    "questions": qs})
+    return json.dumps({"stories": out}, ensure_ascii=False,
+                      separators=(",", ":")) + "\n"
+
+
+# curriculum.json and the three src/data files: generate()'s outputs that are not
+# chapter fragments, so a count of fragments discounts them.
+NON_CHAPTER = 4
 
 
 def generate(m):
@@ -665,7 +755,8 @@ def generate(m):
     here, so --check and the real run cannot disagree about the result."""
     out = {os.path.join(DIR, "curriculum.json"): curriculum(m),
            os.path.join(DIR, "src", "data", "trials.json"): trialdata(m),
-           os.path.join(DIR, "src", "data", "digests.json"): digestdata(m)}
+           os.path.join(DIR, "src", "data", "digests.json"): digestdata(m),
+           os.path.join(DIR, "src", "data", "stories.json"): storydata(m)}
     errs = []
     cdir = os.path.join(DIR, "chapters")
     for f in sorted(os.listdir(cdir)) if os.path.isdir(cdir) else []:

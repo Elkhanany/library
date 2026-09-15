@@ -97,7 +97,24 @@ def main():
     # proves the file is there; this proves it still says what the registry
     # says.
     import export
-    return rc or export.main_check()
+    rc = rc or export.main_check()
+
+    # The story layer names trials by key and the registry is edited daily, so a
+    # story can be orphaned by a rename it never saw. Cheap to check here; the
+    # alternative is a chapter that renders a question with a trial missing
+    # from under it.
+    import stories
+    st, reg = stories.load(), stories.trials()
+    errs, _ = stories.check(st, reg)
+    for e in errs:
+        print("  story  " + e)
+    if errs:
+        print(f"  {len(errs)} problem in the story layer — FIX THESE")
+        return 1
+    named = {k for _, _, q in stories.questions(st) for k in (q.get("trials") or [])}
+    nq = sum(len(x.get("questions") or []) for x in st.values())
+    print(f"  {len(st)} stories, {nq} questions, {len(named)} of {len(reg)} trials placed")
+    return rc
 
 
 if __name__ == "__main__":
