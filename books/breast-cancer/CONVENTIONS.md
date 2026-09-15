@@ -407,3 +407,31 @@ situation. It is reported so the choice is deliberate rather than accidental.
 
 `docs/breast-cancer/stories.html` draws the whole landscape from `src/data/stories.json`, filtered
 and searchable, with each trial linked into the registry appendix.
+
+## Evidence weight
+
+A trial may carry one more axis, and it is the only one a filter has to ask for by name:
+
+```
+weight   practice-defining | supporting | exploratory
+```
+
+An evidence table enumerates the record a decision rests on. A three-week single-arm window
+study is not part of that record, and setting it next to a randomised phase III trial in the
+same table with nothing to tell a reader which is which makes both harder to read. So:
+
+- a block that says **nothing** about weight gets everything **except** the exploratory trials
+- a block that wants them says `weight=exploratory`, or `weight=any` for the lot
+
+Every trial in the registry before the axis existed has no `weight`, which reads as "not
+exploratory", so adding the axis changed no table.
+
+**Exploratory trials are not hidden.** They are in the registry, in Appendix A tagged as such,
+in the downloadable workbook, and in the Chapter Stories, which is where a proof of concept
+earns its place: under the question it was built to answer, with what its design cannot settle
+written next to it. That is the division: a table says what is known, a story says what was
+being asked, and an exploratory trial has much more to offer the second than the first.
+
+`python3 tools/evidence.py --weights` reports how the axis is filled and which tables are
+currently holding exploratory trials back, with the keys, so the decision to leave one out of a
+table is visible rather than silent.

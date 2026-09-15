@@ -150,7 +150,7 @@ def build():
 
     # ---------------------------------------------------------------- Trials
     thead = ["Key", "Trial", "Phase", "N", "Setting", "Subtype", "Line", "Modality",
-             "Status", "Year", "Topic", "Population", "Experimental vs control",
+             "Status", "Evidence weight", "Year", "Topic", "Population", "Experimental vs control",
              "Primary endpoint", "Result", "Overall survival", "Read with care",
              "Methods", "Results", "Result taken from", "PMID", "Papers", "NCT",
              "Result state", "Last reviewed", "Chapters it is assigned to",
@@ -163,7 +163,7 @@ def build():
         trows.append([
             k, t.get("acronym") or k, t.get("phase"), t.get("n"), t.get("setting"),
             t.get("subtype"), t.get("line"), t.get("modality"), t.get("status"),
-            t.get("year"), t.get("topic"), t.get("population"), t.get("arms"),
+            t.get("weight"), t.get("year"), t.get("topic"), t.get("population"), t.get("arms"),
             t.get("endpoint"), t.get("result"), t.get("os"), t.get("note"),
             d.get("methods"), d.get("results"), pr,
             (refs.get(pr) or {}).get("pmid") if pr else None,
@@ -269,6 +269,11 @@ def build():
                             "the figures are the registry's job and are two sheets to the right."],
         ["Trials", "One row per trial, every field the registry holds. Methods and Results "
                    "are the paper's own account, with its background and conclusion left out."],
+        ["Evidence weight", "practice-defining, supporting or exploratory. A table in the "
+                            "book enumerates the record a decision rests on, so an exploratory "
+                            "trial is held back from it unless the table asks for one by name. "
+                            "It is still in the registry, in the appendix and in the Chapter "
+                            "Stories, which is where a proof of concept earns its place."],
         ["Result state", "tabulated means the Result field is filled and the evidence tables "
                          "print it. extracted means the paper's findings are on the record but "
                          "nobody has written the one-line result yet. none means nothing on the "
@@ -292,7 +297,7 @@ def build():
                 "Finding", "Limitation", "Next question", "Trials", "Trial keys",
                 "Chapters"]),
         W("Trials", thead, trows,
-          widths=[18, 22, 6, 8, 12, 16, 15, 18, 10, 7, 34, 44, 44, 26, 52, 40, 40, 56,
+          widths=[18, 22, 6, 8, 12, 16, 15, 18, 10, 17, 7, 34, 44, 44, 26, 52, 40, 40, 56,
                   56, 18, 11, 8, 13, 12, 13, 30, 30, 44],
           wrap=["Topic", "Population", "Experimental vs control", "Primary endpoint",
                 "Result", "Overall survival", "Read with care", "Methods", "Results",
