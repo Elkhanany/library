@@ -2,13 +2,28 @@
 
 **Complete.** 16 parts, 93 chapters, 778 of 778 sections. No chapter is partial.
 
-1,036 references and 329 trials in the registries, every identifier PubMed-verified. 195 caution
-blocks, 107 in-practice blocks, 70 interplay edges, 66 evidence tables.
+1,099 references and 389 trials in the registries, every identifier PubMed-verified. 195 caution
+blocks, 107 in-practice blocks, 70 interplay edges, 67 evidence tables, and
+17 Chapter Stories carrying 97 clinical questions.
+
+## Chapter Stories
+
+`stories.yaml` is the argument layer and `stories.html` is its reader-facing face. One position in
+the treatment landscape, one ordered list of the clinical questions asked there, each written in
+five moves: rationale, experiment, finding, limitation, and the question the finding leaves open.
+309 of 389 trials sit under a question.
+
+A story carries no figures at all. The number belongs to the registry and the evidence table prints
+it, so a story and a table cannot disagree about one. `tools/stories.py --axes` reports where a
+question's trials disagree with the position it is filed under, which is usually deliberate and
+always worth seeing.
+
+Thirteen chapters open their argument with a story block before their first table.
 
 ## Appendix A, the trial registry
 
-`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 329
-trials, 440 publications. The same records generate both the in-chapter evidence tables and the
+`trials.yaml` is the book's trial database and `trials.html` is its reader-facing face. 389
+trials, 506 publications. The same records generate both the in-chapter evidence tables and the
 appendix, so the two cannot disagree.
 
 The appendix filters on the axes the evidence blocks already use (setting, subtype, line,
@@ -22,11 +37,11 @@ Five counts sit at the head of it, and three of them are worklists:
 
 | | |
 |---|---|
-| 329 trials, 440 publications | the database |
-| 254 with a tabulated result | a result field the evidence tables print |
-| 48 extracted, not tabulated | the paper's findings are on the record, nobody has written the one-line result |
-| 27 with no result at all | mostly trials still running, which is the truth rather than a gap |
-| 140 not yet cited in the text | in the registry, no chapter mentions them |
+| 389 trials, 506 publications | the database |
+| 303 with a tabulated result | a result field the evidence tables print |
+| 51 extracted, not tabulated | the paper's findings are on the record, nobody has written the one-line result |
+| 35 with no result at all | mostly trials still running, which is the truth rather than a gap |
+| 44 marked exploratory | held back from the chapter tables by design, and placed in a story instead |
 
 **When a trial reports again**: add the publication to its `pubs` with `added: <date>`, add the
 reference verified, rebuild. `tools/evidence.py --stale` then names the trial, what is new, and
@@ -104,8 +119,8 @@ the triple-positive trial, and the import then matched the document's "HER2+/HRâ
 name. The two keys now hold the trials their names claim, and BC-840 cites the one it meant.
 
 **"Has a result" counted eleven ongoing trials as complete**, because it was derived from a flag
-those trials never carried. It is now computed from the record: 254 tabulated, 48 extracted, 27
-with nothing. The claim of 303 was the flag's, not the registry's.
+those trials never carried. It is now computed from the record, which today reads 303 tabulated,
+51 extracted and 35 with nothing. The claim of 303 was the flag's, not the registry's.
 
 **VIKTORIA-1 read `awaited` with its phase III result already on the record**, and its N of 701
 was the whole trial where the published result belongs to the 392-patient PIK3CA wild-type cohort.

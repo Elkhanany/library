@@ -23,15 +23,29 @@ Filter keys are ANDed. A value may be a comma-separated list, which is ORed.
     status    reported | ongoing | awaited
     modality  endocrine | cdk4-6 | chemo | her2 | adc | immunotherapy | parp | pi3k-akt
               | surgery | radiation | bone | supportive | other
+    weight    practice-defining | supporting | exploratory | any
     topic     substring match on the topic field
     sort      year | acronym | n        (default: status then year)
     cols      comma-separated subset of the column ids below
+
+A table enumerates the record a decision rests on. An exploratory trial is not part
+of that record, so `weight=exploratory` is the one filter value that has to be asked
+for: a block that says nothing about weight gets everything except the exploratory
+trials, and a block that wants them says `weight=exploratory` or `weight=any`. This
+is what stops a three-week single-arm window study from setting next to a randomised
+phase III trial in the same table with nothing to tell a reader which is which.
+
+Exploratory trials are not hidden. They are in the registry, in Appendix A, and in
+the Chapter Stories, which is where a proof of concept earns its place: under the
+question it was built to answer, with what its design cannot settle written next to
+it. See tools/stories.py.
 
 Usage
     python3 tools/evidence.py --check                 validate every block in every chapter
     python3 tools/evidence.py --render "setting=early subtype=TNBC line=neoadjuvant"
     python3 tools/evidence.py --orphans               registry trials no block picks up
     python3 tools/evidence.py --coverage              per-block match counts
+    python3 tools/evidence.py --weights               the evidence-weight axis
     python3 tools/evidence.py --axes                  axes against the source document
     python3 tools/evidence.py --topics                near misses on a topic-filtered table
 """
@@ -59,6 +73,10 @@ VOCAB = {
     "status": {"reported", "ongoing", "awaited"},
     "modality": {"endocrine", "cdk4-6", "chemo", "her2", "adc", "immunotherapy", "parp",
                  "pi3k-akt", "surgery", "radiation", "bone", "supportive", "other"},
+    # How much of a decision the trial's result can carry. Unset means "not
+    # exploratory", which is what every trial in the registry was before the axis
+    # existed, so adding it changed no table.
+    "weight": {"practice-defining", "supporting", "exploratory", "any"},
 }
 DIRECTIVES = {"sort", "cols", "caption"}
 COLS = ["acronym", "phase", "n", "population", "arms", "endpoint", "result", "os", "status"]
@@ -94,8 +112,18 @@ def parse_filter(spec):
 
 
 def matches(trial, f):
+    # The one axis that is not a plain AND. A block that says nothing about weight
+    # is asking for the trials a decision rests on, which is everything the registry
+    # holds except the ones marked exploratory.
+    want_w = f.get("weight")
+    if want_w is None:
+        if trial.get("weight") == "exploratory":
+            return False
+    elif want_w != "any":
+        if str(trial.get("weight") or "") not in set(want_w.split(",")):
+            return False
     for k, v in f.items():
-        if k in DIRECTIVES:
+        if k in DIRECTIVES or k == "weight":
             continue
         tv = trial.get(k)
         if tv is None:
@@ -577,6 +605,9 @@ def main():
     ap.add_argument("--render", metavar="FILTER")
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--coverage", action="store_true")
+    ap.add_argument("--weights", action="store_true",
+                    help="the evidence-weight axis: how it is filled, and which tables "
+                         "are holding exploratory trials back")
     ap.add_argument("--stale", action="store_true",
                     help="trials with a publication newer than their last review, "
                          "and the chapters that cite them")
@@ -616,10 +647,18 @@ def main():
             f, _bad = parse_filter(spec)
             seen |= {t["key"] for t in select(trials, f)}
         miss = sorted(set(trials) - seen)
-        print(f"{len(miss)} of {len(trials)} registry trials are not picked up by any evidence block:")
-        for k in miss:
+        # An exploratory trial in no table is not an orphan. It is held back from
+        # the tables on purpose and its home is the story layer, so it is counted
+        # separately and stories.py --orphans is the report that matters for it.
+        expl = [k for k in miss if trials[k].get("weight") == "exploratory"]
+        rest = [k for k in miss if trials[k].get("weight") != "exploratory"]
+        print(f"{len(rest)} of {len(trials)} registry trials are not picked up by any evidence block:")
+        for k in rest:
             print(f"  {k:22} {trials[k].get('setting','?'):11} {trials[k].get('subtype','?'):12} "
                   f"{trials[k].get('line','-')}")
+        if expl:
+            print(f"\n{len(expl)} more are marked exploratory and are held back from the tables "
+                  f"by design. Run: python3 tools/stories.py --orphans")
         return 0
 
     if a.coverage:
@@ -628,6 +667,27 @@ def main():
             n = len(select(trials, f))
             flag = "  <-- EMPTY" if n == 0 else ("  <-- " + "; ".join(bad) if bad else "")
             print(f"{ch}  {n:3}  {spec}{flag}")
+        return 0
+
+    if a.weights:
+        from collections import Counter
+        c = Counter(t.get("weight") or "unset" for t in trials.values())
+        for k in ("practice-defining", "supporting", "exploratory", "unset"):
+            print(f"  {k:18} {c.get(k, 0):4}")
+        held = []
+        for ch, spec, _ in all_blocks():
+            f, bad = parse_filter(spec)
+            if bad or f.get("weight"):
+                continue
+            wide = dict(f, weight="any")
+            extra = [t["key"] for t in select(trials, wide)
+                     if t.get("weight") == "exploratory"]
+            if extra:
+                held.append((ch, len(extra), spec, extra))
+        print(f"\n{len(held)} table(s) are holding exploratory trials back:")
+        for ch, n, spec, extra in held:
+            print(f"  {ch}  +{n:2}  {spec[:76]}")
+            print(f"            {', '.join(extra[:8])}{' ...' if len(extra) > 8 else ''}")
         return 0
 
     # --check (default)

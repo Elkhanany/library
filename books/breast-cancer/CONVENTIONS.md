@@ -323,14 +323,17 @@ table until someone enters what it showed.
 ## Taking the registry out of the book
 
 `python3 tools/export.py` writes `src/data/breast-cancer-trials.xlsx`, which the appendix offers
-for download. Five sheets: what the file is, the trials, the publications, one row per
-chapter-and-trial pair, and every generated table in the book with the filter that produces it
-and what it renders today.
+for download. Six sheets: what the file is, the chapter stories one row per clinical question,
+the trials, the publications, one row per chapter-and-trial pair, and every generated table in
+the book with the filter that produces it and what it renders today.
 
 It is a working document rather than a report. The **Chapters** sheet filtered to *assigned yes,
 cited blank* is the list of chapters that owe a trial a mention, and the **Evidence tables**
 sheet says what each chapter already tabulates, which is what stops a number being written into
-prose that a table already carries.
+prose that a table already carries. The **Chapter Stories** sheet is the one to edit a chapter
+from, because it says what each group of trials is for and where the argument is still open. The
+same division of labour holds inside the workbook as in the book: the story sheet carries no
+figures and the trial sheet carries nothing but.
 
 The workbook is deterministic and dated by the registry's latest `reviewed` rather than by the
 clock, so two exports of the same data are the same bytes. `tools/sitecheck.py` fails if it has
@@ -343,3 +346,92 @@ The appendix also exports whatever is currently filtered, as a CSV, in the brows
 reference to `references.yaml` verified, and rebuild. `python3 tools/evidence.py --stale` then
 lists the trial, what is new, and every chapter that cites it and may now be out of date. Update
 the prose, then set `reviewed` to today to clear it.
+
+## Chapter Stories
+
+The registry says what each trial showed. The evidence table says what else is in the same cell.
+Neither says what we were trying to find out, and that is the thing a chapter actually opens with.
+
+`books/breast-cancer/stories.yaml` is that layer. A **story** is one position in the treatment
+landscape and an ordered list of the **clinical questions** asked there. The hierarchy is
+deliberately shallow:
+
+```
+setting (early | metastatic | cns)
+  subtype (HR+/HER2- | HER2+ | HR+/HER2+ | TNBC | BRCA | all)
+    stage  early: neoadjuvant | adjuvant | post-neoadjuvant
+           metastatic: 1L | later | any
+      question          <- the deepest level, always
+```
+
+The depth belongs in the question, not in the tree. A drug class is not a question: PALOMA-3,
+SERENA-4, PADA-1 and SONIA all carry `cdk4-6,endocrine` and ask whether to **add**, to
+**substitute**, to **select** and to **sequence** respectively. So the last level is always
+something a clinic wants to know, written as a sentence ending in a question mark.
+
+Every question is written in the same five moves, all required:
+
+```
+rationale    why the idea was worth testing
+experiment   what was actually done to test it
+finding      what came back
+limitation   what the design cannot tell you
+next         the question the finding leaves open
+```
+
+A story that cannot fill `limitation` is a story that has not been read properly.
+
+**A story carries no figures.** The number belongs to the registry and is printed by the evidence
+table, so a story and a table can never disagree. A story names trials by registry key and a trial
+appears under every question it speaks to, which is the point.
+
+In a chapter:
+
+```
+​```story ST-010
+​```                        the whole story
+
+​```story SQ-0010,SQ-0020
+​```                        just those questions, in the order written
+```
+
+Ids are permanent. `ST-###` for a position, `SQ-####` for a question, both globally minted and
+never renumbered; a question moves between stories by editing its story, not by changing its id.
+
+`python3 tools/stories.py --check` validates the whole layer and runs inside `tools/sitecheck.py`.
+`--tree` prints the hierarchy, `--orphans` lists registry trials no question names, and `--axes`
+reports questions whose trials disagree with the position they are filed under. A disagreement is
+not automatically wrong — a lobular window study belongs in an adjuvant argument, and a story
+about what to do after CDK4/6 progression legitimately cites the first-line trial that created the
+situation. It is reported so the choice is deliberate rather than accidental.
+
+`docs/breast-cancer/stories.html` draws the whole landscape from `src/data/stories.json`, filtered
+and searchable, with each trial linked into the registry appendix.
+
+## Evidence weight
+
+A trial may carry one more axis, and it is the only one a filter has to ask for by name:
+
+```
+weight   practice-defining | supporting | exploratory
+```
+
+An evidence table enumerates the record a decision rests on. A three-week single-arm window
+study is not part of that record, and setting it next to a randomised phase III trial in the
+same table with nothing to tell a reader which is which makes both harder to read. So:
+
+- a block that says **nothing** about weight gets everything **except** the exploratory trials
+- a block that wants them says `weight=exploratory`, or `weight=any` for the lot
+
+Every trial in the registry before the axis existed has no `weight`, which reads as "not
+exploratory", so adding the axis changed no table.
+
+**Exploratory trials are not hidden.** They are in the registry, in Appendix A tagged as such,
+in the downloadable workbook, and in the Chapter Stories, which is where a proof of concept
+earns its place: under the question it was built to answer, with what its design cannot settle
+written next to it. That is the division: a table says what is known, a story says what was
+being asked, and an exploratory trial has much more to offer the second than the first.
+
+`python3 tools/evidence.py --weights` reports how the axis is filled and which tables are
+currently holding exploratory trials back, with the keys, so the decision to leave one out of a
+table is visible rather than silent.
