@@ -67,6 +67,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"]{color:var(--bg)}
 .tag.untab{background:var(--warn-soft);color:var(--warn)}
 .tag.fresh{background:var(--accent-soft);color:var(--accent)}
 .tag.awaited{background:var(--bg-alt);color:var(--ink-soft)}
+.tag.expl{background:var(--bg-alt);color:var(--ink-faint);border:1px solid var(--rule)}
 
 .body{padding:.6rem 0 .3rem .2rem;font-size:.9rem;line-height:1.55}
 .body h4{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.11em;
@@ -147,8 +148,8 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
 
   <p class="take">Take it with you.
     <a id="dl-xlsx" href="data/breast-cancer-trials.xlsx" download>Download the whole registry</a>
-    as a spreadsheet, five sheets including the chapters that owe a trial a mention and
-    every generated table in the book. Or
+    as a spreadsheet, six sheets including the <a href="stories.html">chapter stories</a>, the
+    chapters that owe a trial a mention and every generated table in the book. Or
     <button type="button" id="dl-csv">export what you have filtered</button>
     as a CSV.</p>
 
@@ -164,6 +165,7 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
       <select id="f-line"></select>
       <select id="f-modality"></select>
       <select id="f-status"></select>
+      <select id="f-weight"></select>
       <button class="clear" id="clear">Clear</button>
     </div>
     <p class="count-line" id="countline"></p>
@@ -181,7 +183,8 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
     ['f-subtype', 'subtype', 'Any subtype'],
     ['f-line', 'line', 'Any line'],
     ['f-modality', 'modality', 'Any modality'],
-    ['f-status', 'status', 'Any status']
+    ['f-status', 'status', 'Any status'],
+    ['f-weight', 'weight', 'Any evidence weight']
   ];
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) {
@@ -254,6 +257,10 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
       tags += ' <span class="tag awaited">' + esc(t.status) + '</span>';
     if ((t.pubs || []).some(function (p) { return p.added && t.reviewed && p.added > t.reviewed; }))
       tags += ' <span class="tag fresh">new since review</span>';
+    /* An exploratory trial is held back from the chapter tables on purpose. Saying
+       so on its own row is the only place a reader finds out why it is not in one. */
+    if (t.weight === 'exploratory')
+      tags += ' <span class="tag expl" title="A proof of concept, window study or single-arm cohort. It is kept out of the chapter evidence tables, which enumerate the record a decision rests on, and belongs instead under the question it was built to answer in the Chapter Stories">exploratory</span>';
 
     var dl = [];
     [['Population', t.population], ['Arms', t.arms], ['Endpoint', t.endpoint],
