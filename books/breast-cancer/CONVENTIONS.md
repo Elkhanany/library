@@ -323,14 +323,17 @@ table until someone enters what it showed.
 ## Taking the registry out of the book
 
 `python3 tools/export.py` writes `src/data/breast-cancer-trials.xlsx`, which the appendix offers
-for download. Five sheets: what the file is, the trials, the publications, one row per
-chapter-and-trial pair, and every generated table in the book with the filter that produces it
-and what it renders today.
+for download. Six sheets: what the file is, the chapter stories one row per clinical question,
+the trials, the publications, one row per chapter-and-trial pair, and every generated table in
+the book with the filter that produces it and what it renders today.
 
 It is a working document rather than a report. The **Chapters** sheet filtered to *assigned yes,
 cited blank* is the list of chapters that owe a trial a mention, and the **Evidence tables**
 sheet says what each chapter already tabulates, which is what stops a number being written into
-prose that a table already carries.
+prose that a table already carries. The **Chapter Stories** sheet is the one to edit a chapter
+from, because it says what each group of trials is for and where the argument is still open. The
+same division of labour holds inside the workbook as in the book: the story sheet carries no
+figures and the trial sheet carries nothing but.
 
 The workbook is deterministic and dated by the registry's latest `reviewed` rather than by the
 clock, so two exports of the same data are the same bytes. `tools/sitecheck.py` fails if it has

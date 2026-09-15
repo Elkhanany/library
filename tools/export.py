@@ -9,10 +9,13 @@ often not at a terminal, so this writes the whole of it into one workbook:
     python3 tools/export.py            write books/breast-cancer/src/data/*.xlsx
     python3 tools/export.py --check    fail if the workbook is out of date
 
-Five sheets, and the order is the order you would use them in:
+Six sheets, and the order is the order you would use them in:
 
     About            what this is, when the registry was last reviewed, and the
                      rules that govern an edit to the text
+    Chapter Stories  one row per clinical question, with its five moves and the
+                     trials that carry it. This is the sheet to edit a chapter
+                     from, because it says what each group of trials is for.
     Trials           one row per trial, every field the registry holds
     Publications     one row per paper, so a new readout is easy to spot
     Chapters         one row per chapter-and-trial pair, with whether the chapter
@@ -37,6 +40,7 @@ import argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import library
 import evidence
+import stories as story
 import xlsx
 
 try:
@@ -122,6 +126,27 @@ def build():
             bits.append(s.get("group"))
             out.append(" / ".join(b for b in bits if b) + (" [cross-ref]" if s.get("xref") else ""))
         return joined(out)
+
+    # ------------------------------------------------------- Chapter Stories
+    # The argument layer, flattened one row per question. A chapter is edited
+    # from this sheet and its numbers come from the Trials sheet, which is the
+    # same division of labour the book itself uses.
+    st = story.load()
+    shead = ["Story", "Setting", "Subtype", "When", "Story title", "Premise",
+             "Question id", "Clinical question", "Rationale", "Experiment", "Finding",
+             "Limitation", "Next question", "Trials", "Trial keys", "Chapters"]
+    srows = []
+    for sid, s_ in story.ordered(st):
+        for q in s_.get("questions") or []:
+            keys = q.get("trials") or []
+            srows.append([
+                sid, s_["setting"], s_["subtype"], s_["stage"], s_["title"],
+                s_.get("premise") or "", q["id"], q["ask"],
+                q["rationale"], q["experiment"], q["finding"], q["limitation"], q["next"],
+                joined([(trials.get(k) or {}).get("acronym") or k for k in keys], ", "),
+                joined(keys, ", "),
+                joined([chref(c) for c in (s_.get("chapters") or [])]),
+            ])
 
     # ---------------------------------------------------------------- Trials
     thead = ["Key", "Trial", "Phase", "N", "Setting", "Subtype", "Line", "Modality",
@@ -231,11 +256,17 @@ def build():
         ["Trials with no result on the record", state["none"]],
         ["Trials no chapter cites", uncited],
         ["Generated tables in the book", len(erows)],
+        ["Chapter Stories", len(st)],
+        ["Clinical questions", len(srows)],
         ["", ""],
         ["Source", "books/breast-cancer/trials.yaml"],
         ["Regenerate", "python3 tools/export.py"],
         ["", ""],
         ["The sheets", ""],
+        ["Chapter Stories", "One row per clinical question. The hierarchy is setting, subtype "
+                            "and when in the course; the deepest level is always a question, and "
+                            "each is written in five moves. A story carries no figures, because "
+                            "the figures are the registry's job and are two sheets to the right."],
         ["Trials", "One row per trial, every field the registry holds. Methods and Results "
                    "are the paper's own account, with its background and conclusion left out."],
         ["Result state", "tabulated means the Result field is filled and the evidence tables "
@@ -255,6 +286,11 @@ def build():
     return [
         W("About", ahead, arows, widths=[34, 104], wrap=[1], freeze=False,
           autofilter=False),
+        W("Chapter Stories", shead, srows,
+          widths=[9, 12, 12, 17, 40, 56, 11, 46, 56, 56, 52, 56, 52, 40, 34, 30],
+          wrap=["Story title", "Premise", "Clinical question", "Rationale", "Experiment",
+                "Finding", "Limitation", "Next question", "Trials", "Trial keys",
+                "Chapters"]),
         W("Trials", thead, trows,
           widths=[18, 22, 6, 8, 12, 16, 15, 18, 10, 7, 34, 44, 44, 26, 52, 40, 40, 56,
                   56, 18, 11, 8, 13, 12, 13, 30, 30, 44],
