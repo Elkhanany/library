@@ -812,7 +812,7 @@ def main():
         if stale or orphans:
             sys.exit("out of date. Run: python3 tools/bc.py")
         nfrag = len(out) - NON_CHAPTER
-        print("bc: curriculum.json, the two data files and %d fragment%s are current"
+        print("bc: curriculum.json, the three data files and %d fragment%s are current"
               % (nfrag, "s" * (nfrag != 1)))
         return
 
