@@ -227,18 +227,54 @@ def result_state(t):
     return "none"
 
 
-def cited_in(trials):
+def _yaml_load(path):
+    with open(path, encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+def cited_in(trials, prose_only=False):
     """Which chapters actually cite each trial. The registry's cited_by is a
-    record; this is the fact, read out of the prose every time it is asked."""
+    record; this is the fact, read out of the chapter every time it is asked.
+
+    A trial reaches the page three ways and all three count. It can be named in
+    prose as a {{trial:}} chip. It can be a row of a rendered evidence table. It
+    can be one of the trials a story block names under a question. Only the first
+    is literally in the markdown, so counting that alone reports a chapter as
+    owing a trial it already carries, which is how this read the book until the
+    revamp pass caught it."""
     out = {k: set() for k in trials}
     d = os.path.join(BOOK, "chapters")
+    try:
+        stories = (_yaml_load(os.path.join(BOOK, "stories.yaml")) or {}).get("stories") or {}
+    except Exception:
+        stories = {}
+    q_trials = {}
+    for sid, st in stories.items():
+        for q in st.get("questions") or ():
+            q_trials[q["id"]] = q.get("trials") or []
+            q_trials.setdefault(sid, [])
+            q_trials[sid] += q.get("trials") or []
     for fn in sorted(os.listdir(d)):
         if not fn.endswith(".md"):
             continue
+        cid = fn[:-3]
         text = open(os.path.join(d, fn), encoding="utf-8").read()
         for k in re.findall(r"\{\{trial:([A-Za-z0-9_\-]+)\}\}", text):
             if k in out:
-                out[k].add(fn[:-3])
+                out[k].add(cid)
+        if prose_only:
+            continue
+        for spec, _body in blocks_in(os.path.join(d, fn)):
+            f, bad = parse_filter(spec)
+            if bad:
+                continue
+            for t in select(trials, f):
+                out[t["key"]].add(cid)
+        for m in re.finditer(r"^```story[ \t]*([^\n]*)\n```[ \t]*$", text, re.M):
+            for i in (x.strip() for x in m.group(1).split(",")):
+                for k in q_trials.get(i, ()):
+                    if k in out:
+                        out[k].add(cid)
     return out
 
 
@@ -362,20 +398,25 @@ def gaps(trials):
     """The document says where a trial belongs; the prose says where it is
     actually discussed. Each direction is a different kind of work."""
     cites = cited_in(trials)
+    prose = cited_in(trials, prose_only=True)
     unwritten, unlisted = [], []
     for k, t in sorted(trials.items()):
         planned = set(t.get("chapters") or ())
         actual = cites.get(k) or set()
         if planned - actual:
             unwritten.append((k, sorted(planned - actual)))
-        if actual - planned and planned:
-            unlisted.append((k, sorted(actual - planned)))
+        # Only a prose mention is an authorial choice. A table picks trials up by
+        # filter, so a table match outside the assignment is the filter working,
+        # not a chapter quietly annexing a trial.
+        extra = (prose.get(k) or set()) - planned
+        if extra and planned:
+            unlisted.append((k, sorted(extra)))
     print("assigned to a chapter that never cites it: %d" % len(unwritten))
     for k, ch in unwritten[:40]:
         print("   %-26s %s" % (k, ", ".join(ch)))
     if len(unwritten) > 40:
         print("   ... and %d more" % (len(unwritten) - 40))
-    print("\ncited by a chapter the document does not list: %d" % len(unlisted))
+    print("\nnamed in the prose of a chapter the document does not list: %d" % len(unlisted))
     for k, ch in unlisted[:25]:
         print("   %-26s %s" % (k, ", ".join(ch)))
     if len(unlisted) > 25:
