@@ -233,6 +233,32 @@ exception is a number you are arguing *from*, where two trials disagree and the 
 point. A number that lives in two places drifts when one is updated, which is the failure this rule
 exists to prevent.
 
+## How deep a management chapter goes
+
+The management chapters in Parts X, XI and XII render the trial record. A section there is
+measured against the evidence it shows, not against a word count. It owns every trial its table
+carries, and a reader who sees a row and finds nothing in the prose that accounts for it is
+entitled to ask why the row is there.
+
+Engaging a table means four things, in whatever order the argument wants them:
+
+- Where the trials agree, said once, rather than trial by trial.
+- Where they diverge, and whether the divergence is design, population or endpoint rather than
+  drug. This is the sentence most chapters leave out, and it is the one a reader cannot
+  reconstruct from the table.
+- Which trial the decision actually rests on, and what makes that one load-bearing.
+- What the table cannot show. A column that does not exist, a comparison nobody randomised, a
+  population nobody enrolled.
+
+That takes longer than the 120 to 250 words a mechanism section needs. A section rendering twenty
+trials is not finished in 250. Expect 400 to 700 words where the table is heavy, and 4,000 to
+5,000 words for a chapter whose tables carry thirty trials or more.
+
+Length follows the evidence in both directions. A chapter whose tables hold six trials stays
+short, and padding it to look like its neighbours is the failure this rule exists to prevent.
+`python3 tools/evidence.py --coverage` gives each block's match count, which is the number to
+write against.
+
 ## Registry fields
 
 `trials.yaml` entries carry `acronym`, `phase`, `setting`, `subtype`, `line`, `modality`,
