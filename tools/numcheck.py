@@ -29,6 +29,23 @@ SKIP = re.compile(r'(?:HER|CDK|PD-L|BRCA|TROP|ERBB|PIK3|AKT|RB|FAT|CCNE|ESR|TP|G
                   r'phase|BC-|BS-|ST-|SQ-|NCT|grade|T-DM|SN-)', re.I)
 
 
+def tokens(text):
+    """The numbers in a blob, as whole tokens.
+
+    Substring matching was the first version and it was wrong in the direction
+    that matters: a ribociclib dose of 600 mg invented by a writer passed
+    because 600 occurs inside 1600 somewhere in an abstract. A figure counts as
+    found only when the source writes that number, not when some longer number
+    contains it."""
+    out = set()
+    for t in NUM.findall(text):
+        out.add(t)
+        out.add(t.replace(',', ''))
+        if t.startswith('.'):
+            out.add('0' + t)
+    return out
+
+
 def haystack(keys, reg, refs, cited):
     parts = []
     for k in keys:
@@ -56,7 +73,11 @@ def check(cid, reg, refs):
     cited = set(re.findall(r'@([a-z][a-z0-9-]*\d{4}[a-z0-9-]*)', src))
     hay = haystack(keys, reg, refs, cited)
 
-    prose = re.sub(r'```.*?```', ' ', src, flags=re.S)
+    # An evidence block is a filter and a story block is an identifier, so
+    # neither carries prose. A practice, caution or interplay block does, and
+    # its figures are checked like any others.
+    prose = re.sub(r'```(?:evidence|story)[^\n]*\n```', ' ', src)
+    prose = re.sub(r'^```[a-z]*[^\n]*\n|^```$', ' ', prose, flags=re.M)
     prose = re.sub(r'^---\n.*?\n---\n', ' ', prose, flags=re.S)
     prose = re.sub(r'\[\[[^\]]*\]\]', ' ', prose)
 
@@ -81,7 +102,7 @@ def check(cid, reg, refs):
             if tok == '95' and re.match(r'%\s*(?:confidence interval|CI)',
                                         body[m.end():m.end() + 24]):
                 continue
-            if tok in hay or tok.replace(',', '') in hay.replace(',', ''):
+            if tok in hay or tok.replace(',', '') in hay:
                 continue
             out.append(('CHECK' if sourced else 'UNSOURCED', tok, ' '.join(body.split())[:150]))
     return out
