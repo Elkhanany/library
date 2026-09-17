@@ -97,6 +97,9 @@ The one rule: **do not chain independent clauses. Give each its own sentence.**
 - No filler. No "it is important to note". No paragraph that restates the heading.
 
 Length: roughly 120 to 250 words per section. A `major` chapter can run longer. Do not pad.
+A section in a management chapter that renders an evidence table is measured against that
+table instead, and runs 400 to 700 words when the table is heavy. See "How deep a management
+chapter goes" in CONVENTIONS.md.
 
 ## Fenced blocks
 
