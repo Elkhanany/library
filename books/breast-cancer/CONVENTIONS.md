@@ -27,7 +27,7 @@ number.
 | `outline.yaml` | Structure. Parts, chapters, sections, tags, appendices. Hand-edited. |
 | `chapters/BC-###.md` | Chapter prose, one file per chapter, named for the identifier. Hand-edited. |
 | `references.yaml` | Every citation in the book. Hand-edited or imported. |
-| `trials.yaml` | Trial registry. Hand-edited. |
+| `trials.yaml` | Trial registry. Hand-edited, except `chapters`, which `evidence.py --sync-chapters` generates. |
 | `glossary.yaml` | Defined terms. Hand-edited. |
 | `figures.yaml` | Figures the writer constructed rather than reported, with the reason. Hand-edited. |
 | `book.json` | Title, theme, and the reader-facing copy for each part. Hand-edited. |
@@ -218,6 +218,16 @@ reported. **A paragraph that continues a study cited in the paragraph above stil
 citation.** Repeating the mark costs one bracket and lets a reader who lands on that paragraph trace
 its figures. Sixty-nine of the eighty-four figures this check first reported were in exactly that
 position, and every one of them had its source one paragraph up.
+
+A trial written as bare text is not cited. It gets no registry link, no reference card, and no
+entry in Appendix A from that chapter, so **the first mention of a trial in a chapter goes through
+the macro**. Later mentions in plain text are ordinary prose and the book does that 315 times.
+`python3 tools/evidence.py --gaps` reports a chapter that discusses a trial it never cites.
+
+The registry's `chapters` list is **generated**, not hand-kept. `python3 tools/evidence.py
+--sync-chapters` rewrites it from where the book actually cites each trial, and `synthcheck` fails
+when the two disagree. It was 121 entries behind when this was written, all in the same direction,
+which is what a hand-kept index of four hundred trials does.
 
 `books/breast-cancer/figures.yaml` declares the remainder: figures the writer constructed rather than
 reported, each with its reason. A figure belongs there only when no source could carry it, such as an

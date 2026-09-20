@@ -19,6 +19,8 @@ finds is either fixed or declared.
     spanning     a story whose chapters have been split across parts
     stray        a question rendered in a chapter its own story does not list
     untold       a trial a chapter tabulates that nothing in the book discusses
+    index        a trial whose `chapters` list disagrees with where the book
+                 cites it, which `evidence.py --sync-chapters` rewrites
     stale        a question last read before a trial it names was last read
     contradicted a question saying, in the present tense, that something is not
                  yet known, where the registry holds it. Reported as WRONG when
@@ -210,6 +212,12 @@ def reconcile(reg, sto, doc):
         if missing:
             rep["untold"].append((cid, missing))
     rep["stale"], rep["contradicted"] = staleness(reg, sto)
+
+    # the registry's own index of where each trial is discussed, against the fact
+    fact = ev.cited_in(reg)
+    rep["index"] = [(k, sorted(set(reg[k].get("chapters") or ())), sorted(fact.get(k) or ()))
+                    for k in sorted(reg)
+                    if sorted(set(reg[k].get("chapters") or ())) != sorted(fact.get(k) or ())]
     return rep
 
 
@@ -338,7 +346,7 @@ def main():
     wrong = [x for x in r["contradicted"] if x[0] == "WRONG"]
     look = [x for x in r["contradicted"] if x[0] == "CHECK"]
     bad = (len(r["undeclared"]) + len(r["silent"]) + len(r["stray"])
-           + len(r["stale"]) + len(wrong))
+           + len(r["stale"]) + len(wrong) + len(r["index"]))
 
     if not a.quiet:
         print("synthcheck: %d trials, %d stories, %d questions"
@@ -386,6 +394,15 @@ def main():
             print("        ...%s" % ctx)
         print("   A blanket claim is false here and a claim about one named trial "
               "may not be. Read each.")
+
+    if r["index"]:
+        print("\n%d trial(s) whose `chapters` list disagrees with where the book cites "
+              "them:" % len(r["index"]))
+        for k, have, want in r["index"][:12]:
+            print("   %-26s stored %d, actual %d" % (k, len(have), len(want)))
+        if len(r["index"]) > 12:
+            print("   ... and %d more" % (len(r["index"]) - 12))
+        print("   Run: python3 tools/evidence.py --sync-chapters")
 
     if r["stray"]:
         print("\n%d question(s) rendered where their story does not claim them:" % len(r["stray"]))

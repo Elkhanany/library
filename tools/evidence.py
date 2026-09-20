@@ -278,6 +278,52 @@ def cited_in(trials, prose_only=False):
     return out
 
 
+def sync_chapters(trials, write=False):
+    """Bring each trial's `chapters` list into line with where the book cites it.
+
+    The field is a hand-kept index of which chapters carry a trial, and a
+    hand-kept index of four hundred trials across a hundred chapters goes stale
+    the first time anything moves. It was 121 entries behind when this was
+    written, all in the same direction, which is what a hand-kept index does.
+
+    The fact is cheap to compute and `cited_in` already computes it: prose that
+    names the trial, a table that renders it, a story block that places a
+    question naming it. The edit is textual, because a YAML round trip
+    reformats seventeen thousand lines and buries the change."""
+    fact = cited_in(trials)
+    path = os.path.join(BOOK, "trials.yaml")
+    text = open(path, encoding="utf-8").read()
+    changed = []
+    for k in sorted(trials):
+        want = sorted(fact.get(k) or ())
+        m = re.search(r"^  %s:\n((?:    [^\n]*\n|      [^\n]*\n)*)" % re.escape(k),
+                      text, re.M)
+        if not m:
+            continue
+        blk = m.group(1)
+        c = re.search(r"^    chapters:\n(?:    - [^\n]*\n)*", blk, re.M)
+        have = re.findall(r"^    - (\S+)$", c.group(0), re.M) if c else []
+        if have == want:
+            continue
+        changed.append((k, have, want))
+        if not write:
+            continue
+        rows = "".join("    - %s\n" % x for x in want)
+        if c:
+            nb = blk[:c.start()] + ("    chapters:\n" + rows if want else "") + blk[c.end():]
+        else:
+            at = len(blk)                       # keys are written alphabetically
+            for mm in re.finditer(r"^    ([a-z_]+):", blk, re.M):
+                if mm.group(1) > "chapters":
+                    at = mm.start()
+                    break
+            nb = blk[:at] + "    chapters:\n" + rows + blk[at:]
+        text = text[:m.start(1)] + nb + text[m.end(1):]
+    if write and changed:
+        open(path, "w", encoding="utf-8").write(text)
+    return changed
+
+
 def stale(trials):
     """A publication added after a trial was last reviewed means the prose that
     cites it may now be out of date. This is the worklist: what changed, and
@@ -658,6 +704,9 @@ def main():
     ap.add_argument("--topics", action="store_true",
                     help="for each topic-filtered table, the trials that match its "
                          "other axes and miss only the topic")
+    ap.add_argument("--sync-chapters", action="store_true",
+                    help="rewrite each trial's `chapters` list from where the book "
+                         "cites it, so the hand-kept index cannot drift")
     ap.add_argument("--gaps", action="store_true",
                     help="where the trial document and the prose disagree about "
                          "which chapters discuss a trial")
@@ -670,6 +719,17 @@ def main():
         return axes(trials)
     if a.topics:
         return topics(trials)
+    if a.sync_chapters:
+        rows = sync_chapters(trials, write=True)
+        for k, have, want in rows[:30]:
+            print("   %-26s %d -> %d  %s" % (k, len(have), len(want),
+                                             " ".join(sorted(set(want) - set(have))[:6])))
+        if len(rows) > 30:
+            print("   ... and %d more" % (len(rows) - 30))
+        print("evidence: %d trial(s) had a stale `chapters` list; rewritten from the book"
+              % len(rows))
+        return 0
+
     if a.gaps:
         return gaps(trials)
 
