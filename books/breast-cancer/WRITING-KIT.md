@@ -85,6 +85,14 @@ will be read by people making treatment decisions.
 
 ## Voice — this is enforced
 
+The house style is the library's measured rule over the
+[Google developer documentation style guide](https://developers.google.com/style), with six
+declared deviations. Read `.claude/skills/house-style/SKILL.md` before drafting, and check what
+you wrote with `python3 tools/stylecheck.py breast-cancer`.
+
+Two deviations to know before you type: this book is **British** (randomised, tumour, oestrogen)
+and **third person** in full forms (no "you", no "don't").
+
 The one rule: **do not chain independent clauses. Give each its own sentence.**
 
 - Mean sentence length 15 to 18 words. Nothing over about 35.
