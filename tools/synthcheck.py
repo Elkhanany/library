@@ -21,7 +21,10 @@ finds is either fixed or declared.
     untold       a trial a chapter tabulates that nothing in the book discusses
     stale        a question last read before a trial it names was last read
     contradicted a question saying, in the present tense, that something is not
-                 yet known, where the registry holds it
+                 yet known, where the registry holds it. Reported as WRONG when
+                 every trial named has it and no reading of the sentence
+                 survives, and as CHECK when only some do, which a person
+                 settles by reading and records in the `reviewed` date
 
 The out-of-scope declaration is the load-bearing part. A library that reports
 ninety orphans every run trains its reader to ignore the report. Declaring that
@@ -259,9 +262,22 @@ def staleness(reg, sto):
         for mv in st.MOVES:
             text = str(q.get(mv) or "")
             for m in PRESENT.finditer(text):
+                # What the claim is about can sit on either side of the phrase:
+                # "overall survival is immature" puts it before, "has not
+                # reported overall survival at all" puts it after. Reading only
+                # backwards made the first real finding a false positive.
                 head = text[max(0, m.start() - 60):m.start()]
-                field = "os" if SURVIVAL.search(head + m.group(0)) else "result"
+                window = text[max(0, m.start() - 60):m.end() + 60]
+                field = "os" if SURVIVAL.search(window) else "result"
                 have = [k for k in named if settled(reg[k], field)]
+                # A CHECK is a sentence whose universal reading is false and
+                # whose singular reading may not be, so only a person settles
+                # it. The `reviewed` date is that person's answer: once the
+                # question has been read against every trial it names, the
+                # adjudication stands until the registry moves again. WRONG is
+                # never suppressed, because no reading of it survives.
+                if have and len(have) < len(named) and not moved:
+                    continue
                 if have:
                     contra.append(("WRONG" if len(have) == len(named) else "CHECK",
                                    sid, q["id"], mv, m.group(0), field, have,
