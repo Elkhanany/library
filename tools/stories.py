@@ -101,6 +101,7 @@ MOVE_LABEL = {"rationale": "Rationale", "experiment": "Experiment",
 
 ST_ID = re.compile(r"^ST-\d{3}$")
 SQ_ID = re.compile(r"^SQ-\d{4}$")
+REVIEWED = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def load(path=None):
@@ -176,6 +177,13 @@ def check(stories, reg):
             for mv in MOVES:
                 if not str(q.get(mv) or "").strip():
                     errs.append("%s %s: no %s" % (where, qid, mv))
+            # A question makes claims about what is and is not yet known, and the
+            # registry moves under it. The date says when the two were last read
+            # against each other; synthcheck compares it with the trials named.
+            if not REVIEWED.match(str(q.get("reviewed") or "")):
+                errs.append("%s %s: `reviewed` is the date this question was last read "
+                            "against the registry, as YYYY-MM-DD, not %r"
+                            % (where, qid, q.get("reviewed")))
             ts = q.get("trials") or []
             if not ts:
                 errs.append("%s %s: names no trial" % (where, qid))
