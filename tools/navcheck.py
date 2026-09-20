@@ -64,10 +64,22 @@ async def main():
     async with async_playwright() as pw:
         br = await pw.chromium.launch()
 
-        for slug, chap, prev_num, next_num, total in (
-                ('breast-cancer', 'BC-500.html', '56', '58', 94),
-                ('newton-to-mtheory', 'ch2-1.html', '1.4', '2.2', 37)):
-            print('\n%s  %s' % (slug, chap))
+        for slug, chap in (('breast-cancer', 'BC-500.html'),
+                           ('newton-to-mtheory', 'ch2-1.html')):
+            # The neighbours and the count come from the book's own reading
+            # order rather than from constants here. Hard-coding them made this
+            # file report four failures the first time the clinical book was
+            # reorganised, when the navigation was working perfectly and only
+            # the fixtures were stale.
+            page = await br.new_page()
+            order = (await (await page.goto(base + slug + '/nav.json')).json())
+            await page.close()
+            ids = [c['href'] for c in order['chapters']]
+            at = ids.index(chap)
+            prev_num = order['chapters'][at - 1]['num']
+            next_num = order['chapters'][at + 1]['num']
+            total = order['count']
+            print('\n%s  %s  (%d of %d)' % (slug, chap, at + 1, total))
 
             # ---- phone width: the drawer is the surface
             pg = await br.new_page(viewport={'width': 390, 'height': 780})
@@ -122,8 +134,7 @@ async def main():
             await pg.close()
 
             # ---- the first and last chapters keep the shape
-            nav = await (await br.new_page()).goto(base + slug + '/nav.json')
-            first = (await nav.json())['chapters'][0]['href']
+            first = ids[0]
             pg = await br.new_page(viewport={'width': 390, 'height': 780})
             await pg.goto(base + slug + '/' + first, wait_until='networkidle')
             await pg.wait_for_timeout(300)
