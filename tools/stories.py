@@ -65,8 +65,14 @@ BOOK = os.path.join(ROOT, "books", "breast-cancer")
 # The top level is the one the reader already has in their head when they open a
 # chapter: is this curable-intent disease or not. `cns` is third because a brain
 # metastasis trial answers a question neither of the other two asks.
-SETTINGS = ["early", "metastatic", "cns"]
-SETTING_LABEL = {"early": "Early disease", "metastatic": "Advanced disease",
+# `mrd` and `cns` are here for the same reason: each names a patient the other
+# two settings cannot describe. A woman with a positive plasma assay and a clear
+# scan is not early disease, because the question is no longer how hard to treat
+# a tumour that has been removed, and she is not metastatic disease, because
+# there is nothing to measure or palliate.
+SETTINGS = ["early", "mrd", "metastatic", "cns"]
+SETTING_LABEL = {"early": "Early disease", "mrd": "Molecular residual disease",
+                 "metastatic": "Advanced disease",
                  "cns": "Central nervous system disease"}
 SUBTYPES = ["HR+/HER2-", "HER2+", "HR+/HER2+", "TNBC", "BRCA", "all"]
 
@@ -74,6 +80,7 @@ SUBTYPES = ["HR+/HER2-", "HER2+", "HR+/HER2+", "TNBC", "BRCA", "all"]
 # meant to stay shallow, and the finer distinctions live in the question.
 STAGES = {
     "early": ["neoadjuvant", "adjuvant", "post-neoadjuvant"],
+    "mrd": ["any"],
     "metastatic": ["1L", "later", "any"],
     "cns": ["any"],
 }
@@ -194,6 +201,11 @@ def axes(stories, reg):
             why = []
             if s["setting"] == "cns":
                 if t.get("setting") != "cns":
+                    why.append("setting %s" % t.get("setting"))
+            elif s["setting"] == "mrd":
+                # the registry splits the state (`mrd`) from the act of looking
+                # for it (`surveillance`); a story about it needs both
+                if t.get("setting") not in ("mrd", "surveillance"):
                     why.append("setting %s" % t.get("setting"))
             elif t.get("setting") not in (s["setting"], "any"):
                 why.append("setting %s" % t.get("setting"))
