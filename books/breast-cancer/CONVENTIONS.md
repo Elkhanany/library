@@ -29,6 +29,7 @@ number.
 | `references.yaml` | Every citation in the book. Hand-edited or imported. |
 | `trials.yaml` | Trial registry. Hand-edited. |
 | `glossary.yaml` | Defined terms. Hand-edited. |
+| `figures.yaml` | Figures the writer constructed rather than reported, with the reason. Hand-edited. |
 | `book.json` | Title, theme, and the reader-facing copy for each part. Hand-edited. |
 | `curriculum.json` | What the library builds from. **Generated.** |
 | `src/BC-###.html` | Chapter fragments. **Generated.** |
@@ -207,6 +208,20 @@ python3 tools/synthcheck.py --untold     tabulated trials nothing discusses
 It fails on a trial that no question names and whose family is not declared out of scope, on a trial
 that reaches the reader by no route at all, and on a question rendered in a chapter its own story
 does not list. Everything else it prints is read rather than fixed.
+
+`python3 tools/numcheck.py` is the same idea for figures: every number in prose must occur in the
+registry record of a trial the chapter names, or in a reference it cites. The unit is the paragraph,
+because the house style puts the citation at the end of the group of sentences it covers.
+
+That has one consequence worth stating, because it accounts for most of what the check ever
+reported. **A paragraph that continues a study cited in the paragraph above still needs its own
+citation.** Repeating the mark costs one bracket and lets a reader who lands on that paragraph trace
+its figures. Sixty-nine of the eighty-four figures this check first reported were in exactly that
+position, and every one of them had its source one paragraph up.
+
+`books/breast-cancer/figures.yaml` declares the remainder: figures the writer constructed rather than
+reported, each with its reason. A figure belongs there only when no source could carry it, such as an
+arithmetic example or a threshold named as a convention. `numcheck.py --declared` prints them.
 
 The `_scope` block in `stories.yaml` is what keeps the report short enough to be read. It names the
 families the story layer deliberately leaves alone, each with the chapter that owns them instead.
