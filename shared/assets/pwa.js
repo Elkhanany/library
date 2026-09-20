@@ -453,9 +453,181 @@
 
   if (!SLUG) addEventListener('DOMContentLoaded', function () { shelf(); });
 
+  /* ------------------------------------------------------ chapter navigation
+   * One reading order per book, in nav.json, and one set of controls over it,
+   * so the two chaptered books navigate identically instead of merely looking
+   * alike. Everything here is additive: with the file missing, the fetch
+   * failing, or JavaScript off, every page still carries the top bar, the
+   * section sidebar and the prev/next pair at the foot of the chapter that it
+   * carried before.
+   *
+   * Three surfaces, because a book is read on three:
+   *
+   *   desktop     the arrow keys, which is what a keyboard is for
+   *   phone       prev/next inside the drawer, reachable without scrolling
+   *               past the chapter to find them
+   *   standalone  a back control, because a home-screen app has no browser
+   *               chrome to provide one
+   *
+   * The drawer is book.js's, built from the chapter's own H2s. This adds a row
+   * to it rather than building a second one, so a reader has one drawer with
+   * everything in it and not two that each know half. */
+
+  var NAV = null;          /* the book's reading order, once fetched */
+  var HERE = -1;           /* this page's index in it, or -1 off-book */
+
+  function file(href) {
+    var f = String(href || '').split('/').pop().split('#')[0].split('?')[0];
+    try { return decodeURIComponent(f); } catch (e) { return f; }
+  }
+
+  function at(i) {
+    return NAV && i >= 0 && i < NAV.chapters.length ? NAV.chapters[i] : null;
+  }
+
+  /* "57 · Metastatic triple-positive disease". The number is the one the
+   * contents page shows, which in the physics book is "2.1" and in the clinical
+   * book is "57", and neither is the index. */
+  function label(c) { return c.num + ' · ' + c.title; }
+
+  function go(c) { if (c) location.href = c.href; }
+
+  /* ---- the drawer row */
+
+  function drawerNav() {
+    var panel = document.getElementById('mnav');
+    if (!panel || panel.querySelector('.mn-seq')) return;
+
+    var prev = at(HERE - 1), next = at(HERE + 1);
+    if (!prev && !next) return;
+
+    var row = document.createElement('div');
+    row.className = 'mn-seq';
+    [['prev', prev, 'Previous'], ['next', next, 'Next']].forEach(function (spec) {
+      var c = spec[1];
+      /* A disabled span rather than no element at all: the first and last
+       * chapters then keep the same two-column shape as every other, so the
+       * control a thumb is aiming for does not move between pages. */
+      var el = document.createElement(c ? 'a' : 'span');
+      el.className = spec[0];
+      if (c) el.href = c.href;
+      el.innerHTML = '<span class="mn-dir"></span><span class="mn-ch"></span>';
+      el.querySelector('.mn-dir').textContent = spec[2];
+      el.querySelector('.mn-ch').textContent = c ? label(c) : '—';
+      row.appendChild(el);
+    });
+
+    var list = panel.querySelector('.mn-list');
+    if (list) panel.insertBefore(row, list); else panel.appendChild(row);
+
+    /* Where in the book this is. The drawer already names the chapter; this
+     * says how much of the book is behind and ahead of it, which is the thing
+     * a contents page makes you leave the chapter to find out. */
+    var k = panel.querySelector('.mn-kicker');
+    if (k && HERE >= 0) k.textContent = k.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
+  }
+
+  /* The same fact on the other surface. The sidebar is the desktop drawer and
+   * already names the chapter; without this, position is something only a
+   * phone reader is told. */
+  function sidebarPosition() {
+    var t = document.querySelector('.sidebar .sb-title');
+    if (!t || HERE < 0 || t.dataset.pos) return;
+    t.dataset.pos = '1';
+    t.textContent = t.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
+  }
+
+  /* book.js builds the drawer on DOMContentLoaded and only when the chapter has
+   * at least two H2s to list. Both scripts are waiting on the same event, so
+   * rather than depend on which handler runs first, try once now and once after
+   * a frame. */
+  function whenDrawer() {
+    drawerNav();
+    sidebarPosition();
+    requestAnimationFrame(drawerNav);
+  }
+
+  /* ---- the keyboard */
+
+  function typing(e) {
+    var t = e.target;
+    if (!t) return false;
+    if (t.isContentEditable) return true;
+    return /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+  }
+
+  addEventListener('keydown', function (e) {
+    if (HERE < 0) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (typing(e)) return;
+    /* an open dialog or drawer owns the keyboard while it is open */
+    if (document.querySelector('dialog[open]')) return;
+    var btn = document.getElementById('mnav-btn');
+    if (btn && btn.getAttribute('aria-expanded') === 'true') return;
+
+    if (e.key === 'ArrowLeft') { go(at(HERE - 1)); }
+    else if (e.key === 'ArrowRight') { go(at(HERE + 1)); }
+    else return;
+    e.preventDefault();
+  });
+
+  /* ---- standalone back
+   * The stylesheet used to say that no navigation needed injecting here,
+   * because the top bar already carries Library and Chapters. That is true of
+   * reaching a place and false of coming back from one: a reader who followed a
+   * cross-reference three chapters deep has nothing to return along, and in a
+   * home-screen app there is no browser chrome to do it for them. */
+
+  function backControl() {
+    if (!isStandalone()) return;
+    var bar = document.querySelector('.topnav');
+    if (!bar || bar.querySelector('.pwa-back')) return;
+    if (history.length <= 1) return;
+
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pwa-back';
+    b.setAttribute('aria-label', 'Back');
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">'
+      + '<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    b.onclick = function () { history.back(); };
+    bar.insertBefore(b, bar.firstChild);
+  }
+
+  async function chapterNav() {
+    if (!SLUG) return;
+    try { NAV = await (await fetch('nav.json')).json(); }
+    catch (e) { return; }                    /* not a chaptered book, or offline
+                                                before the book was downloaded */
+    if (!NAV || !NAV.chapters || !NAV.chapters.length) { NAV = null; return; }
+
+    var here = file(location.pathname);
+    for (var i = 0; i < NAV.chapters.length; i++) {
+      if (file(NAV.chapters[i].href) === here) { HERE = i; break; }
+    }
+    backControl();
+    if (HERE < 0) return;                    /* contents, trials, ledger: in the
+                                                book but not in its sequence */
+    if (document.readyState === 'loading') {
+      addEventListener('DOMContentLoaded', whenDrawer);
+    } else {
+      whenDrawer();
+    }
+  }
+
+  if (SLUG) chapterNav();
+
   /* What the hub uses to draw the shelf. Everything above is generic. */
   window.LibraryPWA = {
     state: state, save: save, root: ROOT, slug: SLUG,
+    /* Where this page sits in its book, once the reading order has arrived.
+     * The arrow keys do nothing until it has, which is one cached fetch of a
+     * few kilobytes; this is how a test waits for that rather than sleeping,
+     * and how a reader reporting "the keys did nothing" can be answered. */
+    nav: function () {
+      return { ready: !!NAV, index: HERE, count: NAV ? NAV.count : 0 };
+    },
     download: download, resident: resident, removeBook: removeBook,
     usage: usage, mb: mb, toast: toast, coach: maybeCoach,
     standalone: isStandalone, ios: isIOS,

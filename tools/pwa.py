@@ -372,6 +372,33 @@ def offline_json(bk):
             "wire": wire, "count": len(rels), "files": files}
 
 
+def nav_json(bk):
+    """docs/<slug>/nav.json -- the book in reading order.
+
+    The two chaptered books had navigation that looked standard and was not: a
+    top bar, a section sidebar and a prev/next pair at the foot of each chapter,
+    each built by the same producer but each answering a different question.
+    None of them answered the one a reader on a phone asks most, which is "next
+    chapter", without scrolling past five thousand words to reach it.
+
+    This is the list that makes one answer possible in both books at once. It is
+    derived from the curriculum rather than from the built pages, so a chapter's
+    number and title here are the same strings the contents page shows, and it
+    holds only chapters that exist on disk, so the navigation never offers a
+    page that would 404.
+
+    A book with fewer than two written chapters gets no file, and the client
+    then does nothing: the two single-page books are not chaptered and have
+    nothing to page through."""
+    rows = [{"href": slug + ".html", "num": num, "title": library.plain(title),
+             "part": library.plain(part)}
+            for num, slug, title, part, _math in bk.written()]
+    if len(rows) < 2:
+        return None
+    return {"slug": bk.slug, "brand": library.plain(bk.brand),
+            "contents": "contents.html", "count": len(rows), "chapters": rows}
+
+
 def shell_files():
     """Library-level files only: the hub, the manifest, the client, the icons,
     the two static pages. Deliberately O(1) in the number of books -- putting
@@ -507,6 +534,18 @@ def emit_all(books=None):
                    "accent": b.theme.get("accent"), "theme_color": b.theme_color,
                    "start": b.slug + "/index.html"} for b in bks]})
 
+    # 2b. the reading order, for the books that have one. Written before the
+    #     offline manifest in step 4 so it is hashed with the rest of the book
+    #     and downloads with it: navigation that only works online is not
+    #     navigation an installed app can rely on.
+    for b in bks:
+        nav = nav_json(b)
+        p = os.path.join(DOCS, b.slug, "nav.json")
+        if nav:
+            write_json(p, nav)
+        elif os.path.exists(p):
+            os.remove(p)
+
     # 3. inject the head block into every built page
     pages = 0
     for dp, _, fs in os.walk(DOCS):
@@ -595,6 +634,15 @@ def check():
                     "%s/icons/icon-180.png" % b.slug):
             if not os.path.exists(os.path.join(DOCS, rel)):
                 bad.append(rel + " (missing)")
+        # A chaptered book without its reading order still renders; it silently
+        # loses prev/next everywhere, which is exactly the kind of quiet
+        # regression the rest of this function exists to catch.
+        want = nav_json(b)
+        p = os.path.join(DOCS, b.slug, "nav.json")
+        if want and not os.path.exists(p):
+            bad.append("%s/nav.json (missing)" % b.slug)
+        elif want and json.loads(library.read(p)) != want:
+            bad.append("%s/nav.json (stale)" % b.slug)
     if bad:
         print("pwa: %d page(s) do not match what pwa.py would emit:" % len(bad))
         for r in bad[:12]:

@@ -173,10 +173,85 @@ html.standalone .top {
 }
 
 /* There is no browser back button in a standalone app, so anything that was
- * only reachable by the browser's chrome has to be reachable in the page. Both
- * books already carry a Library link and a Chapters link in their own top bar,
- * which is why no extra navigation is injected here. */
+ * only reachable by the browser's chrome has to be reachable in the page. The
+ * top bar's Library and Chapters links cover reaching a place. They do not
+ * cover coming back from one, so pwa.js puts a back control at the head of the
+ * bar, and only where there is somewhere to go back to. */
+
+html.standalone .pwa-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  margin: 0 .1rem 0 -.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft, #565b66);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.standalone .pwa-back:hover,
+html.standalone .pwa-back:focus-visible { color: var(--ink, #1b1b1d); }
+
+/* -------------------------------------------------- chapter navigation
+ * The prev/next row pwa.js adds to book.js's drawer. Styled here rather than
+ * in book.css because the drawer is the book's and this row is the app
+ * layer's: a file:// build has the drawer and none of this.
+ *
+ * Two equal columns whatever the chapter titles are, and the first and last
+ * chapters keep the shape with a disabled span, so the control a thumb aims
+ * for sits in the same place on every page of the book. */
+
+.mn-seq {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  margin: 0 0 .9rem;
+  padding: 0 0 .9rem;
+  border-bottom: 1px solid var(--rule, #dfdcd6);
+}
+
+.mn-seq > * {
+  display: block;
+  min-width: 0;
+  padding: .5rem .6rem;
+  border: 1px solid var(--rule, #dfdcd6);
+  border-radius: .5rem;
+  color: var(--ink, #1b1b1d);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.mn-seq > span { opacity: .45; }
+.mn-seq > a:hover { border-color: currentColor; }
+.mn-seq .next { text-align: right; }
+
+.mn-seq .mn-dir {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-soft, #565b66);
+  margin-bottom: .15rem;
+}
+
+/* Two lines at most. A chapter title in this book runs to sixty characters and
+   the drawer is half a phone wide; without the clamp one title pushes the other
+   control off its row. */
+.mn-seq .mn-ch {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 @media print {
-  .pwa-toast, .pwa-offline, .pwa-install, .pwa-shelf { display: none !important; }
+  .pwa-toast, .pwa-offline, .pwa-install, .pwa-shelf,
+  .pwa-back, .mn-seq { display: none !important; }
 }
