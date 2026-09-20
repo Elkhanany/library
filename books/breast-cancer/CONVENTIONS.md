@@ -161,17 +161,33 @@ block, tying its subject back to Part VI.
 
 ## Voice
 
-The library's `house-style` skill governs, and it comes to one rule: **do not chain independent
-clauses, give each its own sentence.** On top of that, three things this book asks for:
+The library's `house-style` skill governs. It is three layers: the library's own measured rule,
+which comes to **do not chain independent clauses, give each its own sentence**; the
+[Google developer documentation style guide](https://developers.google.com/style) underneath it
+for everything the measurement did not cover; and six declared deviations from that guide, which
+`python3 tools/stylecheck.py --deviations` prints with the reason for each.
 
-- No em dashes. Recast the sentence or use a full stop.
+Two of those deviations matter most here. This book is **British** and stays British, so
+randomised, tumour and oestrogen are correct. It is written in the **third person** and in full
+forms, because it is a reference rather than a tutorial and there is no reader being walked
+through a task.
+
+On top of the skill, four things this book asks for:
+
+- No em dashes at all. Recast the sentence or use a full stop. This is stricter than the guide,
+  which only asks for the dash to be unspaced.
 - Say what a number is a number *of*. A hazard ratio without its comparison is decoration.
 - Separate biology from measurement in every claim. If a statement is about an assay
   threshold, a sampling scheme or a scoring convention, say so. Most of the disagreement in
   this field lives in that gap.
+- Present tense for what a trial shows. `will` belongs only to a trial that has not reported,
+  which is why `stylecheck.py` lowers that rule to a suggestion for this book and no other.
 
 The reader already treats this disease. Do not explain what neoadjuvant means. Do explain why a
 convention was chosen, because that is what nobody writes down.
+
+Check a draft with `python3 tools/stylecheck.py breast-cancer` alongside `prosecheck.py`. The
+first reads the guide, the second reads the sentence architecture, and they do not overlap.
 
 ## The evidence block
 

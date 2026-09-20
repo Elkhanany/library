@@ -197,7 +197,10 @@ The binding sample is the reader's own rewrite of Chapter 2.1 §1, kept in
 10. **Translate the fine print.** When the text hits a technical caveat or a warning, say why it
    matters — in the real world, or in a later chapter — rather than stating it as a dry rule.
 11. **"We", "let's" and "you" are permitted here**, and this register deliberately overrides the
-   second-person-only rule and the ban on *let's*. The forbidden **hedges** still stand:
+   second-person-only rule and the ban on *let's*. It also overrides the Google guide's rule
+   against the first person plural, which the library otherwise follows: `stylecheck.py` lowers
+   `first-person-plural` to a suggestion for this book alone, because its *we* is the reader and
+   the writer working a derivation together. The forbidden **hedges** still stand:
    *obviously, clearly, of course, it turns out that, it can be shown*, and *simply* used to wave
    past work rather than to mean *in a simple way*.
 
