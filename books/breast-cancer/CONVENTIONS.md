@@ -1,7 +1,7 @@
 # How this book is written
 
-A reference on breast cancer for practising medical oncologists and for fellows. Sixteen
-parts, ninety-three chapters, seven hundred and seventy-eight sections. It is the first book in
+A reference on breast cancer for practising medical oncologists and for fellows. Seventeen
+parts, ninety-eight chapters, eight hundred and five sections. It is the first book in
 the library whose structure is data rather than a hand-kept list, because at this size it has
 to be.
 
@@ -156,8 +156,10 @@ A place where the obvious reading of the evidence is wrong.
 ​```
 ```
 
-Every disease-focused chapter in Parts VIII, IX and X should carry at least one interplay
-block, tying its subject back to Part VI.
+Every disease-focused chapter in the therapeutic and management parts, which is Part VIII
+onwards, should carry at least one interplay block tying its subject back to Part VI. Naming the
+parts by number here would go stale the next time the book is reorganised, which has now happened
+twice.
 
 ## Voice
 
@@ -189,10 +191,34 @@ convention was chosen, because that is what nobody writes down.
 Check a draft with `python3 tools/stylecheck.py breast-cancer` alongside `prosecheck.py`. The
 first reads the guide, the second reads the sentence architecture, and they do not overlap.
 
+## Reconciling the three layers
+
+A trial reaches a reader by three routes and each is validated separately: `evidence.py` proves a
+table's filter, `stories.py` proves a question is written in five moves, and `bc.py` proves a
+chapter's macros resolve. `python3 tools/synthcheck.py` asks whether the three agree.
+
+```bash
+python3 tools/synthcheck.py              the whole reconciliation
+python3 tools/synthcheck.py --orphans    registry trials no question names
+python3 tools/synthcheck.py --families   how every orphan is classified
+python3 tools/synthcheck.py --untold     tabulated trials nothing discusses
+```
+
+It fails on a trial that no question names and whose family is not declared out of scope, on a trial
+that reaches the reader by no route at all, and on a question rendered in a chapter its own story
+does not list. Everything else it prints is read rather than fixed.
+
+The `_scope` block in `stories.yaml` is what keeps the report short enough to be read. It names the
+families the story layer deliberately leaves alone, each with the chapter that owns them instead.
+Locoregional control, DCIS, screening, prevention and supportive care are there because a story
+argues a systemic-treatment decision and those trials settle something else. Reversing one is a
+one-line edit followed by writing the questions.
+
 ## The evidence block
 
-Parts PT-15 and PT-16 are evidence chapters. They carry the phase II and III trial record for one
-subtype, setting and modality, and they are expected to change as new data read out.
+The three subtype parts, PT-17 to PT-19, carry the evidence chapters. Each holds the phase II and
+III trial record for one subtype across every setting and modality, and each is expected to change
+as new data read out. PT-09 and PT-10 hold the cross-cutting chapters that do not sort by receptor.
 
 They do not hard-code trial results in prose. They declare a table:
 
