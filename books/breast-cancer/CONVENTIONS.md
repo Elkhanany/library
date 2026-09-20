@@ -192,6 +192,17 @@ convention was chosen, because that is what nobody writes down.
 Check a draft with `python3 tools/stylecheck.py breast-cancer` alongside `prosecheck.py`. The
 first reads the guide, the second reads the sentence architecture, and they do not overlap.
 
+## Reading the book against itself
+
+`python3 tools/synthcheck.py` reconciles the layers mechanically. What it cannot do is read, and a
+contradiction between two chapters is a reading problem. The scaffold for that is the trial: gather
+every sentence in the book that names one, set the cluster against its registry record, and look for
+a trial called positive in one chapter and negative in another, a result attributed to the wrong
+endpoint or population, or two chapters quoting one figure differently.
+
+Two hundred and twenty-five trials are named in more than one chapter, across 1,447 sentences. That
+is the whole surface, and it is small enough to read.
+
 ## Reconciling the three layers
 
 A trial reaches a reader by three routes and each is validated separately: `evidence.py` proves a
@@ -222,7 +233,9 @@ position, and every one of them had its source one paragraph up.
 A trial written as bare text is not cited. It gets no registry link, no reference card, and no
 entry in Appendix A from that chapter, so **the first mention of a trial in a chapter goes through
 the macro**. Later mentions in plain text are ordinary prose and the book does that 315 times.
-`python3 tools/evidence.py --gaps` reports a chapter that discusses a trial it never cites.
+`python3 tools/evidence.py --unlinked` reports a chapter that writes a trial's acronym in plain text
+and never links it once, and `--gaps` reports a chapter the registry assigns a trial to that never
+cites it at all.
 
 The registry's `chapters` list is **generated**, not hand-kept. `python3 tools/evidence.py
 --sync-chapters` rewrites it from where the book actually cites each trial, and `synthcheck` fails

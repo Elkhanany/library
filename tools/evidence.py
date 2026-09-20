@@ -440,6 +440,48 @@ def topics(trials, floor=0.18):
     return 0
 
 
+# an acronym that is also an ordinary word would match everywhere
+COMMON_ACRONYM = {"DATA", "SOLE", "FIRST", "CONFIRM", "TEAM", "FACE", "IDEAL", "SOFT",
+                  "TEXT", "NEXT", "PEARL", "MALE", "POSITIVE", "SUCCESS", "MONITOR",
+                  "SAFE", "TRAIN", "ADAPT", "ABC", "BEST", "CARE", "EA", "MINDACT",
+                  "PLAN", "ICE", "OLD", "YOUNG", "SENOMAC", "ATLAS", "SOUND", "START",
+                  "TAILOR"}
+
+
+def unlinked(trials):
+    """Chapters that discuss a trial in plain text and never once link it.
+
+    A trial written as bare text is not cited. It gets no registry link, no
+    reference card and no entry in Appendix A from that chapter. BC-820 argued
+    KATHERINE, APHINITY and HERA at length and linked none of them.
+
+    A LATER mention in plain text is ordinary prose and the book does it three
+    hundred times, so only a chapter that never links the trial at all is
+    reported."""
+    prose = cited_in(trials, prose_only=True)
+    acr = {}
+    for k, t in trials.items():
+        a = str(t.get("acronym") or "").strip()
+        if len(a) >= 3 and a.upper() not in COMMON_ACRONYM:
+            acr.setdefault(a, k)
+    out = []
+    d = os.path.join(BOOK, "chapters")
+    for fn in sorted(os.listdir(d)):
+        if not fn.endswith(".md"):
+            continue
+        cid = fn[:-3]
+        text = open(os.path.join(d, fn), encoding="utf-8").read()
+        body = re.sub(r"\{\{trial:[a-z0-9.-]*\}\}", " ", text)
+        body = re.sub(r"^---\n.*?\n---\n", "", body, flags=re.S)
+        body = re.sub(r"```evidence[^\n]*\n```", " ", body)
+        for a, k in acr.items():
+            if cid in (prose.get(k) or set()):
+                continue
+            if re.search(r"(?<![A-Za-z0-9-])%s(?![A-Za-z0-9-])" % re.escape(a), body):
+                out.append((cid, k, a))
+    return sorted(out)
+
+
 def gaps(trials):
     """The document says where a trial belongs; the prose says where it is
     actually discussed. Each direction is a different kind of work."""
@@ -704,6 +746,8 @@ def main():
     ap.add_argument("--topics", action="store_true",
                     help="for each topic-filtered table, the trials that match its "
                          "other axes and miss only the topic")
+    ap.add_argument("--unlinked", action="store_true",
+                    help="chapters that discuss a trial in plain text and never link it")
     ap.add_argument("--sync-chapters", action="store_true",
                     help="rewrite each trial's `chapters` list from where the book "
                          "cites it, so the hand-kept index cannot drift")
@@ -719,6 +763,14 @@ def main():
         return axes(trials)
     if a.topics:
         return topics(trials)
+    if a.unlinked:
+        rows = unlinked(trials)
+        for cid, k, a2 in rows:
+            print("   %-8s %-26s writes %s and never links it" % (cid, k, a2))
+        print("evidence: %d chapter/trial pair(s) discussed in plain text and never cited"
+              % len(rows))
+        return 1 if rows else 0
+
     if a.sync_chapters:
         rows = sync_chapters(trials, write=True)
         for k, have, want in rows[:30]:
