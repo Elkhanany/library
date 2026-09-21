@@ -43,6 +43,11 @@ tools/                the build system, shared by every book
   build.py            assembles src/ fragments into whole pages
   make.py             the offline build   → build/<book>/   (self-contained)
   webbuild.py         the website build   → docs/           (GitHub Pages)
+  nav.py              the library bar, on every page of every book. One
+                      producer, so a book cannot offer a page from three of its
+                      four fronts. Each book declares what it wants in
+                      book.json and the bar is derived from that. A text pass
+                      like pwa.py; `--check` asserts docs/ matches.
   pwa.py              the app layer over docs/: manifests, service worker,
                       icons, offline manifests. A text pass, no browser, about
                       five seconds -- so adding a meta tag never costs the
@@ -69,6 +74,8 @@ tools/                the build system, shared by every book
 
 shared/
   assets/             the house style — book.css, book.js
+                      nav.css is the bar, kept apart because it has to render
+                      on the pages that do not load book.css
   vendor/katex/       KaTeX, vendored so no page needs the network
 
 books/<slug>/
@@ -93,6 +100,19 @@ pip install playwright && playwright install chromium
 python3 tools/webbuild.py     # the whole library → docs/
 python3 tools/verify.py       # audit one book's build, network blocked
 python3 tools/sitecheck.py    # every link across the whole site
+python3 tools/navcheck.py     # drive the navigation in a real browser
+```
+
+The last two are the ones that see across books. `sitecheck` runs `nav.py --check`
+and `pwa.py --check` as part of its pass, so a bar that has gone stale fails there
+rather than waiting to be noticed; `navcheck` opens the pages and checks the
+behaviour a text pass cannot see.
+
+Changing the navigation does not need the full build. `nav.py` and `pwa.py` are
+text passes over the finished tree and take about a second each:
+
+```bash
+python3 tools/nav.py && python3 tools/pwa.py
 ```
 
 The breast cancer book keeps its trials in a registry and generates its evidence tables from it,
@@ -145,9 +165,38 @@ Two other keys are the book's own copy rather than the builder's. `blurb` is wha
 shows. `arc` is a list of `[kicker, title, blurb]`, one per part, used for the part list on the
 book's landing page — the builder holds no book's prose.
 
+### Navigation
+
+Every page of every book carries the same bar, and `tools/nav.py` is the only thing that writes it.
+A book does not declare its bar; it declares what it has, and the bar follows. A contents page when
+there are chapters to list, `In Plain Terms` and `Math Ledger` when those features are on, one entry
+per page in `pages` that names a `nav` label, and `Library` last. The same list becomes the drawer
+on a phone and the long-press menu on a home-screen icon, so those three cannot disagree — which
+they did, for as long as each was derived separately.
+
+Where the derivation is wrong for a book, `nav` overrides it:
+
+```json
+"nav": {
+  "items":  ["chapters", "trials", "stories"],
+  "labels": { "trials": "Appendix A" }
+}
+```
+
+`items` is the whole bar and its order, and `labels` renames an entry without restating the list.
+Every key has to be one the book actually has, so a typo fails the build rather than quietly
+dropping a link. `Library` cannot be dropped: it is the way back to the hub, and on iOS it is also
+what keeps a reader inside the installed app, whose scope is the library rather than one book.
+
 ## The standard every book is held to
 
 `verify.py` opens every built page at desktop and phone widths **with all network requests blocked**,
 and fails if any equation did not typeset, any cross-reference did not resolve, any mathematics
 overflows its column, or any page reaches for the internet. `docs/` is committed rather than built by
 an Action, so what is published is exactly the bytes that passed.
+
+`navcheck.py` holds the navigation to the same standard, because a bar that is merely present is not
+a bar that works. It fails if any page offers something other than what its `book.json` declares, if
+the drawer on a phone and the bar above it disagree, if a page whose whole interface fills the window
+stops fitting in it, if a page scrolls sideways on a phone, or if a page reached in a home-screen app
+has no way back.

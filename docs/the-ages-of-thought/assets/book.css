@@ -89,7 +89,25 @@ body{
 }
 
 /* KaTeX keeps a hidden MathML copy for accessibility and copy-paste; it must never
-   contribute to layout width on a narrow screen. */
+   contribute to layout width on a narrow screen.
+
+   Pinning its size was half the answer. The copy is position:absolute, KaTeX
+   gives .katex no position of its own, and nothing between a table cell and the
+   page is positioned either -- so its containing block was the body. An element
+   whose containing block is the body is not clipped by a scroller it merely sits
+   inside, and the rule below that makes a wide table scroll therefore did not
+   hold it: on the Math Ledger at 390px the copies belonging to the far side of
+   six tables sat off the right of the screen and dragged the document 68px wide
+   with them. A one-pixel box still has a left edge.
+
+   So .katex is made the containing block. It is the formula's own outermost
+   element, and every other absolutely positioned thing KaTeX emits already has a
+   positioned ancestor inside it -- .clap, .llap, .rlap, .stretchy,
+   .cd-vert-arrow and .katex-html are all position:relative in the vendored
+   stylesheet -- so this captures the MathML copy and nothing else. Here rather
+   than in shared/vendor/katex/katex.min.css, which is vendored and would lose
+   the patch on the next upgrade. */
+.katex{position:relative}
 .katex-mathml{position:absolute!important;width:1px!important;height:1px!important;
   overflow:hidden!important;clip:rect(1px,1px,1px,1px)!important;white-space:nowrap!important}
 
@@ -594,28 +612,11 @@ h3 a{text-decoration:none}
 @media (max-width:760px){.tl-item{padding-left:0}
   .tl-num{position:static;display:block;margin-bottom:.3rem}}
 
-/* ---------- site top navigation (web build only) ---------- */
-.topnav{position:sticky;top:0;z-index:40;display:flex;align-items:center;
-  justify-content:space-between;gap:1rem;padding:.62rem 1.4rem;
-  background:color-mix(in srgb,var(--bg) 88%,transparent);
-  -webkit-backdrop-filter:saturate(160%) blur(10px);
-  backdrop-filter:saturate(160%) blur(10px);
-  border-bottom:1px solid var(--rule);font-family:var(--sans);font-size:.82rem}
-.topnav .brand{font-weight:700;letter-spacing:.02em;color:var(--ink);text-decoration:none}
-.topnav-links{display:flex;gap:1.4rem}
-.topnav-links a{color:var(--ink-soft);text-decoration:none;font-weight:550}
-.topnav-links a:hover{color:var(--accent)}
-.topnav+.wrap .sidebar{top:2.6rem;height:calc(100vh - 2.6rem);height:calc(100dvh - 2.6rem)}
-/* the theme toggle is position:fixed and would otherwise sit on top of the last nav link */
-.topnav{padding-right:6rem}
-@media (max-width:760px){
-  .topnav{padding:.5rem .8rem;padding-right:5.2rem;font-size:.76rem}
-  .topnav-links{gap:.9rem}
-}
-/* Where the drawer exists it takes the theme toggle with it, and the gutter the
-   topnav was holding open for that toggle goes back to the links. */
-@media (max-width:1000px){html.has-mnav .topnav{padding-right:1.4rem}}
-@media (max-width:760px){html.has-mnav .topnav{padding-right:.8rem}}
+/* ---------- site top navigation ----------
+   Moved to shared/assets/nav.css, which tools/nav.py links from every page in
+   docs/. The bar has to look the same on the pages that do not load this
+   stylesheet -- the atlas and the timeline are self-contained documents -- and
+   it cannot if the rules that draw it live here. */
 
 
 /* ---------- narrow viewports, including a phone turned sideways ----------
@@ -649,9 +650,7 @@ h3 a{text-decoration:none}
    a coin toss on a phone. Only pointer:coarse is touched, so the desktop bar
    keeps its proportions. */
 @media (pointer:coarse){
-  .topnav{padding-top:.35rem;padding-bottom:.35rem}
-  .topnav .brand,.topnav-links a{display:inline-flex;align-items:center;min-height:44px}
-  .topnav-links{gap:1.1rem}
+  /* the bar's own targets are in nav.css, beside the rest of the bar */
   /* the mobile navigation drawer's own footer, and the controls under a figure */
   .mn-foot a,.mn-foot button{display:inline-flex;align-items:center;min-height:44px}
   .ctrl button,.ctrls button{min-height:44px;padding-top:.4rem;padding-bottom:.4rem}

@@ -87,13 +87,20 @@ button,input{font:inherit; color:inherit}
 .k{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
     color:var(--ink-3) }
 
-/* ---------------------------------------------------------- the frame */
+/* ---------------------------------------------------------- the frame
+   The atlas used to be fixed to the whole window, which was right when it was
+   the only thing in the body. The library bar sits above it now, so it takes
+   what is left of the window instead of all of it. Dividing the space with
+   flex rather than subtracting a bar height keeps it correct at every width:
+   the bar is taller where a thumb has to hit it and taller again under a
+   notch, and no arithmetic here has to know that. */
+body{ display:flex; flex-direction:column; min-height:100vh; min-height:100dvh }
+body>nav.topnav{ flex:none }
 .atlas{
-  position:fixed; top:0; left:0; right:0;
-  height:100vh; height:100dvh;          /* dvh, or the address bar steals the foot */
+  position:relative; flex:1; min-height:0;
   display:flex; flex-direction:column;
   background:var(--paper); overflow:hidden;
-  padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+  padding-bottom:env(safe-area-inset-bottom);
 }
 .atlas::before{
   content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
@@ -101,8 +108,7 @@ button,input{font:inherit; color:inherit}
 }
 html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
 @media (min-width:1180px) and (min-height:760px){
-  .atlas{ top:14px; left:14px; right:14px; height:calc(100dvh - 28px);
-          border-radius:16px; box-shadow:var(--shadow-2) }
+  .atlas{ margin:0 14px 14px; border-radius:16px; box-shadow:var(--shadow-2) }
 }
 .atlas>*{ position:relative; z-index:1 }
 
@@ -627,8 +633,19 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
   *{ transition-duration:.01ms !important; animation-duration:.01ms !important }
 }
 </style>
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
 </head>
 <body>
+<!--NAV-->
+<nav class="topnav" aria-label="Site">
+  <a class="nav-brand two" href="index.html" aria-current="page"><span class="nav-full">The Ages of Thought</span><span class="nav-short">Ages</span></a>
+  <div class="topnav-links">
+    <a class="up" href="../index.html">Library</a>
+  </div>
+</nav>
+<!--/NAV-->
 <div class="atlas">
 
   <header class="top">

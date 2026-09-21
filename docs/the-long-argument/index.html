@@ -534,18 +534,15 @@ body.evdrag{cursor:ns-resize;user-select:none}
 @media (prefers-reduced-motion:reduce){.view{transition:none}}
 
 /* ---------- fit the window again ----------
-   `.app` asks for 100vh, but since the restructure it is no longer the first
-   thing in the body — the Library bar sits above it. Asking for the whole
-   window while starting below the top of it made every page taller than the
-   window by exactly that bar. The body divides the space now, so the sum is
-   right whether or not the bar is there. */
+   `.app` asks for 100vh, and it is not the first thing in the body — the
+   library bar sits above it. Asking for the whole window while starting below
+   the top of it made every page taller than the window by exactly that bar.
+   The body divides the space now, so the sum is right whether or not the bar
+   is there. The bar itself is shared, and tools/nav.py injects it; this book
+   used to draw its own, which is the duplication that rule is now free of. */
 body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 body>nav{flex:none}
 .app{height:auto;flex:1;min-height:0}
-@media (pointer:coarse){
-  .libbar{padding:0 max(1.1rem,env(safe-area-inset-left)) 0 max(1.1rem,env(safe-area-inset-right))}
-  .libbar a,.libbar span{display:inline-flex;align-items:center;min-height:44px}
-}
 
 
 /* ============================================================
@@ -1080,13 +1077,15 @@ body>nav{flex:none}
    landscape and no desktop window anyone actually uses. */
 @media (max-width:700px), (max-height:520px){
 
-  /* The clearest waste: the library bar prints "The Long Argument" directly
-     above a header printing "The Long Argument". Its one useful part, the way
-     back, becomes an arrow in the header that was already there.
-     !important because the bar carries an inline display:flex from the build
-     template, and an inline style beats a stylesheet rule without it. */
-  .libbar{display:none!important}
-  .brand .back{display:flex}
+  /* The library bar used to be hidden here, on the reading that it printed
+     "The Long Argument" directly above a header printing the same, and that an
+     arrow in that header covered the way back. Two things were wrong with it.
+     The bar also carries Chapters, which this book's header does not, so
+     hiding it took the contents page away from every phone. And in a
+     home-screen app the back control is injected into that bar, so hiding it
+     left a standalone reader with no way back at all -- on the one surface
+     where the browser supplies none either. The bar stays, and the header's
+     arrow is the duplicate now. */
 
   /* The toolbar wrapped to three labelled rows. In one scrolling row the
      controls still read for themselves: a segmented pair, a zoom stepper, a
@@ -1220,9 +1219,20 @@ body>nav{flex:none}
 @media (max-width:700px),(max-height:520px){ .tierctl input[type=range]{width:80px} }
 
 </style>
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
 </head>
 <body>
-<nav class="libbar" style="font:600 .74rem/1 var(--f-ui);letter-spacing:.02em;padding:.7rem 1.1rem;border-bottom:1px solid var(--rule-2);display:flex;gap:1.1rem;align-items:center"><a href="../index.html" style="color:var(--rubric);text-decoration:none">&larr; Library</a><span style="color:var(--ink-3)">The Long Argument</span></nav>
+<!--NAV-->
+<nav class="topnav" aria-label="Site">
+  <a class="nav-brand two" href="index.html" aria-current="page"><span class="nav-full">The Long Argument</span><span class="nav-short">Argument</span></a>
+  <div class="topnav-links">
+    <a href="contents.html">Chapters</a>
+    <a class="up" href="../index.html">Library</a>
+  </div>
+</nav>
+<!--/NAV-->
 <div class="app">
 <div class="chrome">
 <header class="top">

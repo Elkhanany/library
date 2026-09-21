@@ -10,7 +10,8 @@ and those are exactly the links no single-book check was ever built to see.
 
     python3 tools/sitecheck.py
 
-Exit 1 if any internal link, stylesheet, script or image is missing, or if any
+Exit 1 if any internal link, stylesheet, script or image is missing, if any page
+carries a navigation bar other than the one its book.json describes, or if any
 page reaches outside the site for something it needs to render.
 """
 import os
@@ -87,10 +88,17 @@ def main():
         return 1
     print("  every internal link resolves, nothing loaded from off-site")
 
+    # Every link resolving is not the same as every page offering the same
+    # links. A bar that has gone stale points only at pages that exist, so the
+    # check above passes on it and the reader is simply never offered the page
+    # that was added. That is what this catches.
+    import nav
+    rc = nav.check()
+
     # The app layer is one string match away from silently not existing, so it
     # is checked here rather than left to whoever remembers to look.
     import pwa
-    rc = pwa.check()
+    rc = pwa.check() or rc
 
     # A dataset the site offers for download fails worse than a broken link,
     # because a stale spreadsheet opens and looks right. The link check above

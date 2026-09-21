@@ -14,6 +14,7 @@ from playwright.async_api import async_playwright
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import library
+import nav
 import pwa
 
 ROOT = library.ROOT
@@ -78,28 +79,13 @@ def themecss(bk):
     return "\n".join(out) + "\n"
 
 
-def nav(bk):
-    """The book's own top bar, plus the way back to the library.
-
-    Built from the book's features rather than fixed, so a book with no ledger
-    and no through-line does not advertise two pages it will never have.
-    """
-    links = ['<a href="contents.html">Chapters</a>']
-    if bk.has("throughline"):
-        links.append('<a href="throughline.html">In Plain Terms</a>')
-    if bk.has("ledger"):
-        links.append('<a href="ledger.html">Math Ledger</a>')
-    # A page the book declared for itself gets a top-bar link when it names one.
-    for spec in bk.cfg.get("pages") or []:
-        if spec.get("nav"):
-            links.append('<a href="%s">%s</a>' % (spec["out"], html.escape(spec["nav"])))
-    links.append('<a href="../index.html">Library</a>')
-    return """<nav class="topnav">
-  <a class="brand" href="index.html">{brand}</a>
-  <div class="topnav-links">
-    {links}
-  </div>
-</nav>""".format(brand=bk.brand, links="\n    ".join(links))
+# The top bar is emitted by tools/nav.py over the finished tree, for the same
+# reason the app layer is: it belongs on every page of the site, and most of
+# those pages are not rendered here. The landing pages are copied through
+# verbatim, the atlas and the timeline are whole documents of their own, and a
+# bar this function stamped into SHELL would reach none of them. It used to
+# reach only what SHELL wrote, which is how four books came to have five
+# different bars between them.
 
 
 SHELL = """<!DOCTYPE html>
@@ -113,7 +99,6 @@ SHELL = """<!DOCTYPE html>
 <link rel="stylesheet" href="assets/book.css">
 </head>
 <body>
-{nav}
 <div class="wrap">
 <nav class="sidebar">
   <a class="sb-home" href="contents.html">← All chapters</a>
@@ -185,7 +170,7 @@ def landing_page(bk, stats):
     tplf = os.path.join(bk.src, "_landing.html")
     if not os.path.exists(tplf):
         library.write(os.path.join(bk.out, "index.html"),
-            SHELL.format(mathcss=mathcss(bk), title="Contents", desc=html.escape(bk.tagline), nav=nav(bk),
+            SHELL.format(mathcss=mathcss(bk), title="Contents", desc=html.escape(bk.tagline),
                          sbhead="Parts", toc="", wide=" wide", extra="",
                          book=html.escape(bk.title),
                          body=f'<p class="eyebrow">{html.escape(bk.eyebrow)}</p>'
@@ -537,7 +522,7 @@ async def build_book(bk, browser):
             stats["words"] += words
             stats["eq"] += len(re.findall(r'class="katex"', body))
             stats["boxes"] += len(re.findall(r'class="callout plain"', body))
-        library.write(dest, SHELL.format(mathcss=mathcss(bk), title=title, desc=html.escape(desc), nav=nav(bk),
+        library.write(dest, SHELL.format(mathcss=mathcss(bk), title=title, desc=html.escape(desc),
                                          sbhead=sbhead, toc=toc, body=body,
                                          wide=wide, extra=extra,
                                          book=html.escape(bk.title)))
@@ -607,7 +592,13 @@ async def main():
     # drift apart because they are the same code. The injector is idempotent
     # and anchored on the viewport meta, and raises rather than silently
     # patching nothing if that anchor ever moves.
+    # The bar, then the app layer, both over the finished tree and both pure
+    # text. They anchor on different strings -- the bar on <body>, the app layer
+    # on the viewport meta -- so neither disturbs the other and the order here
+    # is only the order they read best in.
+    barred = nav.emit_all([bk for bk, _n, _s in results])
     pages = pwa.emit_all([bk for bk, _n, _s in results])
+    print(f"  navigation: {barred} pages carry the library bar")
     print(f"  app layer: {pages} pages, {len(results)} manifests")
 
     tot = sum(os.path.getsize(os.path.join(dp, f))
