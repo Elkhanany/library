@@ -152,7 +152,16 @@ var NMT = (function () {
     if (document.getElementById('mnav')) return;
     if (!document.querySelector('.main')) return;
     var h2s = hs.filter(function (h) { return h.tagName === 'H2'; });
-    if (h2s.length < 2) return;          /* nothing worth jumping between */
+    /* Two reasons to build the drawer and they are separate. A chapter with
+       several sections needs the list, to jump between them. A chapter in a
+       book's reading sequence needs the prev/next row and the position, which
+       pwa.js adds to this panel, and it needs them however few sections it has.
+       The sidebar title is what marks a page as sitting in such a sequence: a
+       standalone page such as the trial registry carries none and still builds
+       no drawer. Gating both on the section count is what took the navigation
+       away from a one-section chapter. */
+    var inSequence = !!document.querySelector('.sb-title');
+    if (h2s.length < 2 && !inSequence) return;
 
     var btn = document.createElement('button');
     btn.id = 'mnav-btn';
@@ -181,7 +190,10 @@ var NMT = (function () {
 
     var list = document.createElement('div');
     list.className = 'mn-list';
-    var links = h2s.map(function (h) {
+    /* One section is not a list. The panel still gets the element, so the
+       prev/next row keeps its insertion point and the open handler keeps its
+       query target, but nothing is put in it to jump between. */
+    var links = (h2s.length < 2 ? [] : h2s).map(function (h) {
       var a = document.createElement('a');
       a.href = '#' + h.id;
       a.textContent = h.textContent;
