@@ -141,23 +141,99 @@ class Book:
         ic.setdefault("fg", self.theme.get("paper", "#ffffff"))
         return ic
 
+    # ---------- the navigation a book offers ----------
+    # One list, and three surfaces read it: the top bar that nav.py puts on
+    # every page, the drawer that pwa.js builds on a phone, and the home-screen
+    # shortcut menu above. They used to be three derivations of the same idea,
+    # which is how the clinical book came to advertise Stories in its top bar,
+    # not in its shortcut menu, and not on its own landing page. A reader cannot
+    # see which code wrote which surface. They should not have to.
+
+    def nav_items(self):
+        """Where this book will take a reader, in the order it offers them.
+
+        Derived from what the book actually has, so no book can advertise a
+        page it never builds. A book that wants a different order, or different
+        words, says so in book.json:
+
+            "nav": {"items": ["chapters", "trials", "stories"],
+                    "labels": {"trials": "Appendix A"}}
+
+        "items" is the whole bar and its order. "labels" renames an entry
+        without restating the list. Every key must be one this method derived,
+        so a typo is a build failure rather than a link that quietly vanishes.
+        """
+        nav = self.cfg.get("nav") or {}
+        derived, order = {}, []
+
+        def add(key, label, href):
+            derived[key] = {"key": key, "label": label, "href": href}
+            order.append(key)
+
+        # The contents page is offered when there are chapters on it, written
+        # or merely planned. The Long Argument has eight planned and none
+        # written, and its contents page is the plan -- worth reaching. The
+        # Ages of Thought is an atlas with no curriculum at all, and its
+        # contents page is a heading over nothing, so it is not offered.
+        if self.flat:
+            add("chapters", "Chapters", "contents.html")
+        if self.has("throughline"):
+            add("throughline", "In Plain Terms", "throughline.html")
+        if self.has("ledger"):
+            add("ledger", "Math Ledger", "ledger.html")
+        # A page the book declares for itself, when it names a label for it.
+        # This is the way a book adds a destination: one entry, one place.
+        for spec in self.cfg.get("pages") or []:
+            if spec.get("nav"):
+                add(spec.get("key") or os.path.splitext(spec["out"])[0],
+                    spec["nav"], spec["out"])
+        add("library", "Library", "../index.html")
+
+        keys = nav.get("items")
+        if keys is None:
+            keys = list(order)
+        else:
+            unknown = [k for k in keys if k not in derived]
+            if unknown:
+                raise SystemExit(
+                    "%s: book.json nav.items names %s, which this book does not "
+                    "have. It offers: %s" % (self.slug, ", ".join(unknown),
+                                             ", ".join(order)))
+        # Library is not droppable. It is the only way back to the hub, and on
+        # iOS it is also what keeps a reader inside the installed app: the
+        # manifest is scoped to the library rather than to one book precisely
+        # so this link does not throw them out of it.
+        keys = [k for k in keys if k != "library"] + ["library"]
+
+        labels = nav.get("labels") or {}
+        unknown = [k for k in labels if k not in derived]
+        if unknown:
+            raise SystemExit("%s: book.json nav.labels renames %s, which this "
+                             "book does not have" % (self.slug, ", ".join(unknown)))
+        return [dict(derived[k], label=labels.get(k, derived[k]["label"]))
+                for k in keys]
+
     def shortcuts(self):
-        """Derived from the book's own features, so a book can never advertise a
-        Math Ledger it does not build."""
+        """The home-screen long-press menu, taken from nav_items().
+
+        This used to derive its own list, and the two lists disagreed. The bar
+        in the clinical book offered Stories and Trials; the shortcut menu on
+        the same book's icon offered neither, because it had never been taught
+        that a book can declare pages. A reader has no way to know that the two
+        surfaces were written by different code, so they must not be.
+
+        Trimmed to four. Android shows about four and iOS fewer, and a menu
+        that is silently truncated should be truncated where the order is
+        chosen rather than wherever the platform happens to cut. Continue comes
+        first because it is the one entry no page can offer."""
         if "shortcuts" in self.pwa:
             return self.pwa["shortcuts"]
         out = [{"name": "Continue", "url": "../continue.html?b=" + self.slug}]
-        # Only when there is a chapter index worth opening. A book whose whole
-        # text lives in its landing page still gets a contents.html from the
-        # build, but it is an empty shell -- The Long Argument's has five links,
-        # two of them to itself -- and a shortcut into it is a dead end.
-        if self.written():
-            out.append({"name": "Chapters", "url": "contents.html"})
-        if self.has("throughline"):
-            out.append({"name": "In Plain Terms", "url": "throughline.html"})
-        if self.has("ledger"):
-            out.append({"name": "Math Ledger", "url": "ledger.html"})
-        return out
+        for item in self.nav_items():
+            if item["key"] == "library":
+                continue      # the shortcut menu belongs to one book's icon
+            out.append({"name": plain(item["label"]), "url": item["href"]})
+        return out[:4]
 
     def manifest(self, icons):
         # scope is "../" -- the library root -- rather than this book's own

@@ -1,0 +1,218 @@
+/* ===========================================================================
+ * nav.css -- the library bar, and the only stylesheet that describes it.
+ *
+ * The bar used to live in book.css, which meant it existed only on the pages
+ * that load book.css. The physics book's landing page, the atlas and the
+ * timeline do not load it: they are self-contained documents with their own
+ * palettes, and each had grown a bar of its own or none at all. So the site
+ * had four ideas of how to get back to the library and one of them was "you
+ * cannot".
+ *
+ * Moving the rules here, and having tools/nav.py link this file from every
+ * page it writes, is what makes one bar possible. Which means this file cannot
+ * assume book.css: not its variable names, not its fonts, not its palette.
+ *
+ * COLOUR
+ *
+ * Each page already knows what it is made of, and it is the page rather than
+ * this file that follows the reader into dark mode. So every token below reads
+ * the page's own variable and falls back to the next book's spelling of the
+ * same idea, ending in a literal. book.css calls the page ground --bg and the
+ * two philosophy books call it --paper; both are answered by one declaration,
+ * and neither book had to be edited to agree.
+ *
+ * Nothing here is stamped in by the builder for that reason. A stamped palette
+ * would be a second copy of the theme, correct until someone edited one of
+ * them.
+ * =========================================================================== */
+
+.topnav {
+  --nav-bg:     var(--bg, var(--paper, #fbfaf7));
+  --nav-ink:    var(--ink, #1b1b1d);
+  --nav-soft:   var(--ink-soft, var(--ink-2, #4a4a50));
+  --nav-rule:   var(--rule, #e0ddd5);
+  --nav-accent: var(--accent, var(--rubric, #1b4b80));
+  --nav-sans:   var(--sans, var(--f-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif));
+
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* The bar grows rather than losing what is in it. The physics book carries
+     four links, and four links plus a title plus the floating toggle do not
+     fit across a 360px phone; squeezing the title was the alternative and it
+     squeezed it to nothing. Wrapping only happens when it must, so every
+     other page and book keeps one row. The sidebar's offset below assumes
+     one, and is only ever shown above 1000px where nothing wraps. */
+  flex-wrap: wrap;
+  gap: .25rem 1rem;
+  padding: .62rem 1.4rem;
+  background: color-mix(in srgb, var(--nav-bg) 88%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+  backdrop-filter: saturate(160%) blur(10px);
+  border-bottom: 1px solid var(--nav-rule);
+  font-family: var(--nav-sans);
+  font-size: .82rem;
+  line-height: 1.2;
+}
+
+/* nav-brand, not brand. The timeline's own header calls its title block
+ * .brand and reorders it on a phone with an unscoped rule, which reached into
+ * this bar and put the book's name after the links. A shared component cannot
+ * be named for the thing it is on the page; it has to be named for the
+ * component. Order and flex are stated for the same reason: a property this
+ * file does not declare is one a book's stylesheet can still decide. */
+.topnav .nav-brand {
+  order: 0;
+  flex: 0 1 auto;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--nav-ink);
+  text-decoration: none;
+  /* A floor, not a preference. overflow:hidden makes a flex item shrinkable to
+     nothing -- that is what the specification says an automatic minimum size
+     becomes -- so without this the bar chose a zero-width title over a second
+     row. Below the floor it wraps; below a sane title width it still elides,
+     which is the guard for a brand nobody has written yet. */
+  min-width: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topnav-links {
+  order: 1;
+  margin-left: auto;        /* right-aligned on its own row too, once wrapped */
+  display: flex;
+  gap: 1.4rem;
+  align-items: center;
+  flex: none;
+}
+
+.topnav-links a {
+  color: var(--nav-soft);
+  text-decoration: none;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.topnav-links a:hover,
+.topnav-links a:focus-visible { color: var(--nav-accent); }
+
+/* Where you already are. Every book's bar used to link the page it was on --
+ * contents.html offered Chapters, pointing at itself -- which reads as a dead
+ * control and costs a reader a page load to find out. nav.py marks the current
+ * entry instead, and it stays a link so the shape of the bar does not change
+ * from page to page. */
+.topnav [aria-current="page"] {
+  color: var(--nav-ink);
+  font-weight: 650;
+}
+
+/* The way back out of the book, set apart from the book's own destinations.
+ * It is the one entry every page in the library carries. */
+.topnav-links .up {
+  padding-left: 1.4rem;
+  border-left: 1px solid var(--nav-rule);
+  color: var(--nav-accent);
+}
+
+/* The floating theme toggle is position:fixed and would sit on top of the last
+ * link, so the bar holds a gutter open for it -- but only on the pages that
+ * have one. book.js sets .has-themer when it builds the toggle, and takes it
+ * away again into the drawer below 1000px, which is what .has-mnav says. Held
+ * unconditionally, as it was, the gutter cost five rems of a 390px bar on
+ * every page that never had a toggle at all: four of the seven kinds of page
+ * in this library, including three of the four books' front doors. */
+html.has-themer .topnav { padding-right: 6rem; }
+
+/* ---------- the shell around the bar ----------
+ * Only pages built from webbuild's shell have these; they are here rather than
+ * in book.css so that every rule that knows the bar's height is in one file. */
+.topnav + .wrap .sidebar {
+  top: 2.6rem;
+  height: calc(100vh - 2.6rem);
+  height: calc(100dvh - 2.6rem);
+}
+
+@media (max-width: 760px) {
+  .topnav { padding: .5rem .8rem; font-size: .76rem; }
+  /* The toggle is 52px wide and sits 14px in, so it needs 66. The bar held
+     83 open for it, and those seventeen pixels are the ones a book's name is
+     short of at 390px. */
+  html.has-themer .topnav { padding-right: 4.4rem; }
+  .topnav-links { gap: .9rem; }
+  .topnav-links .up { padding-left: .9rem; }
+}
+
+/* Where the drawer exists it takes the theme toggle with it, and the gutter the
+   bar was holding open for that toggle goes back to the links. */
+@media (max-width: 1000px) { html.has-mnav.has-themer .topnav { padding-right: 1.4rem; } }
+@media (max-width: 760px)  { html.has-mnav.has-themer .topnav { padding-right: .8rem; } }
+
+/* ---------- the brand, on a narrow bar ----------
+ * Something has to give when four links and a title do not fit across 390px,
+ * and it must not be a link. The book already declares a short name -- it is
+ * what iOS writes under the home-screen icon -- so the bar uses it rather than
+ * cutting the long one. "Newton→M" reads; "Newton..." does not, and at the
+ * width where the gutter used to sit the physics book's name was cut to
+ * nothing at all.
+ *
+ * nav.py emits the second span only when the two differ, and marks the brand
+ * .two when it does, so a book whose name is already short carries neither the
+ * extra element nor the rule. */
+.nav-brand .nav-short { display: none; }
+@media (max-width: 560px) {
+  .nav-brand.two .nav-full  { display: none; }
+  .nav-brand.two .nav-short { display: inline; }
+}
+
+/* ---------- touch targets ----------
+   Apple asks for 44pt. The bar's links were 12 to 20 pixels tall, which is a
+   coin toss with a thumb. Only pointer:coarse is touched, so the desktop bar
+   keeps its proportions. */
+@media (pointer: coarse) {
+  .topnav { padding-top: .35rem; padding-bottom: .35rem; }
+  .topnav .nav-brand,
+  .topnav-links a { display: inline-flex; align-items: center; min-height: 44px; }
+  .topnav-links { gap: 1.1rem; }
+  /* the bar runs edge to edge, and on a notched phone the edges are not flat */
+  .topnav {
+    padding-left: max(.8rem, env(safe-area-inset-left));
+    padding-right: max(5.2rem, env(safe-area-inset-right));
+  }
+  @media (max-width: 1000px) {
+    html.has-mnav .topnav { padding-right: max(1.4rem, env(safe-area-inset-right)); }
+  }
+}
+
+/* ---------- the narrowest bar ----------
+ * A 390px bar carrying four links and a title is at the limit, and the physics
+ * book is the one that reaches it: Chapters, In Plain Terms, Math Ledger and
+ * Library leave about forty pixels for a name. Tightening the type and the
+ * gaps by a tenth buys back sixty, which is the difference between a short
+ * name that reads and one that is cut again.
+ *
+ * After the touch block rather than before it, because that block sets the
+ * same gap at the same specificity and the later rule is the one that wins. */
+@media (max-width: 430px) {
+  .topnav { font-size: .72rem; }
+  .topnav-links { gap: .7rem; }
+  .topnav-links .up { padding-left: .7rem; }
+
+  /* Where the bar is this tight and the toggle is still floating over it --
+     one page in the library: a front door with its own toggle and no drawer to
+     put it in -- the toggle goes below the bar rather than taking a gutter out
+     of it. A gutter is no use once the bar has wrapped anyway: it holds the
+     corner open on the row above and the links arrive on the row beneath. */
+  html.has-themer:not(.has-mnav) .topnav { padding-right: .8rem; }
+  html.has-themer:not(.has-mnav) #themer { top: 3.4rem; }
+}
+
+/* A bar is a way of leaving the page. On paper there is nowhere to go, and the
+ * rest of the furniture was already hidden here -- the bar was not, and printed
+ * a row of dead links at the top of every chapter. */
+@media print { .topnav { display: none !important; } }

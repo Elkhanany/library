@@ -389,14 +389,23 @@ def nav_json(bk):
 
     A book with fewer than two written chapters gets no file, and the client
     then does nothing: the two single-page books are not chaptered and have
-    nothing to page through."""
+    nothing to page through.
+
+    It also carries the book's destinations, which are the same list the top
+    bar is built from. The drawer is the whole of the navigation on a phone,
+    and it used to offer one link out of the chapter -- back to the contents
+    page -- while the bar three centimetres above it offered four. Carrying
+    them here rather than reading them off the bar is what makes them work
+    offline and inside a home-screen app, where the bar may be scrolled away
+    and there is no browser chrome to fall back on."""
     rows = [{"href": slug + ".html", "num": num, "title": library.plain(title),
              "part": library.plain(part)}
             for num, slug, title, part, _math in bk.written()]
     if len(rows) < 2:
         return None
     return {"slug": bk.slug, "brand": library.plain(bk.brand),
-            "contents": "contents.html", "count": len(rows), "chapters": rows}
+            "contents": "contents.html", "count": len(rows),
+            "links": bk.nav_items(), "chapters": rows}
 
 
 def shell_files():
@@ -405,7 +414,8 @@ def shell_files():
     every book's landing page and stylesheet in here would make the install cost
     grow with the shelf, and charge a reader for twenty books to open one."""
     out = ["index.html", "manifest.webmanifest", "offline.html",
-           "continue.html", "catalog.json", "assets/pwa.js", "assets/pwa.css"]
+           "continue.html", "catalog.json", "assets/pwa.js", "assets/pwa.css",
+           "assets/nav.css"]
     icons = os.path.join(DOCS, "icons")
     if os.path.isdir(icons):
         out += ["icons/" + f for f in sorted(os.listdir(icons))]
