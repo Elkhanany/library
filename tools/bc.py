@@ -281,7 +281,42 @@ class Chapter:
             self.fail("[[term:%s]] is not in glossary.yaml" % k)
             return esc(k)
         return '<span class="gloss" title="%s">%s</span>' % (
-            esc(g["definition"]), esc(g["term"]))
+            esc(g["definition"]), esc(self.term_case(g["term"], mo)))
+
+    def term_markers(self, t):
+        """A glossary macro is a noun in the sentence, not a marker after it.
+
+        Six chapters wrote `...carries information [[term:rcb]].`, meaning it
+        as a see-also. It renders as a dangling noun phrase: "...carries
+        information residual cancer burden." Put the macro on the words it
+        defines instead."""
+        for mo in TERM.finditer(t):
+            if not re.match(r"\s*[.;]", t[mo.end():mo.end() + 2]):
+                continue
+            run_up = t[max(0, mo.start() - 40):mo.start()].rstrip()
+            if re.search(r"\b(?:is|are|was|were|a|an|the|of|to|with|in|on|and|or|as|"
+                         r"called|termed|namely)$", run_up):
+                continue
+            self.fail("[[term:%s]] sits at the end of a sentence as a marker. It renders "
+                      "as a dangling noun phrase; attach it to the words it defines."
+                      % mo.group(1))
+
+    @staticmethod
+    def term_case(word, mo):
+        """A glossary entry is written as a heading and used as a noun.
+
+        `Residual cancer burden` is the right form for a glossary and the wrong
+        form in the middle of a sentence, where it rendered as "...and Residual
+        cancer burden recovers it". Lowercase the first letter when the macro
+        sits mid-sentence and the entry is merely sentence-cased. An acronym or
+        a proper noun keeps its capitals, which the second character decides:
+        HER2-low has one, Molecular residual disease does not."""
+        if not (word[:1].isupper() and word[1:2].islower()):
+            return word
+        before = mo.string[:mo.start()].rstrip()
+        if not before or before[-1] in ".!?:" or before.endswith("\n\n"):
+            return word
+        return word[0].lower() + word[1:]
 
     def xref(self, mo):
         tid = mo.group(1)
@@ -309,6 +344,7 @@ class Chapter:
         t = esc(t)
         t = CITE_GROUP.sub(self.cite, t)
         t = TRIAL.sub(self.trial, t)
+        self.term_markers(t)
         t = TERM.sub(self.term, t)
         t = XREF.sub(self.xref, t)
         t = MDLINK.sub(lambda mo: '<a href="%s">%s</a>' % (mo.group(2), mo.group(1)), t)
