@@ -337,6 +337,34 @@ async def main():
                    [k for k in ('clipped', 'spill', 'over') if r[k]])
                 await pg.close()
 
+        # ---------------------------------------------------- nothing scrolls sideways
+        # A page that scrolls sideways on a phone puts part of itself where a
+        # reader will not find it, and the reader is given no reason to look.
+        # book.css has guards for the two things that are wide -- a table and an
+        # interactive figure both scroll inside their own box -- and the Math
+        # Ledger escaped both: KaTeX's hidden MathML copy is position:absolute,
+        # nothing between a table cell and the page was positioned, so its
+        # containing block was the body and the table's scroller did not hold
+        # it. The page was 68px wide of the window at 390px with nothing visible
+        # to explain it.
+        #
+        # Six pages rather than a hundred and forty-seven, because each costs a
+        # page load: the two that carry most of the mathematics, the two widest
+        # tables in the library, and the two books that draw their own interface.
+        print('\nnothing scrolls sideways')
+        for page in ('newton-to-mtheory/ledger.html',
+                     'newton-to-mtheory/throughline.html',
+                     'newton-to-mtheory/ch2-1.html',
+                     'breast-cancer/trials.html',
+                     'the-long-argument/index.html',
+                     'the-ages-of-thought/index.html'):
+            for w in (320, 390):
+                pg = await opened(br, base + page, w, 800)
+                over = await pg.evaluate(
+                    '() => document.documentElement.scrollWidth - window.innerWidth')
+                ok('%s does not scroll sideways at %d' % (page, w), over <= 1, over)
+                await pg.close()
+
         # ------------------------------------------------- standalone, everywhere
         # The back control is injected into the bar. A page without one had no
         # back control, and in a home-screen app there is no browser chrome to

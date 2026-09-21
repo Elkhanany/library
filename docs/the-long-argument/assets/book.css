@@ -89,7 +89,25 @@ body{
 }
 
 /* KaTeX keeps a hidden MathML copy for accessibility and copy-paste; it must never
-   contribute to layout width on a narrow screen. */
+   contribute to layout width on a narrow screen.
+
+   Pinning its size was half the answer. The copy is position:absolute, KaTeX
+   gives .katex no position of its own, and nothing between a table cell and the
+   page is positioned either -- so its containing block was the body. An element
+   whose containing block is the body is not clipped by a scroller it merely sits
+   inside, and the rule below that makes a wide table scroll therefore did not
+   hold it: on the Math Ledger at 390px the copies belonging to the far side of
+   six tables sat off the right of the screen and dragged the document 68px wide
+   with them. A one-pixel box still has a left edge.
+
+   So .katex is made the containing block. It is the formula's own outermost
+   element, and every other absolutely positioned thing KaTeX emits already has a
+   positioned ancestor inside it -- .clap, .llap, .rlap, .stretchy,
+   .cd-vert-arrow and .katex-html are all position:relative in the vendored
+   stylesheet -- so this captures the MathML copy and nothing else. Here rather
+   than in shared/vendor/katex/katex.min.css, which is vendored and would lose
+   the patch on the next upgrade. */
+.katex{position:relative}
 .katex-mathml{position:absolute!important;width:1px!important;height:1px!important;
   overflow:hidden!important;clip:rect(1px,1px,1px,1px)!important;white-space:nowrap!important}
 

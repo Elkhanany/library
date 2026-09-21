@@ -198,4 +198,5 @@ an Action, so what is published is exactly the bytes that passed.
 `navcheck.py` holds the navigation to the same standard, because a bar that is merely present is not
 a bar that works. It fails if any page offers something other than what its `book.json` declares, if
 the drawer on a phone and the bar above it disagree, if a page whose whole interface fills the window
-stops fitting in it, or if a page reached in a home-screen app has no way back.
+stops fitting in it, if a page scrolls sideways on a phone, or if a page reached in a home-screen app
+has no way back.
