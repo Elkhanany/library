@@ -497,6 +497,8 @@
   function drawerNav() {
     var panel = document.getElementById('mnav');
     if (!panel || panel.querySelector('.mn-seq')) return;
+    if (HERE < 0) return;        /* contents, trials, ledger: in the book but
+                                    not in its reading sequence */
 
     var prev = at(HERE - 1), next = at(HERE + 1);
     if (!prev && !next) return;
@@ -527,6 +529,50 @@
     if (k && HERE >= 0) k.textContent = k.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
   }
 
+  /* ---- the destinations
+   * The same links the top bar carries, in the drawer that is the whole of the
+   * navigation on a phone. book.js gives the drawer one way out of the chapter,
+   * "All chapters", because that is the only one a file:// build can know
+   * about. A book with a trial registry and a stories index has three more, and
+   * a reader holding a phone had to scroll back to the top of a five-thousand
+   * word chapter to reach any of them.
+   *
+   * Taken from nav.json rather than read off the bar in the page, so it is the
+   * same list on a chapter whose bar has scrolled away, in an installed app
+   * with no browser chrome, and offline. */
+
+  function drawerLinks() {
+    var panel = document.getElementById('mnav');
+    if (!panel || panel.querySelector('.mn-dest')) return;
+    if (!NAV || !NAV.links || NAV.links.length < 2) return;
+
+    var here = file(location.pathname);
+    var box = document.createElement('div');
+    box.className = 'mn-dest';
+    NAV.links.forEach(function (item) {
+      /* The page you are on is not somewhere to go. It stays in the list, so
+       * the list is the same shape on every page, and stops being a control. */
+      var on = file(item.href) === here;
+      var el = document.createElement(on ? 'span' : 'a');
+      if (!on) el.href = item.href;
+      else el.setAttribute('aria-current', 'page');
+      if (item.key === 'library') el.className = 'up';
+      el.textContent = item.label;
+      box.appendChild(el);
+    });
+
+    var foot = panel.querySelector('.mn-foot');
+    if (foot) {
+      panel.insertBefore(box, foot);
+      /* book.js's "All chapters" is now the first entry of this list. Two
+       * controls to the same page, one above the other, is worse than either. */
+      var back = foot.querySelector('a');
+      if (back) back.remove();
+    } else {
+      panel.appendChild(box);
+    }
+  }
+
   /* The same fact on the other surface. The sidebar is the desktop drawer and
    * already names the chapter; without this, position is something only a
    * phone reader is told. */
@@ -542,9 +588,10 @@
    * rather than depend on which handler runs first, try once now and once after
    * a frame. */
   function whenDrawer() {
+    drawerLinks();
     drawerNav();
     sidebarPosition();
-    requestAnimationFrame(drawerNav);
+    requestAnimationFrame(function () { drawerLinks(); drawerNav(); });
   }
 
   /* ---- the keyboard */
@@ -606,9 +653,10 @@
     for (var i = 0; i < NAV.chapters.length; i++) {
       if (file(NAV.chapters[i].href) === here) { HERE = i; break; }
     }
-    backControl();
-    if (HERE < 0) return;                    /* contents, trials, ledger: in the
-                                                book but not in its sequence */
+    /* Not gated on HERE. The prev/next row and the position are meaningless on
+     * the contents page or the trial registry, and drawerNav() declines to
+     * draw them there; the destinations are exactly as useful on those pages as
+     * in a chapter, and returning early used to take them away. */
     if (document.readyState === 'loading') {
       addEventListener('DOMContentLoaded', whenDrawer);
     } else {
@@ -616,7 +664,13 @@
     }
   }
 
-  if (SLUG) chapterNav();
+  /* The back control does not depend on the reading order, and used to be
+   * called from inside the fetch that loads one. So the two books that have no
+   * reading order got no back control -- in a home-screen app, where there is
+   * no browser chrome either, the atlas was somewhere a reader could arrive and
+   * not leave. It is called here instead, where a book having chapters or not
+   * has nothing to do with it. */
+  if (SLUG) { backControl(); chapterNav(); }
 
   /* What the hub uses to draw the shelf. Everything above is generic. */
   window.LibraryPWA = {

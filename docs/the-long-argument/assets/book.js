@@ -20,6 +20,15 @@
       if (window.NMT && NMT.redrawAll) NMT.redrawAll();
     };
     document.body.appendChild(b);
+    /* tells nav.css that this page has a floating toggle, so the bar holds a
+       gutter open for it. Most pages do not: the two philosophy books carry
+       their own toggle inside their own chrome, and the clinical book's
+       landing page and appendices do not load this file at all. The bar used
+       to reserve five rems on every one of them, which at 390px is the
+       difference between a book's name and "Breast..." -- and, on the physics
+       book, between its name and nothing at all. Same shape as .has-mnav
+       below, set at the same moment, for the same kind of reason. */
+    document.documentElement.classList.add('has-themer');
   });
 })();
 
