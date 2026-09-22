@@ -500,6 +500,19 @@ async def build_book(bk, browser):
     library.write(os.path.join(out, "assets", "book.css"),
                   library.read(os.path.join(library.ASSETS, "book.css")) + themecss(bk))
     library.write(os.path.join(out, "assets", "book.js"), runtime_js())
+    # The front door's stylesheet, for the books that have a hand-written one.
+    # Copied per book exactly as book.css is, rather than shared at the library
+    # level, so a book's offline download carries everything that book's pages
+    # ask for and no book pays for a stylesheet it never loads.
+    # Asked for, not merely possible: the atlas and the timeline have landing
+    # pages too and are whole self-contained documents that load neither this
+    # stylesheet nor book.css. Keying off the file's own <link> means a book
+    # gets the stylesheet exactly when it uses it, and stops carrying it the
+    # day it stops.
+    lp = os.path.join(bk.src, "_landing.html")
+    if os.path.exists(lp) and "assets/landing.css" in library.read(lp):
+        library.write(os.path.join(out, "assets", "landing.css"),
+                      library.read(os.path.join(library.ASSETS, "landing.css")))
 
     n = 0
     stats = {"words": 0, "eq": 0, "boxes": 0, "planned": len(bp.FLAT)}
@@ -558,11 +571,16 @@ async def build_book(bk, browser):
 
     def human(x):
         return f"{x/1000:.0f}k" if x >= 10000 else f"{x:,}"
+    # One dict, passed to both. It was written out twice, identically, and a
+    # stat added to one copy would have appeared on the appendices and not on
+    # the front door. PARTS is here because a landing page that names a number
+    # of parts in its prose goes stale the first time a part is added: the
+    # clinical book's said sixteen while the curriculum held seventeen.
     page_stats = {"CH": f"{n} / {stats['planned']}", "WORDS": human(stats["words"]),
-                  "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"])}
+                  "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"]),
+                  "PARTS": str(len(bp.PARTS))}
     extra_pages(bk, page_stats)
-    landing_page(bk, {"CH": f"{n} / {stats['planned']}", "WORDS": human(stats["words"]),
-                      "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"])})
+    landing_page(bk, page_stats)
     return n, stats
 
 
