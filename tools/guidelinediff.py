@@ -18,10 +18,16 @@ same sense. A meeting abstract or a DOI-only entry cannot be matched against a
 PubMed identifier, so the book may well cite the same work under a different
 handle. They are listed because that is where the newest readouts sit.
 
+Once those rows have been read, the resolution is written down in a YAML file
+with one entry per row: the keys that carry it and the basis for saying so.
+`--resolved` checks that file against the store and the chapters, so a
+resolution that names a key nobody cites is reported rather than trusted.
+
   python3 tools/guidelinediff.py nccn.csv                    # the gap report
   python3 tools/guidelinediff.py nccn.csv --topic systemic   # one bucket
   python3 tools/guidelinediff.py nccn.csv --covered          # what we do carry
   python3 tools/guidelinediff.py nccn.csv --json out.json    # for a later pass
+  python3 tools/guidelinediff.py nccn.csv --resolved map.yaml
 """
 import argparse, collections, csv, json, os, re, sys
 import yaml
@@ -147,6 +153,61 @@ def report(buckets, rows, topic_filter=None, show_covered=False, width=100):
                      shorten(r.get('citation'), width - 62)))
 
 
+def resolved(path, rows, refs, used, width=100):
+    """How the book carries each row that has no identifier, checked rather than trusted.
+
+    Title matching cannot settle these rows. A meeting abstract and the paper
+    that followed it share a trial and rarely a title, so the resolution is
+    recorded once, with its basis, and every key it names must still exist in
+    the store and still be cited in a chapter. A row the file marks not
+    citable has no PubMed record, and it has to say why."""
+    doc = yaml.safe_load(open(path, encoding='utf-8')) or {}
+    by = {str(e['ref']): e for e in doc.get('rows') or []}
+    nop = [r for r in rows if not (r.get('pmid') or '').strip()]
+    tally, bad, notcit = collections.Counter(), [], []
+    for r in nop:
+        n = str(r.get('ref_no') or '').strip()
+        e = by.get(n)
+        if not e:
+            bad.append('%s: no resolution recorded' % n)
+            continue
+        keys, basis = e.get('keys') or [], e.get('basis') or ''
+        if basis == 'not-citable':
+            if keys:
+                bad.append('%s: marked not citable but names %s' % (n, ', '.join(keys)))
+            if not e.get('note'):
+                bad.append('%s: marked not citable with no reason' % n)
+            notcit.append((n, e))
+        elif not keys:
+            bad.append('%s: basis %s names no key' % (n, basis))
+        for k in keys:
+            if k not in refs:
+                bad.append('%s: %s is not in references.yaml' % (n, k))
+            elif k not in used:
+                bad.append('%s: %s is in the store and no chapter cites it' % (n, k))
+        tally[basis] += 1
+    stale = sorted(set(by) - {str(r.get('ref_no') or '').strip() for r in nop}, key=int)
+    for n in stale:
+        bad.append('%s: resolution recorded for a row that now has an identifier or does not exist' % n)
+
+    print('\n' + '=' * width)
+    print('ROWS WITH NO IDENTIFIER, AS RESOLVED IN %s' % os.path.basename(path))
+    print('=' * width)
+    for basis, n in tally.most_common():
+        print('  %-20s %4d' % (basis, n))
+    print('  %-20s %4d' % ('total', sum(tally.values())))
+    if notcit:
+        print('\n  not citable, and why')
+        for n, e in notcit:
+            print('    #%-4s %s' % (n, shorten(e.get('citation'), width - 12)))
+            print('          %s' % shorten(e.get('note'), width - 10))
+    if bad:
+        print('\n  problems')
+        for b in bad:
+            print('    ' + b)
+    return bad
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -156,18 +217,21 @@ def main(argv=None):
     ap.add_argument('--covered', action='store_true',
                     help='also list what the store has and no chapter cites')
     ap.add_argument('--json', metavar='PATH', help='write the buckets for a later pass')
+    ap.add_argument('--resolved', metavar='YAML',
+                    help='check the recorded resolution of the rows that carry no identifier')
     a = ap.parse_args(argv)
 
     rows = load(a.csv)
-    keyof, _ = book_pmids(a.book)
+    keyof, refs = book_pmids(a.book)
     used = cited_keys(a.book)
     have = set(keyof)
     buckets = classify(rows, have, used, keyof)
     report(buckets, rows, a.topic, a.covered)
+    bad = resolved(a.resolved, rows, refs, used) if a.resolved else []
     if a.json:
         json.dump(buckets, open(a.json, 'w'), indent=1)
         print('\nwrote %s' % a.json)
-    return 0
+    return 1 if bad else 0
 
 
 if __name__ == '__main__':
