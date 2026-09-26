@@ -69,6 +69,14 @@ VOCAB = {
                 "surveillance", "recurrence", "cns", "any"},
     "subtype": {"HR+/HER2-", "HER2+", "HR+/HER2+", "TNBC", "HER2-low", "BRCA", "all"},
     "line": {"neoadjuvant", "adjuvant", "post-neoadjuvant", "1L", "2L", "3L+", "any"},
+    # What the trial randomised or tested, not what every arm received. A comma
+    # list only when the randomised comparison itself crosses disciplines.
+    "discipline": {"medical", "radiation", "surgical", "supportive", "other"},
+    # How the publication counts lines, which decides the line tag in hormone
+    # receptor-positive disease: endocrine trials count endocrine lines one by
+    # one, while chemotherapy and conjugate trials treat the whole endocrine
+    # phase as one line and count chemotherapy. CONVENTIONS.md has the rule.
+    "line_basis": {"untreated", "endocrine", "chemotherapy", "all", "not-stated"},
     "phase": {"1", "1/2", "2", "2/3", "3"},
     "status": {"reported", "ongoing", "awaited"},
     "modality": {"endocrine", "cdk4-6", "chemo", "her2", "adc", "immunotherapy", "parp",
@@ -100,15 +108,28 @@ def parse_filter(spec):
             bad.append(f"token {tok!r} is not key=value")
             continue
         k, v = tok.split("=", 1)
-        if k not in VOCAB and k not in DIRECTIVES and k != "topic":
+        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry"):
             bad.append(f"unknown filter key {k!r}")
             continue
-        if k in VOCAB:
+        if k in VOCAB or k == "entry":
             for part in v.split(","):
-                if part not in VOCAB[k]:
-                    bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB[k])}")
+                if part not in VOCAB["line" if k == "entry" else k]:
+                    bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB['line' if k == 'entry' else k])}")
         f[k] = v
     return f, bad
+
+
+# A line tag is the span of positions eligibility allowed, so a trial open from the
+# second line onwards is tagged 2L,3L+ and `line=` matches it in a second-line table and
+# a third-line table alike. `entry=` matches only the first position of the span, which
+# lets a chapter give each trial one row in a run of per-line tables.
+_SPAN_ORDER = ["1L", "2L", "3L+", "neoadjuvant", "adjuvant", "post-neoadjuvant", "any"]
+
+
+def entry_line(trial):
+    """The lowest position in a trial's line span, or None when it has no line."""
+    parts = [p.strip() for p in str(trial.get("line") or "").split(",") if p.strip() in _SPAN_ORDER]
+    return min(parts, key=_SPAN_ORDER.index) if parts else None
 
 
 def matches(trial, f):
@@ -124,6 +145,10 @@ def matches(trial, f):
             return False
     for k, v in f.items():
         if k in DIRECTIVES or k == "weight":
+            continue
+        if k == "entry":
+            if entry_line(trial) not in set(v.split(",")):
+                return False
             continue
         tv = trial.get(k)
         if tv is None:
@@ -728,9 +753,115 @@ def axes(trials):
             print("        %s" % g)
     return 0
 
+
+# ------------------------------------------------------------ line labels
+# A heading or caption that names a line of therapy is a claim about the trials
+# beneath it, and nothing used to test it. BC-920's section on conjugates was
+# titled "Conjugates in second line and beyond" from the day the chapter was
+# drafted, while the registry had tagged ASCENT-03, ASCENT-04 and
+# TROPION-Breast02 first-line all along and the prose said the class had moved
+# earlier. The label came from the class's history rather than from the trials,
+# and it outlived them. This reads every such label and checks it against the
+# line tags of the trials its tables actually render.
+_LINE_TOKENS = [
+    (re.compile(r"\bfirst[- ]line\b", re.I), 1),
+    (re.compile(r"\bsecond[- ]line\b", re.I), 2),
+    (re.compile(r"\bthird[- ]line\b|\blater[- ]lines?\b|\blast line\b", re.I), 3),
+]
+_OPEN_END = re.compile(r"\b(?:second|third)[- ]line (?:and|or) (?:beyond|later)\b|\bline and beyond\b|"
+                       r"\band later\b|\bor later\b|\bafter (?:the )?first (?:line|progression)\b", re.I)
+_RANGE = re.compile(r"\bfrom\b.+\bto\b", re.I)
+_SOFT = re.compile(r"\bmostly\b|\blargely\b|\bmainly\b|\bpredominantly\b", re.I)
+_ORD = {"1L": 1, "2L": 2, "3L+": 3}
+
+
+def line_claim(text, names=()):
+    """The metastatic lines a heading or caption asserts, as a set of 1-3, or
+    None when it names no ordinal line. 'from X to Y' spans the range between,
+    'and beyond' opens the top, and 'from diagnosis' starts at the first line.
+    A sentence that names a trial is about that trial, as in "INAVO120 is a
+    first-line trial and so does not appear in the table", so it is skipped.
+    Names match case-sensitively, so the FIRST trial does not swallow the word
+    "first"."""
+    t = str(text or "").replace("_", " ")
+    if names:
+        keep = [x for x in re.split(r"(?<=\.)\s+", t)
+                if not any(re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(n), x) for n in names)]
+        t = " ".join(keep)
+    hits = {n for rx, n in _LINE_TOKENS if rx.search(t)}
+    if not hits:
+        return None
+    if re.search(r"\bfrom diagnosis\b", t, re.I):
+        hits.add(1)
+    if re.search(r"\brefractory\b|\bpretreated\b", t, re.I):
+        hits.add(3)
+    if _OPEN_END.search(t):
+        hits |= set(range(min(hits), 4)) | ({2, 3} if re.search(r"after (?:the )?first", t, re.I) else set())
+    if _RANGE.search(t) and len(hits) > 1:
+        hits = set(range(min(hits), max(hits) + 1))
+    return hits
+
+
+def trial_lines(t):
+    """The ordinal metastatic lines a record is tagged with, or None when it
+    carries none (early disease, or 'any')."""
+    got = {_ORD[p.strip()] for p in str(t.get("line") or "").split(",") if p.strip() in _ORD}
+    return got or None
+
+
+def line_labels(trials):
+    """(errors, warnings) for every heading or caption whose named line of
+    therapy excludes a trial its own tables render. A caption that names the
+    trial is taken to have explained it; a label saying 'mostly' warns."""
+    errs, warns = [], []
+    names = sorted({t.get("acronym") for t in trials.values() if t.get("acronym")}, key=len, reverse=True)
+    d = os.path.join(BOOK, "chapters")
+    for fn in sorted(os.listdir(d)):
+        if not fn.endswith(".md"):
+            continue
+        ch = fn[:-3]
+        text = open(os.path.join(d, fn), encoding="utf-8").read()
+        sections = re.split(r"(?m)^(?=## )", text)
+        for sec in sections:
+            head = sec.split("\n", 1)[0].lstrip("# ").strip() if sec.startswith("## ") else ""
+            rows = []
+            for spec, _body in blocks_in_text(sec):
+                f, bad = parse_filter(spec)
+                if bad:
+                    continue
+                hits = select(trials, f)
+                rows.extend(hits)
+                cap = (f.get("caption") or "").replace("_", " ")
+                claim = line_claim(cap, names)
+                if claim is None:
+                    continue
+                for t in hits:
+                    tl = trial_lines(t)
+                    if tl is None or tl & claim:
+                        continue
+                    if (t.get("acronym") or "").lower() in cap.lower():
+                        continue
+                    msg = (f"{ch}: caption says line {sorted(claim)} but renders {t['key']} "
+                           f"tagged {t.get('line')}: \"{cap[:90]}\"")
+                    (warns if _SOFT.search(cap) else errs).append(msg)
+            claim = line_claim(head)
+            if claim is None:
+                continue
+            for t in {r["key"]: r for r in rows}.values():
+                tl = trial_lines(t)
+                if tl is None or tl & claim:
+                    continue
+                msg = (f"{ch}: heading \"{head[:70]}\" says line {sorted(claim)} but its tables "
+                       f"render {t['key']} tagged {t.get('line')}")
+                (warns if _SOFT.search(head) else errs).append(msg)
+    return errs, warns
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--lines", action="store_true",
+                    help="headings and captions whose named line of therapy excludes a trial they render")
     ap.add_argument("--render", metavar="FILTER")
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--coverage", action="store_true")
@@ -757,6 +888,14 @@ def main():
     a = ap.parse_args()
     trials, refs = load()
 
+    if a.lines:
+        errs, warns = line_labels(trials)
+        for e in errs:
+            print("ERROR:", e)
+        for w in warns:
+            print("warn: ", w)
+        print(f"lines: {len(errs)} label(s) contradicted by the trials they render, {len(warns)} to read")
+        return 1 if errs else 0
     if a.stale:
         return stale(trials)
     if a.axes:
@@ -855,8 +994,30 @@ def main():
         if not bad and not select(trials, f):
             errs.append(f"{ch}: filter {spec!r} matches no trial")
     # registry integrity
+    ADVANCED = {"metastatic", "cns", "recurrence", "mrd"}
     for k, t in trials.items():
-        for key in ("setting", "subtype", "line", "status"):
+        axes_ = lambda f: {p.strip() for p in str(t.get(f) or "").split(",") if p.strip()}
+        if not t.get("discipline"):
+            errs.append(f"trials.yaml[{k}] has no discipline; say what the trial tested "
+                        f"(medical, radiation, surgical, supportive or other)")
+        # Every systemic trial in advanced disease says how it counts lines. The
+        # line tag is derived from that, and a tag with no stated basis is how a
+        # first-line trial ends up filed under second line.
+        if "medical" in axes_("discipline") and axes_("setting") & ADVANCED:
+            if not t.get("line_basis"):
+                errs.append(f"trials.yaml[{k}] is a systemic trial in advanced disease with no line_basis")
+            if not t.get("prior_therapy"):
+                errs.append(f"trials.yaml[{k}] is a systemic trial in advanced disease with no prior_therapy")
+        if t.get("line_basis") and not axes_("setting") & ADVANCED:
+            errs.append(f"trials.yaml[{k}] carries line_basis but no advanced-disease setting")
+        # A recurrence trial treated with curative intent carries an early-disease line
+        # (adjuvant), so only a metastatic line span is held to the 1L rule.
+        if (t.get("line_basis") == "untreated" and axes_("line") & {"1L", "2L", "3L+"}
+                and "1L" not in axes_("line")):
+            errs.append(f"trials.yaml[{k}].line_basis is untreated but line={t.get('line')!r} has no 1L")
+        if axes_("line") == {"1L"} and t.get("line_basis") not in (None, "untreated", "not-stated"):
+            errs.append(f"trials.yaml[{k}] is tagged 1L alone but line_basis={t.get('line_basis')!r}")
+        for key in ("setting", "subtype", "line", "status", "discipline", "line_basis"):
             v = t.get(key)
             if v is None:
                 continue
@@ -889,6 +1050,9 @@ def main():
         if first != k:
             errs.append(f"trials.yaml[{k}] and [{first}] look like the same trial: "
                         f"primary_ref={pr!r}, n={n}. Merge them and keep one key.")
+
+    lerr, _lwarn = line_labels(trials)
+    errs.extend(lerr)
 
     for e in errs:
         print("ERROR:", e)
