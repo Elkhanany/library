@@ -1010,9 +1010,12 @@ def main():
                 errs.append(f"trials.yaml[{k}] is a systemic trial in advanced disease with no prior_therapy")
         if t.get("line_basis") and not axes_("setting") & ADVANCED:
             errs.append(f"trials.yaml[{k}] carries line_basis but no advanced-disease setting")
-        if t.get("line_basis") == "untreated" and "1L" not in axes_("line"):
+        # A recurrence trial treated with curative intent carries an early-disease line
+        # (adjuvant), so only a metastatic line span is held to the 1L rule.
+        if (t.get("line_basis") == "untreated" and axes_("line") & {"1L", "2L", "3L+"}
+                and "1L" not in axes_("line")):
             errs.append(f"trials.yaml[{k}].line_basis is untreated but line={t.get('line')!r} has no 1L")
-        if axes_("line") == {"1L"} and t.get("line_basis") not in (None, "untreated"):
+        if axes_("line") == {"1L"} and t.get("line_basis") not in (None, "untreated", "not-stated"):
             errs.append(f"trials.yaml[{k}] is tagged 1L alone but line_basis={t.get('line_basis')!r}")
         for key in ("setting", "subtype", "line", "status", "discipline", "line_basis"):
             v = t.get(key)
