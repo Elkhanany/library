@@ -658,6 +658,25 @@ var NMT = (function () {
   }
 
   /* ---------- boot ---------- */
+  /* ---------- boot contract (DESIGN.md section 8, "book.js boot shape") ----------
+     Both builds ship this file through runtime_js() in tools/webbuild.py and
+     tools/make.py, which make two text edits and raise unless each happens
+     exactly once:
+       1. the handler's first statement, the numberEquations() call, becomes a
+          comment, because docs/ and build/ number the equations at build time;
+       2. everything from the "if (window.katex)" line to the handler's closing
+          brace is deleted, because the maths is already typeset there.
+     So: keep the numberEquations() call as the first statement, and keep the
+     katex if/else block as the LAST thing in the handler. New boot calls go
+     after the first and before the second; a call placed after the katex block
+     works on the staged page and silently disappears from docs/ and from the
+     Dropbox build. Anything that needs rendered KaTeX or layout (display
+     fitting, the spy, the folio, headroom) registers its own load, resize or
+     scroll listener outside this handler.
+     Build-time capture: the build runs this file on the staged page and saves
+     .main .col and #sb-toc, so every insertion made inside them must check
+     before inserting (idempotent), or live outside them, and no state class
+     may be left on a saved node. runtime_js() drops this comment. */
   window.addEventListener('DOMContentLoaded', function () {
     numberEquations();
     var hs = sectionHeadings();

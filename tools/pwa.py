@@ -653,14 +653,57 @@ def check():
             bad.append("%s/nav.json (missing)" % b.slug)
         elif want and json.loads(library.read(p)) != want:
             bad.append("%s/nav.json (stale)" % b.slug)
+        elif not want and os.path.exists(p):
+            bad.append("%s/nav.json (should not exist: fewer than two chapters)" % b.slug)
+    # The generated files themselves, not only their presence. offline.html,
+    # continue.html, every manifest (its shortcuts and theme_color follow the
+    # books' labels and colours), every nav.json and the two shell assets are
+    # regenerated in memory, through the very writers emit_all() uses, and
+    # compared byte for byte with docs/. library.write is captured for the
+    # duration, so nothing is written. A label change in PAGE or book.json that
+    # was never pushed through pwa.py used to pass here because the file existed.
+    made = {}
+    real_write = library.write
+
+    def capture(path, text):
+        made[os.path.relpath(path, DOCS).replace(os.sep, "/")] = text
+
+    library.write = capture
+    try:
+        emit_pages(bks)
+        write_json(os.path.join(DOCS, "manifest.webmanifest"), library_manifest())
+        for b in bks:
+            write_json(os.path.join(DOCS, b.slug, "manifest.webmanifest"),
+                       b.manifest(icon_entries()))
+            nav = nav_json(b)
+            if nav:
+                write_json(os.path.join(DOCS, b.slug, "nav.json"), nav)
+        for name in ("pwa.js", "pwa.css"):
+            src = os.path.join(library.ASSETS, name)
+            if os.path.exists(src):
+                capture(os.path.join(DOCS, "assets", name), library.read(src))
+    finally:
+        library.write = real_write
+    for rel, text in sorted(made.items()):
+        p = os.path.join(DOCS, rel)
+        if not os.path.exists(p):
+            if rel + " (missing)" not in bad:
+                bad.append(rel + " (missing)")
+            continue
+        with io.open(p, "rb") as fh:
+            disk = fh.read()
+        if disk != text.encode("utf-8") and not any(x.startswith(rel + " (") for x in bad):
+            bad.append(rel + " (differs from what pwa.py would emit)")
     if bad:
-        print("pwa: %d page(s) do not match what pwa.py would emit:" % len(bad))
-        for r in bad[:12]:
+        print("pwa: %d file(s) do not match what pwa.py would emit:" % len(bad))
+        for r in bad[:60]:
             print("   ", r)
         print("    run: python3 tools/pwa.py")
         return 1
     print("pwa: every built page carries the current app-layer head; "
-          "manifests, worker and icons all present")
+          "manifests, worker and icons all present; offline.html, continue.html, "
+          "%d manifests, %d nav.json and the shell assets are what pwa.py would emit"
+          % (1 + len(bks), sum(1 for r in made if r.endswith("nav.json"))))
     return 0
 
 

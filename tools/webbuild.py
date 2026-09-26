@@ -119,9 +119,42 @@ SHELL = """<!DOCTYPE html>
 
 
 def runtime_js():
+    """book.js as docs/ ships it: the equations are numbered and the maths typeset
+    at build time, so the runtime must do neither again.
+
+    THE BOOT-SHAPE CONTRACT (DESIGN.md section 8, "book.js boot shape"). This
+    function makes two text substitutions in shared/assets/book.js, and each must
+    happen exactly once:
+      1. the literal `numberEquations();` becomes a comment. It is the first
+         statement of the DOMContentLoaded boot handler. If it is missing, every
+         page numbers its equations a second time over the numbers already baked
+         in at build time; if it appears twice, some other call is being disabled.
+      2. everything from `if (window.katex) { typeset(); }` up to the handler's
+         closing `\\n  });` is deleted. The katex if/else block must therefore be
+         the LAST thing in the handler: a boot call placed after it is silently
+         removed from docs/ and from the Dropbox build while still working on
+         the staged page.
+    New boot calls go after `numberEquations();` and before `if (window.katex)`.
+    Anything that needs rendered KaTeX or layout registers its own load, resize
+    or scroll listener outside the handler. make.py's runtime_js() is a copy of
+    this function; change the two together. The contract comment above the
+    handler in book.js is dropped here too, so docs/ stays byte-identical."""
     js = library.read(os.path.join(library.ASSETS, "book.js"))
+    law = ("runtime_js(): shared/assets/book.js breaks the boot-shape contract "
+           "(DESIGN.md section 8, 'book.js boot shape'): ")
+    js, n = re.subn(r"\n  /\* ---------- boot contract .*?\*/", "", js, flags=re.S)
+    if n > 1:
+        raise RuntimeError(law + "the boot-contract comment appears %d times" % n)
+    n = js.count("numberEquations();")
+    if n != 1:
+        raise RuntimeError(law + "expected exactly one 'numberEquations();' (the boot "
+                           "handler's first statement), found %d" % n)
     js = js.replace("numberEquations();", "/* numbered at build time */")
-    js = re.sub(r"if \(window\.katex\) \{ typeset\(\); \}.*?\n  \}\);", "});", js, flags=re.S)
+    js, n = re.subn(r"if \(window\.katex\) \{ typeset\(\); \}.*?\n  \}\);", "});", js, flags=re.S)
+    if n != 1:
+        raise RuntimeError(law + "expected the boot handler to end with exactly one "
+                           "'if (window.katex) { typeset(); } else {...}' block closed by "
+                           "'\\n  });', found %d" % n)
     return js
 
 
