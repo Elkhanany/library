@@ -712,8 +712,10 @@ def trialdata(m):
         row = {k: v for k, v in {
             "key": key, "acronym": t.get("acronym") or key,
             "phase": t.get("phase"), "n": t.get("n"), "year": t.get("year"),
+            "discipline": t.get("discipline"),
             "setting": t.get("setting"), "subtype": t.get("subtype"),
-            "line": t.get("line"), "modality": t.get("modality"),
+            "line": t.get("line"), "line_basis": t.get("line_basis"),
+            "prior_therapy": t.get("prior_therapy"), "modality": t.get("modality"),
             "status": t.get("status"), "weight": t.get("weight"),
             "topic": t.get("topic"),
             "population": t.get("population"), "arms": t.get("arms"),

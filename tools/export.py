@@ -149,7 +149,8 @@ def build():
             ])
 
     # ---------------------------------------------------------------- Trials
-    thead = ["Key", "Trial", "Phase", "N", "Setting", "Subtype", "Line", "Modality",
+    thead = ["Key", "Trial", "Discipline", "Phase", "N", "Setting", "Subtype", "Line",
+             "Lines counted by", "Prior therapy", "Modality",
              "Status", "Evidence weight", "Year", "Topic", "Population", "Experimental vs control",
              "Primary endpoint", "Result", "Overall survival", "Read with care",
              "Methods", "Results", "Result taken from", "PMID", "Papers", "NCT",
@@ -161,8 +162,9 @@ def build():
         d = t.get("digest") or {}
         pr = t.get("primary_ref")
         trows.append([
-            k, t.get("acronym") or k, t.get("phase"), t.get("n"), t.get("setting"),
-            t.get("subtype"), t.get("line"), t.get("modality"), t.get("status"),
+            k, t.get("acronym") or k, t.get("discipline"), t.get("phase"), t.get("n"),
+            t.get("setting"), t.get("subtype"), t.get("line"), t.get("line_basis"),
+            t.get("prior_therapy"), t.get("modality"), t.get("status"),
             t.get("weight"), t.get("year"), t.get("topic"), t.get("population"), t.get("arms"),
             t.get("endpoint"), t.get("result"), t.get("os"), t.get("note"),
             d.get("methods"), d.get("results"), pr,
@@ -297,9 +299,9 @@ def build():
                 "Finding", "Limitation", "Next question", "Trials", "Trial keys",
                 "Chapters"]),
         W("Trials", thead, trows,
-          widths=[18, 22, 6, 8, 12, 16, 15, 18, 10, 17, 7, 34, 44, 44, 26, 52, 40, 40, 56,
-                  56, 18, 11, 8, 13, 12, 13, 30, 30, 44],
-          wrap=["Topic", "Population", "Experimental vs control", "Primary endpoint",
+          widths=[18, 22, 14, 6, 8, 12, 16, 15, 16, 44, 18, 10, 17, 7, 34, 44, 44, 26, 52, 40,
+                  40, 56, 56, 18, 11, 8, 13, 12, 13, 30, 30, 44],
+          wrap=["Prior therapy", "Topic", "Population", "Experimental vs control", "Primary endpoint",
                 "Result", "Overall survival", "Read with care", "Methods", "Results",
                 "Chapters it is assigned to", "Chapters that cite it",
                 "Listed in the source document under"]),
