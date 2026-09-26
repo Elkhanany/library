@@ -283,9 +283,54 @@ population was never CNS-restricted.
 | `setting` | early, metastatic, dcis, prevention, mrd, screening, surveillance, recurrence, cns |
 | `subtype` | HR+/HER2-, HER2+, HR+/HER2+, TNBC, HER2-low, BRCA, all |
 | `line` | neoadjuvant, adjuvant, post-neoadjuvant, 1L, 2L, 3L+ |
+| `line_basis` | untreated, endocrine, chemotherapy, all, not-stated |
+| `discipline` | medical, radiation, surgical, supportive, other |
 | `modality` | endocrine, cdk4-6, chemo, her2, adc, immunotherapy, parp, pi3k-akt, surgery, radiation, bone, supportive |
 | `phase`, `status`, `topic` | filters |
 | `sort`, `cols`, `caption` | directives, not filters |
+
+**`discipline` is what the trial tested.** `medical` is systemic anticancer therapy, including
+adjuvant bone-modifying agents, chemoprevention, and trials of how a drug is used (duration, dose,
+sequence, or an assay deciding whether it is given). `radiation`, `surgical` and `supportive` are
+radiotherapy, an operation or its extent, and care aimed at symptoms, toxicity or function rather
+than the cancer. `other` is screening, diagnostic imaging and surveillance schedules. Treatment every
+arm received does not add a discipline, so a radiotherapy-omission trial in patients all taking
+endocrine therapy is `radiation`. A comma list is used only when the randomised comparison itself
+crosses disciplines, as in AMAROS.
+
+**A line in metastatic disease is the position of the study treatment among the systemic regimens
+given for advanced disease.** Maintenance after induction belongs to the induction line, and
+(neo)adjuvant therapy is never a line. A trial requiring no prior therapy for advanced disease is
+`1L` whatever curative-intent treatment came first: ASCENT-03, ASCENT-04, TROPION-Breast02 and
+KEYNOTE-355 are first-line trials. A mixed population lists every position its eligibility allows,
+and `3L+` means at least two prior lines were required.
+
+**Hormone receptor-positive trials count lines in two ways, and the tag follows the trial's own
+counting.** `line_basis` records which one it uses.
+
+- `endocrine`: eligibility counts lines of endocrine therapy, as in "one to two prior lines of
+  endocrine therapy". Each endocrine line counts, and so does any chemotherapy line allowed, so
+  EMERALD is `2L,3L+`. Where a trial counts relapse on or within 12 months of adjuvant endocrine
+  therapy as a failed line, as MONALEESA-3 and PALOMA-3 do, that population is second line.
+- `chemotherapy`: eligibility treats the whole endocrine phase as one condition ("endocrine-
+  resistant", "progressed on at least one endocrine therapy") and counts chemotherapy lines. The
+  endocrine phase is one line however many regimens it held. A chemotherapy-naive trial after
+  endocrine therapy (DESTINY-Breast06, ASCENT-07) is `2L`, and one after one or two chemotherapy
+  lines (TROPION-Breast01) is `3L+`.
+- `all` counts every prior systemic line whatever its class, as HER2-positive and triple-negative
+  trials do. `untreated` marks a first-line trial. `not-stated` means the publication gives no
+  count.
+
+`prior_therapy` is one sentence of the eligibility in the trial's own counting, printed in the
+appendix so a reader can check the tag. Every systemic trial in advanced disease carries both
+fields, and `--check` fails on one that does not.
+
+**A heading or caption that names a line of therapy is checked against the trials it renders.**
+BC-920's section on conjugates was titled "Conjugates in second line and beyond" while three of the
+four trials in its table were first-line; the title came from the class's history and outlived the
+evidence. `--check` now fails when a heading or caption names a line that excludes a trial its own
+tables render, and `--lines` prints the report. A caption sentence that names a trial is taken as
+explaining it.
 
 Validate with `python3 tools/evidence.py --check`. It fails on a filter that matches no trial, on a
 block with a body, on any registry value outside the controlled vocabulary, on two keys that look like
