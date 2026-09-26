@@ -302,8 +302,19 @@ crosses disciplines, as in AMAROS.
 given for advanced disease.** Maintenance after induction belongs to the induction line, and
 (neo)adjuvant therapy is never a line. A trial requiring no prior therapy for advanced disease is
 `1L` whatever curative-intent treatment came first: ASCENT-03, ASCENT-04, TROPION-Breast02 and
-KEYNOTE-355 are first-line trials. A mixed population lists every position its eligibility allows,
-and `3L+` means at least two prior lines were required.
+KEYNOTE-355 are first-line trials, and so are TROPION-Breast05 and INAVO120, which required relapse
+on or soon after adjuvant endocrine therapy but excluded any treatment for advanced disease. A mixed
+population lists every position its eligibility allows, and `3L+` means at least two prior lines
+were required.
+
+**A required prior treatment given in the curative setting counts as a line.** Where eligibility
+requires a named prior treatment, such as trastuzumab and a taxane, an aromatase inhibitor, a
+CDK4/6 inhibitor or an anthracycline and a taxane, and accepts it given either for advanced disease
+or in the curative setting, the curative-setting route counts as one line. The trial's lowest
+position is then `2L`. EMILIA, DESTINY-Breast03, BOLERO-2, BYLieve, OlympiAD and DESTINY-Breast06
+are tagged this way. Publications of the same design counted early relapsers differently, some
+calling them first line, so this rule rather than each paper's wording decides. A trial that
+admitted genuinely untreated patients as well, such as MONALEESA-3's first-line cohort, keeps `1L`.
 
 **Hormone receptor-positive trials count lines in two ways, and the tag follows the trial's own
 counting.** `line_basis` records which one it uses.
@@ -320,6 +331,12 @@ counting.** `line_basis` records which one it uses.
 - `all` counts every prior systemic line whatever its class, as HER2-positive and triple-negative
   trials do. `untreated` marks a first-line trial. `not-stated` means the publication gives no
   count.
+
+**A line tag is a span, so per-line tables filter on its floor.** `line=2L` matches every trial
+whose span includes 2L, and a trial open from the second line onwards (`2L,3L+`) would appear in
+both a second-line and a third-line table. `entry=2L` matches only trials whose lowest position is
+2L, so a run of per-line tables gives each trial one row. BC-900 files its line tables this way and
+says so in its scope section.
 
 `prior_therapy` is one sentence of the eligibility in the trial's own counting, printed in the
 appendix so a reader can check the tag. Every systemic trial in advanced disease carries both

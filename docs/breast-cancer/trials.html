@@ -164,9 +164,11 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
         <button id="v-chap" aria-pressed="false">By chapter</button>
       </div>
       <input id="q" type="search" placeholder="Search name, topic, population, result">
+      <select id="f-discipline"></select>
       <select id="f-setting"></select>
       <select id="f-subtype"></select>
       <select id="f-line"></select>
+      <select id="f-basis"></select>
       <select id="f-modality"></select>
       <select id="f-status"></select>
       <select id="f-weight"></select>
@@ -183,9 +185,11 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
   'use strict';
   var D = null, view = 'list';
   var FILTERS = [
+    ['f-discipline', 'discipline', 'Any discipline'],
     ['f-setting', 'setting', 'Any setting'],
     ['f-subtype', 'subtype', 'Any subtype'],
     ['f-line', 'line', 'Any line'],
+    ['f-basis', 'line_basis', 'Lines counted by'],
     ['f-modality', 'modality', 'Any modality'],
     ['f-status', 'status', 'Any status'],
     ['f-weight', 'weight', 'Any evidence weight']
@@ -203,12 +207,23 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
             .filter(Boolean);
   }
 
-  function options(sel, key, label) {
+  /* Two axes read better spelled out. The stored values stay short so a filter
+     line in a chapter can use them. */
+  var LABELS = {
+    discipline: { medical: 'Medical oncology', radiation: 'Radiation oncology',
+                  surgical: 'Surgery', supportive: 'Supportive care', other: 'Other' },
+    line_basis: { untreated: 'First line, untreated', endocrine: 'Endocrine lines',
+                  chemotherapy: 'Chemotherapy lines, endocrine phase as one', all: 'All lines',
+                  'not-stated': 'Not stated' }
+  };
+  function label(key, v) { return (LABELS[key] && LABELS[key][v]) || v; }
+
+  function options(sel, key, label0) {
     var vals = {};
     D.trials.forEach(function (t) { axis(t, key).forEach(function (v) { vals[v] = 1; }); });
-    sel.innerHTML = '<option value="">' + label + '</option>' +
+    sel.innerHTML = '<option value="">' + label0 + '</option>' +
       Object.keys(vals).sort().map(function (v) {
-        return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
+        return '<option value="' + esc(v) + '">' + esc(label(key, v)) + '</option>';
       }).join('');
   }
 
@@ -245,6 +260,8 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
 
   function card(t) {
     var meta = [];
+    if (t.discipline) meta.push('<i>' + esc(axis(t, 'discipline').map(function (v) {
+      return label('discipline', v); }).join(', ')) + '</i>');
     if (t.phase) meta.push('<i>Ph ' + esc(t.phase) + '</i>');
     if (t.n) meta.push('<i>n=' + esc(t.n) + '</i>');
     if (t.setting) meta.push('<i>' + esc(t.setting) + '</i>');
@@ -267,7 +284,10 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
       tags += ' <span class="tag expl" title="A proof of concept, window study or single-arm cohort. It is kept out of the chapter evidence tables, which enumerate the record a decision rests on, and belongs instead under the question it was built to answer in the Chapter Stories">exploratory</span>';
 
     var dl = [];
-    [['Population', t.population], ['Arms', t.arms], ['Endpoint', t.endpoint],
+    [['Population', t.population],
+     ['Prior therapy', t.prior_therapy],
+     ['Lines counted by', t.line_basis ? label('line_basis', t.line_basis) : ''],
+     ['Arms', t.arms], ['Endpoint', t.endpoint],
      ['Result', t.result], ['Overall survival', t.os]].forEach(function (r) {
       if (r[1]) dl.push('<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>');
     });
@@ -403,7 +423,9 @@ a.chip:hover{border-color:var(--accent);color:var(--accent)}
      evaluating anything. */
   var CSV_COLS = [
     ['Key', 'key'], ['Trial', 'acronym'], ['Phase', 'phase'], ['N', 'n'],
+    ['Discipline', 'discipline'],
     ['Setting', 'setting'], ['Subtype', 'subtype'], ['Line', 'line'],
+    ['Lines counted by', 'line_basis'], ['Prior therapy', 'prior_therapy'],
     ['Modality', 'modality'], ['Status', 'status'], ['Year', 'year'],
     ['Topic', 'topic'], ['Population', 'population'],
     ['Experimental vs control', 'arms'], ['Primary endpoint', 'endpoint'],
