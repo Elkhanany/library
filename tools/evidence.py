@@ -108,15 +108,28 @@ def parse_filter(spec):
             bad.append(f"token {tok!r} is not key=value")
             continue
         k, v = tok.split("=", 1)
-        if k not in VOCAB and k not in DIRECTIVES and k != "topic":
+        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry"):
             bad.append(f"unknown filter key {k!r}")
             continue
-        if k in VOCAB:
+        if k in VOCAB or k == "entry":
             for part in v.split(","):
-                if part not in VOCAB[k]:
-                    bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB[k])}")
+                if part not in VOCAB["line" if k == "entry" else k]:
+                    bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB['line' if k == 'entry' else k])}")
         f[k] = v
     return f, bad
+
+
+# A line tag is the span of positions eligibility allowed, so a trial open from the
+# second line onwards is tagged 2L,3L+ and `line=` matches it in a second-line table and
+# a third-line table alike. `entry=` matches only the first position of the span, which
+# lets a chapter give each trial one row in a run of per-line tables.
+_SPAN_ORDER = ["1L", "2L", "3L+", "neoadjuvant", "adjuvant", "post-neoadjuvant", "any"]
+
+
+def entry_line(trial):
+    """The lowest position in a trial's line span, or None when it has no line."""
+    parts = [p.strip() for p in str(trial.get("line") or "").split(",") if p.strip() in _SPAN_ORDER]
+    return min(parts, key=_SPAN_ORDER.index) if parts else None
 
 
 def matches(trial, f):
@@ -132,6 +145,10 @@ def matches(trial, f):
             return False
     for k, v in f.items():
         if k in DIRECTIVES or k == "weight":
+            continue
+        if k == "entry":
+            if entry_line(trial) not in set(v.split(",")):
+                return False
             continue
         tv = trial.get(k)
         if tv is None:
