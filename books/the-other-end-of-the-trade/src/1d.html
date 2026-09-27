@@ -1,0 +1,103 @@
+<p class="eyebrow">Part I · Foundation · Chapter 1D</p>
+
+<h1>Sharpe ratio</h1>
+
+<p class="subtitle">Return per unit of risk</p>
+
+<p>Now that we have expected value as the foundation, the next question is: how <em>stable</em> is that expected value? A strategy that earns 10% per year with 5% annual volatility is different from a strategy that earns 10% per year with 30% volatility. The Sharpe ratio formalizes this question: it is the ratio of expected excess return to the standard deviation of returns, and it answers "how many units of risk does this strategy ask me to take for each unit of expected return?"</p>
+
+<h2 id="the-definition">1 · The definition</h2>
+
+<pre>SR = (E[R] − r_f) / σ_R</pre>
+
+<p>The numerator is excess return — what you earned above the risk-free rate. The denominator is the standard deviation of those returns. By construction, Sharpe is dimensionless and scale-invariant: doubling your position size doubles both the numerator (return) and the denominator (volatility), leaving Sharpe unchanged. This is what makes Sharpe useful as a <em>comparison</em> metric across strategies of different sizes.</p>
+
+<p>For short-horizon intraday strategies — the regime most quant trading chapters in Sections 2 and below will assume — the risk-free rate is negligible per-bar, so the practical form drops it:</p>
+
+<pre>SR_intraday ≈ E[R] / σ_R</pre>
+
+<p>The annualization follows the square-root-of-time rule from 1B. A strategy with Sharpe = X computed on daily returns has annualized Sharpe of approximately X × √252:</p>
+
+<pre>SR_annual = SR_daily × √252 ≈ SR_daily × 15.87</pre>
+
+<p>This is the famous "Sharpe scales with square root of frequency" relationship, and it's the structural reason high-frequency strategies report eye-popping Sharpes (we'll see this in 2E).</p>
+
+<h2 id="what-sharpe-gives-you-that-ev-alone-doesnt">2 · What Sharpe gives you that EV alone doesn't</h2>
+
+<p>Two strategies can have identical expected return but very different Sharpes if their volatilities differ. The lower-volatility strategy is preferable for three concrete reasons:</p>
+
+<p><strong>1. Compound growth is higher.</strong> From the Itô correction in 1B, expected log return is approximately μ − ½σ². For two strategies with identical arithmetic mean μ, the one with lower σ² compounds to higher terminal wealth. Variance drag is real money over multi-year horizons.</p>
+
+<p><strong>2. Leverage becomes safe.</strong> A strategy with Sharpe of 0.5 cannot safely be leveraged 4×, because the 4× leveraged version still has Sharpe of 0.5 but has 4× volatility, meaning routine drawdowns become catastrophic. A strategy with Sharpe of 4.0 (typical of intraday market-making) can be safely leveraged 4× because the volatility was small to start with and the drift was overwhelming. The maximum sustainable leverage is, roughly, a function of how confident you are that the next move is positive — which is what Sharpe measures.</p>
+
+<p><strong>3. Behavioral survivability improves.</strong> A strategy that wins 51% of trades with tight bounds and high Sharpe feels safe to operate. A strategy that wins 51% of trades with wide bounds and low Sharpe feels terrifying — you have long losing streaks, you can't tell in real time whether the strategy is working or just lucky, and you'll likely abandon it during a drawdown. The path of a high-Sharpe strategy is psychologically easier to ride than the path of a low-Sharpe strategy with identical expected return.</p>
+
+<figure class="fig" id="fig-sharpe-curves"><figcaption><b>Figure to come:</b> sharpe-curves</figcaption></figure>
+
+<h2 id="the-frequency-sharpe-relationship">3 · The frequency-Sharpe relationship</h2>
+
+<p>Here is one of the most important and least-understood facts in quant trading: if you have a tiny edge per trade — say, a 51% win rate at fixed sizing — you don't want to trade it once. You want to trade it many times. The reason is that the Sharpe of a strategy scales as the square root of the number of independent bets:</p>
+
+<pre>SR_N ≈ SR_1 × √N</pre>
+
+<p>A strategy with per-trade Sharpe of 0.05 (a tiny edge) traded once a day produces daily Sharpe of 0.05. The same strategy executed 10 times a day with independent outcomes produces daily Sharpe of approximately 0.05 × √10 ≈ 0.16. Executed 100 times a day, daily Sharpe of 0.50. The annualization (×√252) then gives annual Sharpes of 0.8, 2.5, and 7.9 respectively. Trading frequency turns a tiny per-trade edge into a high Sharpe — which then permits leverage and compounding to do their work.</p>
+
+<p>This is the structural reason a Renaissance Technologies-style high-frequency strategy can produce double-digit annual Sharpes on a 51-52% win rate. It is not that each bet is highly profitable. It is that each bet is <em>slightly</em> profitable and there are tens of thousands of bets per day. The same edge, traded once a year, would be statistically indistinguishable from luck and certainly unsafe to leverage.</p>
+
+<p>The retail implication is sobering: most retail strategies operate at frequencies of one to ten trades per month. Even if each trade has a real edge (which most don't), the resulting Sharpe is going to be modest, leverage is going to be constrained, and the compound growth is going to be slow. There is a fundamental advantage to high frequency that retail traders cannot match — and trying to overcome it by adding leverage to a low-frequency strategy is exactly the path to ruin that Sections 12A and 12C will repeatedly warn against.</p>
+
+<h2 id="why-low-sharpe-caps-leverage">4 · Why low Sharpe caps leverage</h2>
+
+<p>Let me make the leverage point quantitative. Suppose your strategy has annualized Sharpe SR and you lever it by factor k. The levered strategy has:</p>
+
+<ul>
+<li>Expected return: k × E[R]</li>
+<li>Volatility: k × σ</li>
+<li>Sharpe: still SR (leverage doesn't change Sharpe)</li>
+</ul>
+
+<p>But the <em>probability of ruin</em> — the probability that the levered equity curve hits zero or some pre-defined floor before reaching its long-run drift — scales with both leverage and Sharpe. For a continuous Geometric Brownian Motion model, the probability that the equity curve ever falls to fraction f of its starting value before going to infinity is approximately:</p>
+
+<pre>P(ruin to fraction f) ≈ f^(2μ/σ²)</pre>
+
+<p>where μ and σ are the drift and volatility <em>of the levered strategy</em>. Levering up multiplies both μ and σ by k, but σ² is multiplied by k², so the ratio 2μ/σ² gets <em>divided</em> by k. Higher leverage = lower exponent = ruin probability gets closer to 1.</p>
+
+<p>The practical consequence: a Sharpe-0.5 strategy levered 4× has effective μ/σ² that produces ruin probabilities approaching unity over long horizons. A Sharpe-4.0 strategy levered 4× still has comfortable survival probabilities because the underlying drift-to-variance ratio was so high. <strong>Sharpe sets the leverage ceiling.</strong> No amount of clever risk management overrides this.</p>
+
+<h2 id="sortino-information-ratio-and-the-sharpe-family">5 · Sortino, Information Ratio, and the Sharpe family</h2>
+
+<p>The basic Sharpe ratio has several variants worth knowing:</p>
+
+<p><strong>Sortino ratio.</strong> Same formula but uses downside-only standard deviation:</p>
+
+<pre>Sortino = (E[R] − r_f) / σ_downside</pre>
+
+<p>where σ_downside is computed only from returns below some threshold (often zero or r_f). Sortino correctly recognizes that upside volatility is not "risk" — nobody complains about big gains. Sortino is higher than Sharpe for any strategy with positive skew and lower than Sharpe for negative-skew strategies. The CBOE PUT Index has Sortino approximately equal to Sharpe (because most PUT volatility is downside volatility — there's not much upside surprise in collecting fixed premium). SPX has Sortino noticeably higher than Sharpe (because some of SPX's volatility comes from upside surges).</p>
+
+<p><strong>Information Ratio.</strong> Same idea but excess return is measured against a benchmark instead of the risk-free rate:</p>
+
+<pre>IR = (E[R_strategy] − E[R_benchmark]) / σ(R_strategy − R_benchmark)</pre>
+
+<p>The denominator is the volatility of the <em>tracking error</em> — the variation of strategy returns relative to benchmark. IR is the right metric for active portfolio managers who are evaluated against a benchmark and care about how much active risk they take to produce active return.</p>
+
+<p><strong>Treynor ratio.</strong> Excess return divided by beta instead of standard deviation:</p>
+
+<pre>Treynor = (E[R] − r_f) / β</pre>
+
+<p>Used when you assume idiosyncratic risk can be diversified away and only systematic (market) risk matters. Less common in modern practice because the CAPM-style assumptions it relies on don't hold well empirically.</p>
+
+<p><strong>Calmar ratio.</strong> Already covered in 1A — annual return divided by maximum drawdown. The most honest single-number metric for capital-preservation-focused strategies.</p>
+
+<h2 id="the-probabilistic-sharpe-ratio">6 · The probabilistic Sharpe ratio</h2>
+
+<p>A subtle and important variant: how confident are you that the <em>true</em> Sharpe of your strategy exceeds some threshold, given the finite sample you've observed? The <strong>probabilistic Sharpe ratio (PSR)</strong>, also from Bailey and López de Prado, answers this:</p>
+
+<pre>PSR(SR*) = Φ( (SR_observed − SR*) × √(T − 1) / √(1 − γ_3·SR_observed + (γ_4 − 1)/4 × SR_observed²) )</pre>
+
+<p>where T is the number of observations, γ_3 is sample skewness, γ_4 is sample kurtosis, and Φ is the standard normal CDF. The PSR explicitly corrects the standard error of the observed Sharpe for skewness and kurtosis — which, as we established in 1A, are the moments Sharpe ignores. Strategies with negative skew (premium selling) have <em>wider</em> PSR confidence intervals than strategies with the same observed Sharpe but symmetric returns. The same observed Sharpe is less reliable when the underlying distribution is skewed against you.</p>
+
+<p>This connects everything in <a class="xref" href="1a.html">Section 1</a> to a single statistical reality: not only does Sharpe under-report tail risk, but the <em>estimate</em> of Sharpe is less reliable when there is more tail risk. Both errors push in the same direction. Both flatter premium-selling strategies. Both inflate retail trader confidence. Be humble about Sharpe estimates from short backtests of skewed strategies.</p>
+
+<h2 id="what-this-enables-next">7 · What this enables next</h2>
+
+<p><a class="xref" href="2a.html">Section 2</a> (Quant Trading) is where the foundations laid in <a class="xref" href="1a.html">Section 1</a> become operational. Building a model with a tiny positive edge per prediction is step one. The edge only becomes meaningful when executed many times so the Sharpe rises and leverage becomes usable. That's the unit of analysis from here on. <a class="xref" href="3a.html">Section 3</a> then establishes <em>what</em> you can trade — the specific products that exist in the SPX/SPY/options complex, and why product choice (especially the tax treatment of XSP vs SPY) is the most consequential operational decision a US retail trader makes.</p>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>7A The PDE: why dealer hedging works at all — The Other End of the Trade</title>
+<meta name="description" content="Chapter 7A of The Other End of the Trade: The PDE: why dealer hedging works at all.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-6">← Part VII · Theory</a>
+  <div class="sb-folio"><a class="sb-prev" href="6f.html" aria-label="Previous chapter: 6F · The hedging frequency vs cost tradeoff" title="Previous chapter: 6F · The hedging frequency vs cost tradeoff (←)">‹ 6F</a><p class="sb-title"><span class="sb-at">Chapter 7A ·</span> <span class="sb-at">31 of 67</span></p><a class="sb-next" href="7b.html" aria-label="Next chapter: 7B · Second-order Greeks in context" title="Next chapter: 7B · Second-order Greeks in context (→)">7B ›</a></div>
+  <div id="sb-toc"><a href="#step-1-geometric-brownian-motion-the-model">Step 1 — Geometric Brownian Motion (the model)</a><a href="#step-2-its-lemma-how-the-option-value-moves">Step 2 — Itô's lemma (how the option value moves)</a><a href="#step-3-the-replicating-portfolio">Step 3 — The replicating portfolio</a><a href="#step-4-no-arbitrage-closure">Step 4 — No-arbitrage closure</a><a href="#step-5-the-black-scholes-merton-pde">Step 5 — The Black-Scholes-Merton PDE</a><a href="#what-this-pde-is-really-telling-you">What this PDE is really telling you</a><a href="#the-hedging-pl-gamma-vs-theta-the-punchline">The hedging P&amp;L: gamma vs theta — the punchline</a><a href="#why-the-dealer-feedback-loop-is-built-into-the-math">Why the dealer feedback loop is built into the math</a><a href="#the-variance-swap-connection">The variance swap connection</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VII · Theory · Chapter 7A</p>
+
+<h1>The PDE: why dealer hedging works at all</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>Up to this point we've described what the dealer does. The question this section answers is <strong>why their delta-hedging strategy is the unique correct strategy</strong>, and what mathematical structure their hedging P&amp;L actually has. This is the most technical section in the document, but it is also the one that justifies every claim that follows.</p>
+
+<p>The derivation proceeds in five steps. Each one builds on the previous, and each is doing a specific piece of intellectual work:</p>
+
+<ol>
+<li><strong>Step 1</strong> — assume the underlying follows geometric Brownian motion (the GBM model)</li>
+<li><strong>Step 2</strong> — apply Itô's lemma to derive how the option value changes</li>
+<li><strong>Step 3</strong> — construct the delta-hedged portfolio and observe it has no stochastic component</li>
+<li><strong>Step 4</strong> — invoke no-arbitrage: a locally risk-free portfolio must earn the risk-free rate</li>
+<li><strong>Step 5</strong> — derive the Black-Scholes-Merton PDE; this is the consistency condition</li>
+</ol>
+
+<p>Then we derive the gamma-theta P&amp;L decomposition that we previewed in <a class="xref" href="5c.html">Section 5C</a> and that drives everything in the dealer-mechanics framework. And finally we connect the option-replication mathematics to variance swaps and VIX construction — the bridge to <a class="xref" href="9a.html">Section 9</a>.</p>
+
+<p>This section is dense. If math is not your native language, read it slowly, accept the steps one at a time, and pay particular attention to the plain-English unpacking that follows each formula. The intellectual payoff is large: by the end of <a class="xref" href="7b.html">Section 7B</a>, you will understand that <strong>every delta-hedged option position is, fundamentally, a bet on realized volatility against implied volatility</strong>, and nothing else. This single insight reorganizes how to think about every options strategy.</p>
+</div>
+
+<hr>
+
+<h2 id="step-1-geometric-brownian-motion-the-model">Step 1 — Geometric Brownian Motion (the model)</h2>
+
+<p>Black and Scholes (1973) and independently Merton (1973) assumed the underlying asset follows a <strong>geometric Brownian motion</strong>:</p>
+
+<pre>dS = μS·dt + σS·dW</pre>
+
+<p>In words: in a small instant of time dt, the price S changes by an amount that has a deterministic component (μS·dt — the <strong>drift</strong>) and a random component (σS·dW — the <strong>diffusion</strong>). The randomness is captured by dW, an infinitesimal increment of a standard Brownian motion. By construction, dW is normally distributed with mean zero and variance dt. Multiplying by σS scales the noise by the current price and the volatility, making volatility "percent per unit time" rather than "dollars per unit time" — which is what we want, because we observe that volatility scales with price level (a <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo separator="true">,</mo><mn>000</mn><mi>s</mi><mi>t</mi><mi>o</mi><mi>c</mi><mi>k</mi><mi>h</mi><mi>a</mi><mi>s</mi><mi>b</mi><mi>i</mi><mi>g</mi><mi>g</mi><mi>e</mi><mi>r</mi><mi>d</mi><mi>o</mi><mi>l</mi><mi>l</mi><mi>a</mi><mi>r</mi><mi>m</mi><mi>o</mi><mi>v</mi><mi>e</mi><mi>s</mi><mi>t</mi><mi>h</mi><mi>a</mi><mi>n</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">1,000 stock has bigger dollar moves than a </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord">000</span><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal">oc</span><span class="mord mathnormal">kha</span><span class="mord mathnormal">s</span><span class="mord mathnormal">bi</span><span class="mord mathnormal" style="margin-right: 0.0359em;">gg</span><span class="mord mathnormal" style="margin-right: 0.0278em;">er</span><span class="mord mathnormal">d</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right: 0.0197em;">ll</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal">m</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right: 0.0359em;">v</span><span class="mord mathnormal">es</span><span class="mord mathnormal">t</span><span class="mord mathnormal">hana</span></span></span></span></span>10 stock at the same volatility).</p>
+
+<p>This is the <strong>central modeling assumption</strong> of the entire Black-Scholes framework. Prices wiggle proportionally to themselves, and the log-returns are Gaussian in continuous time. The model is wrong (real returns have fat tails, as we established in <a class="xref" href="1a.html">Section 1A</a>), but it is wrong in ways that can be corrected at the margins without rebuilding the whole framework. For our purposes — establishing the rationale for why dealers hedge the way they do — GBM is fine.</p>
+
+<p>A subtle clarification: the parameter μ here is the <em>instantaneous expected return</em> in simple-return space, not log-return space. By Itô's formula (which we're about to derive), the expected log-return is μ − ½σ² — that's the variance drag we discussed in <a class="xref" href="1b.html">Section 1B</a>. The two parameters live in different return conventions; both are valid; you just have to know which one you're using.</p>
+
+<h2 id="step-2-its-lemma-how-the-option-value-moves">Step 2 — Itô's lemma (how the option value moves)</h2>
+
+<p>The option value V is a function of S and t: V(S, t). When S moves, V moves. The textbook chain rule would say dV = (∂V/∂S) × dS, but <strong>that is wrong here</strong>, because S is stochastic. Itô's lemma — the chain rule for Brownian motion — gives us the correct expansion:</p>
+
+<pre>dV = (∂V/∂t)·dt + (∂V/∂S)·dS + ½·(∂²V/∂S²)·σ²S²·dt</pre>
+
+<p>Why the extra term? Because (dS)² is not zero. For ordinary smooth functions, (dx)² = O(dt²), which we drop in the limit. For Brownian motion, the variance of dS over interval dt is σ²S²·dt — same order as dt itself, which we <strong>must</strong> keep. The ½(∂²V/∂S²)σ²S²·dt term is <strong>gamma showing up explicitly</strong>: it's the quadratic variation contribution that makes options different from linear instruments.</p>
+
+<p>This is the central technical insight of stochastic calculus. The second derivative matters when the underlying is stochastic; it doesn't when the underlying is deterministic. Every "interesting" property of options derives from this single mathematical fact.</p>
+
+<p>Substituting the Greek notation ∂V/∂S = Δ, ∂²V/∂S² = Γ, ∂V/∂t = Θ:</p>
+
+<pre>dV = Θ·dt + Δ·dS + ½·Γ·σ²S²·dt</pre>
+
+<p>Read this: the change in option value over a small time interval has three components — a time-decay piece (Θ·dt), a directional piece (Δ·dS, which moves with the underlying), and a curvature piece (½·Γ·σ²S²·dt, which is always positive for long-option positions and reflects the convexity benefit).</p>
+
+<h2 id="step-3-the-replicating-portfolio">Step 3 — The replicating portfolio</h2>
+
+<p>Consider a portfolio Π that holds the option and a short position of Δ shares (the delta hedge):</p>
+
+<pre>Π = V − Δ·S</pre>
+
+<p>In a small interval, its value changes by:</p>
+
+<pre>dΠ = dV − Δ·dS = (Θ + ½·Γ·σ²S²)·dt + Δ·dS − Δ·dS = (Θ + ½·Γ·σ²S²)·dt</pre>
+
+<p>Look at what just happened. <strong>The dS terms canceled.</strong> The portfolio change has no stochastic component — it is locally risk-free. That is what delta hedging accomplishes: it removes the dW term, leaving only the deterministic dt terms.</p>
+
+<p>This is the mathematical statement of what we said informally in <a class="xref" href="6d.html">Section 6D</a>: a delta-hedged book is, at the instant of hedge, locally directionless. The dW noise from the underlying has been hedged away. The remaining motion of the portfolio is entirely deterministic — driven by theta and gamma alone, at first order.</p>
+
+<h2 id="step-4-no-arbitrage-closure">Step 4 — No-arbitrage closure</h2>
+
+<p>A locally risk-free portfolio must earn the risk-free rate, otherwise there is free money. This is the <strong>no-arbitrage condition</strong> — the most consequential single principle in derivatives pricing. So:</p>
+
+<pre>dΠ = r·Π·dt</pre>
+
+<p>The portfolio earns the risk-free rate r on its current value. Combining this with the Step 3 expression:</p>
+
+<pre>(Θ + ½·Γ·σ²S²)·dt = r·(V − Δ·S)·dt</pre>
+
+<p>Cancel dt from both sides and rearrange:</p>
+
+<pre>Θ + ½·Γ·σ²S² = r·V − r·Δ·S</pre>
+
+<p>Or, written with all derivatives expanded back out:</p>
+
+<pre>∂V/∂t + r·S·∂V/∂S + ½·σ²·S²·∂²V/∂S² = r·V</pre>
+
+<h2 id="step-5-the-black-scholes-merton-pde">Step 5 — The Black-Scholes-Merton PDE</h2>
+
+<pre>∂V/∂t + r·S·∂V/∂S + ½·σ²·S²·∂²V/∂S² = r·V</pre>
+
+<p>This is the celebrated <strong>Black-Scholes-Merton partial differential equation</strong>. (Robert Merton received the 1997 Nobel Memorial Prize in Economics for this work, jointly with Myron Scholes; Fischer Black, who would have shared the prize, had died in 1995.)</p>
+
+<h2 id="what-this-pde-is-really-telling-you">What this PDE is really telling you</h2>
+
+<p>The PDE is not a pricing formula. It is a <strong>consistency condition</strong>: any option price function V(S, t) that doesn't satisfy this equation creates an arbitrage. Solving the PDE with boundary condition V(S, T) = max(S − K, 0) (the payoff of a call at expiration) gives the Black-Scholes call formula:</p>
+
+<pre>C = S·e^(-qT)·N(d1) − K·e^(-rT)·N(d2)</pre>
+
+<p>with d1 and d2 as defined in <a class="xref" href="5c.html">Section 5C</a>. But more profoundly, the PDE encodes the <strong>recipe</strong> by which a dealer can replicate the option using only the underlying and cash. The dealer is not "pricing the option" in some metaphysical sense — the dealer is <strong>manufacturing</strong> the option through dynamic hedging.</p>
+
+<p>This is the deepest insight in the entire framework. An option payoff that looks like it requires unusual cleverness to construct (an asymmetric, convex payoff) can in fact be constructed from a simple time-varying position in the underlying plus cash. The cost of constructing this is exactly the Black-Scholes price — no more, no less, under the model's assumptions. Any deviation from this price creates an arbitrage.</p>
+
+<p>The practical implication: when you buy an option, what you're buying is the right to a payoff that the dealer is going to construct for you through their hedging activity. The premium you pay is the cost of the construction kit plus the dealer's margin plus their compensation for taking residual risks the model doesn't capture (jump risk, transaction costs, fat tails). The variance risk premium we discussed in <a class="xref" href="5e.html">Section 5E</a> is the cumulative spread between what dealers charge and what the model says is fair — the structural compensation they require to be in this business.</p>
+
+<h2 id="the-hedging-pl-gamma-vs-theta-the-punchline">The hedging P&amp;L: gamma vs theta — the punchline</h2>
+
+<p>Now we exploit the PDE to get the most important formula in this entire document. Suppose the dealer delta-hedges continuously but realized volatility (σ_R) differs from the volatility used to price the option (σ_I, the implied vol at entry). Their actual P&amp;L over an interval dt is approximately:</p>
+
+<pre>dΠ ≈ ½·Γ·S²·[(dS/S)² − σ_I²·dt]</pre>
+
+<p>Read that as: <strong>over each interval, the delta-hedged dealer earns gamma times the difference between realized squared return and implied variance.</strong> This is the entire economic content of a delta-hedged option position.</p>
+
+<p>If you are <em>long</em> the option (long gamma) and realized volatility <em>exceeds</em> implied, you make money. Every wiggle in spot lets you scalp gamma — buy low, sell high in your hedge — at a rate that, in aggregate, exceeds the theta you're paying.</p>
+
+<p>If you are <em>long</em> the option and realized falls <em>short</em> of implied, you lose. You bought too much vol.</p>
+
+<p>If you are <em>short</em> the option (short gamma — the dealer's typical position), the signs flip. You earn the implied vol (the theta you collect) and pay the realized vol (the rebalancing losses). A short-gamma dealer <strong>wants quiet markets</strong>. A long-gamma dealer <strong>wants moves</strong>.</p>
+
+<div class="callout brick">
+<p><strong>Under the standard delta-hedged framework, an option position is, at first order, a bet on realized vs. implied volatility — the dominant P&amp;L driver in the absence of large vega or skew dynamics.</strong></p>
+</div>
+
+<p>This is the punchline of the gamma-vs-theta decomposition. Strike selection affects the size of gamma; expiration selection affects the speed of gamma; the IV at entry sets the implied side of the bet — and to first order, the resulting P&amp;L is a function of whether realized exceeded implied.</p>
+
+<p><strong>The honest caveats.</strong> The "nothing more, nothing less" framing skips several real-world second-order effects that matter in practice:</p>
+
+<ul>
+<li><strong>Vega risk on IV moves.</strong> A delta-hedged position is <em>not</em> vega-neutral. If implied vol changes between entry and exit, that mark-to-market vega P&amp;L is a separate component on top of the gamma-vs-realized term. For long-dated options with large vega, this can dominate.</li>
+<li><strong>Discrete hedging.</strong> The decomposition above assumes continuous rebalancing. Real hedging happens discretely, and the <em>path</em> of spot between rebalances introduces variance around the theoretical gamma-scalping P&amp;L. Two traders running the same position with different hedge frequencies will realize different P&amp;L from the same realized vs. implied gap.</li>
+<li><strong>Skew and surface dynamics.</strong> Options that sit on a steep part of the surface accrue P&amp;L from vanna and volga as spot and vol co-move — terms that aren't captured by the simple γ × (RV² − IV²) decomposition.</li>
+<li><strong>Transaction costs.</strong> Hedging is not free. The gamma-scalping P&amp;L is <em>gross</em>; net P&amp;L can be meaningfully smaller, especially in less liquid underlyings or on short-DTE options where rebalancing is frequent.</li>
+</ul>
+
+<p>For most retail-scale, short-to-medium DTE, large-cap-underlying delta-hedged positions, the first-order realized-vs-implied framing captures the bulk of P&amp;L variability. For longer-dated positions, exotic surface trades, or low-liquidity underlyings, the second-order terms matter and should be modeled explicitly.</p>
+
+<figure class="fig" id="fig-realized-vs-implied"><figcaption><b>Figure to come:</b> realized-vs-implied</figcaption></figure>
+
+<figure class="fig" id="fig-hedging-friction-simulator"><figcaption><b>Figure to come:</b> hedging-friction-simulator</figcaption></figure>
+
+<h2 id="why-the-dealer-feedback-loop-is-built-into-the-math">Why the dealer feedback loop is built into the math</h2>
+
+<p>This is also the punchline for why aggregate dealer positioning moves the market. Suppose dealers are collectively short gamma in aggregate. They are mechanically losing money to volatility — and the more volatility there is, the more they lose. To minimize losses they hedge aggressively, which means buying as the market rises and selling as it falls. <strong>That hedging creates volatility</strong>, which makes them lose more, which makes them hedge more.</p>
+
+<p>The feedback loop is mathematically built into the gamma-theta decomposition we just derived. It is not a story or a metaphor. It falls out of the PDE. <a class="xref" href="8b.html">Section 8B</a> will formalize this into the effective-volatility equation that quantifies how dealer feedback amplifies (or dampens) underlying volatility depending on the sign of aggregate dealer gamma.</p>
+
+<h2 id="the-variance-swap-connection">The variance swap connection</h2>
+
+<p>Integrating dΠ ≈ ½ΓS²·[(dS/S)² − σ_I²·dt] over the life of the option and weighting by 1/S² gives, almost exactly, the payoff of a <strong>variance swap</strong>. This is not coincidence — it's the foundation of model-free variance replication and the reason VIX (<a class="xref" href="9a.html">Section 9A</a>) is constructed as a weighted strip of options with 1/K² weights.</p>
+
+<p>Specifically, Demeterfi, Derman, Kamal, and Zou's 1999 Goldman Sachs paper ("More Than You Ever Wanted to Know About Volatility Swaps") showed that a portfolio of options weighted by ΔK/K² across all strikes, when dynamically delta-hedged, replicates the payoff of a variance swap. The intuition: weighting by 1/K² creates a "gamma flat" portfolio (constant gamma per dollar of spot move regardless of where spot is), which is exactly the property required to replicate realized variance.</p>
+
+<p>This is the mathematical thread connecting dealer hedging to VIX. VIX is, fundamentally, the cost of replicating variance through delta-hedged options. Every option you trade contributes some amount of replicated variance to the dealer's book; aggregate dealer gamma is, essentially, the aggregate variance replication exposure of the entire options ecosystem. <a class="xref" href="9a.html">Section 9A</a> returns to this connection in detail.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="6f.html" rel="prev" data-part="Part VI · Dealer Mechanics"><span>Previous</span>6F · The hedging frequency vs cost tradeoff</a>
+<a class="next" href="7b.html" rel="next"><span>Next</span>7B · Second-order Greeks in context</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

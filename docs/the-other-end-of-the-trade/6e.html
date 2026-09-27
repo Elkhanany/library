@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>6E Gamma — The Other End of the Trade</title>
+<meta name="description" content="Chapter 6E of The Other End of the Trade: Gamma.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-5">← Part VI · Dealer Mechanics</a>
+  <div class="sb-folio"><a class="sb-prev" href="6d.html" aria-label="Previous chapter: 6D · Delta hedging" title="Previous chapter: 6D · Delta hedging (←)">‹ 6D</a><p class="sb-title"><span class="sb-at">Chapter 6E ·</span> <span class="sb-at">29 of 67</span></p><a class="sb-next" href="6f.html" aria-label="Next chapter: 6F · The hedging frequency vs cost tradeoff" title="Next chapter: 6F · The hedging frequency vs cost tradeoff (→)">6F ›</a></div>
+  <div id="sb-toc"><a href="#the-black-scholes-gamma-formula">1 · The Black-Scholes gamma formula</a><a href="#the-dealer-chases-delta">2 · The dealer chases delta</a><a href="#the-long-gamma-mirror-worked-out">3 · The long-gamma mirror, worked out</a><a href="#dollar-gamma-the-unit-that-matters">4 · Dollar gamma: the unit that matters</a><a href="#the-mechanisms-predictions">5 · The mechanism's predictions</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VI · Dealer Mechanics · Chapter 6E</p>
+
+<h1>Gamma</h1>
+
+<p class="subtitle">The engine of forced flow</p>
+
+<p>Gamma is the partial derivative of delta with respect to spot. It is the second derivative of the option price with respect to spot. Pronouncing those words and <em>understanding what gamma actually does</em> are different things, so let me show you rather than tell you.</p>
+
+<h2 id="the-black-scholes-gamma-formula">1 · The Black-Scholes gamma formula</h2>
+
+<pre>Γ = e^(-qT) × φ(d1) / (S × σ × √T)</pre>
+
+<p>where φ(·) is the standard normal density function (the bell-curve height, not the CDF area). Three things to notice:</p>
+
+<p><strong>First</strong>, gamma is the same for a call and the corresponding put with the same strike — put-call parity guarantees it.</p>
+
+<p><strong>Second</strong>, gamma is maximized at-the-money: φ(d1) is the bell-curve density, which peaks when its argument is zero, which happens approximately when spot equals strike.</p>
+
+<p><strong>Third</strong>, and this is the explosive observation, <strong>gamma is proportional to 1/√T</strong>. As time to expiration shrinks toward zero, ATM gamma diverges to infinity. This is not a mathematical curiosity. It is the dominant feature of modern intraday microstructure, because 0DTE options live exactly in this regime.</p>
+
+<h2 id="the-dealer-chases-delta">2 · The dealer chases delta</h2>
+
+<p>The dealer who has sold 1,000 ATM calls at strike $100 with 30 days to expiry initially hedges by buying shares equal to their net short delta. As spot moves, delta changes — and the existing share position becomes wrong. The dealer must rebalance.</p>
+
+<figure class="fig" id="fig-gamma-hedge-sim"><figcaption><b>Figure to come:</b> gamma-hedge-sim</figcaption></figure>
+
+<p><strong>The dealer is short gamma. Their forced trades go in the same direction as the price move.</strong> They buy as price rises and sell as it falls. This is the destabilizing pattern that dominates negative-GEX regimes at the market level: every dollar of move generates more flow in the direction of the move, which generates more move. The feedback loop is what makes Volmageddon, March 2020, and individual gamma squeezes like GME possible. It also explains why such episodes feel so "violent" — they're not violent because of news but because of mechanical positive feedback.</p>
+
+<p>The opposite case — the dealer <strong>long gamma</strong>, buying dips and selling rallies — is what stabilizes most days in modern markets and what gives positive-GEX regimes their characteristic mean-reverting feel. We'll see in <a class="xref" href="9b.html">Section 9B</a> that current 0DTE market structure has dealers in aggregate <em>long</em> gamma most days (because retail is selling and dealers are buying), which is partly why intraday SPX volatility has compressed even as headline option volume has exploded.</p>
+
+<h2 id="the-long-gamma-mirror-worked-out">3 · The long-gamma mirror, worked out</h2>
+
+<p>Mirror the short-gamma example above, sign-reversed, at SPX scale so it lines up with the $46k per-contract baseline used in the rest of this section.</p>
+
+<p>Suppose a dealer is <em>long</em> 1,000 SPX 6,000 calls with 30 DTE, IV 18%. Per-call ATM delta ≈ 0.52. Total delta exposure from the calls: 1,000 × 100 × 0.52 = +52,000 share-equivalents long. To neutralize, the dealer hedges by going <strong>short 52,000 share-equivalents</strong> of SPX (futures, basket, or ETF).</p>
+
+<p>Now spot ticks up 1% to 6,060. With Γ ≈ 0.0013 per dollar of spot, the per-call delta moves by 0.0013 × 60 ≈ 0.078 — from 0.52 to roughly 0.60. New total long delta from the calls: 1,000 × 100 × 0.60 = +60,000 share-equivalents. To stay flat, the dealer's hedge must grow to short 60,000. They were short 52,000. <strong>They sell 8,000 more shares</strong>.</p>
+
+<p>Spot rising → dealer sells more → presses the rally back toward equilibrium. The opposite holds on a down-move: spot to 5,940 takes delta from 0.52 to 0.44, the dealer's required short hedge shrinks from 52,000 to 44,000, and the dealer <strong>buys</strong> 8,000 shares to close part of the short. Spot falling → dealer buys → absorbs the fall.</p>
+
+<p><strong>The pattern reverses the short-gamma case at every step.</strong> Where the short-gamma dealer's forced trades reinforce the price move (sell into dumps, buy into rallies), the long-gamma dealer's forced trades fade it. Same 8,000-share rebalance per 1% move, opposite sign. This is the structural source of the stabilizing dynamic in positive-GEX regimes — not because someone is "providing liquidity" with judgment, but because the math of delta-hedging requires the opposite-direction trade when the dealer's gamma is the other sign.</p>
+
+<p><strong>Bridge to <a class="xref" href="8a.html">Section 8A</a>.</strong> Long gamma damps; short gamma amplifies. The aggregate dealer book in any given product is a <em>sum</em> of both signs across all dealers, strikes, and expirations. When that sum is positive (dealers net long gamma), the market behaves like the long-gamma case writ large; when negative, like the short-gamma case. The aggregation in 8A is doing exactly this — collapsing thousands of individual long- and short-gamma positions into a single signed scalar that classifies the prevailing regime.</p>
+
+<h2 id="dollar-gamma-the-unit-that-matters">4 · Dollar gamma: the unit that matters</h2>
+
+<p>Raw gamma is in units of "delta per dollar of spot move," which is a hard number to interpret across stocks of different prices. The standardized unit dealers actually care about is <strong>dollar gamma per 1% move</strong>:</p>
+
+<pre>$Γ_1% = Γ × S² × 0.01</pre>
+
+<p>Why this form? A 1% move in price is ΔS = 0.01 × S. The dealer's delta changes by Γ × ΔS = 0.01 × Γ × S per share. To hedge, they transact that many shares per share of original exposure. The dollar value of that flow is (0.01 × Γ × S) × S = 0.01 × Γ × S² per share, or scaling by contracts, 0.01 × Γ × S² × OI × 100. Dropping the 100 (a constant convention), you get the formula above — the canonical "$Γ per 1%" used in every GEX model from SqueezeMetrics onward.</p>
+
+<p>For a typical ATM SPX option at spot 6,000 with 30 days to expiry and 18% IV, single-contract dollar gamma per 1% move is approximately <strong>$46,000</strong> (Γ ≈ 0.0013 per dollar of spot; per 1%: 0.0013 × 6000² × 0.01 ≈ <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>464</mn><mi mathvariant="normal">/</mi><mi>s</mi><mi>h</mi><mi>a</mi><mi>r</mi><mi>e</mi><mo>×</mo><mn>100</mn><mi>s</mi><mi>h</mi><mi>a</mi><mi>r</mi><mi>e</mi><mi>m</mi><mi>u</mi><mi>l</mi><mi>t</mi><mi>i</mi><mi>p</mi><mi>l</mi><mi>i</mi><mi>e</mi><mi>r</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">464/share × 100 share multiplier = </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">464/</span><span class="mord mathnormal">s</span><span class="mord mathnormal">ha</span><span class="mord mathnormal">re</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">100</span><span class="mord mathnormal">s</span><span class="mord mathnormal">ha</span><span class="mord mathnormal">re</span><span class="mord mathnormal">m</span><span class="mord mathnormal">u</span><span class="mord mathnormal">lt</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right: 0.0197em;">pl</span><span class="mord mathnormal">i</span><span class="mord mathnormal" style="margin-right: 0.0278em;">er</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span></span></span></span></span>46,400). For SPY at $600 spot: approximately <strong>$460 per contract per 1%</strong> (same Γ, 100× smaller notional).</p>
+
+<figure class="fig" id="fig-dollar-gamma-units-lab"><figcaption><b>Figure to come:</b> dollar-gamma-units-lab</figcaption></figure>
+
+<p>Aggregate dealer dollar gamma across the listed SPX book typically ranges from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>20</mn><mi>B</mi><mi>t</mi><mi>o</mi></mrow><annotation encoding="application/x-tex">20B to </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">20</span><span class="mord mathnormal">Bt</span><span class="mord mathnormal">o</span></span></span></span></span>100B per 1% move on a normal day. This is the scale of mechanical hedging flow potentially sitting in dealer inventory — meaning a 1% move in SPX could generate tens of billions of dollars of forced rebalancing, depending on the sign of dealer net gamma.</p>
+
+<p>This is what <a class="xref" href="8a.html">Section 8A</a> formalizes into the GEX metric and what <a class="xref" href="8b.html">Section 8B</a> shows can drive market regime characterization. The dollar gamma magnitude tells you the <em>potential size</em> of mechanical flow. The sign tells you the <em>direction</em>. Together they characterize the dealer-hedging engine that drives the modern intraday market.</p>
+
+<h2 id="the-mechanisms-predictions">5 · The mechanism's predictions</h2>
+
+<p>If the framework so far is correct, several predictions follow:</p>
+
+<ol>
+<li><p><strong>Intraday momentum should be observable in markets dominated by short-gamma dealer positioning.</strong> ✓ Baltussen et al. (2021) document this across 60+ futures markets.</p></li>
+<li><p><strong>Intraday mean reversion should be observable in markets dominated by long-gamma dealer positioning.</strong> ✓ Modern SPX intraday character has compressed measurably since 0DTE growth, consistent with the Cboe and Dim-Eraker-Vilkov finding that 0DTE dealer positioning is net long-gamma on average.</p></li>
+<li><p><strong>Volatility should be self-reinforcing in short-gamma regimes.</strong> ✓ Volmageddon and March 2020 case studies in <a class="xref" href="8c.html">Section 8C</a> document exactly this.</p></li>
+<li><p><strong>The transition between regimes — the "gamma flip" — should be marked by visible character change.</strong> ✓ Practitioner experience and academic literature both confirm this, though precise identification of the flip level is contested across vendor methodologies.</p></li>
+</ol>
+
+<p>The framework is empirically supported, but not in a "gamma squeeze accounts for everything" sense — in a "gamma hedging accounts for measurable tens-of-basis-points effects, with occasional larger episodes during stress" sense. <a class="xref" href="8a.html">Section 8</a> quantifies this; <a class="xref" href="9a.html">Section 9</a> applies it; <a class="xref" href="12a.html">Section 12</a> sizes for it.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="6d.html" rel="prev"><span>Previous</span>6D · Delta hedging</a>
+<a class="next" href="6f.html" rel="next"><span>Next</span>6F · The hedging frequency vs cost tradeoff</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

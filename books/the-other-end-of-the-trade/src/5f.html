@@ -1,0 +1,96 @@
+<p class="eyebrow">Part V · Options · Chapter 5F</p>
+
+<h1>Put-call parity, synthetics, and the other risks</h1>
+
+<p>We close the options primer with two related ideas. First, <strong>put-call parity</strong> — a no-arbitrage identity that ties every call to every put with the same strike and expiration, and explains why many "different" strategies are economically identical. Second, a survey of the risks that don't show up in the Greeks but absolutely show up in your P&amp;L.</p>
+
+<h2 id="put-call-parity">1 · Put-call parity</h2>
+
+<p>For European options on the same underlying with the same strike K and expiration T, the call price C and the put price P are linked by:</p>
+
+<pre>C − P = S − K × e^(-rT)</pre>
+
+<p>(Adding dividend yield q gives the more general form: C − P = S × e^(-qT) − K × e^(-rT).)</p>
+
+<p>The intuition: a portfolio of (long call + short put + cash equal to the present value of K) replicates exactly the payoff of holding the underlying at expiration. By no-arbitrage, the cost of the portfolio must equal the cost of the underlying.</p>
+
+<p><strong>Rearrangements give the synthetic equivalents.</strong> Every combination of options and stock has a synthetic counterpart constructed differently:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Synthetic position</th><th class="c-endpoint">Construction</th><th class="c-other">Equivalent to</th></tr></thead><tbody><tr><td class="c-trial" data-label="Synthetic position">Synthetic long stock</td><td class="c-endpoint" data-label="Construction">Long call + Short put (same K) + cash</td><td class="c-other" data-label="Equivalent to">Long underlying</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic long call</td><td class="c-endpoint" data-label="Construction">Long stock + Long put</td><td class="c-other" data-label="Equivalent to">"Protective put"</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic long put</td><td class="c-endpoint" data-label="Construction">Short stock + Long call</td><td class="c-other" data-label="Equivalent to">Synthetic protective short</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short put</td><td class="c-endpoint" data-label="Construction">Long stock + Short call</td><td class="c-other" data-label="Equivalent to">"Covered call"</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short call</td><td class="c-endpoint" data-label="Construction">Short stock + Short put</td><td class="c-other" data-label="Equivalent to">Risky</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short stock</td><td class="c-endpoint" data-label="Construction">Short call + Long put</td><td class="c-other" data-label="Equivalent to">Used when borrow is hard</td></tr></tbody></table></div></div>
+
+<p>The most operationally important equivalence: <strong>a covered call is identical in payoff to a short cash-secured put at the same strike</strong>. Both positions:</p>
+
+<ul>
+<li>Receive a credit upfront</li>
+<li>Have capped upside (the strike for covered call; the premium for short put)</li>
+<li>Have unbounded downside as the underlying falls</li>
+<li>Have identical net Greeks</li>
+</ul>
+
+<p>If you think covered calls are "conservative" but selling puts is "reckless," you're being fooled by labels. They are the same payoff. Naming things differently does not change what you own. The choice between them is operational (covered call requires you to own the stock; cash-secured put requires you to have cash collateral), not economic.</p>
+
+<h2 id="put-call-parity-in-practice">2 · Put-call parity in practice</h2>
+
+<p>Put-call parity provides one of the cleanest sanity checks in options trading. If parity doesn't hold, there's an arbitrage available. In liquid markets, parity holds tight enough that no retail trader can exploit deviations. But monitoring parity is useful: if the bid-ask of a synthetic position is much wider than the bid-ask of its direct equivalent, you've identified a cheap execution route.</p>
+
+<p>For example: if you want long stock exposure but the share borrow is expensive (a short squeeze in progress), the synthetic long via long call + short put can be cheaper. If you want to hedge with a protective put but the put spread is wide, sometimes the equivalent long-put-via-short-stock structure has tighter execution. These are edge cases but they exist.</p>
+
+<h2 id="early-exercise-of-american-options">3 · Early exercise of American options</h2>
+
+<p>European options exercise only at expiration. American options can exercise any time before expiration. This optionality has economic value, but holders exercise only when rational — specific conditions.</p>
+
+<p><strong>Early exercise of American puts</strong> is rational when:</p>
+
+<ul>
+<li>Put is deep ITM (low time value remaining)</li>
+<li>Interest rates are non-trivial (receiving strike cash earlier worth more than holding the option)</li>
+<li>Dividend yield is low (low opportunity cost vs short-stock equivalent)</li>
+</ul>
+
+<p>Rule of thumb: deep ITM put with very low time value (&lt;$0.50) and a strike that would generate &gt;2% annual interest on the released cash sees rational early exercise. A 0.30-delta put with $3 of time value never gets exercised early.</p>
+
+<p><strong>Early exercise of American calls</strong> is rational only <strong>before large dividends</strong>. For non-dividend-paying stocks, early exercise of an American call is strictly suboptimal — you give up time value and get nothing in return.</p>
+
+<p>Dividend exception: a call holder who exercises before ex-dividend receives the dividend. If</p>
+
+<pre>Dividend amount &gt; Time value of the call</pre>
+
+<p>then early exercise can be rational. For deep-ITM American calls with low time value and a large upcoming dividend, this fires.</p>
+
+<p><strong>Implications for short-option positions</strong>:</p>
+
+<p>A trader short a deep-ITM American put can wake up to find it exercised early — converting the short put into long stock at strike. Generally fine (cash → stock at a known price) but it ends the option's continued role.</p>
+
+<p>A trader short a deep-ITM American call on a dividend stock may face early assignment before ex-div — leaving them short stock with the dividend obligation. Rare but operationally important.</p>
+
+<p><strong>SPX/XSP/RUT exemption</strong>: European-style index options (SPX, XSP, RUT, NDX) have no early exercise. This eliminates an entire class of operational risk relative to SPY (American) and individual-stock options.</p>
+
+<h2 id="the-other-risks-the-ones-the-greeks-miss">4 · The other risks (the ones the Greeks miss)</h2>
+
+<p>The Greeks describe sensitivities to smooth changes in price, time, and volatility. They do not describe discontinuous events, structural-market risks, or path-dependent dynamics. Each of these risks has destroyed more retail accounts than missed delta calls.</p>
+
+<p><strong>Pin risk.</strong> The chaos that descends on option sellers when the underlying closes near a strike at expiration. In a perfectly rational world, the option holder exercises if ITM by even one cent and lets the option expire if OTM by any amount. In practice, the final-minute price fluctuates, settlement prints may differ from the close, and you go home Friday not knowing if you'll be assigned. Come Monday morning, you might wake up with 100 shares per contract — long or short — that you didn't plan for, fully exposed to the weekend gap.</p>
+
+<p>The defense against pin risk: <strong>close any short option trading near its strike in the final hour before expiration</strong>. The small premium you give up by closing early is dwarfed by the cost of an unplanned weekend position. Or, structurally, trade cash-settled index options (SPX/XSP) which have no physical delivery and therefore no pin risk in the traditional sense — though they have the related risk that the SOQ settlement can produce a print different from the previous close.</p>
+
+<figure class="fig" id="fig-pin-risk-scenario"><figcaption><b>Figure to come:</b> pin-risk-scenario</figcaption></figure>
+
+<p><strong>Early exercise.</strong> American-style options can be exercised at any time, not just at expiration. The holder of an ITM call has economic incentive to exercise early just before a dividend (to capture the dividend at the cost of the time value forgone). The holder of a deep ITM put has incentive to exercise early to receive the strike cash and reinvest it at the risk-free rate. Short positions can be assigned without warning when this happens.</p>
+
+<p>For European-style cash-settled index options (SPX, XSP, NDX, VIX, RUT), early exercise is impossible — the contract structure precludes it. This is one of several structural advantages of trading SPX/XSP for systematic income strategies.</p>
+
+<p><strong>Gap risk.</strong> The risk that the underlying opens at a price meaningfully different from the previous close, leaving a gap on the chart. Short positions held overnight or over weekends are exposed to the full gap; long positions are insulated by their bounded loss. Gap risk is large for single stocks (earnings releases produce 10-20% gaps regularly), modest for SPY (typical Monday gap of 0.2-0.5%, occasionally 2-5% on stress weekends), and zero for cash-settled SPX options (where the settlement reference at expiry is the SOQ, not a continuous price). For physically-settled SPY positions held into expiry, gap risk includes the weekend between Friday's settlement and Monday's open — you receive shares Friday and absorb the Monday gap in full.</p>
+
+<p><strong>Liquidity risk.</strong> The risk that bid-ask spreads widen dramatically or that depth disappears at exactly the moment you need to exit. Liquidity risk is small for SPY ATM options on a typical day and large for deep OTM single-name options in stress. The 2020 March drawdown saw bid-ask spreads on liquid index options expand to 10× their typical width during the most volatile sessions. Traders attempting to roll positions during these sessions faced execution costs that wiped out months of accumulated premium.</p>
+
+<p>The defense: avoid trading positions you cannot afford to hold to expiration. Avoid OTM strikes with low OI. Plan to close positions during normal liquidity conditions (mid-day, low VIX), not during stress.</p>
+
+<p><strong>Borrow cost.</strong> For strategies involving short stock (which retail rarely does directly, but which underlies certain synthetic positions), the cost to borrow shares can be substantial — particularly for stocks under short squeeze pressure. GameStop in early 2021 had borrow rates exceeding 100% annualized at peak. The borrow cost is paid by the short side and is invisible in standard option pricing models but very real in execution.</p>
+
+<p><strong>Margin expansion risk.</strong> The <a class="xref" href="3c.html">Section 3C</a> discussion of portfolio margin in stress. Position sizing that's comfortable in calm conditions can become forced-liquidation territory in stress as margin requirements expand. The retail discipline: never run margin-leveraged positions whose stress-scenario losses would force liquidation. Use cash-secured strategies or pre-committed kill rules to avoid this.</p>
+
+<p><strong>Counterparty risk.</strong> For exchange-listed options cleared through the OCC, this is effectively zero — the OCC has never failed to deliver in its history. For OTC options, this risk is real and is the primary reason most retail traders should never trade OTC products.</p>
+
+<h2 id="course-complete">5 · Course complete</h2>
+
+<p>You now have the options foundation: contract mechanics, premium anatomy, the chain, all five primary Greeks, the higher-order Greeks, volatility math from log returns to estimators to the surface, put-call parity, and the structural risks the Greeks miss. Everything from here on out — dealer mechanics, GEX aggregation, regime analysis, tactical swing trading, the strategy atlas — builds on these primitives. If a later chapter assumes something you haven't seen yet, the answer is almost always in <a class="xref" href="5a.html">Section 5</a> above or in Sections 1-4.</p>

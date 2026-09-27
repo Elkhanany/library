@@ -1,0 +1,87 @@
+<p class="eyebrow">Part I · Foundation · Chapter 1B</p>
+
+<h1>Log returns and why they're additive</h1>
+
+<p>Before we can talk about volatility, expected value, or compounding coherently, we need a return definition that behaves mathematically. The standard simple percentage return — (P_t − P_{t−1}) / P_{t−1} — has a quiet but fatal flaw: it is <em>asymmetric</em>. A stock that goes up 20% and then comes back to its starting price has, by simple-return arithmetic, gone up 20% and then down 16.67% — two different magnitudes for what is obviously the same-sized round trip. Professionals use logarithmic returns instead, and the reasons run deeper than mere convenience.</p>
+
+<h2 id="two-return-definitions">1 · Two return definitions</h2>
+
+<pre class="aligned">Simple return:   r_t = (P_t − P_{t−1}) / P_{t−1}
+
+Log return:      r_t = ln(P_t / P_{t−1})  =  ln(P_t) − ln(P_{t−1})</pre>
+
+<p>These two definitions agree for small moves (they're equal to first order in the Taylor expansion of ln(1+x) ≈ x), but they diverge for large moves and they have fundamentally different mathematical properties.</p>
+
+<h2 id="property-1-log-returns-are-symmetric">2 · Property 1: log returns are symmetric</h2>
+
+<p>A stock at $100 goes up to $120, then comes back down to $100. Simple returns describe this as:</p>
+
+<pre class="aligned">Up:    (120 − 100) / 100 = +20.0%
+Down:  (100 − 120) / 120 = −16.67%</pre>
+
+<p>Same round trip, two different magnitudes. The asymmetry is real: a 20% gain followed by a 16.67% loss does indeed return to the starting price, because multiplicative returns require a smaller down-percentage to undo a bigger up-percentage. But this asymmetry makes simple returns awkward to reason about.</p>
+
+<p>Log returns describe the same round trip as:</p>
+
+<pre class="aligned">Up:    ln(120/100) = +0.1823
+Down:  ln(100/120) = −0.1823</pre>
+
+<p>The same magnitude in opposite directions. Symmetric. Negation. This matters when you're trying to build intuition about volatility — which is, after all, a measure of magnitude irrespective of direction.</p>
+
+<figure class="fig" id="fig-log-return-symmetry"><figcaption><b>Figure to come:</b> log-return-symmetry</figcaption></figure>
+
+<h2 id="property-2-log-returns-are-additive-over-time">3 · Property 2: log returns are additive over time</h2>
+
+<p>The multi-period simple return requires chaining multiplications:</p>
+
+<pre>Total simple return over T periods:
+R_total = ∏_{t=1}^{T} (1 + r_t) − 1</pre>
+
+<p>That's a product, not a sum. Annoying to work with, hard to differentiate, hard to bound, and a nightmare in any time-series statistical analysis.</p>
+
+<p>The multi-period log return is just the sum:</p>
+
+<pre>Total log return over T periods:
+r_total = ln(P_T / P_0) = ∑_{t=1}^{T} ln(P_t / P_{t−1}) = ∑_{t=1}^{T} r_t</pre>
+
+<p>This is the <strong>additivity property</strong>: total log return is the sum of period-by-period log returns. The proof is one line — a telescoping product of price ratios collapses to a single ratio, and the log of a single ratio is one log. It is the single most useful property in quantitative finance.</p>
+
+<p>Why does additivity matter operationally?</p>
+
+<p><strong>Volatility scaling becomes clean.</strong> If you assume returns are independent over time, the variance of a sum is the sum of variances, so:</p>
+
+<pre>σ²_total = ∑_{t=1}^{T} σ²_t</pre>
+
+<p>If daily log returns have constant variance σ²_daily, then T-day variance is T·σ²_daily, and T-day standard deviation is σ_daily·√T. This is the famous <strong>square-root-of-time rule</strong>. It only works cleanly for log returns under independence.</p>
+
+<p><strong>Annualization becomes trivial.</strong> Daily log returns annualize as:</p>
+
+<pre>σ_annual = σ_daily × √252</pre>
+
+<p>(252 trading days per year). Weekly: ×√52. Monthly: ×√12. These are exact under the independence assumption, not approximations.</p>
+
+<p><strong>Multi-day stress tests become a clean sum.</strong> If you want to ask "what's the cumulative drawdown over a 5-day stress event?" you sum five log returns. With simple returns you'd be compounding (1+r) terms, which produces convexity errors when the moves are large — exactly when you most want the answer to be accurate.</p>
+
+<p><strong>Distributional assumptions become natural.</strong> The classical Black-Scholes model assumes asset prices follow geometric Brownian motion, which in continuous time means log returns are normally distributed. Under that assumption, the sum of independent normals is normal — so the T-period log return is also normal, with mean Tμ and variance Tσ². No correction. With simple returns, the sum of percentage returns is not even well-defined as a distribution under most reasonable models.</p>
+
+<h2 id="the-it-correction-a-preview">4 · The Itô correction (a preview)</h2>
+
+<p>There's a subtle point that becomes important in <a class="xref" href="7a.html">Section 7</a>. If a stock's instantaneous return is normally distributed with mean μ_dt and variance σ²·dt, the <em>instantaneous log return</em> is NOT normal with mean μ·dt — it's normal with mean (μ − ½σ²)·dt. The −½σ² term is called the <strong>Itô drift correction</strong> or <strong>variance drag</strong>. It arises because the log function is concave: when you log-transform a random variable, you don't just transform the mean by ln(mean) — you also pick up a negative term proportional to variance.</p>
+
+<p>The practical implication: a stock with 10% expected simple return per year and 20% volatility has expected log return of only:</p>
+
+<pre>E[ln(1+r)] ≈ μ − ½σ² = 0.10 − 0.5 × 0.04 = 0.08 = 8%</pre>
+
+<p>The 2% gap between expected simple return and expected log return is variance drag. It's the reason that, all else equal, lower-volatility strategies compound to higher terminal wealth than higher-volatility strategies <em>with the same arithmetic mean return</em>. This is also the mathematical engine behind the Kelly criterion, which we'll cover in 1C and 2E.</p>
+
+<div class="callout brick">
+<p><em>Variance drag is why a sequence of returns +50%, −50%, +50%, −50%, … ends in ruin even though the arithmetic mean is zero. The geometric mean — which is what compounding actually delivers — is √(1.5 × 0.5) − 1 = −13.4% per pair.</em></p>
+</div>
+
+<figure class="fig" id="fig-variance-drag-explorer"><figcaption><b>Figure to come:</b> variance-drag-explorer</figcaption></figure>
+
+<h2 id="the-convention">5 · The convention</h2>
+
+<p>For the rest of this book, "return" means log return unless otherwise stated. Volatility, Sharpe ratio, variance, drift — all of them assume log returns under the hood. When you see σ_daily × √252 to annualize, that's a log-return convention. When you see a derivation of Black-Scholes invoking dS/S = μ·dt + σ·dW, recognize that as a statement about log returns. Almost every formula in derivatives pricing is more natural in log space.</p>
+
+<p>The one place where simple returns persist is in reporting to non-quant audiences: clients want to hear "the strategy returned 12% this year," not "log return of 0.1133." That's fine. Translate at the boundary, not in the middle of your math.</p>

@@ -1,0 +1,981 @@
+/* ===========================================================================
+ * landing.css -- the front matter of a book.
+ *
+ * One sheet for every page that is not a chapter and not a contents page: the
+ * two hand-written front doors, and the clinical book's two appendices, Stories
+ * and the Trial Registry. They share one register (DESIGN.md section 6, Front
+ * matter): a kicker, a serif title at weight 400, a lede, stats as hairline
+ * cells, and the same frame, so moving between them from the bar never moves
+ * the title's left edge.
+ *
+ * Each landing keeps only what is its own, which is one figure apiece: the
+ * physics book's light cone and the clinical book's cell field.
+ *
+ * It assumes book.css, which every page here loads for the book's palette and
+ * the type tokens. Every colour below is one of that file's roles, so a book
+ * that changes its accent in book.json changes its front matter too, and the
+ * dark theme needs nothing here.
+ *
+ * THE REGISTER
+ *
+ * These are reference books, and the front matter should say so before a word
+ * is read: the serif for anything that is read, the sans for anything that is
+ * operated or labelled, hairlines rather than boxes, and no shadow anywhere
+ * except under the one button a reader is meant to press.
+ * =========================================================================== */
+
+body { margin: 0; }
+
+/* The frame. The page is 62rem; the inner gutter is the bar's own inset, so
+   the title's left edge is the same on every front-matter page. The bar is
+   full-bleed and never reads this width. */
+:root {
+  --fm-wide: 62rem;     /* the page */
+  --lp-text: 34rem;     /* the landing's text column: lede, thesis, stats, figure edge */
+  --fm-text: 44rem;     /* an appendix's lede and stats */
+  /* An appendix row's reading body, in em of its own size. DESIGN.md caps it at
+     36em; at 36em the fallback serif measured 85 characters to the line, so it
+     is set at 30em, which is 64 to 72 in Iowan and Charter alike. */
+  --fm-body: 30em;
+}
+
+.lp {
+  max-width: var(--fm-wide);
+  margin: 0 auto;
+  padding: 0 var(--lib-inset, 1.25rem);
+}
+
+
+/* ---------------------------------------------------------------- the head
+ * Kicker, title, lede, thesis and stats. The landing sets its title at the
+ * display size; an appendix at the page-title size. Both at weight 400. */
+
+.eyebrow { margin: 0 0 1rem; }
+
+.fm-head h1,
+.hero h1 {
+  font-family: var(--serif);
+  font-weight: var(--fw-title, 400);
+  margin: 0 0 1.25rem;
+  text-wrap: balance;
+}
+.hero h1 {
+  font-size: var(--fs-display, clamp(2.6rem, 1.2rem + 5.4vw, 5rem));
+  line-height: 1.02;
+  letter-spacing: -.02em;
+  max-width: var(--lp-text);
+}
+.fm-head h1 {
+  font-size: var(--fs-title, clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem));
+  line-height: 1.12;
+  letter-spacing: -.015em;
+}
+
+.lede {
+  font-family: var(--serif);
+  font-size: clamp(1.04rem, 1rem + .3vw, 1.2rem);
+  line-height: 1.62;
+  color: var(--ink-soft);
+  max-width: var(--lp-text);
+  margin: 0 0 2rem;
+}
+.fm-head .lede { max-width: var(--fm-text); margin-bottom: 1.5rem; }
+
+/* The book's thesis, in the book's own words. A rule rather than quotation
+   marks: it is not being quoted from somewhere else. */
+.thesis {
+  border-left: 2px solid var(--accent);
+  padding: .1rem 0 .1rem 1.4rem;
+  margin: 0 0 2.4rem;
+  max-width: var(--lp-text);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.02rem, 1rem + .2vw, 1.16rem);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* Plain paragraphs: how the book is built, how a page is read. */
+.note {
+  font-size: .96rem;
+  line-height: 1.66;
+  color: var(--ink-soft);
+  max-width: calc(var(--lp-text) + 6rem);
+  margin: 0;
+}
+.note + .note { margin-top: 1.1rem; }
+.fm-head .note { max-width: var(--fm-text); margin: 0 0 1.5rem; }
+
+
+/* ------------------------------------------------------------- the stats
+ * Counts between two hairlines, capped at the text measure so the rules stop
+ * where the text column does (on a front door, before the figure). Every one
+ * is computed, at build time on a landing and from the data on an appendix. */
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: var(--lp-text);
+  margin: 0 0 2.2rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.fm-head .stats { max-width: var(--fm-text); margin-bottom: 1.6rem; }
+/* An appendix fills its stats from the data after load; the row keeps its
+   height meanwhile, so nothing below it moves when the numbers arrive. */
+.stats:empty { min-height: 4.35rem; }
+
+.stat {
+  padding: .85rem 1.6rem .8rem 0;
+  margin-right: 1.6rem;
+  border-right: 1px solid var(--rule-soft);
+}
+.stat:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+
+.stat b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  font-weight: 400;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+  color: var(--ink);
+  /* so 37 / 76 and 98 / 98 line up down the column rather than shuffling */
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The caption: the label style, in the faint ink. */
+.stat span {
+  display: block;
+  margin-top: .25rem;
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+
+/* ------------------------------------------------------------------ the way in
+ * One button, and the rest as text. Three buttons of equal weight is three
+ * ways of saying "start here", which is none. */
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem 1.6rem;
+  max-width: var(--lp-text);
+}
+/* The button has its row to itself and the text links share the next, so a
+   third link, or the returning reader's "Continue at ...", never leaves one
+   link stranded on a line of its own. */
+.cta > .btn { flex-shrink: 0; max-width: 100%; margin-right: 100%; margin-bottom: .2rem; }
+
+.btn {
+  font-family: var(--sans);
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: .7rem 1.4rem;
+  border-radius: var(--r-m, 6px);
+  background: var(--accent);
+  /* text on an accent fill is the page ground, in both themes: the dark
+     accent is light, and white on it is about 2:1 */
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  /* the only shadow in the front matter */
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 18%, transparent);
+  transition: filter .15s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn-main { display: block; font-weight: 600; }
+.btn-sub {
+  display: block;
+  margin-top: .15rem;
+  font-weight: 400;
+  font-size: .8125rem;
+}
+
+.go {
+  font-family: var(--sans);
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  transition: color .15s;
+}
+.go::after {
+  content: "\2192";
+  margin-left: .45rem;
+  transition: transform .15s;
+}
+.go:hover { color: var(--accent); }
+.go:hover::after { transform: translateX(3px); }
+
+
+/* ---------------------------------------------------------------- the hero
+ * The front door's head, with the book's own figure behind it. At 641px and
+ * wider the figure fills the hero and is masked away from the text column,
+ * starting at the column's right edge, so no line of it runs under a word. At
+ * 640px and narrower it has a band of its own after the way in, with its
+ * caption beneath it. The figure is decoration: nothing on it is a control,
+ * and nothing on it is the only place something is said. */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(3.2rem, 11vh, 6.5rem) 0 clamp(2.6rem, 7vh, 4rem);
+}
+.hero .lp > :not(.hero-fig) { position: relative; z-index: 1; }
+
+/* The text column's right edge, measured from the hero's left edge: the frame
+   is centred, so its left edge is half of what the frame leaves over. */
+.hero-fig {
+  --fig-edge: calc(max(0px, 50% - var(--fm-wide) / 2) + var(--lib-inset, 1.25rem) + var(--lp-text));
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, transparent var(--fig-edge),
+    rgba(0,0,0,.45) calc(var(--fig-edge) + 3rem), #000 calc(var(--fig-edge) + 9rem));
+  mask-image: linear-gradient(to right, transparent 0, transparent var(--fig-edge),
+    rgba(0,0,0,.45) calc(var(--fig-edge) + 3rem), #000 calc(var(--fig-edge) + 9rem));
+}
+.hero-fig canvas { width: 100%; height: 100%; display: block; }
+
+/* The caption under a figure, where the book explains what is being drawn.
+   Held to a short measure and set in the sans, so it reads as apparatus rather
+   than as more of the page. */
+.caption {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 26rem;
+  margin: 1.8rem 0 0;
+}
+.caption b { color: var(--ink); font-weight: 600; }
+
+
+/* ---------------------------------------------------------------- sections */
+
+.sec { padding: clamp(2.8rem, 7vh, 4.4rem) 0 0; }
+.sec:last-of-type { padding-bottom: clamp(2.8rem, 7vh, 4.4rem); }
+
+/* A short accent rule above the heading, the way a part opener is marked in
+   the book itself. */
+.sec h2 {
+  position: relative;
+  font-family: var(--serif);
+  font-weight: var(--fw-head, 700);
+  font-size: var(--fs-h2, clamp(1.35rem, 1.1rem + 1vw, 1.75rem));
+  line-height: 1.22;
+  letter-spacing: -.01em;
+  border: 0;
+  padding: 1.1rem 0 0;
+  margin: 0 0 .6rem;
+}
+.sec h2::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 2.2rem;
+  height: 2px;
+  background: var(--accent);
+}
+
+.sec .sub {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.62;
+  max-width: calc(var(--lp-text) + 6rem);
+  margin: 0 0 2.2rem;
+}
+
+
+/* ------------------------------------------------------------- the columns
+ * A column asks to be read. The rule on top is the whole of the decoration;
+ * a column that is a link says so with the same arrow as a text link, which
+ * a thumb can see without a hover (FD-17). */
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+  gap: 0 2.6rem;
+}
+
+.col-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 1.1rem 0 1.6rem;
+  border-top: 1px solid var(--rule);
+}
+
+.col-item .k {
+  display: block;
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.col-item h3 {
+  font-family: var(--serif);
+  font-weight: var(--fw-head, 700);
+  font-size: 1.15rem;
+  line-height: 1.3;
+  letter-spacing: -.005em;
+  margin: .5rem 0 .5rem;
+  transition: color .15s;
+}
+
+.col-item p {
+  margin: 0;
+  font-size: .95rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+a.col-item h3::after {
+  content: "\2192";
+  display: inline-block;
+  margin-left: .4rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: .9em;
+  color: var(--ink-soft);
+  transition: transform .15s, color .15s;
+}
+a.col-item:hover { border-top-color: var(--accent); }
+a.col-item:hover h3,
+a.col-item:hover h3::after { color: var(--accent); }
+a.col-item:hover h3::after { transform: translateX(3px); }
+
+
+/* ------------------------------------------------------------- the part index
+ * Generated by webbuild from book.json's "arc": kicker, title and blurb,
+ * count. Set as an index rather than a stack of tiles: one rule per row, the
+ * numeral in its own column, the count right-aligned on figures that line
+ * up. */
+
+.arc { border-bottom: 1px solid var(--rule-soft); }
+
+.arc-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  align-items: baseline;
+  gap: 0 1.6rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--rule-soft);
+  text-decoration: none;
+  color: inherit;
+}
+
+a.arc-row:hover .arc-t { color: var(--accent); }
+a.arc-row:hover .arc-n { color: var(--ink-soft); }
+
+.arc-k {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.arc-t {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: .3rem;
+  transition: color .15s;
+}
+
+.arc-row p {
+  margin: 0;
+  font-size: .95rem;
+  line-height: 1.58;
+  color: var(--ink-soft);
+  max-width: 42rem;
+}
+
+.arc-n {
+  font-family: var(--sans);
+  font-size: .75rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transition: color .15s;
+}
+
+/* A part that is planned and not written. The softer ink says so; dimming by
+   opacity would take the words below 4.5:1. */
+.arc-row.pending .arc-t,
+.arc-row.pending p { color: var(--ink-soft); }
+.arc-row.pending .arc-t { font-style: italic; }
+/* On its own line, under the numeral, as a label. */
+.arc-row.pending .arc-k::after {
+  content: "planned";
+  display: block;
+  margin-top: .3rem;
+  letter-spacing: .1em;
+  color: var(--ink-faint);
+}
+
+
+/* -------------------------------------------------------------------- foot */
+
+.foot {
+  margin-top: clamp(2.4rem, 6vh, 3.6rem);
+  padding: 1.6rem 0 clamp(2.6rem, 7vh, 4rem);
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: .8125rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  max-width: calc(var(--lp-text) + 8rem);
+}
+.foot a { color: var(--ink-soft); }
+.foot a:hover { color: var(--accent); }
+
+
+/* =========================================================== the appendices
+ * Stories and the Trial Registry: the same head as a front door at the page
+ * title's size, then a filter bar that stays under the library bar, then rows.
+ * Class names here are the appendices' own (.reg-*, .st-*, .f-*) and never a
+ * chapter component's, so nothing in book.css can leak onto a row. */
+
+.fm { padding-bottom: 5rem; }
+.fm-head { padding: clamp(2rem, 6vh, 3.4rem) 0 0; }
+
+/* A sentence with a link or two in it, under the head. */
+.fm-aside {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: var(--fm-text);
+  margin: 0 0 1.4rem;
+}
+.fm-aside a,
+.fm-aside button {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-line, currentColor);
+  text-underline-offset: .18em;
+}
+.fm-aside a:hover,
+.fm-aside button:hover { text-decoration-color: var(--accent); }
+
+.fm-empty {
+  font-family: var(--sans);
+  font-size: .875rem;
+  color: var(--ink-faint);
+  padding: 2rem 0;
+  margin: 0;
+}
+
+
+/* ------------------------------------------------------------- the filters
+ * Sticky under the library bar, on the page ground, so a reader scrolled a
+ * thousand rows down can still change what they are looking at. On a phone it
+ * folds to one "Filters (n)" row that opens on a tap (PDA-08). */
+
+.filters {
+  position: sticky;
+  top: var(--lib-bar-h, 2.75rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  padding: .75rem 0 .6rem;
+  border-bottom: 1px solid var(--rule);
+  margin: 0 0 .4rem;
+}
+.f-panel { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.f-head { order: 2; display: flex; align-items: center; gap: 1rem; margin: .5rem 0 0; }
+
+.filters select,
+.filters input {
+  font-family: var(--sans);
+  font-size: .875rem;
+  padding: .45rem .55rem;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 38px;
+}
+/* The selects carry long labels and would otherwise push Clear off the right
+   edge at the widths between wrapping and roomy. */
+.filters select { flex: 0 1 auto; min-width: 0; text-overflow: ellipsis; }
+/* 16px or iOS zooms the page on focus */
+.filters input { flex: 1 1 13rem; min-width: 9rem; font-size: 16px; }
+.filters input::placeholder { color: var(--ink-faint); opacity: 1; }
+
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  font-weight: 600;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink-soft);
+  padding: .5rem .8rem;
+  cursor: pointer;
+  min-height: 38px;
+}
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+
+.f-clear {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-size: .8125rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  cursor: pointer;
+  padding: .3rem .4rem;
+  min-height: 38px;
+}
+.f-count {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+/* The fold's own button: only on a phone, and only once the script is there
+   to open it. */
+.f-toggle {
+  display: none;
+  align-items: center;
+  gap: .35rem;
+  font-family: var(--sans);
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0 .9rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.f-toggle::after {
+  content: "";
+  width: .45rem; height: .45rem;
+  margin-left: .25rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+.f-toggle[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
+.f-toggle .f-n { font-weight: 400; color: var(--ink-soft); }
+
+
+/* ----------------------------------------------------------- registry rows
+ * Name in the sans, the facts about it in the label colour, and everything a
+ * reader reads -- topic, result, the paper's own digest -- in the serif at
+ * 1rem, held to 36em of its own size (FD-01). */
+
+.reg-row {
+  border-bottom: 1px solid var(--rule-soft);
+  padding: .8rem 0;
+  scroll-margin-top: calc(var(--lib-bar-h, 2.75rem) + var(--fbar-h, 0px) + .5rem);
+}
+.reg-row > summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.reg-line {
+  display: flex;
+  gap: .3rem .7rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.reg-row > summary::-webkit-details-marker { display: none; }
+.reg-name {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.reg-row[open] .reg-name,
+.reg-row > summary:hover .reg-name { color: var(--accent); }
+.reg-meta {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: .8125rem;
+  color: var(--ink-faint);
+  display: flex;
+  gap: .2rem .6rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.reg-meta i { font-style: normal; white-space: nowrap; }
+.reg-topic {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: var(--fm-body);
+  margin-top: .2rem;
+}
+
+/* Tags: the label style (book.css .tag), on a wash. Each pair is 4.5:1 or
+   better in both themes. */
+.reg-row .tag { padding: .2em .45em; border-radius: var(--r-s, 3px); white-space: nowrap; }
+.tag.untab { background: var(--warn-soft); color: var(--warn); }
+.tag.fresh { background: var(--accent-soft); color: var(--accent); }
+.tag.awaited { background: var(--bg-alt); color: var(--ink-soft); }
+.tag.expl { background: var(--bg-alt); color: var(--ink-soft); box-shadow: inset 0 0 0 1px var(--rule); }
+
+.reg-body {
+  padding: .6rem 0 .3rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.reg-body h4 {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 1.1rem 0 .45rem;
+}
+.reg-body dl {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: .35rem 1rem;
+  margin: 0;
+}
+.reg-body dt {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-top: .3rem;
+}
+.reg-body dd { margin: 0; max-width: var(--fm-body); }
+
+/* The abstract, minus the parts that argue. Methods and results are what a
+   reader checking a row needs. */
+.reg-digest {
+  margin: 0;
+  border-left: 2px solid var(--rule);
+  padding: .1rem 0 .1rem .9rem;
+}
+.reg-digest p { margin: .35rem 0; max-width: var(--fm-body); }
+.reg-digest b {
+  display: block;
+  margin-top: .6rem;
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.reg-digest p:first-child b { margin-top: 0; }
+
+.reg-note {
+  margin: .8rem 0 0;
+  max-width: var(--fm-body);
+  border-left: 2px solid var(--accent);
+  padding-left: .9rem;
+}
+.reg-note::before {
+  content: "Read with care. ";
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+ol.reg-pubs { margin: 0; padding-left: 1.3rem; max-width: var(--fm-body); }
+ol.reg-pubs li { margin: .4rem 0; }
+ol.reg-pubs .role {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-right: .45rem;
+}
+ol.reg-pubs a {
+  font-family: var(--sans);
+  font-size: .875rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-line, currentColor);
+  text-underline-offset: .18em;
+}
+
+.reg-aside {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  color: var(--ink-faint);
+  margin: .6rem 0 0;
+}
+
+.reg-chips,
+.st-trials { display: flex; flex-wrap: wrap; gap: .35rem; }
+.reg-chip,
+.st-trials a {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-s, 4px);
+  padding: .25rem .5rem;
+  background: var(--paper);
+}
+a.reg-chip:hover,
+.st-trials a:hover { border-color: var(--accent); color: var(--accent); }
+.reg-chip.ghost { color: var(--ink-soft); border-style: dashed; }
+
+/* The chapter view's headings. */
+.reg-part {
+  margin: 2rem 0 .5rem;
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.reg-chap {
+  margin: 1.2rem 0 .3rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+.reg-chap a { color: var(--ink); text-decoration: none; }
+.reg-chap a:hover { color: var(--accent); }
+
+
+/* -------------------------------------------------------------- story rows
+ * A story's title and premise in the serif, its questions as the book sets
+ * them: the question, then the five moves as a grid of label and text, the
+ * text in the ink at 1rem and held to 36em. */
+
+.st-set {
+  margin: 2.4rem 0 .2rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+}
+/* the filter bar's own rule is the first one */
+#out > .st-set:first-child { margin-top: 1.4rem; padding-top: 0; border-top: 0; }
+.st-set {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.st-sub {
+  margin: 1.5rem 0 .1rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.st-row {
+  border-bottom: 1px solid var(--rule-soft);
+  padding: .85rem 0 1rem;
+  scroll-margin-top: calc(var(--lib-bar-h, 2.75rem) + var(--fbar-h, 0px) + .5rem);
+}
+.st-row > summary { cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.st-row > summary::-webkit-details-marker { display: none; }
+.st-stage {
+  display: inline-block;
+  margin-right: .55rem;
+  padding: .2em .45em;
+  border-radius: var(--r-s, 3px);
+  background: var(--bg-alt);
+  white-space: nowrap;
+  vertical-align: .15em;
+}
+.st-name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.st-row[open] .st-name,
+.st-row > summary:hover .st-name { color: var(--accent); }
+.st-meta {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  color: var(--ink-faint);
+  margin: .35rem 0 0;
+}
+.st-meta a { color: var(--ink-soft); }
+.st-meta a:hover { color: var(--accent); }
+.st-prem {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: var(--fm-body);
+  margin: .6rem 0 0;
+}
+
+.st-q {
+  margin: 1.3rem 0 0;
+  padding: 0 0 0 .95rem;
+  border-left: 2px solid var(--rule);
+  scroll-margin-top: calc(var(--lib-bar-h, 2.75rem) + var(--fbar-h, 0px) + .5rem);
+}
+.st-ask {
+  font-family: var(--serif);
+  font-weight: var(--fw-head, 700);
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--ink);
+  max-width: var(--fm-body);
+  margin: 0 0 .55rem;
+}
+.st-moves {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: .3rem 1rem;
+  margin: 0 0 .6rem;
+}
+.st-moves dt {
+  font: 700 var(--fs-label, .7rem)/1.3 var(--sans);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-top: .35rem;
+}
+.st-moves dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: var(--fm-body);
+}
+.st-trials { margin: .6rem 0 0; }
+.st-trials a { white-space: nowrap; }
+.st-trials a .yr { font-weight: 400; color: var(--ink-faint); margin-left: .3rem; }
+
+
+/* ------------------------------------------------------------------ touch
+ * Every control a thumb uses is 44px (PDA-10). */
+
+@media (pointer: coarse) {
+  .filters select,
+  .filters input,
+  .seg button,
+  .f-clear { min-height: 44px; }
+  .reg-chip,
+  .st-trials a { min-height: 44px; }
+  /* Inline links in a sentence: the padding widens the target without moving
+     the line. */
+  .foot a,
+  .fm-aside a,
+  .fm-aside button,
+  .st-meta a { padding-block: .75rem; }
+}
+
+
+/* ------------------------------------------------------------------ narrow */
+
+@media (max-width: 640px) {
+  .hero h1 { max-width: none; }
+
+  /* The figure's own band, after the way in, with the caption under it. It
+     is full-bleed, so the picture has the whole width of the phone. */
+  .hero-fig {
+    position: relative;
+    inset: auto;
+    height: clamp(15rem, 70vw, 20rem);
+    margin: 2rem calc(-1 * var(--lib-inset, 1rem)) 0;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  }
+  .caption { margin-top: .9rem; }
+
+  /* Two cells to a row, so a third or fourth count starts a row of its own
+     under a hairline rather than hanging off the end of the last one. */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; }
+  .stat { margin-right: 0; padding: .75rem .9rem .7rem 0; border-right: 0; }
+  .stat:nth-child(odd) { border-right: 1px solid var(--rule-soft); }
+  .stat:nth-child(even) { padding-left: 1rem; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--rule-soft); }
+  .stat:last-child:nth-child(odd) { border-right: 0; }
+  .stat b { font-size: 1.35rem; }
+  .cols { gap: 0 1.6rem; }
+  /* the three-column index becomes two rows: numeral and count share a line,
+     the title and blurb take the next */
+  .arc-row { grid-template-columns: auto 1fr; gap: .35rem 1rem; }
+  .arc-b { grid-column: 1 / -1; grid-row: 2; }
+  .arc-n { justify-self: end; }
+
+  /* The filters fold to one row. */
+  .filters { padding: .5rem 0; }
+  .filters.fold .f-head { order: 0; margin: 0; }
+  .filters.fold .f-toggle { display: inline-flex; }
+  .filters.fold:not(.open) .f-panel { display: none; }
+  .filters.fold.open .f-panel { margin-top: .6rem; }
+  .filters.fold.open {
+    max-height: calc(100vh - var(--lib-bar-h, 2.75rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .filters input { flex-basis: 100%; }
+  .filters select { flex: 1 1 calc(50% - .25rem); }
+
+  .reg-meta { margin-left: 0; flex: 1 1 100%; }
+  .reg-body dl { grid-template-columns: 1fr; gap: .1rem; }
+  .reg-body dt { margin-top: .55rem; }
+
+  .st-moves { grid-template-columns: 1fr; gap: .1rem; }
+  .st-moves dt { margin-top: .55rem; }
+  /* A few trials are named by a phrase rather than an acronym, and on a narrow
+     phone one of those chips is wider than the screen. */
+  .st-trials a { white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .go, .go::after, .col-item, .col-item h3, a.col-item h3::after, .arc-t, .arc-n {
+    transition: none;
+  }
+  .go:hover::after,
+  a.col-item:hover h3::after { transform: none; }
+}
+
+@media print {
+  .btn { box-shadow: none; }
+  .hero-fig { display: none; }
+  .filters { position: static; }
+}

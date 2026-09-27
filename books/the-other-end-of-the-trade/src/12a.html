@@ -1,0 +1,109 @@
+<p class="eyebrow">Part XII · Discipline · Chapter 12A</p>
+
+<h1>The retail haircut for swing strategies</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>Everything in Sections 1-11 was about understanding the mechanism. This section is about the operational discipline that turns understanding into compound returns. The framework is specifically oriented around <strong>swing trading SPX/SPY/QQQ/Mag-7 setups on horizons of 2 to 20 trading days</strong>, which is where most of the framework lives and where the dealer-mechanics framework has its sharpest practical application.</p>
+
+<p>The retail trader's problem isn't usually edge — most have access to genuinely tradeable setups. The problem is the gap between paper performance and live performance, which is dominated by behavioral and operational factors. <strong>A strategy with paper Sharpe of 0.80 routinely shows 0.20-0.40 in a retail account.</strong> This section is about closing that gap.</p>
+
+<p>Five sub-chapters:</p>
+
+<ul>
+<li><strong>12A</strong> — The retail haircut. Why paper Sharpe degrades to user-account Sharpe, with concrete numbers.</li>
+<li><strong>12B</strong> — The conviction score. E × M × R × X × S as a pre-trade discipline.</li>
+<li><strong>12C</strong> — Pipeline and kill rules. Observation → interpretation → trade implication → sizing → invalidation, plus three levels of kill rules.</li>
+<li><strong>12D</strong> — Ten worked examples. Real swing-trade reasoning chains, applied.</li>
+<li><strong>12E</strong> — Setup cards. Operational one-pagers for the four core swing archetypes plus do-not-trade reference cards.</li>
+</ul>
+</div>
+
+<hr>
+
+<p>A swing strategy with paper Sharpe of 1.0 in a clean backtest routinely shows Sharpe of 0.3-0.5 in a retail account. The gap is not because backtests are wrong (well, sometimes they are — but assume yours isn't). The gap is because real implementation introduces friction at multiple layers, each one compounding on the previous.</p>
+
+<div class="callout brick">
+<p><strong>Defining "mechanical sleeve."</strong> Throughout Section 12 (and in the kill rules of 12C, the conviction discussion of 12B, and the discipline pipeline), the term <em>mechanical sleeve</em> refers to a rules-only sub-portfolio that executes predefined entries and exits without discretionary override. Examples: a systematic SPX cash-secured-put writing program; a 200-day-moving-average crossover allocation; a Connors RSI(2) mean-reversion bot on QQQ; a fixed monthly Iron Condor sale at 30 DTE. The defining property is that <em>no human judgment intervenes between signal and execution</em>.</p>
+
+<p>Why the distinction matters: mechanical sleeves provide <strong>baseline market exposure</strong> that continues to compound during periods when discretionary judgment must be suspended — drawdown timeouts (per 12C kill rules), personal/health events, regime confusion, or simple loss-of-conviction phases. The mechanical sleeve is the portfolio's heartbeat; the discretionary sleeve is its thinking layer. A trader running only discretionary positions has no baseline; if discretion fails (and it sometimes will), the entire portfolio sits in cash earning Treasury yields.</p>
+
+<p><strong>Sleeve sizing.</strong> A reasonable structure for a swing-trading retail account is <strong>60-80% mechanical, 20-40% discretionary</strong>, with the mechanical sleeve weighted toward systematic equity exposure (factor or buy-and-hold) plus modest systematic premium selling. The discretionary sleeve takes the swing trades described in <a class="xref" href="10a.html">Section 10</a> and is where this entire curriculum's tactical layer operates.</p>
+
+<p>When this curriculum talks about "stopping all trading after a 25% drawdown" (12C) or "the conviction score governing entries" (12B), those rules apply to the <strong>discretionary</strong> sleeve only. Mechanical sleeves run regardless.</p>
+</div>
+
+<h2 id="the-four-layers-of-friction-for-swing-strategies">1 · The four layers of friction for swing strategies</h2>
+
+<p><strong>1. Paper backtest.</strong> Baseline performance on historical data. Mid-quote fills (entry at midpoint of bid-ask). No transaction costs beyond a token commission. No taxes. Idealized entries. This is what the backtest engine produces.</p>
+
+<p><strong>2. Out-of-sample.</strong> Same strategy, same parameters, but on unseen data. This is where overfitting bias appears. A strategy with paper Sharpe 1.0 from in-sample optimization typically delivers Sharpe 0.5-0.7 out-of-sample on truly fresh data. The gap is the <strong>deflation factor</strong> from López de Prado's work (<a class="xref" href="1a.html">Section 1A</a>).</p>
+
+<p><strong>3. Live execution.</strong> Real bid-ask spreads on entry and exit (not mid-quote). Real slippage when sizing exceeds top-of-book depth. Real timing — you don't always see the setup form in real time as cleanly as you see it in the backtest. Real-world execution typically introduces another 20-30% Sharpe degradation.</p>
+
+<p><strong>4. After-tax, after-behavior.</strong> Tax friction (ordinary income on short-term gains for SPY/QQQ; 1256 60/40 for SPX/XSP, ES). Behavioral interventions — early exits, missed setups, position-size inconsistencies, the urge to revenge-trade after a loss. Behavioral friction is the largest single source of loss in the chain, and the one most retail traders deny exists.</p>
+
+<h2 id="the-compounding-haircut-equation">2 · The compounding haircut equation</h2>
+
+<pre>SR_user = SR_paper × h_1 × h_2 × h_3 × h_4
+
+typical product: 0.30-0.60 — i.e., 30-60% of the paper Sharpe survives</pre>
+
+<p>Typical haircut values for a competent retail swing trader operating with discipline:</p>
+
+<ul>
+<li><strong>h₁ = 0.70-0.85</strong> (out-of-sample degradation)</li>
+<li><strong>h₂ = 0.80-0.90</strong> (execution slippage and timing)</li>
+<li><strong>h₃ = 0.85-0.95</strong> (tax friction; depends heavily on instrument choice — XSP vs SPY)</li>
+<li><strong>h₄ = 0.70-0.90</strong> (behavioral; depends on discipline)</li>
+</ul>
+
+<p>Product: 0.35-0.58. A paper-Sharpe-1.0 strategy typically delivers user-Sharpe 0.4-0.6 in practice. <strong>This is the median outcome, not a pessimistic projection.</strong></p>
+
+<figure class="fig" id="fig-retail-haircut-decomposition"><figcaption><b>Figure to come:</b> retail-haircut-decomposition</figcaption></figure>
+
+<p>If you find yourself thinking "I'll be better than the median because I'm more disciplined," you may be right — but the burden of proof is on you. Most traders who think they'll be better than the median are wrong.</p>
+
+<h2 id="the-behavioral-component-is-the-biggest-single-factor">3 · The behavioral component is the biggest single factor</h2>
+
+<p>Of the four haircut layers, the user-account layer (h₄) is consistently the largest single source of loss. <strong>Morningstar's annual <em>Mind the Gap</em> study has measured this for two decades</strong>: the difference between time-weighted fund returns and dollar-weighted investor returns runs consistently 100-200 basis points annually, with the gap widest in volatile, complex, and non-intuitive strategies.</p>
+
+<p>For swing trading specifically, the behavioral failure modes are:</p>
+
+<ol>
+<li><strong>Position-size inconsistency.</strong> Sizing larger after wins, smaller after losses. The reverse of what disciplined trading requires.</li>
+<li><strong>Stop migration.</strong> Moving stops further away as price approaches them, "to give the trade more room." This converts small losses into large ones.</li>
+<li><strong>Premature exits on winners.</strong> Closing winners early to "lock in profit" while letting losers run. The classic disposition effect.</li>
+<li><strong>Revenge trading.</strong> Taking marginal setups after a loss to "make it back," with predictable consequences.</li>
+<li><strong>Setup creep.</strong> Lowering the bar for what counts as a valid setup during slow weeks.</li>
+<li><strong>News chasing.</strong> Entering positions based on news after the move has already happened, rather than based on setup geometry.</li>
+</ol>
+
+<p>The fix is not "I'll behave better than the average investor." Most people who think this are wrong. <strong>The fix is structural</strong>: written rules, pre-committed entry criteria, mechanical position sizing, pre-committed kill criteria. Discipline only exists when it is binding under stress, and it is only binding when it was written down in calm conditions before the trade.</p>
+
+<h2 id="worked-example-a-swing-setup-paper-to-user">4 · Worked example: a swing setup, paper to user</h2>
+
+<p>Consider a trend-pullback swing setup on SPY: enter on RSI(2) &lt; 10 during Stage 2, exit at 21-EMA reclaim or 3-day time stop, fixed dollar-risk position sizing.</p>
+
+<ul>
+<li><strong>Paper backtest</strong> (2015-2024, in-sample optimization): Sharpe 1.1, average trade duration 4 days, win rate 67%, average win/loss ratio 1.4:1.</li>
+<li><strong>Out-of-sample</strong> (2025 forward-walk, parameters frozen): Sharpe 0.8. Win rate drops to 60%.</li>
+<li><strong>Live execution</strong> (slippage on entry/exit at limit orders that don't always fill at mid): Sharpe 0.65.</li>
+<li><strong>After-tax</strong>: For a top-bracket US retail trader, all gains are short-term. Effective tax rate ~40%. After-tax Sharpe 0.45.</li>
+<li><strong>After-behavior</strong>: Sharpe 0.30-0.35.</li>
+</ul>
+
+<p>The paper 1.1 became user 0.30-0.35. <strong>A 65-70% Sharpe haircut.</strong> This is normal. Plan for it.</p>
+
+<h2 id="plan-for-the-haircut-not-against-it">5 · Plan for the haircut, not against it</h2>
+
+<p>When you read a strategy description claiming Sharpe 0.85, your default expectation should be user-account 0.30-0.40. Use the haircut equation to <strong>filter strategies before committing capital</strong>: if the user-after-tax Sharpe doesn't beat just holding SPX outright, the strategy isn't worth the operational complexity.</p>
+
+<p>The honest framing: spending 100 hours implementing a paper-Sharpe-1.0 swing strategy and realizing 0.35 user-Sharpe is the median outcome. The win condition is to:</p>
+
+<ol>
+<li><strong>Pick strategies whose value doesn't depend on perfect execution.</strong></li>
+<li><strong>Pick instruments with favorable tax treatment.</strong> XSP/SPX/ES over SPY for the 1256 60/40 advantage.</li>
+<li><strong>Pick setups with simple, mechanical entry/exit rules.</strong></li>
+<li><strong>Pre-commit to position sizing.</strong></li>
+</ol>

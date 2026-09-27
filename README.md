@@ -21,6 +21,7 @@ deriving what it uses, and marking what it does not.**
 | **[The Long Argument](books/the-long-argument/)** | Eight philosophical questions that opened early and never closed, read as conversations across centuries. | index and 117 studies built, 8 chapters planned |
 | **[The Ages of Thought](books/the-ages-of-thought/)** | The same 2,600 years drawn rather than told: ten ages, and a line between two philosophers whenever one read or argued with the other. | atlas built |
 | **[Breast Cancer](books/breast-cancer/)** | Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both. | 98 chapters, complete |
+| **[The Other End of the Trade](books/the-other-end-of-the-trade/)** | SPX options from the dealer's side: what a market maker takes on with every option, the hedging that forces on it, and the footprint that hedging leaves on the index. Imported from the Dealer Mechanics Lab. | 67 chapters and 54 figures, complete |
 
 Each book keeps its own conventions, its own register of what it has taken on trust, and its own
 plans and review reports, because those are properties of a book rather than of the machinery. What
@@ -71,6 +72,13 @@ tools/                the build system, shared by every book
                       is entered once and appears in every chapter it bears on.
                       `--check` validates every block; `--orphans` finds trials
                       no block picks up.
+  spx.py              the trading book's front end: the Dealer Mechanics Lab's
+                      markdown into a curriculum and chapter fragments, with its
+                      widgets rewritten as figures. `--check` asserts both are
+                      current; `--verify` proves every word of the source reaches
+                      the book in order; `--import` refreshes the source.
+  spxfig.py           tries one of that book's figures on a page of its own, in
+                      seconds, with the checks the build and figcheck will apply
 
 shared/
   assets/             the house style — book.css, book.js
@@ -123,7 +131,17 @@ python3 tools/evidence.py --check   # every table's filter, and the registry's o
 python3 tools/export.py             # the registry as a spreadsheet, offered for download
 ```
 
-`pyyaml` is needed for that book; nothing else beyond the standard library is. The spreadsheet is
+`pyyaml` is needed for that book; nothing else beyond the standard library is.
+
+The trading book is written as markdown in another repository, the Dealer Mechanics Lab, and
+imported. Its chapters and curriculum are generated, as the clinical book's are:
+
+```bash
+python3 tools/spx.py --import ../dealer-lab   # copy the app's curriculum into source/
+python3 tools/spx.py                          # regenerate curriculum.json and src/
+python3 tools/spx.py --verify                 # every source word is in the book, in order
+python3 tools/spxfig.py --all                 # every figure, on its own, in both themes
+``` The spreadsheet is
 written by `tools/xlsx.py` rather than by a library, so a clone can produce it without installing
 anything.
 

@@ -1,0 +1,73 @@
+<p class="eyebrow">Part III · Markets · Chapter 3E</p>
+
+<h1>Execution as negative alpha</h1>
+
+<p>A strategy with a positive paper Sharpe and unsurprising mechanics can still be a net loser in a retail account. The reason is rarely the model — it's the <strong>gap between the price you saw and the price you got</strong>. Across the four-layer haircut framework introduced in 12A, execution friction (layer 3) typically destroys 20-30% of paper Sharpe even before behavior is considered. For multi-leg options strategies in single-name underlyings, the destruction can exceed 50%.</p>
+
+<p>This section consolidates the practical rules. The mathematics is simple; the discipline is hard.</p>
+
+<h2 id="the-bid-ask-trap-in-numbers">1 · The bid-ask trap, in numbers</h2>
+
+<p>Open any options chain on a single-name stock. The "last" price you see is irrelevant — it's the price of the last trade, which may have been seconds or hours ago, at whatever spread happened to exist then. The actionable prices are the <strong>bid</strong> (what you can sell at right now) and the <strong>ask</strong> (what you can buy at right now). Between them is the <strong>spread</strong>, and the spread is where edges go to die.</p>
+
+<p>For SPX index options, typical bid-ask spreads run $0.10-$0.30 on ATM strikes during regular hours, widening to $0.50-$1.00 on wing strikes. For SPY, $0.01-$0.03 ATM. For NVDA or AAPL options at typical strikes, $0.05-$0.15 ATM. For a thinly-traded single-name option three weeks out at a 30-delta strike, you might see $0.50-$1.50 spreads on a $5 premium — <strong>10-30% of the premium itself</strong>.</p>
+
+<p>A VRP-harvest strategy that collects 80 bps of annual edge over realized variance gets erased by a single 30% round-trip spread. The math: harvest $0.30 of edge per spread, give $0.40 to execution per trade across entry and exit. Net: lose money holding a "winning" strategy.</p>
+
+<p>This is not hypothetical. It is the single most common reason retail options strategies underperform their backtests.</p>
+
+<h2 id="the-five-rules-of-options-execution">2 · The five rules of options execution</h2>
+
+<p><strong>Rule 1 — The bid-ask midpoint is the only fair reference price.</strong> Compute mid = (bid + ask) / 2 at the moment of decision. Any limit order you place gets compared to this mid. "Selling at the mid" means an order at mid; "selling at $0.05 better than mid" means an order at mid + $0.05. Last price is decorative. Theoretical price (from vendor models) is informational, not actionable.</p>
+
+<p><strong>Rule 2 — Marketable limits, not market orders.</strong> A market order on a thin option chain at 9:32 AM can fill 30% above the prevailing mid in stress. Always use a limit. The limit can be aggressive (at the ask for a fast fill, or one penny inside it) but it must exist. The only exception is in clear emergencies — and a planned exit is never an emergency.</p>
+
+<p><strong>Rule 3 — Multi-leg orders go in as multi-leg spreads, not legged manually.</strong> When you place a vertical spread as two separate orders ("leg in" by selling one side, then buying the other), you take execution risk on the timing gap between fills. Even a 5-second gap during a fast tape can cost 5-15% of the spread credit. Use your broker's multi-leg ticket and price the spread as a single net debit/credit. The broker's market makers will fill or not — but you don't take legging risk.</p>
+
+<p><strong>Rule 4 — Avoid the open, the close, and the lunch hour unless trading those windows is part of your strategy.</strong> The first 15 minutes after the open feature the widest spreads of the day as overnight charm and vanna unwinds clear. The last 30 minutes feature mechanical rebalancing that creates price pressure unrelated to your thesis. The middle of the lunch hour (roughly 12:00-1:00 PM ET) often features thin liquidity. <strong>The cleanest execution window is generally 10:30 AM to 11:30 AM ET and 1:30 PM to 2:30 PM ET.</strong></p>
+
+<p><strong>Rule 5 — Estimate slippage before entering, not after.</strong> For every trade, before clicking, compute: "If I have to exit at the bid (or buy at the ask), what does that do to my expected profit?" If exiting at the unfavorable side costs more than 25% of your expected profit, the trade is execution-marginal. Either improve execution (tighter strikes, more liquid expirations) or skip.</p>
+
+<figure class="fig" id="fig-slippage-cost-calculator"><figcaption><b>Figure to come:</b> slippage-cost-calculator</figcaption></figure>
+
+<h2 id="instrument-selection-as-execution-decision">3 · Instrument selection as execution decision</h2>
+
+<p><strong>SPX vs SPY vs XSP.</strong> All three reference the same underlying but have different execution characteristics:</p>
+
+<ul>
+<li><strong>SPX</strong>: tightest bid-ask spreads on liquid strikes; 1256 tax treatment; cash-settled (no assignment risk); largest contract size ($5,000 notional per point at SPX 5,000). Best for size; worst for small accounts.</li>
+<li><strong>XSP</strong>: identical structure to SPX at 1/10 the contract size; 1256 tax treatment; cash-settled. Spreads sometimes wider proportionally than SPX. <strong>Best instrument for most retail swing-options traders.</strong></li>
+<li><strong>SPY</strong>: highest liquidity in raw volume; tightest absolute spreads in dollars; 1099 tax treatment; American-style (early-assignment risk on ITM short legs near ex-div). Best for share-level execution; tax-disadvantaged for short-term trading.</li>
+</ul>
+
+<p>For a retail trader running a Trend Pullback or Compression Breakout setup, <strong>XSP is the default choice</strong>. The marginal spread cost vs SPX is paid back many times over in tax efficiency, and the smaller contract size permits cleaner position sizing.</p>
+
+<p><strong>Single-name options.</strong> Mag-7 names (NVDA, AAPL, GOOGL, MSFT, META, AMZN, TSLA) have institutional-grade options liquidity — bid-ask spreads of $0.05-$0.15 on near-dated ATM strikes. Below the top 50 names, spreads widen dramatically. A small-cap biotech option might have $1.00 spreads on $3.00 premiums — <strong>untradeable for any strategy whose edge isn't measured in percentage of underlying move, not in IV mispricing</strong>.</p>
+
+<h2 id="when-legging-is-acceptable">4 · When legging is acceptable</h2>
+
+<p>Despite Rule 3, there are two cases where leg-by-leg execution beats multi-leg orders:</p>
+
+<ol>
+<li><p><strong>When the multi-leg order won't fill.</strong> Some thinly-traded strikes have market makers who won't price the spread as a package but will price each leg individually. After 30 seconds with no fill on a midpoint multi-leg order, you can try legging — but accept that your edge has just degraded.</p></li>
+<li><p><strong>When you're closing a position into rapid movement and want to capture one side quickly.</strong> If your iron condor's short call has moved deep ITM and the put side is worthless, closing the call side first protects against further loss; the worthless put side can close whenever. This is "scratching the trade" — not optimal execution but valid risk management.</p></li>
+</ol>
+
+<h2 id="the-journal-entry">5 · The journal entry</h2>
+
+<p>The mark of execution discipline is the post-trade journal. For every trade, record:</p>
+
+<ul>
+<li>Mid at decision time (before clicking)</li>
+<li>Limit price submitted</li>
+<li>Fill price</li>
+<li>Spread width at decision time</li>
+<li>Time of day</li>
+<li>Volume in the contract that day</li>
+</ul>
+
+<p>Over 50 trades, this dataset reveals your personal slippage profile. Most retail traders, asked to estimate their average slippage, guess 10-20% of spread. The journaled data routinely shows 40-60%. The difference is not skill — it's discipline. Recognizing the gap is the first step to closing it.</p>
+
+<div class="callout brick">
+<p><em>Execution is the only Greek not derived from Black-Scholes. It is the largest, the most controllable, and the one most retail traders ignore.</em></p>
+</div>

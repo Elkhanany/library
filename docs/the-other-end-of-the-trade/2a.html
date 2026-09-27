@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>2A The model: regression vs classification — The Other End of the Trade</title>
+<meta name="description" content="Chapter 2A of The Other End of the Trade: The model: regression vs classification.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-1">← Part II · Quant Trading</a>
+  <div class="sb-folio"><a class="sb-prev" href="1d.html" aria-label="Previous chapter: 1D · Sharpe ratio" title="Previous chapter: 1D · Sharpe ratio (←)">‹ 1D</a><p class="sb-title"><span class="sb-at">Chapter 2A ·</span> <span class="sb-at">5 of 67</span></p><a class="sb-next" href="2b.html" aria-label="Next chapter: 2B · Mean reversion vs momentum (an AR(1) model)" title="Next chapter: 2B · Mean reversion vs momentum (an AR(1) model) (→)">2B ›</a></div>
+  <div id="sb-toc"><a href="#regression-models-predict-a-real-number">1 · Regression models predict a real number</a><a href="#classification-models-predict-a-category">2 · Classification models predict a category</a><a href="#features-and-targets">3 · Features and targets</a><a href="#univariate-vs-multivariate-models">4 · Univariate vs multivariate models</a><a href="#the-occam-tax">5 · The Occam tax</a><a href="#where-the-model-fits-in-the-pipeline">6 · Where the model fits in the pipeline</a><a href="#cross-validation-in-time-series">7 · Cross-validation in time series</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part II · Quant Trading · Chapter 2A</p>
+
+<h1>The model: regression vs classification</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>Quantitative trading, distilled to one sentence: <strong>create a statistical edge and execute it to produce risk-adjusted returns</strong>. Both halves matter equally. A great model with poor execution makes no money. Great execution without a model is just clean losses. The quant trading industry is divided into firms that excel at the first half (the alpha researchers) and firms that excel at the second half (the execution engines like Jane Street, Citadel Securities, Tower Research) — and the most profitable firms in the world are those that have built unified pipelines from research to execution with minimal slippage between them.</p>
+
+<p>This section walks through the five components in order: the model (2A), the simplest interesting model class (2B), how the model is fit (2C), how the resulting predictions are executed (2D), and how the position is sized and traded at appropriate frequency (2E). The treatment is deliberately introductory — entire books exist on each of these topics. The goal here is to give you enough mechanics to read the dealer chapters that follow without confusion.</p>
+</div>
+
+<hr>
+
+<p>A <strong>model</strong> is a mathematical object that takes inputs and produces an output prediction. In trading, inputs are typically a vector of features observed at time t — past prices, volumes, technical indicators, macro variables, news sentiment scores — and the output is some quantity at time t+h, where h is the prediction horizon. Two basic flavors of model dominate the literature.</p>
+
+<h2 id="regression-models-predict-a-real-number">1 · Regression models predict a real number</h2>
+
+<p>A regression model predicts a continuous quantity. Examples in trading:</p>
+
+<ul>
+<li><strong>Predict the next bar's return.</strong> Output: log return over the next minute, hour, or day.</li>
+<li><strong>Predict the price h minutes from now.</strong> Output: a price level.</li>
+<li><strong>Predict realized volatility over the next 30 days.</strong> Output: a non-negative number, often log-transformed to make it more Gaussian-shaped.</li>
+<li><strong>Predict the cost to execute a 1,000-share buy in the next 30 seconds.</strong> Output: implementation shortfall in basis points.</li>
+</ul>
+
+<p>The output of a regression model is, in principle, unbounded — though in practice it's bounded by what's physically possible (a single-day return less than −100% is impossible because you can't lose more than you have).</p>
+
+<h2 id="classification-models-predict-a-category">2 · Classification models predict a category</h2>
+
+<p>A classification model predicts which of a finite set of categories the next observation will fall into, often with an associated probability:</p>
+
+<ul>
+<li><strong>Predict next bar direction.</strong> Output: probability of "up" vs "down."</li>
+<li><strong>Predict next event type.</strong> Output: probabilities over {breakout, mean-reversion, range-bound}.</li>
+<li><strong>Predict whether a position will be a winner.</strong> Output: probability of profit, given current setup and execution path.</li>
+</ul>
+
+<p>Classification is useful when you only care about direction rather than magnitude. It's also useful when the underlying signal is structurally bounded (a tick can only go up or down — or stay flat, in a three-class formulation). And it's useful when you want to feed the output to a downstream sizing function — many sizing rules in 2E take a probability or signed signal in [−1, +1] as their input.</p>
+
+<h2 id="features-and-targets">3 · Features and targets</h2>
+
+<p>A model is fit on training data consisting of (feature, target) pairs:</p>
+
+<ul>
+<li><strong>Features (x):</strong> the inputs available at time t, before the future is revealed. Typically a vector — past returns, indicator values, volume, etc.</li>
+<li><strong>Target (y):</strong> the quantity to be predicted at time t+h. For regression, a number. For classification, a label.</li>
+</ul>
+
+<p>A core principle of model-building: <strong>the feature must be available at the time of prediction</strong>. If your feature set includes "tomorrow's open price" while trying to predict "tomorrow's close," you have lookahead bias and your backtest is meaningless. This sounds obvious; in practice, lookahead bias is the most common backtest error in retail strategy development. Every joined dataset must be checked for it. Every indicator that uses smoothing or filtering must be verified to use only past data. Every macro variable must be lagged to reflect publication timing.</p>
+
+<h2 id="univariate-vs-multivariate-models">4 · Univariate vs multivariate models</h2>
+
+<p>The simplest possible model is univariate — one feature, one target. The next-simplest is multivariate — many features, one target. The most complex is multi-target — many features, many targets simultaneously.</p>
+
+<p>Univariate models are easy to interpret, easy to debug, and surprisingly competitive. The AR(1) model in 2B is univariate. A linear regression of next-bar return on past-bar return has two parameters (slope and intercept) and is often hard to beat for short-horizon prediction.</p>
+
+<p>Multivariate models can capture interactions between features but pay a price in interpretability and overfitting risk. With more features than you have independent observations, even a linear regression can fit noise perfectly. The danger compounds when the features themselves are correlated.</p>
+
+<h2 id="the-occam-tax">5 · The Occam tax</h2>
+
+<p>There is a strong empirical prior in quant trading that <strong>simpler is better</strong>. This is not just folklore; it has explicit statistical foundations.</p>
+
+<p><strong>Bias-variance tradeoff.</strong> Every estimator has two sources of error: bias (consistently wrong in some direction) and variance (noisy estimate due to finite sample). Complex models reduce bias but increase variance. Simple models do the opposite. In finance, where signal-to-noise ratios are very low and sample sizes are effectively bounded by historical data length, the optimal point on the bias-variance tradeoff tends to favor simple models.</p>
+
+<p><strong>Overfitting.</strong> Given enough parameters, any model will fit any in-sample data perfectly — including the noise. The model "learns" patterns that don't exist in the underlying data-generating process. In financial time series, where the signal-to-noise ratio is roughly 1:100 to 1:1000 on short horizons, overfitting is the default outcome, not the exception. A neural network with 10,000 parameters trained on 5 years of daily data (1,260 observations) is <em>extremely</em> prone to overfit in the absence of regularization, dropout, early stopping, or other complexity-control mechanisms; with aggressive regularization and large auxiliary datasets it is possible to fit such a model usefully, but the burden of proof — that the fit reflects signal rather than noise — sits firmly on the modeler.</p>
+
+<p><strong>The "no free lunch" theorem.</strong> Wolpert and Macready (1997) proved that, averaged over all possible problems, no single algorithm outperforms any other. In specific problem domains, some algorithms work better than others — but you need strong prior knowledge to choose. In finance, that prior knowledge is hard to come by, so robust simple methods tend to outperform exotic complex ones once you account for transaction costs and out-of-sample degradation.</p>
+
+<p><strong>López de Prado's principle (from "Advances in Financial Machine Learning," 2018).</strong> Most published trading strategies are statistical artifacts. The probability that a backtested Sharpe ratio survives to live deployment is roughly inverse in the number of trials conducted to find it. If you tested 100 strategies and the best one has Sharpe 1.5, the deflated Sharpe (correcting for multiple testing) is probably indistinguishable from zero.</p>
+
+<p><strong>Linear models are competitive baselines.</strong> Univariate auto-regressive models — predicting the next value from the last one, with a single weight and bias — often outperform deep neural networks on noisy financial data, because the deep network finds patterns that don't generalize. This is the central empirical finding of three decades of academic finance: the linear baseline is hard to beat once you control for overfitting and transaction costs.</p>
+
+<div class="callout brick">
+<p><em>"Neural networks are a Ferrari. Powerful, but easy to crash. On financial time series, they overfit unless very carefully managed. Start with linear regression. Earn the right to add complexity."</em></p>
+</div>
+
+<p>Earning the right to add complexity means: show that the simpler model leaves systematic residuals (deviations from prediction) that the more complex model can capture; verify that the improvement survives walk-forward cross-validation on data the more complex model never saw; account for the additional degrees of freedom in your performance evaluation; and stress-test that the more complex model is robust to feature noise. Most retail "ML for trading" content skips every one of these steps.</p>
+
+<h2 id="where-the-model-fits-in-the-pipeline">6 · Where the model fits in the pipeline</h2>
+
+<p>The model is one half of the trading system. The other half is the <strong>strategy</strong> — the execution layer that turns predictions into orders. A perfect predictor with no execution policy is useless because you don't know how big to trade, when to enter, when to exit, or how to handle the case where your model contradicts your existing position.</p>
+
+<pre>Model     →  produces edge (a prediction with positive E[outcome])
+Strategy  →  executes edge (turns predictions into sized orders with entry/exit rules)</pre>
+
+<p>In card-counting blackjack, the counting system is the model — it produces an estimate of the deck's remaining favorable cards. The betting strategy is everything else — bet sizing as a function of count, table choice, session length, when to walk away. A perfect counter who bets the same amount on every hand loses. A perfect bettor with no counting system loses faster. You need both, and they have to be designed together.</p>
+
+<p><a class="xref" href="2b.html">Section 2B</a> builds the simplest possible model class. <a class="xref" href="2d.html">Section 2D</a> builds the execution layer.</p>
+
+<h2 id="cross-validation-in-time-series">7 · Cross-validation in time series</h2>
+
+<p>A subtle but critical point that retail strategy developers routinely get wrong: standard k-fold cross-validation does not work on time series data. The standard method splits the data randomly into k buckets, trains on k−1 buckets, and tests on the remaining bucket. This produces meaningless results in finance because it mixes future data into the training set.</p>
+
+<p>The correct method is <strong>walk-forward analysis</strong> or, more rigorously, <strong>purged k-fold cross-validation</strong> (López de Prado, 2018):</p>
+
+<ol>
+<li>Split the data into time-ordered chunks.</li>
+<li>For each chunk, train on data strictly before the chunk start (and possibly a "purge" gap to avoid contamination from data labeling near the boundary).</li>
+<li>Test on the chunk.</li>
+<li>Aggregate test-set performance across all chunks.</li>
+</ol>
+
+<p>This is computationally more expensive than standard cross-validation but it's the only honest way to estimate out-of-sample performance on time series data. Any backtest that doesn't use it is overestimating performance.</p>
+
+<figure class="fig" id="fig-walk-forward-cv-visualizer"><figcaption><b>Figure to come:</b> walk-forward-cv-visualizer</figcaption></figure>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="1d.html" rel="prev" data-part="Part I · Foundation"><span>Previous</span>1D · Sharpe ratio</a>
+<a class="next" href="2b.html" rel="next"><span>Next</span>2B · Mean reversion vs momentum (an AR(1) model)</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

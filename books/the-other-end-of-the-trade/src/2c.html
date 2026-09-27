@@ -1,0 +1,98 @@
+<p class="eyebrow">Part II · Quant Trading · Chapter 2C</p>
+
+<h1>Optimization: closed-form vs gradient descent</h1>
+
+<p>Once a model is specified, we need to <strong>fit</strong> its parameters — find the weight and bias (in our AR(1) case) that minimize the prediction error on training data. Two canonical approaches: closed-form (exact, doesn't scale to massive datasets) and gradient descent (iterative, scales beautifully and underlies every modern ML library).</p>
+
+<h2 id="closed-form-ordinary-least-squares">1 · Closed-form ordinary least squares</h2>
+
+<p>For linear regression with squared-error loss, there is a one-line analytical solution. Define the design matrix X (rows are observations, columns are features) and target vector y. The OLS estimator for the weight vector β is:</p>
+
+<pre>β̂ = (X^T X)^(-1) X^T y</pre>
+
+<p>Exact. Fast for small datasets. Used inside scikit-learn's <code>LinearRegression</code>, R's <code>lm()</code>, and basically every statistical software package's linear regression function. For the AR(1) case with one feature, this collapses to a particularly clean form:</p>
+
+<pre>ŵ = Cov(r_t, r_{t-1}) / Var(r_{t-1})
+
+b̂ = mean(r_t) − ŵ × mean(r_{t-1})</pre>
+
+<p>Two numbers, no iteration, no learning rate. Compute the sample covariance and sample variance, divide. Done.</p>
+
+<p><strong>The flaw of OLS.</strong> It requires inverting a matrix of size (features × features). For a model with 5 features and 1,000 observations, this is trivial. For a model with 50,000 features and 100 million observations — typical of large-scale ML — the matrix inversion becomes infeasible. You cannot load all of the data into memory simultaneously, and matrix inversion is O(n³) in the feature count.</p>
+
+<h2 id="gradient-descent">2 · Gradient descent</h2>
+
+<p>Gradient descent is iterative. At each step:</p>
+
+<ol>
+<li>Compute the current loss on the training data (or a mini-batch of it).</li>
+<li>Compute the gradient of the loss with respect to each parameter.</li>
+<li>Take a small step in the direction opposite to the gradient (downhill on the loss surface).</li>
+<li>Repeat.</li>
+</ol>
+
+<p>The update rule for parameter w at step t:</p>
+
+<pre>w_{t+1} = w_t − η × ∂L/∂w</pre>
+
+<p>where η (eta) is the <strong>learning rate</strong> — the step size. Too large a learning rate and the optimizer overshoots, oscillates, and may diverge entirely. Too small and convergence is painfully slow. Tuning η is part of the art of optimization, and getting it right is most of the challenge in training modern ML models.</p>
+
+<p><strong>Why gradient descent is the foundation of modern ML.</strong> The crucial property of gradient descent is that it doesn't require loading all the data at once. You can compute the gradient on a <em>mini-batch</em> — a small random subset of the training data — and take a step. This is <strong>stochastic gradient descent (SGD)</strong>, and it scales to arbitrarily large datasets. Modern variants like Adam (Kingma and Ba, 2014), RMSProp (Tieleman and Hinton, 2012), and SGD with momentum (Polyak, 1964) all build on this idea: instead of inverting a giant matrix, take many small steps with smart adaptations.</p>
+
+<h2 id="the-geometry-of-optimization">3 · The geometry of optimization</h2>
+
+<p>For convex loss functions (like squared error on a linear model), gradient descent converges to the global optimum from any starting point, provided the learning rate is appropriate. Convex problems are easy.</p>
+
+<p>For non-convex loss functions (like everything in deep learning, plus most realistic trading objectives), gradient descent converges to some local minimum that depends on the starting point. Real-world loss surfaces have:</p>
+
+<ul>
+<li><strong>Local minima</strong> — points where every nearby direction increases the loss but the global optimum lies elsewhere.</li>
+<li><strong>Saddle points</strong> — points where some directions go up and others go down; these are vastly more common than local minima in high-dimensional spaces.</li>
+<li><strong>Plateaus</strong> — large regions where the gradient is nearly zero, slowing progress dramatically.</li>
+<li><strong>Cliffs</strong> — regions where the gradient is enormous, causing standard SGD to take huge destabilizing steps.</li>
+</ul>
+
+<figure class="fig" id="fig-gradient-descent"><figcaption><b>Figure to come:</b> gradient-descent</figcaption></figure>
+
+<h2 id="modern-optimizers">4 · Modern optimizers</h2>
+
+<p>The plain SGD update is rarely used in practice. Modern variants address specific failure modes:</p>
+
+<p><strong>SGD with momentum (Polyak, 1964).</strong> Accumulates a running average of past gradients and uses it to dampen oscillation and escape saddle points. Update:</p>
+
+<pre>v_{t+1} = γ × v_t + η × ∂L/∂w
+w_{t+1} = w_t − v_{t+1}</pre>
+
+<p>The "velocity" v keeps you moving in directions that have consistently pointed downhill, even if the current local gradient is noisy.</p>
+
+<p><strong>AdaGrad (Duchi et al., 2011).</strong> Adapts the learning rate per parameter, dividing by the running sum of squared past gradients. Parameters that have already seen big updates get smaller updates going forward.</p>
+
+<p><strong>RMSProp (Tieleman and Hinton, 2012).</strong> Like AdaGrad but uses an exponential moving average instead of a cumulative sum, preventing the learning rate from going to zero.</p>
+
+<p><strong>Adam (Kingma and Ba, 2014).</strong> Combines momentum with RMSProp. The default choice in most modern ML codebases. Robust, fast, requires minimal tuning.</p>
+
+<p>You don't need to know the internals of these. You need to know that "the optimizer is doing something smarter than vanilla gradient descent" and that the choice of optimizer can dramatically affect training speed and final performance. For most trading applications with linear or simple nonlinear models, vanilla SGD or Adam with default hyperparameters works fine.</p>
+
+<h2 id="why-optimization-matters-for-trading">5 · Why optimization matters for trading</h2>
+
+<p>The optimization step is where most of the computational expense in modern quant research lives. Backtesting a strategy means fitting models, generating predictions, simulating execution, computing performance, and iterating. Fitting a model on millions of (feature, target) pairs is the slow step. Modern quant firms run massive distributed-training infrastructure precisely because they're optimizing thousands of model variants in parallel.</p>
+
+<p>For retail-scale work — fitting a model on a few thousand observations — optimization is essentially free. The bottleneck is data acquisition, feature engineering, and avoiding overfitting, not the optimization step itself.</p>
+
+<h2 id="regularization">6 · Regularization</h2>
+
+<p>A core technique that addresses overfitting at the optimization stage: add a penalty term to the loss function that discourages large parameter values. The two most common forms:</p>
+
+<p><strong>L2 regularization (ridge):</strong></p>
+
+<pre>L_total = L_data + λ × ∑_i w_i²</pre>
+
+<p><strong>L1 regularization (lasso):</strong></p>
+
+<pre>L_total = L_data + λ × ∑_i |w_i|</pre>
+
+<p>The hyperparameter λ controls the strength of regularization. Higher λ means smaller fitted weights, which means a smoother model with less overfitting risk.</p>
+
+<p>L2 keeps all features but shrinks their weights toward zero. L1 has the additional property that it zeros out many weights entirely — performing feature selection automatically. For trading models with many candidate features, L1 is often the right choice because it produces sparse, interpretable models.</p>
+
+<p>For AR(1) with a single feature, regularization is unnecessary; for multivariate models with dozens of features, it is essential.</p>

@@ -1,0 +1,90 @@
+<p class="eyebrow">Part X · Tactical Swing · Chapter 10B</p>
+
+<h1>Indicator foundations: the measurement instruments</h1>
+
+<p>Indicators are <strong>not edges</strong>. They are instruments that measure features of price and volume — trend strength, momentum extreme, volatility regime, range structure. The edge lives in the <em>framework that combines them</em>. Picking the right instruments, and knowing what each one measures (and doesn't), is foundational.</p>
+
+<p>The selection below is small and deliberate. Six indicators across three pedagogical functions: momentum extremes (RSI), trend regime (MACD, ADX), volatility regime (ATR, Bollinger), structural levels (Donchian).</p>
+
+<h2 id="rsi-relative-strength-index">1 · RSI — Relative Strength Index</h2>
+
+<p><strong>Formula:</strong> <code>RSI = 100 − 100/(1 + RS)</code> where <code>RS = avg gain / avg loss over n bars</code>. Standard parameter: n = 14 (Wilder, 1978).</p>
+
+<p><strong>Intuition.</strong> Normalizes recent price action to a bounded 0-100 scale. Above 70 is conventionally "overbought," below 30 is "oversold" — but these are calibration points, not signals. The RSI(2) variant by Larry Connors flips the use entirely: extremes below 10 or above 90 on RSI(2) become mean-reversion entry signals in trending markets.</p>
+
+<p><strong>Dealer mechanic note.</strong> RSI(2) &lt; 10 on a Stage-2 pullback (<a class="xref" href="10d.html">Section 10D</a>) is a typical gamma-scalping setup — positive-GEX dealers fade the move, and your mean-reversion bet rides their hedging flow.</p>
+
+<h2 id="macd-moving-average-convergence-divergence">2 · MACD — Moving Average Convergence Divergence</h2>
+
+<p><strong>Formula:</strong> <code>MACD line = EMA(12) − EMA(26)</code>; <code>Signal = EMA(9) of MACD line</code>; <code>Histogram = MACD − Signal</code>.</p>
+
+<p><strong>Intuition.</strong> Captures the change in trend in two ways: the line itself (positive when fast EMA above slow EMA), and the histogram (positive and growing when bullish momentum accelerates).</p>
+
+<p><strong>Dealer mechanic note.</strong> MACD histogram crossing zero correlates with regime transitions — Stage 1 to 2 or Stage 3 to 4 in Weinstein terms.</p>
+
+<h2 id="atr-average-true-range">3 · ATR — Average True Range</h2>
+
+<div class="callout brick">
+<p><strong>Wilder smoothing</strong> — a specific EMA variant invented by J. Welles Wilder, used in ATR, ADX, RSI, and other Wilder indicators. Standard EMA uses α = 2/(n+1); Wilder smoothing uses α = 1/n.</p>
+
+<p>For n=14: standard EMA α ≈ 0.133 vs Wilder α ≈ 0.0714.</p>
+
+<p>Wilder smoothing is <strong>slower to respond</strong> — effectively equivalent to standard EMA of period 2n−1 (Wilder(14) ≈ EMA(27)). The indicator's documented thresholds (e.g., "ADX &gt; 25 = trend") are calibrated to Wilder smoothing. Do not substitute one for the other.</p>
+
+<p>Python: <code>pandas.ewm(span=n).mean()</code> is standard EMA; for Wilder, use <code>pandas.ewm(alpha=1/n, adjust=False).mean()</code>.</p>
+</div>
+
+<p><strong>Formula:</strong> <code>TR = max(H−L, |H−PCₜ₋₁|, |L−PCₜ₋₁|)</code>; <code>ATR = Wilder-smoothed TR over n bars</code>.</p>
+
+<p><strong>Intuition.</strong> Measures the typical bar range — how much the underlying moves in a typical session. Pure volatility instrument. Critical for sizing: position size should be inversely proportional to ATR for consistent risk per trade.</p>
+
+<p><strong>Dealer mechanic note.</strong> ATR scales with realized vol, which scales with dealer hedging during stress. ATR expansion often signals the dealer-hedging regime is changing before GEX figures update.</p>
+
+<h2 id="adx-average-directional-index">4 · ADX — Average Directional Index</h2>
+
+<p><strong>Formula:</strong> Computed from +DI and −DI (directional movement indicators) over a Wilder-smoothed window, with ADX measuring the strength of the trend regardless of direction.</p>
+
+<p><strong>Intuition.</strong> Answers "is the underlying trending or chopping?" Values below 20 indicate no trend; 20-25 weak trend; above 25 strong trend; above 40 very strong trend. ADX has no inherent direction.</p>
+
+<p><strong>Dealer mechanic note.</strong> ADX &gt; 25 corresponds empirically to negative-GEX regimes — where mean-reversion underperforms and trend-following works. ADX &lt; 20 corresponds to positive-GEX, mean-reverting regimes.</p>
+
+<h2 id="bollinger-bands">5 · Bollinger Bands</h2>
+
+<p><strong>Formula:</strong> <code>Middle = SMA(20)</code>; <code>Upper/Lower = Middle ± 2σ(20)</code>; <code>%B = (Close − Lower)/(Upper − Lower)</code>; <code>Bandwidth = (Upper − Lower)/Middle</code>.</p>
+
+<p><strong>Intuition.</strong> Dynamic range-channel that adapts to recent volatility. Bandwidth contractions identify low-vol periods (the "Bollinger squeeze") that often precede volatility expansions.</p>
+
+<p><strong>Dealer mechanic note.</strong> Bandwidth contraction often coincides with positive GEX above the gamma flip — dealers suppressing realized vol below historical levels.</p>
+
+<h2 id="donchian-channels">6 · Donchian Channels</h2>
+
+<p><strong>Formula:</strong> <code>Upper = highest high over past n bars</code>; <code>Lower = lowest low over past n bars</code>. Standard parameter: n = 20 or n = 55 (Turtle traders).</p>
+
+<p><strong>Intuition.</strong> Pure breakout signal. Price above the upper Donchian = new n-day high = potential trend initiation. The Turtle Traders famously used 55-day Donchian breakouts as entry signals.</p>
+
+<p><strong>Dealer mechanic note.</strong> Donchian breakouts often coincide with mechanical institutional rebalancing flow at quarter ends. When dealer net gamma is short going into the breakout, the dealer hedging response amplifies the breakout.</p>
+
+<figure class="fig" id="fig-indicator-lab"><figcaption><b>Figure to come:</b> indicator-lab</figcaption></figure>
+
+<h2 id="the-multicollinearity-trap">7 · The multicollinearity trap</h2>
+
+<p>A common retail mistake: stacking RSI(2) + IBS + Bollinger %B + Williams %R + Stochastic and calling them "five independent signals confirming the trade."</p>
+
+<p><strong>They aren't independent.</strong> All five compute the same latent quantity (how stretched is price relative to the recent range). Using them as separate inputs to a decision rule is <em>double-counting</em>.</p>
+
+<p>The honest selection is <strong>one indicator per pedagogical function</strong>:</p>
+
+<ul>
+<li>One momentum-extreme indicator (RSI is the classical choice)</li>
+<li>One trend-strength indicator (ADX)</li>
+<li>One volatility-regime indicator (ATR or Bollinger Bandwidth — but not both)</li>
+<li>One range-structure indicator (Donchian)</li>
+</ul>
+
+<p>Confluence across different measurements is real evidence. Confluence across reparameterizations of the same measurement is noise.</p>
+
+<h2 id="the-23-indicator-menagerie">8 · The 23-indicator menagerie</h2>
+
+<p>The full retail menagerie includes Stochastic, ROC, CCI, Williams %R, OBV, MFI, Aroon, Ichimoku Cloud, Parabolic SAR, SuperTrend, KAMA, Choppiness Index, Linear Regression Channel, Keltner Channels, Heikin Ashi candles, Mansfield Relative Strength, and several others. Each has a use case; almost none are essential.</p>
+
+<p><strong>The retail bias is to add more indicators. The professional bias is to remove them.</strong> If you can't articulate which feature of the data each indicator measures, drop it. If two indicators measure the same feature, drop one. Simpler systems generalize better; complex systems overfit. Same Occam principle as <a class="xref" href="2a.html">Section 2A</a> applied to technical analysis.</p>

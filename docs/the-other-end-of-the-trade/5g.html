@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>5G The vol surface in operational depth — The Other End of the Trade</title>
+<meta name="description" content="Chapter 5G of The Other End of the Trade: The vol surface in operational depth.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-4">← Part V · Options</a>
+  <div class="sb-folio"><a class="sb-prev" href="5f.html" aria-label="Previous chapter: 5F · Put-call parity, synthetics, and the other risks" title="Previous chapter: 5F · Put-call parity, synthetics, and the other risks (←)">‹ 5F</a><p class="sb-title"><span class="sb-at">Chapter 5G ·</span> <span class="sb-at">24 of 67</span></p><a class="sb-next" href="6a.html" aria-label="Next chapter: 6A · What you&#x27;ll learn and why" title="Next chapter: 6A · What you&#x27;ll learn and why (→)">6A ›</a></div>
+  <div id="sb-toc"><a href="#iv-rank-vs-iv-percentile-the-distinction-that-matters">1 · IV rank vs IV percentile — the distinction that matters</a><a href="#forward-iv-the-structure-of-the-future-variable">2 · Forward IV — the structure-of-the-future variable</a><a href="#skew-steepness-as-information">3 · Skew steepness as information</a><a href="#surface-aware-strategy-choice">4 · Surface-aware strategy choice</a><a href="#why-high-iv-sell-premium-is-too-crude">5 · Why "high IV → sell premium" is too crude</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part V · Options · Chapter 5G</p>
+
+<h1>The vol surface in operational depth</h1>
+
+<p>We covered the vol surface conceptually in 5E — that implied volatility varies by strike (skew) and by expiration (term structure). This subsection makes it operational. The question we're answering: <strong>given the current state of the surface, which structure is mispriced and which is not?</strong></p>
+
+<p>The cleanest version of options edge comes from finding strikes or expirations where IV is systematically richer or cheaper than realized vol forecasts justify. The surface tells you where to look.</p>
+
+<h2 id="iv-rank-vs-iv-percentile-the-distinction-that-matters">1 · IV rank vs IV percentile — the distinction that matters</h2>
+
+<p>These terms get used interchangeably. They are not the same.</p>
+
+<p><strong>IV rank</strong> = (current IV − 52-week low IV) / (52-week high IV − 52-week low IV)</p>
+
+<p>A linear interpolation. An IV of 25 in a 52-week range of [10, 50] has IV rank = (25-10)/(50-10) = 0.375.</p>
+
+<p><strong>IV percentile</strong> = fraction of trading days in the trailing 52 weeks on which IV was <em>below</em> the current level.</p>
+
+<p>A distribution-aware measure. If IV has been at 25 or below on 60% of the prior 252 trading days, IV percentile = 60%.</p>
+
+<p>The two metrics diverge when the IV distribution is skewed (which it almost always is — IV spikes upward, mean-reverts downward, spends most of its life in the lower half of the range). <strong>In typical equity environments, IV percentile is roughly 2× IV rank.</strong> A stock with IV rank 30 typically has IV percentile near 60.</p>
+
+<p><strong>Operational rule:</strong> Use IV percentile, not IV rank, for strategy selection. IV rank exaggerates the apparent "richness" of vol because the rare upward spikes pull the range maximum far above the typical level. IV percentile correctly accounts for how often vol actually sits at various levels.</p>
+
+<p>A stock at IV percentile 80% has been at this IV level or lower on 80% of days — vol is elevated relative to its own history. A stock at IV percentile 30% has been here or lower 30% of the time — vol is depressed.</p>
+
+<figure class="fig" id="fig-iv-rank-vs-percentile"><figcaption><b>Figure to come:</b> iv-rank-vs-percentile</figcaption></figure>
+
+<h2 id="forward-iv-the-structure-of-the-future-variable">2 · Forward IV — the structure-of-the-future variable</h2>
+
+<p>The term structure tells you what the market is implying about volatility <em>during</em> future windows.</p>
+
+<p>Given two implied vols σ_1 (front-month, T_1 days) and σ_2 (back-month, T_2 days, T_2 &gt; T_1), the <strong>forward implied vol</strong> from T_1 to T_2 is:</p>
+
+<pre>σ_forward² × (T_2 − T_1) = σ_2² × T_2 − σ_1² × T_1</pre>
+
+<p>Solving:</p>
+
+<pre>σ_forward = √[ (σ_2² × T_2 − σ_1² × T_1) / (T_2 − T_1) ]</pre>
+
+<p>This is the implied vol the market is pricing for the <em>interval between</em> T_1 and T_2. It is the quantity that determines whether calendar spreads and diagonals are mispriced.</p>
+
+<p><strong>Worked example.</strong> AAPL trades at $230. AAPL earnings in 7 days. 14-DTE ATM IV = 38%. 35-DTE ATM IV = 28%.</p>
+
+<pre>σ_forward² × 21 = 0.28² × 35 − 0.38² × 14
+σ_forward² × 21 = 2.744 − 2.022 = 0.722
+σ_forward² = 0.0344
+σ_forward = 18.5%</pre>
+
+<p>The market is implying just 18.5% vol for the 21-day window <em>after</em> earnings. That's much lower than the 28% headline 35-DTE figure suggests, because the front 14 days contain the earnings event, which is being priced at much higher vol.</p>
+
+<p>If your forecast is that AAPL realized vol after earnings will run 22-25%, the forward IV at 18.5% is <strong>structurally cheap</strong> — and a calendar or diagonal that's net long the back month and short the front month is the surface-aware way to express that view.</p>
+
+<figure class="fig" id="fig-forward-iv-calculator"><figcaption><b>Figure to come:</b> forward-iv-calculator</figcaption></figure>
+
+<h2 id="skew-steepness-as-information">3 · Skew steepness as information</h2>
+
+<p>We covered skew in 5E. Here we operationalize.</p>
+
+<p>The conventional skew metric is the difference between the 25-delta put IV and the 25-delta call IV at a fixed DTE:</p>
+
+<pre>Skew = IV(25Δ put) − IV(25Δ call)</pre>
+
+<p>In SPX, this is reliably positive (puts richer than calls — equity skew). Typical value: 4-8 vol points in normal conditions, expanding to 12-15 vol points during stress.</p>
+
+<p><strong>Skew steepening</strong> (skew metric rising) signals demand for downside protection growing faster than upside speculation. Empirically, skew tends to steepen 1-3 days before broader equity sell-offs, then peak coincident with the sell-off, then mean-revert.</p>
+
+<p><strong>Skew flattening</strong> (skew metric falling) signals the opposite — speculation is bidding up call IV relative to put IV. This often happens during melt-up phases (late 2020, mid-2024 NVDA-led periods) when retail call-buying compresses the skew.</p>
+
+<p><strong>Operational rule:</strong> If you're considering a put credit spread or other short-put-side structure, check whether skew is steepening (defer the trade — skew expansion means short-put-side is increasingly expensive to close) or flattening (proceed — the cost of being short puts has been declining).</p>
+
+<h2 id="surface-aware-strategy-choice">4 · Surface-aware strategy choice</h2>
+
+<p>The most common retail mistake is "high IV → sell premium." This is a one-dimensional projection of a two-dimensional surface. The correct question is: <strong>where on the surface is IV mispriced?</strong></p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Surface observation</th><th class="c-result">Operational implication</th></tr></thead><tbody><tr><td class="c-trial" data-label="Surface observation"><strong>Front IV high, back IV low</strong> (steep contango — i.e., backwardation since front &gt; back)</td><td class="c-result" data-label="Operational implication">Short front-vol structures: cash-secured puts, put credit spreads in the front, calendar spreads (sell front, buy back)</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Back IV high, front IV low</strong> (normal contango)</td><td class="c-result" data-label="Operational implication">Long forward vol: long diagonals, LEAPS strategies, calendars that benefit from forward vol moving up</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Skew very steep (12+ point) at near-term DTE</strong></td><td class="c-result" data-label="Operational implication">Put-side is structurally rich; sell premium via put credit spreads at high-delta strikes</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Skew flat or inverted</strong> (rare; signals melt-up)</td><td class="c-result" data-label="Operational implication">Call-side is rich; sell premium via call credit spreads at high-delta strikes</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Pre-earnings IV elevated, post-earnings forward IV cheap</strong></td><td class="c-result" data-label="Operational implication">Calendar or diagonal: sell front-month earnings vol, buy back-month forward vol</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>High IV percentile, flat term structure</strong></td><td class="c-result" data-label="Operational implication">Vol is high everywhere; sell premium broadly with defined risk</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Low IV percentile, steep term structure</strong></td><td class="c-result" data-label="Operational implication">Vol is cheap front, normal further out; buy near-dated options for catalyst plays</td></tr></tbody></table></div></div>
+
+<h2 id="why-high-iv-sell-premium-is-too-crude">5 · Why "high IV → sell premium" is too crude</h2>
+
+<p>Consider two stocks both at IV percentile 75%:</p>
+
+<ul>
+<li><strong>Stock A</strong>: front-month IV 35%, 90-day IV 32%. Term structure flat. IV is high across the curve. Selling premium at any DTE collects similar VRP.</li>
+<li><strong>Stock B</strong>: front-month IV 60%, 90-day IV 28%. Earnings in 5 days. Steep backwardation. IV is high because of an imminent event, not because forward vol is elevated.</li>
+</ul>
+
+<p>A naïve "high IV → sell premium" strategy treats these identically. The surface-aware approach recognizes that Stock A is a normal short-premium candidate, while Stock B is an <strong>event-trade candidate where you specifically want to sell front-month event vol against long back-month forward vol</strong> — i.e., a diagonal or calendar.</p>
+
+<p>The surface is the map. The composite-signal scorecard tells you the regime; the surface tells you where on the regime to position.</p>
+
+<div class="callout brick">
+<p><em>Most retail strategy choice operates on the single dimension of "IV is high/low." The professional choice operates on the two-dimensional surface of strike × expiration. The difference shows up immediately in calendar and diagonal strategies, and shows up over time in single-name event trades.</em></p>
+</div>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="5f.html" rel="prev"><span>Previous</span>5F · Put-call parity, synthetics, and the other risks</a>
+<a class="next" href="6a.html" rel="next" data-part="Part VI · Dealer Mechanics"><span>Next</span>6A · What you'll learn and why</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

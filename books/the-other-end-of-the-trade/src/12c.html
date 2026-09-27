@@ -1,0 +1,133 @@
+<p class="eyebrow">Part XII · Discipline · Chapter 12C</p>
+
+<h1>The signal-to-trade pipeline and the kill rules</h1>
+
+<p>Every action in your portfolio should pass through the same five-step grammar: <strong>observation → interpretation → trade implication → sizing → invalidation</strong>.</p>
+
+<h2 id="the-five-steps">1 · The five steps</h2>
+
+<p><strong>01 — Observation.</strong> What did I see? A measurable, specific market state. "SPX RSI(2) closed at 5 today, with Stage 2 confirmed by 30-SMA slope &gt; 0.05 and ADX 22." NOT "the market feels oversold."</p>
+
+<p><strong>02 — Interpretation.</strong> What does it mean? Map the observation to a known mechanism. "RSI(2) &lt; 10 during Stage 2 with positive GEX = dealer hedging will fade the pullback, providing mechanical buying support at the EMA."</p>
+
+<p><strong>03 — Trade implication.</strong> What action follows? Specific entry, direction, instrument, and timing.</p>
+
+<p><strong>04 — Sizing.</strong> How big? From explicit loss budget, not intuition.</p>
+
+<p><strong>05 — Invalidation.</strong> What kills the trade? <strong>Pre-committed</strong> in writing. Not "I'll see how it goes."</p>
+
+<h2 id="critical-distinction-risk-vs-position-size">2 · Critical distinction: risk vs position size</h2>
+
+<p>"Risk 1% of portfolio per trade" means: <strong>if the stop is hit, the realized dollar loss equals 1% of total portfolio value</strong>. It does NOT mean "deploy 1% of capital."</p>
+
+<p>Position size = Dollar risk budget / Stop distance.</p>
+
+<p>For $500k risking 1% ($5,000) with $6 stop on $600 underlying:</p>
+
+<ul>
+<li>Position size = $5,000 / $6 = 833 shares</li>
+<li>Notional deployed = 833 × $600 = $500k = <strong>100% of portfolio</strong></li>
+</ul>
+
+<p>Correct sizing: 1% <strong>risk</strong>, 100% <strong>notional</strong>. Acceptability depends on:</p>
+
+<ul>
+<li><strong>Liquidity</strong> — can you exit cleanly under stress?</li>
+<li><strong>Margin</strong> — do you have buying power?</li>
+<li><strong>Correlation</strong> — what's the aggregate risk with existing positions?</li>
+<li><strong>Gap risk</strong> — can the stop blow through?</li>
+</ul>
+
+<p>For options, notional is bounded by premium (long) or collateral (short). The risk-to-notional ratio is structurally different from equity.</p>
+
+<p><strong>Common mistake A:</strong> interpreting "1% sizing" as "1% notional deployed" → under-sizes by 50-100× and the framework's edge never realizes.</p>
+
+<p><strong>Common mistake B:</strong> interpreting "1% risk" as "1% notional" → over-sizes by buying $500k of underlying without thinking about the stop → 5% adverse move = $25k loss, not the planned $5k.</p>
+
+<figure class="fig" id="fig-position-size-clarifier"><figcaption><b>Figure to come:</b> position-size-clarifier</figcaption></figure>
+
+<h2 id="position-sizing-from-explicit-loss-budget">3 · Position sizing from explicit loss budget</h2>
+
+<pre>n ≤ ⌊ B_exp / L_max ⌋
+
+where:
+- B_exp is the explicit dollar loss budget you're willing to absorb on this trade
+- L_max is the per-unit (per-contract or per-share) loss at your stop</pre>
+
+<p><strong>Worked example:</strong> $500,000 portfolio. Maximum risk per trade is 1% = $5,000. Trend Pullback trade on XSP with a clear technical stop $20 below entry.</p>
+
+<pre>B_exp = $5,000
+L_max = $20 × 100 (multiplier) = $2,000 per contract
+n ≤ ⌊5,000 / 2,000⌋ = 2 contracts</pre>
+
+<figure class="fig" id="fig-position-size-calculator"><figcaption><b>Figure to come:</b> position-size-calculator</figcaption></figure>
+
+<h2 id="kelly-and-loss-budget-same-framework-different-unit">4 · Kelly and loss-budget — same framework, different unit</h2>
+
+<p><a class="xref" href="2e.html">Section 2E</a> derives the Kelly criterion as the bet fraction that maximizes expected log compound growth. This section's loss-budget rule (n ≤ ⌊B_exp / L_max⌋) sizes from a per-trade dollar cap. A reader emerging from 2E thinks Kelly is the answer; one emerging from here thinks loss-budget is. They are not in conflict; they answer different questions and converge for honest retail-scale edges.</p>
+
+<p><strong>Both frameworks size positions; the question each answers differs.</strong></p>
+
+<ul>
+<li><strong>Kelly maximizes expected log growth.</strong> Output: a <em>capital fraction</em> under an assumed bet-outcome geometry (binary win G / lose L per unit bet). The criterion assumes you have estimated edge correctly and that you are willing to commit the full Kelly bet to a single opportunity.</li>
+<li><strong>Loss-budget bounds dollar loss per trade.</strong> Output: a <em>position size</em> under a stop-distance geometry. The criterion makes no claim about long-run growth optimality — it caps drawdown contribution from any single trade.</li>
+</ul>
+
+<p><strong>Where they converge.</strong> For a typical retail edge — say 52-55% win rate with near-symmetric payoffs — Kelly recommends a fraction in the 4-10% range. Half-Kelly halves that; quarter-Kelly quarters it. For modest edges, the quarter-Kelly dollar bet sits near the dollar loss the loss-budget rule produces at 1% risk per trade with a typical stop distance. The two frameworks land in roughly the same dollar position because the underlying anchor — "size in proportion to honest edge, not to confidence" — is the same.</p>
+
+<p><strong>Where they diverge — case 1: diversification.</strong> Kelly is per-strategy. If you run five uncorrelated strategies each at quarter-Kelly, aggregate exposure is the sum (potentially ~12.5% of capital at risk simultaneously). Loss-budget is per-trade and caps each trade at 1% independently; aggregate is bounded only by the number of simultaneously open trades. For a portfolio running 10 concurrent trades at 1% each, loss-budget tolerates 10% aggregate at-risk capital. Kelly-aggregated comparable portfolios at quarter-Kelly tolerate roughly the same. <strong>The two frameworks agree on aggregate exposure ceilings when you do the arithmetic, which is exactly where retail traders fail to do the arithmetic.</strong></p>
+
+<p><strong>Where they diverge — case 2: edge uncertainty.</strong> Kelly assumes edge is known. Over-estimating edge produces over-betting, and the Kelly utility function is concave — the penalty for over-betting exceeds the gain from under-betting. If your edge estimate has 30% standard error (typical for backtest-derived estimates), point-estimate Kelly betting is meaningfully too aggressive. Loss-budget is robust to this: it caps loss regardless of edge correctness. For traders who don't trust their edge estimate (which is most traders, including this book's intended reader), <strong>loss-budget is the safer first-line tool</strong>; Kelly is a sanity check on whether the aggregate of those loss-budgeted positions is plausible.</p>
+
+<p><strong>Operational rule for this book's framework.</strong> Size individual trades by the loss-budget rule (1% risk per trade, stop-distance-scaled). Use Kelly as a sanity check on the aggregate: if your loss-budget-derived positions across the open book imply ≥30% capital at simultaneous risk, you are effectively past half-Kelly even if no single trade exceeds 1% risk. Either reduce concurrent positions, tighten the per-trade budget, or recheck the edge estimates that justified taking that many trades at once. <a class="xref" href="2e.html">Section 2E</a>'s worked example shows the per-trade chain end-to-end; this section's job is to keep the <em>aggregate</em> honest.</p>
+
+<h2 id="the-25-drawdown-30-day-cool-off">5 · The 25% drawdown / 30-day cool-off</h2>
+
+<p><strong>When portfolio drawdown crosses 25% peak-to-trough, all discretionary tactical activity halts for 30 days.</strong> Mechanical sleeves (if any) continue running; new entries are suspended.</p>
+
+<p>Four reasons: drawdowns produce sub-optimal decision-making; forced halt prevents revenge trading; mechanical systems continue running; knowing the cool-off exists makes the drawdown less catastrophic psychologically.</p>
+
+<p>The 25%/30-day rule is binding regardless of how good the next setup looks. <strong>The rule exists precisely to override your judgment during the period when your judgment is most compromised.</strong></p>
+
+<h2 id="kill-rules-at-three-levels">6 · Kill rules at three levels</h2>
+
+<p><strong>Strategy-level kill rules (per setup):</strong></p>
+
+<ul>
+<li>Trend Pullback: close below the entry-day low OR time stop at 5 days</li>
+<li>Compression Breakout: close back inside the consolidation range OR time stop at 7 days</li>
+<li>Undercut and Reclaim: close below the undercut low OR time stop at 3 days</li>
+<li>IBS + RSI Mean Reversion: 21-EMA reclaim achieved OR time stop at 3 days</li>
+</ul>
+
+<p><strong>Sleeve-level kill rules (per strategy bucket):</strong></p>
+
+<ul>
+<li>If 3 of last 5 swing trades are losers: pause new entries for 1 week, review the framework</li>
+<li>If sleeve drawdown &gt; 15% peak-to-trough: reduce sizing 50% for next month</li>
+<li>If sleeve drawdown &gt; 25% peak-to-trough: pause for 30 days</li>
+</ul>
+
+<p><strong>Portfolio-level kill rules:</strong></p>
+
+<ul>
+<li>Portfolio drawdown &gt; 25% PTP: halt all discretionary tactical for 30 days</li>
+<li>Personal behavioral state degraded: halt new entries for 1 week minimum</li>
+<li>Account margin cushion &lt; 30%: force-deleverage by closing smallest tactical positions first</li>
+</ul>
+
+<figure class="fig" id="fig-behavioral-state-checklist"><figcaption><b>Figure to come:</b> behavioral-state-checklist</figcaption></figure>
+
+<h2 id="the-selectivity-principle">7 · The selectivity principle</h2>
+
+<p>Retail traders bias toward action because action feels productive. Doing nothing feels lazy. <strong>The data systematically rewards the opposite: doing nothing is the highest-EV move on most days.</strong></p>
+
+<p>Empirically, a competent swing trader running this framework should expect:</p>
+
+<ul>
+<li><strong>Most days: no new positions.</strong> 60-70% of days produce no qualifying setups.</li>
+<li><strong>Most weeks: 1-3 new positions</strong> across the entire watchlist.</li>
+<li><strong>Most months: 6-12 positions</strong> with explicit conviction scores ≥ 0.5.</li>
+</ul>
+
+<p>The pipeline imposes selectivity by structure: most observations don't pass interpretation; most interpretations don't pass conviction; the trades that exist have all four gates clear. <strong>This is the system working, not failing.</strong></p>

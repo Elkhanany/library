@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>2E Sizing and frequency scaling — The Other End of the Trade</title>
+<meta name="description" content="Chapter 2E of The Other End of the Trade: Sizing and frequency scaling.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-1">← Part II · Quant Trading</a>
+  <div class="sb-folio"><a class="sb-prev" href="2d.html" aria-label="Previous chapter: 2D · Making vs taking: the order book mechanics" title="Previous chapter: 2D · Making vs taking: the order book mechanics (←)">‹ 2D</a><p class="sb-title"><span class="sb-at">Chapter 2E ·</span> <span class="sb-at">9 of 67</span></p><a class="sb-next" href="3a.html" aria-label="Next chapter: 3A · What is the S&amp;P 500, actually?" title="Next chapter: 3A · What is the S&amp;P 500, actually? (→)">3A ›</a></div>
+  <div id="sb-toc"><a href="#the-kelly-criterion">1 · The Kelly criterion</a><a href="#why-kelly-is-a-ceiling-not-a-target">2 · Why Kelly is a ceiling, not a target</a><a href="#a-retail-scale-worked-example">3 · A retail-scale worked example</a><a href="#sizing-functions">4 · Sizing functions</a><a href="#frequency-scaling">5 · Frequency scaling</a><a href="#frequency-vs-cost">6 · Frequency vs cost</a><a href="#the-path-vs-terminal-distinction">7 · The path-vs-terminal distinction</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part II · Quant Trading · Chapter 2E</p>
+
+<h1>Sizing and frequency scaling</h1>
+
+<p>Even with a perfect model, oversizing a single trade can ruin the whole strategy. The intuition is brutal but simple: <strong>bet small, bet often</strong>. The best quant strategies often win 51-53% of trades; if you oversize at that win rate, the variance of any single trade dominates the expected value and ruin probability climbs fast.</p>
+
+<h2 id="the-kelly-criterion">1 · The Kelly criterion</h2>
+
+<p>Edward Thorp's gambling research, extended by Kelly (1956), provides the canonical answer to the sizing question. For a binary bet where you win amount G with probability p or lose amount L with probability 1−p, the fraction of wealth that maximizes expected log return is:</p>
+
+<pre>f* = p/L − (1 − p)/G</pre>
+
+<p>For the special case where G = L = 1 (symmetric payoffs, scaled to 1):</p>
+
+<pre>f* = 2p − 1</pre>
+
+<p>So a strategy with 55% win rate at symmetric payoffs has Kelly fraction 0.10 — bet 10% of wealth per trial. A strategy with 60% win rate has Kelly fraction 0.20. A strategy with exactly 50% win rate at symmetric payoffs has Kelly fraction zero — don't bet.</p>
+
+<p>For continuous returns rather than binary outcomes, the Kelly fraction is:</p>
+
+<pre>f* = μ / σ²</pre>
+
+<p>where μ is the expected excess return and σ² is the variance. Equivalently, Kelly fraction equals the strategy's Sharpe ratio divided by its volatility — making Kelly fraction the leverage that maximizes expected compound growth.</p>
+
+<h2 id="why-kelly-is-a-ceiling-not-a-target">2 · Why Kelly is a ceiling, not a target</h2>
+
+<p>The Kelly criterion maximizes <em>expected</em> compound growth, but it produces enormous <em>variance</em> in outcomes. A Kelly-sized strategy has roughly a 50% chance of seeing a 50%+ drawdown at some point. The math is unforgiving: optimal compound growth requires accepting wild swings in path.</p>
+
+<p>Most professional traders use <strong>fractional Kelly</strong> — typically half-Kelly (f = 0.5 × f*) or quarter-Kelly. Half-Kelly gives up about 25% of expected compound growth but reduces drawdown probability dramatically. Quarter-Kelly gives up about 44% of expected compound growth but reduces drawdown probability further. The optimal fraction depends on the trader's tolerance for path-dependent risk and on the reliability of the estimated edge.</p>
+
+<p>The reason half-Kelly is the dominant convention: estimates of edge are noisy. If your true Kelly fraction is f* but your estimate has a 30% standard error, betting at the point estimate means you're often betting at 1.3 × f* — which has <em>worse</em> expected compound growth than betting at f* (the Kelly utility function is concave; over-betting hurts more than under-betting). Half-Kelly accommodates the estimation error by buffering against over-betting.</p>
+
+<h2 id="a-retail-scale-worked-example">3 · A retail-scale worked example</h2>
+
+<p>A formula and a buffering principle are useful but abstract. Walk one full chain at a retail account size and the operational shape comes into focus — including the seam between this framework and the loss-budget framework that <a class="xref" href="12c.html">Section 12C</a> builds on top of.</p>
+
+<p><strong>Setup.</strong> Account size <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>250</mn><mo separator="true">,</mo><mn>000.</mn><mi>A</mi><mi>s</mi><mi>w</mi><mi>i</mi><mi>n</mi><mi>g</mi><mi>s</mi><mi>t</mi><mi>r</mi><mi>a</mi><mi>t</mi><mi>e</mi><mi>g</mi><mi>y</mi><mi>w</mi><mi>i</mi><mi>t</mi><mi>h</mi><mi>a</mi><mi>n</mi><mi>e</mi><mi>s</mi><mi>t</mi><mi>i</mi><mi>m</mi><mi>a</mi><mi>t</mi><mi>e</mi><mi>d</mi><mn>60</mn></mrow><annotation encoding="application/x-tex">250,000. A swing strategy with an estimated 60% win rate, </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">250</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord">000.</span><span class="mord mathnormal">A</span><span class="mord mathnormal">s</span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord mathnormal">in</span><span class="mord mathnormal" style="margin-right: 0.0359em;">g</span><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal">a</span><span class="mord mathnormal">t</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right: 0.0359em;">g</span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord mathnormal">i</span><span class="mord mathnormal">t</span><span class="mord mathnormal">han</span><span class="mord mathnormal">es</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ima</span><span class="mord mathnormal">t</span><span class="mord mathnormal">e</span><span class="mord mathnormal">d</span><span class="mord">60</span></span></span></span></span>4 average winner per share, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mi>a</mi><mi>v</mi><mi>e</mi><mi>r</mi><mi>a</mi><mi>g</mi><mi>e</mi><mi>l</mi><mi>o</mi><mi>s</mi><mi>e</mi><mi>r</mi><mi>p</mi><mi>e</mi><mi>r</mi><mi>s</mi><mi>h</mi><mi>a</mi><mi>r</mi><mi>e</mi><mo separator="true">,</mo><mi>t</mi><mi>r</mi><mi>a</mi><mi>d</mi><mi>e</mi><mi>d</mi><mi>o</mi><mi>n</mi><mi>a</mi><mi>n</mi><mi>u</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>r</mi><mi>l</mi><mi>y</mi><mi>i</mi><mi>n</mi><mi>g</mi><mi>a</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">3 average loser per share, traded on an underlying at </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">3</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right: 0.0359em;">v</span><span class="mord mathnormal" style="margin-right: 0.0278em;">er</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right: 0.0359em;">g</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right: 0.0197em;">l</span><span class="mord mathnormal" style="margin-right: 0.0278em;">oser</span><span class="mord mathnormal">p</span><span class="mord mathnormal">ers</span><span class="mord mathnormal">ha</span><span class="mord mathnormal">re</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal">a</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal">d</span><span class="mord mathnormal">o</span><span class="mord mathnormal">nan</span><span class="mord mathnormal">u</span><span class="mord mathnormal">n</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right: 0.0278em;">er</span><span class="mord mathnormal" style="margin-right: 0.0197em;">l</span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="mord mathnormal">in</span><span class="mord mathnormal" style="margin-right: 0.0359em;">g</span><span class="mord mathnormal">a</span><span class="mord mathnormal">t</span></span></span></span></span>50/share with a $2 stop distance.</p>
+
+<p><strong>Step 1 — apply the formula.</strong> f* = p/L − (1 − p)/G = 0.60/3 − 0.40/4 = 0.200 − 0.100 = <strong>0.100</strong>. Full-Kelly fraction is 10%. Half-Kelly is 5%; quarter-Kelly is 2.5%.</p>
+
+<p><strong>Step 2 — translate to dollars.</strong> Full-Kelly bet = 10% × <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>250</mn><mi>k</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">250k = </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord">250</span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span></span></span></span></span>25,000. Half-Kelly = <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>12</mn><mo separator="true">,</mo><mn>500.</mn><mi>Q</mi><mi>u</mi><mi>a</mi><mi>r</mi><mi>t</mi><mi>e</mi><mi>r</mi><mo>−</mo><mi>K</mi><mi>e</mi><mi>l</mi><mi>l</mi><mi>y</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">12,500. Quarter-Kelly = </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8778em; vertical-align: -0.1944em;"></span><span class="mord">12</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord">500.</span><span class="mord mathnormal">Q</span><span class="mord mathnormal">u</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right: 0.0278em;">er</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">Ke</span><span class="mord mathnormal" style="margin-right: 0.0197em;">ll</span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span></span></span></span></span>6,250.</p>
+
+<p><strong>Step 3 — translate to shares at $50.</strong> Full = 500, half = 250, quarter = <strong>125 shares</strong>. The shop-floor share count under quarter-Kelly is small.</p>
+
+<p><strong>Step 4 — what would the 1% loss-budget rule (<a class="xref" href="12c.html">Section 12C</a>) produce?</strong> Risk 1% × <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>250</mn><mi>k</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">250k = </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord">250</span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span></span></span></span></span>2,500. With a <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>s</mi><mi>t</mi><mi>o</mi><mi>p</mi><mo separator="true">,</mo><mi>t</mi><mi>h</mi><mi>a</mi><msup><mi>t</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mi>s</mi><mi>n</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">2 stop, that's n = </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9463em; vertical-align: -0.1944em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal">o</span><span class="mord mathnormal">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal">t</span><span class="mord mathnormal">ha</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.7519em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mord mathnormal">s</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span></span></span></span></span>2,500 / $2 = <strong>1,250 shares</strong> — a $62,500 notional, or 25% of the account.</p>
+
+<p><strong>The two frameworks disagree by an order of magnitude.</strong> Quarter-Kelly says 125 shares with a <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>250</mn><mi>w</mi><mi>o</mi><mi>r</mi><mi>s</mi><mi>t</mi><mo>−</mo><mi>c</mi><mi>a</mi><mi>s</mi><mi>e</mi><mi>l</mi><mi>o</mi><mi>s</mi><mi>s</mi><mo stretchy="false">(</mo><mn>0.1</mn></mrow><annotation encoding="application/x-tex">250 worst-case loss (0.1% of capital); the 1% loss-budget says 1,250 shares with a </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">250</span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord mathnormal">ors</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">c</span><span class="mord mathnormal">a</span><span class="mord mathnormal">se</span><span class="mord mathnormal" style="margin-right: 0.0197em;">l</span><span class="mord mathnormal">oss</span><span class="mopen">(</span><span class="mord">0.1</span></span></span></span></span>2,500 worst-case loss (1% of capital). For this specific edge, Kelly is <em>far</em> more conservative than the loss-budget rule.</p>
+
+<p>This disagreement is structural, not a bug in either rule. Kelly's "bet" is the <em>full notional at stake</em> under a binary-outcome geometry where the entire position rises or falls by G or L per unit; loss-budget's "size" is the <em>position scaled to a fixed-stop maximum loss</em> under a stop-distance geometry. The two converge in dollars only when the edge is mild enough that Kelly's recommended fraction sits near the loss-budget's risk fraction — empirically, around 52-53% win rate with near-symmetric payoffs.</p>
+
+<p>For the strong edge above (60% with 4:3 payoffs), the divergence is the operational answer to "is the loss-budget rule sufficient on its own?" — and the answer is <strong>only if you don't actually have 10% Kelly worth of edge</strong>, which most retail strategies don't. <a class="xref" href="12c.html">Section 12C</a> reconciles the two frameworks explicitly: loss-budget for individual-trade sizing, Kelly as a sanity check on the aggregate.</p>
+
+<h2 id="sizing-functions">4 · Sizing functions</h2>
+
+<p>How big should the trade be when the model produces prediction strength p?</p>
+
+<p><strong>Constant.</strong> Same position size regardless of prediction strength. Just trade the sign of the prediction. This is the cleanest baseline for backtesting because the interpretation is unambiguous — every trade is the same size, so the P&amp;L is a pure function of directional accuracy.</p>
+
+<p><strong>Piecewise-linear (hard tanh).</strong> Size scales linearly with prediction strength up to a cap. Stronger predictions get larger trades; the cap ensures a runaway prediction (a single extreme outlier in input data) can't blow up size.</p>
+
+<p><strong>Smooth nonlinear (tanh).</strong> Like hard tanh but smooth. Differentiable everywhere — useful if you're optimizing the sizing parameters with gradient-based methods alongside the model. The smooth transition between zero-prediction (zero size) and strong-prediction (capped size) avoids the "I just barely crossed the threshold, should I scale up?" decision discontinuity.</p>
+
+<p>In practice, most production quant strategies use either piecewise-linear or smooth-tanh sizing, calibrated so that the cap corresponds to half-Kelly at the strongest prediction signal the model produces.</p>
+
+<h2 id="frequency-scaling">5 · Frequency scaling</h2>
+
+<p>If your model has a tiny edge per prediction — say, 51% win rate or Sharpe 0.05 per trade — you don't want to bet once. You want to bet many times. The reason follows directly from the frequency-Sharpe relationship in 1D:</p>
+
+<pre>SR_total ≈ SR_per_bet × √N</pre>
+
+<p>A tiny per-bet Sharpe becomes a robust strategy Sharpe when N is large. A model that predicts the 12-hour-ahead return with Sharpe 0.05 can be split into many smaller bets at finer temporal resolution — bet on the 1-hour-ahead return 24 times a day, each time at a smaller size. If the 24 bets are roughly independent, the daily Sharpe of the high-frequency version is √24 ≈ 4.9× higher than the daily Sharpe of the once-per-12-hours version.</p>
+
+<p>This is the structural reason high-frequency strategies dominate the modern quant landscape. They aren't smarter about direction; they trade the same edge many more times. The compounding logic is identical to the Sharpe argument in 1D: more independent bets with positive EV → same terminal drift, lower variance → higher Sharpe → leverage becomes safer → returns scale.</p>
+
+<p>The retail implication is sobering. Most retail strategies have N on the order of 10-100 trades per year. Even with substantial per-trade edge, the resulting annual Sharpe is modest. To compete with institutional high-frequency strategies you would need either (a) a per-trade edge that's an order of magnitude larger than what HFT firms exploit — which means you're operating in a different market regime, probably lower-liquidity products — or (b) the operational infrastructure to trade at high frequency, which retail doesn't have.</p>
+
+<p>The honest path for retail is to accept that you can't compete on frequency, focus on capturing risk premia (variance, equity, trend) that don't require high frequency, and size conservatively because your effective Sharpe is going to be modest.</p>
+
+<h2 id="frequency-vs-cost">6 · Frequency vs cost</h2>
+
+<p>There's a fundamental tradeoff between frequency and transaction costs. Each trade costs spread plus commission plus slippage. At very high frequency, costs eat the edge. The optimal frequency for any strategy is the one where the marginal Sharpe gain from one more trade per day equals the marginal cost in basis points.</p>
+
+<p>For HFT firms with co-located servers, near-zero latency, and rebate-earning maker strategies, the optimal frequency can be thousands of trades per second. For retail traders paying 1 cent per share commission plus 5 bps slippage per round-trip, the optimal frequency is dramatically lower — perhaps 10-50 trades per year, depending on the per-trade edge.</p>
+
+<p>This is also why the "free trades" era (post-2019, when most US brokerages dropped commissions for retail equity orders) didn't actually transform retail performance. Commissions were already small. The dominant retail cost is slippage, which retail traders neither see directly nor can negotiate down, and the dominant retail edge-destroyer is behavioral — overtrading, sizing inconsistencies, and emotional exits. None of these were fixed by zero commissions.</p>
+
+<h2 id="the-path-vs-terminal-distinction">7 · The path-vs-terminal distinction</h2>
+
+<p>A final point worth emphasizing: Kelly maximizes <em>expected log terminal wealth</em> over a long horizon. It does not minimize drawdown probability, doesn't bound worst-case outcomes, and doesn't account for behavioral capitulation during drawdowns.</p>
+
+<p>For a real-world investor with finite emotional bandwidth, <strong>drawdown discipline</strong> is more important than Kelly optimization. A strategy sized at quarter-Kelly with a 30% maximum drawdown discipline (close-and-reset rule) outperforms a strategy sized at full Kelly with no drawdown discipline, in any realistic behavioral model, because the full-Kelly strategy gets abandoned during its first 50% drawdown and the quarter-Kelly strategy doesn't.</p>
+
+<p><a class="xref" href="12c.html">Section 12C</a> will return to this with explicit kill rules at three levels. For now, the principle is: <strong>size for survivability first, then for compound growth</strong>. Kelly is the ceiling, half-Kelly is the working compromise, and quarter-Kelly is what you actually use if you want to sleep through drawdowns.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="2d.html" rel="prev"><span>Previous</span>2D · Making vs taking: the order book mechanics</a>
+<a class="next" href="3a.html" rel="next" data-part="Part III · Markets"><span>Next</span>3A · What is the S&amp;P 500, actually?</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

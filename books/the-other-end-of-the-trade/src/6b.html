@@ -1,0 +1,98 @@
+<p class="eyebrow">Part VI · Dealer Mechanics · Chapter 6B</p>
+
+<h1>The trade: who is on the other side?</h1>
+
+<p>Begin with the simplest possible scene. You decide to buy one SPY call option, strike $600, expiring in 30 days. You click "buy" in your broker. A millisecond later, you own the contract. Somewhere, a market maker now has the opposite of what you have — they are short a call. Who are they, and why did they take the other side?</p>
+
+<h2 id="the-market-maker-is-not-betting-against-you">1 · The market maker is not betting against you</h2>
+
+<p><strong>This is the most important sentence in this entire section.</strong> A market maker is not a speculator on the other side of your trade. They have no view on whether SPY will go up or down. Their entire business is to quote a bid (the price they'll buy at) and an offer (the price they'll sell at) simultaneously, and capture the spread between them.</p>
+
+<p>The math is brutally simple. Suppose the call has a "fair value" of $5.00. The market maker quotes a bid of $4.95 and an offer of $5.05. You hit the offer at $5.05. The market maker simultaneously stands ready to buy the same contract back at $4.95 from someone else. If they round-trip the contract, they pocket $0.10. Times one hundred shares per contract, times a hundred contracts a second, times every option in every name — the franchise emerges from scale, not from being right about direction.</p>
+
+<div class="callout brick">
+<p><em>"By taking the market risk to trade in this fashion, market makers can earn a 'spread' between the bid and the ask. In today's highly competitive and efficient markets, the bid-ask spread is often much less than one percent of the price of a security."</em> — Citadel Securities</p>
+</div>
+
+<p>In US listed options, this business is dominated by a small number of firms. As discussed in <a class="xref" href="3b.html">Section 3B</a> with current 2025-2026 data:</p>
+
+<ul>
+<li><strong>Citadel Securities</strong> — approximately 35% of all US-listed retail equities and options volume</li>
+<li><strong>Susquehanna International Group (SIG)</strong> — historically dominant in options market-making</li>
+<li><strong>Wolverine Trading</strong> — institutional and options franchise</li>
+<li><strong>Virtu Financial</strong> — second-largest retail wholesaler historically</li>
+<li><strong>Jane Street</strong> — dominant ETF market-maker, $39.6 billion 2025 net trading revenue</li>
+<li><strong>Hudson River Trading</strong> — ~20% of US cash equities (entered retail in 2022)</li>
+<li><strong>Optiver, IMC, DRW</strong> — additional institutional liquidity providers</li>
+</ul>
+
+<p>The Big Three options wholesalers (Citadel, SIG, Wolverine) together execute roughly 85% of retail options order flow. Alongside them sit the dominant institutional liquidity providers (Jane Street, Optiver, IMC, DRW). Jane Street's revenue figures alone — $20.5 billion in 2024 followed by $39.6 billion in 2025 — tell you how thick the layer of intermediation is between you and any counterparty with an actual directional view.</p>
+
+<h2 id="the-problem-the-dealer-just-created-for-themselves">2 · The problem the dealer just created for themselves</h2>
+
+<p>Back to our trade. You bought a call. The dealer sold it. The dealer is now <strong>short a call</strong>. If SPY rallies, they lose money. If SPY falls, they make money. They have a directional exposure they did not want and are not paid to hold.</p>
+
+<p>Carrying this exposure overnight is unthinkable. Consider the math: the spread the dealer captured might be ten cents per contract. A 1% move in SPY against their position on a delta of 0.50 produces a loss many multiples of that spread. They would lose months of franchise profit on a single bad afternoon. So they immediately, mechanically, neutralize the directional exposure. This neutralization is called <strong>delta hedging</strong>, and it is the engine that drives nearly everything that follows in this document.</p>
+
+<h2 id="the-lifecycle-of-one-trade-end-to-end">3 · The lifecycle of one trade, end to end</h2>
+
+<p>Walk through what actually happens when you click "buy" on a single SPY $600 call. The chain is mechanical, fast, and almost entirely invisible to you.</p>
+
+<p><strong>T + 0ms — You.</strong> Click "buy" in your broker app at the NBBO offer of $3.05. Order is a marketable limit at $3.05 for 1 contract.</p>
+
+<p><strong>T + 1-3ms — Your broker.</strong> Routing engine decides which venue to send to. For SPY (equity option), almost always a wholesaler — Citadel Securities, Susquehanna, or Wolverine. SPX/XSP (index options) route directly to Cboe instead.</p>
+
+<p><strong>T + 3-5ms — Wholesaler.</strong> Receives the order. Their internal matching engine checks the principal book. They have inventory to sell the call at $3.03. They fill you at the NBBO ($3.05) — "price improvement" of $0.00 from the NBBO offer, but $0.02 better than their internal sub-mid mark. Their reported execution beats the SIP NBBO; their actual edge is the $0.02 spread.</p>
+
+<p><strong>T + 5-10ms — Wholesaler.</strong> Now short 1 SPY $600 call. Their risk system computes delta = 0.58 at current spot. They are short 58 share-equivalents. The risk system fires an aggregated hedge order — typically batched with hundreds of other simultaneous flows — for SPY shares.</p>
+
+<p><strong>T + 10-50ms — Wholesaler.</strong> Buys 58 SPY shares (or proportionally less if internalizable against opposite flow). The hedge typically executes at or inside the NBBO via either internalization, a lit exchange, or an ATS. The aggregate principal book is now delta-flat with respect to this trade.</p>
+
+<p><strong>T + 1 day — OCC.</strong> Trade settles. You have 1 long call (no shares delivered until exercise/expiry). The wholesaler has the offsetting short position registered at OCC. Counterparty risk is now between you and OCC, not between you and the wholesaler.</p>
+
+<p><strong>Throughout life — Wholesaler.</strong> Continuously delta-hedges as spot moves. Gamma, vanna, charm all feed in. P&amp;L over the life of the trade depends on whether realized vol on the hedge path exceeded the IV implicit in the $3.05 fill. This is the gamma-theta math from <a class="xref" href="5c.html">Section 5C</a>.</p>
+
+<p><strong>Expiry — OCC / You / Wholesaler.</strong> If expired worthless: you lose the premium, wholesaler keeps it (minus hedge P&amp;L). If expired ITM: cash settles (SPX/XSP) or physical settles (SPY shares change hands).</p>
+
+<h2 id="the-franchise-math-at-scale">4 · The franchise math at scale</h2>
+
+<p>One trade looks negligible — $0.02 of edge on a 1-contract order is $2. But the volume is enormous. Citadel Securities discloses executing roughly 35% of all US retail equity and options volume. On a typical day, that's billions of share-equivalents and tens of millions of options contracts running through their book. The 2025 total US options market traded approximately 13.8 billion contracts; if Citadel handled 35% of retail (and a smaller but still substantial fraction of institutional flow), their annual options volume is in the billions of contracts.</p>
+
+<p>The arithmetic is dispiriting if you imagine taking the other side, and gratifying if you're the wholesaler:</p>
+
+<pre>Franchise revenue (simplified):
+Revenue = Σ (edge per contract) × (contracts) − hedge slippage − tech &amp; comp</pre>
+
+<p>With per-contract edges in the $0.50-$2.00 range across the retail options book and hundreds of millions of contracts annually, the franchise produces multi-billion-dollar revenues consistently. Jane Street's $20.5 billion (2024) and $39.6 billion (2025) net trading revenues are not aberrations. They are the asymptotic profile of a high-volume, low-per-trade-edge franchise that executes at scale.</p>
+
+<h2 id="risk-capital-vs-alpha-capital">5 · Risk capital vs alpha capital</h2>
+
+<p>Two kinds of capital are at work in any market-making operation. Understanding the distinction clarifies what dealers care about and what they don't.</p>
+
+<p><strong>Risk capital</strong> is the collateral the dealer must post against open positions. It covers the worst-case loss they could incur before they can unwind. Post-2008 regulation (Basel III, Dodd-Frank, EMIR) made this binding via stress tests. A modern dealer's biggest operational constraint is not "how much can we make per trade" — it is "how much capital does each book consume per unit of expected revenue."</p>
+
+<p><strong>Alpha capital</strong> is what the firm uses to take active directional or relative-value bets — outright views the desk has. Market makers technically run negligible alpha capital relative to their risk capital; they are nominally directionally flat. In practice, every dealer book has small residual exposures (skew, term, basis, correlation) that they choose to carry rather than hedge perfectly. These residuals are where the real "edge" of a well-run dealer book lives — and where the franchise can lose money in stress.</p>
+
+<p>The relevance to retail: when you read "Citadel Securities lost $3 billion in March 2020," it almost certainly refers to the residual book, not the spread franchise. The spread franchise compounds quietly through every regime. The residual book is what produces the headline losses (and headline gains in benign years).</p>
+
+<h2 id="capacity-constraints-why-the-dealer-takes-your-trade">6 · Capacity constraints — why the dealer takes your trade</h2>
+
+<p>One question retail traders rarely ask: why is the dealer willing to take the other side of your trade specifically? Aren't they worried you might know something?</p>
+
+<p>The honest answer: in aggregate, retail flow is informationally uninformed. A wholesaler internalizing $50 billion of monthly retail flow doesn't worry that the median order knows tomorrow's news. They worry about the tails — the rare retail order that's informed (insider activity, leaked earnings data). Those orders are flagged and routed to lit exchanges rather than internalized, because routing them externally transfers the adverse-selection risk to whichever venue takes them.</p>
+
+<p>For institutional flow, the calculation is different. A hedge fund placing a $200 million SPX options trade is presumed informed; the wholesaler will quote wider (or refuse) and route through the order book directly. This is why "institutional spreads" on large index options trades are often 10-30 bps wider than the SIP NBBO that retail sees.</p>
+
+<p>The structural lesson: <strong>retail order flow is profitable to wholesalers because it is uninformed in aggregate</strong>. The wholesaler is paid not for taking risk against a smart counterparty (they're not — they hedge immediately) but for providing immediacy and capturing spread against the noise that retail order flow represents in aggregate.</p>
+
+<h2 id="a-quick-orientation-to-what-follows">7 · A quick orientation to what follows</h2>
+
+<p>Every chapter from here forward is, in some sense, about how the dealer neutralizes the exposure they did not ask for, and what their neutralizing transactions do to the market. The arc:</p>
+
+<ul>
+<li><strong><a class="xref" href="6c.html">Chapter 6C</a></strong> — what exposure they actually inherited (the Greeks)</li>
+<li><strong><a class="xref" href="6d.html">Chapter 6D</a></strong> — how they neutralize the first-order risk (delta hedge)</li>
+<li><strong><a class="xref" href="6e.html">Chapter 6E</a></strong> — why the hedge doesn't stay neutralized (gamma)</li>
+<li><strong><a class="xref" href="7a.html">Chapter 7</a></strong> — the mathematical guarantee that the hedge is the only consistent strategy</li>
+<li><strong><a class="xref" href="8a.html">Chapter 8</a> onward</strong> — what happens when millions of these books interact</li>
+</ul>

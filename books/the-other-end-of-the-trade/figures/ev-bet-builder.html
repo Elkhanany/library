@@ -1,0 +1,86 @@
+<!--
+name: EV bet builder
+source: src/interactives/EVBetBuilder.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="150"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-p">P(win)</label>
+      <input type="range" id="{{uid}}-p" min="10" max="90" step="1" value="55">
+      <output id="{{uid}}-p-o" for="{{uid}}-p"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-w">win</label>
+      <input type="range" id="{{uid}}-w" min="0.1" max="50" step="0.1" value="1">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-l">loss</label>
+      <input type="range" id="{{uid}}-l" min="0.1" max="50" step="0.1" value="1.25">
+      <output id="{{uid}}-l-o" for="{{uid}}-l"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Presets">
+      <label>preset</label>
+      <button type="button" id="{{uid}}-trap">the high-win-rate trap</button>
+      <button type="button" id="{{uid}}-edge">the low-win-rate edge</button>
+    </div>
+    <div class="ctrl"><output id="{{uid}}-ev"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Win rate is not edge.</b> One bet, set by its probability of winning and the
+  sizes of the win and the loss. The bar is the bet's expected value per round, E[X] = p × G −
+  (1 − p) × L. The two presets are the chapter's coin flips: a 55% win rate that loses money,
+  and a 25% win rate that makes it.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var P = DL.$(U + '-p'), G = DL.$(U + '-w'), L = DL.$(U + '-l');
+
+  function verdict(ev) {
+    if (ev > 0.05) return ['Strong edge.', 'Play this game as often as possible.'];
+    if (ev > 0) return ['Positive EV.', 'Tiny edge. Bet small, bet often.'];
+    if (ev > -0.05) return ['Negative EV.', 'Do not play. The losses accumulate.'];
+    return ['Bleeding.', 'Walk away.'];
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = parseFloat(P.value) / 100, g = parseFloat(G.value), l = parseFloat(L.value);
+    var win = p * g, loss = (1 - p) * l, ev = win - loss;
+    var span = Math.max(1, win, loss) * 1.15;
+    var plot = new NMT.Plot(c, { xmin: -span, xmax: span, ymin: 0, ymax: 3.2,
+                                 pad: { l: 14, r: 14, t: 8, b: 30 }, grid: false });
+    DL.axes(plot, { nx: 6, y: false, yAxis: false,
+                    x: function (v) { return DL.usd(v, span < 4 ? 2 : 0); } });
+    /* three bars: what the wins bring, what the losses cost, and the balance */
+    DL.hbars(plot, [2.45], [win], { h: 0.55, color: DL.fade(DL.color('insight'), 0.7) });
+    DL.hbars(plot, [1.6], [-loss], { h: 0.55, color: DL.fade(DL.color('plain'), 0.7) });
+    DL.hbars(plot, [0.75], [ev], { h: 0.55, color: DL.color(ev >= 0 ? 'insight' : 'plain') });
+    DL.vline(plot, 0, { color: DL.color('ink-faint') });
+    plot.text(0, 2.45, 'p × G', { dx: win >= 0 ? -6 : 6, dy: 4, baseline: 'middle',
+                                  align: 'right', color: DL.color('ink-soft') });
+    plot.text(0, 1.6, '(1 − p) × L', { dx: 6, dy: 4, baseline: 'middle', color: DL.color('ink-soft') });
+    plot.text(0, 0.75, 'E[X]', { dx: ev >= 0 ? -6 : 6, dy: 4, baseline: 'middle',
+                                 align: ev >= 0 ? 'right' : 'left', color: DL.color('ink') });
+
+    var v = verdict(ev);
+    DL.out(U + '-p-o', Math.round(p * 100) + '%');
+    DL.out(U + '-w-o', DL.usd(g, 2));
+    DL.out(U + '-l-o', DL.usd(l, 2));
+    DL.out(U + '-ev', 'P(loss) = ' + Math.round((1 - p) * 100) + '%   E[X] = ' +
+           (ev > 0 ? '+' : '') + DL.usd(ev, 3) + ' per round');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+  });
+  function preset(p, g, l) {
+    P.value = p; G.value = g; L.value = l;
+    draw();
+  }
+  DL.$(U + '-trap').addEventListener('click', function () { preset(55, 1, 1.25); });
+  DL.$(U + '-edge').addEventListener('click', function () { preset(25, 35, 1); });
+  DL.bind([U + '-p', U + '-w', U + '-l'], draw);
+})();
+</script>

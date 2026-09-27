@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>1A Distributions, skew, and why Sharpe lies — The Other End of the Trade</title>
+<meta name="description" content="Chapter 1A of The Other End of the Trade: Distributions, skew, and why Sharpe lies.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-0">← Part I · Foundation</a>
+  <div class="sb-folio"><span class="sb-prev" aria-hidden="true"></span><p class="sb-title"><span class="sb-at">Chapter 1A ·</span> <span class="sb-at">1 of 67</span></p><a class="sb-next" href="1b.html" aria-label="Next chapter: 1B · Log returns and why they&#x27;re additive" title="Next chapter: 1B · Log returns and why they&#x27;re additive (→)">1B ›</a></div>
+  <div id="sb-toc"><a href="#the-four-moments-in-order-of-operational-importance">1 · The four moments, in order of operational importance</a><a href="#mean-and-variance-produce-sharpe-skew-and-kurtosis-produce-the-gap-between-sharpe-and-reality">2 · Mean and variance produce Sharpe; skew and kurtosis produce the gap between Sharpe and reality</a><a href="#the-win-rate-trap">3 · The win-rate trap</a><a href="#jurek-and-stafford-most-alpha-is-short-skew">4 · Jurek and Stafford: most "alpha" is short skew</a><a href="#what-to-use-instead-of-sharpe">5 · What to use instead of Sharpe</a><a href="#kurtosis-rare-events-are-not-as-rare-as-gaussian-implies">6 · Kurtosis: rare events are not as rare as Gaussian implies</a><a href="#the-drawdown-asymmetry">7 · The drawdown asymmetry</a><a href="#the-deflated-sharpe-ratio-bailey-and-lpez-de-prado">8 · The deflated Sharpe ratio (Bailey and López de Prado)</a><a href="#the-operational-rule">9 · The operational rule</a><a href="#the-equity-risk-premium-the-structural-reward-youre-competing-with">10 · The equity risk premium — the structural reward you're competing with</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part I · Foundation · Chapter 1A</p>
+
+<h1>Distributions, skew, and why Sharpe lies</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>Before we can talk about dealers, hedging, gamma, or any of the structural machinery of options markets, we need a common foundation in four things: what a return distribution actually looks like, why we use logarithmic returns instead of percentage returns, what "edge" really means in expected-value terms, and how to think about risk-adjusted performance without lying to ourselves. These four ideas are not optional preliminaries. They are the load-bearing assumptions under every claim that follows. If you skip them, every later chapter will mislead you in subtle and expensive ways.</p>
+
+<p>This section is organized as four sub-chapters, each building on the previous. <strong>1A</strong> establishes that returns are not Gaussian and that the Sharpe ratio — the most-cited number in finance — is structurally blind to the deviation from Gaussianity that matters most: skew. <strong>1B</strong> justifies the use of log returns, which are additive over time and symmetric in a way that simple percentage returns are not. <strong>1C</strong> defines expected value precisely and shows the most important consequence: win rate is not edge. <strong>1D</strong> revisits the Sharpe ratio with full machinery — what it measures, what it misses, and why low-Sharpe strategies cannot safely use leverage no matter how positive their drift.</p>
+</div>
+
+<hr>
+
+<p>The single most consequential thing to internalize before evaluating any short-volatility strategy is this: <strong>the Sharpe ratio cannot see skew</strong>. A strategy can win ninety-five percent of the time and still lose money. A strategy can show a Sharpe ratio of 0.8 in a backtest and a Sharpe ratio of 0.2 in a live retail account. The gap between these numbers is, mostly, the shape of the return distribution — specifically the third and fourth moments that Sharpe ignores by mathematical construction. If you only remember one thing from this entire section, remember that.</p>
+
+<h2 id="the-four-moments-in-order-of-operational-importance">1 · The four moments, in order of operational importance</h2>
+
+<p>Any return distribution is described, to first approximation, by four numbers — the <strong>moments</strong> of the distribution. They have technical names but each one answers an intuitive question.</p>
+
+<p>The <strong>first moment</strong> is the mean, μ = E[R]. It answers: <em>what is the average return?</em> This is the thing every backtest tab brags about. By itself it tells you almost nothing because the same mean can be produced by wildly different distributions.</p>
+
+<p>The <strong>second moment</strong> about the mean is the variance, σ² = E[(R − μ)²]. Its square root, σ, is the standard deviation. It answers: <em>how spread out are the returns around the mean?</em> Variance is the engine of the Sharpe ratio: high mean and low variance produce high Sharpe; high mean and high variance produce mediocre Sharpe.</p>
+
+<p>The <strong>third moment</strong>, normalized by σ³, is the skewness:</p>
+
+<pre>Skew = E[((R − μ) / σ)³]</pre>
+
+<p>It answers: <em>is the distribution symmetric, or is one tail longer than the other?</em> For a true Gaussian distribution, skew is zero. For SPX daily returns over multi-decade samples, skew is approximately <strong>−0.7</strong> (left-skewed — the left tail, the loss tail, is longer than the right). For the CBOE PUT Index — a benchmark for systematic monthly at-the-money put-writing on SPX, which Cboe has tracked since June 1986 — skew is roughly <strong>−2.1</strong> on monthly returns. The PUT Index has skew approximately three times worse than the underlying it sells protection on. Selling premium does not eliminate skew; it <em>concentrates</em> it.</p>
+
+<p>The <strong>fourth moment</strong>, normalized by σ⁴, is the kurtosis:</p>
+
+<pre>Kurtosis = E[((R − μ) / σ)⁴]</pre>
+
+<p>It answers: <em>how fat are the tails relative to a Gaussian?</em> For a true Gaussian, kurtosis is exactly 3. (Some texts use "excess kurtosis," kurtosis minus 3, so that zero means Gaussian.) For SPX daily returns since 1928, kurtosis is roughly <strong>15 to 20</strong> depending on the sample — five to seven times the Gaussian value. Returns are massively fatter-tailed than a normal distribution. The tail events we care most about — Black Monday 1987, October 2008, Volmageddon 2018, March 2020 — are not rare flukes against a Gaussian baseline. They are routine against an empirically calibrated baseline that recognizes how fat the tails actually are.</p>
+
+<p>To put this in operational terms: under a Gaussian model calibrated to pre-1987 SPX daily volatility, the −22.6% one-day move on October 19, 1987 had a probability of roughly <strong>10⁻¹³⁷</strong>. That number is so absurd it should have ended faith in Gaussian models permanently. The probability under the Gaussian model that this event would have occurred <em>once in the lifetime of the universe</em> (about 4×10¹⁷ seconds × maybe 10⁵ markets) is still essentially zero. The event happened anyway. Anyone who told you in 1986 that the Gaussian model was an acceptable approximation owed you an apology by October 20th.</p>
+
+<h2 id="mean-and-variance-produce-sharpe-skew-and-kurtosis-produce-the-gap-between-sharpe-and-reality">2 · Mean and variance produce Sharpe; skew and kurtosis produce the gap between Sharpe and reality</h2>
+
+<p>The Sharpe ratio is defined as:</p>
+
+<pre>SR = (E[R] − r_f) / σ_R</pre>
+
+<p>Notice what's in the formula: mean (first moment), standard deviation (square root of second moment), and a risk-free rate. Notice what's <em>not</em> in the formula: skew, kurtosis, the entire shape of the left tail, autocorrelation, drawdown depth, recovery time, regime conditioning. The Sharpe ratio is a two-parameter summary of a distribution that requires four parameters to characterize even roughly, and many more to characterize honestly.</p>
+
+<p>This would not matter if real return distributions were approximately Gaussian. They aren't. For most strategies retail traders care about — short premium, trend-following, factor tilts, volatility-targeted equity, momentum — the higher moments are big enough that ignoring them constitutes financial malpractice.</p>
+
+<figure class="fig" id="fig-skew-simulator"><figcaption><b>Figure to come:</b> skew-simulator</figcaption></figure>
+
+<p>What you're seeing: at skew = 0 the distribution is symmetric — Sharpe matches the intuition. At skew = −3 the mean and standard deviation are essentially unchanged, but the left tail has grown much fatter and ES₉₅ has roughly doubled in magnitude. Sharpe drifts slightly because the asymmetry shifts the mean a hair, but it doesn't come close to reflecting the change in tail risk. <strong>The same Sharpe describes two very different P&amp;L distributions.</strong> This is the canonical "Sharpe lies" demonstration.</p>
+
+<h2 id="the-win-rate-trap">3 · The win-rate trap</h2>
+
+<p>Consider two coin-flip scenarios with identical 95% win rates but opposite expected values.</p>
+
+<p><strong>Scenario A — the insurance buyer.</strong> With probability 95% you pay <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo separator="true">;</mo><mi>w</mi><mi>i</mi><mi>t</mi><mi>h</mi><mi>p</mi><mi>r</mi><mi>o</mi><mi>b</mi><mi>a</mi><mi>b</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>t</mi><mi>y</mi><mn>5</mn></mrow><annotation encoding="application/x-tex">1; with probability 5% you receive </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">1</span><span class="mpunct">;</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord mathnormal">i</span><span class="mord mathnormal">t</span><span class="mord mathnormal">h</span><span class="mord mathnormal">p</span><span class="mord mathnormal">ro</span><span class="mord mathnormal">babi</span><span class="mord mathnormal" style="margin-right: 0.0197em;">l</span><span class="mord mathnormal">i</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="mord">5</span></span></span></span></span>25. The win rate is 5% (you "win" when the rare event hits). The expected value is:</p>
+
+<pre>E[X] = 0.95 × (−1) + 0.05 × (+25) = −0.95 + 1.25 = +$0.30</pre>
+
+<p>The bet pays $0.30 per round in expectation. This is the structural shape of a tail-hedge buyer: pay small premiums most of the time, collect a large payoff when the rare event hits. Positive EV, low win rate, positive skew.</p>
+
+<p><strong>Scenario B — the premium seller.</strong> Flip Scenario A around: with probability 95% you receive <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo separator="true">;</mo><mi>w</mi><mi>i</mi><mi>t</mi><mi>h</mi><mi>p</mi><mi>r</mi><mi>o</mi><mi>b</mi><mi>a</mi><mi>b</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>t</mi><mi>y</mi><mn>5</mn></mrow><annotation encoding="application/x-tex">1; with probability 5% you pay </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">1</span><span class="mpunct">;</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord mathnormal">i</span><span class="mord mathnormal">t</span><span class="mord mathnormal">h</span><span class="mord mathnormal">p</span><span class="mord mathnormal">ro</span><span class="mord mathnormal">babi</span><span class="mord mathnormal" style="margin-right: 0.0197em;">l</span><span class="mord mathnormal">i</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="mord">5</span></span></span></span></span>25. Win rate is now 95%. Expected value is:</p>
+
+<pre>E[X] = 0.95 × (+1) + 0.05 × (−25) = +0.95 − 1.25 = −$0.30</pre>
+
+<p>You win 19 times out of 20 and lose money in expectation. <strong>This is the trap.</strong> The same shape — 95% wins, 5% catastrophic losses — describes every undisciplined premium-selling strategy in existence. Sell a deep-out-of-the-money put: 95% of the time the premium expires worthless and you keep it; 5% of the time the underlying blows through your strike and erases a year of accumulated premium. The structural shape is identical to the coin flip; only the magnitudes change. <strong>Win rate is not edge. Expected value is.</strong></p>
+
+<p>The trap is <em>Scenario B</em>, not premium-selling in general. The CBOE PUT Index — mechanical at-the-money cash-secured monthly put writing on SPX from 1986 forward — has produced <em>positive</em> long-run risk-adjusted returns over four decades. Premium selling can be Scenario A or Scenario B depending on strike selection, sizing, roll discipline, and whether the premium collected actually compensates for the tail risk taken. The point is not that selling premium is bad; the point is that a 95% win rate tells you nothing about which scenario you're in.</p>
+
+<p>This is also why the brokerage statements of new premium-sellers look magnificent for their first six to twelve months. The first batch of options expires worthless. The next batch expires worthless. The trader concludes they have discovered a free money machine. The 5% catastrophe hasn't happened yet because 5% events happen about once every twenty trials, and a monthly cadence means roughly twenty months between hits. The trader is sampling from a distribution they have not yet seen the left tail of, and concluding that the left tail doesn't exist.</p>
+
+<p>Anyone who tells you their options-selling strategy has "an 85% win rate" or "a 92% probability of profit" is <em>telling you about the shape</em>, not the <em>edge</em>. Always ask: what does the average losing trade lose, in dollars, relative to what the average winning trade wins? That ratio, times the win rate, is what determines whether you're in Scenario A or Scenario B.</p>
+
+<p><strong>The structural bridge to index premium-selling.</strong> When you sell a deep-OTM index put, you've placed a structural bet that the equity skew and the variance risk premium together compensate you sufficiently for the rare tail outcome — and that you'll size and roll the position so the tail outcome doesn't end the game. Notice which assumptions are doing the work: <em>the premium has to be enough</em> (an empirical claim about the market — sometimes true, sometimes not), <em>and your sizing has to survive the tail</em> (a discipline claim about you, almost always the binding constraint). The Scenario A→B transition is rarely about a sudden change in market behavior; it's about a sudden change in <em>the trader's behavior</em> — a doubled position size after a winning streak, a strike moved one band closer to ATM "because vol is high right now," a stop level that wasn't pre-committed in writing. <a class="xref" href="12a.html">Section 12</a> (Discipline) returns to this in detail because it is the central practical issue, not <a class="xref" href="5a.html">Section 5</a> (Options) which is the technical preamble.</p>
+
+<h2 id="jurek-and-stafford-most-alpha-is-short-skew">4 · Jurek and Stafford: most "alpha" is short skew</h2>
+
+<p>In a Journal of Finance paper that should be required reading for anyone evaluating a managed-futures or hedge fund pitch, Jakub Jurek (Princeton, NBER) and Erik Stafford (Harvard Business School) examined broad hedge fund index returns from 1996 to 2012 and asked a deceptively simple question: how much of the apparent alpha is real, and how much is just compensation for accepting negative skew that traditional factor models don't see? (<a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/jofi.12269">Jurek and Stafford, 2015, <em>Journal of Finance</em> 70(5), 2185–2226</a>)</p>
+
+<p>Their finding, restated in the cleanest possible form: the hedge fund return series is <strong>not reliably distinguishable</strong> from the returns of mechanical S&amp;P 500 put-writing strategies. Once you correctly price the skewed payoffs — using a stochastic discount factor that recognizes downside risk in a way traditional linear models cannot — the apparent 6% to 10% pre-fee annual alpha of hedge fund indices over the 1996–2012 period largely disappears.</p>
+
+<div class="callout brick">
+<p><em>"Traditional risk factor models indicate that hedge funds capture pre-fee alphas of 6% to 10% per annum over the period from 1996 to 2012. At the same time, the hedge fund return series is not reliably distinguishable from the returns of mechanical S&amp;P 500 put-writing strategies."</em> — Jurek &amp; Stafford (2015), abstract</p>
+</div>
+
+<p>The implication is uncomfortable. If institutional sophistication — global research teams, prime brokerage relationships, custom risk systems, decades of pedigree, $20 billion AUM — cannot produce a skew-adjusted Sharpe meaningfully above what comes out of mechanical at-the-money put writing on SPX, then the retail trader's prior on "I can do better than put writing through clever entry timing, smart strike selection, or proprietary indicators" should be very, very low. The honest framing is: a retail trader running cash-secured ATM XSP puts with mechanical monthly rolls is operating at roughly the same after-tax expected risk-adjusted return as a sophisticated multi-billion-dollar hedge fund — if both are sized appropriately. Most of what separates the institutional return from the retail one is fees, not skill.</p>
+
+<h2 id="what-to-use-instead-of-sharpe">5 · What to use instead of Sharpe</h2>
+
+<p>No single number captures distribution shape. The honest move is to look at multiple metrics together, and to look at the actual historical path the strategy took to produce its returns.</p>
+
+<p><strong>Sortino ratio.</strong> Like Sharpe, but penalizes only downside volatility:</p>
+
+<pre>Sortino = (E[R] − r_f) / σ_downside</pre>
+
+<p>where σ_downside is the standard deviation of returns below some threshold (often zero or the risk-free rate). Sortino fixes one Sharpe defect — it stops penalizing upside surprises as "risk" — but doesn't capture kurtosis or the depth of the left tail.</p>
+
+<p><strong>Calmar ratio.</strong> Mean annual return divided by maximum drawdown:</p>
+
+<pre>Calmar = E[R_annual] / |MaxDD|</pre>
+
+<p>Calmar directly penalizes path-dependent risk. It asks: per unit of pain you had to absorb to participate in this strategy, how much did you get paid? Calmar rankings of strategies often differ sharply from Sharpe rankings. SPX over 1990–2024 has Sharpe around 0.50, Calmar around 0.18. The PUT Index over the same period has Sharpe around 0.65 but Calmar around 0.29. By Sharpe, PUT looks 30% better than SPX. By Calmar, PUT looks 60% better. Both are correct; they're answering different questions, and Calmar is the more honest one for capital-preservation decisions.</p>
+
+<p><strong>Expected Shortfall (ES) at the 95% or 99% level.</strong> Also called Conditional Value-at-Risk (CVaR):</p>
+
+<pre>ES_95 = E[R | R ≤ VaR_95]</pre>
+
+<p>The average loss <em>conditional on</em> being in the worst 5% of periods. Where VaR asks "how bad is the 5th percentile loss," ES asks "given that we hit the 5th percentile or worse, how bad is it on average?" ES is the metric Basel III adopted for bank capital after the 2008 crisis precisely because VaR is silent about the magnitude of losses beyond the threshold. For short-vol sizing, ES is the single most useful number you can compute.</p>
+
+<p><strong>Maximum drawdown.</strong> The largest peak-to-trough loss in the historical record:</p>
+
+<pre>MaxDD = max_t [ (Peak_t − Trough_t≥t) / Peak_t ]</pre>
+
+<p>Asymmetric (one-sided), real, and binding for portfolio survival. A 40% drawdown requires a 67% recovery to break even. A 60% drawdown requires a 150% recovery. A 90% drawdown requires 900%. Recovery cost is non-linear in loss size, which is why max-drawdown discipline is binding for portfolio survival: survive small losses and you can compound; survive a single large one and you may never compound back to your prior peak within your lifetime.</p>
+
+<p><strong>Tail beta.</strong> The strategy's beta to the underlying market <em>conditional on</em> the underlying being in its worst 5% of months:</p>
+
+<pre>β_tail = Cov(R_strategy, R_market | R_market ≤ VaR_market_95) / Var(R_market | R_market ≤ VaR_market_95)</pre>
+
+<p>For most premium-selling strategies, tail beta is approximately 1.0 — meaning your "diversifier" or "income overlay" fully correlates with everything else in your portfolio precisely when you needed diversification most. The CBOE PUT Index has tail beta near 1.0 to SPX in the worst months. So does most of the "alternatives" allocation in a typical endowment portfolio. This is the empirical content of "all correlations go to one in a crisis."</p>
+
+<p><strong>Bondarenko's PUT Index analysis: real numbers.</strong> In a Cboe-commissioned white paper, Professor Oleg Bondarenko (University of Illinois Chicago) analyzed the CBOE PUT Index over the 32-year period from June 30, 1986 to December 31, 2018 (<a href="https://cdn.cboe.com/resources/education/research_publications/PutWriteCBOE19_v14_by_Prof_Oleg_Bondarenko_as_of_June_14.pdf">Bondarenko, 2019</a>). Headline numbers: PUT delivered annualized compound returns of <strong>9.54%</strong> with <strong>9.95%</strong> annualized volatility, producing a Sharpe ratio of <strong>0.65</strong>. Maximum drawdown was <strong>−32.7%</strong>, lasting 40 months. Skew on monthly returns was approximately <strong>−2.09</strong>, several multiples worse than the SPX itself. The PUT Index also delivered a Sortino ratio higher than SPX, MSCI World, Russell 2000, or 30-year Treasury bonds over the same window.</p>
+
+<p>Through 2024, the PUT Index continued to deliver — 2024 calendar year return was 17.8% versus SPX Total Return at 25.0%. Over the 10-year window through September 2025, PUT delivered 8.0% annualized at lower volatility than the index. The strategy works. But understanding <em>why</em> it works — that it is paid for accepting negative skew, not for any clever timing — is the prerequisite for sizing it correctly.</p>
+
+<h2 id="kurtosis-rare-events-are-not-as-rare-as-gaussian-implies">6 · Kurtosis: rare events are not as rare as Gaussian implies</h2>
+
+<p>We touched on Black Monday above; it bears returning to in detail because the lesson is structural. On October 19, 1987, the S&amp;P 500 closed down 22.6%. Under a Gaussian model with volatility calibrated to the trailing decade, that event was approximately a 22-sigma move. Sigma counts get unintuitive past about four; here are some benchmarks for orientation:</p>
+
+<ul>
+<li>3-sigma event: roughly 1 in 740 (twice per decade)</li>
+<li>4-sigma event: roughly 1 in 31,500 (once per 125 years)</li>
+<li>5-sigma event: roughly 1 in 3.5 million (once per 14,000 years)</li>
+<li>6-sigma event: roughly 1 in 506 million (once per 2 million years)</li>
+<li>22-sigma event: roughly 1 in 10¹³⁷ (more rare than picking a specific atom in the observable universe at random — twice)</li>
+</ul>
+
+<p>The 22-sigma event happened. So did the 18-sigma move during the 2008 financial crisis, the 14-sigma move on COVID Monday in March 2020, and the 19-sigma single-day VIX move during Volmageddon. These are not flukes against the correct baseline; they are routine against an empirically-calibrated baseline that admits fat tails.</p>
+
+<p>The lesson is not that markets are mysterious or that quants are dumb. The lesson is that <strong>the Gaussian assumption is wrong</strong>. Returns have fat tails. Kurtosis is high. Once-per-century events happen multiple times per career. Any sizing model that assumes Gaussian tails will under-size stress reserves by orders of magnitude. The right starting point is to assume kurtosis between 10 and 20 in your tail model, treat any "30-sigma" event as roughly a "1-in-30-years" event, and size your largest single position so that a 4-standard-deviation move (against the empirical distribution, not the Gaussian one) does not threaten the survival of the account.</p>
+
+<p>This is also why every quantitative risk manager you will ever meet talks about <em>stress scenarios</em> rather than <em>VaR percentiles</em>. A stress scenario asks "what happens if SPX falls 20% in three days and VIX goes from 15 to 60?" — a concrete, scenario-based question that you can answer with explicit Greek calculations. A VaR percentile asks "what's the 99th percentile loss?" — a question whose answer depends entirely on your assumed tail thickness. The first question survives bad assumptions; the second one is hostage to them.</p>
+
+<h2 id="the-drawdown-asymmetry">7 · The drawdown asymmetry</h2>
+
+<p>Let me belabor the recovery math because it is the single most underweighted fact in retail trading. If you lose 40% of your capital, you need a 67% gain on the remaining 60% to get back to even. If you lose 60%, you need 150%. If you lose 90%, you need 900%. The recovery cost is non-linear in loss size, governed by:</p>
+
+<pre>Recovery_needed = 1 / (1 − DD) − 1
+
+DD = 0.40 → recovery = 0.67 (67%)
+DD = 0.50 → recovery = 1.00 (100%)
+DD = 0.60 → recovery = 1.50 (150%)
+DD = 0.70 → recovery = 2.33 (233%)
+DD = 0.80 → recovery = 4.00 (400%)
+DD = 0.90 → recovery = 9.00 (900%)</pre>
+
+<p>This is why max-drawdown discipline is binding for portfolio survival. A strategy with positive expected return but a 60% drawdown that <em>would have happened anyway in your backtest</em> requires you to make 150% from the trough to get back to even. At the strategy's normal compound rate, that recovery may take a decade or more. Meanwhile, the opportunity cost of capital sitting in a deep drawdown is the return you could have earned in a simpler, lower-drawdown strategy over those same years. <strong>Survive small losses and you can compound; survive a single large one and you may never compound back to your prior peak within a useful career window.</strong></p>
+
+<p>This is also why the academic literature distinguishes "drawdown-adjusted" performance metrics from volatility-adjusted ones. A strategy that produces its volatility through small, frequent moves around a rising mean (high Sharpe) is fundamentally different from a strategy that produces the same volatility through occasional catastrophic losses with smooth gains in between (the short-vol shape). The Sharpe ratio reads them the same; Calmar, Sortino, ES, and max drawdown all read them very differently.</p>
+
+<h2 id="the-deflated-sharpe-ratio-bailey-and-lpez-de-prado">8 · The deflated Sharpe ratio (Bailey and López de Prado)</h2>
+
+<p>A more recent contribution to this literature: David Bailey and Marcos López de Prado introduced the <strong>deflated Sharpe ratio</strong> (<a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551">Bailey and López de Prado, 2014</a>) to address a separate Sharpe defect: backtested Sharpe ratios are biased upward, and the bias grows with the number of strategies tested. If you backtest 1,000 strategies, the best one will have a phenomenal Sharpe — purely from selection. The deflated Sharpe corrects for this by computing the probability that the observed Sharpe is statistically distinguishable from zero given (a) the number of trials run, (b) the non-Gaussianity of the returns, and (c) the length of the backtest.</p>
+
+<p>Their empirical finding is sobering: most published "anomaly" Sharpe ratios in the academic literature shrink to indistinguishable-from-zero after deflation. The retail equivalent is even worse: a trader who has spent six months testing parameter combinations on TradingView and finally finds one with a Sharpe of 1.2 over their three-year backtest has run thousands of implicit trials; the deflated Sharpe is almost certainly not significant. Most "discovered" trading systems are statistical artifacts.</p>
+
+<h2 id="the-operational-rule">9 · The operational rule</h2>
+
+<p>Before sizing any short-vol position, compute its ES₉₅ and its expected behavior in stress scenarios calibrated to SPX −10% / −20% / −35% combined with VIX +10 / +25 / +50 vol-point spikes. The Sharpe is, at best, a third-tier input. The binding questions are:</p>
+
+<ol>
+<li><strong>What is the average loss in the worst 5% of months?</strong> (ES₉₅)</li>
+<li><strong>What is the maximum drawdown likely under stress?</strong> (path-dependent risk)</li>
+<li><strong>Is the portfolio recoverable from that drawdown without behavioral capitulation?</strong> (survival)</li>
+</ol>
+
+<p>If you cannot answer those three questions in dollar terms for your current portfolio, the position is too big or you don't understand it. Probably both.</p>
+
+<h2 id="the-equity-risk-premium-the-structural-reward-youre-competing-with">10 · The equity risk premium — the structural reward you're competing with</h2>
+
+<p>Everything we've said about Sharpe, tail risk, and the haircut chain sits inside a particular numerical reality: equities have, over the longest data sets available, paid a real risk premium of roughly 4–6% over the risk-free rate, with extreme variation across countries and centuries.</p>
+
+<p>The canonical citations:</p>
+
+<ul>
+<li><p><strong>Mehra and Prescott (1985), "The Equity Premium: A Puzzle," <em>Journal of Monetary Economics</em>.</strong> Using US data from 1889 to 1978, Mehra and Prescott documented an average real return on equities of about 7% versus about 1% on short-term debt — a 6 percentage-point premium that traditional consumption-based asset pricing models could not rationalize without implausibly high risk aversion. The "puzzle" framing is decades old; the empirical magnitude has held up remarkably well in subsequent data.</p></li>
+<li><p><strong>Dimson, Marsh, and Staunton, <em>Triumph of the Optimists</em> (2002) and ongoing Credit Suisse / UBS Global Investment Returns Yearbook.</strong> DMS extended the dataset to 16+ countries over 100+ years. Their headline number for the global ex-US equity risk premium relative to bills is approximately 4.4% (geometric mean, 1900–present), with substantial cross-country dispersion. Some markets (US, Australia, South Africa) ran higher; others (Italy, Japan, Belgium) were materially lower. There are countries where 50-year equity returns were negative in real terms.</p></li>
+<li><p><strong>Fama and French (2002), "The Equity Premium," <em>Journal of Finance</em>.</strong> Argued that the <em>expected</em> equity premium, derived from dividend and earnings yields, is closer to 3–4% — meaningfully below the <em>realized</em> historical premium, because much of the realized premium came from unexpected valuation expansion (multiple expansion, declining discount rates) that cannot be repeated indefinitely.</p></li>
+</ul>
+
+<p><strong>Three operational takeaways:</strong></p>
+
+<ol>
+<li><p><strong>The risk premium is real but smaller than retail intuition assumes.</strong> "Stocks return 10% per year" is a rounded nominal pre-tax figure, not the real after-tax post-fee expected return you'll actually compound. The honest expected real after-tax retail figure for a US equity buy-and-hold is roughly 4–5% — meaningfully positive, not a windfall.</p></li>
+<li><p><strong>The country selection in the data set matters enormously.</strong> The most-cited US-only ERP figures embed a survivorship bias: the US happened to be the <em>winning</em> market of the 20th century. The DMS global panel — which includes markets that lost world wars, suffered hyperinflation, were closed by political revolution, or had decades of stagnation — gives a more honest baseline for the <em>ex-ante</em> premium an investor in 1900 could have expected.</p></li>
+<li><p><strong>The competitor for your active strategy is not zero — it's the equity risk premium.</strong> Any active strategy you run has to beat buy-and-hold of a broad equity index <em>after taxes and fees</em>, not beat zero. The four-layer retail haircut framework (<a class="xref" href="12a.html">Section 12A</a>) and the Jurek-Stafford finding above are both pointing at the same operational conclusion: most retail active strategies fail to beat the structural reward already available from passive equity exposure once frictions are honestly accounted for.</p></li>
+</ol>
+
+<p>The equity risk premium is the baseline against which everything in this book competes. When a strategy claims "edge," the right comparison is not "is this better than nothing?" — it's "is this better than the variance risk premium / equity risk premium combination that I could harvest passively?" That comparison is the operational frame for the rest of the curriculum.</p>
+
+<figure class="fig" id="fig-deflated-sharpe-calculator"><figcaption><b>Figure to come:</b> deflated-sharpe-calculator</figcaption></figure>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<span class="dead"></span>
+<a class="next" href="1b.html" rel="next"><span>Next</span>1B · Log returns and why they're additive</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

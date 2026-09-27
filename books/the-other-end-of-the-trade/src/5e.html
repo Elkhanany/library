@@ -1,0 +1,95 @@
+<p class="eyebrow">Part V · Options · Chapter 5E</p>
+
+<h1>Volatility quantified</h1>
+
+<p>Volatility is the most important driver of option premium and the most misunderstood single concept in retail options trading. We need to define it precisely. In finance, volatility is the <strong>annualized standard deviation of logarithmic returns</strong>. It is directionless — it measures the <em>magnitude</em> of price swings, not their direction.</p>
+
+<h2 id="why-log-returns-recap-from-1b">1 · Why log returns (recap from 1B)</h2>
+
+<p>Professionals do not use simple percentage returns when computing or annualizing volatility. They use log returns: r_t = ln(P_t / P_{t-1}). The critical property that makes log returns indispensable for volatility computation is <strong>additivity</strong> — multi-period log returns are the sum of single-period log returns, which means variance over multiple periods is the sum of single-period variances under independence:</p>
+
+<pre>Var(r_T + r_{T-1} + ... + r_1) = Var(r_T) + Var(r_{T-1}) + ... + Var(r_1) = T × σ²_daily
+
+σ_T-period = σ_daily × √T</pre>
+
+<p>This is the <strong>square-root-of-time scaling</strong> that pervades the entire volatility framework.</p>
+
+<h2 id="annualization-conventions">2 · Annualization conventions</h2>
+
+<p>The standard annualization for daily-volatility computation in equity markets uses 252 trading days per year:</p>
+
+<pre>σ_annual = σ_daily × √252  ≈  σ_daily × 15.87
+σ_annual = σ_weekly × √52  ≈  σ_weekly × 7.21
+σ_annual = σ_monthly × √12 ≈  σ_monthly × 3.46</pre>
+
+<h2 id="the-rule-of-16">3 · The rule of 16</h2>
+
+<p>Since √252 ≈ 15.87, traders use <strong>divide by 16</strong> as a mental shortcut to convert annual IV to an expected daily move:</p>
+
+<pre>Expected daily move (1 SD) ≈ Annual IV / 16</pre>
+
+<p>A stock with IV of 32% is pricing in roughly 2% daily one-sigma moves (32 / 16 = 2). A VIX of 80 is bracing for 5% daily moves (80 / 16 = 5). A VIX of 16 is at parity with a 1% daily expected move (the namesake equality that makes "the rule of 16" memorable).</p>
+
+<p>This single conversion lets you instantly judge whether option prices feel cheap or expensive relative to your forecast of the underlying's daily range. If you think SPX is going to move 1.5% per day for the next month but VIX is at 12, then IV is pricing in less movement than you expect — that's a long-vol setup. If VIX is at 24 but you think SPX is going to be quiet, that's a short-vol setup. The rule of 16 makes IV legible to discretionary traders without requiring a vol surface.</p>
+
+<figure class="fig" id="fig-iv-move-converter"><figcaption><b>Figure to come:</b> iv-move-converter</figcaption></figure>
+
+<h2 id="volatility-estimators-we-can-never-know-the-true-vol">4 · Volatility estimators — we can never know the true vol</h2>
+
+<p>Realized volatility is always an estimate. We see only discrete prices, never the underlying generating process. Different estimators use different subsets of the OHLC (open-high-low-close) data, and they have different statistical efficiency.</p>
+
+<p><strong>Close-to-close (CC) estimator.</strong> The simplest. Uses only closing prices:</p>
+
+<pre>σ²_CC = (1/N) × Σ_{i=1}^N [ln(C_i / C_{i-1})]²</pre>
+
+<p>Simple. Ignores intraday range and overnight gaps. Statistically inefficient — needs many days of data to converge to a reliable estimate.</p>
+
+<p><strong>Parkinson (1980) estimator.</strong> Uses the daily high-low range:</p>
+
+<pre>σ²_Parkinson = (1/(4N × ln 2)) × Σ_{i=1}^N [ln(H_i / L_i)]²</pre>
+
+<p>Approximately 5× more efficient than close-to-close, in the sense that the same precision can be achieved with 1/5 the data. Ignores opens and closes; biased downward by overnight gaps (because the H-L range doesn't capture jumps that happen between sessions).</p>
+
+<p><strong>Garman-Klass (1980) estimator.</strong> Uses full OHLC:</p>
+
+<pre>σ²_GK = (1/N) × Σ_{i=1}^N [½ × ln(H_i/L_i)² − (2 ln 2 − 1) × ln(C_i/O_i)²]</pre>
+
+<p>Approximately 7-8× more efficient than close-to-close. Still ignores overnight gaps. Industry standard for liquid intraday names where the H-L range carries most of the information.</p>
+
+<p><strong>Yang-Zhang (2000) estimator.</strong> Decomposes into overnight component + open-to-close component + Rogers-Satchell drift-adjusted component. Handles overnight gaps explicitly. The most efficient and robust estimator under standard assumptions. Default for serious vol research.</p>
+
+<h2 id="implied-vs-realized-vol-and-the-variance-risk-premium">5 · Implied vs realized vol — and the variance risk premium</h2>
+
+<p><strong>Implied volatility (IV)</strong> is the market's forecast of future realized volatility, extracted by inverting an option pricing model on the observed premium. If the market is quoting a 30-day ATM SPX call at $35, the IV is the volatility input that, plugged into Black-Scholes, produces a price of $35. Different option prices imply different volatilities; the function from market prices to implied volatilities is the <strong>implied volatility surface</strong>.</p>
+
+<p><strong>Realized volatility (RV)</strong> is what actually happened — computed ex-post via the estimators above.</p>
+
+<p>The persistent empirical finding across decades and markets: <strong>IV is, on average, higher than subsequent RV</strong>. This is the <strong>variance risk premium (VRP)</strong> we touched on in <a class="xref" href="4c.html">Section 4C</a>. It exists because:</p>
+
+<ul>
+<li>Institutional hedgers (pension funds, endowments, structured-product issuers) systematically overpay for downside protection because their mandates require them to remain hedged regardless of price.</li>
+<li>Retail traders systematically overpay for upside speculation (lottery-ticket calls on meme stocks, OTM SPY calls on event days).</li>
+<li>Option sellers must be compensated for the convex tail risk they're warehousing.</li>
+</ul>
+
+<p>Bondarenko's CBOE PUT Index analysis quantifies the VRP: over the period 1990-2018, the average difference between VIX (implied) and subsequent 1-month realized vol on SPX was approximately <strong>+4.2 vol points</strong>. That's the size of the VRP on average — implied has been about 4.2 percentage points higher than what subsequently realized.</p>
+
+<p>The VRP is the most important source of edge available to retail options traders. It is the structural reason that systematic short-premium strategies (PUT Index, ATM put writing, iron condor writing, etc.) have historically produced positive returns over multi-decade horizons. <a class="xref" href="12a.html">Section 12</a> returns to this.</p>
+
+<h2 id="the-vol-surface">6 · The vol surface</h2>
+
+<p>IV is not one number. It varies across strikes (the <strong>smile</strong> or <strong>skew</strong>) and across expirations (the <strong>term structure</strong>).</p>
+
+<p><strong>Skew.</strong> For equities (SPX, SPY, individual stocks), the IV curve across strikes typically slopes downward from low strikes (high IV) to high strikes (lower IV). This is the "equity skew" or "smirk" — OTM puts trade at higher IV than OTM calls. The economic intuition: crash insurance is more in demand than upside speculation in equity markets, so the put wing is structurally bid.</p>
+
+<p>For commodities and FX, the skew can have different shapes — sometimes a smile (both wings up), sometimes a reverse skew (calls higher than puts), depending on the structural demand profile of hedgers in that market.</p>
+
+<p><strong>Term structure.</strong> The IV curve across expirations is usually in <strong>contango</strong> for equity markets (long-dated IV &gt; short-dated IV), reflecting more uncertainty about events further out. In stress regimes, it can invert into <strong>backwardation</strong> (short-dated IV &gt; long-dated IV) — panic concentrates demand into near-dated puts. The VIX/VIX3M ratio is the canonical proxy for the SPX term structure shape; values above 1.00 indicate backwardation, values below 1.00 indicate contango.</p>
+
+<p>The vol surface is what professionals actually trade. A pure "long vol" position is rare; most options trades implicitly take views on the surface — long upside skew (long calls relative to puts), long downside skew (long puts relative to calls), long forward vol (long longer-dated options against shorter-dated), etc. <a class="xref" href="9a.html">Section 9</a> returns to the surface in detail when we discuss VIX and 0DTE.</p>
+
+<h2 id="skew-as-a-leading-indicator">7 · Skew as a leading indicator</h2>
+
+<p>A subtle and important pattern: the SPX put-wing skew (how much higher OTM put IV is than ATM IV) often leads VIX itself. Periods of skew steepening — even with VIX flat — suggest that institutional positioning is becoming more defensive. Periods of skew flattening (often during low-volatility regimes when no one is buying puts because nothing is happening) precede subsequent vol spikes more often than chance would suggest.</p>
+
+<p>The CBOE SKEW index, published since 1990, formalizes this into a single number based on the 30-day SPX skew curve. SKEW values above 130 indicate steep skew (heavy demand for crash protection). SKEW above 145 historically has preceded mean-reverting vol spikes. SKEW below 115 suggests complacency. The SKEW index is a useful regime indicator that, combined with VIX level, captures more about market state than either does alone.</p>

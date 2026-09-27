@@ -1,0 +1,165 @@
+<p class="eyebrow">Part XII · Discipline · Chapter 12F</p>
+
+<h1>Aggregate vega management</h1>
+
+<p class="subtitle">The portfolio-level vega framework</p>
+
+<p>Sections 5-9 cover vega thoroughly at the single-position level: what it measures, how it scales with DTE and IV, how vanna and volga refine it. What they don't address is what happens when you have <strong>five short-premium positions running simultaneously</strong>. The aggregate vega exposure of a swing portfolio is rarely discussed in retail education, and it is the single largest source of catastrophic loss in real premium-selling portfolios. This section closes that gap.</p>
+
+<h2 id="why-position-level-vega-is-insufficient">1 · Why position-level vega is insufficient</h2>
+
+<p>Consider a swing trader running, simultaneously:</p>
+
+<ul>
+<li>One SPX iron condor (short vega)</li>
+<li>Two short put credit spreads on SPY (short vega)</li>
+<li>One short strangle on QQQ (short vega)</li>
+<li>A covered call program on individual stocks (short vega)</li>
+<li>A LEAP collar on a core equity holding (mixed)</li>
+</ul>
+
+<p>Each position, viewed alone, looks reasonable. The trader has assigned each position 1-2% of portfolio risk. But the <strong>aggregate vega exposure</strong> — the total dollar P&amp;L impact per vol point of VIX movement — is typically the equivalent of being short several hundred SPX vega units. When VIX moves from 15 to 25 over three days (a routine stress episode, not a tail event), the mark-to-market loss across the portfolio can exceed the sum of individual position stop-loss budgets — because vega losses compound across positions before any single stop is triggered.</p>
+
+<p>This is the <strong>vega correlation problem</strong>: short-vega positions across SPX, SPY, QQQ, and individual stocks are <em>not</em> diversified. They all lose simultaneously in a VIX-spike regime. The "1% per trade" sizing rule that works perfectly well for delta exposure produces concentrated portfolio risk on the vega axis.</p>
+
+<h2 id="the-aggregate-vega-framework">2 · The aggregate vega framework</h2>
+
+<p>For each position, compute:</p>
+
+<pre class="aligned">position_vega_$ = vega_per_contract × number_of_contracts × multiplier × position_sign
+                  × 0.01    (to convert to dollar P&amp;L per 1 vol point IV change)</pre>
+
+<p>Where <code>position_sign = +1 for long, -1 for short</code>.</p>
+
+<p><strong>Adjust for VIX beta of the underlying</strong> (single-name vega doesn't move 1:1 with VIX):</p>
+
+<pre>adjusted_vega_$ = position_vega_$ × β_underlying_to_VIX</pre>
+
+<p>Typical VIX betas:</p>
+
+<ul>
+<li>SPX, SPY: 1.00 (definitional — VIX is SPX's vol)</li>
+<li>QQQ: 0.85-0.95 (high-beta, slightly lower IV vol than SPX)</li>
+<li>IWM: 0.80-0.90</li>
+<li>Large-cap individual stocks (NVDA, MSFT, AAPL): 0.60-0.85 (varies by company)</li>
+<li>Mid/small caps: 0.40-0.65 (idiosyncratic IV less correlated with VIX)</li>
+</ul>
+
+<p><strong>Aggregate portfolio vega</strong> = sum across positions:</p>
+
+<pre>Portfolio_Vega_$ = Σ_i adjusted_vega_$ᵢ</pre>
+
+<p>For a swing-oriented retail account ($250k-$1M), a reasonable upper bound on aggregate short vega is <strong>$500-$1,500 per vol point</strong> (meaning a 10-point VIX spike costs $5-15k mark-to-market). Beyond that, the portfolio becomes a directional bet on VIX rather than a diversified swing book.</p>
+
+<h2 id="monitoring-cadence">3 · Monitoring cadence</h2>
+
+<ul>
+<li><strong>Daily</strong> (end of day): compute aggregate vega using current marks. Compare to last week's number; large changes warrant investigation.</li>
+<li><strong>Weekly</strong> (Friday close): full report — aggregate vega, per-position contribution, % of portfolio NAV that a 10-vol-point spike would cost.</li>
+<li><strong>Pre-event</strong>: before FOMC, CPI, NFP, or major single-name earnings the portfolio is exposed to, recompute aggregate vega. Consider trimming if elevated.</li>
+<li><strong>Stress threshold</strong>: when aggregate short vega exceeds 1% of NAV per vol point, the portfolio is over-concentrated; trim or hedge before adding new short-premium positions.</li>
+</ul>
+
+<h2 id="hedging-short-vega-the-macro-vega-overlay">4 · Hedging short vega — the macro vega overlay</h2>
+
+<p>Three practical hedges for an over-concentrated short-vega book:</p>
+
+<p><strong>1. Long-dated VIX calls (90-180 DTE)</strong>. The cleanest macro vega hedge. Strike selection: VIX 25-30 (well above VIX9D-3M mean of ~17). Sized to cover <strong>half</strong> of aggregate short vega — a full hedge is too expensive in carry and defeats the VRP harvesting purpose. Roll quarterly.</p>
+
+<p><strong>2. Long SPX puts (90-180 DTE) at 90-92% strikes</strong>. Carries direction along with vega. Cheaper than VIX calls in absolute dollar terms but more correlated with the delta book (so less pure as a vega-only hedge). Useful when the swing portfolio is already net long delta.</p>
+
+<p><strong>3. Long-dated SPX call spread or put spread purchases (60-90 DTE)</strong>. Defined risk; small positive vega exposure. Less powerful than the above but cheaper. Useful as a partial offset when the short vega is modest (&lt;0.5% of NAV per vol point).</p>
+
+<p><strong>Anti-pattern: don't try to hedge short vega with more options sales.</strong> Selling deeper-OTM puts to "fund" the hedge increases aggregate short vega rather than reducing it. The hedge must consume premium, not generate it.</p>
+
+<h2 id="common-failure-modes">5 · Common failure modes</h2>
+
+<p><strong>Failure mode 1 — Stealth vega accumulation.</strong> A trader adds one Iron Condor per month for six months. Each one looks like 1% risk. The aggregate vega has grown to 6× single-position size, but no single decision triggered review. Mitigation: track aggregate vega as a portfolio-level metric, not just per-position risk.</p>
+
+<p><strong>Failure mode 2 — Pre-event hedge sizing too small.</strong> Before an FOMC meeting, the trader buys $500 of VIX calls "for protection" against a portfolio with $1,200/vol-point short vega exposure. The hedge is too small to matter. Mitigation: size hedges as a fraction of the gross exposure they're hedging (e.g., 30-50%), not as a fraction of free cash.</p>
+
+<p><strong>Failure mode 3 — Hedging with same-month VIX calls.</strong> Short-dated VIX calls have catastrophic theta decay (VIX vol-of-vol is high; charm collapses the value quickly). Long-dated calls cost more in absolute dollars but decay slower, providing real protection across multi-week stress windows.</p>
+
+<p><strong>Failure mode 4 — Forgetting the LEAP collar isn't short vega.</strong> A covered call on stock + protective put (the classic LEAP collar) is approximately vega-neutral. Don't double-count it as short vega in the aggregate.</p>
+
+<figure class="fig" id="fig-vega-portfolio-monitor"><figcaption><b>Figure to come:</b> vega-portfolio-monitor</figcaption></figure>
+
+<p>The <code>vega-portfolio-monitor</code> widget lets you input up to six positions, each with instrument, DTE, delta, vega per contract, and number of contracts. It computes aggregate vega, applies VIX-beta adjustment per instrument, and shows the estimated P&amp;L impact of +5, +10, and +15 vol-point VIX spikes. A secondary panel sizes the macro vega overlay needed to offset the short-vega exposure to a user-chosen target (flat vega, half-vega, or full hedge).</p>
+
+<hr>
+
+<h2 id="appendix-trade-journal-template">6 · Appendix: Trade Journal Template</h2>
+
+<p>For systematic framework application, every trade should be logged with the following fields. Implement in any tool (Notion, Obsidian, Sheets, plain markdown) — keep the field set consistent across trades.</p>
+
+<pre class="aligned">Trade ID: YYYY-MM-DD-N
+
+═══ PRE-TRADE ═══
+Date / Time of decision:
+Symbol / Instrument:
+Setup type: [Trend Pullback | Compression Breakout | Undercut and Reclaim | IBS+RSI | Pre-earnings momentum | Other]
+Macro regime (composite signal):
+Stage classification:
+Required conditions (check all):
+  [ ] Composite signal conditions met
+  [ ] Setup-specific entry trigger fired
+  [ ] No event-day overlay restrictions
+  [ ] Position size within portfolio limits
+  [ ] Conviction score:
+        E (evidence):
+        M (mechanism):
+        R (regime):
+        X (execution):
+        S (sizing):
+        C (product):
+
+═══ EXECUTION ═══
+Mid price at decision:
+Limit order submitted:
+Fill price:
+Fill time:
+Bid-ask spread at fill:
+Slippage vs mid (bps):
+Time of day:
+
+═══ POSITION ═══
+Risk budget (dollar):
+Risk budget (% portfolio):
+Entry price:
+Stop level:
+Position size:
+Notional deployed:
+Notional as % of portfolio:
+Time stop:
+Profit target:
+
+═══ MANAGEMENT ═══
+[Adjustments during trade — additions, partials, stop moves]
+[Allowed: stop trailed UP on winners, or full exit. NO stop migration toward profit.]
+
+═══ OUTCOME ═══
+Exit reason: [profit target | stop | time stop | discretionary | event-driven]
+Exit price:
+Exit time:
+Days held:
+P&amp;L (dollars):
+P&amp;L (% of portfolio):
+R-multiple (P&amp;L / risk budget):
+
+═══ POST-TRADE REVIEW ═══
+What went as planned:
+What surprised me:
+Errors made:
+Framework lessons:
+Should I have skipped this trade in hindsight? Why?
+Did the regime change during the hold?</pre>
+
+<p>Three principles:</p>
+
+<ol>
+<li><strong>Write everything before the trade</strong>: pre-trade fields are filled before you click buy. This catches lazy setups.</li>
+<li><strong>Don't editorialize outcomes</strong>: record what happened, not what should have.</li>
+<li><strong>Review monthly</strong>: scan the prior 4-6 weeks of trades, look for patterns — which setups produced positive R-multiples, which regimes worked.</li>
+</ol>
+
+<p>The journal is the framework's external memory. Without it, the framework cannot improve over time.</p>

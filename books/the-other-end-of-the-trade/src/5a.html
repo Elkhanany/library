@@ -1,0 +1,92 @@
+<p class="eyebrow">Part V · Options · Chapter 5A</p>
+
+<h1>The option contract and the four primary positions</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>This section is the bridge between abstract derivative theory (<a class="xref" href="4a.html">Section 4</a>) and the dealer mechanics framework (<a class="xref" href="6a.html">Section 6</a> onward). We cover, in order: the option contract and its four primitive positions (5A); how to read an option chain and decompose premium into intrinsic and extrinsic components (5B); the five primary Greeks with formal derivations and operational meanings (5C); the higher-order Greeks that drive most of the interesting flow dynamics (5D); volatility quantified from log returns through estimators to the implied volatility surface (5E); and finally put-call parity, synthetic positions, and the structural risks the Greeks don't see (5F).</p>
+
+<p>The treatment is deliberately ground-up. If you have an undergraduate-level finance background, you can skim. If you don't, every concept in Sections 6 through 12 assumes mastery of what's here.</p>
+</div>
+
+<hr>
+
+<p>At its core, an option is a contract that gives its holder the <strong>right but not the obligation</strong> to either buy or sell a specified quantity of an underlying asset at a predetermined price (the <strong>strike</strong> or <strong>exercise price</strong>) on or before a specific date (the <strong>expiration</strong>). To acquire that right, the holder pays a non-refundable fee called the <strong>premium</strong>. The writer (seller) keeps the premium regardless of what happens at expiration, but accepts a <em>conditional obligation</em>: if the holder exercises the option, the writer must fulfill their end of the contract.</p>
+
+<p>This asymmetry — the holder has rights, the writer has obligations — is the cornerstone of every option's value. The premium is the price of that asymmetric right.</p>
+
+<h2 id="calls-and-puts-in-one-paragraph-each">1 · Calls and puts in one paragraph each</h2>
+
+<p>A <strong>call option</strong> gives the holder the right to <strong>buy</strong> the underlying at the strike price. Holders profit when the underlying rises above the strike by more than the premium they paid. The maximum gain is theoretically unbounded (any price above the strike adds dollar-for-dollar to the payoff); the maximum loss is the premium paid.</p>
+
+<p>A <strong>put option</strong> gives the holder the right to <strong>sell</strong> the underlying at the strike price. Holders profit when the underlying falls below the strike by more than the premium they paid. The maximum gain is bounded but large — the strike price minus the premium, achieved if the underlying goes to zero. The maximum loss is again the premium paid.</p>
+
+<p>Each option type — call or put — can be either bought (long) or sold (short, also called writing the option), producing the four primitive positions from which every more complex strategy in <a class="xref" href="11-0.html">Section 11</a> is constructed.</p>
+
+<h2 id="european-vs-american-exercise">2 · European vs American exercise</h2>
+
+<p>A second classification axis: <strong>European-style</strong> options can only be exercised at expiration. <strong>American-style</strong> options can be exercised at any time up to expiration. This distinction matters because American-style options are worth at least as much as their European-style counterparts (the optionality to exercise early has non-negative value), and the difference between the two can be material when dividends or interest rates create early-exercise incentives.</p>
+
+<p>US-listed equity options (SPY, AAPL, NVDA, etc.) are American-style. US-listed broad-based index options (SPX, XSP, NDX, RUT, VIX) are European-style — this is a structural consequence of the cash settlement: there's no underlying to deliver, so the early-exercise mechanism doesn't apply. Most academic options pricing assumes European exercise for tractability; the practical adjustments for American exercise are well-understood but add complexity (you have to solve a free-boundary PDE rather than the cleaner Black-Scholes form).</p>
+
+<p>For the rest of this book, "option" means a European-style cash-settled index option unless otherwise specified — that's our laboratory specimen for SPX dealer mechanics. We'll address American-style and physical-settlement complications in 5F.</p>
+
+<h2 id="live-the-four-primary-payoffs">3 · Live: the four primary payoffs</h2>
+
+<p>Each of the four primitive positions has a characteristic payoff diagram at expiration. The payoff diagrams are functions of the underlying spot price S at expiration, for a given strike K and premium P paid or received:</p>
+
+<p><strong>Long call.</strong> Pay premium P upfront. At expiration:</p>
+
+<ul>
+<li>Payoff = max(S − K, 0) − P</li>
+<li>Breakeven: S = K + P</li>
+<li>Maximum profit: unbounded</li>
+<li>Maximum loss: P (the premium paid)</li>
+</ul>
+
+<p><strong>Short call.</strong> Receive premium P upfront. At expiration:</p>
+
+<ul>
+<li>Payoff = P − max(S − K, 0)</li>
+<li>Breakeven: S = K + P</li>
+<li>Maximum profit: P</li>
+<li>Maximum loss: unbounded (theoretically; in practice, bounded by how high the underlying can go)</li>
+</ul>
+
+<p><strong>Long put.</strong> Pay premium P upfront. At expiration:</p>
+
+<ul>
+<li>Payoff = max(K − S, 0) − P</li>
+<li>Breakeven: S = K − P</li>
+<li>Maximum profit: K − P (achieved if S → 0)</li>
+<li>Maximum loss: P (the premium paid)</li>
+</ul>
+
+<p><strong>Short put.</strong> Receive premium P upfront. At expiration:</p>
+
+<ul>
+<li>Payoff = P − max(K − S, 0)</li>
+<li>Breakeven: S = K − P</li>
+<li>Maximum profit: P (the premium received)</li>
+<li>Maximum loss: K − P (substantial — the put could be exercised against you when S → 0)</li>
+</ul>
+
+<figure class="fig" id="fig-position-picker"><figcaption><b>Figure to come:</b> position-picker</figcaption></figure>
+
+<h2 id="the-four-positions-in-one-table">4 · The four positions in one table</h2>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Position</th><th class="c-result">Thesis</th><th class="c-other">Max profit</th><th class="c-other">Max loss</th><th class="c-other">Breakeven</th></tr></thead><tbody><tr><td class="c-trial" data-label="Position"><strong>Long call</strong></td><td class="c-result" data-label="Thesis">Strong UP move expected; IV cheap relative to expected move</td><td class="c-other" data-label="Max profit">Unbounded</td><td class="c-other" data-label="Max loss">Premium paid</td><td class="c-other" data-label="Breakeven">K + premium</td></tr><tr><td class="c-trial" data-label="Position"><strong>Short call</strong></td><td class="c-result" data-label="Thesis">Stock flat or modestly down; IV rich relative to forecast</td><td class="c-other" data-label="Max profit">Premium received</td><td class="c-other" data-label="Max loss">Unbounded (naked)</td><td class="c-other" data-label="Breakeven">K + premium</td></tr><tr><td class="c-trial" data-label="Position"><strong>Long put</strong></td><td class="c-result" data-label="Thesis">Strong DOWN move expected; or hedge for long stock</td><td class="c-other" data-label="Max profit">K − premium (S → 0)</td><td class="c-other" data-label="Max loss">Premium paid</td><td class="c-other" data-label="Breakeven">K − premium</td></tr><tr><td class="c-trial" data-label="Position"><strong>Short put</strong></td><td class="c-result" data-label="Thesis">Stock flat or modestly up; willing buyer at K; IV rich</td><td class="c-other" data-label="Max profit">Premium received</td><td class="c-other" data-label="Max loss">K − premium (S → 0)</td><td class="c-other" data-label="Breakeven">K − premium</td></tr></tbody></table></div></div>
+
+<p>The asymmetry between the long sides (defined risk, theoretically unlimited reward) and the short sides (limited reward, large or unlimited risk) is <em>the</em> fundamental feature of options trading. Every "income strategy" you'll ever encounter is some structured version of selling premium — accepting the asymmetric risk profile in exchange for collecting positive expected value via the variance risk premium. Every "lottery ticket" strategy is the opposite — paying premium upfront for a chance at the convex upside. The two are mirror images, traded at different population frequencies for different reasons.</p>
+
+<h2 id="why-these-four-matter">5 · Why these four matter</h2>
+
+<p>Every options "strategy" you will ever encounter — a covered call, an iron condor, a jade lizard, a calendar spread, a broken-wing butterfly — is just a specific combination of these four primitives. Knowing the four cold, including their P&amp;L asymmetry and natural market thesis, is the difference between <em>memorizing</em> strategy names and actually <em>understanding</em> what you're trading. <a class="xref" href="11-0.html">Section 11</a> will use this composition principle to deconstruct fifty-odd named strategies; the deconstruction is trivial once you've internalized the four primitives.</p>
+
+<h2 id="a-note-on-contract-size">6 · A note on contract size</h2>
+
+<p>US equity and ETF options have a standard contract multiplier of 100 — one contract controls 100 shares of the underlying. So a premium of $3.00 quoted on the chain means $300 of actual cash per contract. SPX index options use a $100 multiplier on the index <em>level</em> (not on shares — there are no shares). ES futures options use $50 per index point. VIX options use $100 per VIX point.</p>
+
+<p>The multiplier is the most common source of "I thought I bet smaller than that" mistakes in retail accounts. A trader who sees "ATM XSP put trading at $4.50 premium, sell 10 contracts" and thinks "$45 of risk" is off by 100×. The actual cash exposure is $4,500 of premium received, with potential assignment liability equal to 10 × $100 × strike — at strike 580, that's $580,000 of cash-secured collateral obligation. The XSP multiplier saves you from sizing errors that would be catastrophic on SPX (which is 10× larger), but it doesn't save you from misunderstanding what you've sold.</p>
+
+<p>The discipline: every time you place an options order, multiply the per-contract values by the multiplier and the number of contracts to get the actual dollar exposure. Do this <em>before</em> clicking submit. The two-second pause has saved more retail accounts than any indicator stack.</p>

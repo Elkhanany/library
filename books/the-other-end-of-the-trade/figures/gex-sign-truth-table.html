@@ -1,0 +1,79 @@
+<!--
+name: GEX sign truth table
+source: src/interactives/GEXSignTruthTable.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Customer is" id="{{uid}}-cust">
+      <label>customer is</label>
+      <button type="button" data-v="long" class="on" aria-pressed="true">long</button>
+      <button type="button" data-v="short" aria-pressed="false">short</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="{{uid}}-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Spot moves" id="{{uid}}-dir">
+      <label>spot moves</label>
+      <button type="button" data-v="up" class="on" aria-pressed="true">up</button>
+      <button type="button" data-v="down" aria-pressed="false">down</button>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Derivation</th><th class="c-other">This case</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Customer</td><td class="c-other" id="{{uid}}-d0"></td></tr>
+      <tr><td class="c-trial">Dealer (other side)</td><td class="c-other" id="{{uid}}-d1"></td></tr>
+      <tr><td class="c-trial">Dealer gamma sign</td><td class="c-other" id="{{uid}}-d2"></td></tr>
+      <tr><td class="c-trial" id="{{uid}}-d3k">On spot up</td><td class="c-other" id="{{uid}}-d3"></td></tr>
+      <tr><td class="c-trial">Market impact</td><td class="c-other" id="{{uid}}-d4"></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Customer</th><th>Dealer</th><th>Gamma</th><th>On up</th><th>On down</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial">long call</td><td data-label="Dealer">short call</td><td data-label="Gamma">short gamma</td><td data-label="On up">buys stock</td><td data-label="On down">sells stock</td><td data-label="Impact">destabilizing</td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial">short call</td><td data-label="Dealer">long call</td><td data-label="Gamma">long gamma</td><td data-label="On up">sells stock</td><td data-label="On down">buys stock</td><td data-label="Impact">stabilizing</td></tr>
+      <tr id="{{uid}}-r2"><td class="c-trial">long put</td><td data-label="Dealer">short put</td><td data-label="Gamma">short gamma</td><td data-label="On up">buys stock</td><td data-label="On down">sells stock</td><td data-label="Impact">destabilizing</td></tr>
+      <tr id="{{uid}}-r3"><td class="c-trial">short put</td><td data-label="Dealer">long put</td><td data-label="Gamma">long gamma</td><td data-label="On up">sells stock</td><td data-label="On down">buys stock</td><td data-label="Impact">stabilizing</td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>From the customer's position to the market's.</b> Choose what the customer
+  holds and which way spot moves, and follow it through: the dealer holds the other side, the
+  dealer's gamma sign follows from that, and the gamma sign decides whether the hedge trades
+  against the move or with it. The second table is all four base combinations, with the chosen
+  one marked.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var cust = DL.seg(U + '-cust', update), type = DL.seg(U + '-type', update),
+      dir = DL.seg(U + '-dir', update);
+  var ROWS = { 'long call': 0, 'short call': 1, 'long put': 2, 'short put': 3 };
+
+  /* the app's derive(): the dealer holds the opposite side; long an option is
+     long gamma; long gamma hedges against the move, short gamma with it */
+  function derive(customer, d) {
+    var dealer = customer === 'long' ? 'short' : 'long', owns = dealer === 'long';
+    var hedge = d === 'up' ? (owns ? 'sells stock' : 'buys stock')
+                           : (owns ? 'buys stock' : 'sells stock');
+    return { dealer: dealer, gamma: owns ? 'long gamma' : 'short gamma', hedge: hedge,
+             impact: owns ? 'stabilizing' : 'destabilizing' };
+  }
+  function update() {
+    var c = cust(), t = type(), d = dir(), x = derive(c, d);
+    DL.out(U + '-d0', c + ' ' + t);
+    DL.out(U + '-d1', x.dealer + ' ' + t);
+    DL.out(U + '-d2', x.gamma);
+    DL.out(U + '-d3k', 'On spot ' + d);
+    DL.out(U + '-d3', 'dealer ' + x.hedge);
+    DL.out(U + '-d4', x.impact);
+    for (var i = 0; i < 4; i++) {
+      var row = DL.$(U + '-r' + i), on = i === ROWS[c + ' ' + t];
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    }
+  }
+  DL.figure('fig-' + U, update);
+})();
+</script>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>9A VIX: the same mechanism, viewed from above — The Other End of the Trade</title>
+<meta name="description" content="Chapter 9A of The Other End of the Trade: VIX: the same mechanism, viewed from above.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-8">← Part IX · Vol &amp; Practice</a>
+  <div class="sb-folio"><a class="sb-prev" href="8d.html" aria-label="Previous chapter: 8D · Gamma squeeze identification" title="Previous chapter: 8D · Gamma squeeze identification (←)">‹ 8D</a><p class="sb-title"><span class="sb-at">Chapter 9A ·</span> <span class="sb-at">37 of 67</span></p><a class="sb-next" href="9b.html" aria-label="Next chapter: 9B · 0DTE: the singularity at the strike" title="Next chapter: 9B · 0DTE: the singularity at the strike (→)">9B ›</a></div>
+  <div id="sb-toc"><a href="#the-construction-formula">1 · The construction formula</a><a href="#a-toy-worked-example">2 · A toy worked example</a><a href="#why-vix-rises-asymmetrically-when-spx-falls">3 · Why VIX rises asymmetrically when SPX falls</a><a href="#vix-futures-and-the-roll">4 · VIX futures and the roll</a><a href="#contango-and-the-roll-cost" class="lvl3">Contango and the roll cost</a><a href="#backwardation" class="lvl3">Backwardation</a><a href="#connection-to-dealer-hedging" class="lvl3">Connection to dealer hedging</a><a href="#the-vanna-feedback-during-vix-spikes">5 · The vanna feedback during VIX spikes</a><a href="#vix-is-one-tool-in-a-family">6 · VIX is one tool in a family</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part IX · Vol &amp; Practice · Chapter 9A</p>
+
+<h1>VIX: the same mechanism, viewed from above</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>This is the chapter where theory meets practice. We've built the mathematical and empirical framework; now we apply it. 9A connects everything in Sections 6-8 to the VIX index — how it's constructed, why it's structurally inverse to SPX, and how vanna feedback drives the violence of VIX spikes. 9B addresses the modern 0DTE phenomenon, with the latest 2024-2025 academic findings showing that 0DTE has, on net, dampened SPX volatility. 9C closes with seven practical heuristics for reading the tape through a dealer-mechanics lens, formalized into a regime classifier.</p>
+</div>
+
+<hr>
+
+<p>The VIX is widely called the "fear gauge." That label is qualitatively useful but mathematically imprecise. <strong>The VIX is the model-free 30-day implied volatility of the S&amp;P 500, expressed in annualized percentage points.</strong> The construction starts from a model-free expression for the implied <em>variance</em> of the 30-day SPX log-return distribution (a weighted strip of OTM option prices), then takes the square root and scales by 100. So when you see "VIX = 18," that means the model-free 30-day implied annualized vol of SPX is 18% — not 18 units of variance.</p>
+
+<p>This distinction matters because variance and vol move on different scales: a doubling of implied vol (18 → 36) quadruples implied variance (324 → 1,296). The published VIX number is the <em>vol</em> scale, which is the one a trader's intuition for "how much can the index move" lives on.</p>
+
+<h2 id="the-construction-formula">1 · The construction formula</h2>
+
+<pre>σ²_30d = (2/T) × Σ_i [ΔK_i / K_i²] × e^(rT) × Q(K_i)  − (1/T) × (F/K_0 − 1)²
+
+VIX = 100 × √(σ²_30d)</pre>
+
+<p>The first line computes the annualized 30-day implied variance from the OTM option strip (where T is the 30-day fraction of a year, K_i is each strike, ΔK_i is the strike spacing, Q(K_i) is the mid quote of the OTM option at K_i, F is the SPX forward, K_0 is the strike immediately below F, and r is the risk-free rate). The second line is the published VIX: take the square root to get vol on the σ scale, then multiply by 100 to express as percentage points.</p>
+
+<p>Every term has a meaning that connects back to dealer hedging through the gamma-theta decomposition of <a class="xref" href="7a.html">Section 7A</a>.</p>
+
+<p><strong>The 1/K² weighting is not arbitrary.</strong> It is the coefficient that makes a portfolio of options replicate a variance swap. Demeterfi, Derman, Kamal, and Zou (Goldman Sachs Quantitative Strategies Research Notes, 1999) showed that holding ΔK/K² of each strike across all OTM strikes gives you a position whose P&amp;L is, exactly, total realized variance minus a fixed strike — a variance swap. <strong>VIX is the discrete version of the fair strike of that swap</strong>, scaled and annualized.</p>
+
+<p>The connection to gamma is direct. A delta-hedged option earns ½·Γ·S²·[(ΔS/S)² − σ²·Δt] per interval (<a class="xref" href="7a.html">Section 7A</a>). Weight this by 1/K² and sum over strikes, and the gammas across strikes combine to give a roughly constant "gamma" exposure per percent move regardless of where spot is — which is the property required for a variance swap. The mathematics is tight: <strong>VIX is, fundamentally, the cost of replicating variance through delta-hedged options.</strong></p>
+
+<h2 id="a-toy-worked-example">2 · A toy worked example</h2>
+
+<p>The formula above is opaque until you compute one. Walk through a stylized six-strike strip end-to-end and you have the chain in hand. The arithmetic is grade-school; the pedagogical value is in seeing every term land somewhere.</p>
+
+<p><strong>Setup.</strong> SPX = 4,500. 30-day forward F = 4,503. T = 30 / 365 ≈ 0.0822. r = 0.05. K_0 (the strike immediately below F) = 4,500. Six OTM contributions:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">Strike</th><th>Type</th><th style="text-align:right">Mid quote Q(K)</th><th style="text-align:right">ΔK</th><th class="c-other" style="text-align:right">(ΔK / K²) × Q</th></tr></thead><tbody><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,400</td><td data-label="Type">put</td><td data-label="Mid quote Q(K)" style="text-align:right">$18</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">4.65 × 10⁻⁵</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,450</td><td data-label="Type">put</td><td data-label="Mid quote Q(K)" style="text-align:right">$32</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">8.08 × 10⁻⁵</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,500</td><td data-label="Type">K_0</td><td data-label="Mid quote Q(K)" style="text-align:right">$52</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.28 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,550</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$48</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.16 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,600</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$30</td><td data-label="ΔK" style="text-align:right">75</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.06 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,700</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$14</td><td data-label="ΔK" style="text-align:right">100</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">6.34 × 10⁻⁵</td></tr></tbody></table></div></div>
+
+<p>ΔK at internal strikes is half the distance between neighbors; at the boundary strikes (4,400 and 4,700) it's the one-sided distance.</p>
+
+<p><strong>Step 1 — sum the strike contributions.</strong> Σ (ΔK_i / K_i²) × Q(K_i) ≈ 5.41 × 10⁻⁴.</p>
+
+<p><strong>Step 2 — scale by 2/T and e^(rT).</strong> 2/T = 24.33. e^(rT) = e^(0.05 × 0.0822) ≈ 1.0041. Product: 24.33 × 1.0041 × 5.41 × 10⁻⁴ ≈ 0.01322.</p>
+
+<p><strong>Step 3 — subtract the forward correction.</strong> (1/T) × (F/K_0 − 1)² = 12.17 × (4,503/4,500 − 1)² = 12.17 × (6.67 × 10⁻⁴)² ≈ 5.4 × 10⁻⁶. Effectively negligible at this strike spacing, which is why F sitting on top of K_0 is the desirable methodology choice in CBOE's specification.</p>
+
+<p><strong>Step 4 — combine.</strong> σ²_30d ≈ 0.01322 − 5.4 × 10⁻⁶ ≈ 0.01321.</p>
+
+<p><strong>Step 5 — square root and rescale.</strong> VIX = 100 × √0.01321 ≈ <strong>11.5</strong>.</p>
+
+<p>The toy strip lands at VIX ≈ 11.5 because the mid-quotes above correspond to an implied vol around 12% — a calm-regime strip. The exact same chain at higher-vol mids (every Q roughly doubled) produces a VIX near 16-17; at typical post-2020 mids (every Q roughly tripled) it lands in the low 20s. <strong>The strip's premium level scales VIX roughly linearly; the geometry of the formula is invariant.</strong> That's the pedagogical payoff of doing this by hand once.</p>
+
+<p>Two caveats. First, real VIX is computed from ~150 strikes weighted continuously per the CBOE methodology, not 6 strikes — what changes is precision, not the qualitative chain. Second, the published VIX uses a near-and-next interpolation across two expirations (this toy uses one). The <a href="#fig-vix-strip-builder">vix-strip-builder</a> widget below lets you vary the strip parameters and watch the index respond.</p>
+
+<figure class="fig" id="fig-vix-strip-builder"><figcaption><b>Figure to come:</b> vix-strip-builder</figcaption></figure>
+
+<h2 id="why-vix-rises-asymmetrically-when-spx-falls">3 · Why VIX rises asymmetrically when SPX falls</h2>
+
+<p>The 1/K² weighting puts disproportionate weight on low-strike options. Combined with the equity skew — OTM puts trade at higher implied vol than OTM calls — a 1% downside move in SPX re-prices the put wing far more than a 1% upside move re-prices the call wing.</p>
+
+<p><strong>This is why VIX is structurally inverse to SPX</strong>: it isn't "fear" per se, it's the mechanical asymmetry of how variance replication weights the strikes the market is hedged in. The correlation between daily SPX returns and daily VIX changes is approximately −0.80 across decades of data; this is not because fear and stock prices are correlated, but because the math of variance replication requires put-side reweighting that responds asymmetrically to direction.</p>
+
+<h2 id="vix-futures-and-the-roll">4 · VIX futures and the roll</h2>
+
+<p>VIX is computed from a strip of SPX options — it is NOT directly tradable. What <em>is</em> tradable:</p>
+
+<p><strong>1. VIX futures</strong>: monthly contracts expiring Wednesday 30 days before SPX OPEX. Settle at the SOQ of VIX computed Friday morning.</p>
+
+<p><strong>2. VIX ETPs</strong>:</p>
+
+<ul>
+<li><strong>VXX</strong> (Barclays): long position in 1st and 2nd VIX futures</li>
+<li><strong>UVXY</strong> (ProShares): 2× leveraged long VIX futures</li>
+<li><strong>SVXY</strong> (ProShares): -0.5× inverse VIX futures</li>
+<li><strong>VIXY</strong> (ProShares): unleveraged long VIX futures</li>
+</ul>
+
+<p><strong>3. VIX options</strong>: cash-settled options on the VIX index level, with notional based on the index level.</p>
+
+<h3 id="contango-and-the-roll-cost">Contango and the roll cost</h3>
+
+<p>Under normal conditions, the VIX futures curve is in <strong>contango</strong>. Front-month sits below spot VIX; second-month sits above front. The economic reason is the variance risk premium — buyers pay extra for protection over each forward window.</p>
+
+<p>For long-vol ETPs, contango is a <strong>cost</strong>: every month they sell the front (lower price) and buy the second (higher price), locking in a loss. Accumulated drag is approximately <strong>−10% annualized</strong> for VXX. UVXY suffers roughly 2× this drag.</p>
+
+<p>For inverse-vol ETPs, contango is a <strong>benefit</strong>: SVXY profits from the roll. This was the dominant return source for XIV/SVXY pre-2018 — until the eight-month low-vol regime made positioning catastrophically large, triggering Volmageddon.</p>
+
+<h3 id="backwardation">Backwardation</h3>
+
+<p>In stress, the curve inverts: front-month trades above second-month. This reverses the roll dynamics:</p>
+
+<ul>
+<li>Long-vol ETPs profit</li>
+<li>Inverse-vol ETPs lose</li>
+</ul>
+
+<p>Backwardation is a reliable stress indicator. VIX/VIX3M ratio crossing 1.0 preceded major SPX drawdowns in nearly every multi-year cycle.</p>
+
+<h3 id="connection-to-dealer-hedging">Connection to dealer hedging</h3>
+
+<p>VIX ETP issuers (Barclays VXX, ProShares UVXY/SVXY) are themselves significant participants in VIX futures. Their daily rebalancing is mechanical and well-understood — the 16:08 EST volume spike on Feb 5, 2018, was the cumulative effect of XIV's forced rebalancing in the closing auction interacting with dealer vol-of-vol hedging.</p>
+
+<p><strong>Operational implication</strong>: VIX futures and VIX ETPs are NOT the same instrument as the VIX index. The roll structure introduces a multi-percent annualized drag (contango) or boost (backwardation), and futures basis can diverge from spot VIX in stress. Use VIX as a regime indicator; trade VIX futures and options as separate instruments with their own dynamics.</p>
+
+<h2 id="the-vanna-feedback-during-vix-spikes">5 · The vanna feedback during VIX spikes</h2>
+
+<p>Recall vanna from <a class="xref" href="5d.html">Section 5D</a> and 7B: ∂Δ/∂σ. When VIX rises, OTM put deltas become more negative in magnitude. A dealer who is short OTM puts — the dealer of record for most institutional hedging demand — sees their effective long exposure increase. To stay delta-neutral they must sell stock.</p>
+
+<p>Selling stock pushes SPX further down. Further SPX down increases VIX. Further VIX increase deepens put deltas. And around the loop we go. <strong>Vanna is the technical name for the variable that makes VIX-driven sell-offs so violent.</strong></p>
+
+<figure class="fig" id="fig-vanna-feedback-loop"><figcaption><b>Figure to come:</b> vanna-feedback-loop</figcaption></figure>
+
+<p>The animator demonstrates: at step 0 the dealer is short 1,000 SPX OTM puts (K=4400) against an institutional hedger. Initial delta-hedge: long approximately 410 shares. Spot 4500, VIX 20, IV at this strike 23%. Then spot ticks down 1%; VIX bids up 8%; put delta becomes more negative; dealer must sell more shares; SPX ticks down further; VIX bids up further; loop continues.</p>
+
+<div class="callout brick">
+<p><em>"Transaction data show a spike in trading volume to 115,862 VIX futures contracts, or roughly one quarter of the entire market, and at highly inflated prices, within one minute at 16:08 [on February 5, 2018]."</em> — BIS Quarterly Review, March 2018</p>
+</div>
+
+<p>That moment — 16:08 EST on Volmageddon — is the cleanest empirical example of the feedback the animator walks through.</p>
+
+<h2 id="vix-is-one-tool-in-a-family">6 · VIX is one tool in a family</h2>
+
+<p>Cboe launched <strong>VIX1D</strong> in April 2023 to measure one-day expected volatility, explicitly because the 30-day VIX no longer captures the short-horizon vol regime driven by 0DTE. VIX1D uses the same model-free variance replication formula but applied to the very-near-dated SPX option strip.</p>
+
+<p>The Cboe VIX family now includes:</p>
+
+<ul>
+<li><strong>VIX1D</strong> — 1-day implied volatility (launched April 2023)</li>
+<li><strong>VIX9D</strong> — 9-day implied volatility</li>
+<li><strong>VIX</strong> — 30-day (the original, launched 1993; reformulated 2003)</li>
+<li><strong>VIX3M</strong> — 3-month implied volatility</li>
+<li><strong>VIX6M</strong> — 6-month implied volatility</li>
+<li><strong>VIX1Y</strong> — 1-year implied volatility</li>
+</ul>
+
+<p>The relationships between these form the <strong>VIX term structure</strong>. In normal markets, the term structure is in <strong>contango</strong> (short &lt; long), reflecting the variance risk premium — implied vol is bid up further out because more can happen over longer horizons. In stress, it inverts (<strong>backwardation</strong> — short &gt; long): panic concentrates demand into near-dated puts.</p>
+
+<p>The combination of GEX sign and VIX term structure shape is the most common composite signal serious traders use to characterize regime. The standard combinations:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Net dealer GEX</th><th class="c-other">VIX term structure</th><th class="c-endpoint">Regime</th></tr></thead><tbody><tr><td class="c-trial" data-label="Net dealer GEX">Strongly positive</td><td class="c-other" data-label="VIX term structure">Steep contango</td><td class="c-endpoint" data-label="Regime"><strong>Stable</strong> — premium selling favored</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Mildly positive</td><td class="c-other" data-label="VIX term structure">Mild contango</td><td class="c-endpoint" data-label="Regime"><strong>Normal</strong> — neutral character</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Near zero</td><td class="c-other" data-label="VIX term structure">Flat or barely inverted</td><td class="c-endpoint" data-label="Regime"><strong>Transition</strong> — reduce size</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Negative</td><td class="c-other" data-label="VIX term structure">Backwardation</td><td class="c-endpoint" data-label="Regime"><strong>Stress</strong> — long vol favored, mean-reversion dangerous</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Deeply negative</td><td class="c-other" data-label="VIX term structure">Deep backwardation</td><td class="c-endpoint" data-label="Regime"><strong>Crisis</strong> — defensive only, mechanical strategies suspended</td></tr></tbody></table></div></div>
+
+<p>This 5×regime classification underlies the composite scorecard in <a class="xref" href="10f.html">Section 10F</a> and the conviction-scoring framework in <a class="xref" href="12b.html">Section 12B</a>.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="8d.html" rel="prev" data-part="Part VIII · Aggregation"><span>Previous</span>8D · Gamma squeeze identification</a>
+<a class="next" href="9b.html" rel="next"><span>Next</span>9B · 0DTE: the singularity at the strike</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

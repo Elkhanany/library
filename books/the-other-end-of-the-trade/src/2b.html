@@ -1,0 +1,68 @@
+<p class="eyebrow">Part II · Quant Trading · Chapter 2B</p>
+
+<h1>Mean reversion vs momentum (an AR(1) model)</h1>
+
+<p>The simplest possible model — an auto-regressive linear regression of order one, or <strong>AR(1)</strong> — captures the two most fundamental trading behaviors: mean reversion and momentum. The model predicts the next log return as a linear function of the previous log return:</p>
+
+<pre>ŷ_t = w × r_{t−1} + b</pre>
+
+<p>Just two parameters: a weight w and a bias b. That's it. The sign of w determines everything.</p>
+
+<h2 id="three-regimes">1 · Three regimes</h2>
+
+<p><strong>w &lt; 0 · Mean reversion.</strong> A negative weight flips the sign of the lag. A positive return is predicted to be followed by a negative one; a negative return predicts a positive next return. "What goes up must come down." This regime is common at second-to-minute timescales in liquid markets, where dealer mean-reversion (from gamma hedging) and microstructure noise (bid-ask bounce) dominate. It's also common at multi-week timescales for individual equities and indices, where overreaction-then-correction patterns recur.</p>
+
+<p><strong>w &gt; 0 · Momentum.</strong> A positive weight reinforces the sign. "What goes up keeps going up." This regime is most common at intermediate timescales (weeks to months) across asset classes — the empirical foundation of decades of trend-following research and the basis of factor strategies like Jegadeesh-Titman 12-1 momentum (Jegadeesh and Titman, 1993, <em>Journal of Finance</em>). Cross-asset trend has been documented in 140+ years of data by Hurst, Ooi, and Pedersen (2017, <em>Journal of Portfolio Management</em>).</p>
+
+<p><strong>w ≈ 0 · Random walk.</strong> No predictive content. The next return is independent of the previous one. This is the efficient market hypothesis in its weakest form, and it's a good approximation at most timescales for most liquid markets. Trade fees, slippage, and adverse selection eat any strategy that operates in this regime.</p>
+
+<p>The AR(1) process is <strong>stationary</strong> when |w| &lt; 1 — variance stays bounded, distributions don't drift, forecasts converge. As |w| approaches 1, the process becomes non-stationary; variance grows unbounded with horizon and the AR(1) model loses predictive validity. Watch the simulated paths fan out as you push the weight toward ±1.</p>
+
+<figure class="fig" id="fig-ar1-regime-explorer"><figcaption><b>Figure to come:</b> ar1-regime-explorer</figcaption></figure>
+
+<h2 id="how-to-interpret-a-fitted-weight">2 · How to interpret a fitted weight</h2>
+
+<p>The weight in a fitted AR(1) is interpretable as the <strong>first-order autocorrelation</strong> of returns:</p>
+
+<pre>w ≈ Corr(r_t, r_{t−1})</pre>
+
+<p>A weight of −0.05 means returns are weakly mean-reverting — a 1% up move predicts roughly a 0.05% down move on average. A weight of +0.10 means returns are weakly momentum-driven. The magnitude tells you the predictive content, and the magnitudes in financial markets are <em>small</em> — typical first-order autocorrelations on daily SPX returns are between −0.05 and +0.05, with most of the absolute value coming from microstructure noise rather than fundamental signal.</p>
+
+<h2 id="hurst-exponent-and-the-variance-ratio-test">3 · Hurst exponent and the variance ratio test</h2>
+
+<p>A more powerful way to detect mean reversion vs momentum than just fitting AR(1) is to compute the <strong>Hurst exponent (H)</strong> of the return series. The Hurst exponent measures how variance scales with time horizon:</p>
+
+<pre>Var(returns over T periods) ∝ T^(2H)</pre>
+
+<p>For a random walk (no autocorrelation), H = 0.5 and variance scales linearly with time (because 2H = 1). For mean-reverting series, H &lt; 0.5 — variance grows more slowly than linearly because reversals shrink the cumulative move. For momentum-driven (persistent) series, H &gt; 0.5 — variance grows faster than linearly because trends compound.</p>
+
+<p>The related <strong>variance ratio test</strong> (Lo and MacKinlay, 1988, <em>Review of Financial Studies</em>) formalizes this into a statistical test of the random-walk null hypothesis. The variance ratio at lag k is:</p>
+
+<pre>VR(k) = Var(r_t + r_{t+1} + ... + r_{t+k−1}) / (k × Var(r_t))</pre>
+
+<p>Under the random walk null, VR(k) = 1 for all k. VR(k) &gt; 1 indicates momentum; VR(k) &lt; 1 indicates mean reversion. Lo and MacKinlay's 1988 paper found significant momentum in weekly US stock returns (VR &gt; 1 at lags of 1 to 4 weeks), challenging the random-walk hypothesis on those horizons.</p>
+
+<p>These tools are how the academic literature has built robust statistical support for both mean reversion (at very short and very long horizons) and momentum (at intermediate horizons). The retail trader who claims "I'm a mean reversion guy" is making a horizon-specific assumption they may not realize they're making.</p>
+
+<figure class="fig" id="fig-ar-fit-widget"><figcaption><b>Figure to come:</b> ar-fit-widget</figcaption></figure>
+
+<h2 id="why-ar1-is-the-right-starting-point">4 · Why AR(1) is the right starting point</h2>
+
+<p>You will not get rich on AR(1) alone. The reason to learn it is pedagogical: it is the simplest non-trivial model that captures the essential question every trading system must answer — do I expect the next move to continue the current move (momentum) or reverse it (mean reversion)? Every more sophisticated model is a refinement of this question:</p>
+
+<ul>
+<li>ARMA models add moving-average residual terms</li>
+<li>ARIMA models handle non-stationarity</li>
+<li>GARCH models add time-varying volatility</li>
+<li>Kalman filters add latent-state inference</li>
+<li>Hidden Markov models add discrete regime switching</li>
+<li>LSTMs and transformers add nonlinear temporal interactions</li>
+</ul>
+
+<p>All of them, in their cleanest formulation, are answering some version of "given what we've seen, what do we expect next?" — and the simplest answer is a weighted combination of recent values. Start with AR(1); add complexity only when residuals demand it.</p>
+
+<h2 id="the-regime-problem">5 · The regime problem</h2>
+
+<p>The most important practical issue with AR(1) and its descendants is that <strong>the sign of w changes over time</strong>. SPX intraday autocorrelation in calm regimes is mildly negative (mean-reverting, courtesy of positive-gamma dealer hedging — we'll see this in <a class="xref" href="6a.html">Section 6</a>). In stress regimes, intraday autocorrelation flips positive (momentum, courtesy of negative-gamma dealer hedging amplifying moves). A static AR(1) fit to "all available data" averages across these regimes and produces an estimated w near zero — neither regime, not predictive.</p>
+
+<p>The fix is <strong>regime-conditional modeling</strong>: fit one AR(1) for "calm" regimes and another for "stress" regimes, with a classifier that identifies which regime is currently active. This is the essence of regime-switching models and the foundation of every serious quant trading framework. We'll return to this in Sections 8B (positive vs negative GEX as regime indicator) and 10F (composite regime scorecard).</p>

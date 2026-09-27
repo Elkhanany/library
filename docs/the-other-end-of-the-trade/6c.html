@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>6C The Greek inheritance — The Other End of the Trade</title>
+<meta name="description" content="Chapter 6C of The Other End of the Trade: The Greek inheritance.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-5">← Part VI · Dealer Mechanics</a>
+  <div class="sb-folio"><a class="sb-prev" href="6b.html" aria-label="Previous chapter: 6B · The trade: who is on the other side?" title="Previous chapter: 6B · The trade: who is on the other side? (←)">‹ 6B</a><p class="sb-title"><span class="sb-at">Chapter 6C ·</span> <span class="sb-at">27 of 67</span></p><a class="sb-next" href="6d.html" aria-label="Next chapter: 6D · Delta hedging" title="Next chapter: 6D · Delta hedging (→)">6D ›</a></div>
+  <div id="sb-toc"><a href="#unpacking-the-black-scholes-delta-formula">1 · Unpacking the Black-Scholes delta formula</a><a href="#reading-delta-as-a-hedge-ratio-not-quite-a-probability">2 · Reading delta as a hedge ratio (not quite a probability)</a><a href="#the-d1-geometry">3 · The d1 geometry</a><a href="#the-other-greeks-the-dealer-also-inherited">4 · The other Greeks the dealer also inherited</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VI · Dealer Mechanics · Chapter 6C</p>
+
+<h1>The Greek inheritance</h1>
+
+<p>When the dealer sold you the call, they inherited a bundle of sensitivities. The option's value will change when the spot price moves, when implied volatility moves, when time passes, and when interest rates change. Each of these sensitivities has a name — a Greek letter, covered in <a class="xref" href="5c.html">Section 5C</a> — and each must eventually be managed.</p>
+
+<p>We start with the most important one. <strong>Delta</strong> is the partial derivative of the option's value with respect to spot. In plain language: if the underlying moves up by one dollar, the option moves up by delta dollars. For a call, delta lives between 0 and 1. For a put, between −1 and 0. Deep ITM options behave almost identically to holding the underlying (delta near ±1); deep OTM options barely react at all (delta near 0); ATM sits near ±0.5.</p>
+
+<h2 id="unpacking-the-black-scholes-delta-formula">1 · Unpacking the Black-Scholes delta formula</h2>
+
+<p>The Black-Scholes call delta is:</p>
+
+<pre>Δ_call = e^(-qT) × N(d1)
+where d1 = [ln(S/K) + (r − q + ½σ²) × T] / (σ × √T)</pre>
+
+<p>Let me unpack this piece by piece, because the structure repeats across every Greek in this document.</p>
+
+<p><strong>N(·)</strong> is the cumulative distribution function of the standard normal. It takes a number on the real line and returns a probability between 0 and 1.</p>
+
+<p><strong>d1</strong> is a standardized measure of "how in-the-money is this option, relative to the volatility it will see over the remaining time?" Specifically:</p>
+
+<ul>
+<li><strong>ln(S/K)</strong> — the log-moneyness. Positive when spot is above strike (ITM for a call), negative when below (OTM), zero exactly at-the-money.</li>
+<li><strong>(r − q + ½σ²) × T</strong> — adjusts for the risk-free rate (the forward should be higher than spot), the dividend yield (reduces the forward), and the convexity correction (½σ² accounts for the fact that the lognormal distribution's mean is shifted upward relative to the median in log space).</li>
+<li><strong>σ × √T</strong> in the denominator — normalizes the log-moneyness by the standard deviation of log-returns over T years.</li>
+</ul>
+
+<p>So d1 tells you, in z-score units, how strongly the option is positioned to finish in-the-money. Feeding that into N(·) gives a probability-like number. Multiplying by e^(-qT) adjusts for the dividend yield foregone by holding the option rather than the stock itself.</p>
+
+<p>The result — delta — is the dividend-discounted <strong>hedge ratio</strong>: the number of shares per contract required to neutralize the option's first-order spot exposure. The Black-Scholes call price is C = S·e^(-qT)·N(d₁) − K·e^(-rT)·N(d₂). The two N(·) terms are different probabilities under different measures. <strong>N(d₂) is the standard risk-neutral probability of finishing in-the-money.</strong> Call delta = e^(-qT) × N(d₁) is the share-equivalent hedge ratio under the share-numeraire measure — close to but not equal to the ITM probability, with the gap growing as σ√T grows.</p>
+
+<h2 id="reading-delta-as-a-hedge-ratio-not-quite-a-probability">2 · Reading delta as a hedge ratio (not quite a probability)</h2>
+
+<p>A 0.30-delta call <em>behaves as</em> 30 shares of the underlying per 100-share contract — that's the operative meaning, and it's what dealer hedging is based on. The informal "30% chance of being ITM" interpretation is approximately right for short-dated near-money options but technically wrong: the actual ITM probability is N(d₂), which is N(d₁) − σ√T-ish smaller. For 30-day 30-delta options at 20% IV, the gap is about 3 percentage points; at 60% IV and 90 days, the gap can exceed 10. When you hear "I'm selling 25-delta puts," interpret it as "25-share-equivalent hedge ratio," not as "25% probability of assignment."</p>
+
+<p>For dealer-mechanics purposes, the share-equivalent interpretation is the operative one. A dealer who is short 1,000 contracts of a 0.30-delta call is short 1,000 × 100 × 0.30 = 30,000 share-equivalents — they behave as if short 30,000 shares of the underlying. To neutralize this, they buy 30,000 shares. <a class="xref" href="6d.html">Section 6D</a> covers the mechanics.</p>
+
+<h2 id="the-d1-geometry">3 · The d1 geometry</h2>
+
+<p>A useful visualization: d1 is just a z-score, and the area under the standard normal density to the left of d1 is N(d1), which is delta (modulo the dividend factor).</p>
+
+<figure class="fig" id="fig-d1-bell-curve"><figcaption><b>Figure to come:</b> d1-bell-curve</figcaption></figure>
+
+<p>A subtle but useful fact: the +½σ² term inside d1 is what makes high-vol options drift higher in delta even when at-the-money. This is the convexity correction — it accounts for log-normal asymmetry: even with zero spot move, high vol means more upside than downside in dollar terms (because the lognormal distribution is right-skewed by construction).</p>
+
+<h2 id="the-other-greeks-the-dealer-also-inherited">4 · The other Greeks the dealer also inherited</h2>
+
+<p>The call the dealer just sold also has a gamma, theta, vega, and rho. The dealer is short all of them in some sign convention:</p>
+
+<ul>
+<li><strong>Short delta</strong> — to be discussed and hedged in 6D</li>
+<li><strong>Short gamma</strong> — the dealer is on the unfavorable side of gamma (their delta moves against them). To be discussed in 6E.</li>
+<li><strong>Long theta</strong> — the dealer collects theta as time passes. This is the compensation for accepting negative gamma.</li>
+<li><strong>Short vega</strong> — the dealer loses money if IV rises (the option becomes more valuable to the customer holding it). Vega is more expensive to hedge dynamically; most dealers manage vega in aggregate across their book rather than hedging each position.</li>
+<li><strong>Short rho</strong> — usually negligible for short-dated options</li>
+</ul>
+
+<p>The asymmetry that drives all subsequent mechanics: the dealer can hedge delta easily and cheaply (just buy/sell shares of the underlying). They cannot hedge gamma cheaply except by acquiring offsetting options positions. Most dealer books are not gamma-hedged in the literal sense — they carry net gamma exposure and manage it through dynamic delta re-hedging. This is the structural setup for everything in 6E onward.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="6b.html" rel="prev"><span>Previous</span>6B · The trade: who is on the other side?</a>
+<a class="next" href="6d.html" rel="next"><span>Next</span>6D · Delta hedging</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

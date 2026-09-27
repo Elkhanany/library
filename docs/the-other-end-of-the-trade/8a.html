@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>8A GEX: aggregation from one book to the market — The Other End of the Trade</title>
+<meta name="description" content="Chapter 8A of The Other End of the Trade: GEX: aggregation from one book to the market.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-7">← Part VIII · Aggregation</a>
+  <div class="sb-folio"><a class="sb-prev" href="7b.html" aria-label="Previous chapter: 7B · Second-order Greeks in context" title="Previous chapter: 7B · Second-order Greeks in context (←)">‹ 7B</a><p class="sb-title"><span class="sb-at">Chapter 8A ·</span> <span class="sb-at">33 of 67</span></p><a class="sb-next" href="8b.html" aria-label="Next chapter: 8B · Two regimes, one mechanism" title="Next chapter: 8B · Two regimes, one mechanism (→)">8B ›</a></div>
+  <div id="sb-toc"><a href="#a-formal-gex-sign-convention">1 · A formal GEX sign convention</a><a href="#from-per-contract-to-aggregate-a-stylized-sum" class="lvl3">From per-contract to aggregate — a stylized sum</a><a href="#vendor-presentation">2 · Vendor presentation</a><a href="#where-the-sign-comes-from-and-why-its-wrong-sometimes">3 · Where the sign comes from — and why it's wrong sometimes</a><a href="#walk-the-sign-chain-first">4 · Walk the sign chain first</a><a href="#try-toggling-the-assumption">5 · Try toggling the assumption</a><a href="#what-a-gamma-flip-is">6 · What a gamma flip is</a><a href="#limits-of-the-gex-framework">7 · Limits of the GEX framework</a><a href="#the-flex-otc-blindspot">8 · The FLEX / OTC blindspot</a><a href="#demand-based-option-pricing-garleanu-pedersen-poteshman">9 · Demand-based option pricing (Garleanu, Pedersen, Poteshman)</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VIII · Aggregation · Chapter 8A</p>
+
+<h1>GEX: aggregation from one book to the market</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>We've followed a single dealer through a single trade. The real market has thousands of strikes, dozens of expirations, and hundreds of trillions of dollars of open interest. Aggregating the per-strike, per-expiration gamma exposure across all dealers gives us a single number — the <strong>Gamma Exposure index</strong>, or <strong>GEX</strong> — that tries to capture the total mechanical flow dealers will generate per 1% market move.</p>
+
+<p>This section walks through GEX construction (8A), the two-regime characterization (positive vs negative dealer gamma) and the effect sizes documented in academic literature (8B), and finally the cases where the framework breaks — Volmageddon and the March 2020 Great Liquidity Crisis (8C). The treatment is empirically grounded throughout: where I cite numbers, they come from peer-reviewed work or directly from exchange data, not from social-media commentary.</p>
+</div>
+
+<hr>
+
+<h2 id="a-formal-gex-sign-convention">1 · A formal GEX sign convention</h2>
+
+<p>To prevent downstream confusion, we'll define GEX with all signs visible:</p>
+
+<pre>Γ_$,i = Γᵢ × Sᵢ² × M × Nᵢ × 0.01 × s_dealer,i</pre>
+
+<p>where:</p>
+
+<ul>
+<li>Γᵢ = BSM gamma per share at strike i</li>
+<li>Sᵢ = spot price</li>
+<li>M = contract multiplier (100 for SPX/SPY)</li>
+<li>Nᵢ = open interest at strike i (contracts)</li>
+<li>0.01 = converts "per $1 spot" to "per 1% move"</li>
+<li>s_dealer,i = ±1 depending on the assumed dealer position</li>
+</ul>
+
+<p><strong>Sign conventions in vendor models</strong>:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Convention</th><th>s_dealer,call</th><th>s_dealer,put</th><th class="c-result">Reasoning</th></tr></thead><tbody><tr><td class="c-trial" data-label="Convention"><strong>JPM-era (pre-2022)</strong></td><td data-label="s_dealer,call">+1</td><td data-label="s_dealer,put">−1</td><td class="c-result" data-label="Reasoning">Dealers long calls (sold by asset managers), short puts (sold by hedgers)</td></tr><tr><td class="c-trial" data-label="Convention"><strong>0DTE-era (post-2022)</strong></td><td data-label="s_dealer,call">−1</td><td data-label="s_dealer,put">+1</td><td class="c-result" data-label="Reasoning">Dealers short calls (sold by retail), long puts (bought by retail premium sellers)</td></tr></tbody></table></div></div>
+
+<p><strong>Aggregate</strong>: G_<span><span class="katex-error" title="ParseError: KaTeX parse error: Expected group after '_' at position 9:  = Σ_i Γ_̲" style="color:#cc0000"> = Σ_i Γ_</span></span>,i across all strikes and expirations.</p>
+
+<p><strong>Hedge flow sensitivity to spot move</strong>:</p>
+
+<pre>dH ≈ −G_$ × (dS/S)</pre>
+
+<ul>
+<li>G_$ &gt; 0: hedge contra-trend → <strong>stabilizing</strong></li>
+<li>G_$ &lt; 0: hedge pro-trend → <strong>destabilizing</strong></li>
+</ul>
+
+<h3 id="from-per-contract-to-aggregate-a-stylized-sum">From per-contract to aggregate — a stylized sum</h3>
+
+<p><a class="xref" href="6e.html">Section 6E</a> pinned the per-contract dollar gamma per 1% at ≈ <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>46</mn><mi>k</mi><mi>f</mi><mi>o</mi><mi>r</mi><mi>a</mi><mi>n</mi><mi>A</mi><mi>T</mi><mi>M</mi><mi>S</mi><mi>P</mi><mi>X</mi><mi>o</mi><mi>p</mi><mi>t</mi><mi>i</mi><mi>o</mi><mi>n</mi><mi>a</mi><mi>t</mi><mi>s</mi><mi>p</mi><mi>o</mi><mi>t</mi><mn>6</mn><mo separator="true">,</mo><mn>000</mn><mo separator="true">,</mo><mn>30</mn><mi>D</mi><mi>T</mi><mi>E</mi><mo separator="true">,</mo><mi>I</mi><mi>V</mi><mn>18</mn></mrow><annotation encoding="application/x-tex">46k for an ATM SPX option at spot 6,000, 30 DTE, IV 18%. The claim that aggregate dealer GEX lives in the </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord">46</span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span><span class="mord mathnormal" style="margin-right: 0.1076em;">f</span><span class="mord mathnormal" style="margin-right: 0.0278em;">or</span><span class="mord mathnormal">an</span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right: 0.0785em;">TMSPX</span><span class="mord mathnormal">o</span><span class="mord mathnormal">pt</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mord mathnormal">na</span><span class="mord mathnormal">t</span><span class="mord mathnormal">s</span><span class="mord mathnormal">p</span><span class="mord mathnormal">o</span><span class="mord mathnormal">t</span><span class="mord">6</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord">000</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord">30</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mord mathnormal" style="margin-right: 0.0576em;">TE</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0785em;">I</span><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="mord">18</span></span></span></span></span>20–100B range is an order-of-magnitude scaling claim on top of that. Walk one stylized cross-strike sum end-to-end and the orders of magnitude reconcile.</p>
+
+<p><strong>Setup.</strong> SPX = 6,000. Stylized Γ profile peaking ATM and decaying symmetrically (Γ ≈ 0.0006 at ±200 strikes, ≈ 0.0010 at ±100, ≈ 0.0013 at ATM). OI per strike taken from a typical SPX put-heavy positioning profile (more put OI than call OI is the empirical norm because SPX skew is steep). Per-contract dollar gamma per 1% follows the 6E formula $Γ_1% = Γ × S² × 0.01 × 100 (the 100 is the contract multiplier).</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">Strike</th><th>Type (assumed dominant)</th><th style="text-align:right">OI (contracts)</th><th style="text-align:right">Γ (per $)</th><th style="text-align:right">$Γ per contract per 1%</th><th style="text-align:right">Aggregate per strike</th><th style="text-align:right">Signed</th></tr></thead><tbody><tr><td class="c-trial" data-label="Strike" style="text-align:right">5,800</td><td data-label="Type (assumed dominant)">puts</td><td data-label="OI (contracts)" style="text-align:right">100,000</td><td data-label="Γ (per $)" style="text-align:right">0.0006</td><td data-label="$Γ per contract per 1%" style="text-align:right">$21.6k</td><td data-label="Aggregate per strike" style="text-align:right">+$2.16B</td><td data-label="Signed" style="text-align:right">+$2.16B</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">5,900</td><td data-label="Type (assumed dominant)">puts</td><td data-label="OI (contracts)" style="text-align:right">200,000</td><td data-label="Γ (per $)" style="text-align:right">0.0010</td><td data-label="$Γ per contract per 1%" style="text-align:right">$36.0k</td><td data-label="Aggregate per strike" style="text-align:right">+$7.20B</td><td data-label="Signed" style="text-align:right">+$7.20B</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">6,000</td><td data-label="Type (assumed dominant)">puts</td><td data-label="OI (contracts)" style="text-align:right">280,000</td><td data-label="Γ (per $)" style="text-align:right">0.0013</td><td data-label="$Γ per contract per 1%" style="text-align:right">$46.8k</td><td data-label="Aggregate per strike" style="text-align:right">+$13.10B</td><td data-label="Signed" style="text-align:right">+$13.10B</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">6,000</td><td data-label="Type (assumed dominant)">calls</td><td data-label="OI (contracts)" style="text-align:right">120,000</td><td data-label="Γ (per $)" style="text-align:right">0.0013</td><td data-label="$Γ per contract per 1%" style="text-align:right">$46.8k</td><td data-label="Aggregate per strike" style="text-align:right">$5.62B</td><td data-label="Signed" style="text-align:right">−$5.62B</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">6,100</td><td data-label="Type (assumed dominant)">calls</td><td data-label="OI (contracts)" style="text-align:right">200,000</td><td data-label="Γ (per $)" style="text-align:right">0.0010</td><td data-label="$Γ per contract per 1%" style="text-align:right">$36.0k</td><td data-label="Aggregate per strike" style="text-align:right">$7.20B</td><td data-label="Signed" style="text-align:right">−$7.20B</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">6,200</td><td data-label="Type (assumed dominant)">calls</td><td data-label="OI (contracts)" style="text-align:right">100,000</td><td data-label="Γ (per $)" style="text-align:right">0.0006</td><td data-label="$Γ per contract per 1%" style="text-align:right">$21.6k</td><td data-label="Aggregate per strike" style="text-align:right">$2.16B</td><td data-label="Signed" style="text-align:right">−$2.16B</td></tr></tbody></table></div></div>
+
+<p>The sign column applies the 0DTE-era convention from the table above (dealers long puts → puts contribute positive G_<span><span class="katex-error" title="ParseError: KaTeX parse error: Expected group after '_' at position 52: …bute negative G_̲" style="color:#cc0000">; dealers short calls → calls contribute negative G_</span></span>). The ATM strike is split 70/30 put-heavy to reflect the typical SPX put skew.</p>
+
+<p>Aggregate G_$ = (2.16 + 7.20 + 13.10) − (5.62 + 7.20 + 2.16) ≈ <strong>+$7.5B per 1% move</strong>.</p>
+
+<p>That's the toy's order of magnitude. The real listed SPX book has <em>hundreds</em> of strikes across <em>multiple</em> expirations, and the per-contract dollar gamma is concentrated more sharply at short-dated ATM strikes than this five-strike snapshot represents. Scaling the aggregate by a factor of 3-15× — which a real strip-vs-toy ratio supports — lands you in the $20-100B range cited at the top of this section. The toy proves the dollar-gamma claim and the aggregate claim are <em>the same claim</em>, just at different summation grains.</p>
+
+<p><strong>The choice of sign convention is model risk</strong>: the same OI produces opposite GEX signs depending on assumption. There is no universally correct convention; the right one depends on which side of each option type dealers actually hold in aggregate.</p>
+
+<p>For 0DTE-era SPX: empirical evidence (Dim-Eraker-Vilkov 2024; Adams et al. 2025, both cited below) suggests dealers are net long gamma on most days — consistent with the 0DTE-era convention. For SPY and individual stocks, the appropriate convention may be regime-dependent.</p>
+
+<p>When reading a vendor's GEX number, always check which convention they use before drawing conclusions.</p>
+
+<h2 id="vendor-presentation">2 · Vendor presentation</h2>
+
+<p>The standard vendor formula, published by SqueezeMetrics in 2017 and adopted in some form by every subsequent vendor (SpotGamma, Tier1Alpha, Cboe's own derivative dashboards):</p>
+
+<pre>GEX = Σ_i Γ_i · OI_i · 100 · S² · 0.01 · sign_i
+
+where sign_i = +1 for calls, −1 for puts</pre>
+
+<p>Each term in the sum is the dollar gamma per 1% move generated by open interest at one strike. The 100 is the contract multiplier. The 0.01 is the conversion from "per dollar of spot move" to "per 1% move." The sign convention is the whole game: it encodes the assumption about which side of each option type the dealer typically holds.</p>
+
+<h2 id="where-the-sign-comes-from-and-why-its-wrong-sometimes">3 · Where the sign comes from — and why it's wrong sometimes</h2>
+
+<p>SqueezeMetrics published their methodology in 2017 with the assumption that <strong>dealers are net long calls and net short puts</strong>. The reasoning at the time was the dominant flow regime: institutional asset managers were the primary call sellers (covered calls, the famous "JPM collar" rolled by JPMorgan's Hedged Equity Fund), and institutional hedgers (pension funds, endowments) were the primary put buyers. Dealers stood on the other side of both — long calls (from buying them from yield-hunting asset managers) and short puts (from selling them to hedgers).</p>
+
+<p>Aggregating under this assumption: when SPX rises, dealers' long calls gain delta — they sell stock to stay flat — dampening the rally. When SPX falls, dealers' short puts get more negative delta — they sell stock to stay flat — amplifying the fall. This created the familiar regime: slow grinds up, fast crashes down. The asymmetric character of equity vol cycles was directly attributable to this asymmetric dealer positioning.</p>
+
+<p><strong>That was 2017. The 0DTE era flipped the dominant flow.</strong> Retail and small institutional accounts now overwhelmingly <em>sell</em> premium in 0DTE — credit spreads, iron condors, cash-secured puts. The dealers <em>buy</em> from them. The new net positioning is plausibly the opposite of the JPM-era assumption: dealers net long puts (from buying retail puts), net short calls (from buying retail calls).</p>
+
+<p>This is not speculation. <strong>Dim, Eraker, and Vilkov (2024)</strong> — in "0DTEs: Trading, Gamma Risk and Volatility Propagation," SSRN 4692190, working paper, George Washington University — found empirically that <strong>net market-maker gamma in 0DTE is positive on average</strong>. The dealer is mostly long gamma in 0DTE, which is the <em>opposite</em> sign of the original SqueezeMetrics convention. This was further extended in <strong>Adams, Dim, Eraker, Fontaine, Ornthanalai, and Vilkov (2025)</strong> — "Do S&amp;P 500 Options Increase Market Volatility? Evidence from 0DTEs," SSRN 5641974, posted December 3, 2025 — which found that 0DTEs <em>dampen</em> market volatility through dealer hedging.</p>
+
+<div class="callout brick">
+<p><em>"On the contrary, we show that the presence of 0DTEs dampens market volatility through a shift in market makers' hedging needs. Importantly, this shift occurs not due to trading 0DTEs on their expiration day but due to positions in longer-dated options accumulated earlier and becoming 0DTEs."</em> — Adams, Dim, Eraker, Fontaine, Ornthanalai, Vilkov (2025)</p>
+</div>
+
+<h2 id="walk-the-sign-chain-first">4 · Walk the sign chain first</h2>
+
+<figure class="fig" id="fig-gex-sign-truth-table"><figcaption><b>Figure to come:</b> gex-sign-truth-table</figcaption></figure>
+
+<h2 id="try-toggling-the-assumption">5 · Try toggling the assumption</h2>
+
+<figure class="fig" id="fig-gex-profile-builder"><figcaption><b>Figure to come:</b> gex-profile-builder</figcaption></figure>
+
+<p>This is not a minor calibration issue. It is the dominant source of model risk in every public GEX product, and the reason "GEX flipped negative today" claims should be received with skepticism unless you know which sign convention the publisher uses and whether it matches the actual flow regime in the product you're trading.</p>
+
+<h2 id="what-a-gamma-flip-is">6 · What a gamma flip is</h2>
+
+<p>The level of spot at which net dealer gamma crosses zero is called the <strong>gamma flip</strong> or <strong>volatility trigger</strong> (SpotGamma's proprietary name for it). Below this level, dealer hedging amplifies moves (the dealer is short gamma in aggregate). Above it, dealer hedging dampens moves (the dealer is long gamma in aggregate).</p>
+
+<p>The flip is not a hard mechanical barrier — it is a regime boundary. Crossing it slowly during a calm session is uneventful; crossing it during stress, when dealers themselves are under-positioned to absorb flow, is where the destabilization shows up. We will see this explicitly in the case studies in <a class="xref" href="8c.html">Section 8C</a>.</p>
+
+<h2 id="limits-of-the-gex-framework">7 · Limits of the GEX framework</h2>
+
+<p>The model has serious limitations and you should know them before reading any GEX chart with conviction.</p>
+
+<p><strong>1. The counterparty assumption.</strong> As the toggle made painfully clear, the sign is fragile. The standard SqueezeMetrics convention assumed dealers long calls / short puts; current evidence suggests the opposite in 0DTE. Different vendors make different assumptions, and the published GEX numbers diverge accordingly. There is no universally correct convention; the right one depends on which counterparty actually holds the option in aggregate, which is hard to observe.</p>
+
+<p><strong>2. OI data publishes with a lag.</strong> Open-interest data from the OCC publishes T+1, so intraday GEX is imputed from trade-tape inference rather than directly observed. Vendors do this with varying sophistication; the imputation errors can be substantial intraday, especially during high-volume sessions.</p>
+
+<p><strong>3. FLEX and OTC books are invisible.</strong> As discussed in <a class="xref" href="3b.html">Section 3B</a> and 4A, FLEX options (1.3-1.4M contracts/day in 2025, with open interest of 35 million) are visible only in aggregate to public data feeds. Bank-issued structured products (autocallables, principal-protected notes, defined-outcome ETF inventories) — globally measured in hundreds of billions of notional — are completely invisible to public GEX models. The hedging flows from these books can dwarf listed-OI gammas during stress.</p>
+
+<p><strong>4. Black-Scholes gamma is wrong under skew.</strong> GEX uses Black-Scholes gamma, which assumes a flat vol surface (no skew). Real-world put-wing gammas under steep skew can be several times the BS-implied number. The error doesn't reverse — it consistently understates put-side gamma in equity markets.</p>
+
+<p><strong>5. GEX is positioning, not outcome.</strong> It tells you what dealers would do <em>given</em> a move; it does not tell you whether a move will happen. The empirical effect sizes in the academic literature are real but modest — Ni, Pearson, and Poteshman (2005) find pinning effects of about 16.5 basis points on expiry days; Barbon and Buraschi (2021) find gamma imbalance effects of around 16 bps per standard deviation.</p>
+
+<h2 id="the-flex-otc-blindspot">8 · The FLEX / OTC blindspot</h2>
+
+<p>Of all the limitations, the one that bites hardest in practice is the <strong>invisible book</strong>. Every public GEX model sees only listed open interest: contracts that trade on Cboe, OCC-cleared, with strikes on a fixed grid. That dataset is comprehensive — but it captures only one side of the market.</p>
+
+<p><strong>FLEX options sit alongside the listed market.</strong> They trade on Cboe but with customizable strike, expiration, exercise style, and settlement. Cboe reports FLEX volume averaging 1.3-1.4 million contracts per day in 2025 — more than ten times the 2019 level — with total open interest of 35 million (up from 2 million in 2019, a 17.5× increase).</p>
+
+<p><strong>The bigger invisible layer is bank-issued structured products</strong> — autocallables, principal-protected notes, range accruals — that retail and private-wealth channels sell to clients around the world. The issuing bank's hedge replicates the structure's option exposure dynamically. Globally, the autocallable book alone is measured in hundreds of billions of notional, dominated by EU and Asian retail flow.</p>
+
+<p>Why does this matter? Because <strong>the invisible book matters most precisely when GEX matters most.</strong> On a quiet day, FLEX/OTC hedging is small and self-cancelling. On a stress day — when a barrier is approached, when an autocallable book is getting close to a knock-in level, when an institutional buyer suddenly rolls a multi-billion-dollar collar — the invisible book can dominate everything the listed-GEX number is showing.</p>
+
+<p>Volmageddon's VIX call wing was in FLEX. The March 2020 vanna cascade ran through structured-product hedges as much as through listed puts. The next stress event will almost certainly feature a flow that surprised every published GEX model.</p>
+
+<p>The honest reading: <strong>published GEX is a useful prior on typical days. On atypical days, treat it as one of several inputs, not a forecast.</strong></p>
+
+<h2 id="demand-based-option-pricing-garleanu-pedersen-poteshman">9 · Demand-based option pricing (Garleanu, Pedersen, Poteshman)</h2>
+
+<p>A foundational paper worth citing here: <strong>Garleanu, Pedersen, and Poteshman (2009)</strong>, "Demand-Based Option Pricing," <em>Review of Financial Studies</em>, Vol. 22, No. 10, pp. 4259-4299. They showed that net end-user demand for index options is the primary driver of the deviation of option prices from no-arbitrage benchmarks. The deeper the dealer positioning imbalance, the larger the deviation — and the larger the subsequent hedging activity needed to manage it.</p>
+
+<p>The Garleanu-Pedersen-Poteshman framework establishes that option prices are not pure forecasts of future variance plus a risk-free rate; they are functions of <em>who is buying and who is selling</em> in addition to the model fundamentals. This is the structural justification for the variance risk premium and the academic foundation for the GEX framework as a whole.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="7b.html" rel="prev" data-part="Part VII · Theory"><span>Previous</span>7B · Second-order Greeks in context</a>
+<a class="next" href="8b.html" rel="next"><span>Next</span>8B · Two regimes, one mechanism</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<p class="eyebrow">Part IV · Derivatives · Chapter 4B</p>
+
+<h1>Futures, swaps, options: three payoff families</h1>
+
+<p>Almost every derivative you'll meet in practice belongs to one of three payoff families. The <em>geometry</em> of the payoff tells you the position's behavior under different market scenarios — before you ever look at Greeks or sophisticated valuation models. Pictures of payoffs are foundational because they're what every multi-leg strategy in <a class="xref" href="11-0.html">Section 11</a> builds from.</p>
+
+<h2 id="linear-payoffs-futures-and-forwards">1 · Linear payoffs (futures and forwards)</h2>
+
+<p><strong>Futures</strong> are exchange-traded contracts to buy or sell an underlying asset at a future date for a price agreed today. The payoff is <strong>linear</strong> in the underlying:</p>
+
+<pre>Long futures payoff at expiration = S_T − K</pre>
+
+<p>where S_T is the spot price at expiration and K is the contract price. Symmetric: each $1 the underlying moves above K is $1 of profit; each $1 below K is $1 of loss. No upfront premium. Initial margin posted as collateral against potential losses, marked to market daily, with variation margin added or refunded each evening as P&amp;L is realized.</p>
+
+<p><strong>Forwards</strong> are the OTC analog — same payoff structure, but bilateral and not standardized. Most institutional FX hedging uses forwards rather than futures because forwards can be sized and dated precisely.</p>
+
+<p>The economic intuition: a futures contract is equivalent to borrowing money to buy the underlying today at the spot price, holding it to the contract date, and then comparing the borrowed amount (plus financing) against the actual spot at expiry. The futures price K is set such that this "cash-and-carry" trade has zero expected P&amp;L — it builds in the cost of financing and the expected dividend yield (or storage costs, for physical commodities).</p>
+
+<p>For E-mini S&amp;P 500 futures (ES):</p>
+
+<ul>
+<li>Multiplier: $50 per index point</li>
+<li>1 ES contract at SPX 6000 = $300,000 notional</li>
+<li>Initial margin: ~$15,000-$22,000 depending on volatility regime</li>
+<li>Tick: 0.25 index points = $12.50</li>
+</ul>
+
+<p>The ES contract is the cleanest leveraged equity exposure available to US traders. Combined with the 1256 60/40 tax treatment, it's the operationally correct vehicle for any retail trader who wants leveraged SPX exposure without the complications of options. The funding cost is baked into the basis between ES and SPX — when interest rates are positive, ES trades at a premium to SPX that decays to zero at expiration, and that decay is the implicit financing cost.</p>
+
+<h2 id="linearperiodic-payoffs-swaps">2 · Linear/periodic payoffs (swaps)</h2>
+
+<p><strong>Swaps</strong> are derivatives that involve recurring payments based on the difference between two reference rates or prices. The most common form is the <strong>interest rate swap</strong>, where one party pays a fixed rate and receives a floating rate over a series of periodic payments.</p>
+
+<p>A standard 5-year USD interest rate swap:</p>
+
+<ul>
+<li>Notional: say, $10 million (notional is not exchanged; it's only used to compute the floating payments)</li>
+<li>Fixed rate: say, 4.5% paid by Party A</li>
+<li>Floating rate: 3-month SOFR (Secured Overnight Financing Rate) paid by Party B</li>
+<li>Payment frequency: quarterly</li>
+<li>Term: 5 years</li>
+</ul>
+
+<p>Each quarter, Party A pays Party B 4.5% × $10M × (90/360) = $112,500. Party B pays Party A 3-month SOFR × $10M × (90/360), which varies as SOFR varies. The net payment goes from A to B (if SOFR is below 4.5%) or from B to A (if SOFR is above 4.5%). Over the 5-year life, the swap has 20 quarterly settlements.</p>
+
+<p>The economic content: Party A has converted their fixed-rate funding into floating-rate exposure; Party B has done the reverse. Swaps are how institutional balance sheets manage interest rate risk at scale. The interest rate swap market is the largest derivative market in the world by notional — hundreds of trillions of dollars outstanding.</p>
+
+<p>Other swap families:</p>
+
+<ul>
+<li><strong>Currency swaps</strong> (exchange streams of cash flows in different currencies)</li>
+<li><strong>Commodity swaps</strong> (fixed price vs floating commodity price)</li>
+<li><strong>Total return swaps</strong> (one party pays a fixed/floating rate, the other pays the total return on an underlying asset — used by hedge funds for synthetic exposure)</li>
+<li><strong>Variance swaps</strong> (one party pays a fixed strike, the other pays the realized variance over the swap period — these are mathematically equivalent to a delta-hedged option strip, as we'll show in <a class="xref" href="7a.html">Section 7A</a>)</li>
+<li><strong>Credit default swaps</strong> (one party pays a fixed premium, the other pays par value if a reference entity defaults)</li>
+</ul>
+
+<p>Swaps are almost entirely institutional. Retail traders rarely encounter them directly.</p>
+
+<h2 id="convex-payoffs-options">3 · Convex payoffs (options)</h2>
+
+<p><strong>Options</strong> are derivatives whose payoff is <strong>non-linear</strong> in the underlying. The holder pays a premium upfront and receives a payoff at expiration that depends asymmetrically on the underlying:</p>
+
+<pre>Long call payoff at expiration = max(S_T − K, 0)
+Long put payoff at expiration  = max(K − S_T, 0)</pre>
+
+<p>The asymmetry is what creates everything interesting about options. The call holder has unlimited upside (any positive move above K becomes profit) but limited downside (loss is bounded at the premium paid). The put holder has large bounded upside (up to K if the underlying goes to zero) but limited downside (also bounded at the premium paid).</p>
+
+<p>The <strong>bend</strong> in the payoff at the strike — where the slope changes from zero to one — is the mathematical source of all option dynamics. Linear instruments need no Greeks beyond delta. Convex instruments need gamma to describe how delta changes, theta to describe the cost of carrying the bend, vega to describe how the bend's value depends on expected volatility. <a class="xref" href="5a.html">Section 5</a> unpacks each in full.</p>
+
+<h2 id="visual-the-three-families-on-one-chart">4 · Visual: the three families on one chart</h2>
+
+<figure class="fig" id="fig-three-payoff-overlay"><figcaption><b>Figure to come:</b> three-payoff-overlay</figcaption></figure>
+
+<h2 id="the-convexity-premium">5 · The convexity premium</h2>
+
+<p>The bend in an option's payoff is the source of all option mathematics. Every formula in <a class="xref" href="5a.html">Section 5</a>, every Greek, every dealer-hedging mechanic in <a class="xref" href="6a.html">Section 6</a> — all of them exist because the option payoff is convex and the linear hedge instruments cannot replicate convexity in a single transaction. <strong>Linear instruments need no continuous hedging; convex instruments do.</strong> This is the mathematical engine that drives the entire dealer mechanics framework.</p>
+
+<p>The economic price of convexity is the <strong>option premium</strong>. The holder pays the premium upfront in exchange for the convex payoff. The writer collects the premium in exchange for assuming the concave (mirror-image) liability. The fair value of the premium under any complete-market model — Black-Scholes is one such model — is exactly the amount that makes the dynamic replication of the option (<a class="xref" href="7a.html">Section 7A</a>) cost zero in expectation. Any deviation from this fair value is, in principle, arbitrageable; in practice, the deviation captures the variance risk premium and the various other premia we'll discuss throughout the book.</p>
+
+<h2 id="composite-derivatives">6 · Composite derivatives</h2>
+
+<p>Almost every derivative you'll encounter at retail or institutional scale is a combination of these three primitive families plus the underlying:</p>
+
+<ul>
+<li>A <strong>collar</strong> is long stock + long put + short call → equivalent to a long call spread + a put exposure</li>
+<li>A <strong>straddle</strong> is a long call + long put at the same strike → equivalent to a position long convexity in both directions</li>
+<li>A <strong>callable bond</strong> is a regular bond + a short call option on its own price → the issuer keeps the right to retire the bond early</li>
+<li>A <strong>convertible bond</strong> is a regular bond + a long call option on the issuer's stock</li>
+<li>An <strong>autocallable note</strong> is a complex combination of swaps and options that pays a coupon contingent on the underlying not crossing certain barriers</li>
+</ul>
+
+<p>The taxonomy gets baroque quickly. The principle stays simple: <strong>every derivative is composed of futures, swaps, and options on some underlying</strong>. If you can decompose a complex structured product into its constituent linear and convex pieces, you can hedge it. If you can't decompose it, you can't price it, and you can't safely sell it. This is the foundation of structured products desks at investment banks.</p>

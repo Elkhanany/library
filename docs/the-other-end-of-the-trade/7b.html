@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>7B Second-order Greeks in context — The Other End of the Trade</title>
+<meta name="description" content="Chapter 7B of The Other End of the Trade: Second-order Greeks in context.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-6">← Part VII · Theory</a>
+  <div class="sb-folio"><a class="sb-prev" href="7a.html" aria-label="Previous chapter: 7A · The PDE: why dealer hedging works at all" title="Previous chapter: 7A · The PDE: why dealer hedging works at all (←)">‹ 7A</a><p class="sb-title"><span class="sb-at">Chapter 7B ·</span> <span class="sb-at">32 of 67</span></p><a class="sb-next" href="8a.html" aria-label="Next chapter: 8A · GEX: aggregation from one book to the market" title="Next chapter: 8A · GEX: aggregation from one book to the market (→)">8A ›</a></div>
+  <div id="sb-toc"><a href="#vanna-recap">1 · Vanna recap: ∂Δ/∂σ</a><a href="#worked-example-post-fomc-vanna-unwind-with-full-arithmetic">2 · Worked example: post-FOMC vanna unwind with full arithmetic</a><a href="#charm-recap-t">3 · Charm recap: ∂Δ/∂t</a><a href="#worked-example-the-charm-weekend-gap-with-full-arithmetic">4 · Worked example: the charm weekend gap with full arithmetic</a><a href="#a-note-on-calendar-vs-trading-time">5 · A note on calendar vs trading time</a><a href="#vomma-speed-color-veta-zomma">6 · Vomma, Speed, Color, Veta, Zomma</a><a href="#what-to-look-for-as-you-slide">7 · What to look for as you slide</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VII · Theory · Chapter 7B</p>
+
+<h1>Second-order Greeks in context</h1>
+
+<p>Gamma told us how delta changes when spot moves. But delta also changes when implied volatility moves (no spot move required) and when time passes (no spot move, no vol move). These derivatives — <strong>Vanna</strong> and <strong>Charm</strong> — generate predictable hedging flows that are largely invisible to retail and relentless on a calendar-time schedule. Understanding them is the difference between knowing dealers hedge and knowing <em>when</em> they hedge.</p>
+
+<p>This section provides fully worked examples with dollar arithmetic for the two most important higher-order Greek flows: post-FOMC vanna unwinds, and the charm-driven Monday gap.</p>
+
+<h2 id="vanna-recap">1 · Vanna recap: ∂Δ/∂σ</h2>
+
+<p>We covered Vanna formally in <a class="xref" href="5d.html">Section 5D</a>. The closed form is:</p>
+
+<pre>Vanna = ∂Δ/∂σ = ∂ν/∂S = −e^(-qT)·φ(d1)·d2/σ</pre>
+
+<p>The intuition: implied volatility affects the option's pricing density. Higher IV puts more probability mass in the tails. For an OTM call, this raises delta. For an OTM put (negative delta), it pulls delta toward zero in magnitude.</p>
+
+<p><strong>Vanna is large and negative for OTM puts.</strong> When VIX spikes, OTM put deltas become more negative in magnitude. A dealer short these puts (because customers were buying protection) becomes effectively <em>longer</em> the underlying through the option leg. To remain delta-neutral, the dealer must sell more of the underlying.</p>
+
+<p>Conversely: when IV crashes (typical post-event behavior), OTM put deltas decay toward zero. The dealer's effective long exposure from the puts evaporates. They were holding extra long shares against the short puts; now they have too many shares and must sell some back.</p>
+
+<h2 id="worked-example-post-fomc-vanna-unwind-with-full-arithmetic">2 · Worked example: post-FOMC vanna unwind with full arithmetic</h2>
+
+<p>Make this concrete. Suppose SPX is 4,500. A dealer is short 5,000 SPX OTM puts at strike 4,400, against an institutional hedger who bought protection ahead of the FOMC meeting. The contracts have thirty days to expiration. Pre-FOMC, the IV at that strike is 25%.</p>
+
+<p><strong>Initial setup (pre-FOMC):</strong></p>
+
+<ul>
+<li>5,000 short contracts at K=4400, S=4500, IV=25%, T=30 days, r=4%, q=1.5%</li>
+<li>Put delta at this strike: approximately <strong>−0.36</strong> (BSM with these parameters)</li>
+<li>Dealer's effective delta exposure from the put leg: 5,000 × 100 × 0.36 = <strong>+180,000 share-equivalents long</strong></li>
+<li>Hedge: dealer is short 180,000 SPX share-equivalents (via ES futures or SPY)</li>
+</ul>
+
+<p>Net delta zero.</p>
+
+<p><strong>FOMC announcement lands. IV at the put strike crushes from 25% to 18%.</strong></p>
+
+<p>Vanna at this strike is approximately <strong>−0.005 per vol point</strong>:</p>
+
+<pre>ΔΔ_put = Vanna × Δσ = (−0.005) × (−7 vol points) = +0.035</pre>
+
+<p>The put delta moves from −0.36 to approximately −0.325. The dealer's effective long exposure from the puts drops from 180,000 to:</p>
+
+<pre>5,000 × 100 × 0.325 = 162,500 share-equivalents long</pre>
+
+<p>That's a drop of about <strong>17,500 share-equivalents long</strong>.</p>
+
+<p><strong>The dealer is now over-hedged by 17,500 short shares.</strong> To re-flatten, they buy 17,500 SPX-equivalents.</p>
+
+<p>Across the entire dealer community, the aggregate flow scales proportionally. A 500,000-contract aggregate put book produces several hundred million to over a billion dollars of mechanical buying flow in the hour after the announcement.</p>
+
+<p><strong>The aggregate is the post-FOMC ramp that has nothing to do with anyone reading the dot plot favorably.</strong> It is dealers reversing their pre-event hedges into the vol crush. The rally is mechanical, not interpretive.</p>
+
+<div class="callout brick">
+<p><em>Numbers computed at stated parameters using a standard BSM calculator. Vanna and delta vary continuously with all inputs; verify with your own calculator. The orders of magnitude — tens of thousands of share-equivalents per 5,000-contract book — are the load-bearing point.</em></p>
+</div>
+
+<p>This is the standard FOMC pattern: vol bids up into the event (because hedgers position), IV crushes after the event regardless of direction (because the event is now in the past), and dealers buy back hedge stock as their put deltas decay. The most you'll typically see this contribute to the SPX move post-FOMC is 0.3-0.5%, but it operates with high reliability across years.</p>
+
+<h2 id="charm-recap-t">3 · Charm recap: ∂Δ/∂t</h2>
+
+<p>Charm is the rate of change of delta with respect to time. Even with spot and IV frozen, delta drifts because the option's effective probability of finishing ITM evolves as the expiration window shrinks. The Black-Scholes formula for call charm:</p>
+
+<pre>Charm_call = −e^(-qT)·φ(d1)·[2(r−q)T − d2·σ√T] / (2T·σ√T)</pre>
+
+<p>Charm is small far from expiration and grows like 1/T as expiration approaches. It also operates on <strong>calendar time</strong> — including weekends, even though markets are closed. This is the technical reason for the empirical regularity of Monday gaps and the "charm bid" into OPEX Fridays.</p>
+
+<h2 id="worked-example-the-charm-weekend-gap-with-full-arithmetic">4 · Worked example: the charm weekend gap with full arithmetic</h2>
+
+<p>Charm scales with 1/T and runs on calendar time, not trading time. A 30-DTE OTM put with delta −0.25 on Friday at 4:00 PM ET has its remaining T measured in calendar days. Friday close to Monday open is 65.5 hours of calendar elapse — roughly 9% of the option's remaining life — even though markets were open for zero of those hours.</p>
+
+<p><strong>Setup:</strong> 100,000 SPX OTM put contracts (a typical institutional book) at K = SPX × 0.97, S = SPX, T = 30 calendar days. Initial put delta: −0.25. Dealer is short these puts, so their effective long-stock exposure is:</p>
+
+<pre>100,000 × 100 × 0.25 = 2,500,000 share-equivalents long</pre>
+
+<p>The dealer is hedged with 2,500,000 SPX-equivalents short in ES or SPY.</p>
+
+<p><strong>Friday 4 PM → Monday 9:30 AM. Spot is identical to Friday's close (no overnight news). T has shrunk from 30 days to 27.3 calendar days (Friday 4 PM = T₀; Monday 9:30 AM = T₀ + 65.5 hours = T₀ + 2.73 calendar days).</strong></p>
+
+<p>For our −0.25 delta put, charm is approximately −0.004 per calendar day (computed from Black-Scholes at these parameters). Over 2.73 calendar days, the delta drifts:</p>
+
+<pre>ΔΔ_put = Charm × ΔT = (−0.004) × 2.73 = −0.011</pre>
+
+<p>Toward zero. So the put delta on Monday morning is approximately:</p>
+
+<pre>−0.25 + 0.011 = −0.239</pre>
+
+<p>The dealer's effective long exposure from the puts drops from 2,500,000 to:</p>
+
+<pre>100,000 × 100 × 0.239 = 2,390,000 share-equivalents long</pre>
+
+<p>A reduction of about 110,000 share-equivalents long.</p>
+
+<p><strong>On Monday morning, the dealer is now over-hedged by 110,000 short shares</strong> (because they hadn't unwound any of the 2,500,000 short hedge over the weekend, while the put deltas decayed in their favor). To re-flatten, the dealer buys 110,000 SPX-equivalents.</p>
+
+<p>This is small per-contract but a dealer carrying 100,000 such put contracts opens Monday over-hedged by enough share-equivalents to push the SPX morning open up by a few basis points to a tenth of a percent. Aggregated across the entire dealer community, the buying flow becomes meaningful.</p>
+
+<p>These 100,000-share-equivalent flows of mechanical buy-flow hit the tape in the first 30 minutes of Monday trading and explain a meaningful chunk of the <strong>"Monday gap-up" anomaly</strong> that's been documented in SPX since the 1990s. <strong>The bull doesn't show up on Monday; the hedger does.</strong></p>
+
+<h2 id="a-note-on-calendar-vs-trading-time">5 · A note on calendar vs trading time</h2>
+
+<p>There's a subtle technical issue worth noting. Some option pricing models use calendar time for charm calculations (T measured in 365-day years), while others use trading time (T measured in 252-day years). The choice affects the magnitude of weekend charm — calendar-time models predict larger weekend charm drift than trading-time models.</p>
+
+<p>Empirically, the Monday-gap-up anomaly is more consistent with calendar-time charm decay than trading-time, which is why most dealer risk systems use calendar-time conventions for short-dated positions. This is a pedantic detail, but it's the kind of pedantic detail that separates dealers who correctly anticipate Monday morning flows from those who don't.</p>
+
+<h2 id="vomma-speed-color-veta-zomma">6 · Vomma, Speed, Color, Veta, Zomma</h2>
+
+<p>The Greek menagerie keeps going. We touched on each in <a class="xref" href="5d.html">Section 5D</a>; here is the operational summary of when each matters:</p>
+
+<p><strong>Vomma (Volga)</strong> — the second derivative of value with respect to vol. Vega convexity. Matters most for vol-of-vol risk and VIX options. Played a major role in Volmageddon (<a class="xref" href="8c.html">Section 8C</a>) — short VIX wing positioning had massively negative vomma, and as VIX spiked, the convex losses overwhelmed the linear vega losses.</p>
+
+<p><strong>Speed</strong> — the third derivative of value with respect to spot (∂Γ/∂S). In 0DTE options, speed is enormous near the strike and explains why a 1% move can flip a position from heavily long to heavily short gamma within minutes. This is the source of the "gamma flipping" intraday character that makes 0DTE risk management qualitatively different from longer-dated risk management.</p>
+
+<p><strong>Color</strong> — the rate at which gamma decays over time (∂Γ/∂t). For ATM options, color is positive near expiration: gamma compresses <em>into</em> the ATM strike as expiration approaches. By the final hour of OPEX Friday, virtually all the dealer gamma is concentrated within ±$5-10 of spot. This is the mathematical source of pin risk (<a class="xref" href="5f.html">Section 5F</a>) — the gamma concentration is what creates the gravitational pull toward strikes.</p>
+
+<p><strong>Veta</strong> — the rate at which vega decays over time (∂ν/∂t). Mostly relevant for managing the time decay of long-dated positions where vega is the dominant exposure. A vol-targeting fund running long VIX call positions for crash insurance worries about veta in a way that retail traders rarely do.</p>
+
+<p><strong>Zomma</strong> — the rate at which gamma changes with respect to vol (∂Γ/∂σ). Shows up in risk management of large vega positions and in vol surface dynamics.</p>
+
+<p>For our purposes — understanding aggregate dealer flow analysis — Vanna and Charm cover roughly 95% of the dealer-relevant higher-order dynamics. The rest get bookkeeping attention from risk managers but rarely move the broad tape on their own. If you understand vanna and charm, you understand most of what's published about "dealer flows" with any analytical rigor; the rest is mostly noise.</p>
+
+<figure class="fig" id="fig-higher-order-greeks"><figcaption><b>Figure to come:</b> higher-order-greeks</figcaption></figure>
+
+<h2 id="what-to-look-for-as-you-slide">7 · What to look for as you slide</h2>
+
+<p>Gamma peaks sharply at-the-money. Crank the days-to-expiry slider down and watch the peak grow — that's the 1/√T divergence in action. Vanna changes sign at-the-money: positive on the OTM-call side, negative on the OTM-put side. This sign asymmetry is what makes vanna flow direction-dependent. Charm is largest near the money and grows aggressively as expiry approaches — it is the mathematics of "pinning."</p>
+
+<p>The joint surface visualization is what risk managers actually look at. A position isn't risky just because of any single Greek's value — it's risky because of how all the Greeks evolve jointly as conditions change. A short straddle two days before expiration isn't dangerous because of gamma alone; it's dangerous because gamma, vanna, charm, and vomma are all simultaneously at their peak magnitudes, and any combination of spot move + IV move + time passing activates all of them against the position at once.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="7a.html" rel="prev"><span>Previous</span>7A · The PDE: why dealer hedging works at all</a>
+<a class="next" href="8a.html" rel="next" data-part="Part VIII · Aggregation"><span>Next</span>8A · GEX: aggregation from one book to the market</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

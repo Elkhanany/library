@@ -1,0 +1,79 @@
+<p class="eyebrow">Part XI · Strategy Atlas · Chapter 11.4</p>
+
+<h1>Expert tier</h1>
+
+<p class="subtitle">Synthetic and arbitrage structures</p>
+
+<h2 id="synthetic-and-arbitrage">1 · Synthetic and Arbitrage</h2>
+
+<h3 id="longshort-synthetic-future">Long/Short Synthetic Future</h3>
+
+<p><strong>Legs:</strong> Long call + short put (long synthetic) or short call + long put (short synthetic), both at same strike.</p>
+
+<p><strong>Net Greeks:</strong> Δ ≈ ±1.0, Γ ≈ 0, Θ ≈ 0, ν ≈ 0 (all option Greeks cancel out by put-call parity).</p>
+
+<p><strong>Use case:</strong> When borrow on the underlying is hard or expensive (short squeeze in single stock), the synthetic can be cheaper than the literal stock.</p>
+
+<h3 id="synthetic-put">Synthetic Put</h3>
+
+<p>Short 100 shares + long 1 call at same strike. Replicates a long put. Used when listed puts are illiquid or expensive.</p>
+
+<h3 id="longshort-combo">Long/Short Combo</h3>
+
+<p>Combo = synthetic long or short stock. Used as half of a put-call parity arbitrage trade.</p>
+
+<h3 id="strip-strap">Strip / Strap</h3>
+
+<p>Asymmetric straddle ratios. Strip = 1 call + 2 puts (bearish bias). Strap = 2 calls + 1 put (bullish bias). Long convexity in both directions with asymmetric weight.</p>
+
+<h3 id="longshort-guts">Long/Short Guts</h3>
+
+<p>Long/short ITM call + ITM put. Same vol exposure as straddle but more capital-intensive.</p>
+
+<h3 id="double-diagonal">Double Diagonal</h3>
+
+<p>Two diagonal calendars combined — one on the call side and one on the put side, at different strikes. Income from near shorts + forward vol via far longs.</p>
+
+<h3 id="box-spread-synthetic-loan-borrow">Box Spread — synthetic loan / borrow</h3>
+
+<p><strong>Legs:</strong> Long call K_low + short call K_high + short put K_low + long put K_high. All four options at the same expiration, same underlying. The combination locks in a payoff equal to the width (K_high − K_low) at expiration, regardless of where the underlying prints.</p>
+
+<p><strong>Net Greeks:</strong> Δ ≈ 0, Γ ≈ 0, Θ ≈ 0, ν ≈ 0. By put-call parity, the box is <em>deterministic</em> — every Greek cancels.</p>
+
+<p><strong>Use case:</strong> <strong>The box spread is a synthetic loan.</strong> If you <em>sell</em> the box (collect the net credit upfront, owe the width at expiration), you've borrowed money at an implied interest rate equal to the gap between the net credit and the width, annualized over the days to expiration. If you <em>buy</em> the box (pay the net debit upfront, receive the width at expiration), you've lent money at that same implied rate.</p>
+
+<p>For SPX, where boxes get tax-advantaged 1256 60/40 treatment, the box is the cleanest available retail borrowing or lending instrument: the rate is often within 5–25 bps of broker margin call rates for borrowing, and within a few bps of T-bill rates for lending. <strong>Sold</strong> SPX boxes are the institutional retail-tier alternative to broker margin loans for accessing leverage; the implied rate is typically materially below the margin rates that retail brokers charge (where the broker's spread over fed funds is often 100–400 bps).</p>
+
+<p><strong>Worked example:</strong> SPX 6,000, 90 DTE. Construct a box at strikes 6,000 / 6,100. Width = $100 per share = $10,000 per box. Suppose the net credit received from selling the box is $9,940. Implied loan: receive $9,940 today, owe $10,000 in 90 days. Implied annualized rate = (60 / 9,940) × (365 / 90) ≈ <strong>2.45% APR</strong>. If T-bills yield 4.2%, that's a <em>very cheap</em> loan — but liquidity in box spreads on listed-only exchanges varies widely, and you generally need to trade them on tastytrade, Interactive Brokers, or a specialty broker that quotes box-spread liquidity. Some brokers won't execute boxes at all.</p>
+
+<p><strong>Failure modes:</strong></p>
+
+<ul>
+<li><strong>Early assignment on the short legs.</strong> Even SPX boxes (European) are safe; SPY (American) boxes carry early-assignment risk on the short put (deep ITM puts get exercised early when the discounted strike exceeds time value). Stick to European-style index options for boxes.</li>
+<li><strong>Counterparty / clearing-firm risk.</strong> A famously cautionary tale: a Robinhood user in 2019 sold "infinite leverage" by repeatedly selling boxes — the system didn't margin the future obligation correctly. The leverage was real; when SPX moved, the user was wiped out by margin calls on positions that had been booked as a riskless arbitrage. The box itself is riskless at expiration; <em>the path to expiration</em> can produce margin calls if the broker doesn't compute the offsetting risk correctly.</li>
+<li><strong>Friction.</strong> Round-trip execution cost on a four-leg structure is typically 1–4 cents per share of width. On a $10,000 box, that's $100–$400 — meaningful relative to the ~$60 implied-rate spread above.</li>
+</ul>
+
+<p><strong>The honest framing:</strong> boxes are an <em>interest-rate</em> instrument that happens to be constructed out of options. The Greeks are not the interesting part; the implied rate is.</p>
+
+<h3 id="conversion-reversal">Conversion / Reversal</h3>
+
+<p><strong>Conversion:</strong> long stock + short call + long put at same strike (=long synthetic short via puts + actual long stock). The position is delta-neutral and locks in a small profit if the put-call parity gap is mispriced in the right direction.</p>
+
+<p><strong>Reversal:</strong> the mirror — short stock + long call + short put. Used when the parity gap is mispriced the other way.</p>
+
+<p>Both structures are professional arbitrage trades that retail traders almost never see economic versions of — bid-ask costs typically exceed the arbitrage spread. The pedagogical point is that <em>put-call parity is enforced by the existence of these structures</em>. Anyone who quotes prices that violate parity is offering an immediate arbitrage to professional desks; the prices snap back within milliseconds.</p>
+
+<h2 id="cards-are-starting-points-not-signals">2 · Cards are starting points, not signals</h2>
+
+<p>A payoff geometry is necessary but not sufficient. Every strategy above also requires:</p>
+
+<ul>
+<li>A market thesis (<a class="xref" href="10a-5.html">Section 10A.5</a>)</li>
+<li>A regime check (<a class="xref" href="10a.html">Section 10A</a> dashboard + 10F composite)</li>
+<li>A conviction score (<a class="xref" href="12b.html">Section 12B</a>)</li>
+<li>An explicit sizing rule (<a class="xref" href="12c.html">Section 12C</a>)</li>
+<li>A pre-committed kill condition</li>
+</ul>
+
+<p>Picking a structure because the payoff diagram looks attractive is the most common retail failure mode. <strong>Remember that the structure is just the vehicle for expressing a forecast, not the forecast itself.</strong> The work that produces edge is in steps 1, 2, and 3 above — not in selecting an exotic combination of legs.</p>
