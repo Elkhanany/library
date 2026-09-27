@@ -1,0 +1,118 @@
+<!--
+name: variance drag explorer
+source: src/interactives/VarianceDragExplorer.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-mu">arithmetic mean μ</label>
+      <input type="range" id="{{uid}}-mu" min="-0.2" max="0.5" step="0.01" value="0.1">
+      <output id="{{uid}}-mu-o" for="{{uid}}-mu"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sigma">volatility σ</label>
+      <input type="range" id="{{uid}}-sigma" min="0.05" max="1.5" step="0.01" value="0.3">
+      <output id="{{uid}}-sigma-o" for="{{uid}}-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-years">horizon (years)</label>
+      <input type="range" id="{{uid}}-years" min="1" max="30" step="1" value="10">
+      <output id="{{uid}}-years-o" for="{{uid}}-years"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="1000" step="1" value="42">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-drag"></output></div>
+    <div class="ctrl"><output id="{{uid}}-g"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ten"></output></div>
+  </div>
+  <p class="readout" aria-live="polite" id="{{uid}}-read"></p>
+  <figcaption><b>What compounding takes from the arithmetic mean.</b> Six simulated wealth
+  paths with arithmetic mean μ and volatility σ, each compounded twice from the same daily
+  shocks, once as simple returns and once as log returns, which is why every pair of lines
+  nearly coincides. The paths gather around e^(Gt), where G = μ − σ²/2, rather than the e^(μt)
+  the arithmetic mean promises, and the gap widens with volatility. Holding μ fixed, doubling
+  volatility from 20% to 40% raises the drag from 2% to 8% a year.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+
+  /* the app's six paths: daily steps, one point kept every 21 days. A compounds
+     the simple return mu dt + sigma sqrt(dt) z; G compounds the log return
+     (mu - sigma^2/2) dt + sigma sqrt(dt) z from the same z. */
+  var memo = { key: null };
+  function paths(mu, sigma, years, seed) {
+    var key = [mu, sigma, years, seed].join();
+    if (memo.key === key) return memo;
+    var nSteps = years * 252, dt = 1 / 252, arith = [], geom = [];
+    for (var p = 0; p < 6; p++) {
+      var r = DL.rng(seed + p), A = 1, G = 1, aP = [A], gP = [G];
+      for (var i = 0; i < nSteps; i++) {
+        var z = DL.gauss(r);
+        A *= 1 + (mu * dt + sigma * Math.sqrt(dt) * z);
+        G *= Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * z);
+        if (i % 21 === 0) { aP.push(A); gP.push(G); }
+      }
+      arith.push(aP); geom.push(gP);
+    }
+    memo = { key: key, arith: arith, geom: geom };
+    return memo;
+  }
+  function tick(v, st) {
+    if (Math.abs(v) >= 1000) return DL.compact(v, 0);
+    return DL.num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 3));
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
+        years = DL.val(U + '-years'), seed = DL.val(U + '-seed');
+    var drag = sigma * sigma / 2, g = mu - drag;
+    /* ten years of the drag, both rates compounded the same (continuous) way */
+    var ten = Math.exp(10 * mu) / Math.exp(10 * g) - 1;
+    var P = paths(mu, sigma, years, seed);
+
+    var lo = 0.5, hi = 1.5;
+    P.arith.concat(P.geom).forEach(function (a) {
+      a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; });
+    });
+    var n = P.arith[0].length;
+    var xs = P.arith[0].map(function (_, i) { return i / (n - 1) * years; });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: years, ymin: lo, ymax: hi + (hi - lo) * 0.22,
+                              pad: { l: 42, r: 14, t: 10, b: 34 }, xlabel: 'years' });
+    DL.axes(p, { nx: 6, ny: 5, yAt: 0, x: tick, y: tick });
+    DL.hline(p, 1, { color: DL.color('ink-faint'), dash: [2, 3] });
+
+    var fam = DL.fade(DL.color('familiar'), 0.5), pla = DL.fade(DL.color('plain'), 0.5);
+    P.arith.forEach(function (a) { DL.line(p, xs, a, { color: fam, width: 1.1 }); });
+    P.geom.forEach(function (a) { DL.line(p, xs, a, { color: pla, width: 1.1 }); });
+    p.fn(function (t) { return Math.exp(mu * t); }, { color: DL.color('ink-soft'), width: 1.6, dash: [5, 4] });
+    p.fn(function (t) { return Math.exp(g * t); }, { color: DL.color('accent'), width: 2.2 });
+
+    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
+    DL.legend(p, [{ label: 'e^(μt)', color: DL.color('ink-soft'), dash: [5, 4] },
+                  { label: 'e^(Gt)', color: DL.color('accent') }]);
+    DL.legend(p, [{ label: 'simple returns', color: DL.color('familiar') },
+                  { label: 'log returns', color: DL.color('plain') }], { dy: 15 });
+
+    DL.out(U + '-mu-o', DL.num(mu * 100, 0) + '%');
+    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
+    DL.out(U + '-years-o', years + 'y');
+    DL.out(U + '-seed-o', String(seed));
+    DL.out(U + '-drag', 'variance drag σ²/2 = ' + DL.num(drag * 100, 2) + '%');
+    DL.out(U + '-g', 'geometric G = ' + DL.num(g * 100, 2) + '%');
+    DL.out(U + '-gap', 'gap A − G = ' + DL.num(drag * 100, 2) + 'pp');
+    DL.out(U + '-ten', '10-yr drag (compounded) = ' + DL.num(ten * 100, 1) + '%');
+    DL.out(U + '-read', 'A strategy with arithmetic mean ' + DL.num(mu * 100, 0) +
+           '% and volatility ' + DL.num(sigma * 100, 0) + '% compounds at only ' +
+           DL.num(g * 100, 2) + '% a year.');
+  });
+  DL.bind([U + '-mu', U + '-sigma', U + '-years', U + '-seed'], draw);
+})();
+</script>

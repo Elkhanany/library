@@ -65,4 +65,4 @@ python3 tools/spx.py --verify
 
 A new `##` subsection has to be given a chapter in `outline.json`; the tool fails on one that
 belongs to none. A new widget needs a figure in `figures/`: copy the shape of an existing one,
-keep the rules at the top of `_lib.js`, and try it with `python3 tools/spxfig.py <id>`.
+keep the rules in `FIGURES.md`, and try it with `python3 tools/spxfig.py <id>`.

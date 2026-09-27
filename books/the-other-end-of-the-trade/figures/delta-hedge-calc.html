@@ -1,0 +1,75 @@
+<!--
+name: delta hedge calculator
+source: src/interactives/DeltaHedgeCalc.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">contracts dealer sold</label>
+      <input type="range" id="{{uid}}-n" min="1" max="5000" step="1" value="100">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot price</label>
+      <input type="range" id="{{uid}}-s" min="500" max="700" step="1" value="600">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Step</th><th class="c-other">This position</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">1 · delta per contract</td><td class="c-other" id="{{uid}}-d"></td></tr>
+      <tr><td class="c-trial">1 · net delta exposure</td><td class="c-other" id="{{uid}}-x"></td></tr>
+      <tr><td class="c-trial">2 · dealer buys</td><td class="c-other" id="{{uid}}-b"></td></tr>
+      <tr><td class="c-trial">2 · notional</td><td class="c-other" id="{{uid}}-v"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>The first hedge is one multiplication.</b> A dealer has sold call contracts
+  struck at $600 with 30 days to expiry, priced at 18% implied vol. Step 1 finds the call's
+  delta and the short exposure it leaves, delta × contracts × 100 shares; step 2 buys exactly
+  that many shares, and the book is flat. The curve is the hedge the same position needs at
+  every spot on the slider, so the shares bought at one spot are the wrong hedge at the
+  next.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 600, SIGMA = 0.18, T = 30 / 365;
+  var N = DL.$(U + '-n'), S = DL.$(U + '-s');
+
+  /* the app's hedge: call delta at K = 600, 30 DTE, σ = 18%, times the contracts */
+  function delta(s) { return DL.bsDelta(s, K, T, SIGMA, 'call'); }
+  /* axis numbers in thousands without a trailing ".0" */
+  function k(v) {
+    if (v === 0) return '0';
+    if (Math.abs(v) < 1000) return DL.num(v, 0);
+    return DL.compact(v, 1).replace('.0K', 'K').replace('.0M', 'M');
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var n = parseFloat(N.value), s = parseFloat(S.value);
+    var d = delta(s), shares = Math.round(d * n * 100), full = n * 100;
+    var p = new NMT.Plot(c, { xmin: 500, xmax: 700, ymin: 0, ymax: full * 1.12,
+                              pad: { l: 46, r: 14, t: 22, b: 30 } });
+    DL.axes(p, { xs: [500, 550, 600, 650, 700], ny: 4, yAxis: false,
+                 x: function (v) { return DL.usd(v, 0); }, y: function (v) { return k(v); } });
+    DL.vline(p, K, { color: DL.fade(DL.color('accent'), 0.6), dash: [3, 3] });
+    p.text(K, full * 1.12, 'K = $600', { dx: 5, dy: 13, color: DL.color('ink-faint'),
+                                         font: '11px ' + DL.color('sans') });
+    p.fn(function (x) { return delta(x) * n * 100; }, { color: DL.color('familiar'), width: 2, N: 240 });
+    p.seg(s, 0, s, d * n * 100, { color: DL.fade(DL.color('accent'), 0.55), dash: [2, 3], width: 1 });
+    p.dot(s, d * n * 100, { color: DL.color('accent'), r: 4.5, ring: true });
+    p.text(500, full * 1.12, 'shares the hedge needs, by spot',
+           { dx: 2, dy: -8, color: DL.color('ink-soft'), font: '11px ' + DL.color('sans') });
+
+    DL.out(U + '-n-o', DL.num(n, 0));
+    DL.out(U + '-s-o', DL.usd(s, 0));
+    DL.out(U + '-d', DL.num(d, 4));
+    DL.out(U + '-x', DL.MINUS + DL.num(d * n * 100, 0) + ' shares');
+    DL.out(U + '-b', DL.num(shares, 0) + ' shares');
+    DL.out(U + '-v', DL.usd(shares * s, 0));
+  });
+  DL.bind([U + '-n', U + '-s'], draw);
+})();
+</script>

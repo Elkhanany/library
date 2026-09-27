@@ -1,0 +1,79 @@
+<!--
+name: three payoffs
+source: src/interactives/PayoffOverlay.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Instrument family" id="{{uid}}-fam">
+      <label>family</label>
+      <button type="button" data-v="future" class="on" aria-pressed="true">futures (linear)</button>
+      <button type="button" data-v="call" aria-pressed="false">call (convex)</button>
+      <button type="button" data-v="put" aria-pressed="false">put (convex)</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-pos"></output></div>
+    <div class="ctrl"><output id="{{uid}}-be"></output></div>
+  </div>
+  <figcaption><b>Linear against convex.</b> The payoff at expiration of a long future, a long
+  call and a long put, all struck at K = 100, the options bought for a premium of 3. Choose a
+  family to draw it; the other two stay behind it as faint lines. Green is profit and red is
+  loss, and the dashed lines mark the strike and the breakeven (BE). The future is one straight
+  line; each option bends at the strike.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 100, PREMIUM = 3;
+  var FAM = {
+    future: { label: 'long future', be: K, f: function (S) { return S - K; } },
+    call: { label: 'long call', be: K + PREMIUM, f: function (S) { return Math.max(S - K, 0) - PREMIUM; } },
+    put: { label: 'long put', be: K - PREMIUM, f: function (S) { return Math.max(K - S, 0) - PREMIUM; } }
+  };
+  var family = DL.seg(U + '-fam', function () { draw(); });
+
+  /* a label centred on x, kept inside the canvas */
+  function tag(p, x, y, s, color, dy) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var w = p.g.measureText(s).width, px = p.X(x);
+    var at = Math.min(Math.max(px, w / 2 + 2), p.w - w / 2 - 2);
+    p.text(x, y, s, { dx: at - px, dy: dy, align: 'center', baseline: 'middle', color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var fam = family(), cur = FAM[fam];
+    /* the app's PayoffChart: S from 0.6K to 1.4K in 200 steps, the y range
+       the payoff's own, but never inside -10 to +10 */
+    var sMin = K * 0.6, sMax = K * 1.4, xs = [], ys = [];
+    for (var i = 0; i <= 200; i++) {
+      var s = sMin + (sMax - sMin) * i / 200;
+      xs.push(s); ys.push(cur.f(s));
+    }
+    var yMin = Math.min.apply(null, ys.concat([-10])), yMax = Math.max.apply(null, ys.concat([10]));
+    var room = (yMax - yMin) * 0.05;
+    var p = new NMT.Plot(c, { xmin: sMin, xmax: sMax, ymin: yMin - room, ymax: yMax + room,
+                              pad: { l: 40, r: 14, t: 34, b: 30 }, grid: false });
+    DL.axes(p, { xs: [60, 80, 100, 120, 140], ys: [yMin, 0, yMax],
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return v > 0 ? '+' + DL.num(v, 0) : DL.num(v, 0); } });
+
+    DL.band(p, xs, ys.map(function (y) { return Math.max(0, y); }), 0, DL.fade(DL.color('insight'), 0.16));
+    DL.band(p, xs, ys.map(function (y) { return Math.min(0, y); }), 0, DL.fade(DL.color('plain'), 0.16));
+    /* the two families not chosen, faintly, for comparison */
+    Object.keys(FAM).forEach(function (k) {
+      if (k === fam) return;
+      DL.line(p, xs, xs.map(FAM[k].f), { color: DL.fade(DL.color('ink-faint'), 0.45), width: 1.2 });
+    });
+    p.seg(K, p.o.ymin, K, p.o.ymax, { color: DL.fade(DL.color('accent'), 0.55), width: 1, dash: [3, 3] });
+    p.seg(cur.be, p.o.ymin, cur.be, p.o.ymax, { color: DL.color('familiar'), width: 1, dash: [2, 3] });
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 2 });
+    tag(p, K, p.o.ymax, 'K = ' + K, DL.color('accent'), -22);
+    tag(p, cur.be, p.o.ymax, 'BE = ' + DL.num(cur.be, 2), DL.color('familiar'), -8);
+
+    DL.out(U + '-pos', 'position = ' + cur.label + ', at expiration');
+    DL.out(U + '-be', 'breakeven = ' + DL.num(cur.be, 2));
+  });
+})();
+</script>

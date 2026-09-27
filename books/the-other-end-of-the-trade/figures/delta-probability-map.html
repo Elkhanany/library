@@ -1,0 +1,141 @@
+<!--
+name: delta probability map
+source: src/interactives/DeltaProbabilityMap.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot S</label>
+      <input type="range" id="{{uid}}-s" min="4500" max="7500" step="5" value="6000">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">strike K</label>
+      <input type="range" id="{{uid}}-k" min="4500" max="7500" step="5" value="6000">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-dte">DTE</label>
+      <input type="range" id="{{uid}}-dte" min="1" max="365" step="1" value="30">
+      <output id="{{uid}}-dte-o" for="{{uid}}-dte"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV σ</label>
+      <input type="range" id="{{uid}}-iv" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-r">risk-free r</label>
+      <input type="range" id="{{uid}}-r" min="0" max="0.10" step="0.005" value="0.04">
+      <output id="{{uid}}-r-o" for="{{uid}}-r"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-q">dividend yield q</label>
+      <input type="range" id="{{uid}}-q" min="0" max="0.05" step="0.001" value="0.015">
+      <output id="{{uid}}-q-o" for="{{uid}}-q"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="{{uid}}-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Quantity</th><th>Value</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">N(d₁)</td><td data-label="Value" id="{{uid}}-nd1"></td><td data-label="Meaning">share-numeraire probability</td></tr>
+      <tr class="on"><td class="c-trial" id="{{uid}}-dk"></td><td data-label="Value" id="{{uid}}-dv"></td><td data-label="Meaning">hedge ratio (shares per contract ÷ 100)</td></tr>
+      <tr><td class="c-trial" id="{{uid}}-pk"></td><td data-label="Value" id="{{uid}}-pv"></td><td data-label="Meaning">risk-neutral ITM probability</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-diff"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>N(d₁), delta and N(d₂) are three different numbers.</b> The standard normal
+  density with d₁ and d₂ marked, σ√T apart; the shaded area is the risk-neutral probability of
+  finishing in the money, N(d₂) for a call and 1 − N(d₂) for a put. The table sets it beside
+  N(d₁) and the delta, the hedge ratio. Lengthen the time to expiry or raise the IV and the gap
+  between |Δ| and P(ITM) opens.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['s', 'k', 'dte', 'iv', 'r', 'q'];
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* a label beside a marker line, flipped to the left near the right edge */
+  function tag(p, x, y, s, color) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var right = p.X(x) + 4 + p.g.measureText(s).width > p.w - 4;
+    p.text(x, y, s, { dx: right ? -4 : 4, align: right ? 'right' : 'left', baseline: 'middle',
+                      color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var spot = DL.val(U + '-s'), strike = DL.val(U + '-k'), dte = DL.val(U + '-dte'),
+        iv = DL.val(U + '-iv'), rate = DL.val(U + '-r'), div = DL.val(U + '-q');
+    var optType = type();
+
+    var T = dte / 365;
+    var r = DL.bsm(spot, strike, T, iv, rate, div);
+    var delta = optType === 'call' ? r.callDelta : r.putDelta;
+    var itmProb = optType === 'call' ? r.Nd2 : 1 - r.Nd2;
+    var diff = Math.abs(delta) - itmProb, gap = Math.abs(diff);
+
+    /* the app's density plot: phi on [-4, 4], its peak at 92% of the height */
+    var zMin = -4, zMax = 4, peak = DL.phi(0);
+    var p = new NMT.Plot(c, { xmin: zMin, xmax: zMax, ymin: 0, ymax: peak / 0.92,
+                              pad: { l: 14, r: 14, t: 38, b: 28 }, grid: false });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], y: false, yAxis: false,
+                 x: function (v) { return DL.num(v, 0); } });
+    var d1c = Math.max(zMin, Math.min(zMax, r.d1)), d2c = Math.max(zMin, Math.min(zMax, r.d2));
+
+    /* P(ITM) as an area: left of d2 for a call, right of it for a put */
+    var lo = optType === 'call' ? zMin : d2c, hi = optType === 'call' ? d2c : zMax;
+    var zs = [], hs = [];
+    for (var i = 0; i <= 160; i++) {
+      var z = zMin + (zMax - zMin) * i / 160;
+      if (z > lo && z < hi) { zs.push(z); hs.push(DL.phi(z)); }
+    }
+    zs.unshift(lo); hs.unshift(DL.phi(lo)); zs.push(hi); hs.push(DL.phi(hi));
+    DL.band(p, zs, hs, 0, DL.fade(DL.color('insight'), 0.18));
+
+    p.fn(DL.phi, { color: DL.color('accent'), width: 1.6 });
+    p.seg(d1c, 0, d1c, p.invY(10), { color: DL.color('familiar'), width: 1.4, dash: [2, 2] });
+    p.seg(d2c, 0, d2c, p.invY(25), { color: DL.color('insight'), width: 1.4, dash: [2, 2] });
+    /* the two labels ride above the curve, d1 on the top line */
+    tag(p, d1c, p.invY(10), 'd₁ = ' + DL.num(r.d1, 2), DL.color('familiar'));
+    tag(p, d2c, p.invY(25), 'd₂ = ' + DL.num(r.d2, 2), DL.color('insight'));
+
+    var call = optType === 'call';
+    DL.out(U + '-s-o', String(spot));
+    DL.out(U + '-k-o', String(strike));
+    DL.out(U + '-dte-o', dte + 'd');
+    DL.out(U + '-iv-o', (iv * 100).toFixed(0) + '%');
+    DL.out(U + '-r-o', (rate * 100).toFixed(1) + '%');
+    DL.out(U + '-q-o', (div * 100).toFixed(2) + '%');
+    DL.out(U + '-nd1', DL.num(r.Nd1, 4));
+    DL.out(U + '-dk', call ? 'Call Δ = e^(−qT)·N(d₁)' : 'Put Δ = e^(−qT)·(N(d₁) − 1)');
+    DL.out(U + '-dv', DL.num(delta, 4));
+    DL.out(U + '-pk', call ? 'N(d₂) = P(ITM)' : '1 − N(d₂) = P(ITM)');
+    DL.out(U + '-pv', DL.num(itmProb, 4));
+    DL.out(U + '-diff', '|Δ| − P(ITM) = ' + DL.signed(diff, 4));
+    DL.out(U + '-gap', 'absolute gap = ' + DL.num(gap, 4));
+    if (gap < 0.005) {
+      DL.out(U + '-vk', 'Δ and P(ITM) are within 0.005.');
+      DL.out(U + '-vt', 'The retail shortcut, delta as the probability of finishing in the ' +
+                        'money, barely fails here.');
+    } else {
+      DL.out(U + '-vk', '|Δ| ' + (diff > 0 ? 'exceeds' : 'falls short of') +
+                        ' P(ITM) by a meaningful margin.');
+      DL.out(U + '-vt', 'Reading delta as the probability of finishing in the money loses ' +
+                        'accuracy as σ√T, the distance from d₁ down to d₂, grows with vol and time.');
+    }
+  });
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
+})();
+</script>

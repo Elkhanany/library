@@ -1,0 +1,103 @@
+<!--
+name: tax drag comparison
+source: src/interactives/TaxDragComparison.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-fed">federal bracket</label>
+      <input type="range" id="{{uid}}-fed" min="0.10" max="0.37" step="0.01" value="0.32">
+      <output id="{{uid}}-fed-o" for="{{uid}}-fed"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-st">state tax</label>
+      <input type="range" id="{{uid}}-st" min="0" max="0.133" step="0.005" value="0.05">
+      <output id="{{uid}}-st-o" for="{{uid}}-st"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pl">annual P&amp;L</label>
+      <input type="range" id="{{uid}}-pl" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="{{uid}}-pl-o" for="{{uid}}-pl"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-yr">horizon</label>
+      <input type="range" id="{{uid}}-yr" min="1" max="30" step="1" value="10">
+      <output id="{{uid}}-yr-o" for="{{uid}}-yr"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">From $100k</th><th>SPY (1099)</th><th>XSP / SPX (1256)</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Effective rate</td><td data-label="SPY (1099)" id="{{uid}}-r0"></td><td data-label="XSP / SPX (1256)" id="{{uid}}-r1"></td></tr>
+      <tr><td class="c-trial">After-tax annual</td><td data-label="SPY (1099)" id="{{uid}}-a0"></td><td data-label="XSP / SPX (1256)" id="{{uid}}-a1"></td></tr>
+      <tr><td class="c-trial">Terminal wealth</td><td data-label="SPY (1099)" id="{{uid}}-w0"></td><td data-label="XSP / SPX (1256)" id="{{uid}}-w1"></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gpct"></output></div>
+    <div class="ctrl"><output id="{{uid}}-spread"></output></div>
+  </div>
+  <figcaption><b>The same pre-tax P&amp;L, two tax regimes.</b> $100,000 compounds for the
+  chosen horizon at the annual P&amp;L after tax, taxed as SPY short-term gains at the ordinary
+  rate (federal plus state) or as 1256 gains on XSP or SPX, 60% long-term and 40% short-term.
+  The bars are the terminal wealth. The model holds the long-term rate at 20% at every bracket
+  and charges state tax only on the 40% short-term share.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LT_CAP = 0.20, START = 100000;
+
+  /* ticks in dollars, K/M/B/T, with only the decimals a tick needs */
+  function money(v) {
+    var a = Math.abs(v), u = a >= 1e12 ? 1e12 : a >= 1e9 ? 1e9 : a >= 1e6 ? 1e6 : a >= 1e3 ? 1e3 : 1;
+    var q = a / u, d = 0;
+    while (d < 2 && Math.abs(Number(q.toFixed(d)) - q) > 1e-9 * Math.max(1, q)) d++;
+    return DL.compact(v, d, '$');
+  }
+  function whole(v) { return DL.usd(v, 0); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var fed = DL.val(U + '-fed'), state = DL.val(U + '-st'),
+        pl = DL.val(U + '-pl'), years = DL.val(U + '-yr');
+
+    /* the app's arithmetic: ordinary rate on SPY; 60% at the long-term cap
+       and 40% at the ordinary rate on a 1256 contract */
+    var ordRate = fed + state;
+    var sectionRate = 0.6 * LT_CAP + 0.4 * (fed + state);
+    var spyAfter = pl * (1 - ordRate), sectionAfter = pl * (1 - sectionRate);
+    var spyTerminal = START * Math.pow(1 + spyAfter, years);
+    var sectionTerminal = START * Math.pow(1 + sectionAfter, years);
+    var gapDollar = sectionTerminal - spyTerminal;
+    var gapPct = (sectionTerminal / spyTerminal - 1) * 100;
+    var maxV = Math.max(spyTerminal, sectionTerminal);
+
+    var p = new NMT.Plot(c, { xmin: 0, xmax: maxV * 1.06, ymin: 0, ymax: 3,
+                              pad: { l: 14, r: 18, t: 8, b: 30 }, grid: false });
+    DL.axes(p, { nx: 4, y: false, yAxis: false, x: money });
+    DL.hbars(p, [2.05], [spyTerminal], { h: 0.5, color: DL.fade(DL.color('plain'), 0.55) });
+    DL.hbars(p, [0.7], [sectionTerminal], { h: 0.5, color: DL.fade(DL.color('insight'), 0.55) });
+    p.text(0, 2.3, 'SPY · short-term, ordinary rates', { dy: -4, font: '11px ' + DL.color('sans'),
+                                                      color: DL.color('ink-soft') });
+    p.text(0, 0.95, 'XSP / SPX · 1256 60/40', { dy: -4, font: '11px ' + DL.color('sans'),
+                                              color: DL.color('ink-soft') });
+
+    DL.out(U + '-fed-o', (fed * 100).toFixed(0) + '%');
+    DL.out(U + '-st-o', (state * 100).toFixed(1) + '%');
+    DL.out(U + '-pl-o', (pl * 100).toFixed(0) + '%');
+    DL.out(U + '-yr-o', years + 'y');
+    DL.out(U + '-r0', (ordRate * 100).toFixed(1) + '%');
+    DL.out(U + '-r1', (sectionRate * 100).toFixed(1) + '%');
+    DL.out(U + '-a0', (spyAfter * 100).toFixed(2) + '%');
+    DL.out(U + '-a1', (sectionAfter * 100).toFixed(2) + '%');
+    DL.out(U + '-w0', whole(spyTerminal));
+    DL.out(U + '-w1', whole(sectionTerminal));
+    DL.out(U + '-gap', 'terminal gap = ' + whole(gapDollar));
+    DL.out(U + '-gpct', 'gap = ' + DL.num(gapPct, 1) + '%');
+    DL.out(U + '-spread', 'tax-rate spread = ' + DL.num((ordRate - sectionRate) * 100, 1) + 'pp');
+  });
+  DL.bind([U + '-fed', U + '-st', U + '-pl', U + '-yr'], draw);
+})();
+</script>

@@ -1,0 +1,97 @@
+<!--
+name: forward IV calculator
+source: src/interactives/ForwardIVCalculator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s1">σ₁ · front IV</label>
+      <input type="range" id="{{uid}}-s1" min="0.05" max="2" step="0.01" value="0.38">
+      <output id="{{uid}}-s1-o" for="{{uid}}-s1"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-t1">t₁ · front DTE</label>
+      <input type="range" id="{{uid}}-t1" min="1" max="60" step="1" value="14">
+      <output id="{{uid}}-t1-o" for="{{uid}}-t1"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-s2">σ₂ · back IV</label>
+      <input type="range" id="{{uid}}-s2" min="0.05" max="2" step="0.01" value="0.28">
+      <output id="{{uid}}-s2-o" for="{{uid}}-s2"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-t2">t₂ · back DTE</label>
+      <input type="range" id="{{uid}}-t2" min="15" max="365" step="1" value="35">
+      <output id="{{uid}}-t2-o" for="{{uid}}-t2"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-fv"></output></div>
+    <div class="ctrl"><output id="{{uid}}-fi"></output></div>
+    <div class="ctrl"><output id="{{uid}}-w"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The vol the term structure prices between two expiries.</b> Set the implied
+  vol and days to expiry of a front and a back month; the middle bar is the forward vol for
+  the window between them, σ_forward = √[(σ₂²T₂ − σ₁²T₁) / (T₂ − T₁)]. The defaults are the
+  chapter's AAPL example, where 38% for 14 days and 28% for 35 days leave 18.5% for the 21
+  days after earnings. Raise the front vol far enough and the forward variance turns
+  negative, which no consistent term structure allows.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var S1 = DL.$(U + '-s1'), T1 = DL.$(U + '-t1'), S2 = DL.$(U + '-s2'), T2 = DL.$(U + '-t2');
+
+  /* the app's reading of the forward vol against the back month */
+  function reading(neg, sf, s2) {
+    if (neg) return ['Negative forward variance.', 'The inputs imply an arbitrage opportunity: the ' +
+      'back month is too cheap relative to the front for the term structure to be consistent. ' +
+      'Re-check the quotes; this almost always means a data error rather than a tradable mispricing.'];
+    if (sf < s2 * 0.85) return ['Forward IV is meaningfully below the back-month IV.', 'Calendar ' +
+      'and diagonal spreads benefit from this discount: sell the front, buy the back.'];
+    if (sf > s2 * 1.15) return ['Forward IV exceeds the back-month IV.', 'The term structure ' +
+      'prices an event between t₁ and t₂ that the back-month average dilutes. Selling the back ' +
+      'and buying the front loses on convexity.'];
+    return ['Forward IV is roughly in line with the back month.', 'No meaningful event premium ' +
+      'is being priced between t₁ and t₂.'];
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var s1 = parseFloat(S1.value), t1 = parseFloat(T1.value), s2 = parseFloat(S2.value);
+    /* the back month's slider starts a day after the front month, as in the app */
+    if (T2.min !== String(t1 + 1)) T2.min = String(t1 + 1);
+    if (parseFloat(T2.value) < t1 + 1) T2.value = String(t1 + 1);
+    var t2 = parseFloat(T2.value);
+    var ty1 = t1 / 365, ty2 = Math.max(t2, t1 + 1) / 365;
+    var fvar = (s2 * s2 * ty2 - s1 * s1 * ty1) / (ty2 - ty1), neg = fvar < 0;
+    var sf = neg ? null : Math.sqrt(fvar);
+
+    var vals = [s1 * 100, neg ? 0 : sf * 100, s2 * 100];
+    var top = Math.max(vals[0], vals[1], vals[2], 1);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 3, ymin: 0, ymax: top * 1.2,
+                              pad: { l: 14, r: 14, t: 8, b: 26 }, grid: false });
+    DL.axes(p, { xs: [], ys: [], x: false, y: false, yAxis: false });
+    var cols = [DL.color('familiar'), DL.color(neg ? 'plain' : 'accent'), DL.color('familiar')];
+    DL.bars(p, [0.5, 1.5, 2.5], vals, { w: 0.6, color: function (v, i) { return DL.fade(cols[i], 0.6); } });
+    vals.forEach(function (v, i) {
+      p.text(0.5 + i, v, neg && i === 1 ? '—' : DL.num(v, 1) + '%',
+             { align: 'center', dy: -5, color: cols[i] });
+    });
+    DL.xticks(p, [0.5, 1.5, 2.5], function (x, i) { return ['σ₁ · front', 'σ_forward', 'σ₂ · back'][i]; });
+
+    var r = reading(neg, sf, s2);
+    DL.out(U + '-s1-o', Math.round(s1 * 100) + '%');
+    DL.out(U + '-t1-o', t1 + 'd');
+    DL.out(U + '-s2-o', Math.round(s2 * 100) + '%');
+    DL.out(U + '-t2-o', t2 + 'd');
+    DL.out(U + '-fv', 'forward variance = ' + (neg ? 'negative' : DL.num(fvar, 5)));
+    DL.out(U + '-fi', 'forward IV = ' + (neg ? '—' : DL.num(sf * 100, 1) + '%'));
+    DL.out(U + '-w', 'window = ' + t1 + 'd → ' + t2 + 'd');
+    DL.out(U + '-vk', r[0]);
+    DL.out(U + '-vt', r[1]);
+  });
+  DL.bind([U + '-s1', U + '-t1', U + '-s2', U + '-t2'], draw);
+})();
+</script>

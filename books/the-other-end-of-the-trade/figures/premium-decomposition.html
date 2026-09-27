@@ -1,0 +1,77 @@
+<!--
+name: premium decomposition
+source: src/interactives/PremiumDecomposition.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot S</label>
+      <input type="range" id="{{uid}}-s" min="85" max="115" step="0.5" value="105">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">K = 100</th><th>Intrinsic</th><th>Extrinsic</th><th>Total</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Call</td><td data-label="Intrinsic" id="{{uid}}-ci"></td><td data-label="Extrinsic" id="{{uid}}-ce"></td><td data-label="Total" id="{{uid}}-ct"></td></tr>
+      <tr><td class="c-trial">Put</td><td data-label="Intrinsic" id="{{uid}}-pi"></td><td data-label="Extrinsic" id="{{uid}}-pe"></td><td data-label="Total" id="{{uid}}-pt"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>Intrinsic and extrinsic value on each side of the strike.</b> A call and a put
+  at K = 100, with the total premium held at $6.50 for illustration. Drag spot through the
+  strike: the option in the money gains intrinsic value, max(S − K, 0) for the call and
+  max(K − S, 0) for the put, and extrinsic is whatever is left of the $6.50. Past $6.50 in the
+  money the premium is all intrinsic. The other side of the chain is always the mirror
+  image.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 100, TOTAL = 6.5;
+
+  /* a segment's value, written inside it when it fits */
+  function inside(p, x0, x1, y, s) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    if (p.X(x1) - p.X(x0) < p.g.measureText(s).width + 8) return;
+    p.text((x0 + x1) / 2, y, s, { align: 'center', baseline: 'middle', font: font, color: DL.color('ink') });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var spot = DL.val(U + '-s');
+    /* the app's split: intrinsic is exercise value, extrinsic the rest of
+       a premium fixed at 6.50, never below zero */
+    var intrinsicCall = Math.max(spot - K, 0);
+    var extrinsicCall = Math.max(0, TOTAL - intrinsicCall);
+    var intrinsicPut = Math.max(K - spot, 0);
+    var extrinsicPut = Math.max(0, TOTAL - intrinsicPut);
+
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 15.5, ymin: 0, ymax: 2.9,
+                              pad: { l: 40, r: 14, t: 24, b: 30 }, grid: false });
+    DL.axes(p, { xs: [0, 5, 10, 15], y: false, yAxis: false,
+                 x: function (v) { return DL.usd(v, 0); } });
+    var fin = DL.fade(DL.color('accent'), 0.45), fex = DL.fade(DL.color('familiar'), 0.4);
+    var rows = [[2.0, intrinsicCall, extrinsicCall, 'call'], [0.85, intrinsicPut, extrinsicPut, 'put']];
+    rows.forEach(function (r) {
+      DL.hbars(p, [r[0]], [r[1] + r[2]], { h: 0.62, base: r[1], color: fex });
+      if (r[1] > 0) DL.hbars(p, [r[0]], [r[1]], { h: 0.62, color: fin });
+      inside(p, 0, r[1], r[0], DL.usd(r[1], 2));
+      inside(p, r[1], r[1] + r[2], r[0], DL.usd(r[2], 2));
+      p.text(0, r[0], r[3], { dx: -8, align: 'right', baseline: 'middle', color: DL.color('ink-soft') });
+    });
+    p.g.textAlign = 'left';   /* DL.legend keeps whatever alignment was set last */
+    DL.legend(p, [{ label: 'intrinsic', color: fin, box: true },
+                  { label: 'extrinsic', color: fex, box: true }], { dx: -36, dy: -24 });
+
+    DL.out(U + '-s-o', DL.usd(spot, 1));
+    DL.out(U + '-ci', DL.usd(intrinsicCall, 2));
+    DL.out(U + '-ce', DL.usd(extrinsicCall, 2));
+    DL.out(U + '-ct', DL.usd(intrinsicCall + extrinsicCall, 2));
+    DL.out(U + '-pi', DL.usd(intrinsicPut, 2));
+    DL.out(U + '-pe', DL.usd(extrinsicPut, 2));
+    DL.out(U + '-pt', DL.usd(intrinsicPut + extrinsicPut, 2));
+  });
+  DL.bind([U + '-s'], draw);
+})();
+</script>
