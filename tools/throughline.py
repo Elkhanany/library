@@ -214,7 +214,10 @@ def build():
     total = sum(len(b) for _, _, e in parts for *_, b in [e[0]] for _ in [0]) if parts else 0
     total = sum(len(bx) for _, _, entries in parts for *_, bx in entries)
     words = 0
-    out = ['<p class="eyebrow">Reference</p>',
+    # The eyebrow is the destination's one name (NAV-09): the bar, the sidebar
+    # and the <title> call this page In Plain Terms, and the h1 keeps the
+    # page's own title.
+    out = ['<p class="eyebrow">In Plain Terms</p>',
            '<h1>The Through-Line</h1>',
            '<p class="subtitle">The whole book in plain language, assembled from every '
            '&ldquo;In plain terms&rdquo; passage in order. No mathematics.</p>']
@@ -241,7 +244,17 @@ def build():
            '<a href="ledger.html">Math Ledger</a></p>' % (total, f"{words:,}", span))
     out.append('<div class="callout plain bridge tl-closing">%s</div>' % CLOSING)
     out.insert(3, hdr)
-    open(os.path.join(SRC, "_throughline.html"), "w").write("\n\n".join(out))
+    # The file keeps the line endings it already has. It was last written on
+    # Windows, where open() writes CRLF, and regenerating it here with LF made
+    # every line differ in git when only a word had changed.
+    dest = os.path.join(SRC, "_throughline.html")
+    text = "\n\n".join(out)
+    if os.path.exists(dest):
+        with open(dest, "rb") as fh:
+            if b"\r\n" in fh.read(4096):
+                text = text.replace("\r\n", "\n").replace("\n", "\r\n")
+    with open(dest, "w", encoding="utf-8", newline="") as fh:
+        fh.write(text)
     print(f"through-line: {total} passages, {words:,} words")
 
 

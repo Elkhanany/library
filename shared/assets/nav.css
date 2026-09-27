@@ -1,218 +1,861 @@
 /* ===========================================================================
- * nav.css -- the library bar, and the only stylesheet that describes it.
+ * nav.css -- the library bar, the library's tokens, and the only stylesheet
+ * every page in docs/ loads.
  *
- * The bar used to live in book.css, which meant it existed only on the pages
- * that load book.css. The physics book's landing page, the atlas and the
- * timeline do not load it: they are self-contained documents with their own
- * palettes, and each had grown a bar of its own or none at all. So the site
- * had four ideas of how to get back to the library and one of them was "you
- * cannot".
+ * tools/nav.py links this file from every page it writes, the hub included,
+ * and the Dropbox build inlines it (tools/make.py). So it cannot assume
+ * book.css: not its variable names, not its fonts, not its palette. The atlas
+ * and the timeline are whole documents with their own palettes and load it
+ * last of all.
  *
- * Moving the rules here, and having tools/nav.py link this file from every
- * page it writes, is what makes one bar possible. Which means this file cannot
- * assume book.css: not its variable names, not its fonts, not its palette.
+ * TOKENS
+ *
+ * Every custom property this file defines is prefixed --lib- (DESIGN.md
+ * section 8): the timeline already has a --bar-h and a --focus of its own, and
+ * a shared sheet that loads last must not reach into a page's names. It is the
+ * one place the type stacks are written; every other sheet reads
+ * var(--lib-serif, <the same literal stack>), so a page that has not loaded
+ * this file yet still sets the right faces.
  *
  * COLOUR
  *
  * Each page already knows what it is made of, and it is the page rather than
- * this file that follows the reader into dark mode. So every token below reads
- * the page's own variable and falls back to the next book's spelling of the
- * same idea, ending in a literal. book.css calls the page ground --bg and the
- * two philosophy books call it --paper; both are answered by one declaration,
- * and neither book had to be edited to agree.
- *
- * Nothing here is stamped in by the builder for that reason. A stamped palette
- * would be a second copy of the theme, correct until someone edited one of
- * them.
+ * this file that follows the reader into dark mode. So every colour below
+ * reads the page's own variable and falls back to the next book's spelling of
+ * the same idea, ending in a literal. book.css and the hub call the page
+ * ground --bg and the two philosophy books call it --paper; both are answered
+ * by one declaration. Nothing here is stamped in by the builder: a stamped
+ * palette would be a second copy of the theme, correct until someone edited
+ * one of them.
  * =========================================================================== */
+
+:root {
+  /* System faces only (DESIGN.md section 2). Palatino Linotype sits ahead of
+     Sitka Text, so Windows never sets Sitka's text optical size at display
+     sizes. */
+  --lib-serif: "Iowan Old Style", Charter, "Bitstream Charter", "Palatino Linotype",
+               "Sitka Text", Palatino, "Source Serif 4", "Noto Serif",
+               Georgia, Cambria, serif;
+  --lib-sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  --lib-mono:  ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* The bar is 44px at every width. The installed app adds the status-bar
+     inset below; the Dropbox build, which has no bar, sets 0 after this file. */
+  --lib-bar-h: 2.75rem;
+
+  /* One inset: the bar's padding, the sidebar's, and the inner gutter of every
+     centred frame read it, so the brand sits at the same x on every page and
+     lines up with the sidebar's text on a chapter. */
+  --lib-inset: 1.25rem;
+
+  /* One stacking scale for everything that floats. */
+  --lib-z-bar: 40;
+  --lib-z-folio: 40;
+  --lib-z-menu: 45;
+  --lib-z-scrim: 50;
+  --lib-z-sheet: 60;
+  --lib-z-card: 70;
+  --lib-z-toast: 80;
+
+  /* This shell styles the folio bar and the sheet drawer. book.js reads it
+     and, on an older shell that has neither, builds the floating drawer
+     button that shell does style instead. */
+  --lib-folio: 1;
+}
+
+@media (max-width: 640px) {
+  :root { --lib-inset: 1rem; }
+}
+
+/* Never 0 in the installed app: the status bar is drawn over the page there,
+   and the bar grows by exactly what the system reserves (pwa.css pads it). */
+html.standalone { --lib-bar-h: calc(2.75rem + env(safe-area-inset-top, 0px)); }
+
+
+/* ================================================================= the bar
+ * One row, one height and one inset on every page, full-bleed, reading no
+ * frame width (DESIGN.md sections 5 and 6). It used to wrap into a 104px
+ * double row on three clinical pages, hold a gutter open for a toggle that
+ * floated over it on some pages and not others, and move Library 74px between
+ * page types (NAV-03, NAV-10). Now the theme control is the last item in the
+ * bar itself and there are no gutters to hold. */
 
 .topnav {
   --nav-bg:     var(--bg, var(--paper, #fbfaf7));
   --nav-ink:    var(--ink, #1b1b1d);
   --nav-soft:   var(--ink-soft, var(--ink-2, #4a4a50));
   --nav-rule:   var(--rule, #e0ddd5);
-  --nav-accent: var(--accent, var(--rubric, #1b4b80));
-  --nav-sans:   var(--sans, var(--f-ui, -apple-system, BlinkMacSystemFont,
-                "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif));
+  /* --accent-ink first: the atlas and the timeline expose a text-safe accent
+     under that name, where their own --accent is for fills. */
+  --nav-accent: var(--accent-ink, var(--accent, var(--rubric, #1b4b80)));
 
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: var(--lib-z-bar, 40);
+  box-sizing: border-box;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  /* The bar grows rather than losing what is in it. The physics book carries
-     four links, and four links plus a title plus the floating toggle do not
-     fit across a 360px phone; squeezing the title was the alternative and it
-     squeezed it to nothing. Wrapping only happens when it must, so every
-     other page and book keeps one row. The sidebar's offset below assumes
-     one, and is only ever shown above 1000px where nothing wraps. */
-  flex-wrap: wrap;
-  gap: .25rem 1rem;
-  padding: .62rem 1.4rem;
+  gap: .75rem;
+  height: var(--lib-bar-h, 2.75rem);
+  margin: 0;
+  padding: 0 var(--lib-inset, 1.25rem);
+  padding-left: max(var(--lib-inset, 1.25rem), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--lib-inset, 1.25rem), env(safe-area-inset-right, 0px));
+  background: var(--nav-bg);
   background: color-mix(in srgb, var(--nav-bg) 88%, transparent);
   -webkit-backdrop-filter: saturate(160%) blur(10px);
   backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid var(--nav-rule);
-  font-family: var(--nav-sans);
-  font-size: .82rem;
-  line-height: 1.2;
+  /* 13px at every width. The .76rem and .72rem steps that set the primary
+     navigation at 11.5px on a phone existed only to fit a toggle gutter
+     (NAV-21). */
+  font: 400 .8125rem/1.2 var(--lib-sans);
+  letter-spacing: normal;
+  text-transform: none;
 }
 
-/* nav-brand, not brand. The timeline's own header calls its title block
- * .brand and reorders it on a phone with an unscoped rule, which reached into
- * this bar and put the book's name after the links. A shared component cannot
- * be named for the thing it is on the page; it has to be named for the
- * component. Order and flex are stated for the same reason: a property this
- * file does not declare is one a book's stylesheet can still decide. */
+/* nav-brand, not brand. The timeline's own header calls its title block .brand
+ * and reorders it on a phone with an unscoped rule, which reached into this bar
+ * and put the book's name after the links. A shared component cannot be named
+ * for the thing it is on the page; it has to be named for the component. Order
+ * and flex are stated for the same reason: a property this file does not
+ * declare is one a book's stylesheet can still decide. */
 .topnav .nav-brand {
+  display: block;
   order: 0;
   flex: 0 1 auto;
-  font-weight: 700;
-  letter-spacing: .02em;
-  color: var(--nav-ink);
-  text-decoration: none;
-  /* A floor, not a preference. overflow:hidden makes a flex item shrinkable to
-     nothing -- that is what the specification says an automatic minimum size
-     becomes -- so without this the bar chose a zero-width title over a second
-     row. Below the floor it wraps; below a sane title width it still elides,
-     which is the guard for a brand nobody has written yet. */
+  margin-right: auto;       /* everything after the brand sits at the right */
+  /* A floor, not a preference: overflow:hidden makes a flex item shrinkable to
+     nothing, so without this the bar would choose a zero-width title. */
   min-width: 4rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--nav-ink);
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-decoration: none;
 }
 
 .topnav-links {
-  order: 1;
-  margin-left: auto;        /* right-aligned on its own row too, once wrapped */
   display: flex;
-  gap: 1.4rem;
-  align-items: center;
   flex: none;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0;
 }
 
-.topnav-links a {
-  color: var(--nav-soft);
-  text-decoration: none;
-  font-weight: 550;
+.topnav a {
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.topnav-links a,
+.topnav .up {
+  color: var(--nav-soft);
+  font-weight: 600;
 }
 
 .topnav-links a:hover,
-.topnav-links a:focus-visible { color: var(--nav-accent); }
+.topnav .up:hover,
+.topnav .nav-brand:hover { color: var(--nav-accent); }
 
-/* Where you already are. Every book's bar used to link the page it was on --
- * contents.html offered Chapters, pointing at itself -- which reads as a dead
- * control and costs a reader a page load to find out. nav.py marks the current
- * entry instead, and it stays a link so the shape of the bar does not change
- * from page to page. */
-.topnav [aria-current="page"] {
-  color: var(--nav-ink);
-  font-weight: 650;
-}
+/* Where you already are. It stays a link, so the shape of the bar does not
+ * change from page to page, and is set in ink rather than offered. */
+.topnav [aria-current="page"] { color: var(--nav-ink); }
 
 /* The way back out of the book, set apart from the book's own destinations.
- * It is the one entry every page in the library carries. */
-.topnav-links .up {
-  padding-left: 1.4rem;
+ * Only when it follows them: on the atlas and the timeline, whose bars are the
+ * brand, Library and the theme button, the rule separated Library from nothing
+ * (NAV-10, FD-15). */
+.topnav .up { flex: none; }
+.topnav-links + .up {
+  padding-left: 1rem;
   border-left: 1px solid var(--nav-rule);
-  color: var(--nav-accent);
 }
 
-/* The floating theme toggle is position:fixed and would sit on top of the last
- * link, so the bar holds a gutter open for it -- but only on the pages that
- * have one. book.js sets .has-themer when it builds the toggle, and takes it
- * away again into the drawer below 1000px, which is what .has-mnav says. Held
- * unconditionally, as it was, the gutter cost five rems of a 390px bar on
- * every page that never had a toggle at all: four of the seven kinds of page
- * in this library, including three of the four books' front doors. */
-html.has-themer .topnav { padding-right: 6rem; }
-
-/* ---------- the shell around the bar ----------
- * Only pages built from webbuild's shell have these; they are here rather than
- * in book.css so that every rule that knows the bar's height is in one file. */
-.topnav + .wrap .sidebar {
-  top: 2.6rem;
-  height: calc(100vh - 2.6rem);
-  height: calc(100dvh - 2.6rem);
+/* ---------- the two buttons ----------
+ * nav.py emits both with the hidden attribute and pwa.js removes it when it
+ * wires them. Under html.js (set by the boot script in <head>) the slot is
+ * held open meanwhile, so nothing in the bar moves when the script arrives. A
+ * page whose shell predates this file has no such rule, and the browser's own
+ * [hidden] keeps a button nobody wired out of sight. */
+.topnav .nav-theme,
+.topnav .nav-menu {
+  box-sizing: border-box;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nav-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@media (max-width: 760px) {
-  .topnav { padding: .5rem .8rem; font-size: .76rem; }
-  /* The toggle is 52px wide and sits 14px in, so it needs 66. The bar held
-     83 open for it, and those seventeen pixels are the ones a book's name is
-     short of at 390px. */
-  html.has-themer .topnav { padding-right: 4.4rem; }
-  .topnav-links { gap: .9rem; }
-  .topnav-links .up { padding-left: .9rem; }
+.topnav .nav-theme {
+  display: inline-flex;
+  width: 2.25rem;
+  padding: 0;
+}
+.topnav .nav-theme svg { display: block; width: 18px; height: 18px; }
+html.js .topnav .nav-theme[hidden] { display: inline-flex; visibility: hidden; }
+
+.topnav .nav-theme:hover,
+.topnav .nav-menu:hover {
+  color: var(--nav-ink);
+  background: color-mix(in srgb, var(--nav-ink) 7%, transparent);
 }
 
-/* Where the drawer exists it takes the theme toggle with it, and the gutter the
-   bar was holding open for that toggle goes back to the links. */
-@media (max-width: 1000px) { html.has-mnav.has-themer .topnav { padding-right: 1.4rem; } }
-@media (max-width: 760px)  { html.has-mnav.has-themer .topnav { padding-right: .8rem; } }
+/* Menu is shown only where it folds something, at 640px and below (the phone
+ * block further down). A chevron says it opens rather than goes somewhere,
+ * and turns over while the panel is open. */
+.topnav .nav-menu { display: none; gap: .45em; padding: 0 .6rem; }
+.topnav .nav-menu::after {
+  content: "";
+  width: .38em;
+  height: .38em;
+  margin-top: -.22em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.topnav .nav-menu[aria-expanded="true"] {
+  color: var(--nav-ink);
+  background: color-mix(in srgb, var(--nav-ink) 7%, transparent);
+}
+.topnav .nav-menu[aria-expanded="true"]::after { margin-top: .22em; transform: rotate(225deg); }
+
+/* One focus ring, in the book's accent. */
+.topnav :focus-visible {
+  outline: 2px solid var(--nav-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.topnav .nav-theme:focus-visible,
+.topnav .nav-menu:focus-visible { border-radius: 6px; }
 
 /* ---------- the brand, on a narrow bar ----------
- * Something has to give when four links and a title do not fit across 390px,
- * and it must not be a link. The book already declares a short name -- it is
- * what iOS writes under the home-screen icon -- so the bar uses it rather than
- * cutting the long one. "Newton→M" reads; "Newton..." does not, and at the
- * width where the gutter used to sit the physics book's name was cut to
- * nothing at all.
- *
- * nav.py emits the second span only when the two differ, and marks the brand
- * .two when it does, so a book whose name is already short carries neither the
- * extra element nor the rule. */
+ * A book already declares a short name -- it is what iOS writes under the
+ * home-screen icon -- so the bar uses it rather than cutting the long one:
+ * "Newton→M" reads, "Newton..." does not. nav.py emits the second span only
+ * when the two differ, and marks the brand .two when it does. Only a bar that
+ * carries the Menu needs it, and only below 390px: at 390 the whole
+ * "Newton → M-Theory" fits beside Menu, Library and the theme button with room
+ * to spare. The atlas and the timeline have room for their whole name at any
+ * width. */
 .nav-brand .nav-short { display: none; }
-@media (max-width: 560px) {
-  .nav-brand.two .nav-full  { display: none; }
-  .nav-brand.two .nav-short { display: inline; }
+@media (max-width: 389px) {
+  .topnav:has(.nav-menu) .nav-brand.two .nav-full  { display: none; }
+  .topnav:has(.nav-menu) .nav-brand.two .nav-short { display: inline; }
+}
+/* the installed app gives 44px more of the row to the back control */
+@media (max-width: 720px) {
+  html.standalone .topnav:has(.nav-menu) .nav-brand.two .nav-full  { display: none; }
+  html.standalone .topnav:has(.nav-menu) .nav-brand.two .nav-short { display: inline; }
+}
+
+/* ---------- the narrowest bars ----------
+ * At 400px and below the gaps close up, and at 375px and below Menu loses its
+ * chevron. If the book's name still does not fit beside Menu, Library and the
+ * theme button -- "Breast Cancer" on a 320px phone, or in the installed app
+ * where the back control takes 44px more -- it takes two lines inside the
+ * same 44px row rather than being cut. */
+@media (max-width: 640px) {
+  .topnav .nav-brand {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: normal;
+    line-height: 1.15;
+    padding-block: .5rem;
+  }
+}
+@media (max-width: 400px) {
+  .topnav { gap: .5rem; }
+  .topnav-links + .up { padding-left: .625rem; }
+  .topnav .nav-menu { gap: .35em; padding: 0 .45rem; }
+}
+@media (max-width: 375px) {
+  .topnav .nav-menu::after { display: none; }
+}
+
+/* ---------- a phone: the destinations fold under Menu ----------
+ * Library and the theme button stay in the bar, so leaving the book and
+ * changing the theme never cost a tap. Without JavaScript nothing can open a
+ * menu, so the links stay inline and the bar may wrap instead. */
+@media (max-width: 640px) {
+  html.js .topnav .nav-menu { display: inline-flex; }
+  html.js .topnav .nav-menu[hidden] { display: inline-flex; visibility: hidden; }
+
+  html.js .topnav-links {
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: .25rem 0 .5rem;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--nav-rule);
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .28);
+  }
+  html.js .topnav.menu-open { z-index: var(--lib-z-menu, 45); }
+  html.js .topnav.menu-open .topnav-links { display: flex; }
+  html.js .topnav-links a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 var(--lib-inset, 1rem) 0 calc(var(--lib-inset, 1rem) - 3px);
+    border-left: 3px solid transparent;
+    font-size: .9375rem;
+  }
+  html.js .topnav-links a[aria-current="page"] { border-left-color: var(--nav-accent); }
+
+  html:not(.js) .topnav { flex-wrap: wrap; height: auto; min-height: var(--lib-bar-h, 2.75rem); }
+  html:not(.js) .topnav-links { flex-wrap: wrap; gap: .25rem 1rem; }
 }
 
 /* ---------- touch targets ----------
-   Apple asks for 44pt. The bar's links were 12 to 20 pixels tall, which is a
-   coin toss with a thumb. Only pointer:coarse is touched, so the desktop bar
-   keeps its proportions. */
+ * Apple asks for 44pt. The bar is exactly that tall, so the targets fill it. */
+@media (pointer: coarse) and (min-width: 641px) {
+  .topnav .nav-brand { line-height: 44px; }
+}
 @media (pointer: coarse) {
-  .topnav { padding-top: .35rem; padding-bottom: .35rem; }
-  .topnav .nav-brand,
+  .topnav .up,
   .topnav-links a { display: inline-flex; align-items: center; min-height: 44px; }
-  .topnav-links { gap: 1.1rem; }
-  /* the bar runs edge to edge, and on a notched phone the edges are not flat */
-  .topnav {
-    padding-left: max(.8rem, env(safe-area-inset-left));
-    padding-right: max(5.2rem, env(safe-area-inset-right));
-  }
-  @media (max-width: 1000px) {
-    html.has-mnav .topnav { padding-right: max(1.4rem, env(safe-area-inset-right)); }
-  }
+  .topnav .nav-theme { width: 44px; height: 44px; }
+  .topnav .nav-menu { height: 44px; }
+}
+@media (pointer: coarse) and (max-width: 640px) {
+  html.js .topnav-links a { display: flex; min-height: 48px; }
 }
 
-/* ---------- the narrowest bar ----------
- * A 390px bar carrying four links and a title is at the limit, and the physics
- * book is the one that reaches it: Chapters, In Plain Terms, Math Ledger and
- * Library leave about forty pixels for a name. Tightening the type and the
- * gaps by a tenth buys back sixty, which is the difference between a short
- * name that reads and one that is cut again.
- *
- * After the touch block rather than before it, because that block sets the
- * same gap at the same specificity and the later rule is the one that wins. */
-@media (max-width: 430px) {
-  .topnav { font-size: .72rem; }
-  .topnav-links { gap: .7rem; }
-  .topnav-links .up { padding-left: .7rem; }
-
-  /* Where the bar is this tight and the toggle is still floating over it --
-     one page in the library: a front door with its own toggle and no drawer to
-     put it in -- the toggle goes below the bar rather than taking a gutter out
-     of it. A gutter is no use once the bar has wrapped anyway: it holds the
-     corner open on the row above and the links arrive on the row beneath. */
-  html.has-themer:not(.has-mnav) .topnav { padding-right: .8rem; }
-  html.has-themer:not(.has-mnav) #themer { top: 3.4rem; }
+/* ---------- the installed app ----------
+ * pwa.js puts a back control at the head of the bar once there is somewhere to
+ * go back to (pwa.css styles it). Its slot is held open before it arrives, so
+ * the brand does not jump 42px to the right when it does (NAV-18). The slot is
+ * the button's own size in pwa.css: 2.25rem, or 44px under touch. */
+html.standalone .topnav:not(:has(.pwa-back))::before {
+  content: "";
+  flex: none;
+  width: 2.25rem;
+  height: 1px;
 }
+@media (pointer: coarse) {
+  html.standalone .topnav:not(:has(.pwa-back))::before { width: 44px; }
+}
+
+/* ---------- the shell around the bar ----------
+ * Only pages built from webbuild's shell have a sidebar; its top and height
+ * are here, beside the bar's height, so that every rule that knows the bar's
+ * height is in one file (DESIGN.md section 5). A general sibling rather than
+ * the adjacent one, so an element placed between the bar and the shell does
+ * not unhook it. */
+.topnav ~ .wrap .sidebar {
+  top: var(--lib-bar-h, 2.75rem);
+  height: calc(100vh - var(--lib-bar-h, 2.75rem));
+  height: calc(100dvh - var(--lib-bar-h, 2.75rem));
+}
+
+/* ---------- skip link ----------
+ * The first Tab stop on every page, out of sight until it has focus. Its
+ * target is #text, which pwa.js supplies on a page that has none. A chapter
+ * used to put 15 to 31 stops between the reader and the text (PDA-05). */
+.skip {
+  position: absolute;
+  top: .375rem;
+  left: var(--lib-inset, 1.25rem);
+  z-index: var(--lib-z-toast, 80);
+  padding: .55rem .8rem;
+  border: 1px solid var(--rule, #e0ddd5);
+  border-radius: 6px;
+  background: var(--bg, var(--paper, #fbfaf7));
+  color: var(--ink, #1b1b1d);
+  font: 600 .8125rem/1.2 var(--lib-sans);
+  text-decoration: none;
+}
+.skip:not(:focus) {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+.skip:focus-visible {
+  outline: 2px solid var(--accent-ink, var(--accent, var(--rubric, #1b4b80)));
+  outline-offset: 2px;
+}
+/* The skip target takes focus so the next Tab starts inside the text; it is a
+   landmark, not a control, and draws no ring of its own. .skip-target is the
+   placeholder nav.py leaves after the bar on a page that does not name its
+   text yet: it takes no room. */
+#text:focus { outline: none; }
+.skip-target { display: block; height: 0; overflow: hidden; }
+
+
+/* ================================================ the phone's chrome
+ * Below 1000px, on the chapter shell (DESIGN.md section 6): the folio bar at
+ * the foot of the screen, the drawer as a bottom sheet, and headroom, which
+ * takes the bar and the folio out of view while the reader reads down.
+ * book.js builds all three and nothing of them is saved by the build. Here
+ * rather than in book.css so they are styled wherever nav.css is: on every
+ * docs page, and inlined into the Dropbox build. Every value that book.css's
+ * older drawer rules set is restated, so an older book.css under this shell
+ * cannot pull the sheet back into a side panel. */
+
+.folio, #mnav-btn, #mnav, #mnav-scrim { display: none; }
+
+@media (max-width: 1000px) {
+
+  /* ---------- the folio bar ----------
+   * "‹ 67", the section being read (which opens the drawer), "69 ›". The
+   * arrows carry chapter numbers because they jump chapters, not sections.
+   * It follows the bar in the DOM, so Tab reaches it next, and the page gets
+   * room below its last line so nothing is ever under it (NAV-06). */
+  .folio {
+    display: flex;
+    align-items: stretch;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--lib-z-folio, 40);
+    box-sizing: border-box;
+    height: calc(3rem + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    padding: 0 max(.25rem, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
+             max(.25rem, env(safe-area-inset-left, 0px));
+    background: var(--bg, #fbfaf7);
+    background: color-mix(in srgb, var(--bg, #fbfaf7) 94%, transparent);
+    -webkit-backdrop-filter: saturate(160%) blur(10px);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-top: 1px solid var(--rule, #e0ddd5);
+    font: 600 .8125rem/1.2 var(--lib-sans);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  html.has-folio body { padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0px)); }
+
+  .folio .folio-prev,
+  .folio .folio-next {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .1rem;
+    box-sizing: border-box;
+    min-width: 3.25rem;
+    height: 3rem;
+    margin: 0;
+    padding: 0 .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .folio a:hover { color: var(--accent, #1b4b80); }
+  /* a missing neighbour keeps its slot: the edge of the sequence, not a control */
+  .folio .folio-off { color: var(--rule, #e0ddd5); }
+  .folio .g { display: block; flex: none; }
+
+  /* #mnav-btn keeps its id (navcheck, the arrow keys, older scripts) and is
+   * restyled here from the floating circle it used to be. */
+  .folio #mnav-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    position: static;
+    box-sizing: border-box;
+    width: auto;
+    height: 3rem;
+    margin: 0;
+    padding: 0 .5rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--ink, #1b1b1d);
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .folio #mnav-btn .folio-sec {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .folio #mnav-btn .g { color: var(--ink-soft, #4a4a50); }
+  .folio a:active,
+  .folio #mnav-btn:active { background: color-mix(in srgb, var(--ink, #1b1b1d) 7%, transparent); }
+  .folio :focus-visible { outline: 2px solid var(--accent, #1b4b80); outline-offset: -3px; }
+
+  /* ---------- the floating button, for an older page ----------
+   * A page whose book.js predates the folio appends #mnav-btn to <body> as a
+   * round button. It keeps working under this shell (C2-sw-mixed). It sits
+   * above the sheet, where that page's script turns it into the close
+   * control, and the sheet leaves room for it. */
+  body > #mnav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    z-index: calc(var(--lib-z-sheet, 60) + 1);
+    right: calc(.85rem + env(safe-area-inset-right, 0px));
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    width: 2.95rem;
+    height: 2.95rem;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    background: var(--bg-alt);
+    color: var(--ink-soft);
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .16);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body > #mnav-btn:active { background: var(--accent-soft); color: var(--accent); }
+  body:has(> #mnav-btn) #mnav { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+  #mnav-ico { position: relative; display: block; width: 1.05rem; height: .72rem; }
+  #mnav-ico i {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  #mnav-ico i:nth-child(1) { top: 0; }
+  #mnav-ico i:nth-child(2) { top: 50%; margin-top: -.75px; }
+  #mnav-ico i:nth-child(3) { bottom: 0; }
+  #mnav-btn.open #mnav-ico i:nth-child(1) { transform: translateY(.35rem) rotate(45deg); }
+  #mnav-btn.open #mnav-ico i:nth-child(2) { opacity: 0; }
+  #mnav-btn.open #mnav-ico i:nth-child(3) { transform: translateY(-.35rem) rotate(-45deg); }
+
+  /* ---------- the drawer: a bottom sheet ----------
+   * In the reference sheet's idiom (PDA-07): 14px top corners, a handle, the
+   * scrim, at most 80% of the screen, and every row inset 1.15rem on both
+   * sides (NAV-07). In order: the way up, the head with a visible Close, the
+   * neighbours, the sections. */
+  #mnav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--lib-z-scrim, 50);
+    background: rgba(0, 0, 0, .42);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .24s ease;
+    touch-action: none;
+  }
+  #mnav-scrim.open { opacity: 1; pointer-events: auto; }
+
+  #mnav {
+    --surface: var(--bg-alt);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: var(--lib-z-sheet, 60);
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: auto;
+    max-width: 36rem;
+    height: auto;
+    max-height: 80vh;
+    max-height: 80dvh;
+    margin: 0 auto;
+    padding: 0 0 calc(.5rem + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-alt, #f3f2ee);
+    border: 1px solid var(--rule, #e0ddd5);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -10px 34px rgba(0, 0, 0, .2);
+    font-family: var(--lib-sans);
+    transform: translateY(calc(100% + 1rem));
+    visibility: hidden;
+    /* visibility flips at once on the way in, so the sheet can take focus
+       immediately, and waits for the slide to finish on the way out */
+    transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .26s;
+    overscroll-behavior: contain;
+    outline: none;
+  }
+  #mnav.open {
+    transform: none;
+    visibility: visible;
+    transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s linear 0s;
+  }
+  #mnav.dragging { transition: none; }
+
+  /* The handle, and the head it belongs to, take a drag rather than a scroll. */
+  #mnav .mn-grab {
+    display: flex;
+    justify-content: center;
+    flex: none;
+    padding: .55rem 0 .3rem;
+    color: color-mix(in srgb, var(--ink, #1b1b1d) 28%, var(--bg-alt, #f3f2ee));
+    cursor: grab;
+  }
+  #mnav .mn-grab svg { display: block; }
+  #mnav .mn-grab,
+  #mnav .mn-up,
+  #mnav .mn-head { touch-action: none; }
+
+  /* 1. Up: the phone's way to the part in the contents. */
+  #mnav .mn-up {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex: none;
+    box-sizing: border-box;
+    min-height: 48px;
+    margin: 0;
+    padding: .35rem 1.15rem;
+    border-bottom: 1px solid var(--rule, #e0ddd5);
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font: 600 .875rem/1.3 var(--lib-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-up span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  #mnav .mn-up .g { flex: none; }
+  #mnav .mn-up:hover { color: var(--accent, #1b4b80); }
+
+  /* 2. The head: where this is, what it is called, and Close. */
+  #mnav .mn-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0 .75rem;
+    flex: none;
+    margin: 0;
+    padding: .8rem 1.15rem .85rem;
+    border: 0;
+  }
+  #mnav .mn-grab + .mn-head { padding-top: .35rem; }
+  #mnav .mn-hd { flex: 1 1 0; min-width: 0; }
+  /* an older page's head: the kicker and the title straight inside it */
+  #mnav .mn-head > p { flex: 1 0 100%; }
+  #mnav .mn-kicker {
+    margin: 0 0 .3rem;
+    font: 700 var(--fs-label, .7rem)/1.3 var(--lib-sans);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint, #63636a);
+  }
+  #mnav .mn-title {
+    margin: 0;
+    font: 400 1.0625rem/1.3 var(--serif, var(--lib-serif));
+    color: var(--ink, #1b1b1d);
+  }
+  #mnav .mn-close {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    box-sizing: border-box;
+    height: 2.75rem;
+    margin: -.2rem -.35rem 0 0;
+    padding: 0 .75rem 0 .6rem;
+    border: 1px solid var(--rule, #e0ddd5);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft, #4a4a50);
+    font: 600 .8125rem/1 var(--lib-sans);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-close:hover { color: var(--ink, #1b1b1d); border-color: var(--ink-faint, #63636a); }
+
+  /* 3. The neighbours: two equal cards whatever the titles are, and a
+     missing one keeps its slot, so a thumb finds them in the same place on
+     every page. The styles moved here from pwa.css with the row itself. */
+  #mnav .mn-seq {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+    flex: none;
+    margin: 0 1.15rem;
+    padding: 0 0 .85rem;
+    border-bottom: 1px solid var(--rule, #e0ddd5);
+  }
+  #mnav .mn-seq > * {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .15rem;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 3.5rem;
+    margin: 0;
+    padding: .5rem .7rem;
+    border: 1px solid var(--rule, #e0ddd5);
+    border-radius: 6px;
+    background: var(--paper, var(--bg, #fbfaf7));
+    color: var(--ink, #1b1b1d);
+    text-decoration: none;
+    font: 400 .9375rem/1.3 var(--serif, var(--lib-serif));
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-seq > a:hover,
+  #mnav .mn-seq > a:focus-visible { border-color: var(--accent, #1b4b80); }
+  #mnav .mn-seq .next { align-items: flex-end; text-align: right; }
+  #mnav .mn-seq > span { background: transparent; border-style: dashed; color: var(--ink-soft, #4a4a50); }
+  #mnav .mn-seq .mn-dir {
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+    margin: 0;
+    font: 700 var(--fs-label, .7rem)/1.3 var(--lib-sans);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint, #63636a);
+  }
+  #mnav .mn-seq .mn-dir .g { width: 12px; height: 12px; }
+  /* Two lines at most: a title runs to sixty characters and the card is half
+     a phone wide. */
+  #mnav .mn-seq .mn-ch {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  /* 4. The sections: the only part of the sheet that scrolls. */
+  #mnav .mn-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    margin: 0;
+    padding: .35rem 0 .25rem;
+  }
+  #mnav .mn-head + .mn-list { border-top: 1px solid var(--rule, #e0ddd5); }
+  #mnav .mn-list:empty { display: none; }
+  #mnav .mn-list a {
+    display: block;
+    box-sizing: border-box;
+    min-height: 44px;
+    margin: 0;
+    padding: .7rem 1.15rem .7rem calc(1.15rem - 3px);
+    border-left: 3px solid transparent;
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font: 400 .9375rem/1.35 var(--lib-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-list a:hover { color: var(--ink, #1b1b1d); }
+  #mnav .mn-list a.active {
+    color: var(--accent, #1b4b80);
+    border-left-color: var(--accent, #1b4b80);
+    background: var(--accent-soft, #e8eef5);
+    font-weight: 600;
+  }
+  #mnav :focus-visible { outline: 2px solid var(--accent, #1b4b80); outline-offset: -2px; }
+
+  /* ---------- headroom ----------
+   * html.chrome-hidden takes the bar up and the folio down, by transform
+   * only. In the installed app the bar leaves its status-bar strip behind. */
+  .topnav,
+  .folio { transition: transform .22s ease; }
+  html.chrome-hidden .topnav { transform: translateY(calc(-100% + env(safe-area-inset-top, 0px))); }
+  html.chrome-hidden .folio { transform: translateY(100%); }
+}
+
+/* The reference sheet's head takes a drag, as the drawer's does (book.js). */
+.refcard.sheet .rc-head { touch-action: none; cursor: grab; }
+
+@media (prefers-reduced-motion: reduce) {
+  #mnav, #mnav-scrim, #mnav-ico i, .topnav, .folio { transition: none; }
+}
+
+/* Forced colours keep the glyphs (inline SVG in currentColor); these keep the
+ * edges and the marks that are drawn with a border or a fill. */
+@media (forced-colors: active) {
+  .folio { border-top-color: CanvasText; }
+  #mnav { border-color: CanvasText; }
+  #mnav .mn-seq > * { border-color: CanvasText; }
+  #mnav .mn-list a.active { border-left-color: Highlight; }
+  #mnav-ico i { forced-color-adjust: none; background: ButtonText; }
+  /* an svg's own colour is not forced: let the glyph take its control's */
+  .folio #mnav-btn .g, .folio .g, #mnav .g { color: inherit; }
+}
+
+
+/* ========================================= contents: find a chapter
+ * book.js inserts input.toc-find after the contents head's count line;
+ * book.css styles it with the rest of the head. This is only its status
+ * line, which says "No chapter matches" and is otherwise out of sight but
+ * still read out when it changes. */
+.toc-none {
+  margin: .6rem 0 0;
+  font: 600 .875rem/1.4 var(--lib-sans);
+  color: var(--ink-soft, #4a4a50);
+}
+.toc-none:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+
+/* ======================================= the theme toggle, as a fallback
+ * Copied from book.css with the drawer. book.js builds this floating #themer
+ * only when nothing wired the bar's button by window load (html.theme-wired
+ * absent): the Dropbox build, which has no bar and no pwa.js, and an installed
+ * copy whose shell is older than the page. It is the only theme control on
+ * such a page, so it is never hidden for the drawer's sake. */
+#themer{position:fixed;top:.8rem;right:.9rem;z-index:var(--lib-z-bar, 40);cursor:pointer;
+  border:1px solid var(--rule);background:var(--bg-alt);color:var(--ink-soft);
+  border-radius:20px;padding:.3rem .7rem;font-family:var(--sans);font-size:.72rem;
+  font-weight:600;letter-spacing:.04em}
+#themer:hover{color:var(--accent);border-color:var(--accent)}
+/* Where a bar is on the page after all (an older page under this shell), the
+   toggle sits under it rather than over its last link. */
+.topnav ~ #themer { top: calc(var(--lib-bar-h, 2.75rem) + .5rem); }
+@media (pointer: coarse) { #themer { min-height: 44px; padding: .3rem .95rem; } }
+
 
 /* A bar is a way of leaving the page. On paper there is nowhere to go, and the
- * rest of the furniture was already hidden here -- the bar was not, and printed
- * a row of dead links at the top of every chapter. */
-@media print { .topnav { display: none !important; } }
+ * rest of the furniture is hidden here too. */
+@media print {
+  .topnav, .skip, .topnav-links, #themer, #mnav, #mnav-btn, #mnav-scrim,
+  .folio, .mn-seq, input.toc-find, .toc-none {
+    display: none !important;
+  }
+  html.has-folio body { padding-bottom: 0; }
+}

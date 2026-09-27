@@ -201,15 +201,35 @@ STATUSBAR = '<meta name="apple-mobile-web-app-status-bar-style" content="default
 # Standalone is detected in JS rather than with @media (display-mode:standalone),
 # which is unreliable on iOS; navigator.standalone is the signal that works, so
 # every standalone-only rule keys off html.standalone.
+#
+# THE THEME (DESIGN.md section 4). This is the one place a page's theme is
+# decided, before first paint, in this order:
+#   1. library:v1.look -- written only when the reader presses the bar's theme
+#      button (pwa.js) or the fallback toggle (book.js);
+#   2. nmt-theme -- the older key, which was also only ever written by a press;
+#   3. the OS setting.
+# library:v1.theme is never read. pwa.js used to write it passively on every
+# page load, so the first light page an OS-dark reader opened pinned the whole
+# library to light for good (NAV-02, PDA-01).
+#
+# It also adds "js" to <html>, which nav.css keys on to reserve the slots of the
+# bar's two buttons before pwa.js un-hides them, so nothing in the bar moves
+# when the script arrives.
+THEME_JS = (
+    "var t='';"
+    "try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||"
+    "localStorage.getItem('nmt-theme')||''}catch(e){}"
+    "if(t!=='dark'&&t!=='light')"
+    "t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';"
+    "d.setAttribute('data-theme',t);")
+
 BOOT = (
-    "<script>"
-    "try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');"
-    "var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}"
-    "if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';"
-    "document.documentElement.setAttribute('data-theme',t);"
+    "<script>(function(){var d=document.documentElement;"
+    + THEME_JS +
+    "d.classList.add('js');"
     "if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)"
-    "document.documentElement.classList.add('standalone');"
-    "</script>")
+    "d.classList.add('standalone');"
+    "})();</script>")
 
 
 def head(bk, depth):
@@ -222,13 +242,15 @@ def head(bk, depth):
     return value, so the two paths cannot disagree."""
     up = "../" * depth
     if bk is None:
-        # The hub has no theme toggle: its dark mode is purely a media query, so
-        # the browser picks the bar colour with the media attribute rather than
-        # anything JavaScript has to keep in sync.
+        # The pair is right before any script runs. Once the reader has chosen
+        # a theme that is not the OS's, pwa.js rewrites both to the resolved
+        # --bg, so the browser chrome follows the page rather than the OS.
         theme = ('<meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme:light)">\n'
                  '<meta name="theme-color" content="#101216" media="(prefers-color-scheme:dark)">')
         title, icons = "Library", "icons/"
     else:
+        # The paper colour, until pwa.js sets it to the page's resolved --bg on
+        # load and after every theme change (PDA-14).
         theme = '<meta name="theme-color" content="%s">' % bk.theme_color
         title, icons = bk.short_name, "icons/"
 
@@ -403,9 +425,21 @@ def nav_json(bk):
             for num, slug, title, part, _math in bk.written()]
     if len(rows) < 2:
         return None
-    return {"slug": bk.slug, "brand": library.plain(bk.brand),
-            "contents": "contents.html", "count": len(rows),
-            "links": bk.nav_items(), "chapters": rows}
+    out = {"slug": bk.slug, "brand": library.plain(bk.brand),
+           "contents": "contents.html", "count": len(rows),
+           "links": bk.nav_items(), "chapters": rows}
+    # How the front door treats a returning reader (DESIGN.md section 6, Front
+    # matter): a "sequential" book's primary becomes "Continue reading" at
+    # their place, and a "reference" book keeps Contents as its primary and
+    # offers "Continue at ..." beside it. pwa.js reads it here because the
+    # front door is not the place to decide it: one book.json key, one reader.
+    reading = bk.cfg.get("reading")
+    if reading:
+        if reading not in ("sequential", "reference"):
+            raise SystemExit('%s: book.json "reading" is %r; it is "sequential" or '
+                             '"reference"' % (bk.slug, reading))
+        out["reading"] = reading
+    return out
 
 
 def shell_files():
@@ -428,6 +462,11 @@ def shell_files():
 # has to be fetched. offline.html is what a reader sees when the network is gone
 # and the page they asked for was never stored, so it must render from its own
 # bytes alone -- a fallback that needs a fetch to look right is not a fallback.
+#
+# The theme is resolved inline, in <head>, by the same three steps as BOOT
+# (THEME_JS), and both [data-theme] values are styled, so a reader who chose
+# dark on a light OS is not flashed a light page here. The media query is kept
+# only for a page no script has stamped.
 
 PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -435,24 +474,35 @@ PAGE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>%(title)s</title>
+<script>(function(){var d=document.documentElement;%(theme)s})();</script>
 <style>
-:root{color-scheme:light dark;--ink:#16181d;--soft:#565b66;--paper:#f4f3f0;--rule:#dcdfe5}
+:root{color-scheme:light;--ink:#16181d;--soft:#565b66;--paper:#f4f3f0;--rule:#dcdfe5}
+:root[data-theme="dark"]{color-scheme:dark;--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}
 @media (prefers-color-scheme:dark){
-  :root{--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}}
+  :root:not([data-theme]){color-scheme:dark;--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}}
 html,body{margin:0;height:100%%}
 body{background:var(--paper);color:var(--ink);display:grid;place-items:center;
   padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));
-  font-family:"Iowan Old Style",Palatino,Georgia,serif;-webkit-text-size-adjust:100%%}
+  font-family:"Iowan Old Style",Charter,"Bitstream Charter",Palatino,Georgia,serif;
+  -webkit-text-size-adjust:100%%}
 main{max-width:26rem;text-align:center}
-h1{font-size:1.5rem;font-weight:600;margin:0 0 .6rem}
+h1{font-size:1.5rem;font-weight:400;margin:0 0 .6rem}
+h2{font:700 11px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--soft);margin:2rem 0 .5rem;text-align:left}
 p{color:var(--soft);line-height:1.6;margin:0 0 1.4rem;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
-a,button{display:inline-block;font:inherit;font-size:14px;font-family:-apple-system,sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
+.acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+a,button{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:14px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:600;
   padding:11px 16px;min-height:44px;box-sizing:border-box;border:1px solid var(--rule);
-  border-radius:9px;background:none;color:inherit;text-decoration:none;cursor:pointer}
+  border-radius:6px;background:none;color:inherit;text-decoration:none;cursor:pointer}
+a:focus-visible,button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+[hidden]{display:none!important}
 ul{list-style:none;padding:0;margin:0;text-align:left}
 li{border-top:1px solid var(--rule)}
-li a{display:block;border:0;border-radius:0;padding:14px 2px}
+li:last-child{border-bottom:1px solid var(--rule)}
+li a{display:flex;justify-content:flex-start;border:0;border-radius:0;padding:12px 2px;font-weight:400;
+  font-family:inherit;font-size:1rem}
 </style>
 </head>
 <body>
@@ -465,32 +515,83 @@ li a{display:block;border:0;border-radius:0;padding:14px 2px}
 """
 
 
-def emit_pages(bks):
-    library.write(os.path.join(DOCS, "offline.html"), PAGE % {
-        "title": "Offline — A Library",
-        "body": ("<h1>Not stored on this device</h1>"
-                 "<p>You are offline, and this page was never downloaded. "
-                 "Books you have downloaded are still readable in full.</p>"
-                 '<a href="./">The library</a>'),
-        "script": ""})
+# offline.html's own script. It is served in place of whatever page was asked
+# for, at that page's address, so every address in it is absolute from
+# library.SITE rather than relative to wherever it happens to be standing
+# (NAV-16: its "./" link used to go to the book's folder, which was just as
+# likely not to be stored). A book is listed as downloaded only when its
+# lib:book:<slug> cache holds a __resident__ record with complete:true, the
+# test pwa.js resident() uses (DESIGN.md section 8): a cache holding only the
+# pages a reader happened to visit is not a downloaded book. caches.keys()
+# is read first because caches.open() would create a missing cache.
+OFFLINE_JS = r"""<script>
+(function(){
+  var S=%(site)s, P='lib:book:';
+  var back=document.getElementById('back');
+  if(history.length>1){back.hidden=false;back.addEventListener('click',function(){history.back()})}
+  if(!('caches' in window))return;
+  function complete(k){
+    return caches.open(k).then(function(c){return c.keys().then(function(rs){
+      var r=rs.filter(function(q){return /\/__resident__$/.test(q.url)})[0];
+      return r?c.match(r).then(function(x){return x.json()}):null;
+    })}).then(function(j){return j&&j.complete===true?k.slice(P.length):null})
+      .catch(function(){return null});
+  }
+  caches.keys().then(function(ks){
+    return Promise.all(ks.filter(function(k){return k.indexOf(P)===0}).map(complete));
+  }).then(function(got){
+    got=got.filter(Boolean);
+    if(!got.length)return;
+    var names={};
+    return fetch(S+'catalog.json').then(function(r){return r.json()}).then(function(c){
+      (c.books||[]).forEach(function(b){names[b.slug]=b.name});
+    }).catch(function(){}).then(function(){
+      var ul=document.getElementById('dl-list');
+      got.sort().forEach(function(s){
+        var li=document.createElement('li'),a=document.createElement('a');
+        a.setAttribute('href',S+s+'/index.html');a.textContent=names[s]||s;
+        li.appendChild(a);ul.appendChild(li);
+      });
+      document.getElementById('dl').hidden=false;
+    });
+  }).catch(function(){});
+})();
+</script>"""
 
-    # continue.html is the target of the manifest shortcut and of the hub's
-    # Continue button. It reads the position the client runtime records and
-    # redirects, so the shortcut is a real "carry on where I was" rather than a
-    # second copy of the shelf.
-    library.write(os.path.join(DOCS, "continue.html"), PAGE % {
-        "title": "Continue reading",
-        "body": ('<h1>Continue reading</h1>'
-                 '<p id="m">Looking for where you left off\u2026</p>'
-                 '<ul id="l"></ul>'),
-        "script": """<script>
+
+# continue.html's script. With ?b=<slug> (a book's own home-screen
+# shortcut) it goes to that book's place: library:v1.lastBy[slug], which
+# pwa.js records on every chapter, and failing that the most recent page of
+# the book in library:v1.pos, which is all a reader who read before lastBy
+# existed has. With no b (the library's shortcut) it goes to the most recent
+# place in any book. It used to follow only library:v1.last, the single last
+# page of the whole library, so a physics reader's shortcut said "Nothing
+# recorded yet" whenever they had since opened the clinical book (NAV-01).
+CONTINUE_JS = r"""<script>
 (function(){
   var want=new URLSearchParams(location.search).get('b');
-  var s={};try{s=JSON.parse(localStorage.getItem('library:v1')||'{}')}catch(e){}
-  var last=s.last;
-  if(last&&last.url&&(!want||last.slug===want)){location.replace(last.url);return}
-  // Nothing recorded, or recorded for a different book: offer the shelf rather
-  // than dead-ending on a shortcut the reader deliberately tapped.
+  var s={};try{s=JSON.parse(localStorage.getItem('library:v1')||'{}')||{}}catch(e){}
+  var by=s.lastBy||{}, go=null, k;
+  function newer(a,b){return !a||(b&&(b.at||0)>(a.at||0))?b:a}
+  if(want){
+    if(by[want]&&by[want].url)go=by[want];
+    else{
+      // pos keys are paths; a book's front door and contents are not a place
+      var pos=s.pos||{},best=null,at=-1,i=0;
+      for(k in pos){i++;
+        if(k.indexOf('/'+want+'/')<0||/\/(index|contents)\.html$|\/$/.test(k))continue;
+        var t=(pos[k]&&pos[k].at)||i;
+        if(t>=at){at=t;best=k}
+      }
+      if(best)go={url:best};
+    }
+  }else{
+    for(k in by)if(by[k]&&by[k].url)go=newer(go,by[k]);
+    if(!go&&s.last&&s.last.url)go=s.last;
+  }
+  if(go&&go.url){location.replace(go.url);return}
+  // Nothing recorded, or nothing for this book: offer the shelf rather than
+  // dead-ending on a shortcut the reader deliberately tapped.
   document.getElementById('m').textContent=
     'Nothing recorded yet. Pick up a book and this will remember your place.';
   // Built with DOM calls rather than by concatenating markup: a book title is
@@ -505,7 +606,35 @@ def emit_pages(bks):
     });
   }).catch(function(){});
 })();
-</script>"""})
+</script>"""
+
+
+def emit_pages(bks):
+    library.write(os.path.join(DOCS, "offline.html"), PAGE % {
+        "theme": THEME_JS,
+        "title": "Offline — A Library",
+        "body": ("<h1>Not stored on this device</h1>"
+                 "<p>You are offline, and this page was never downloaded. "
+                 "Books you have downloaded are still readable in full.</p>"
+                 '<div class="acts"><button type="button" id="back" hidden>Go back</button>'
+                 '<a href="%s">The library</a></div>'
+                 '<section id="dl" hidden><h2>Downloaded on this device</h2>'
+                 '<ul id="dl-list"></ul></section>' % library.SITE),
+        "script": OFFLINE_JS % {"site": json.dumps(library.SITE)}})
+
+    # continue.html is the target of the home-screen shortcuts: the library
+    # icon's "Continue reading" and each book icon's "Continue", which adds
+    # ?b=<slug>. It reads the place pwa.js records and redirects, so a shortcut
+    # is a real "carry on where I was" rather than a second copy of the shelf.
+    # The hub's Continue strip and the front doors link to the chapter itself
+    # and do not come through here.
+    library.write(os.path.join(DOCS, "continue.html"), PAGE % {
+        "theme": THEME_JS,
+        "title": "Continue reading",
+        "body": ('<h1>Continue reading</h1>'
+                 '<p id="m">Looking for where you left off\u2026</p>'
+                 '<ul id="l"></ul>'),
+        "script": CONTINUE_JS})
 
 
 # ------------------------------------------------------------------ the emitter
@@ -653,14 +782,57 @@ def check():
             bad.append("%s/nav.json (missing)" % b.slug)
         elif want and json.loads(library.read(p)) != want:
             bad.append("%s/nav.json (stale)" % b.slug)
+        elif not want and os.path.exists(p):
+            bad.append("%s/nav.json (should not exist: fewer than two chapters)" % b.slug)
+    # The generated files themselves, not only their presence. offline.html,
+    # continue.html, every manifest (its shortcuts and theme_color follow the
+    # books' labels and colours), every nav.json and the two shell assets are
+    # regenerated in memory, through the very writers emit_all() uses, and
+    # compared byte for byte with docs/. library.write is captured for the
+    # duration, so nothing is written. A label change in PAGE or book.json that
+    # was never pushed through pwa.py used to pass here because the file existed.
+    made = {}
+    real_write = library.write
+
+    def capture(path, text):
+        made[os.path.relpath(path, DOCS).replace(os.sep, "/")] = text
+
+    library.write = capture
+    try:
+        emit_pages(bks)
+        write_json(os.path.join(DOCS, "manifest.webmanifest"), library_manifest())
+        for b in bks:
+            write_json(os.path.join(DOCS, b.slug, "manifest.webmanifest"),
+                       b.manifest(icon_entries()))
+            nav = nav_json(b)
+            if nav:
+                write_json(os.path.join(DOCS, b.slug, "nav.json"), nav)
+        for name in ("pwa.js", "pwa.css"):
+            src = os.path.join(library.ASSETS, name)
+            if os.path.exists(src):
+                capture(os.path.join(DOCS, "assets", name), library.read(src))
+    finally:
+        library.write = real_write
+    for rel, text in sorted(made.items()):
+        p = os.path.join(DOCS, rel)
+        if not os.path.exists(p):
+            if rel + " (missing)" not in bad:
+                bad.append(rel + " (missing)")
+            continue
+        with io.open(p, "rb") as fh:
+            disk = fh.read()
+        if disk != text.encode("utf-8") and not any(x.startswith(rel + " (") for x in bad):
+            bad.append(rel + " (differs from what pwa.py would emit)")
     if bad:
-        print("pwa: %d page(s) do not match what pwa.py would emit:" % len(bad))
-        for r in bad[:12]:
+        print("pwa: %d file(s) do not match what pwa.py would emit:" % len(bad))
+        for r in bad[:60]:
             print("   ", r)
         print("    run: python3 tools/pwa.py")
         return 1
     print("pwa: every built page carries the current app-layer head; "
-          "manifests, worker and icons all present")
+          "manifests, worker and icons all present; offline.html, continue.html, "
+          "%d manifests, %d nav.json and the shell assets are what pwa.py would emit"
+          % (1 + len(bks), sum(1 for r in made if r.endswith("nav.json"))))
     return 0
 
 

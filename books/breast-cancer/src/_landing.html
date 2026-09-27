@@ -7,18 +7,11 @@
 <meta name="description" content="Biology, heterogeneity, and the decisions that follow. A reference on breast cancer for practising medical oncologists, readable offline.">
 <link rel="stylesheet" href="assets/book.css">
 <link rel="stylesheet" href="assets/landing.css">
-<style>
-/* This book's own figure, and nothing else. Everything that is shared with the
-   physics book's front door -- the hero, the stat row, the columns, the part
-   index -- is in landing.css, and every colour in it comes from book.css,
-   which carries this book's palette from book.json. */
-#bg { width: 100%; height: 100%; display: block; }
-</style>
 </head>
 <body>
 
+<main id="text">
 <section class="hero">
-  <div class="hero-fig"><canvas id="bg"></canvas></div>
   <div class="lp">
     <p class="eyebrow">A working reference</p>
     <h1>Breast Cancer</h1>
@@ -31,14 +24,14 @@
     <div class="stats">
       <div class="stat"><b>{{CH}}</b><span>chapters</span></div>
       <div class="stat"><b>{{PARTS}}</b><span>parts</span></div>
-      <div class="stat"><b>{{WORDS}}</b><span>words</span></div>
     </div>
     <div class="cta">
-      <a class="btn" href="contents.html">All chapters</a>
-      <a class="go" href="trials.html">The trial registry</a>
-      <a class="go" href="stories.html">Chapter stories</a>
+      <a class="btn" href="contents.html"><span class="btn-main">Contents</span></a>
+      <a class="go" href="stories.html">Stories</a>
+      <a class="go" href="trials.html">Trial Registry</a>
     </div>
-    <p class="caption"><b>Above:</b> four clonal populations in overlapping territories, and a
+    <div class="hero-fig" aria-hidden="true"><canvas id="bg"></canvas></div>
+    <p class="caption"><b>The figure:</b> four clonal populations in overlapping territories, and a
     core passing over them. What the core holds is what the report would say. Move it and the
     answer moves, which is the argument the sixth part of this book makes at length.</p>
   </div>
@@ -94,11 +87,14 @@
   off. Nothing on any page is fetched from anywhere.</p>
 </section>
 
+</div>
+</main>
+
+<div class="lp">
 <footer class="foot">
   Part of <a href="../index.html">A Library</a>. Every chapter is written. What changes from
   here is the evidence, which is why the trial tables are generated from one registry.
 </footer>
-
 </div>
 
 <script>
@@ -128,18 +124,51 @@
   if (!c || !c.getContext) return;
   var g = c.getContext('2d'), W = 0, H = 0, DPR = 1, t = 0, still = false;
 
-  function css(v) {
-    return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  var fig = c.parentNode;
+
+  /* A colour role as [r, g, b]. getPropertyValue() returns the unresolved
+     color-mix() text, and a computed colour serialises as color(srgb ...), so
+     neither can be parsed here. The role is set on a probe instead, its
+     computed colour painted into a 1x1 canvas, and the pixel read back
+     (DESIGN.md section 3). That follows the theme whatever book.css derives
+     the role from. A value this cannot read falls back rather than throwing:
+     a background is never worth a broken page. */
+  var probe = null, px1 = null;
+  function color(name, fallback) {
+    try {
+      if (!probe) {
+        probe = document.createElement('i');
+        probe.setAttribute('aria-hidden', 'true');
+        probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;visibility:hidden';
+        document.body.appendChild(probe);
+      }
+      probe.style.color = 'var(' + name + ')';
+      var cs = getComputedStyle(probe).color;
+      if (!px1) {
+        var k = document.createElement('canvas');
+        k.width = k.height = 1;
+        px1 = k.getContext('2d', { willReadFrequently: true });
+      }
+      px1.clearRect(0, 0, 1, 1);
+      px1.fillStyle = '#010203';
+      px1.fillStyle = cs;
+      if (px1.fillStyle === '#010203') return fallback;
+      px1.fillRect(0, 0, 1, 1);
+      var d = px1.getImageData(0, 0, 1, 1).data;
+      return [d[0], d[1], d[2]];
+    } catch (e) { return fallback; }
+  }
+  function hex(c) {
+    return '#' + c.map(function (v) { v = v | 0; return (v < 16 ? '0' : '') + v.toString(16); }).join('');
   }
 
-  /* #rgb and #rrggbb, which is all book.css declares. A value this cannot read
-     falls back rather than throwing: a background is never worth a broken
-     page. */
-  function rgb(hex, fallback) {
-    var h = String(hex || '').replace('#', '');
-    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (!/^[0-9a-f]{6}$/i.test(h)) return fallback;
-    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  /* Read once, and again when the theme changes, rather than on every frame. */
+  var acc = [142, 42, 95], faint = [131, 131, 140];
+  function palette() {
+    acc = color('--accent', [142, 42, 95]);
+    faint = color('--ink-faint', [131, 131, 140]);
+    c.setAttribute('data-accent', hex(acc));
+    c.setAttribute('data-ink', hex(faint));
   }
   function mix(a, b, u) {
     return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
@@ -190,23 +219,23 @@
     if (c.clientWidth !== W || c.clientHeight !== H) size();
     g.clearRect(0, 0, W, H);
 
-    /* The field sits to the right, where the hero's mask lets it show, and is
-       square whatever the window is doing. */
-    /* Beside the type on a wide screen, and beneath it on a phone. There is no
-       room to the right of a 390px column, and the first attempt put the mass
-       squarely behind the thesis, where it competed with the one sentence the
-       hero exists to carry. The stylesheet's mask fades the figure downward at
-       that width, so the foot of the hero is where it can be seen without
-       being read through. */
-    var narrow = W < 720;
-    var R = narrow ? Math.min(W * 0.42, H * 0.26) : Math.min(W * 0.26, H * 0.46);
-    var cx = narrow ? W * 0.66 : W - R * 1.22;
-    var cy = narrow ? H * 0.88 : H * 0.5;
+    /* The field is square whatever the window is doing. On a wide screen it
+       sits in the space right of the text column, where the stylesheet's mask
+       lets it show; on a phone the stylesheet gives the figure a band of its
+       own after the way in, and the field is centred in it. The stylesheet
+       decides which, and the drawing follows it: one breakpoint, not two. */
+    var band = getComputedStyle(fig).position !== 'absolute';
+    var x0 = 0;
+    if (!band) {
+      var lede = document.querySelector('.hero .lede');
+      if (lede) x0 = Math.max(0, lede.getBoundingClientRect().right - c.getBoundingClientRect().left);
+    }
+    var A = W - x0;
+    var R = band ? Math.min(W * 0.42, H * 0.44) : Math.min(A * 0.36, H * 0.46);
+    var cx = band ? W * 0.5 : x0 + A * 0.5;
+    var cy = H * 0.5;
     function PX(x) { return cx + x * R; }
     function PY(y) { return cy + y * R; }
-
-    var acc = rgb(css('--accent'), [142, 42, 95]);
-    var faint = rgb(css('--ink-faint'), [131, 131, 140]);
     /* The clones are tints along one line between the book's accent and its
        faintest ink. Four unrelated hues would be a chart. This is one colour
        family, which is what tells the eye these are variants of a single
@@ -259,6 +288,7 @@
     requestAnimationFrame(draw);
   }
 
+  palette();
   size();
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     /* one frame, part way along the path, so the still picture shows a core
@@ -268,8 +298,16 @@
     requestAnimationFrame(draw);
   }
   addEventListener('resize', function () { size(); if (still) draw(); });
-  new MutationObserver(function () { if (still) draw(); })
+  /* The palette follows the theme: the bar's control, and the OS when the
+     reader has stored no choice. */
+  function retheme() { palette(); if (still) draw(); }
+  addEventListener('library:theme', retheme);
+  new MutationObserver(retheme)
     .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (window.matchMedia) {
+    var mq = matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', retheme);
+  }
 })();
 </script>
 </body>

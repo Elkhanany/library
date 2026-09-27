@@ -14,21 +14,32 @@
 <meta name="apple-mobile-web-app-title" content="Library">
 <meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#101216" media="(prefers-color-scheme:dark)">
-<script>try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)document.documentElement.classList.add('standalone');</script>
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="assets/pwa.js" defer></script>
 <!--/PWA-->
 <title>A Library</title>
 <meta name="description" content="Books built from first principles: From Newton to M-Theory, The Long Argument, The Ages of Thought, Breast Cancer.">
 <style>
 *{box-sizing:border-box}
+/* The same role names every book page uses (DESIGN.md section 3), in both
+   themes, so the library bar and anything else that reads --bg, --paper or
+   --ink finds the hub's own colours rather than a literal fallback.
+   --ink-faint is the palest ink a word may use: 4.96:1 on the ground and
+   5.36:1 on a tile in light, 5.78:1 and 5.48:1 in dark. */
 :root{
-  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Charter,Georgia,Cambria,serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#878d99; --rule:#dcdfe5;
+  --serif:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+    "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --sans:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    "Helvetica Neue",Arial,sans-serif);
+  --bg:#f4f3f0; --paper:#ffffff;
+  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#646975; --rule:#dcdfe5;
+  --accent-ink:var(--ink);
+  --tile:rgba(255,255,255,.72);
+  color-scheme:light;
 }
 html,body{margin:0;height:100%}
 body{
-  font-family:var(--serif); color:var(--ink); background:#f4f3f0;
+  font-family:var(--serif); color:var(--ink); background:var(--bg);
   -webkit-font-smoothing:antialiased; position:relative; overflow-x:hidden;
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
 }
@@ -72,112 +83,209 @@ body[data-focus] .field.base{opacity:0}
     linear-gradient(180deg, rgba(var(--fg),var(--wg)), rgba(var(--fg2),calc(var(--wg)*1.6)))}
 .field[data-book="newton-to-mtheory"]{--a-rgb:27,75,128;--a2-rgb:127,176,232}
 body[data-focus="newton-to-mtheory"] .field[data-book="newton-to-mtheory"]{opacity:1}
-body[data-focus="newton-to-mtheory"] .book[data-slug="newton-to-mtheory"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
-.field[data-book="the-long-argument"]{--a-rgb:163,35,43;--a2-rgb:201,73,74}
+body[data-focus="newton-to-mtheory"] .book[data-slug="newton-to-mtheory"]{opacity:1;filter:none;border-color:var(--bk-hue)}
+.field[data-book="the-long-argument"]{--a-rgb:163,35,43;--a2-rgb:228,99,95}
 body[data-focus="the-long-argument"] .field[data-book="the-long-argument"]{opacity:1}
-body[data-focus="the-long-argument"] .book[data-slug="the-long-argument"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
-.field[data-book="the-ages-of-thought"]{--a-rgb:168,86,42;--a2-rgb:208,130,76}
+body[data-focus="the-long-argument"] .book[data-slug="the-long-argument"]{opacity:1;filter:none;border-color:var(--bk-hue)}
+.field[data-book="the-ages-of-thought"]{--a-rgb:147,65,42;--a2-rgb:217,127,92}
 body[data-focus="the-ages-of-thought"] .field[data-book="the-ages-of-thought"]{opacity:1}
-body[data-focus="the-ages-of-thought"] .book[data-slug="the-ages-of-thought"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+body[data-focus="the-ages-of-thought"] .book[data-slug="the-ages-of-thought"]{opacity:1;filter:none;border-color:var(--bk-hue)}
 .field[data-book="breast-cancer"]{--a-rgb:142,42,95;--a2-rgb:216,120,166}
 body[data-focus="breast-cancer"] .field[data-book="breast-cancer"]{opacity:1}
-body[data-focus="breast-cancer"] .book[data-slug="breast-cancer"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+body[data-focus="breast-cancer"] .book[data-slug="breast-cancer"]{opacity:1;filter:none;border-color:var(--bk-hue)}
 
 
-.wrap{position:relative;z-index:1;max-width:64rem;margin:0 auto;padding:clamp(2.5rem,7vh,5rem) 1.4rem 4rem}
+/* The frame's inner gutter is the bar's inset (DESIGN.md section 5), so the
+   lede starts under the brand's letters on a phone. */
+.wrap{position:relative;z-index:1;max-width:64rem;margin:0 auto;
+  padding:clamp(2.5rem,7vh,5rem) var(--lib-inset,1.25rem) 4rem}
+main{display:block}
 
+/* ---------- the lede: a label, the serif title, the lede ---------- */
 header.lede{max-width:38rem;margin:0 0 clamp(2rem,5vh,3.4rem)}
-.eyebrow{font-family:var(--sans);font-size:.7rem;font-weight:700;letter-spacing:.22em;
+.eyebrow,.continue h2{font:700 .7rem/1.3 var(--sans);letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-faint);margin:0 0 .9rem}
-h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
-  font-weight:600;margin:0 0 1rem}
-.lede p{font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
+h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.06;letter-spacing:-.02em;
+  font-weight:400;margin:0 0 1rem;text-wrap:balance}
+/* not the eyebrow, which is also a <p> in the lede and lost to this rule: it
+   rendered at 18px bold with 4px tracking, louder than anything but the h1
+   (FD-05) */
+.lede > p:not(.eyebrow){font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
 
-/* ---------- the shelf ---------- */
-.shelf{display:grid;grid-template-columns:repeat(2,1fr);gap:1.15rem}
-@media (max-width:760px){.shelf{grid-template-columns:1fr}}
+/* ---------- continue reading ----------
+   Filled by pwa.js from library:v1.lastBy, one row per book the reader has
+   opened a chapter of, most recent first (DESIGN.md section 6, Hub). Hidden
+   until there is something in it, so a first visit shows nothing here. The
+   book's name is in its own accent, the dark-safe one in the dark theme,
+   which is the same swap the tiles make. */
+.continue{margin:0 0 clamp(2rem,5vh,2.8rem);max-width:44rem}
+.continue[hidden]{display:none}
+.continue ol{list-style:none;margin:0;padding:0}
+.continue li{margin:0}
+/* Each row stands on its own progress rule: the hairline is the track, the
+   book's accent the part read, so the rows need no other divider. */
+.continue a{--bk-hue:var(--bk-accent);display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr);
+  align-items:baseline;gap:.15rem 1.2rem;padding:.65rem 0 0;min-height:44px;
+  text-decoration:none;color:var(--ink)}
+.continue .c-book{font:600 .8125rem/1.3 var(--sans);color:var(--bk-hue);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.continue .c-ch{font-size:1.02rem;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.continue .c-rule{grid-column:1/-1;height:2px;margin-top:.55rem;background:var(--rule);position:relative}
+.continue .c-rule i{position:absolute;left:0;top:0;bottom:0;background:var(--bk-hue)}
+.continue a:hover .c-ch,.continue a:focus-visible .c-ch{color:var(--bk-hue)}
+.continue a:focus-visible{outline:2px solid var(--bk-hue);outline-offset:2px}
+@media (max-width:639.98px){
+  .continue a{grid-template-columns:minmax(0,1fr)}
+}
+
+/* ---------- the shelf ----------
+   Tiles in the house register (FD-11): a hairline, radius 6px, the page's
+   raised surface let through a little, and nothing that lifts, shadows,
+   blurs or holds a tile open to a fixed height. The title's link is
+   stretched over the whole tile, so the tile is one target; only the offline
+   chip sits above it. */
+.shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem}
+@media (max-width:639.98px){.shelf{grid-template-columns:minmax(0,1fr);gap:.9rem}}
 
 .book{
-  position:relative;display:flex;flex-direction:column;justify-content:space-between;
-  min-height:19rem;padding:1.6rem 1.5rem 1.35rem;
-  text-decoration:none;color:inherit;
-  background:rgba(255,255,255,.72);
-  border:1px solid var(--rule);border-radius:10px;
-  -webkit-backdrop-filter:saturate(140%) blur(6px);
-  backdrop-filter:saturate(140%) blur(6px);
-  transition:transform .3s ease,box-shadow .3s ease,opacity .4s ease,
-             border-color .3s ease,background .4s ease;
+  position:relative;display:flex;flex-direction:column;
+  padding:1.5rem 1.5rem 1.2rem;
+  color:inherit;background:var(--tile);
+  border:1px solid var(--rule);border-radius:6px;
+  transition:opacity .4s ease,border-color .3s ease,background .4s ease;
 }
-.book:hover,.book:focus-visible{
-  transform:translateY(-3px);
-  border-color:var(--bk-accent);
-  box-shadow:0 14px 40px rgba(20,22,28,.14);
-  outline:none;
+/* --bk-hue is the tile's accent in the active theme: --bk-accent on paper,
+   --bk-accent-2 (the book's accent_dark) on the dark ground, where the light
+   accents measured 2.0 to 3.4:1 (FD-03, NAV-12, PDA-04). Both are stamped on
+   the tile by hub(); the swap is below, keyed on data-theme. */
+.book{--bk-hue:var(--bk-accent)}
+.book:hover{border-color:var(--bk-hue)}
+/* Keyboard focus lands on the title's link, which is stretched over the tile,
+   so the ring goes round the tile in the book's own colour (C2-tile-focus),
+   not round the title's words. */
+.book h2 a:focus-visible{outline:none}
+.book:has(h2 a:focus-visible){outline:2px solid var(--bk-hue);outline-offset:2px;border-color:var(--bk-hue)}
+@supports not selector(:has(a)){
+  .book:focus-within{outline:2px solid var(--bk-hue);outline-offset:2px}
 }
-/* the other books recede rather than disappear — still readable, plainly not the subject */
+/* the other books recede rather than disappear: still readable, plainly not the subject */
 body[data-focus] .book{opacity:.34;filter:saturate(.5)}
-body[data-focus] .book[data-live="1"]:hover,
-body[data-focus] .book[data-live="1"]:focus-visible{opacity:1;filter:none}
 
-.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-accent);margin:0 0 1.1rem}
-.book .kicker{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--bk-accent);margin:0 0 .6rem}
-.book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.08;letter-spacing:-.02em;
-  font-weight:600;margin:0 0 .7rem}
-.book p{font-size:.95rem;line-height:1.55;color:var(--ink-soft);margin:0}
-.book .foot{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
-  margin-top:1.5rem;font-family:var(--sans);font-size:.78rem;color:var(--ink-faint)}
-.book .count{font-weight:650;color:var(--ink-soft)}
-.book .go{color:var(--bk-accent);font-weight:650}
-.book[data-live="0"]{cursor:default}
+.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-hue);margin:0 0 1.1rem}
+.book .kicker{font:700 .7rem/1.3 var(--sans);letter-spacing:.12em;
+  text-transform:uppercase;color:var(--bk-hue);margin:0 0 .6rem}
+.book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.1;letter-spacing:-.015em;
+  font-weight:400;margin:0 0 .6rem}
+.book h2 a{color:inherit;text-decoration:none}
+.book h2 a::after{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit}
+.book .tagline{font-size:.98rem;line-height:1.55;color:var(--ink-soft);margin:0}
+.book .foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+  gap:.6rem 1rem;margin-top:auto;padding-top:1.3rem;font:.8125rem/1.35 var(--sans)}
+.book .count{font-weight:600;color:var(--ink-soft)}
+.book .go{color:var(--bk-hue);font-weight:600;white-space:nowrap}
+.book .off{grid-column:1/-1;justify-self:start}
 .book[data-live="0"] .go{color:var(--ink-faint)}
 
-footer{margin-top:3rem;font-family:var(--sans);font-size:.76rem;color:var(--ink-faint)}
+/* The offline chip: a button, above the stretched link, in the page's own
+   inks. pwa.js un-hides it once it knows what is stored; with no script,
+   or no Cache Storage, it never shows. */
+.book button.off{position:relative;z-index:2;font:600 .75rem/1.2 var(--sans);
+  color:var(--ink-soft);background:var(--tile);border:1px solid var(--rule);
+  border-radius:999px;padding:.35rem .8rem;min-height:32px;cursor:pointer}
+.book button.off:hover{border-color:currentColor;color:var(--ink)}
+.book button.off:focus-visible{outline:2px solid var(--bk-hue);outline-offset:2px}
+.book button.off[disabled]{cursor:default}
+.book button.off[hidden]{display:none}
+
+/* ---------- below the grid: one quiet line ---------- */
+.store{margin:1.6rem 0 0;font:.8125rem/1.5 var(--sans);color:var(--ink-faint)}
+.store[hidden]{display:none}
+.store button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;
+  text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.store button:hover{color:var(--ink)}
+.store button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+footer{margin-top:2.4rem;font:.8125rem/1.5 var(--sans);color:var(--ink-faint)}
 footer a{color:inherit}
 
 @media (prefers-reduced-motion:reduce){
   .field,.book{transition:none}
-  .book:hover,.book:focus-visible{transform:none}
 }
 /* A phone cannot hover, so the wash never fires there and the tiles have to
    carry their own colour. Apple's 44pt minimum and the home indicator are the
    other two things a desktop layout forgets. */
 @media (pointer:coarse){
-  .book{min-height:16rem}
-  .book:active{transform:scale(.995)}
-  footer a{display:inline-flex;align-items:center;min-height:44px}
-  .wrap{padding-left:max(1.4rem,env(safe-area-inset-left));
-        padding-right:max(1.4rem,env(safe-area-inset-right));
+  .book button.off{min-height:44px;padding:.5rem 1rem}
+  .store button,footer a{display:inline-flex;align-items:center;min-height:44px}
+  .wrap{padding-left:max(var(--lib-inset,1rem),env(safe-area-inset-left));
+        padding-right:max(var(--lib-inset,1rem),env(safe-area-inset-right));
         padding-bottom:calc(4rem + env(safe-area-inset-bottom))}
 }
 @media (max-width:520px){
-  .shelf{gap:.9rem}
-  .book{min-height:14rem;padding:1.3rem 1.2rem 1.15rem}
+  .book{padding:1.3rem 1.2rem 1.1rem}
 }
+/* ---------- dark ----------
+   Keyed on data-theme, which the boot script in <head> stamps before first
+   paint from the reader's choice or, failing one, from the OS. The hub used
+   to read only the media query, so it ignored the theme a reader had chosen
+   and sat dark under html[data-theme=light] (NAV-02, FD-02). The media query
+   is kept only as the fallback for a page no script has stamped. :root[data-theme="dark"]{--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--tile:rgba(24,27,32,.66);--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root[data-theme="dark"] .book{--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .continue a{--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root[data-theme="dark"] .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
 @media (prefers-color-scheme:dark){
-  :root{--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#787d87;--rule:#31353d;
-        --w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
-  body{background:#101216}
-  .book{background:rgba(24,27,32,.66)}
-  /* the accents were chosen against paper; on a dark ground the book's lighter
-     variant is the one that reads, so the two swap roles. */
-  .field{--fg:var(--a2-rgb); --fg2:var(--a-rgb)}
-  .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+:root:not([data-theme]){--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--tile:rgba(24,27,32,.66);--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root:not([data-theme]) .book{--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .continue a{--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root:not([data-theme]) .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+} is
+   filled in by hub() from HUB_DARK, once for each of the two selectors. */
+:root[data-theme="dark"]{--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--tile:rgba(24,27,32,.66);--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root[data-theme="dark"] .book{--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .continue a{--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root[data-theme="dark"] .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme]){--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--tile:rgba(24,27,32,.66);--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root:not([data-theme]) .book{--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .continue a{--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root:not([data-theme]) .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
 }
 </style>
+<!--NAVCSS-->
+<link rel="stylesheet" href="assets/nav.css">
+<!--/NAVCSS-->
 </head>
 <body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library">
+  <a class="nav-brand" href="index.html" aria-current="page">A Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<span class="skip-target" id="text" tabindex="-1"></span>
+<!--/NAV-->
 <div class="field base"></div>
 <div class="field" data-book="newton-to-mtheory" data-style="lightcone"></div><div class="field" data-book="the-long-argument" data-style="marginalia"></div><div class="field" data-book="the-ages-of-thought" data-style="plain"></div><div class="field" data-book="breast-cancer" data-style="plain"></div>
 <div class="wrap">
+<main>
 <header class="lede">
   <p class="eyebrow">Built from first principles</p>
   <h1>A library of books that show their working.</h1>
   <p>Each one begins at the beginning and derives what it uses. Where something is taken on
   trust it is marked as such, so you always know what you are standing on.</p>
 </header>
-<main class="shelf">
-<a class="book" data-slug="newton-to-mtheory" data-live="1" href="newton-to-mtheory/index.html" style="--bk-accent:#1b4b80"><div><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2>From Newton to M-Theory</h2><p>Special relativity, general relativity, quantum mechanics, quantum field theory, the Standard Model and string theory — derived, not asserted.</p></div><div class="foot"><span class="count">37 of 76 chapters</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-long-argument" data-live="1" href="the-long-argument/index.html" style="--bk-accent:#a3232b"><div><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2>The Long Argument</h2><p>Eight arguments that never finished — read in pairs, across the centuries that kept reopening them.</p></div><div class="foot"><span class="count">8 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-ages-of-thought" data-live="1" href="the-ages-of-thought/index.html" style="--bk-accent:#a8562a"><div><div class="rule"></div><p class="kicker">An atlas</p><h2>The Ages of Thought</h2><p>Ten ages, and the people who argued their way from one to the next.</p></div><div class="foot"><span class="count">0 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="breast-cancer" data-live="1" href="breast-cancer/index.html" style="--bk-accent:#8e2a5f"><div><div class="rule"></div><p class="kicker">A working reference</p><h2>Breast Cancer</h2><p>Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both.</p></div><div class="foot"><span class="count">98 of 98 chapters</span><span class="go">Read &rarr;</span></div></a>
+<section class="continue" data-continue hidden aria-labelledby="continue-h">
+  <h2 id="continue-h">Continue reading</h2>
+  <ol></ol>
+</section>
+<div class="shelf">
+<article class="book" data-slug="newton-to-mtheory" data-live="1" style="--bk-accent:#1b4b80;--bk-accent-2:#7fb0e8"><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2><a href="newton-to-mtheory/index.html">From Newton to M-Theory</a></h2><p class="tagline">Special relativity, general relativity, quantum mechanics, quantum field theory, the Standard Model and string theory — derived, not asserted.</p><div class="foot"><span class="count">37 of 76 chapters written</span><span class="go" aria-hidden="true">Read &rarr;</span><button class="off" type="button" data-offline="newton-to-mtheory" hidden></button></div></article><article class="book" data-slug="the-long-argument" data-live="1" style="--bk-accent:#a3232b;--bk-accent-2:#e4635f"><div class="rule"></div><p class="kicker">A history in arguments</p><h2><a href="the-long-argument/index.html">The Long Argument</a></h2><p class="tagline">Eight arguments that never finished — read in pairs, across the centuries that kept reopening them.</p><div class="foot"><span class="count">133 thinkers, each with a study</span><span class="go" aria-hidden="true">Read &rarr;</span><button class="off" type="button" data-offline="the-long-argument" hidden></button></div></article><article class="book" data-slug="the-ages-of-thought" data-live="1" style="--bk-accent:#93412a;--bk-accent-2:#d97f5c"><div class="rule"></div><p class="kicker">An atlas</p><h2><a href="the-ages-of-thought/index.html">The Ages of Thought</a></h2><p class="tagline">Ten ages, and the people who argued their way from one to the next.</p><div class="foot"><span class="count">133 thinkers across ten ages</span><span class="go" aria-hidden="true">Read &rarr;</span><button class="off" type="button" data-offline="the-ages-of-thought" hidden></button></div></article><article class="book" data-slug="breast-cancer" data-live="1" style="--bk-accent:#8e2a5f;--bk-accent-2:#d878a6"><div class="rule"></div><p class="kicker">A working reference</p><h2><a href="breast-cancer/index.html">Breast Cancer</a></h2><p class="tagline">Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both.</p><div class="foot"><span class="count">98 chapters</span><span class="go" aria-hidden="true">Read &rarr;</span><button class="off" type="button" data-offline="breast-cancer" hidden></button></div></article>
+</div>
+<p class="store" data-store hidden></p>
 </main>
 <footer>Every page works with the network switched off. <a href="https://github.com/Elkhanany">Source</a>.</footer>
 </div>
@@ -191,11 +299,18 @@ footer a{color:inherit}
   document.querySelectorAll('.book').forEach(function (el) {
     var slug = el.getAttribute('data-slug');
     el.addEventListener('mouseenter', function () { focusBook(slug); });
-    el.addEventListener('focus', function () { focusBook(slug); });
-    el.addEventListener('mouseleave', function () { focusBook(null); });
-    el.addEventListener('blur', function () { focusBook(null); });
+    el.addEventListener('mouseleave', function () {
+      if (!el.contains(document.activeElement)) focusBook(null);
+    });
+    el.addEventListener('focusin', function () { focusBook(slug); });
+    el.addEventListener('focusout', function (e) {
+      if (!e.relatedTarget || !el.contains(e.relatedTarget)) focusBook(null);
+    });
   });
-  document.querySelector('.shelf').addEventListener('mouseleave', function () { focusBook(null); });
+  document.querySelector('.shelf').addEventListener('mouseleave', function () {
+    if (!document.activeElement || !document.activeElement.closest ||
+        !document.activeElement.closest('.book')) focusBook(null);
+  });
 })();
 </script>
 </body>

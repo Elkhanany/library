@@ -60,11 +60,46 @@ def katex_css_inlined():
 
 def runtime_js():
     """book.js minus the KaTeX pass — the maths is already rendered. Keeps the
-    theme toggle, the sidebar TOC and the figure/plotting code."""
+    theme toggle, the sidebar TOC and the figure/plotting code.
+
+    THE BOOT-SHAPE CONTRACT (DESIGN.md section 8, "book.js boot shape"). Two text
+    substitutions in shared/assets/book.js, each of which must happen exactly once:
+      1. the literal `numberEquations();`, the boot handler's first statement,
+         becomes a comment. Missing, the Dropbox pages number every equation a
+         second time over the numbers baked in here.
+      2. everything from `if (window.katex) { typeset(); }` to the handler's
+         closing `\\n  });` is deleted, so the katex if/else block must be the
+         LAST thing in the handler. A boot call placed after it vanishes from
+         every page this script writes.
+    New boot calls go after `numberEquations();` and before `if (window.katex)`.
+    This is a copy of webbuild.runtime_js(); change the two together. The
+    contract comment above the handler in book.js is dropped here too."""
     js = library.read(os.path.join(library.ASSETS, "book.js"))
+    law = ("runtime_js(): shared/assets/book.js breaks the boot-shape contract "
+           "(DESIGN.md section 8, 'book.js boot shape'): ")
+    js, n = re.subn(r"\n  /\* ---------- boot contract .*?\*/", "", js, flags=re.S)
+    if n > 1:
+        raise RuntimeError(law + "the boot-contract comment appears %d times" % n)
+    n = js.count("numberEquations();")
+    if n != 1:
+        raise RuntimeError(law + "expected exactly one 'numberEquations();' (the boot "
+                           "handler's first statement), found %d" % n)
     js = js.replace("numberEquations();", "/* numbered at build time */")
-    js = re.sub(r"if \(window\.katex\) \{ typeset\(\); \}.*?\n  \}\);", "});", js, flags=re.S)
+    js, n = re.subn(r"if \(window\.katex\) \{ typeset\(\); \}.*?\n  \}\);", "});", js, flags=re.S)
+    if n != 1:
+        raise RuntimeError(law + "expected the boot handler to end with exactly one "
+                           "'if (window.katex) { typeset(); } else {...}' block closed by "
+                           "'\\n  });', found %d" % n)
     return js
+
+
+# The sidebar's section list without the spy's state (webbuild.TOC_JS).
+TOC_JS = """() => {
+                const t = document.getElementById('sb-toc').cloneNode(true);
+                t.querySelectorAll('.active, [aria-current]').forEach(a => {
+                  a.classList.remove('active'); a.removeAttribute('aria-current');
+                  if (!a.className) a.removeAttribute('class'); });
+                return t.innerHTML; }"""
 
 
 SHELL = """<!DOCTYPE html>
@@ -77,17 +112,20 @@ SHELL = """<!DOCTYPE html>
 {katexcss}
 </style>
 <style>
-{bookcss}
+{bookcss}{themecss}
+</style>
+<style>
+{navcss}
+:root{{--lib-bar-h:0px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<nav class="sidebar">
-  <a class="sb-home" href="index.html">← Newton to M-Theory</a>
-  <p class="sb-title">{sbhead}</p>
+<nav class="sidebar" aria-label="Chapter sections">
+{side}
   <div id="sb-toc">{toc}</div>
 </nav>
-<main class="main">
+<main class="main" id="text">
 <div class="col{wide}">
 {body}
 </div>
@@ -128,12 +166,20 @@ async def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT, exist_ok=True)
     kcss, bcss, rt = katex_css_inlined(), library.read(os.path.join(library.ASSETS, "book.css")), runtime_js()
+    # The book's own palette, as docs/ appends it to book.css, so a Dropbox copy
+    # of the clinical book is not printed in the physics book's blue. Then
+    # nav.css, which carries the library's type stacks, the drawer and the
+    # theme-toggle fallback (#themer), and then the bar height at 0: there is
+    # no bar in these files, and scroll padding, the sidebar's top and
+    # anything else sized from --lib-bar-h must not leave room for one.
+    tcss = library.themecss(BOOK)
+    ncss = library.read(os.path.join(library.ASSETS, "nav.css"))
     n = 0
 
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
 
-        async def render(src, title, sbhead, wide, extra, dest):
+        async def render(src, title, side, wide, extra, dest):
             pg = await b.new_page(viewport={"width": 1280, "height": 1000})
             await pg.goto("file://" + src)
             await pg.wait_for_timeout(2400)
@@ -142,7 +188,7 @@ async def main():
             await pg.evaluate("() => { if (window.NMT && NMT.resetForSnapshot) NMT.resetForSnapshot(); }")
             await pg.wait_for_timeout(60)
             body = await pg.evaluate("document.querySelector('.main .col').innerHTML")
-            toc = await pg.evaluate("document.getElementById('sb-toc').innerHTML")
+            toc = await pg.evaluate(TOC_JS)
             left = await pg.evaluate(
                 "(document.body.innerText.match(/\\\\[a-zA-Z]+\\{/g)||[]).length")
             bad = await pg.evaluate("document.querySelectorAll('.katex-error').length")
@@ -151,7 +197,8 @@ async def main():
                 print(f"   !! {os.path.basename(dest)}: {left} unrendered, {bad} katex errors")
             body = body.replace('href="chapters/', 'href="')
             library.write(dest, SHELL.format(
-                title=title, book=BOOK.title, katexcss=kcss, bookcss=bcss, sbhead=sbhead,
+                title=title, book=BOOK.title, katexcss=kcss, bookcss=bcss, side=side,
+                themecss=tcss, navcss=ncss,
                 toc=toc, body=body, wide=wide, runtime=rt, extra=extra))
 
         for num, slug, title, part, _m in bp.FLAT:
@@ -161,17 +208,22 @@ async def main():
             raw = library.read(BOOK.chapter_path(slug))
             m = re.search(r"<!--SCRIPT-->(.*?)<!--/SCRIPT-->", raw, re.S)
             extra = "<script>\n" + m.group(1) + "\n</script>" if m else ""
-            await render(src, f"{num} {title}", f"Ch {num}", "", extra,
-                         os.path.join(OUT, slug + ".html"))
+            # Here the contents page is index.html, so a chapter's up-link goes
+            # to index.html#sec-<i>; and there is no pwa.js, so the arrows'
+            # titles name no arrow keys.
+            await render(src, f"{num} {title}",
+                         bp.sidebar_head("chapter", slug, contents="index.html", keys=False),
+                         "", extra, os.path.join(OUT, slug + ".html"))
             n += 1
 
-        TITLES = {"index": "Contents", "ledger": "Math Ledger",
-                  "throughline": "The Through-Line"}
-        for name, sbhead in (("index", "Parts"), ("ledger", "Ledger"),
-                             ("throughline", "Through-Line")):
+        # One name per destination, as on the site (webbuild.py). Only the
+        # contents page and the ledger take the wide column.
+        for name, page, title, wide in (("index", "contents", "Contents", " wide"),
+                                        ("ledger", "ledger", "Math Ledger", " wide"),
+                                        ("throughline", "throughline", "In Plain Terms", "")):
             src = os.path.join(STAGE, name + ".html")
             if os.path.exists(src):
-                await render(src, TITLES[name], sbhead, " wide", "",
+                await render(src, title, bp.sidebar_head(page), wide, "",
                              os.path.join(OUT, name + ".html"))
         await b.close()
 

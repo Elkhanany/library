@@ -63,43 +63,93 @@ HEAD_END = "</head>"
 
 # Library-level pages that carry no bar, and why.
 #
-# index.html is the hub. It is the place the bar points back to, it is the
-# start_url of the installed app, and it has no book to name; a bar there would
-# be a link to itself.
-#
 # offline.html and continue.html are deliberately dependency-free -- no
 # stylesheet, no script, no font to fetch. offline.html is what a reader sees
 # when the network is gone and the page they asked for was never stored, so it
 # has to render from its own bytes. A bar that needs a stylesheet would be the
 # one piece of it that did not. Both already carry their own way back.
-UNBARRED = ("index.html", "offline.html", "continue.html")
+#
+# The hub is barred. It used to be left out as the page the bar points back to,
+# which also left it the one page in the library with no theme control (NAV-02):
+# its bar is the brand "A Library", marked as the current page, and the theme
+# button.
+UNBARRED = ("offline.html", "continue.html")
+
+# The theme button's glyph: a circle half-filled with currentColor, the same
+# everywhere (DESIGN.md section 4). Decorative; the button carries the label.
+THEME_ICON = ('<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" '
+              'focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" '
+              'stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 '
+              '7.25 0 0 1 0 14.5z" fill="currentColor"/></svg>')
 
 
 # ------------------------------------------------------------------- the bar
 
-def bar(bk, here=None):
-    """The book's bar, with the entry for `here` marked as the current page.
+def bar(bk, here=None, target=False):
+    """The library bar for one page, with the entry for `here` marked as the
+    current page (DESIGN.md section 6, "The library bar").
 
-    `here` is a file name inside the book -- "contents.html", "BC-500.html" --
-    or None on a page that is not in the book's directory. A chapter matches
-    nothing and simply gets no mark.
+    `bk` is the book the page belongs to, or None for the hub. `here` is a file
+    name inside the book -- "contents.html", "BC-500.html" -- or the hub's
+    "index.html". A chapter matches nothing and simply gets no mark.
+
+    The skip link comes first, so it is the first Tab stop on every page. Then
+    the brand; the Menu button, which folds the book's destinations under one
+    control at 640px and below, and only exists where there are destinations
+    to fold; the destinations; Library, the way out, outside the fold so it
+    never costs a tap; and the theme button, last on every page.
+
+    Both buttons ship hidden. pwa.js wires them and removes the attribute, and
+    nav.css reserves their slots meanwhile under html.js, so nothing moves when
+    the script arrives. A page whose shell predates this file never shows a
+    dead button, because the browser hides [hidden] on its own.
+
+    `target` adds the skip link's target just after the bar, for a page whose
+    own markup does not yet name its text with id="text". Without it the link
+    would point at nothing on every such page, with scripts or without. pwa.js
+    moves the id onto the page's own main, .main, .app or .hero when there is
+    one, so on a chapter the skip also passes the sidebar.
     """
     def current(href):
         return ' aria-current="page"' if here and href == here else ""
 
-    links = []
+    theme = ('  <button class="nav-theme" type="button" aria-pressed="false" '
+             'aria-label="Dark theme" title="Switch to dark" hidden>%s</button>\n'
+             % THEME_ICON)
+    skip = '<a class="skip" href="#text">Skip to text</a>\n'
+    after = ('\n<span class="skip-target" id="text" tabindex="-1"></span>'
+             if target else '')
+
+    if bk is None:
+        return (skip + '<nav class="topnav" aria-label="Library">\n'
+                '  <a class="nav-brand" href="index.html"%s>A Library</a>\n'
+                '%s</nav>%s' % (current("index.html"), theme, after))
+
+    dest, up = [], None
     for item in bk.nav_items():
-        cls = ' class="up"' if item["key"] == "library" else ""
-        links.append('<a%s href="%s"%s>%s</a>'
-                     % (cls, item["href"], current(item["href"]),
-                        html.escape(item["label"])))
+        if item["key"] == "library":
+            up = '  <a class="up" href="%s">%s</a>\n' % (item["href"],
+                                                        html.escape(item["label"]))
+            continue
+        dest.append('<a href="%s"%s>%s</a>'
+                    % (item["href"], current(item["href"]), html.escape(item["label"])))
     cls, name = brand(bk)
-    return ('<nav class="topnav" aria-label="Site">\n'
-            '  <a class="%s" href="index.html"%s>%s</a>\n'
-            '  <div class="topnav-links">\n'
-            '    %s\n'
-            '  </div>\n'
-            '</nav>' % (cls, current("index.html"), name, "\n    ".join(links)))
+    out = [skip,
+           '<nav class="topnav" aria-label="Library" data-book="%s">\n' % bk.slug,
+           '  <a class="%s" href="index.html"%s>%s</a>\n' % (cls, current("index.html"), name)]
+    # No destinations besides Library -- the atlas and the timeline -- means no
+    # Menu and no empty group: an empty .topnav-links drew the divider before
+    # Library with nothing on its other side (NAV-10, FD-15).
+    if dest:
+        out.append('  <button class="nav-menu" type="button" aria-expanded="false" '
+                   'aria-controls="nav-dest" hidden>Menu</button>\n')
+        out.append('  <div class="topnav-links" id="nav-dest">\n    %s\n  </div>\n'
+                   % "\n    ".join(dest))
+    out.append(up or "")
+    out.append(theme)
+    out.append('</nav>')
+    out.append(after)
+    return "".join(out)
 
 
 def brand(bk):
@@ -152,19 +202,22 @@ def inject(text, bk, here, depth):
         if n != 1:
             raise SystemExit("nav: anchor %s found %d times, expected exactly 1"
                              % (anchor, n))
+    # The page names its own text once its shell does (<main id="text">);
+    # until then the bar brings a target of its own.
+    target = not re.search(r'(?<![\w-])id="text"', text)
     text = text.replace(HEAD_END,
                         CSS_OPEN + "\n" + stylesheet(depth) + "\n" + CSS_CLOSE
                         + "\n" + HEAD_END, 1)
     return text.replace(BODY,
-                        BODY + "\n" + OPEN + "\n" + bar(bk, here) + "\n" + CLOSE, 1)
+                        BODY + "\n" + OPEN + "\n" + bar(bk, here, target) + "\n" + CLOSE, 1)
 
 
 def pages(by_slug):
     """Every page that gets a bar, with the book it belongs to.
 
     Yields (path, rel, book, here, depth). A page in docs/<slug>/ belongs to
-    that book; nothing else in the tree does, which is why the hub and the two
-    static pages fall out here rather than needing a rule of their own.
+    that book, and the hub, docs/index.html, gets the library's own bar with
+    book None. Nothing else in the tree is a page a reader lands on.
     """
     for dp, _dirs, fs in os.walk(DOCS):
         for f in sorted(fs):
@@ -173,6 +226,9 @@ def pages(by_slug):
             p = os.path.join(dp, f)
             rel = os.path.relpath(p, DOCS).replace(os.sep, "/")
             if rel in UNBARRED:
+                continue
+            if rel == "index.html":
+                yield p, rel, None, "index.html", 0
                 continue
             head, _, name = rel.rpartition("/")
             bk = by_slug.get(head)

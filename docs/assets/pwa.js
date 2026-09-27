@@ -14,28 +14,218 @@
 (function () {
   'use strict';
 
-  /* file:// has no origin a worker can be registered against, and the Dropbox
-   * build is opened exactly that way. Leave immediately rather than throwing. */
-  if (location.protocol === 'file:') return;
-
   var KEY = 'library:v1';
   var $ = function (s, r) { return (r || document).querySelector(s); };
+  var html = document.documentElement;
 
   function load() {
-    try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
     catch (e) { return {}; }
   }
   function save(s) {
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
   }
 
+  var state = load();
+
+  /* ================================================================ the bar
+   * Everything in this first part works on any page that carries the library
+   * bar, file:// included, because none of it needs a worker: the theme
+   * button, the Menu, and the skip link. The app layer proper starts below the
+   * file:// check. */
+
+  /* ---------------------------------------------------------------- colour
+   * A custom property's value cannot be read as a colour: getPropertyValue()
+   * returns the unresolved color-mix() text, and a computed colour serialises
+   * as color(srgb ...), which not every consumer accepts. So a colour is
+   * resolved by setting var(--x) on a probe element, painting the probe's
+   * computed colour into a 1x1 canvas, and reading the pixel back as #rrggbb
+   * (DESIGN.md section 3). book.js has its own copy as NMT.color(). */
+  var probe = null, cx = null;
+  function resolve(name) {
+    try {
+      if (!getComputedStyle(html).getPropertyValue(name).trim()) return '';
+      var host = document.body || html;
+      if (!probe) {
+        probe = document.createElement('i');
+        probe.setAttribute('aria-hidden', 'true');
+        probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;' +
+                              'visibility:hidden;pointer-events:none';
+      }
+      if (probe.parentNode !== host) host.appendChild(probe);
+      probe.style.color = 'var(' + name + ')';
+      var c = getComputedStyle(probe).color;
+      if (!cx) {
+        var cv = document.createElement('canvas');
+        cv.width = cv.height = 1;
+        cx = cv.getContext('2d', { willReadFrequently: true });
+      }
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = '#010203';
+      cx.fillStyle = c;
+      if (cx.fillStyle === '#010203') return '';     /* the canvas could not read it */
+      cx.fillRect(0, 0, 1, 1);
+      var d = cx.getImageData(0, 0, 1, 1).data;
+      if (d[3] < 255) return 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3] / 255).toFixed(3) + ')';
+      return '#' + [d[0], d[1], d[2]].map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+    } catch (e) { return ''; }
+  }
+
+  /* The browser's own chrome follows the page (PDA-14): every theme-color meta
+   * is set to the ground the page is actually painted in, --bg where the page
+   * has one and --paper on the two philosophy books. On the hub that is the
+   * media pair, which then agrees with the reader's choice rather than the
+   * OS's. */
+  function themeColor() {
+    var c = resolve('--bg') || resolve('--paper');
+    if (!c || c.charAt(0) !== '#') return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+      if (m.getAttribute('content') !== c) m.setAttribute('content', c);
+    });
+  }
+
+  /* ----------------------------------------------------------------- theme
+   * The boot script in <head> decided the theme before first paint (pwa.py
+   * BOOT: library:v1.look, then nmt-theme, then the OS). This wires the one
+   * control, button.nav-theme, the last item in the bar on every page. Nothing
+   * is written until the reader presses it: the old passive write of the
+   * current theme pinned OS-dark readers to light (NAV-02, PDA-01). */
+  function dark() { return html.getAttribute('data-theme') === 'dark'; }
+
+  function paintThemeButtons() {
+    var on = dark();
+    document.querySelectorAll('button.nav-theme').forEach(function (b) {
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Switch to light' : 'Switch to dark';
+    });
+  }
+
+  function flipTheme() {
+    var t = dark() ? 'light' : 'dark';
+    html.setAttribute('data-theme', t);
+    state.look = t;
+    delete state.theme;          /* the passive key, never read again */
+    save(state);
+    /* The older key too, so a page this shell has not replaced yet -- whose
+     * book.js still reads nmt-theme -- opens in the theme the reader chose. */
+    try { localStorage.setItem('nmt-theme', t); } catch (e) { /* private mode */ }
+    paintThemeButtons();
+    themeColor();
+    try { window.dispatchEvent(new CustomEvent('library:theme', { detail: { theme: t } })); }
+    catch (e) { /* no CustomEvent constructor: the attribute observers still fire */ }
+  }
+
+  function wireTheme() {
+    var bs = document.querySelectorAll('button.nav-theme');
+    if (!bs.length) return;
+    bs.forEach(function (b) {
+      if (b.getAttribute('data-wired')) return;
+      b.setAttribute('data-wired', '1');
+      b.addEventListener('click', flipTheme);
+      b.hidden = false;
+    });
+    /* book.js reads this at window load: with it, no floating #themer. */
+    html.classList.add('theme-wired');
+    paintThemeButtons();
+  }
+
+  /* Anything else that flips the attribute -- book.js's fallback toggle on a
+   * page this shell reaches before its own button is wired -- keeps the
+   * button's state and the browser chrome in step. */
+  new MutationObserver(function () { paintThemeButtons(); themeColor(); })
+    .observe(html, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ------------------------------------------------------------------ menu
+   * At 640px and below the book's destinations fold under one button, and
+   * Library and the theme button stay in the bar (DESIGN.md section 6).
+   * Escape closes it and gives focus back to the button; so do a tap outside
+   * it and choosing a link. */
+  function wireMenu() {
+    var bar = $('.topnav');
+    var btn = bar && bar.querySelector('button.nav-menu');
+    var panel = btn && document.getElementById(btn.getAttribute('aria-controls') || 'nav-dest');
+    if (!btn || !panel || btn.getAttribute('data-wired')) return;
+    btn.setAttribute('data-wired', '1');
+
+    function open() { return bar.classList.contains('menu-open'); }
+    function set(on, refocus) {
+      bar.classList.toggle('menu-open', on);
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (!on && refocus) btn.focus();
+    }
+    btn.addEventListener('click', function () { set(!open()); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && open()) set(false, true);
+    });
+    document.addEventListener('click', function (e) {
+      if (open() && !btn.contains(e.target) && !panel.contains(e.target)) set(false);
+    });
+    panel.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('a')) set(false);
+    });
+    addEventListener('resize', function () { if (open() && innerWidth > 640) set(false); });
+    btn.hidden = false;
+  }
+
+  /* ------------------------------------------------------------- skip link
+   * nav.py puts "Skip to text" first on every page, aimed at #text. A page
+   * whose own markup names its text keeps that target. Otherwise nav.py left a
+   * placeholder just after the bar (.skip-target), and the id moves from it to
+   * the page's own main, .main, .app or .hero, in that order of preference, so
+   * on a chapter the skip passes the sidebar too. Following the link focuses
+   * the target, so the next Tab starts inside the text. */
+  function wireSkip() {
+    var target = document.getElementById('text');
+    if (!target || target.classList.contains('skip-target')) {
+      var sels = ['main', '.main', '.app', '.hero'], found = null;
+      for (var i = 0; i < sels.length && !found; i++) found = $(sels[i]);
+      if (found) {
+        if (!found.id) {
+          if (target) target.removeAttribute('id');
+          found.id = 'text';
+        }
+        target = found;
+      }
+    }
+    if (!target) return;
+    document.querySelectorAll('a.skip').forEach(function (a) {
+      if (a.getAttribute('data-wired')) return;
+      a.setAttribute('data-wired', '1');
+      if (a.getAttribute('href') !== '#' + target.id) a.setAttribute('href', '#' + target.id);
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus();
+      });
+    });
+  }
+
+  function wireBar() { wireTheme(); wireMenu(); wireSkip(); themeColor(); }
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', wireBar);
+  else wireBar();
+  /* the stylesheets may still have been arriving the first time */
+  addEventListener('load', themeColor);
+
+  /* file:// has no origin a worker can be registered against, and the Dropbox
+   * build is opened exactly that way. Leave now rather than throwing. */
+  if (location.protocol === 'file:') return;
+
+  /* The book this page belongs to. The bar says so (nav.py stamps data-book),
+   * and whenever it does the page sits one directory down, so ROOT is '../'.
+   * That is right however docs/ is served: under the Pages project prefix,
+   * at the root of a local preview, or on a custom domain. Deriving both from
+   * the path assumed the prefix, and a root-served page lost the drawer's
+   * prev/next, the arrow keys and position memory without a word (NAV-19).
+   * The path is the fallback, for a page with no bar. */
   var parts = location.pathname.split('/').filter(Boolean);
   var SLUG = null, ROOT = './';
-
-  /* The book a page belongs to is the directory it sits in, and the hub is the
-   * only page with no such directory. Derived from the path rather than stamped
-   * into the page, so it cannot go stale. */
   (function () {
+    var tn = document.querySelector('.topnav[data-book]');
+    if (tn) {
+      SLUG = tn.getAttribute('data-book') || null;
+      ROOT = '../';
+      return;
+    }
     var f = parts[parts.length - 1] || '';
     var isFile = /\.html?$/.test(f);
     var dirs = isFile ? parts.slice(0, -1) : parts.slice();
@@ -43,45 +233,47 @@
     if (dirs.length >= 2) { SLUG = dirs[dirs.length - 1]; ROOT = '../'; }
   })();
 
-  var state = load();
-
-  /* ---------------------------------------------------------------- theme
-   * The inline boot script stamped data-theme before first paint. book.js owns
-   * the toggle and writes its own key; rather than editing book.js -- which
-   * also ships to the Dropbox build, where a slip would break the toggle on
-   * every page at once -- watch the attribute it sets and mirror it. */
-  var meta = document.querySelector('meta[name="theme-color"]:not([media])');
-  function syncTheme() {
-    var t = document.documentElement.getAttribute('data-theme') || 'light';
-    if (state.theme !== t) { state.theme = t; save(state); }
-    if (meta) {
-      var dark = meta.getAttribute('data-dark');
-      var light = meta.getAttribute('data-light') || meta.content;
-      if (!meta.getAttribute('data-light')) meta.setAttribute('data-light', light);
-      if (dark) meta.content = (t === 'dark') ? dark : light;
-    }
-  }
-  new MutationObserver(syncTheme).observe(document.documentElement,
-    { attributes: true, attributeFilter: ['data-theme'] });
-  syncTheme();
-
   /* ------------------------------------------------------- reading position
-   * Where the reader was, per page, so the hub can offer to continue and a
-   * returning reader lands where they left off. Deliberately does not fight a
-   * #hash: a link into a specific section must win over a remembered scroll. */
+   * Where the reader was, per page, so a returning reader lands where they
+   * left off. Deliberately does not fight a #hash: a link into a specific
+   * section must win over a remembered scroll.
+   *
+   * And where they are in each book (DESIGN.md section 8): lastBy[slug] =
+   * {url, num, title, pct, at}, written on a chapter page only, with the
+   * number and title from nav.json, so the hub's Continue strip, the front
+   * door, the contents page and continue.html?b= all name the same chapter
+   * the same way. A front door or a contents page is not a place in the book
+   * and records nothing there. It used to be one state.last for the whole
+   * library, a document title and no number, so a reader of two books could
+   * only ever continue the one they opened last (NAV-01). */
   function pageKey() { return location.pathname; }
+  var restoring = null;          /* the stored place, until it is restored */
+
+  function scrollPct() {
+    var y = window.scrollY || document.documentElement.scrollTop || 0;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    return { y: y, pct: h > 0 ? Math.min(100, Math.round(100 * y / h)) : 0 };
+  }
+
+  function recordPlace(where) {
+    var c = at(HERE);
+    if (!SLUG || !c) return;
+    /* before the stored scroll is put back, the page is at its top; the
+     * place is still the one it is about to return to */
+    var pct = (restoring && !where.y) ? restoring.pct : where.pct;
+    state.lastBy = state.lastBy || {};
+    state.lastBy[SLUG] = { url: pageKey(), num: c.num, title: c.title,
+                           pct: pct || 0, at: Date.now() };
+  }
 
   function rememberScroll() {
     if (!SLUG) return;
-    var y = window.scrollY || document.documentElement.scrollTop || 0;
-    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var w = scrollPct();
     state.pos = state.pos || {};
-    state.pos[pageKey()] = { y: y, pct: h > 0 ? Math.round(100 * y / h) : 0 };
-    state.last = {
-      slug: SLUG, url: pageKey(),
-      title: (document.title || '').split('—')[0].trim(),
-      at: Date.now()
-    };
+    if (!(restoring && !w.y)) {
+      state.pos[pageKey()] = { y: w.y, pct: w.pct, at: Date.now() };
+    }
+    recordPlace(w);
     save(state);
   }
 
@@ -96,8 +288,20 @@
     var rec = (state.pos || {})[pageKey()];
     /* Only worth restoring if they were meaningfully into the page. */
     if (rec && rec.y > 400) {
+      restoring = rec;
       addEventListener('load', function () {
-        requestAnimationFrame(function () { window.scrollTo(0, rec.y); });
+        requestAnimationFrame(function () {
+          restoring = null;
+          /* At once: the page's smooth scrolling would otherwise carry the
+           * reader through the chapter to their place. */
+          try { window.scrollTo({ top: rec.y, left: 0, behavior: 'instant' }); }
+          catch (e) { window.scrollTo(0, rec.y); }
+          /* book.js answers this: the sidebar, the drawer and the folio say
+           * where the reader now is, and the chrome is shown (DESIGN.md
+           * section 6, the spy). */
+          try { window.dispatchEvent(new CustomEvent('library:restored', { detail: { y: rec.y } })); }
+          catch (e) { /* no CustomEvent: the scroll event still reaches the spy */ }
+        });
       });
     }
   }
@@ -305,173 +509,288 @@
     host.appendChild(d);
   }
 
-  /* ------------------------------------------------------------- the shelf
-   * Rendered here rather than emitted by the build, because every word of it
-   * is live: what is stored, how far a download has got, what a rebuild has
-   * changed underneath it. A server-rendered shelf would be wrong the moment
-   * it was painted. Only ever drawn on the hub. */
+  /* --------------------------------------------------------------- the hub
+   * Drawn here rather than emitted by the build, because every word of it is
+   * live: where the reader is in each book, what is stored, how far a
+   * download has got, what a rebuild has changed underneath it. A
+   * server-rendered answer would be wrong the moment it was painted. The hub
+   * emits the empty places (DESIGN.md section 6, Hub): section[data-continue],
+   * one button[data-offline] per tile, and p[data-store] below the grid. */
 
-  async function shelf() {
-    var host = document.querySelector('.wrap');
-    if (!host || SLUG) return;
+  /* "68 · Deciding whether to treat". The number is the one the contents page
+   * shows, which in the physics book is "2.1" and in the clinical book is
+   * "68", and neither is the index. */
+  function label(c) { return c.num + ' · ' + c.title; }
 
-    var cat;
-    try { cat = await (await fetch('catalog.json')).json(); }
-    catch (e) { return; }                    /* no catalogue, no shelf */
-
-    var sec = document.createElement('section');
-    sec.className = 'pwa-shelf';
-    sec.innerHTML = '<h2>Read offline</h2>';
-
-    for (var i = 0; i < (cat.books || []).length; i++) {
-      sec.appendChild(await row(cat.books[i]));
-    }
-
-    /* Books that have left the library but whose bytes are still here. */
-    (state.orphans || []).forEach(function (slug) {
-      var d = document.createElement('div');
-      d.className = 'pwa-row';
-      var n = document.createElement('div'); n.className = 'n';
-      n.innerHTML = '<b>' + slug + '</b><span>No longer in this library — still on this device</span>';
-      var b = document.createElement('button');
-      b.textContent = 'Delete';
-      b.onclick = async function () {
-        await removeBook(slug);
-        state.orphans = (state.orphans || []).filter(function (s) { return s !== slug; });
-        save(state); d.remove();
-      };
-      d.appendChild(n); d.appendChild(b); sec.appendChild(d);
+  /* The Continue strip: one row per book the reader has a place in, most
+   * recent first. The book's name and colours come from its own tile, so a
+   * book that has left the shelf is not offered. */
+  function continueStrip() {
+    var sec = document.querySelector('section[data-continue]');
+    var list = sec && sec.querySelector('ol');
+    if (!list) return;
+    var by = state.lastBy || {};
+    var rows = Object.keys(by).map(function (slug) { return [slug, by[slug]]; })
+      .filter(function (r) { return r[1] && r[1].url; })
+      .sort(function (a, b) { return (b[1].at || 0) - (a[1].at || 0); });
+    list.textContent = '';
+    rows.forEach(function (r) {
+      var tile = document.querySelector('.book[data-slug="' + r[0] + '"]');
+      if (!tile) return;
+      var name = (tile.querySelector('h2') || tile).textContent.trim();
+      var pct = Math.max(0, Math.min(100, Math.round(r[1].pct || 0)));
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.setAttribute('href', r[1].url);
+      a.setAttribute('data-book', r[0]);
+      a.setAttribute('style', tile.getAttribute('style') || '');
+      a.setAttribute('aria-label', 'Continue ' + name + ' at ' + label(r[1]) +
+                                   ', ' + pct + '% through');
+      a.innerHTML = '<span class="c-book"></span><span class="c-ch"></span>' +
+                    '<span class="c-rule" aria-hidden="true"><i></i></span>';
+      a.querySelector('.c-book').textContent = name;
+      a.querySelector('.c-ch').textContent = label(r[1]);
+      a.querySelector('.c-rule i').style.width = pct + '%';
+      li.appendChild(a);
+      list.appendChild(li);
     });
-
-    var note = document.createElement('p');
-    note.className = 'pwa-note';
-    sec.appendChild(note);
-    usage().then(function (u) {
-      if (!u || !u.usage) return;
-      note.textContent = 'Using ' + mb(u.usage) +
-        (u.quota ? ' of about ' + mb(u.quota) + ' available' : '') + ' on this device.';
-    });
-
-    /* Quiet, and behind a confirmation. It is the only user-side recovery from
-     * a worker that has gone bad, so it has to be here -- but it throws away
-     * every download, so it must not sit next to Download looking like a peer. */
-    var reset = document.createElement('button');
-    reset.className = 'quiet';
-    reset.textContent = 'Reset offline data';
-    reset.onclick = function () {
-      if (confirm('Remove every downloaded book and reset the offline store?'))
-        window.LibraryPWA.reset();
-    };
-    note.appendChild(document.createTextNode(' '));
-    note.appendChild(reset);
-
-    var foot = host.querySelector('footer');
-    if (foot) host.insertBefore(sec, foot); else host.appendChild(sec);
-    maybeCoach(sec);
+    sec.hidden = !list.children.length;
   }
 
-  async function row(book) {
-    var d = document.createElement('div');
-    d.className = 'pwa-row';
-    var n = document.createElement('div'); n.className = 'n';
-    var title = document.createElement('b'); title.textContent = book.name;
-    var sub = document.createElement('span');
-    n.appendChild(title); n.appendChild(sub);
-
-    var btn = document.createElement('button');
-    var bar = document.createElement('progress');
-    bar.max = 1; bar.value = 0; bar.hidden = true;
-
-    d.appendChild(n); d.appendChild(bar); d.appendChild(btn);
-
+  /* The offline chip on each tile. What it says is what this device holds:
+   * "Download · 2.2 MB", "Update · 3 files", "Stored · Remove", or the
+   * progress of a download under way. The separate "Read offline" list that
+   * repeated the four books under the shelf is gone (NAV-13). */
+  function chip(btn) {
+    var slug = btn.getAttribute('data-offline');
+    var tile = btn.closest('.book');
+    var name = tile ? (tile.querySelector('h2') || tile).textContent.trim() : slug;
     var man = null;
-    try { man = await (await fetch(book.slug + '/offline.json')).json(); }
-    catch (e) { /* offline and never downloaded: leave the row informational */ }
+
+    function set(text, aria, disabled) {
+      btn.textContent = text;
+      if (aria) btn.setAttribute('aria-label', aria); else btn.removeAttribute('aria-label');
+      btn.disabled = !!disabled;
+      btn.hidden = false;
+    }
 
     async function paint() {
-      var res = await resident(book.slug);
+      var res = await resident(slug);
       if (!man) {
-        sub.textContent = res && res.complete ? 'Stored on this device' : 'Unavailable offline';
-        btn.hidden = !(res && res.complete);
-        btn.textContent = 'Remove';
-        btn.onclick = wipe;
+        /* offline and never fetched the manifest: say only what is known */
+        if (res && res.complete) {
+          set('Stored · Remove', 'Remove ' + name + ' from this device');
+          btn.onclick = wipe;
+        } else { btn.hidden = true; }
         return;
       }
       var stale = res && res.files
         ? Object.keys(man.files).filter(function (p) { return res.files[p] !== man.files[p]; })
         : Object.keys(man.files);
-
       if (res && res.complete && !stale.length) {
-        sub.textContent = 'Stored — ' + man.count + ' files, ' + mb(man.bytes);
-        btn.textContent = 'Remove'; btn.onclick = wipe;
+        set('Stored · Remove', 'Remove ' + name + ' from this device (' + mb(man.bytes) + ')');
+        btn.onclick = wipe;
       } else if (res && stale.length && stale.length < Object.keys(man.files).length) {
-        sub.textContent = 'Updated — ' + stale.length +
-          (stale.length === 1 ? ' file' : ' files') + ' changed';
-        btn.textContent = 'Update'; btn.onclick = pull;
+        set('Update · ' + stale.length + (stale.length === 1 ? ' file' : ' files'),
+            'Update the stored copy of ' + name + ': ' + stale.length +
+            (stale.length === 1 ? ' file' : ' files') + ' changed');
+        btn.onclick = pull;
       } else {
         /* Both numbers, deliberately. They differ by more than tenfold, and
          * quoting only the small one would be a way of not telling the reader
          * what they are agreeing to. */
-        sub.textContent = 'About ' + mb(man.wire) + ' to download, ' +
-                          mb(man.bytes) + ' stored';
-        btn.textContent = 'Download'; btn.onclick = pull;
+        set('Download · ' + mb(man.wire),
+            'Download ' + name + ' to read offline: about ' + mb(man.wire) +
+            ' to fetch, ' + mb(man.bytes) + ' stored');
+        btn.onclick = pull;
       }
-      btn.hidden = false; btn.disabled = false;
     }
 
     async function pull() {
-      btn.disabled = true; btn.textContent = 'Downloading…';
-      bar.hidden = false;
+      set('Downloading · 0%', null, true);
       try {
-        var r = await download(book.slug, function (done, total) {
-          bar.value = done / total;
-          sub.textContent = done + ' of ' + total + ' files';
+        var r = await download(slug, function (done, total) {
+          btn.textContent = 'Downloading · ' + Math.floor(100 * done / total) + '%';
         });
-        bar.hidden = true;
         if (r.failed) {
-          sub.textContent = r.failed + ' file' + (r.failed === 1 ? '' : 's') +
-            ' could not be fetched — try again to finish';
+          toast(r.failed + ' file' + (r.failed === 1 ? '' : 's') + ' of ' + name +
+                ' could not be fetched. Try again to finish.');
         }
       } catch (err) {
-        bar.hidden = true;
-        sub.textContent = (err && err.name === 'QuotaExceededError')
-          ? 'Not enough room on this device — what downloaded is kept'
-          : 'Download interrupted — try again to resume';
+        toast((err && err.name === 'QuotaExceededError')
+          ? 'Not enough room on this device for ' + name + '. What downloaded is kept.'
+          : 'The download of ' + name + ' was interrupted. Try again to resume.');
       }
       await paint();
+      storeLine();
     }
 
     async function wipe() {
+      if (!confirm('Remove ' + name + ' from this device? You can download it again.')) return;
       btn.disabled = true;
-      await removeBook(book.slug);
+      await removeBook(slug);
       await paint();
+      storeLine();
     }
 
-    await paint();
-    return d;
+    fetch(slug + '/offline.json').then(function (r) { return r.json(); })
+      .then(function (m) { man = m; }, function () { /* offline: paint what is known */ })
+      .then(paint);
   }
 
-  if (!SLUG) addEventListener('DOMContentLoaded', function () { shelf(); });
+  /* One quiet line under the grid: what the library uses on this device,
+   * the Reset that is the reader's only recovery from a worker gone bad
+   * (behind a confirmation, and visibly not a peer of Download), and a
+   * Delete for any book that has left the library but not this device. */
+  var storeBusy = false;
+  function storeLine() {
+    var p = document.querySelector('p[data-store]');
+    if (!p || storeBusy) return;
+    storeBusy = true;
+    usage().then(function (u) {
+      storeBusy = false;
+      p.textContent = '';
+      if (u && u.usage) {
+        p.appendChild(document.createTextNode('Using ' + mb(u.usage) +
+          (u.quota ? ' of about ' + mb(u.quota) : '') + ' on this device. '));
+      }
+      var reset = document.createElement('button');
+      reset.type = 'button';
+      reset.textContent = 'Reset offline data';
+      reset.onclick = function () {
+        if (confirm('Remove every downloaded book and reset the offline store?'))
+          window.LibraryPWA.reset();
+      };
+      p.appendChild(reset);
+      (state.orphans || []).forEach(function (slug) {
+        p.appendChild(document.createTextNode(' · '));
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = 'Delete ' + slug + ', no longer in this library';
+        b.onclick = async function () {
+          await removeBook(slug);
+          state.orphans = (state.orphans || []).filter(function (s) { return s !== slug; });
+          save(state);
+          storeLine();
+        };
+        p.appendChild(b);
+      });
+      p.hidden = false;
+    });
+  }
+
+  function hub() {
+    continueStrip();
+    if (!('caches' in window)) return;
+    document.querySelectorAll('button[data-offline]').forEach(chip);
+    storeLine();
+    var p = document.querySelector('p[data-store]');
+    if (p) {
+      /* the coaching card goes after the line, never inside it */
+      var host = document.createElement('div');
+      p.parentNode.insertBefore(host, p.nextSibling);
+      maybeCoach(host);
+    }
+  }
+
+  if (!SLUG) {
+    if (document.readyState === 'loading') addEventListener('DOMContentLoaded', hub);
+    else hub();
+    /* back from a chapter by the browser's back button: the page may come
+     * from the back/forward cache with the strip as it was */
+    addEventListener('pageshow', function (e) {
+      if (e.persisted) { state = load(); continueStrip(); }
+    });
+  }
+
+  /* ------------------------------------------------------------ resume
+   * A returning reader's place, offered where they arrive in a book
+   * (DESIGN.md sections 6 and 7). What the front door does depends on how
+   * the book is read, which nav.json carries from book.json "reading":
+   *
+   *   sequential  the primary becomes "Continue reading" over "1.1 · ...",
+   *               and "Begin" moves to the first text link;
+   *   reference   the primary stays Contents, and "Continue at 68 · ..."
+   *               is the first text link.
+   *
+   * On the contents page the row is marked "Last read", and a "Jump to where
+   * you were" link sits above the first part. The front door's primary is
+   * found by the contract, .cta > .btn with .btn-main and .btn-sub, and
+   * nothing else about the page is assumed. */
+  function resume() {
+    var last = (state.lastBy || {})[SLUG];
+    if (!NAV || !last || !last.url) return;
+    var here = file(location.pathname);
+    var text = label(last);
+
+    var btn = document.querySelector('.cta > .btn');
+    if (btn && !btn.hasAttribute('data-resumed') && file(last.url) !== here) {
+      btn.setAttribute('data-resumed', '');
+      var firstGo = btn.parentNode.querySelector('.go');
+      var go = document.createElement('a');
+      go.className = 'go';
+      if (NAV.reading === 'sequential') {
+        /* the original primary, kept as the first text link */
+        var main = btn.querySelector('.btn-main');
+        go.setAttribute('href', btn.getAttribute('href'));
+        go.textContent = (main ? main.textContent : btn.textContent).trim();
+        if (btn.getAttribute('aria-label')) go.setAttribute('aria-label', btn.getAttribute('aria-label'));
+        btn.setAttribute('href', last.url);
+        btn.setAttribute('aria-label', 'Continue reading, ' + text);
+        btn.innerHTML = '<span class="btn-main">Continue reading</span><span class="btn-sub"></span>';
+        btn.querySelector('.btn-sub').textContent = text;
+      } else if (NAV.reading === 'reference') {
+        go.setAttribute('href', last.url);
+        go.textContent = 'Continue at ' + text;
+      } else {
+        go = null;
+      }
+      if (go) btn.parentNode.insertBefore(go, firstGo || btn.nextSibling);
+    }
+
+    var rows = document.querySelectorAll('.clist li');
+    for (var i = 0; i < rows.length; i++) {
+      var a = rows[i].querySelector('a[href]');
+      if (!a || file(a.getAttribute('href')) !== file(last.url)) continue;
+      if (rows[i].hasAttribute('data-last')) break;
+      rows[i].setAttribute('data-last', '');
+      var tag = document.createElement('span');
+      tag.className = 'tag last';
+      tag.textContent = 'Last read';
+      rows[i].appendChild(tag);
+      var part = document.querySelector('h2.part-head');
+      var block = part && (part.closest('section') || part);
+      if (block && block.parentNode && !document.querySelector('.pwa-jump')) {
+        var p = document.createElement('p');
+        p.className = 'pwa-jump';
+        var j = document.createElement('a');
+        j.setAttribute('href', last.url);
+        j.setAttribute('aria-label', 'Jump to where you were: ' + text);
+        j.textContent = 'Jump to where you were';
+        p.appendChild(j);
+        block.parentNode.insertBefore(p, block);
+      }
+      break;
+    }
+  }
 
   /* ------------------------------------------------------ chapter navigation
-   * One reading order per book, in nav.json, and one set of controls over it,
-   * so the two chaptered books navigate identically instead of merely looking
-   * alike. Everything here is additive: with the file missing, the fetch
-   * failing, or JavaScript off, every page still carries the top bar, the
-   * section sidebar and the prev/next pair at the foot of the chapter that it
-   * carried before.
-   *
-   * Three surfaces, because a book is read on three:
+   * One reading order per book, in nav.json, for the one thing only a script
+   * with the whole book in view can do: the arrow keys. Everything else about
+   * moving through a book is written into the page at build and read from it
+   * there (DESIGN.md section 8): the sidebar's up-link and folio row, the
+   * chapter foot, and from those, book.js's folio bar and drawer. That is
+   * what lets the Dropbox build, which has no nav.json and no pwa.js,
+   * navigate the same way.
    *
    *   desktop     the arrow keys, which is what a keyboard is for
-   *   phone       prev/next inside the drawer, reachable without scrolling
-   *               past the chapter to find them
+   *   phone       book.js's folio bar and drawer
    *   standalone  a back control, because a home-screen app has no browser
    *               chrome to provide one
    *
-   * The drawer is book.js's, built from the chapter's own H2s. This adds a row
-   * to it rather than building a second one, so a reader has one drawer with
-   * everything in it and not two that each know half. */
+   * The position ("Chapter 68 of 98") is written into the sidebar at build,
+   * and the drawer's kicker copies it; this no longer appends one to either,
+   * which printed it twice once the build wrote it. */
 
   var NAV = null;          /* the book's reading order, once fetched */
   var HERE = -1;           /* this page's index in it, or -1 off-book */
@@ -485,14 +804,13 @@
     return NAV && i >= 0 && i < NAV.chapters.length ? NAV.chapters[i] : null;
   }
 
-  /* "57 · Metastatic triple-positive disease". The number is the one the
-   * contents page shows, which in the physics book is "2.1" and in the clinical
-   * book is "57", and neither is the index. */
-  function label(c) { return c.num + ' · ' + c.title; }
-
   function go(c) { if (c) location.href = c.href; }
 
-  /* ---- the drawer row */
+  /* ---- the drawer row, for an older page
+   * book.js builds the prev/next row itself now, from the chapter foot. A
+   * stored page whose book.js predates that builds a drawer without one; it
+   * gets the row from the reading order here, as it always did, so its
+   * drawer keeps its neighbours under this shell. */
 
   function drawerNav() {
     var panel = document.getElementById('mnav');
@@ -505,93 +823,31 @@
 
     var row = document.createElement('div');
     row.className = 'mn-seq';
-    [['prev', prev, 'Previous'], ['next', next, 'Next']].forEach(function (spec) {
+    [['prev', prev, 'Previous', 'No previous chapter'],
+     ['next', next, 'Next', 'No next chapter']].forEach(function (spec) {
       var c = spec[1];
-      /* A disabled span rather than no element at all: the first and last
-       * chapters then keep the same two-column shape as every other, so the
-       * control a thumb is aiming for does not move between pages. */
+      /* A span rather than no element at all: the first and last chapters
+       * then keep the same two-column shape as every other, so the control a
+       * thumb is aiming for does not move between pages. */
       var el = document.createElement(c ? 'a' : 'span');
       el.className = spec[0];
       if (c) el.href = c.href;
       el.innerHTML = '<span class="mn-dir"></span><span class="mn-ch"></span>';
       el.querySelector('.mn-dir').textContent = spec[2];
-      el.querySelector('.mn-ch').textContent = c ? label(c) : '—';
+      el.querySelector('.mn-ch').textContent = c ? label(c) : spec[3];
       row.appendChild(el);
     });
 
     var list = panel.querySelector('.mn-list');
     if (list) panel.insertBefore(row, list); else panel.appendChild(row);
-
-    /* Where in the book this is. The drawer already names the chapter; this
-     * says how much of the book is behind and ahead of it, which is the thing
-     * a contents page makes you leave the chapter to find out. */
-    var k = panel.querySelector('.mn-kicker');
-    if (k && HERE >= 0) k.textContent = k.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
   }
 
-  /* ---- the destinations
-   * The same links the top bar carries, in the drawer that is the whole of the
-   * navigation on a phone. book.js gives the drawer one way out of the chapter,
-   * "All chapters", because that is the only one a file:// build can know
-   * about. A book with a trial registry and a stories index has three more, and
-   * a reader holding a phone had to scroll back to the top of a five-thousand
-   * word chapter to reach any of them.
-   *
-   * Taken from nav.json rather than read off the bar in the page, so it is the
-   * same list on a chapter whose bar has scrolled away, in an installed app
-   * with no browser chrome, and offline. */
-
-  function drawerLinks() {
-    var panel = document.getElementById('mnav');
-    if (!panel || panel.querySelector('.mn-dest')) return;
-    if (!NAV || !NAV.links || NAV.links.length < 2) return;
-
-    var here = file(location.pathname);
-    var box = document.createElement('div');
-    box.className = 'mn-dest';
-    NAV.links.forEach(function (item) {
-      /* The page you are on is not somewhere to go. It stays in the list, so
-       * the list is the same shape on every page, and stops being a control. */
-      var on = file(item.href) === here;
-      var el = document.createElement(on ? 'span' : 'a');
-      if (!on) el.href = item.href;
-      else el.setAttribute('aria-current', 'page');
-      if (item.key === 'library') el.className = 'up';
-      el.textContent = item.label;
-      box.appendChild(el);
-    });
-
-    var foot = panel.querySelector('.mn-foot');
-    if (foot) {
-      panel.insertBefore(box, foot);
-      /* book.js's "All chapters" is now the first entry of this list. Two
-       * controls to the same page, one above the other, is worse than either. */
-      var back = foot.querySelector('a');
-      if (back) back.remove();
-    } else {
-      panel.appendChild(box);
-    }
-  }
-
-  /* The same fact on the other surface. The sidebar is the desktop drawer and
-   * already names the chapter; without this, position is something only a
-   * phone reader is told. */
-  function sidebarPosition() {
-    var t = document.querySelector('.sidebar .sb-title');
-    if (!t || HERE < 0 || t.dataset.pos) return;
-    t.dataset.pos = '1';
-    t.textContent = t.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
-  }
-
-  /* book.js builds the drawer on DOMContentLoaded and only when the chapter has
-   * at least two H2s to list. Both scripts are waiting on the same event, so
-   * rather than depend on which handler runs first, try once now and once after
-   * a frame. */
+  /* book.js builds the drawer on DOMContentLoaded. Both scripts are waiting on
+   * the same event, so rather than depend on which handler runs first, try
+   * once now and once after a frame. */
   function whenDrawer() {
-    drawerLinks();
     drawerNav();
-    sidebarPosition();
-    requestAnimationFrame(function () { drawerLinks(); drawerNav(); });
+    requestAnimationFrame(function () { drawerNav(); });
   }
 
   /* ---- the keyboard */
@@ -653,10 +909,14 @@
     for (var i = 0; i < NAV.chapters.length; i++) {
       if (file(NAV.chapters[i].href) === here) { HERE = i; break; }
     }
-    /* Not gated on HERE. The prev/next row and the position are meaningless on
-     * the contents page or the trial registry, and drawerNav() declines to
-     * draw them there; the destinations are exactly as useful on those pages as
-     * in a chapter, and returning early used to take them away. */
+    /* A chapter is a place in the book: record it now, before any scroll. */
+    if (HERE >= 0) { recordPlace(scrollPct()); save(state); }
+    if (document.readyState === 'loading') addEventListener('DOMContentLoaded', resume);
+    else resume();
+    /* Not gated on HERE. The prev/next row is meaningless on the contents
+     * page or the trial registry, and drawerNav() declines to draw it there
+     * itself. The book's destinations are not repeated in the drawer: the bar
+     * carries them, under Menu on a phone (NAV-07). */
     if (document.readyState === 'loading') {
       addEventListener('DOMContentLoaded', whenDrawer);
     } else {
