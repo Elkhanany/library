@@ -135,6 +135,53 @@ var NMT = (function () {
     });
   }
 
+  /* ---------- sitting breaks ----------
+     The authored break is one span: "a natural place to stop · the equation is
+     on the table; what follows is ...". It is split at the first separator
+     (JavaScript's \s includes the U+00A0 of the authored "&nbsp;·&nbsp;") into
+     the kicker, span.k, and the line, span.t, which book.css sets as a label
+     between two rules with a wrapping italic line beneath (DESIGN.md section
+     6, Callouts, preambles and sitting breaks). Any markup inside the span is
+     carried across by a Range, not rebuilt from text. The build saves the
+     column, so a break that already has its .k or .t is left alone; one with
+     no separator becomes the line alone. */
+  function sittingBreaks() {
+    [].forEach.call(document.querySelectorAll('.main .pause'), function (p) {
+      if (p.querySelector('.k, .t')) return;
+      var s = null;
+      for (var c = p.firstElementChild; c; c = c.nextElementSibling)
+        if (c.tagName === 'SPAN') { s = c; break; }
+      if (!s) {
+        s = document.createElement('span');
+        while (p.firstChild) s.appendChild(p.firstChild);
+        p.appendChild(s);
+      }
+      var w = document.createTreeWalker(s, NodeFilter.SHOW_TEXT, null, false), node = null, m = null;
+      while (w.nextNode()) {
+        m = /\s*·\s*/.exec(w.currentNode.nodeValue);
+        if (m) { node = w.currentNode; break; }
+      }
+      var t = document.createElement('span');
+      t.className = 't';
+      if (!node) {
+        while (s.firstChild) t.appendChild(s.firstChild);
+        p.replaceChild(t, s);
+        return;
+      }
+      var k = document.createElement('span');
+      k.className = 'k';
+      var r = document.createRange();
+      r.setStart(s, 0);
+      r.setEnd(node, m.index);
+      k.appendChild(r.extractContents());
+      /* what is left of the node now starts with the separator */
+      node.nodeValue = node.nodeValue.slice(m[0].length);
+      while (s.firstChild) t.appendChild(s.firstChild);
+      p.insertBefore(k, s);
+      p.replaceChild(t, s);
+    });
+  }
+
   /* ---------- section headings ---------- */
   /* Both navigations hang off these, and both need the ids to agree with the ones
      the build already wrote into the page, so the numbering is derived the same
@@ -1072,6 +1119,210 @@ var NMT = (function () {
     onSnapshot(function () { evs.forEach(function (ev) { ev.classList.remove('more'); }); });
   }
 
+  /* ---------- display maths: fit, scroll, hang, number ----------
+     DESIGN.md section 6, Equations and figures. For each display in the
+     column, measured on the reader's own page:
+     - it fits: nothing is done;
+     - it overflows its box by a little: its font-size is set so that it fits,
+       down to a floor of .9em;
+     - it overflows by more: it keeps its size and scrolls inside its box, and
+       .scrolls paints the edge shades (book.css);
+     - except that from 1200px an unnumbered display that the margin track can
+       hold hangs into it at full size, and the panel it sits in (a worked
+       example, say) grows to the right to hold it while the panel's prose
+       keeps the measure.
+     Then each equation's number stays on the display's line if the centred
+     display leaves room for it, and drops below it (.eq-drop) if not. From
+     1200px, where the margin track is wide enough to hold it (book.css
+     decides, by a container query on .main), the number is in the track and
+     never collides; where the track is too narrow, as it is with a large
+     default text size, the same rule decides as below 1200px.
+
+     Layout is read in batches, all resets first, so a chapter of a hundred
+     displays costs a handful of layouts rather than hundreds. The whole pass is
+     recomputed on DOMContentLoaded, when the fonts are ready, on load, on a
+     change of width and when a <details> opens, so a size the build captured
+     would be harmless; the build's snapshot clears it anyway (onSnapshot), and
+     no state is saved into the page. Registered outside the boot handler
+     (DESIGN.md section 8), since it needs rendered maths and layout. */
+  var FIT_FLOOR = 0.9, NUM_GAP = 12, HANG_GAP = 16;
+  var fitted = { ds: [], eqs: [], panels: [] };
+
+  /* The rendered maths' left and right, whatever its box does: the union of
+     KaTeX's top-level pieces, which are laid out on one line. */
+  function mathExtent(d) {
+    var L = Infinity, R = -Infinity, bs = d.querySelectorAll('.katex-html > .base');
+    for (var i = 0; i < bs.length; i++) {
+      var r = bs[i].getBoundingClientRect();
+      if (r.width) { if (r.left < L) L = r.left; if (r.right > R) R = r.right; }
+    }
+    return R > L ? { L: L, R: R, w: R - L } : null;
+  }
+
+  function tidy(el) { if (!el.getAttribute('style')) el.removeAttribute('style'); }
+
+  /* The numbered equation an a.eqref points at on this page, or null. */
+  function eqTarget(a) {
+    var h = a.getAttribute('href') || '', id = '';
+    if (h.charAt(0) !== '#') return null;
+    try { id = decodeURIComponent(h.slice(1)); } catch (e) { id = h.slice(1); }
+    var el = id && document.getElementById(id);
+    return el && el.classList.contains('eq') ? el : null;
+  }
+
+  function unfit() {
+    fitted.ds.forEach(function (d) {
+      d.style.fontSize = ''; d.style.marginRight = '';
+      d.classList.remove('scrolls');
+      tidy(d);
+    });
+    fitted.panels.forEach(function (p) {
+      p.style.marginRight = ''; p.style.paddingRight = '';
+      p._hang = 0;
+      tidy(p);
+    });
+    fitted.eqs.forEach(function (e) { e.classList.remove('eq-drop'); });
+    fitted = { ds: [], eqs: [], panels: [] };
+  }
+
+  /* Fit a set of displays. hang: allow the margin track (the column only). */
+  /* How far the maths runs past its box: the wider of its drawn extent and
+     what the box would scroll by (a boxed or braced display can scroll a
+     pixel or two further than its ink). */
+  function overBy(d, B) {
+    var x = mathExtent(d);
+    return Math.max(x ? x.w - B : 0, d.scrollWidth - d.clientWidth);
+  }
+
+  function fitSet(ds, hang) {
+    var m = ds.map(function (d) {
+      if (!d.getClientRects().length) return null;       /* not rendered: a closed <details> */
+      var x = mathExtent(d), B = d.clientWidth;
+      if (!x || !B) return null;
+      var ov = overBy(d, B);
+      return { d: d, B: B, W: B + Math.max(0, ov), ov: ov, k: 1 };
+    });
+    var live = m.filter(function (o) { return o && o.ov > 0.5; });
+    /* Scaling is not quite linear (rules and struts snap to pixels), so the
+       size is stepped down from the measured overflow and measured again, a
+       few times at most, never below the floor. */
+    for (var pass = 0; pass < 3 && live.length; pass++) {
+      live.forEach(function (o) {
+        /* one per cent under the measured ratio, so that one pass is
+           nearly always enough: each pass is a layout of the chapter */
+        var k = Math.floor(o.k * (o.B - 1) / (o.B + o.ov) * 990) / 1000;
+        if (k >= FIT_FLOOR) { o.k = k; o.d.style.fontSize = k + 'em'; }
+        else { o.k = 0; o.d.style.fontSize = ''; tidy(o.d); }
+      });
+      live = live.filter(function (o) {
+        if (!o.k) return false;
+        o.ov = overBy(o.d, o.B);
+        return o.ov > 0.5;
+      });
+    }
+    /* still over after the last pass: back to full size, to scroll */
+    live.forEach(function (o) { o.k = 0; o.d.style.fontSize = ''; tidy(o.d); });
+    m.forEach(function (o) { if (o && o.k === 1) o.k = o.ov > 0.5 ? 0 : 1; });
+    var room = 0, col = null;
+    if (hang) {
+      var main = document.querySelector('.main');
+      col = main && main.querySelector('.col');
+      room = main ? parseFloat(getComputedStyle(main).getPropertyValue('--breakout')) : 0;
+      room = isFinite(room) ? room - HANG_GAP : 0;
+    }
+    var hung = [];
+    m.forEach(function (o) {
+      if (!o || o.k) return;                              /* fits, or fitted */
+      var need = Math.ceil(o.W - o.B) + 2;
+      if (room > 0 && col && need <= room && !o.d.closest('.eq') && col.contains(o.d)) {
+        var top = o.d;
+        while (top.parentElement && top.parentElement !== col) top = top.parentElement;
+        var panel = top !== o.d && !/^(SPAN|P)$/.test(top.tagName) ? top : null;
+        hung.push({ d: o.d, need: need, panel: panel });
+        if (panel) panel._hang = Math.max(panel._hang || 0, need);
+      } else {
+        o.d.classList.add('scrolls');
+      }
+    });
+    hung.forEach(function (h) {
+      if (h.panel && fitted.panels.indexOf(h.panel) < 0) {
+        h.panel._pad = parseFloat(getComputedStyle(h.panel).paddingRight) || 0;
+        fitted.panels.push(h.panel);
+      }
+    });
+    hung.forEach(function (h) {
+      h.d.style.marginRight = -h.need + 'px';
+      if (h.panel) {
+        h.panel.style.marginRight = -h.panel._hang + 'px';
+        h.panel.style.paddingRight = (h.panel._pad + h.panel._hang) + 'px';
+      }
+    });
+    fitted.ds = fitted.ds.concat(ds);
+  }
+
+  /* Each number on its display's line when the centred maths leaves room for
+     it, else below it. */
+  function numberSet(eqs) {
+    var drop = eqs.filter(function (e) {
+      var n = null, d = e.querySelector('.katex-display');
+      for (var c = e.firstElementChild; c; c = c.nextElementSibling)
+        if (c.classList.contains('eqnum')) { n = c; break; }
+      if (!n || !d) return false;
+      var nr = n.getBoundingClientRect(), x = mathExtent(d);
+      if (!nr.width || !x) return false;
+      var b = d.getBoundingClientRect();
+      var L = Math.max(x.L, b.left), R = Math.min(x.R, b.right);
+      return nr.left < R + NUM_GAP && nr.right > L - NUM_GAP;
+    });
+    drop.forEach(function (e) { e.classList.add('eq-drop'); });
+    fitted.eqs = fitted.eqs.concat(eqs);
+  }
+
+  /* The width and the state of the fonts the last pass measured at. The
+     status is read after the pass, whose layout is what asks for the maths
+     faces: a pass made while they were loading is made again when they
+     arrive, and only then. */
+  var fitWidth = -1, fitFonts = '';
+  function fonts() { return document.fonts ? document.fonts.status : 'loaded'; }
+  function fitMaths() {
+    if (!booted && document.readyState === 'loading') return;
+    unfit();
+    fitSet([].slice.call(document.querySelectorAll('.main .col .katex-display')), true);
+    numberSet([].slice.call(document.querySelectorAll('.main .col .eq')));
+    fitWidth = window.innerWidth;
+    fitFonts = fonts();
+    if (fitFonts !== 'loaded' && document.fonts && document.fonts.ready)
+      document.fonts.ready.then(function () { refit(false); });
+  }
+  var fitT = 0;
+  function refit(force) {
+    if (!force && window.innerWidth === fitWidth && fitFonts === 'loaded') return;
+    clearTimeout(fitT);
+    fitT = setTimeout(fitMaths, 90);
+  }
+  /* the first pass is registered after the boot handler, below */
+  window.addEventListener('load', function () { refit(false); });
+  window.addEventListener('resize', function () { refit(false); });
+  /* A <details> that opens shows displays nothing could measure while it
+     was closed: those are fitted where they are, and nothing else moves. */
+  document.addEventListener('toggle', function (e) {
+    var t = e.target;
+    if (!t || !t.open || !t.querySelector || !t.closest('.main .col')) return;
+    var ds = [].slice.call(t.querySelectorAll('.katex-display')).filter(function (d) {
+      return !d.style.fontSize && !d.style.marginRight && !d.classList.contains('scrolls');
+    });
+    if (!ds.length) return;
+    fitSet(ds, true);
+    numberSet([].slice.call(t.querySelectorAll('.eq')));
+  }, true);
+  onSnapshot(function () { clearTimeout(fitT); unfit(); });
+  /* A printed page is laid out at the paper's width, which nothing here
+     measured: it prints the maths at its own size, the numbers in the
+     reserved space book.css gives them in print, and no panel reaching into
+     a margin the paper does not have. Fitted again afterwards. */
+  window.addEventListener('beforeprint', function () { clearTimeout(fitT); unfit(); });
+  window.addEventListener('afterprint', function () { refit(true); });
+
   /* ---------- the reference card ----------
      Bring the reference to the citation rather than sending the reader to the
      foot of a twenty-thousand-word chapter and losing their place. The same
@@ -1086,7 +1337,12 @@ var NMT = (function () {
   function refCards() {
     var cites = [].slice.call(document.querySelectorAll('a.cite[href^="#r-"]'));
     var mks = marks();
-    if (!cites.length && !mks.length) return;
+    /* An equation reference (physics) gets the same card: a clone of the
+       equation's display and its number, made when the card opens, and "Go to
+       equation". The link itself still jumps. */
+    var eqrefs = [].slice.call(document.querySelectorAll('.main a.eqref[href^="#"]'))
+      .filter(function (a) { return !!eqTarget(a); });
+    if (!cites.length && !mks.length && !eqrefs.length) return;
 
     /* A mouse gets a card on hover. A thumb has no hover, so it gets a sheet on
        tap -- and there the tap must not also jump to the list. */
@@ -1149,6 +1405,11 @@ var NMT = (function () {
       return li && li.tagName === 'LI' ? li : null;
     }
     function isCite(a) { return a.classList.contains('cite'); }
+    function isEq(a) { return a.classList.contains('eqref'); }
+    function label(a) {
+      var t = (a.textContent || '').replace(/\s+/g, ' ').trim();
+      return isEq(a) ? 'Equation ' + t : t;
+    }
 
     /* The first keyboard stop after the mark in document order, outside the
        card, or null. */
@@ -1196,6 +1457,29 @@ var NMT = (function () {
         head.className = 'rc-head';
         head.innerHTML = '<span class="rc-close"></span>';
       }
+      if (isEq(a)) {
+        var eq = eqTarget(a), d = eq && eq.querySelector('.katex-display');
+        if (!d) return null;
+        if (asSheet) frag.appendChild(head);
+        var box = document.createElement('div');
+        box.className = 'rc-eq';
+        var dc = d.cloneNode(true);
+        dc.removeAttribute('style');
+        dc.classList.remove('scrolls');
+        [].forEach.call(dc.querySelectorAll('[id]'), function (e) { e.removeAttribute('id'); });
+        box.appendChild(dc);
+        for (var c = eq.firstElementChild; c; c = c.nextElementSibling) {
+          if (c.classList.contains('eqnum')) { box.appendChild(c.cloneNode(true)); break; }
+        }
+        frag.appendChild(box);
+        var go = document.createElement('a');
+        go.className = 'rc-go';
+        go.setAttribute('href', '#' + eq.id);
+        go.textContent = 'Go to equation';
+        go.addEventListener('click', function () { close(); });
+        frag.appendChild(go);
+        return frag;
+      }
       if (isCite(a)) {
         var li = entry(a);
         if (!li) return null;
@@ -1236,12 +1520,15 @@ var NMT = (function () {
       if (!content) return;
       close(true);
       openFor = a;
-      card.className = 'refcard' + (asSheet ? ' sheet' : '');
+      card.className = 'refcard' + (asSheet ? ' sheet' : '') + (isEq(a) ? ' rc-eqcard' : '');
       card.setAttribute('role', isCite(a) && !asSheet ? 'tooltip' : 'dialog');
-      if (!isCite(a)) card.setAttribute('aria-label', (a.textContent || '').trim());
+      if (!isCite(a)) card.setAttribute('aria-label', label(a));
       else card.removeAttribute('aria-label');
       card.innerHTML = '';
       card.appendChild(content);
+      /* the cloned display is fitted to the card as the page's are to the
+         column: a little small, or scrolling with its edge shades */
+      if (isEq(a)) fitSet([].slice.call(card.querySelectorAll('.katex-display')), false);
       a.setAttribute('aria-expanded', 'true');
       if (!isCite(a)) a.setAttribute('aria-controls', 'refcard');
       if (asSheet) {
@@ -1308,6 +1595,22 @@ var NMT = (function () {
         if (hoverable) { openRefs(); return; }
         if (!entry(a)) return;
         e.preventDefault();
+        show(a, true);
+      });
+    });
+
+    eqrefs.forEach(function (a) {
+      if (a._card) return;
+      a._card = true;
+      if (hoverable) hover(a);
+      /* With a mouse or a keyboard the link jumps, as it always did, and the
+         card closes first so that it is not left following a mark the page
+         has just scrolled away. On a thumb the tap opens the sheet, whose
+         "Go to equation" makes the jump. */
+      a.addEventListener('click', function (e) {
+        if (hoverable) { close(); return; }
+        e.preventDefault();
+        if (openFor === a) { close(); return; }
         show(a, true);
       });
     });
@@ -1603,6 +1906,7 @@ var NMT = (function () {
      may be left on a saved node. runtime_js() drops this comment. */
   window.addEventListener('DOMContentLoaded', function () {
     numberEquations();
+    sittingBreaks();
     var hs = sectionHeadings();
     buildTOC(hs);
     buildMobileNav(hs);
@@ -1628,6 +1932,16 @@ var NMT = (function () {
     HR.y = window.pageYOffset || 0;
     if (location.hash) jumping();
     spyNow(true);
+  });
+
+  /* The displays' first fit, after the boot. While the maths faces are
+     still arriving a display measured now is the wrong width and would be
+     measured again, a layout of the whole chapter each time, so the first
+     fit waits for them (and load, below, makes it in any case). */
+  window.addEventListener('DOMContentLoaded', function () {
+    if (fonts() === 'loading' && document.fonts.ready)
+      document.fonts.ready.then(function () { refit(false); });
+    else fitMaths();
   });
 
   return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, color: color,

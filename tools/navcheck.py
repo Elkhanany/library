@@ -51,6 +51,31 @@ desktop the sidebar's active entry is checked after a jump and after scrolling
 up, the two cases the old observer got wrong. On the clinical contents page,
 "Find a chapter" filters to the rows that match and Escape restores every row.
 
+THE MATHEMATICS (DESIGN.md section 6, Equations and figures; Callouts,
+preambles and sitting breaks)
+
+Every sitting break in the physics book has its kicker (.k, at most 40
+characters) and a non-empty line (.t), which on ch4-6 and ch4-7 wraps inside
+the column with its first letter capitalised. Inline maths is 1.045 times the
+text on a phone. Every display on ch3-5 at 390 fits its box or carries its
+edge shades, and at 1280 none of the widest displays in the book overflows
+its box. No equation number overlaps its display at 390, 1000 or 1280; at
+1280 every number sits right of the column, and (1.2.11) keeps its line at
+390. With a 20px default text size, on ch1-2 at 1200 and 1280 (where the
+margin track is too narrow to hang a number) and at 1400 (where it hangs),
+every number stays inside .main's content box and over no display, with no
+page overflow. Hovering the first equation reference on ch1-2 at 1280 shows a
+card holding the equation and its number, whose "Go to equation" jumps there; a
+tap at 390 on a touch screen shows the sheet instead.
+
+THE CLINICAL APPARATUS (folded in from the W3-CLINIC probe)
+
+No id is used twice on any chapter page of either book, or on the ledger,
+the Through-Line, the registry or the stories page. A tap on BC-900's first
+trial mark at 390 opens the sheet with the trial's facts and a link to its
+registry row, and following it opens that row. BC-870 opened at its twelfth
+reference opens the list and lands on the entry, highlighted.
+
 TWO CHECKS THE RESTYLE DEPENDS ON
 
 - Equation numbers. The build numbers every .eq and runtime_js() switches the
@@ -120,13 +145,9 @@ SWEEP_WIDTHS = (390, 1280)
 # longer reproduces. The list only shrinks.
 KNOWN = {
     # (the evidence tables' 2px bleed past a 390px phone, PDA-09, went when
-    # W2-FRAME put .main's phone padding on --gutter, which the bleed uses)
-    # the sitting-break labels are white-space:nowrap and run up to 2049px wide,
-    # clipped by the shell (PDA-09, R-03); W4-MATH lets them wrap
-    ('newton-to-mtheory/ch4-6.html', 390): {'p.pause>span': 'W4-MATH'},
-    ('newton-to-mtheory/ch4-6.html', 1280): {'p.pause>span': 'W4-MATH'},
-    ('newton-to-mtheory/ch4-7.html', 390): {'p.pause>span': 'W4-MATH'},
-    ('newton-to-mtheory/ch4-7.html', 1280): {'p.pause>span': 'W4-MATH'},
+    # W2-FRAME put .main's phone padding on --gutter, which the bleed uses;
+    # the sitting-break labels, nowrap and up to 2049px wide, went when W4-MATH
+    # split them into a kicker and a wrapping line)
 }
 
 # The sweep itself. The shell is forced to overflow:visible, so a clip on the
@@ -305,16 +326,27 @@ async def opened(br, url, width=1400, height=900):
     a page that was still arriving. Waiting for the controller is waiting for
     the exact thing that causes it."""
     pg = await page(br, width, height)
+    # Whether this document was controlled from its start. One that was not
+    # is the one pwa.js reloads when the worker takes control, and a
+    # controller alone does not say which document is running: the old one
+    # has it too for the moment before its reload begins. So the wait is for
+    # a document that started under control, loaded.
+    await pg.add_init_script(
+        "window.__ncControlled = !('serviceWorker' in navigator)"
+        " || !!navigator.serviceWorker.controller;")
     await pg.goto(url, wait_until='networkidle')
     for _ in range(3):
         try:
             await pg.wait_for_function(
-                "() => !('serviceWorker' in navigator)"
-                " || navigator.serviceWorker.controller !== null", timeout=6000)
+                "() => window.__ncControlled === true && document.readyState === 'complete'",
+                timeout=6000)
             break
         except Exception:
             # not a failure: the page may simply still be arriving
-            await pg.wait_for_load_state('networkidle')
+            try:
+                await pg.wait_for_load_state('networkidle')
+            except Exception:
+                pass
     await pg.wait_for_timeout(200)
     return pg
 
@@ -363,8 +395,7 @@ async def chaptered(br, base, slug, chap):
 
     # ---- phone width: the drawer is the surface
     async with section('%s: the drawer at 390' % slug):
-        pg = await page(br, 390, 780)
-        await pg.goto(base + slug + '/' + chap, wait_until='networkidle')
+        pg = await opened(br, base + slug + '/' + chap, 390, 780)
         await waitfn(pg, READY, what='the reading order (LibraryPWA.nav().index >= 0)')
         await pg.wait_for_timeout(120)
 
@@ -658,6 +689,283 @@ async def hub_tiles(br, base):
                and s['color'] == s['hue'], s)
     finally:
         await ctx.close()
+
+
+# ------------------------------------------------------------ the mathematics
+# What the physics pages' maths and sitting breaks look like to a reader, after
+# book.js has fitted the displays (on load and when the fonts arrive).
+MATH_EXTENT = """(d) => { let L = Infinity, R = -Infinity;
+    d.querySelectorAll('.katex-html > .base').forEach(b => { const r = b.getBoundingClientRect();
+      if (r.width) { L = Math.min(L, r.left); R = Math.max(R, r.right); } });
+    return R > L ? {L: L, R: R} : null; }"""
+
+PAUSES = """() => [...document.querySelectorAll('.main .pause')].map(p => {
+    const k = p.querySelectorAll('.k'), t = p.querySelectorAll('.t');
+    const col = document.querySelector('.main .col').getBoundingClientRect();
+    const tr = t.length ? t[0].getBoundingClientRect() : null;
+    const cs = t.length ? getComputedStyle(t[0]) : null;
+    return {k: k.length === 1 ? k[0].textContent.trim() : null, nk: k.length, nt: t.length,
+            t: t.length ? t[0].textContent.trim().slice(0, 40) : '',
+            inside: !!tr && tr.width > 0 && tr.left >= col.left - 0.5 && tr.right <= col.right + 0.5,
+            wraps: !!cs && cs.whiteSpace !== 'nowrap' && t[0].scrollWidth <= t[0].clientWidth + 1,
+            cap: !!t.length && getComputedStyle(t[0], '::first-letter').textTransform === 'uppercase'};
+  })"""
+
+DISPLAYS = """() => { const ext = """ + MATH_EXTENT + """;
+    const out = {n: 0, bad: []};
+    document.querySelectorAll('.main .katex-display').forEach((d, i) => {
+      if (!d.getClientRects().length) return;
+      out.n++;
+      const x = ext(d), b = d.getBoundingClientRect();
+      const over = d.scrollWidth > d.clientWidth + 1 || (x && (x.R > b.right + 1 || x.L < b.left - 1));
+      if (over) out.bad.push({i: i, cue: d.classList.contains('scrolls'),
+                              w: x ? Math.round(x.R - x.L) : 0, box: Math.round(b.width)});
+    });
+    return out; }"""
+
+NUMBERS = """() => { const ext = """ + MATH_EXTENT + """;
+    const col = document.querySelector('.main .col').getBoundingClientRect();
+    return [...document.querySelectorAll('.main .eq')].map(e => {
+      const n = [...e.children].find(c => c.classList.contains('eqnum'));
+      const d = e.querySelector('.katex-display');
+      if (!n || !d) return null;
+      const nr = n.getBoundingClientRect(), b = d.getBoundingClientRect(), x = ext(d);
+      if (!nr.width || !x) return null;
+      const L = Math.max(x.L, b.left), R = Math.min(x.R, b.right);
+      return {num: n.textContent.trim(), drop: e.classList.contains('eq-drop'),
+              hit: nr.left < R && nr.right > L && nr.top < b.bottom && nr.bottom > b.top,
+              right: nr.left >= col.right - 0.5};
+    }).filter(Boolean); }"""
+
+
+LARGE_TEXT = """() => { const main = document.querySelector('.main'), cs = getComputedStyle(main);
+    const R = main.getBoundingClientRect().right - parseFloat(cs.paddingRight);
+    const col = document.querySelector('.main .col').getBoundingClientRect();
+    const ns = [...document.querySelectorAll('.main .eq > .eqnum')].map(n => n.getBoundingClientRect())
+      .filter(r => r.width);
+    return {root: getComputedStyle(document.documentElement).fontSize,
+            breakout: cs.getPropertyValue('--breakout').trim(),
+            past: ns.length ? Math.round(Math.max(...ns.map(r => r.right - R)) * 10) / 10 : 0,
+            hung: ns.filter(r => r.left >= col.right - 0.5).length,
+            pageOver: document.documentElement.scrollWidth - innerWidth}; }"""
+
+async def fitted_page(ctx, url):
+    """A page whose displays book.js has fitted: after load, the fonts and a
+    beat for the refit they start."""
+    pg = await ctx.new_page()
+    await pg.goto(url, wait_until='load', timeout=45000)
+    await pg.evaluate('() => document.fonts.ready.then(() => true)')
+    await pg.wait_for_timeout(600)
+    return pg
+
+
+async def mathematics(br, base):
+    phys = base + 'newton-to-mtheory/'
+    import glob as _glob
+    with_breaks = sorted(os.path.basename(f) for f in
+                         _glob.glob(os.path.join(DOCS, 'newton-to-mtheory', 'ch*.html'))
+                         if 'class="pause"' in open(f, encoding='utf-8').read())
+
+    print('\nthe mathematics: sitting breaks')
+    async with section('sitting breaks'):
+        ctx = await br.new_context(viewport={'width': 1280, 'height': 900}, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        bad, n = [], 0
+        for ch in with_breaks:
+            pg = await fitted_page(ctx, phys + ch)
+            for i, p in enumerate(await pg.evaluate(PAUSES)):
+                n += 1
+                if not (p['nk'] == 1 and p['nt'] == 1 and p['k'] and len(p['k']) <= 40 and p['t']):
+                    bad.append('%s #%d %r' % (ch, i, p))
+            await pg.close()
+        await ctx.close()
+        ok('every sitting break (%d, on %d chapters) has one .k of at most 40 characters and a '
+           'non-empty .t' % (n, len(with_breaks)), n > 0 and not bad, bad[:3] or '')
+        for w in (390, 1280):
+            ctx = await br.new_context(viewport={'width': w, 'height': 844 if w < 700 else 900},
+                                       service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            for ch in ('ch4-6.html', 'ch4-7.html'):
+                pg = await fitted_page(ctx, phys + ch)
+                ps = await pg.evaluate(PAUSES)
+                await pg.close()
+                off = [p['t'] for p in ps if not (p['inside'] and p['wraps'] and p['cap'])]
+                ok('%s at %d: every .t (%d) wraps inside the column, first letter capitalised'
+                   % (ch, w, len(ps)), ps and not off, off[:2] or '')
+            await ctx.close()
+
+    print('\nthe mathematics: displays, numbers and inline maths')
+    async with section('displays and numbers'):
+        for w in (390, 1000, 1280):
+            ctx = await br.new_context(viewport={'width': w, 'height': 844 if w < 700 else 900},
+                                       service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            for ch in ('ch1-2.html', 'ch3-5.html'):
+                pg = await fitted_page(ctx, phys + ch)
+                nums = await pg.evaluate(NUMBERS)
+                hit = [x['num'] for x in nums if x['hit']]
+                ok('%s at %d: no equation number (%d) overlaps its display' % (ch, w, len(nums)),
+                   nums and not hit, hit[:5] or '%d dropped below' % sum(x['drop'] for x in nums))
+                if w == 1280:
+                    left = [x['num'] for x in nums if not x['right']]
+                    ok('%s at 1280: every number sits right of the column' % ch, not left, left[:5])
+                if w == 390 and ch == 'ch1-2.html':
+                    e = [x for x in nums if x['num'] == '(1.2.11)']
+                    ok('ch1-2 at 390: (1.2.11) keeps its number on its line',
+                       len(e) == 1 and not e[0]['drop'], e)
+                if w == 390 and ch == 'ch3-5.html':
+                    d = await pg.evaluate(DISPLAYS)
+                    nocue = [x for x in d['bad'] if not x['cue']]
+                    ok('ch3-5 at 390: every display (%d) fits or shows its edge shades' % d['n'],
+                       d['n'] > 0 and not nocue, nocue[:3] or '%d scroll' % len(d['bad']))
+                    r = await pg.evaluate("""() => { const p = [...document.querySelectorAll('.main .col > p')]
+                        .find(p => !p.closest('.callout, .tools, .pause') && !p.className && p.querySelector('.katex'));
+                      return p ? {body: parseFloat(getComputedStyle(p).fontSize),
+                                  math: parseFloat(getComputedStyle(p.querySelector('.katex')).fontSize)} : null; }""")
+                    ok('ch3-5 at 390: inline maths is 1.045 times the text (+-0.5px)',
+                       bool(r) and abs(r['math'] - 1.045 * r['body']) <= 0.5, r)
+                await pg.close()
+            await ctx.close()
+        # the widest displays in the book, at 1280: fitted, or hung into the margin
+        ctx = await br.new_context(viewport={'width': 1280, 'height': 900}, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        for ch in ('ch3-1.html', 'ch3-2.html', 'ch3-7.html', 'ch3-9.html', 'ch4-2.html', 'ch4-7.html'):
+            pg = await fitted_page(ctx, phys + ch)
+            d = await pg.evaluate(DISPLAYS)
+            await pg.close()
+            ok('%s at 1280: no display (%d) overflows its box' % (ch, d['n']), d['n'] > 0 and not d['bad'],
+               d['bad'][:3] or '')
+        await ctx.close()
+        # A reader whose default text size is 20px (125%): every rem grows, so
+        # the margin track narrows (0 at 1200, 23.75px at 1280) and cannot hold
+        # a hanging number. Each number then keeps its line or drops, inside
+        # .main's content box, as below 1200. At 1400 the track holds it again.
+        for w in (1200, 1280, 1400):
+            ctx = await br.new_context(viewport={'width': w, 'height': 900}, service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            cdp = await ctx.new_cdp_session(pg)
+            await cdp.send('Page.setFontSizes', {'fontSizes': {'standard': 20, 'fixed': 16}})
+            await pg.goto(phys + 'ch1-2.html', wait_until='load', timeout=45000)
+            await pg.evaluate('() => document.fonts.ready.then(() => true)')
+            await pg.wait_for_timeout(600)
+            nums = await pg.evaluate(NUMBERS)
+            r = await pg.evaluate(LARGE_TEXT)
+            await pg.close()
+            await ctx.close()
+            hit = [x['num'] for x in nums if x['hit']]
+            ok('ch1-2 at %d, 20px default text (root %s, track %s): every number (%d) inside '
+               '.main, none over its display, no page overflow'
+               % (w, r['root'], r['breakout'], len(nums)),
+               r['root'] == '20px' and nums and not hit and r['past'] <= 0.5 and r['pageOver'] <= 0,
+               'furthest number edge %+.1fpx from .main, %d hung, %d dropped, overlaps %s, '
+               'page overflow %dpx' % (r['past'], r['hung'], sum(x['drop'] for x in nums),
+                                       hit[:3] or 0, r['pageOver']))
+
+    print('\nthe mathematics: equation cards')
+    async with section('the equation card on ch1-2'):
+        ctx = await br.new_context(viewport={'width': 1280, 'height': 900}, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        pg = await fitted_page(ctx, phys + 'ch1-2.html')
+        href = await pg.get_attribute('.main a.eqref', 'href')
+        await pg.evaluate("() => document.querySelector('.main a.eqref').scrollIntoView({block: 'center', behavior: 'instant'})")
+        await pg.wait_for_timeout(200)
+        await pg.hover('.main a.eqref')
+        if await waitsel(pg, '.refcard.on .katex-display', state='visible'):
+            c = await pg.evaluate("""() => { const c = document.querySelector('.refcard.on');
+              const go = c.querySelector('a.rc-go');
+              return {num: (c.querySelector('.eqnum') || {}).textContent || '',
+                      go: go ? go.textContent.trim() : '', href: go ? go.getAttribute('href') : '',
+                      ref: document.querySelector('.main a.eqref').textContent.trim()}; }""")
+            ok('hovering the first a.eqref at 1280 shows a card with the equation and its number',
+               c['num'] == c['ref'] and c['go'] == 'Go to equation' and c['href'] == href, c)
+            await pg.hover('.refcard.on a.rc-go')
+            await pg.click('.refcard.on a.rc-go')
+            await pg.wait_for_timeout(900)
+            j = await pg.evaluate("""(h) => { const t = document.getElementById(h.slice(1));
+              const r = t.getBoundingClientRect();
+              return {hash: location.hash, inview: r.top >= 0 && r.top < innerHeight,
+                      open: !!document.querySelector('.refcard.on')}; }""", href)
+            ok('its "Go to equation" jumps to %s and closes the card' % href,
+               j['hash'] == href and j['inview'] and not j['open'], j)
+        await ctx.close()
+        ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                   is_mobile=True, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        pg = await fitted_page(ctx, phys + 'ch1-2.html')
+        y0 = await pg.evaluate("() => { document.querySelector('.main a.eqref').scrollIntoView({block: 'center', behavior: 'instant'}); return scrollY; }")
+        await pg.tap('.main a.eqref')
+        if await waitsel(pg, '.refcard.sheet.on .katex-display', state='visible'):
+            await pg.wait_for_timeout(300)
+            y1 = await pg.evaluate('() => scrollY')
+            ok('a tap on it at 390 (touch) opens the sheet and does not jump', abs(y1 - y0) < 2,
+               'scrollY %d -> %d' % (y0, y1))
+        await ctx.close()
+
+
+# ------------------------------------------------------ the clinical apparatus
+# Folded in from W3-CLINIC's probe: ids, the trial sheet and its registry link,
+# and a reference address opening the collapsed list.
+async def apparatus(br, base):
+    import collections as _c, glob as _glob, re as _re
+    print('\nthe clinical apparatus')
+    pages = []
+    for pat in ('breast-cancer/BC-*.html', 'breast-cancer/trials.html', 'breast-cancer/stories.html',
+                'newton-to-mtheory/ch*.html', 'newton-to-mtheory/ledger.html',
+                'newton-to-mtheory/throughline.html'):
+        pages += sorted(_glob.glob(os.path.join(DOCS, pat)))
+    dup = []
+    for f in pages:
+        s = _re.sub(r'<script\b.*?</script>', '', open(f, encoding='utf-8').read(), flags=_re.S)
+        ids = _c.Counter(_re.findall(r'(?<![-\w])id="([^"]*)"', s))
+        dup += ['%s#%s' % (os.path.relpath(f, DOCS), k) for k, v in ids.items() if v > 1]
+    ok('no id is used twice on %d chapter and appendix pages' % len(pages), pages and not dup, dup[:4])
+
+    async with section('the trial sheet on BC-900'):
+        ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                   is_mobile=True, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        pg = await ctx.new_page()
+        await pg.goto(base + 'breast-cancer/BC-900.html', wait_until='load')
+        await pg.wait_for_timeout(500)
+        await pg.tap('.col .trial[data-trial]')
+        if await waitsel(pg, '.refcard.sheet.on', state='visible'):
+            s = await pg.evaluate("""() => { const c = document.querySelector('.refcard.sheet.on');
+              const m = document.querySelector('.col .trial[data-trial][aria-expanded="true"]');
+              const go = c.querySelector('a.rc-go'), f = c.querySelector('.rc-f');
+              return {facts: !!(f && f.textContent.trim()), href: go && go.getAttribute('href'),
+                      key: m && m.dataset.trial}; }""")
+            ok('BC-900 at 390: a tap on the first trial mark opens the sheet with its facts and '
+               'a link to trials.html#t-<key>', s['facts'] and bool(s['key'])
+               and s['href'] == 'trials.html#t-' + s['key'], s)
+            if s['href']:
+                await pg.tap('.refcard.sheet.on a.rc-go')
+                await pg.wait_for_load_state('load')
+                await pg.wait_for_timeout(1000)
+                o = await pg.evaluate("(k) => { const d = document.getElementById('t-' + k);"
+                                      " return {url: location.pathname + location.hash, open: !!(d && d.open)}; }",
+                                      s['key'])
+                ok('and following it opens that registry row', o['open'], o)
+        await ctx.close()
+
+    async with section('a reference address on BC-870'):
+        src = open(os.path.join(DOCS, 'breast-cancer', 'BC-870.html'), encoding='utf-8').read()
+        rid = (_re.findall(r'<li id="(r-[^"]+)"', src)[11:12] or [None])[0]
+        ok('BC-870 has a twelfth reference', bool(rid), rid)
+        if rid:
+            ctx = await br.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            await pg.goto(base + 'breast-cancer/BC-870.html#' + rid, wait_until='load')
+            await pg.wait_for_timeout(900)
+            r = await pg.evaluate("""(id) => { const li = document.getElementById(id), rc = li.getBoundingClientRect();
+              const bg = getComputedStyle(li).backgroundColor;
+              return {open: document.querySelector('details.refs-list').open,
+                      inview: rc.top >= 0 && rc.top < innerHeight,
+                      lit: bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent'}; }""", rid)
+            ok('BC-870 at 390: #%s opens the list, lands on the entry and highlights it' % rid,
+               r['open'] and r['inview'] and r['lit'], r)
+            await ctx.close()
 
 
 async def main():
@@ -1244,6 +1552,12 @@ async def main():
         async with section('the hub tiles'):
             await hub_tiles(br, base)
 
+        # ------------------------------------ the mathematics and the apparatus
+        async with section('the mathematics'):
+            await mathematics(br, base)
+        async with section('the clinical apparatus'):
+            await apparatus(br, base)
+
         # --------------------------------------------------- the masked sweep
         async with section('the masked-overflow sweep'):
             await sweep(br, base)
@@ -1271,7 +1585,11 @@ if __name__ == '__main__':
           'Menu\n          on a phone; an OS-dark reader stays dark and a press '
           'sticks; a returning reader is offered their place on the hub, the front doors, the\n'
           '          contents and continue.html?b=; Tab onto a hub tile brings its weather and ring; '
-          'every equation carries one number, and nothing new\n'
+          'every equation carries one number, clear of its display;\n'
+          '          every sitting break has its kicker and line, the displays fit or say they '
+          'scroll, an equation reference has its card;\n'
+          '          no id repeats, the trial sheet reaches the registry, a reference address '
+          'opens the list; and nothing new\n'
           '          passes the viewport with the shell unmasked '
           '(%d KNOWN entries, each owned by the package that removes it)'
           % sum(len(v) for v in KNOWN.values()))
