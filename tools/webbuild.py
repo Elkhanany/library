@@ -249,10 +249,10 @@ def landing_page(bk, stats):
 HUB_CSS = """
 *{box-sizing:border-box}
 /* The same role names every book page uses (DESIGN.md section 3), in both
-   themes, so the library bar, the offline shelf in pwa.css and anything else
-   that reads --bg, --paper or --ink finds the hub's own colours rather than a
-   literal fallback. --ink-faint is the palest ink a word may use: 4.96:1 on
-   the ground and 5.36:1 on a tile in light, 5.78:1 and 5.48:1 in dark. */
+   themes, so the library bar and anything else that reads --bg, --paper or
+   --ink finds the hub's own colours rather than a literal fallback.
+   --ink-faint is the palest ink a word may use: 4.96:1 on the ground and
+   5.36:1 on a tile in light, 5.78:1 and 5.48:1 in dark. */
 :root{
   --serif:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
     "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
@@ -261,6 +261,7 @@ HUB_CSS = """
   --bg:#f4f3f0; --paper:#ffffff;
   --ink:#16181d; --ink-soft:#565b66; --ink-faint:#646975; --rule:#dcdfe5;
   --accent-ink:var(--ink);
+  --tile:rgba(255,255,255,.72);
   color-scheme:light;
 }
 html,body{margin:0;height:100%}
@@ -309,86 +310,134 @@ body[data-focus] .field.base{opacity:0}
     linear-gradient(180deg, rgba(var(--fg),var(--wg)), rgba(var(--fg2),calc(var(--wg)*1.6)))}
 BOOKFIELDS
 
-.wrap{position:relative;z-index:1;max-width:64rem;margin:0 auto;padding:clamp(2.5rem,7vh,5rem) 1.4rem 4rem}
+/* The frame's inner gutter is the bar's inset (DESIGN.md section 5), so the
+   lede starts under the brand's letters on a phone. */
+.wrap{position:relative;z-index:1;max-width:64rem;margin:0 auto;
+  padding:clamp(2.5rem,7vh,5rem) var(--lib-inset,1.25rem) 4rem}
+main{display:block}
 
+/* ---------- the lede: a label, the serif title, the lede ---------- */
 header.lede{max-width:38rem;margin:0 0 clamp(2rem,5vh,3.4rem)}
-.eyebrow{font-family:var(--sans);font-size:.7rem;font-weight:700;letter-spacing:.22em;
+.eyebrow,.continue h2{font:700 .7rem/1.3 var(--sans);letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-faint);margin:0 0 .9rem}
-h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
-  font-weight:600;margin:0 0 1rem}
+h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.06;letter-spacing:-.02em;
+  font-weight:400;margin:0 0 1rem;text-wrap:balance}
 /* not the eyebrow, which is also a <p> in the lede and lost to this rule: it
    rendered at 18px bold with 4px tracking, louder than anything but the h1
    (FD-05) */
 .lede > p:not(.eyebrow){font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
 
-/* ---------- the shelf ---------- */
-.shelf{display:grid;grid-template-columns:repeat(2,1fr);gap:1.15rem}
-@media (max-width:760px){.shelf{grid-template-columns:1fr}}
+/* ---------- continue reading ----------
+   Filled by pwa.js from library:v1.lastBy, one row per book the reader has
+   opened a chapter of, most recent first (DESIGN.md section 6, Hub). Hidden
+   until there is something in it, so a first visit shows nothing here. The
+   book's name is in its own accent, the dark-safe one in the dark theme,
+   which is the same swap the tiles make. */
+.continue{margin:0 0 clamp(2rem,5vh,2.8rem);max-width:44rem}
+.continue[hidden]{display:none}
+.continue ol{list-style:none;margin:0;padding:0}
+.continue li{margin:0}
+/* Each row stands on its own progress rule: the hairline is the track, the
+   book's accent the part read, so the rows need no other divider. */
+.continue a{--bk-hue:var(--bk-accent);display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr);
+  align-items:baseline;gap:.15rem 1.2rem;padding:.65rem 0 0;min-height:44px;
+  text-decoration:none;color:var(--ink)}
+.continue .c-book{font:600 .8125rem/1.3 var(--sans);color:var(--bk-hue);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.continue .c-ch{font-size:1.02rem;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.continue .c-rule{grid-column:1/-1;height:2px;margin-top:.55rem;background:var(--rule);position:relative}
+.continue .c-rule i{position:absolute;left:0;top:0;bottom:0;background:var(--bk-hue)}
+.continue a:hover .c-ch,.continue a:focus-visible .c-ch{color:var(--bk-hue)}
+.continue a:focus-visible{outline:2px solid var(--bk-hue);outline-offset:2px}
+@media (max-width:639.98px){
+  .continue a{grid-template-columns:minmax(0,1fr)}
+}
+
+/* ---------- the shelf ----------
+   Tiles in the house register (FD-11): a hairline, radius 6px, the page's
+   raised surface let through a little, and nothing that lifts, shadows,
+   blurs or holds a tile open to a fixed height. The title's link is
+   stretched over the whole tile, so the tile is one target; only the offline
+   chip sits above it. */
+.shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem}
+@media (max-width:639.98px){.shelf{grid-template-columns:minmax(0,1fr);gap:.9rem}}
 
 .book{
-  position:relative;display:flex;flex-direction:column;justify-content:space-between;
-  min-height:19rem;padding:1.6rem 1.5rem 1.35rem;
-  text-decoration:none;color:inherit;
-  background:rgba(255,255,255,.72);
-  border:1px solid var(--rule);border-radius:10px;
-  -webkit-backdrop-filter:saturate(140%) blur(6px);
-  backdrop-filter:saturate(140%) blur(6px);
-  transition:transform .3s ease,box-shadow .3s ease,opacity .4s ease,
-             border-color .3s ease,background .4s ease;
+  position:relative;display:flex;flex-direction:column;
+  padding:1.5rem 1.5rem 1.2rem;
+  color:inherit;background:var(--tile);
+  border:1px solid var(--rule);border-radius:6px;
+  transition:opacity .4s ease,border-color .3s ease,background .4s ease;
 }
 /* --bk-hue is the tile's accent in the active theme: --bk-accent on paper,
    --bk-accent-2 (the book's accent_dark) on the dark ground, where the light
    accents measured 2.0 to 3.4:1 (FD-03, NAV-12, PDA-04). Both are stamped on
    the tile by hub(); the swap is below, keyed on data-theme. */
 .book{--bk-hue:var(--bk-accent)}
-.book:hover,.book:focus-visible{
-  transform:translateY(-3px);
-  border-color:var(--bk-hue);
-  box-shadow:0 14px 40px rgba(20,22,28,.14);
+.book:hover{border-color:var(--bk-hue)}
+/* Keyboard focus lands on the title's link, which is stretched over the tile,
+   so the ring goes round the tile in the book's own colour (C2-tile-focus),
+   not round the title's words. */
+.book h2 a:focus-visible{outline:none}
+.book:has(h2 a:focus-visible){outline:2px solid var(--bk-hue);outline-offset:2px;border-color:var(--bk-hue)}
+@supports not selector(:has(a)){
+  .book:focus-within{outline:2px solid var(--bk-hue);outline-offset:2px}
 }
-.book:hover{outline:none}
-/* a real ring in the tile's own colour: the focused tile used to differ from
-   its neighbours only by a 1px border at 2:1 (PDA-04) */
-.book:focus-visible{outline:2px solid var(--bk-hue);outline-offset:3px}
-/* the other books recede rather than disappear — still readable, plainly not the subject */
+/* the other books recede rather than disappear: still readable, plainly not the subject */
 body[data-focus] .book{opacity:.34;filter:saturate(.5)}
-body[data-focus] .book[data-live="1"]:hover,
-body[data-focus] .book[data-live="1"]:focus-visible{opacity:1;filter:none}
 
 .book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-hue);margin:0 0 1.1rem}
-.book .kicker{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.18em;
+.book .kicker{font:700 .7rem/1.3 var(--sans);letter-spacing:.12em;
   text-transform:uppercase;color:var(--bk-hue);margin:0 0 .6rem}
-.book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.08;letter-spacing:-.02em;
-  font-weight:600;margin:0 0 .7rem}
-.book p{font-size:.95rem;line-height:1.55;color:var(--ink-soft);margin:0}
-.book .foot{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
-  margin-top:1.5rem;font-family:var(--sans);font-size:.78rem;color:var(--ink-faint)}
-.book .count{font-weight:650;color:var(--ink-soft)}
-.book .go{color:var(--bk-hue);font-weight:650}
-.book[data-live="0"]{cursor:default}
+.book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.1;letter-spacing:-.015em;
+  font-weight:400;margin:0 0 .6rem}
+.book h2 a{color:inherit;text-decoration:none}
+.book h2 a::after{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit}
+.book .tagline{font-size:.98rem;line-height:1.55;color:var(--ink-soft);margin:0}
+.book .foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+  gap:.6rem 1rem;margin-top:auto;padding-top:1.3rem;font:.8125rem/1.35 var(--sans)}
+.book .count{font-weight:600;color:var(--ink-soft)}
+.book .go{color:var(--bk-hue);font-weight:600;white-space:nowrap}
+.book .off{grid-column:1/-1;justify-self:start}
 .book[data-live="0"] .go{color:var(--ink-faint)}
 
-footer{margin-top:3rem;font-family:var(--sans);font-size:.76rem;color:var(--ink-faint)}
+/* The offline chip: a button, above the stretched link, in the page's own
+   inks. pwa.js un-hides it once it knows what is stored; with no script,
+   or no Cache Storage, it never shows. */
+.book button.off{position:relative;z-index:2;font:600 .75rem/1.2 var(--sans);
+  color:var(--ink-soft);background:var(--tile);border:1px solid var(--rule);
+  border-radius:999px;padding:.35rem .8rem;min-height:32px;cursor:pointer}
+.book button.off:hover{border-color:currentColor;color:var(--ink)}
+.book button.off:focus-visible{outline:2px solid var(--bk-hue);outline-offset:2px}
+.book button.off[disabled]{cursor:default}
+.book button.off[hidden]{display:none}
+
+/* ---------- below the grid: one quiet line ---------- */
+.store{margin:1.6rem 0 0;font:.8125rem/1.5 var(--sans);color:var(--ink-faint)}
+.store[hidden]{display:none}
+.store button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;
+  text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.store button:hover{color:var(--ink)}
+.store button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+footer{margin-top:2.4rem;font:.8125rem/1.5 var(--sans);color:var(--ink-faint)}
 footer a{color:inherit}
 
 @media (prefers-reduced-motion:reduce){
   .field,.book{transition:none}
-  .book:hover,.book:focus-visible{transform:none}
 }
 /* A phone cannot hover, so the wash never fires there and the tiles have to
    carry their own colour. Apple's 44pt minimum and the home indicator are the
    other two things a desktop layout forgets. */
 @media (pointer:coarse){
-  .book{min-height:16rem}
-  .book:active{transform:scale(.995)}
-  footer a{display:inline-flex;align-items:center;min-height:44px}
-  .wrap{padding-left:max(1.4rem,env(safe-area-inset-left));
-        padding-right:max(1.4rem,env(safe-area-inset-right));
+  .book button.off{min-height:44px;padding:.5rem 1rem}
+  .store button,footer a{display:inline-flex;align-items:center;min-height:44px}
+  .wrap{padding-left:max(var(--lib-inset,1rem),env(safe-area-inset-left));
+        padding-right:max(var(--lib-inset,1rem),env(safe-area-inset-right));
         padding-bottom:calc(4rem + env(safe-area-inset-bottom))}
 }
 @media (max-width:520px){
-  .shelf{gap:.9rem}
-  .book{min-height:14rem;padding:1.3rem 1.2rem 1.15rem}
+  .book{padding:1.3rem 1.2rem 1.1rem}
 }
 /* ---------- dark ----------
    Keyed on data-theme, which the boot script in <head> stamps before first
@@ -406,11 +455,13 @@ HUBDARK
 HUB_DARK = (
     ("", "--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;"
          "--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;"
+         "--tile:rgba(24,27,32,.66);"
          "--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17"),
     # the accents were chosen against paper; on a dark ground the book's
     # lighter variant is the one that reads, so the two swap roles, in the
-    # weather and on the tile alike
-    (" .book", "background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)"),
+    # weather, on the tile and in the Continue strip alike
+    (" .book", "--bk-hue:var(--bk-accent-2)"),
+    (" .continue a", "--bk-hue:var(--bk-accent-2)"),
     (" .field", "--fg:var(--a2-rgb);--fg2:var(--a-rgb)"),
     (" .field.base", "background-image:radial-gradient(120% 80% at 50% -10%,"
                      "rgba(150,160,180,.06) 0%,transparent 60%)"),
@@ -424,6 +475,11 @@ def hub_dark():
             + "\n@media (prefers-color-scheme:dark){\n"
             + block(":root:not([data-theme])") + "\n}")
 
+# The weather follows the reader's attention: a pointer over a tile, or
+# keyboard focus anywhere inside one. focus and blur do not bubble, so they
+# were bound to a tile that is no longer the thing that takes focus (its
+# title's link and its offline chip do); focusin and focusout do, and a move
+# between the link and the chip inside one tile keeps that tile's weather.
 HUB_JS = """
 (function () {
   var body = document.body;
@@ -434,11 +490,18 @@ HUB_JS = """
   document.querySelectorAll('.book').forEach(function (el) {
     var slug = el.getAttribute('data-slug');
     el.addEventListener('mouseenter', function () { focusBook(slug); });
-    el.addEventListener('focus', function () { focusBook(slug); });
-    el.addEventListener('mouseleave', function () { focusBook(null); });
-    el.addEventListener('blur', function () { focusBook(null); });
+    el.addEventListener('mouseleave', function () {
+      if (!el.contains(document.activeElement)) focusBook(null);
+    });
+    el.addEventListener('focusin', function () { focusBook(slug); });
+    el.addEventListener('focusout', function (e) {
+      if (!e.relatedTarget || !el.contains(e.relatedTarget)) focusBook(null);
+    });
   });
-  document.querySelector('.shelf').addEventListener('mouseleave', function () { focusBook(null); });
+  document.querySelector('.shelf').addEventListener('mouseleave', function () {
+    if (!document.activeElement || !document.activeElement.closest ||
+        !document.activeElement.closest('.book')) focusBook(null);
+  });
 })();
 """
 
@@ -464,29 +527,35 @@ def _contrast(a, b):
     return (max(x, y) + 0.05) / (min(x, y) + 0.05)
 
 
-# The tile grounds the kicker and "Read" sit on: rgba(255,255,255,.72) over the
-# light hub, rgba(24,27,32,.66) over the dark one (HUB_CSS, HUB_DARK).
+# The grounds a book's accent is set on as text: the tile's kicker and "Read"
+# on rgba(255,255,255,.72) or rgba(24,27,32,.66) over the hub (HUB_CSS,
+# HUB_DARK), and the Continue strip's book name on the hub's own ground. Each
+# accent has to read on both of its theme's grounds.
 TILE_LIGHT, TILE_DARK = "#fcfcfb", "#15181d"
+GROUND_LIGHT, GROUND_DARK = "#f4f3f0", "#101216"
 
 
-def _legible(accent, ground, floor=4.5):
+def _legible(accent, grounds, floor=4.5):
     """The book's accent, or the nearest mix of it toward white (on a dark
-    ground) or black (on a light one) that reads at `floor` on `ground`.
+    ground) or black (on a light one) that reads at `floor` on every one of
+    `grounds`.
 
     A book chooses its accents against its own paper. On the hub they are also
-    text -- the tile's kicker and "Read" -- on a ground the book never saw, and
-    an accent_dark that is fine as a rule can be 3.8:1 as a word. Derived here
-    rather than typed into book.json, so a book whose colours already pass is
-    emitted unchanged."""
-    if _contrast(accent, ground) >= floor:
+    text -- the tile's kicker and "Read", the Continue strip's book name -- on
+    grounds the book never saw, and an accent_dark that is fine as a rule can
+    be 3.8:1 as a word. Derived here rather than typed into book.json, so a
+    book whose colours already pass is emitted unchanged."""
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    if all(_contrast(accent, g) >= floor for g in grounds):
         return accent
-    to = "#ffffff" if _luminance(ground) < 0.2 else "#000000"
+    to = "#ffffff" if _luminance(grounds[0]) < 0.2 else "#000000"
     a = [int(x) for x in _rgb(accent).split(",")]
     b = [int(x) for x in _rgb(to).split(",")]
     for step in range(1, 21):
         t = step / 20.0
         c = "#" + "".join("%02x" % round(p + (q - p) * t) for p, q in zip(a, b))
-        if _contrast(c, ground) >= floor:
+        if all(_contrast(c, g) >= floor for g in grounds):
             return c
     return to
 
@@ -504,41 +573,101 @@ def _field_css(bk):
     return (f'.field[data-book="{bk.slug}"]{{--a-rgb:{_rgb(a)};--a2-rgb:{_rgb(a2)}}}\n'
             f'body[data-focus="{bk.slug}"] .field[data-book="{bk.slug}"]{{opacity:1}}\n'
             f'body[data-focus="{bk.slug}"] .book[data-slug="{bk.slug}"]'
-            f'{{opacity:1;filter:none;border-color:var(--bk-hue);'
-            f'box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}}\n')
+            f'{{opacity:1;filter:none;border-color:var(--bk-hue)}}\n')
+
+
+_WORDS = ("zero one two three four five six seven eight nine ten eleven twelve").split()
+
+
+def _data_count(bk, ref):
+    """len() of a book's data file, or of one key in it: "atlas.json#people"."""
+    name, _, key = ref.partition("#")
+    path = os.path.join(bk.src, "data", name)
+    if not os.path.exists(path):
+        raise SystemExit("%s: book.json shelf counts %s, which is not in src/data/"
+                         % (bk.slug, name))
+    import json
+    obj = json.loads(library.read(path))
+    if key:
+        if key not in obj:
+            raise SystemExit("%s: book.json shelf counts %s, which has no %r"
+                             % (bk.slug, name, key))
+        obj = obj[key]
+    return len(obj)
+
+
+def shelf_status(bk, written):
+    """The tile's status line, in the book's own unit, from book.json "shelf"
+    and computed here, never typed (DESIGN.md section 1, principle 9).
+
+      {"unit": "chapters"}                      "98 chapters", or
+                                                "37 of 76 chapters written"
+      {"count": "studies.json", "unit": ...}    "133 thinkers, each with a study"
+      {"count": "atlas.json#people", "unit": "thinkers",
+       "across": "atlas.json#epochs", "across_unit": "ages"}
+                                                "133 thinkers across ten ages"
+
+    A chaptered book says how much of it is written; "chapters planned" and
+    "0 chapters" (NAV-13) cannot be produced. A book with nothing to count gets
+    no status line rather than a zero."""
+    spec = bk.cfg.get("shelf") or {"unit": "chapters"}
+    unit = spec.get("unit", "chapters")
+    if "count" not in spec:
+        total = len(bk.flat)
+        if not written:
+            return ""
+        return ("%d %s" % (total, unit) if written >= total
+                else "%d of %d %s written" % (written, total, unit))
+    n = _data_count(bk, spec["count"])
+    if not n:
+        return ""
+    out = "%d %s" % (n, unit)
+    if spec.get("across"):
+        m = _data_count(bk, spec["across"])
+        out += " across %s %s" % (_WORDS[m] if m < len(_WORDS) else m,
+                                  spec.get("across_unit", ""))
+    return out.strip()
 
 
 def hub(results):
-    """docs/index.html — the library's front door.
+    """docs/index.html -- the library's front door.
 
-    Two tiles per row, each carrying its own colour. Hovering or tabbing to one
-    changes the whole page's background to that book's and lets the others
-    recede, so the shelf answers "what kind of book is this" before you click.
+    The bar, the lede, the reader's Continue strip (filled by pwa.js), then
+    two tiles per row, each carrying its own colour. Hovering or tabbing to
+    one changes the whole page's background to that book's and lets the
+    others recede, so the shelf answers "what kind of book is this" before you
+    click. Then one quiet line about storage, and the footer.
     """
     fields, tiles = [], []
     for bk, n, stats in results:
         fields.append(_field_css(bk))
-        total = len(bk.flat)
         # A book is readable when it has a front door, not when it has chapters:
         # The Long Argument is an interactive index and would otherwise be
         # unclickable on the shelf that exists to open it.
         live = os.path.exists(os.path.join(bk.out, "index.html"))
-        href = f"{bk.slug}/index.html" if live else None
-        count = (f"{n} of {total} chapters" if n else f"{total} chapters planned")
-        go = "Read &rarr;" if live else "Not yet written"
-        tag = "a" if live else "div"
-        attrs = f' href="{href}"' if live else ""
+        href = f"{bk.slug}/index.html"
+        status = shelf_status(bk, n)
+        title = html.escape(bk.title)
+        heading = (f'<h2><a href="{href}">{title}</a></h2>' if live
+                   else f'<h2>{title}</h2>')
+        go = ('<span class="go" aria-hidden="true">Read &rarr;</span>' if live
+              else '<span class="go">Not yet written</span>')
+        # The chip is emitted hidden and empty: what it says depends on what
+        # this device has stored, which only the page can know.
+        chip = (f'<button class="off" type="button" data-offline="{bk.slug}" hidden></button>'
+                if live else "")
         tiles.append(
-            f'<{tag} class="book" data-slug="{bk.slug}" data-live="{1 if live else 0}"{attrs}'
-            f' style="--bk-accent:{_legible(bk.theme.get("accent", "#333333"), TILE_LIGHT)};'
-            f'--bk-accent-2:{_legible(bk.theme.get("accent_dark") or bk.theme.get("accent", "#999999"), TILE_DARK)}">'
-            f'<div><div class="rule"></div>'
+            f'<article class="book" data-slug="{bk.slug}" data-live="{1 if live else 0}"'
+            f' style="--bk-accent:{_legible(bk.theme.get("accent", "#333333"), [TILE_LIGHT, GROUND_LIGHT])};'
+            f'--bk-accent-2:{_legible(bk.theme.get("accent_dark") or bk.theme.get("accent", "#999999"), [TILE_DARK, GROUND_DARK])}">'
+            f'<div class="rule"></div>'
             f'<p class="kicker">{html.escape(bk.eyebrow)}</p>'
-            f'<h2>{html.escape(bk.title)}</h2>'
-            f'<p>{html.escape(bk.tagline)}</p></div>'
-            f'<div class="foot"><span class="count">{count}</span>'
-            f'<span class="go">{go}</span></div>'
-            f'</{tag}>')
+            f'{heading}'
+            f'<p class="tagline">{html.escape(bk.tagline)}</p>'
+            f'<div class="foot">'
+            + (f'<span class="count">{html.escape(status)}</span>' if status else '<span></span>')
+            + f'{go}{chip}</div>'
+            f'</article>')
 
     field_divs = "".join(
         f'<div class="field" data-book="{bk.slug}" '
@@ -558,14 +687,21 @@ def hub(results):
 <div class="field base"></div>
 {field_divs}
 <div class="wrap">
+<main>
 <header class="lede">
   <p class="eyebrow">Built from first principles</p>
   <h1>A library of books that show their working.</h1>
   <p>Each one begins at the beginning and derives what it uses. Where something is taken on
   trust it is marked as such, so you always know what you are standing on.</p>
 </header>
-<main class="shelf">
+<section class="continue" data-continue hidden aria-labelledby="continue-h">
+  <h2 id="continue-h">Continue reading</h2>
+  <ol></ol>
+</section>
+<div class="shelf">
 {"".join(tiles)}
+</div>
+<p class="store" data-store hidden></p>
 </main>
 <footer>Every page works with the network switched off. <a href="https://github.com/Elkhanany">Source</a>.</footer>
 </div>

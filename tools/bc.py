@@ -201,6 +201,40 @@ def esc(t):
     return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+# Evidence-table columns by header: the class every th and td carries, and
+# the three that fold into the trial cell's meta line as span.m[data-col].
+EV_COL = {"Trial": "c-trial", "Population": "c-pop", "Experimental vs control": "c-arms",
+          "Primary endpoint": "c-endpoint", "Result": "c-result",
+          "Overall survival": "c-os"}
+EV_META = {"Ph": "ph", "N": "n", "Status": "status"}
+
+# A sentence ends at . ! or ?, perhaps inside a closing quote or bracket, before
+# a space and a capital, a digit or an opening quote. An abbreviation or an
+# initial is not an end.
+SENT_END = re.compile(r"[.!?][\u201d\u2019\"')\]]?(?=\s+[\u201c\u2018\"'(\[]?[A-Z0-9])")
+NOT_END = re.compile(r"(?:\b(?i:vs|e\.g|i\.e|al|etc|approx|cf|fig|no|dr|st)|(?<![\w.])[A-Z])\.$")
+
+
+def split_caption(text):
+    """An evidence caption, as (first sentence, the rest). The rest is empty
+    when the caption is one sentence."""
+    for mo in SENT_END.finditer(text):
+        if NOT_END.search(text[:mo.start() + 1]):
+            continue
+        return text[:mo.end()], text[mo.end():].strip()
+    return text, ""
+
+
+def sentence_end(title, note):
+    """bc.py's own check that a caption split landed on a sentence end: the
+    title ends one and does not end on an abbreviation, and the note, if any,
+    starts the next."""
+    t = re.sub(r"\s*\[@[^\]]*\]", "", title).rstrip()
+    if not re.search(r"[.!?][\u201d\u2019\"')\]]?$", t) or NOT_END.search(t.rstrip("\u201d\u2019\"')]")):
+        return False
+    return not note or bool(re.match(r"[\u201c\u2018\"'(\[]?[A-Z0-9]", note))
+
+
 def format_ref(key, r):
     """One bibliography line. PubMed when there is a PMID, DOI otherwise, and
     neither when the entry has only a citation."""
@@ -233,6 +267,7 @@ class Chapter:
         self.seen = {}
         self.errs = []
         self.interplay = []    # (target id, text) — APP-F is built from these
+        self.told = set()      # stories already introduced in this chapter
 
     def fail(self, msg):
         # One line per distinct problem. A key cited ten times in a chapter is
@@ -262,7 +297,13 @@ class Chapter:
             out.append('<a href="#r-%s" class="cite">%d</a>' % (k, self.seen[k]))
         return "<sup>" + ",".join(out) + "</sup>"
 
-    def trial(self, mo):
+    def trial(self, mo, chip=False):
+        """A trial named in the text: `span.trial[data-trial=<key>]` (DESIGN.md
+        section 8). The key is what book.js builds the card and the registry
+        link from; the title carries the facts until book.js moves them to
+        data-facts. A chip, under a story question, is the same mark with the
+        class `chip`, left a span here because the Dropbox build has no
+        registry page to link to: book.js makes it a link where there is one."""
         k = mo.group(1)
         t = self.m.trials.get(k)
         if t is None:
@@ -271,8 +312,9 @@ class Chapter:
         bits = [b for b in (("phase %s" % t["phase"]) if t.get("phase") else None,
                             t.get("setting"), t.get("subtitle") or t.get("subtype"),
                             t.get("topic")) if b]
-        return '<span class="trial" title="%s">%s</span>' % (
-            esc("; ".join(bits)), esc(t.get("acronym", k)))
+        return '<span class="trial%s" data-trial="%s" title="%s">%s</span>' % (
+            " chip" if chip else "", esc(k), esc("; ".join(bits)),
+            esc(t.get("acronym", k)))
 
     def term(self, mo):
         k = mo.group(1)
@@ -385,6 +427,20 @@ class Chapter:
                 % (cls, label, paras, see))
 
     def evidence(self, arg, body):
+        """An evidence block, rendered from the registry (DESIGN.md section 6,
+        Evidence tables).
+
+        The authored caption is a reading note of one to three sentences. Its
+        first sentence becomes the table's title and the rest its note, and
+        both stand above the table, so the instruction to read one column
+        before another arrives before the table does rather than after it.
+
+        Ph, N and Status identify a row rather than compare it, so they leave
+        their columns for a meta line inside the trial cell, and the Ref
+        citation moves beside the trial name. The texts are the registry's
+        own, untouched: "Phase " and "n = " are the stylesheet's. Every cell
+        carries its column's class and its header as data-label, which a phone
+        prints above each cell once the head has scrolled out of sight."""
         if body.strip():
             self.fail("an evidence block carries only a filter, not a body")
         if _ev is None:
@@ -403,17 +459,41 @@ class Chapter:
         rows = [r for r in md.splitlines() if r.startswith("|")]
         cap = [r for r in md.splitlines() if r.startswith("_")]
         head = [c.strip() for c in rows[0].strip("|").split("|")]
-        out = ["<div class=\"evidence\"><table class=\"trials\"><thead><tr>"]
-        out += ["<th>%s</th>" % esc(h) for h in head]
+        fold = "Trial" in head
+        ti = head.index("Trial") if fold else None
+        shown = [i for i, h in enumerate(head)
+                 if not (fold and (h in EV_META or h == "Ref"))]
+
+        out = ['<div class="evidence">']
+        if cap:
+            title, note = split_caption(cap[0].strip("_").strip())
+            if not sentence_end(title, note):
+                self.fail("evidence caption %r: the split into title and note does not "
+                          "land on a sentence end" % cap[0][:70])
+            out.append('<p class="ev-title">%s</p>' % self.inline(title))
+            if note:
+                out.append('<p class="ev-note">%s</p>' % self.inline(note))
+        out.append('<div class="ev-scroll"><table class="trials"><thead><tr>')
+        out += ['<th class="%s">%s</th>' % (EV_COL.get(head[i], "c-other"), esc(head[i]))
+                for i in shown]
         out.append("</tr></thead><tbody>")
         for r in rows[2:]:
-            cells = [c.strip() for c in r.strip("|").split("|")]
-            out.append("<tr>" + "".join(
-                "<td>%s</td>" % self.inline(c.replace("\\|", "|")) for c in cells) + "</tr>")
-        out.append("</tbody></table>")
-        if cap:
-            out.append("<p class=\"ct-cap\">%s</p>" % self.inline(cap[0].strip("_")))
-        out.append("</div>")
+            cells = [self.inline(c.strip().replace("\\|", "|"))
+                     for c in r.strip("|").split("|")]
+            tds = []
+            for i in shown:
+                html = cells[i]
+                if i == ti:
+                    ref = [cells[j] for j, h in enumerate(head) if h == "Ref" and cells[j]]
+                    meta = ['<span class="m" data-col="%s">%s</span>' % (EV_META[h], cells[j])
+                            for j, h in enumerate(head) if h in EV_META and cells[j]]
+                    html += "".join(ref)
+                    if meta:
+                        html += '<span class="ev-meta">%s</span>' % " · ".join(meta)
+                tds.append('<td class="%s" data-label="%s">%s</td>'
+                           % (EV_COL.get(head[i], "c-other"), esc(head[i]), html))
+            out.append("<tr>" + "".join(tds) + "</tr>")
+        out.append("</tbody></table></div></div>")
         return "".join(out)
 
     def story(self, arg, body):
@@ -442,13 +522,22 @@ class Chapter:
             qs += got
         seen = set()
         qs = [q for q in qs if not (q["id"] in seen or seen.add(q["id"]))]
-        out = ['<div class="story" id="%s">' % esc(sid if len(ids) == 1 and ids[0] == sid else qs[0]["id"])]
-        out.append('<p class="st-where">%s &middot; %s &middot; %s</p>'
-                   % (esc(_st.SETTING_LABEL[st["setting"]]), esc(st["subtype"]),
-                      esc(st["stage"])))
-        out.append('<p class="st-title">%s</p>' % self.inline(st["title"]))
-        if st.get("premise") and len(ids) == 1 and ids[0] == sid:
-            out.append('<p class="st-premise">%s</p>' % self.inline(st["premise"]))
+        # The wrapper is story-<first question>: the question keeps its own id,
+        # so #SQ- lands on the question and no id is used twice (NAV-20).
+        out = ['<div class="story" id="story-%s">' % esc(qs[0]["id"])]
+        if sid in self.told:
+            # A story that runs across sections: its second and later
+            # appearances in a chapter say only that it continues, rather than
+            # repeating the where-line and the title (R-11).
+            out.append('<p class="st-cont">%s, continued</p>' % self.inline(st["title"]))
+        else:
+            self.told.add(sid)
+            out.append('<p class="st-where">%s &middot; %s &middot; %s</p>'
+                       % (esc(_st.SETTING_LABEL[st["setting"]]), esc(st["subtype"]),
+                          esc(st["stage"])))
+            out.append('<p class="st-title">%s</p>' % self.inline(st["title"]))
+            if st.get("premise") and len(ids) == 1 and ids[0] == sid:
+                out.append('<p class="st-premise">%s</p>' % self.inline(st["premise"]))
         for q in qs:
             out.append('<div class="sq" id="%s">' % esc(q["id"]))
             out.append('<p class="sq-ask">%s</p>' % self.inline(q["ask"]))
@@ -458,7 +547,7 @@ class Chapter:
                            % (esc(_st.MOVE_LABEL[mv]), self.inline(q[mv])))
             out.append("</dl>")
             out.append('<p class="sq-trials">%s</p>' % " ".join(
-                self.trial(re.match(r"\{\{trial:(.+)\}\}", "{{trial:%s}}" % t))
+                self.trial(re.match(r"\{\{trial:(.+)\}\}", "{{trial:%s}}" % t), chip=True)
                 for t in q.get("trials") or []))
             out.append("</div>")
         out.append("</div>")
@@ -594,9 +683,16 @@ class Chapter:
             # the first bad key -- before main() could print the error list, so
             # the one tool meant to name a broken citation died instead of
             # reporting it. Nothing is written when errs is non-empty anyway.
-            tail.append('<ol class="refs">\n%s\n</ol>' % "\n".join(
-                '<li id="r-%s">%s</li>' % (k, format_ref(k, self.m.refs[k]))
-                for k in self.order if k in self.m.refs))
+            # The list is collapsed (R-07): on a phone it was four to ten
+            # screens between the end of the prose and the next chapter, and
+            # the card already brings each entry to its citation. book.js opens
+            # it for a #r- or #references link and for printing.
+            keys = [k for k in self.order if k in self.m.refs]
+            tail.append('<details class="refs-list"><summary>All %d reference%s</summary>\n'
+                        '<ol class="refs">\n%s\n</ol>\n</details>' % (
+                            len(keys), "s" * (len(keys) != 1), "\n".join(
+                                '<li id="r-%s">%s</li>' % (k, format_ref(k, self.m.refs[k]))
+                                for k in keys)))
         return "\n\n".join(head + [body] + tail) + "\n"
 
 

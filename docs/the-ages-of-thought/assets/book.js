@@ -924,17 +924,169 @@ var NMT = (function () {
     redrawAll();
   }
 
+  /* ---------- the clinical apparatus ----------
+     DESIGN.md section 6 (Cards, Evidence tables, References). Everything here
+     runs at build time too, on the staged file:// page whose .main .col the
+     build then saves, so every change it makes inside the column is
+     idempotent (it checks before it writes) and leaves no state class behind:
+     a title moves to data-facts once; tab stops are recomputed, not added to;
+     the scroll cue's class is cleared before the save (onSnapshot); chips
+     become links only off file:, so the saved page and the Dropbox build keep
+     them as spans. */
+  function onFile() { return location.protocol === 'file:'; }
+
+  /* A trial's row in the registry. Not under file:, where there is none. */
+  function registryHref(key) { return 'trials.html#t-' + encodeURIComponent(key); }
+
+  /* The marks that have a card: trials named in the column (in prose, in
+     tables and as chips) and defined terms. Their facts move from the title
+     attribute, which the browser would show as a second, unstyled tooltip,
+     to data-facts. Chips become links to the registry. Then the first mark of
+     each trial or term in each h2 section becomes a tab stop, and the rest
+     are pointer-only, so a chapter with 134 trial marks does not add 134 tab
+     stops. */
+  function marks() {
+    var col = document.querySelector('.main .col');
+    if (!col) return [];
+    var list = [].slice.call(col.querySelectorAll('.trial[data-trial], .gloss'));
+    list.forEach(function (el) {
+      if (!el.hasAttribute('title')) return;
+      if (!el.hasAttribute('data-facts')) el.setAttribute('data-facts', el.getAttribute('title'));
+      el.removeAttribute('title');
+    });
+    if (!onFile()) {
+      list = list.map(function (el) {
+        if (el.tagName === 'A' || !el.classList.contains('chip')) return el;
+        var a = document.createElement('a');
+        [].forEach.call(el.attributes, function (at) {
+          if (at.name !== 'tabindex' && at.name !== 'role') a.setAttribute(at.name, at.value);
+        });
+        a.setAttribute('href', registryHref(el.getAttribute('data-trial')));
+        while (el.firstChild) a.appendChild(el.firstChild);
+        el.parentNode.replaceChild(a, el);
+        return a;
+      });
+    }
+    var seen = {};
+    [].forEach.call(col.querySelectorAll('h2, .trial[data-trial], .gloss'), function (el) {
+      if (el.tagName === 'H2') { seen = {}; return; }
+      var key = el.hasAttribute('data-trial') ? 't:' + el.getAttribute('data-trial')
+              : 'g:' + (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      var first = !seen[key];
+      seen[key] = true;
+      if (el.tagName === 'A') {
+        if (first) el.removeAttribute('tabindex');
+        else el.setAttribute('tabindex', '-1');
+      } else if (first) {
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+      } else {
+        el.removeAttribute('tabindex');
+        el.removeAttribute('role');
+      }
+    });
+    return list;
+  }
+
+  /* ---------- the references list ----------
+     Collapsed under "All N references" (R-07). Opened for a #references or
+     #r- address, on load and on hashchange; before a clicked citation jumps
+     (refCards); and for printing, restored afterwards. The card and the
+     sheet read entries out of it open or closed. */
+  function refsBox() { return document.querySelector('.main details.refs-list'); }
+  function openRefs() {
+    var d = refsBox();
+    if (d && !d.open) d.open = true;
+    return d;
+  }
+  function refsList() {
+    var d = refsBox();
+    if (!d || d._wired) return;
+    d._wired = true;
+    function target() {
+      var h = '';
+      try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = location.hash.slice(1); }
+      return h === 'references' || h.indexOf('r-') === 0 ? h : '';
+    }
+    /* The browser may have tried to scroll to an entry inside the closed
+       list and found nothing to scroll to; once it is open, bring the entry
+       to the top unless it is already in view. */
+    function land(h) {
+      var t = h && document.getElementById(h);
+      if (!t) return;
+      var r = t.getBoundingClientRect();
+      if (r.top >= 0 && r.bottom <= window.innerHeight) return;
+      t.scrollIntoView({ block: 'start' });
+    }
+    function check(scroll) {
+      var h = target();
+      if (!h) return;
+      openRefs();
+      if (scroll) land(h);
+    }
+    check(false);
+    window.addEventListener('load', function () { check(true); });
+    window.addEventListener('hashchange', function () { check(true); });
+    var was = null;
+    window.addEventListener('beforeprint', function () {
+      if (was === null) was = d.open;
+      d.open = true;
+    });
+    window.addEventListener('afterprint', function () {
+      if (was !== null) d.open = was;
+      was = null;
+    });
+  }
+
+  /* ---------- evidence tables: the scroll cue ----------
+     "→ more columns" (generated content, book.css) shows while the table is
+     wider than its box and not scrolled to its right end. The class is state,
+     so the build clears it before saving the page. */
+  function evidenceCues() {
+    var evs = [].slice.call(document.querySelectorAll('.main .evidence'));
+    if (!evs.length) return;
+    function box(ev) { return ev.querySelector('.ev-scroll') || ev; }
+    function update(ev) {
+      var s = box(ev);
+      var more = s.scrollWidth > s.clientWidth + 1 &&
+                 s.scrollLeft + s.clientWidth < s.scrollWidth - 2;
+      if (ev.classList.contains('more') !== more) ev.classList.toggle('more', more);
+    }
+    function all() { evs.forEach(update); }
+    var queued = false;
+    function soon() {
+      if (queued) return;
+      queued = true;
+      (window.requestAnimationFrame || setTimeout)(function () { queued = false; all(); });
+    }
+    evs.forEach(function (ev) {
+      var s = box(ev);
+      if (s._cue) return;
+      s._cue = true;
+      s.addEventListener('scroll', function () { update(ev); }, { passive: true });
+      if (window.ResizeObserver) new ResizeObserver(soon).observe(s);
+    });
+    all();
+    window.addEventListener('resize', soon);
+    window.addEventListener('load', soon);
+    onSnapshot(function () { evs.forEach(function (ev) { ev.classList.remove('more'); }); });
+  }
+
   /* ---------- the reference card ----------
      Bring the reference to the citation rather than sending the reader to the
-     foot of a twenty-thousand-word chapter and losing their place.
+     foot of a twenty-thousand-word chapter and losing their place. The same
+     card, and on a thumb the same sheet, serves a trial mark (its facts and
+     its row in the registry) and a defined term (its definition).
 
      The entry is read out of the page's own reference list, so there is no
      second copy to keep in step, nothing to fetch, and it works with the
-     network off. Books with no citations have no .cite elements and this
-     returns immediately, so nothing is added to a page that cannot use it. */
+     network off. Books with no citations and no marks have none of these
+     elements and this returns immediately, so nothing is added to a page that
+     cannot use it. */
   function refCards() {
     var cites = [].slice.call(document.querySelectorAll('a.cite[href^="#r-"]'));
-    if (!cites.length) return;
+    var mks = marks();
+    if (!cites.length && !mks.length) return;
 
     /* A mouse gets a card on hover. A thumb has no hover, so it gets a sheet on
        tap -- and there the tap must not also jump to the list. */
@@ -945,10 +1097,43 @@ var NMT = (function () {
       if (card) return;
       card = document.createElement('div');
       card.className = 'refcard';
-      card.setAttribute('role', 'tooltip');
+      card.id = 'refcard';
       document.body.appendChild(card);
       card.addEventListener('mouseenter', function () { clearTimeout(hideT); });
       card.addEventListener('mouseleave', schedHide);
+      card.addEventListener('focusin', function () { clearTimeout(hideT); });
+      card.addEventListener('focusout', function (e) {
+        var to = e.relatedTarget;
+        if (to && (card.contains(to) || to === openFor)) return;
+        if (!scrim) schedHide();
+      });
+      card.addEventListener('keydown', function (e) {
+        /* The card sits at the end of <body>, so a Tab out of it would land
+           on whatever follows the page, and the page would scroll there. Tab
+           and Shift+Tab close it instead: Shift+Tab goes back to the mark,
+           Tab on to the next stop after the mark, and the reader keeps the
+           place. */
+        if (e.key === 'Tab') {
+          var from = openFor;
+          if (!from) return;
+          e.preventDefault();
+          close();
+          var to = e.shiftKey ? null : nextStop(from);
+          /* The next stop takes focus only when it starts within one screen
+             below the mark; it is focused with scrolling allowed, so the
+             browser brings it into view with a small scroll. A stop farther
+             away than that, or none at all, leaves focus on the mark without
+             scrolling, so focus never lands out of sight. */
+          if (to && to.getBoundingClientRect().top - from.getBoundingClientRect().top >= innerHeight) to = null;
+          if (to) to.focus();
+          else from.focus({ preventScroll: true });
+          return;
+        }
+        if (e.key !== 'Escape') return;
+        var back = openFor;
+        close();
+        if (back && back.focus) back.focus({ preventScroll: true });
+      });
       /* The sheet's handle is real, as the drawer's is: drag its head down
          more than 64px and it closes. */
       dragToClose(card, function (t) {
@@ -963,13 +1148,33 @@ var NMT = (function () {
       var li = id && document.getElementById(id);
       return li && li.tagName === 'LI' ? li : null;
     }
+    function isCite(a) { return a.classList.contains('cite'); }
+
+    /* The first keyboard stop after the mark in document order, outside the
+       card, or null. */
+    function nextStop(a) {
+      var sel = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),' +
+                'textarea:not([disabled]),summary,[tabindex]:not([tabindex="-1"])';
+      var all = document.querySelectorAll(sel);
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el === a || card.contains(el)) continue;
+        if (!(a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
+        if (a.contains(el) || el.closest('[hidden],[inert]')) continue;
+        if (!el.getClientRects().length) continue;
+        return el;
+      }
+      return null;
+    }
 
     function place(a) {
       /* Fixed coordinates, so the card is positioned against the viewport and
          does not need the page's scroll offset. Preferred below the mark;
          flipped above when the room is not there. Clamped to a 12px gutter so
-         it can never sit half off a narrow screen. */
-      var m = 12, r = a.getBoundingClientRect(), c = card.getBoundingClientRect();
+         it can never sit half off a narrow screen. A mark that wraps is
+         placed by its first line. */
+      var m = 12, rs = a.getClientRects(), r = rs.length ? rs[0] : a.getBoundingClientRect();
+      var c = card.getBoundingClientRect();
       var top = r.bottom + 8;
       if (top + c.height > innerHeight - m) {
         var above = r.top - c.height - 8;
@@ -982,19 +1187,63 @@ var NMT = (function () {
       card.style.left = Math.round(left) + 'px';
     }
 
+    /* The card's content, as nodes. A citation: its number and the entry.
+       A trial: the name, the facts and the registry link. A term: the term
+       and its definition. */
+    function fill(a, asSheet) {
+      var head = document.createElement(asSheet ? 'div' : 'span'), frag = document.createDocumentFragment();
+      if (asSheet) {
+        head.className = 'rc-head';
+        head.innerHTML = '<span class="rc-close"></span>';
+      }
+      if (isCite(a)) {
+        var li = entry(a);
+        if (!li) return null;
+        var n = document.createElement('span');
+        n.className = 'rc-n';
+        n.textContent = 'Reference ' + (a.textContent || '').trim();
+        if (asSheet) { head.appendChild(n); frag.appendChild(head); } else frag.appendChild(n);
+        var body = document.createElement('div');
+        body.innerHTML = li.innerHTML;
+        while (body.firstChild) frag.appendChild(body.firstChild);
+        return frag;
+      }
+      var t = document.createElement('span');
+      t.className = 'rc-t';
+      t.textContent = (a.textContent || '').replace(/\s+/g, ' ').trim();
+      if (asSheet) { head.appendChild(t); frag.appendChild(head); } else frag.appendChild(t);
+      var facts = a.getAttribute('data-facts') || a.getAttribute('title') || '';
+      if (facts) {
+        var f = document.createElement('p');
+        f.className = 'rc-f';
+        f.textContent = facts;
+        frag.appendChild(f);
+      }
+      var key = a.getAttribute('data-trial');
+      if (key && !onFile()) {
+        var go = document.createElement('a');
+        go.className = 'rc-go';
+        go.setAttribute('href', registryHref(key));
+        go.textContent = 'Full record in the Trial Registry →';
+        frag.appendChild(go);
+      }
+      return frag;
+    }
+
     function show(a, asSheet) {
-      var li = entry(a);
-      if (!li) return;
       build();
+      var content = fill(a, asSheet);
+      if (!content) return;
       close(true);
       openFor = a;
       card.className = 'refcard' + (asSheet ? ' sheet' : '');
-      var n = '<span class="rc-n">Reference ' + (a.textContent || '').trim() + '</span>';
-      /* On a sheet, the handle and the label are its head, the part a thumb
-         drags (nav.css makes it touch-action:none). */
-      card.innerHTML = (asSheet ? '<div class="rc-head"><span class="rc-close"></span>' + n + '</div>' : n) +
-        li.innerHTML;
+      card.setAttribute('role', isCite(a) && !asSheet ? 'tooltip' : 'dialog');
+      if (!isCite(a)) card.setAttribute('aria-label', (a.textContent || '').trim());
+      else card.removeAttribute('aria-label');
+      card.innerHTML = '';
+      card.appendChild(content);
       a.setAttribute('aria-expanded', 'true');
+      if (!isCite(a)) a.setAttribute('aria-controls', 'refcard');
       if (asSheet) {
         scrim = document.createElement('div');
         scrim.className = 'refscrim';
@@ -1002,7 +1251,8 @@ var NMT = (function () {
         document.body.appendChild(scrim);
         card.style.top = card.style.left = '';
         requestAnimationFrame(function () {
-          scrim.classList.add('on'); card.classList.add('on');
+          if (scrim) scrim.classList.add('on');
+          card.classList.add('on');
         });
       } else {
         card.style.visibility = 'hidden';
@@ -1015,7 +1265,11 @@ var NMT = (function () {
 
     function close(immediate) {
       clearTimeout(showT); clearTimeout(hideT);
-      if (openFor) { openFor.removeAttribute('aria-expanded'); openFor = null; }
+      if (openFor) {
+        openFor.removeAttribute('aria-expanded');
+        openFor.removeAttribute('aria-controls');
+        openFor = null;
+      }
       if (card) card.classList.remove('on');
       if (scrim) {
         var s = scrim; scrim = null;
@@ -1026,38 +1280,102 @@ var NMT = (function () {
     }
     function schedHide() { clearTimeout(hideT); hideT = setTimeout(close, 180); }
 
+    function hover(a) {
+      a.addEventListener('mouseenter', function () {
+        clearTimeout(hideT);
+        if (openFor === a) return;
+        clearTimeout(showT);
+        showT = setTimeout(function () { show(a, false); }, 110);
+      });
+      a.addEventListener('mouseleave', function () {
+        clearTimeout(showT); schedHide();
+      });
+      /* Keyboard reaches the same card. */
+      a.addEventListener('focus', function () { if (openFor !== a) show(a, false); });
+      a.addEventListener('blur', function (e) {
+        if (card && e.relatedTarget && card.contains(e.relatedTarget)) return;
+        schedHide();
+      });
+    }
+
     cites.forEach(function (a) {
-      if (hoverable) {
-        a.addEventListener('mouseenter', function () {
-          clearTimeout(hideT);
-          showT = setTimeout(function () { show(a, false); }, 110);
-        });
-        a.addEventListener('mouseleave', function () {
-          clearTimeout(showT); schedHide();
-        });
-        /* Keyboard reaches the same card: the mark is already a link. */
-        a.addEventListener('focus', function () { show(a, false); });
-        a.addEventListener('blur', schedHide);
-      }
+      if (hoverable) hover(a);
       a.addEventListener('click', function (e) {
         /* Only on a touch screen does the tap take over from the jump. With a
            mouse the click still goes to the list, which is where a reader who
-           clicked rather than hovered was asking to go. */
-        if (hoverable) return;
+           clicked rather than hovered was asking to go; the list opens first,
+           so the jump has somewhere to land. */
+        if (hoverable) { openRefs(); return; }
         if (!entry(a)) return;
         e.preventDefault();
         show(a, true);
       });
     });
 
-    addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    mks.forEach(function (a) {
+      if (a._card) return;
+      a._card = true;
+      var link = a.tagName === 'A';
+      if (hoverable) hover(a);
+      /* A tap opens the sheet, as it does for a citation; the sheet carries
+         the registry link. With a mouse or a keyboard a chip that is a link
+         goes to the registry, and any other mark opens its card. */
+      a.addEventListener('click', function (e) {
+        if (link && hoverable) return;
+        e.preventDefault();
+        if (openFor === a && !hoverable) { close(); return; }
+        show(a, !hoverable);
+      });
+      if (link) return;
+      a.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+        e.preventDefault();
+        if (openFor !== a) show(a, !hoverable);
+        /* A card show() has just opened stays hidden until it is placed on
+           the next frame, and a hidden link cannot take focus. Place it now,
+           so Enter on a mark whose card Escape had closed still moves focus
+           into the card. */
+        if (card && openFor === a && card.style.visibility === 'hidden') {
+          place(a); card.style.visibility = '';
+        }
+        /* From the keyboard the card's one link is the next stop. */
+        var go = card && card.querySelector('.rc-go');
+        if (go) go.focus({ preventScroll: true });
+      });
+    });
+
+    addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !openFor) return;
+      var back = openFor, inside = card && card.contains(document.activeElement);
+      close();
+      if (inside && back.focus) back.focus({ preventScroll: true });
+    });
     /* A card pinned to a viewport coordinate is wrong the moment anything moves
-       under it. Cheaper to dismiss than to follow. Capture, because scroll does
-       not bubble and the citation may sit inside a scroll container of its own
-       -- an evidence table scrolls sideways by design, and without this the card
-       stayed put while the mark it belongs to slid out from under it. */
-    addEventListener('scroll', function () { if (openFor && !scrim) close(); },
-                     { passive: true, capture: true });
+       under it, so on any scroll it is placed again, once a frame, or closed
+       when its mark has left the screen or its table's scroller. Capture,
+       because scroll does not bubble and the mark may sit inside a scroll
+       container of its own -- an evidence table scrolls sideways by design,
+       and without this the card stayed put while the mark it belongs to slid
+       out from under it. */
+    var following = false;
+    addEventListener('scroll', function () {
+      if (!openFor || scrim || following) return;
+      following = true;
+      (window.requestAnimationFrame || setTimeout)(function () {
+        following = false;
+        if (!openFor || scrim) return;
+        /* A card follows its mark while the mark is in view, or while the
+           keyboard is on the mark or in the card (the scroll a focus starts
+           to bring the mark into view); once the mark has gone, so does the
+           card. */
+        var r = openFor.getBoundingClientRect(), sc = openFor.closest('.ev-scroll');
+        var box = sc ? sc.getBoundingClientRect() : { left: 0, right: innerWidth };
+        var gone = r.bottom < 0 || r.top > innerHeight || r.right < box.left || r.left > box.right;
+        var kept = document.activeElement === openFor || card.contains(document.activeElement);
+        if (gone && !kept) close();
+        else place(openFor);
+      });
+    }, { passive: true, capture: true });
     addEventListener('resize', function () { close(); });
   }
 
@@ -1270,6 +1588,8 @@ var NMT = (function () {
     buildTOC(hs);
     buildMobileNav(hs);
     findChapter();
+    refsList();
+    evidenceCues();
     refCards();
     });
 

@@ -425,9 +425,21 @@ def nav_json(bk):
             for num, slug, title, part, _math in bk.written()]
     if len(rows) < 2:
         return None
-    return {"slug": bk.slug, "brand": library.plain(bk.brand),
-            "contents": "contents.html", "count": len(rows),
-            "links": bk.nav_items(), "chapters": rows}
+    out = {"slug": bk.slug, "brand": library.plain(bk.brand),
+           "contents": "contents.html", "count": len(rows),
+           "links": bk.nav_items(), "chapters": rows}
+    # How the front door treats a returning reader (DESIGN.md section 6, Front
+    # matter): a "sequential" book's primary becomes "Continue reading" at
+    # their place, and a "reference" book keeps Contents as its primary and
+    # offers "Continue at ..." beside it. pwa.js reads it here because the
+    # front door is not the place to decide it: one book.json key, one reader.
+    reading = bk.cfg.get("reading")
+    if reading:
+        if reading not in ("sequential", "reference"):
+            raise SystemExit('%s: book.json "reading" is %r; it is "sequential" or '
+                             '"reference"' % (bk.slug, reading))
+        out["reading"] = reading
+    return out
 
 
 def shell_files():
@@ -471,17 +483,26 @@ PAGE = """<!DOCTYPE html>
 html,body{margin:0;height:100%%}
 body{background:var(--paper);color:var(--ink);display:grid;place-items:center;
   padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));
-  font-family:"Iowan Old Style",Palatino,Georgia,serif;-webkit-text-size-adjust:100%%}
+  font-family:"Iowan Old Style",Charter,"Bitstream Charter",Palatino,Georgia,serif;
+  -webkit-text-size-adjust:100%%}
 main{max-width:26rem;text-align:center}
-h1{font-size:1.5rem;font-weight:600;margin:0 0 .6rem}
+h1{font-size:1.5rem;font-weight:400;margin:0 0 .6rem}
+h2{font:700 11px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--soft);margin:2rem 0 .5rem;text-align:left}
 p{color:var(--soft);line-height:1.6;margin:0 0 1.4rem;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
-a,button{display:inline-block;font:inherit;font-size:14px;font-family:-apple-system,sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
+.acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+a,button{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:14px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:600;
   padding:11px 16px;min-height:44px;box-sizing:border-box;border:1px solid var(--rule);
-  border-radius:9px;background:none;color:inherit;text-decoration:none;cursor:pointer}
+  border-radius:6px;background:none;color:inherit;text-decoration:none;cursor:pointer}
+a:focus-visible,button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+[hidden]{display:none!important}
 ul{list-style:none;padding:0;margin:0;text-align:left}
 li{border-top:1px solid var(--rule)}
-li a{display:block;border:0;border-radius:0;padding:14px 2px}
+li:last-child{border-bottom:1px solid var(--rule)}
+li a{display:flex;justify-content:flex-start;border:0;border-radius:0;padding:12px 2px;font-weight:400;
+  font-family:inherit;font-size:1rem}
 </style>
 </head>
 <body>
@@ -494,34 +515,83 @@ li a{display:block;border:0;border-radius:0;padding:14px 2px}
 """
 
 
-def emit_pages(bks):
-    library.write(os.path.join(DOCS, "offline.html"), PAGE % {
-        "theme": THEME_JS,
-        "title": "Offline — A Library",
-        "body": ("<h1>Not stored on this device</h1>"
-                 "<p>You are offline, and this page was never downloaded. "
-                 "Books you have downloaded are still readable in full.</p>"
-                 '<a href="./">The library</a>'),
-        "script": ""})
+# offline.html's own script. It is served in place of whatever page was asked
+# for, at that page's address, so every address in it is absolute from
+# library.SITE rather than relative to wherever it happens to be standing
+# (NAV-16: its "./" link used to go to the book's folder, which was just as
+# likely not to be stored). A book is listed as downloaded only when its
+# lib:book:<slug> cache holds a __resident__ record with complete:true, the
+# test pwa.js resident() uses (DESIGN.md section 8): a cache holding only the
+# pages a reader happened to visit is not a downloaded book. caches.keys()
+# is read first because caches.open() would create a missing cache.
+OFFLINE_JS = r"""<script>
+(function(){
+  var S=%(site)s, P='lib:book:';
+  var back=document.getElementById('back');
+  if(history.length>1){back.hidden=false;back.addEventListener('click',function(){history.back()})}
+  if(!('caches' in window))return;
+  function complete(k){
+    return caches.open(k).then(function(c){return c.keys().then(function(rs){
+      var r=rs.filter(function(q){return /\/__resident__$/.test(q.url)})[0];
+      return r?c.match(r).then(function(x){return x.json()}):null;
+    })}).then(function(j){return j&&j.complete===true?k.slice(P.length):null})
+      .catch(function(){return null});
+  }
+  caches.keys().then(function(ks){
+    return Promise.all(ks.filter(function(k){return k.indexOf(P)===0}).map(complete));
+  }).then(function(got){
+    got=got.filter(Boolean);
+    if(!got.length)return;
+    var names={};
+    return fetch(S+'catalog.json').then(function(r){return r.json()}).then(function(c){
+      (c.books||[]).forEach(function(b){names[b.slug]=b.name});
+    }).catch(function(){}).then(function(){
+      var ul=document.getElementById('dl-list');
+      got.sort().forEach(function(s){
+        var li=document.createElement('li'),a=document.createElement('a');
+        a.setAttribute('href',S+s+'/index.html');a.textContent=names[s]||s;
+        li.appendChild(a);ul.appendChild(li);
+      });
+      document.getElementById('dl').hidden=false;
+    });
+  }).catch(function(){});
+})();
+</script>"""
 
-    # continue.html is the target of the manifest shortcut and of the hub's
-    # Continue button. It reads the position the client runtime records and
-    # redirects, so the shortcut is a real "carry on where I was" rather than a
-    # second copy of the shelf.
-    library.write(os.path.join(DOCS, "continue.html"), PAGE % {
-        "theme": THEME_JS,
-        "title": "Continue reading",
-        "body": ('<h1>Continue reading</h1>'
-                 '<p id="m">Looking for where you left off\u2026</p>'
-                 '<ul id="l"></ul>'),
-        "script": """<script>
+
+# continue.html's script. With ?b=<slug> (a book's own home-screen
+# shortcut) it goes to that book's place: library:v1.lastBy[slug], which
+# pwa.js records on every chapter, and failing that the most recent page of
+# the book in library:v1.pos, which is all a reader who read before lastBy
+# existed has. With no b (the library's shortcut) it goes to the most recent
+# place in any book. It used to follow only library:v1.last, the single last
+# page of the whole library, so a physics reader's shortcut said "Nothing
+# recorded yet" whenever they had since opened the clinical book (NAV-01).
+CONTINUE_JS = r"""<script>
 (function(){
   var want=new URLSearchParams(location.search).get('b');
-  var s={};try{s=JSON.parse(localStorage.getItem('library:v1')||'{}')}catch(e){}
-  var last=s.last;
-  if(last&&last.url&&(!want||last.slug===want)){location.replace(last.url);return}
-  // Nothing recorded, or recorded for a different book: offer the shelf rather
-  // than dead-ending on a shortcut the reader deliberately tapped.
+  var s={};try{s=JSON.parse(localStorage.getItem('library:v1')||'{}')||{}}catch(e){}
+  var by=s.lastBy||{}, go=null, k;
+  function newer(a,b){return !a||(b&&(b.at||0)>(a.at||0))?b:a}
+  if(want){
+    if(by[want]&&by[want].url)go=by[want];
+    else{
+      // pos keys are paths; a book's front door and contents are not a place
+      var pos=s.pos||{},best=null,at=-1,i=0;
+      for(k in pos){i++;
+        if(k.indexOf('/'+want+'/')<0||/\/(index|contents)\.html$|\/$/.test(k))continue;
+        var t=(pos[k]&&pos[k].at)||i;
+        if(t>=at){at=t;best=k}
+      }
+      if(best)go={url:best};
+    }
+  }else{
+    for(k in by)if(by[k]&&by[k].url)go=newer(go,by[k]);
+    if(!go&&s.last&&s.last.url)go=s.last;
+  }
+  if(go&&go.url){location.replace(go.url);return}
+  // Nothing recorded, or nothing for this book: offer the shelf rather than
+  // dead-ending on a shortcut the reader deliberately tapped.
   document.getElementById('m').textContent=
     'Nothing recorded yet. Pick up a book and this will remember your place.';
   // Built with DOM calls rather than by concatenating markup: a book title is
@@ -536,7 +606,35 @@ def emit_pages(bks):
     });
   }).catch(function(){});
 })();
-</script>"""})
+</script>"""
+
+
+def emit_pages(bks):
+    library.write(os.path.join(DOCS, "offline.html"), PAGE % {
+        "theme": THEME_JS,
+        "title": "Offline — A Library",
+        "body": ("<h1>Not stored on this device</h1>"
+                 "<p>You are offline, and this page was never downloaded. "
+                 "Books you have downloaded are still readable in full.</p>"
+                 '<div class="acts"><button type="button" id="back" hidden>Go back</button>'
+                 '<a href="%s">The library</a></div>'
+                 '<section id="dl" hidden><h2>Downloaded on this device</h2>'
+                 '<ul id="dl-list"></ul></section>' % library.SITE),
+        "script": OFFLINE_JS % {"site": json.dumps(library.SITE)}})
+
+    # continue.html is the target of the home-screen shortcuts: the library
+    # icon's "Continue reading" and each book icon's "Continue", which adds
+    # ?b=<slug>. It reads the place pwa.js records and redirects, so a shortcut
+    # is a real "carry on where I was" rather than a second copy of the shelf.
+    # The hub's Continue strip and the front doors link to the chapter itself
+    # and do not come through here.
+    library.write(os.path.join(DOCS, "continue.html"), PAGE % {
+        "theme": THEME_JS,
+        "title": "Continue reading",
+        "body": ('<h1>Continue reading</h1>'
+                 '<p id="m">Looking for where you left off\u2026</p>'
+                 '<ul id="l"></ul>'),
+        "script": CONTINUE_JS})
 
 
 # ------------------------------------------------------------------ the emitter

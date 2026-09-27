@@ -371,7 +371,8 @@ li{margin:.35rem 0}
 }
 h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.chapnav,
 .callout .ct,.worked>.ct,.prob .pnum,.col .trial,.cite,code,.katex,th,
-.col .story .st-where,.col .story .sq-moves dt,.evidence table.trials td:first-child{
+.col .story .st-where,.col .story .st-cont,.col .story .sq-moves dt,.evidence .c-trial,
+.evidence th,.ev-title,.chip,.gloss{
   -webkit-hyphens:manual;hyphens:manual}
 
 /* ---------- prose links ----------
@@ -394,7 +395,7 @@ h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.c
    (sidebar position, problem numbers, story move names, chapter-foot direction,
    the contents' count line, part numerals and tags). Uppercase is for one or
    two short words. */
-.kicker,.eyebrow,.callout .ct,.worked>.ct,.col .story .st-where{
+.kicker,.eyebrow,.callout .ct,.worked>.ct,.col .story .st-where,.col .story .st-cont{
   font:700 var(--fs-label)/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase;
   color:var(--accent)}
 .label,.sb-title,.prob .pnum,.col .story .sq-moves dt,.chapnav a>span:first-child,.part-k,.tag{
@@ -458,24 +459,30 @@ h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.c
 /* ---------- reference apparatus ----------
    Used by the clinical books, where a paragraph carries citations, named
    trials and defined terms, and the prose has to stay readable through all
-   three. So each mark is quiet: a citation is a raised numeral, a trial is the
-   acronym in small caps, a defined term is a dotted underline. None of them
-   is a coloured link in running text, because a paragraph with six coloured
-   words in it stops being a paragraph.
+   three (DESIGN.md section 6, Cards). So each mark is quiet. A citation is a
+   small raised numeral. A trial or a defined term is set as the words around
+   it, serif at text size in ink, with a dotted hairline under it: the one
+   mark in the library that means "this has a card". None of them is a
+   coloured link in running text, because a paragraph with six coloured words
+   in it stops being a paragraph.
 
    The trial and glossary marks are scoped to the column. Unscoped, .trial
-   reached the registry's <details class="trial"> rows and set the whole of
-   Appendix A in semibold sans with a help cursor. */
-/* The raising is the <sup> element's job. Doing it again here would stack the
-   two, and the correction for that needs :has(), which older iOS does not
-   have -- so the mark would sit wrong on exactly the phones this book is read
-   on. Left to the browser, it is right everywhere. */
-.cite{font-family:var(--sans);font-weight:600;text-decoration:none;
-  color:var(--accent);padding:0 .12em}
+   reached the registry's <details class="trial"> rows. */
+/* A raised numeral must not open the line it sits on: line-height 0 keeps
+   every baseline-to-baseline gap in a cited paragraph the same (R-05). The
+   raising stays the <sup> element's job. */
+sup{line-height:0}
+.cite{font-family:var(--sans);font-size:.75em;font-weight:600;text-decoration:none;
+  color:var(--accent);padding:0;margin:0}
 .cite:hover{text-decoration:underline}
-.col .trial{font-family:var(--sans);font-size:.88em;font-weight:600;letter-spacing:.02em;
-  color:var(--ink);border-bottom:1px solid var(--rule);cursor:help}
-.col .gloss{border-bottom:1px dotted var(--ink-faint);cursor:help}
+.col .trial:not(.chip),.col .gloss{font:inherit;letter-spacing:inherit;color:var(--ink);
+  text-decoration-line:underline;text-decoration-style:dotted;text-decoration-thickness:1px;
+  text-decoration-color:var(--ink-faint);text-underline-offset:.2em;
+  -webkit-text-decoration-skip:none;text-decoration-skip-ink:none}
+.col .trial:not(.chip):hover,.col .gloss:hover,
+.col .trial[aria-expanded="true"],.col .gloss[aria-expanded="true"]{text-decoration-color:var(--accent)}
+.col .trial[tabindex]:focus-visible,.col .gloss[tabindex]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
 /* A chapter that is planned but not yet written. Naming it and refusing to
    link it is the honest form: the reader learns the book intends to cover it
    and is not sent to a page that does not exist. */
@@ -487,9 +494,24 @@ h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.c
 .to-come .ct{color:var(--ink-faint)}
 .to-come ol{font-size:.9rem;color:var(--ink-soft);margin-bottom:.2rem}
 
+/* The list is collapsed under a summary (R-07): the card brings each entry
+   to its citation, and on a phone the open list put the next chapter four to
+   ten screens below the prose. book.js opens it for #references and #r-
+   links, before a clicked citation jumps, and for printing. */
 .refs-head{font-size:1.05rem !important;letter-spacing:.04em;text-transform:uppercase;
-  font-family:var(--sans);font-weight:650;color:var(--ink-soft)}
-ol.refs{font-size:.88rem;line-height:1.5;color:var(--ink-soft);padding-left:1.6rem}
+  font-family:var(--sans);font-weight:700;color:var(--ink-soft)}
+details.refs-list{margin:0 0 var(--sp-5)}
+details.refs-list > summary{display:inline-flex;align-items:center;gap:.5rem;min-height:2rem;
+  cursor:pointer;list-style:none;font:600 var(--fs-ui)/1.3 var(--sans);color:var(--accent);
+  -webkit-user-select:none;user-select:none}
+details.refs-list > summary::-webkit-details-marker{display:none}
+details.refs-list > summary::before{content:"\25B8";display:inline-block;font-size:.85em;
+  transition:transform .15s}
+details.refs-list[open] > summary::before{transform:rotate(90deg)}
+details.refs-list > summary:hover{text-decoration:underline;text-underline-offset:.18em}
+details.refs-list > summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;
+  border-radius:2px}
+ol.refs{font-size:.88rem;line-height:1.5;color:var(--ink-soft);padding-left:1.6rem;margin-top:var(--sp-3)}
 ol.refs li{margin:.55rem 0;padding-left:.15rem}
 ol.refs li:target{background:var(--accent-soft);border-radius:4px}
 ol.refs em{font-style:italic}
@@ -516,6 +538,13 @@ ol.refs em{font-style:italic}
   letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
   display:block;margin-bottom:.35rem}
 .refcard a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+/* A trial's card and a term's: the name, the facts, and for a trial the one
+   link, to its row in the registry. */
+.refcard .rc-t{display:block;margin:0 0 .3rem;font:700 1.05em/1.3 var(--serif);color:var(--ink)}
+.refcard .rc-f{margin:0;color:var(--ink)}
+.refcard a.rc-go{display:inline-flex;align-items:center;margin-top:.6rem;
+  font:600 var(--fs-ui)/1.3 var(--sans);border-bottom:0}
+.refcard a.rc-go:hover{text-decoration:underline;text-underline-offset:.18em}
 .refcard a:hover{border-bottom-color:var(--accent)}
 
 /* On a thumb the same card becomes a sheet: full width, at the bottom, above the
@@ -626,72 +655,136 @@ th{font-family:var(--sans);font-size:.75rem;font-weight:650;letter-spacing:.05em
 /* math must never be uppercased or letter-spaced by table-header styling */
 th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
 
-/* ---------- evidence tables ---------- */
-/* Generated from trials.yaml by an evidence block, so these are the only tables in
-   the book whose width is not under an author's control: a filter can return four
-   columns or nine. They are also the tables a reader most often opens on a phone
-   between patients, so the trial name stays pinned while the results scroll under
-   the thumb. Without that you lose which row you are reading by column three. */
-/* The block scrolls, never the page. A filter can return ten columns, which is
-   wider than the prose measure on a desktop too -- and there the house rule that
-   makes a table its own scroll container only applies under 760px, so the
-   overflow reached the document and scrolled the whole page sideways. Contained
-   here at every width; the sticky first column below stays pinned against
-   whichever of the two boxes is doing the scrolling. */
-.evidence{margin:1.9rem 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.evidence table.trials{margin:0;font-size:.88rem;font-variant-numeric:tabular-nums}
-.evidence table.trials th{white-space:nowrap}
-.evidence table.trials td:first-child,
-.evidence table.trials th:first-child{
-  position:sticky;left:0;z-index:1;background:var(--bg);
-  box-shadow:1px 0 0 var(--rule-soft)}
-.evidence table.trials tbody tr:hover td{background:var(--bg-alt)}
-.evidence table.trials tbody tr:hover td:first-child{background:var(--bg-alt)}
-.evidence table.trials td .trial{font-weight:600;white-space:nowrap}
-.evidence table.trials td sup{white-space:nowrap}
-.evidence .ct-cap{font-family:var(--sans);font-size:.78rem;color:var(--ink-soft);
-  margin:.6rem 0 0;line-height:1.45}
+/* ---------- evidence tables ----------
+   Generated from trials.yaml by an evidence block (DESIGN.md section 6,
+   Evidence tables). bc.py writes the caption's first sentence as p.ev-title
+   and the rest as p.ev-note, above the table; folds Ph, N and Status into a
+   meta line in the trial cell (span.m[data-col]); and gives every cell its
+   column's class and its header as data-label.
 
-/* A story block: the argument a chapter's evidence table is evidence for. It
-   sets as prose rather than as a callout, because it is the spine of the
-   section and not an aside from it. See tools/stories.py. Scoped to the
-   column: the Stories appendix has rows of its own called .story. */
-.col .story{margin:2rem 0;padding:0 0 0 1rem;border-left:3px solid var(--accent-soft)}
-.col .story .st-where{margin:0 0 .15rem}
-.col .story .st-title{font-family:var(--sans);font-weight:650;font-size:.98rem;color:var(--ink);
-  margin:0 0 .3rem}
-.col .story .st-premise{font-size:.94rem;color:var(--ink-soft);margin:0 0 .2rem;line-height:1.6}
-.col .story .sq{margin:1.25rem 0 0}
-.col .story .sq-ask{font-weight:600;color:var(--ink);margin:0 0 .45rem;line-height:1.45}
-.col .story .sq-moves{display:grid;grid-template-columns:7.2rem 1fr;gap:.18rem .9rem;margin:0;
-  font-size:.92rem;line-height:1.55}
-.col .story .sq-moves dt{padding-top:.3rem}
-.col .story .sq-moves dd{margin:0;color:var(--ink-soft)}
-.col .story .sq-trials{display:flex;flex-wrap:wrap;gap:.3rem;margin:.55rem 0 0}
-.col .story .sq-trials .trial{font-family:var(--sans);font-size:.75rem;font-weight:600;
-  border:1px solid var(--rule);border-radius:4px;padding:.2rem .45rem;white-space:nowrap}
-.col .story .sq-trials a.trial{text-decoration:none;border-bottom:1px solid var(--rule)}
-.col .story .sq-trials a.trial:hover{border-color:var(--accent);color:var(--accent)}
-@media (max-width:640px){
-  .col .story{padding-left:.75rem}
-  .col .story .sq-moves{grid-template-columns:1fr;gap:.05rem}
-  .col .story .sq-moves dt{margin-top:.5rem}
-  .col .story .sq-trials .trial{white-space:normal}
+   Before this, nowrap uppercase heads forced the table past its box and auto
+   layout gave every column its min-content width: rows 300 to 700px tall and
+   a third of the chapter's height (R-01). Now the heads wrap in sentence
+   case, the prose columns have floors, and the table is as wide as it needs
+   to be (width auto, never narrower than its box). The block bleeds across
+   .main from 1200px (the frame's rules above); inside it .ev-scroll scrolls
+   sideways, never the page, with the trial name pinned. An edge shade and a
+   "more columns" cue (book.js sets .more while columns are hidden to the
+   right) say that it scrolls. There is no vertical cap: on a phone every
+   cell names its column instead. */
+.evidence{--surface:var(--bg);--ev-shade:rgba(0,0,0,.13);
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"t" "n" "s";
+  margin:var(--sp-block) 0}
+@supports (color: color-mix(in srgb, red, blue)){
+  .evidence{--ev-shade:color-mix(in srgb, var(--ink) 16%, transparent)}
 }
+.ev-title,.ev-note{max-width:52em;font-family:var(--sans);font-size:var(--fs-small);line-height:1.45}
+.ev-title{grid-area:t;margin:0 0 .15rem;font-weight:600;color:var(--ink)}
+.ev-note{grid-area:n;margin:0;color:var(--ink-soft)}
+.ev-scroll{grid-area:s;margin-top:.6rem;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  /* the cover (local) scrolls with the table and hides the shade (fixed to
+     the box) once the right end is reached */
+  background:
+    linear-gradient(to left, var(--surface) 35%, transparent) right center / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--ev-shade), transparent) right center / .9rem 100% no-repeat scroll}
+/* The cue sits on the table's top right corner, in the page's ground, while
+   there are columns out of sight to the right. Generated content, so the
+   build never saves it as text; the empty alternative keeps it from being
+   read aloud as part of the table. */
+.evidence.more::after{content:"\2192\00a0 more columns";content:"\2192\00a0 more columns" / "";
+  grid-area:s;align-self:start;justify-self:end;position:relative;z-index:3;
+  margin-top:.6rem;padding:.3rem .15rem .3rem 1.1rem;pointer-events:none;
+  font:600 var(--fs-ui)/1.2 var(--sans);color:var(--accent);white-space:nowrap;
+  background:linear-gradient(to right, transparent, var(--surface) 1rem)}
 
-@media (max-width:640px){
+.evidence table.trials{display:table;width:auto;min-width:100%;max-width:none;overflow:visible;
+  margin:0;border-collapse:collapse;
+  font-family:var(--sans);font-size:var(--fs-small);line-height:1.45;
+  font-variant-numeric:tabular-nums}
+.evidence table.trials th{font:600 var(--fs-small)/1.3 var(--sans);letter-spacing:0;
+  text-transform:none;color:var(--ink-soft);white-space:normal;vertical-align:bottom;
+  padding:.45rem .7rem .5rem;border-bottom:1px solid var(--rule)}
+.evidence table.trials td{padding:.6rem .7rem .65rem;vertical-align:top;
+  border-bottom:1px solid var(--rule-soft)}
+.evidence .c-pop{min-width:17rem}
+.evidence :is(.c-arms,.c-os){min-width:12rem}
+/* the column a reader came for, and the longest: a wider floor here takes
+   more off the table's height than anywhere else */
+.evidence .c-result{min-width:16rem}
+.evidence .c-endpoint{min-width:11rem}
+.evidence .c-other{min-width:7rem}
+.evidence .c-trial{min-width:8.5rem}
+/* the trial column is pinned, painted in the ground the table sits on */
+.evidence table.trials .c-trial{position:sticky;left:0;z-index:1;background:var(--surface);
+  box-shadow:1px 0 0 var(--rule)}
+.evidence table.trials tbody tr:hover td{background:var(--bg-alt)}
+/* in a table the trial name is sans: a cell is operated, not read */
+.evidence .c-trial .trial{font-family:var(--sans);font-weight:600;color:var(--ink);white-space:nowrap}
+.evidence table.trials td sup{white-space:nowrap}
+.evidence .ev-meta{display:block;margin-top:.2rem;font-size:1em;line-height:1.35;color:var(--ink-faint)}
+.evidence .m{white-space:nowrap}
+.evidence .m[data-col="ph"]::before{content:"Phase "}
+.evidence .m[data-col="n"]::before{content:"n = "}
+
+@media (max-width:639.98px){
   /* The horizontal scroll is deliberate. Stacking nine result columns into cards
      makes a trial impossible to compare against the one below it, which is the
-     only reason to put them in a table. */
-  .evidence{margin-inline:calc(-1 * var(--gutter,1rem))}
-  .evidence table.trials{font-size:.82rem}
-  .evidence table.trials th,.evidence table.trials td{padding:.5rem .55rem}
-  .evidence table.trials td:first-child,
-  .evidence table.trials th:first-child{padding-left:var(--gutter,1rem)}
+     only reason to put them in a table. The block reaches the screen's edges:
+     .main's padding is --gutter here, so the bleed is exactly that (PDA-09). */
+  .col > .evidence{margin-inline:calc(-1 * var(--gutter,1rem))}
+  .ev-title,.ev-note{padding-inline:var(--gutter,1rem)}
+  .evidence table.trials th,.evidence table.trials td{padding:.5rem .55rem .55rem}
+  .evidence table.trials .c-trial{padding-left:var(--gutter,1rem);min-width:0}
+  /* the pinned name may break at its hyphen: DESTINY- / Breast09 */
+  .evidence .c-trial .trial{white-space:normal}
+  /* The two long columns are each about one screen of the scroller wide,
+     so a thumb moves a column at a time and no cell is 20 characters to the
+     line; the others are narrower. */
+  .evidence :is(.c-pop,.c-result){min-width:min(16rem, 100vw - 8rem)}
+  .evidence :is(.c-arms,.c-os,.c-endpoint){min-width:min(13rem, 100vw - 9rem)}
+  /* Every cell names its column, so an endpoint is never read as a result
+     once the head has scrolled away. */
+  .evidence table.trials td:not(:first-child)::before{content:attr(data-label);display:block;
+    margin:0 0 .15rem;font:600 .75rem/1.3 var(--sans);color:var(--ink-soft)}
+  .evidence :is(.c-pop,.c-arms,.c-endpoint,.c-result,.c-os){-webkit-hyphens:auto;hyphens:auto;
+    -webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;hyphenate-limit-chars:6 3 3}
 }
-@media print{
-  .evidence table.trials td:first-child,
-  .evidence table.trials th:first-child{position:static;box-shadow:none}
+
+/* ---------- stories ----------
+   The argument a chapter's evidence table is evidence for, and the spine of
+   the section, so it is set in em of the body and never smaller than a
+   callout (R-11): the title outranks the question, the question outranks the
+   moves, and the moves are in ink. A story's second and later appearances
+   in a chapter carry only "<title>, continued" (bc.py). Scoped to the
+   column: the Stories appendix has rows of its own. */
+.col .story{font-size:.95em;margin:var(--sp-block) 0;padding:0 0 0 1rem;
+  border-left:3px solid var(--accent-soft)}
+.col .story .st-where{margin:0 0 .3rem}
+.col .story .st-cont{margin:0 0 .1rem}
+.col .story .st-title{font:700 1.2em/1.25 var(--serif);color:var(--ink);margin:0 0 .4rem;
+  text-wrap:balance}
+.col .story .st-premise{color:var(--ink-soft);margin:0 0 .2rem}
+.col .story .sq{margin:1.1em 0 0}
+.col .story .st-cont + .sq{margin-top:.45em}
+.col .story .sq-ask{font:700 1.05em/1.4 var(--serif);color:var(--ink);margin:0 0 .55em;
+  text-wrap:pretty}
+.col .story .sq-moves{display:grid;grid-template-columns:7.2rem minmax(0,1fr);align-items:baseline;
+  gap:.3em .9rem;margin:0;font-size:1em;line-height:1.55}
+.col .story .sq-moves dd{margin:0;color:var(--ink)}
+.col .story .sq-trials{display:flex;flex-wrap:wrap;gap:.35rem;margin:.7em 0 0}
+/* A chip: the trial's name, and a link to its row in the registry once
+   book.js has made it one (not in the Dropbox build, which has no registry). */
+.col .trial.chip{display:inline-flex;align-items:center;padding:.2rem .5rem;
+  font:600 .75rem/1.3 var(--sans);letter-spacing:.01em;color:var(--ink);text-decoration:none;
+  border:1px solid var(--rule);border-radius:var(--r-s);white-space:nowrap}
+.col a.trial.chip:hover,.col a.trial.chip:focus-visible{border-color:var(--accent);color:var(--accent)}
+.col .trial.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){
+  .col .story{padding-left:.75rem}
+  .col .story .sq-moves{grid-template-columns:minmax(0,1fr);gap:.05rem}
+  .col .story .sq-moves dt{margin-top:.55rem}
+  .col .trial.chip{white-space:normal}
 }
 
 /* ---------- chapter foot ----------
@@ -735,11 +828,31 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
   h1{font-size:20pt} h2{font-size:14pt} h3{font-size:11.5pt}
   h2,h3,h4{break-after:avoid;page-break-after:avoid}
   .eq,figure.fig,.worked,.callout,.prob,table{break-inside:avoid;page-break-inside:avoid}
+  /* A chapter printed for a tumour board keeps its evidence (DESIGN.md
+     section 6, Print): the tables whole, at 8pt, with no floors and no bleed;
+     the references open (book.js, on beforeprint) and without their summary;
+     no scroll cue. */
+  .col .story{break-inside:avoid;page-break-inside:avoid}
+  details.refs-list > summary,.evidence::after{display:none!important}
+  .col > .evidence,.evidence{margin-inline:0!important}
+  .ev-scroll{overflow:visible;background:none}
+  .evidence table.trials{width:100%;min-width:0;font-size:8pt;break-inside:auto;page-break-inside:auto}
+  .evidence table.trials :is(th,td){min-width:0!important;white-space:normal;padding:.2rem .3rem;font-size:8pt}
+  .evidence table.trials tr{break-inside:avoid;page-break-inside:avoid}
+  .evidence table.trials .c-trial{position:static;box-shadow:none;background:none}
+  .evidence .c-trial .trial,.evidence .m{white-space:normal}
   details.grind,details{break-inside:auto}
   details.grind>summary,.prob details>summary{color:#555}
   figure.fig canvas{max-height:8.5cm}
   a{color:#000;text-decoration:none}
   .callout,.worked,figure.fig{border-color:#bbb}
+}
+
+/* A closed <details> prints nothing. book.js opens the references on
+   beforeprint; where the browser exposes the details' content box, the print
+   rule opens it too, for a print that fires no event. */
+@media print{
+  details.refs-list::details-content{content-visibility:visible}
 }
 
 /* ---------- contents ----------
@@ -873,10 +986,15 @@ h2.part-head{margin:0 0 .3rem;font-size:clamp(1.3rem, 1.1rem + .8vw, 1.6rem);fon
 @media (pointer:coarse){
   /* A numeral is not a touch target. Give it the room Apple asks for rather than
      leaving a 7px digit on a phone. */
-  .cite{padding:.35em .45em;margin:0 -.15em}
+  .cite{position:relative}
+  .cite::after{content:"";position:absolute;inset:-.6em -.5em}
   .col .trial,.col .gloss,.xref{padding:.15em 0}
   /* the controls under a figure */
   .ctrl button,.ctrls button{min-height:44px;padding-top:.4rem;padding-bottom:.4rem}
+  /* the references' summary, the chips and the card's registry link are
+     controls */
+  details.refs-list > summary,.refcard a.rc-go{min-height:44px}
+  .col .trial.chip{min-height:44px}
   /* a 16px slider is hard to catch with a thumb; the track keeps its look */
   .ctrl input[type=range]{height:44px;background:transparent}
   .ctrl input[type=range]::-webkit-slider-runnable-track{height:4px}

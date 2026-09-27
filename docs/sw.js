@@ -3,7 +3,7 @@
    BUILD is a content digest of the shell file set, so a deploy that
    changes nothing produces the same worker and no reader is asked to
    reload for a build that would give them identical bytes. */
-const BUILD  = "c0eea1ac01b8";
+const BUILD  = "75113dfabab2";
 const FILES  = [
   "index.html",
   "manifest.webmanifest",

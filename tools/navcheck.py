@@ -477,6 +477,189 @@ async def sweep(br, base):
                'fixed: delete this entry from KNOWN in tools/navcheck.py')
 
 
+LASTBY = "(slug) => ((JSON.parse(localStorage.getItem('library:v1') || '{}') || {}).lastBy || {})[slug] || null"
+
+
+async def returning_reader(br, base):
+    phys = json_of(os.path.join(DOCS, 'newton-to-mtheory', 'nav.json'))
+    clin = json_of(os.path.join(DOCS, 'breast-cancer', 'nav.json'))
+    c11 = next(c for c in phys['chapters'] if c['href'] == 'ch1-1.html')
+    c500 = next(c for c in clin['chapters'] if c['href'] == 'BC-500.html')
+    ok('nav.json carries how each book is read',
+       (phys.get('reading'), clin.get('reading')) == ('sequential', 'reference'),
+       (phys.get('reading'), clin.get('reading')))
+    ctx = await br.new_context(viewport={'width': 1280, 'height': 900}, service_workers='block')
+    ctx.set_default_timeout(TIMEOUT)
+    pg = await ctx.new_page()
+    try:
+        await pg.goto(base + 'newton-to-mtheory/ch1-1.html', wait_until='load')
+        if await waitfn(pg, READY, what='the reading order on ch1-1'):
+            await pg.evaluate("() => window.scrollTo({top: (document.documentElement.scrollHeight"
+                              " - innerHeight) * .4, behavior: 'instant'})")
+            await pg.wait_for_timeout(1000)
+        got = await pg.evaluate(LASTBY, 'newton-to-mtheory')
+        ok('reading ch1-1 to 40%% records lastBy with its number and title (%s)' % c11['num'],
+           bool(got) and got['url'].endswith('/newton-to-mtheory/ch1-1.html')
+           and got['num'] == c11['num'] and got['title'] == c11['title']
+           and 30 <= got['pct'] <= 50 and got['at'] > 0, got)
+
+        await pg.goto(base + 'breast-cancer/BC-500.html', wait_until='load')
+        await waitfn(pg, READY, what='the reading order on BC-500')
+        await pg.wait_for_timeout(300)
+        got = await pg.evaluate(LASTBY, 'breast-cancer')
+        ok('opening BC-500 records it (%s)' % c500['num'],
+           bool(got) and got['url'].endswith('/breast-cancer/BC-500.html')
+           and got['num'] == c500['num'], got)
+
+        # a front door and a contents page are not a place in the book
+        for where_ in ('breast-cancer/index.html', 'breast-cancer/contents.html'):
+            await pg.goto(base + where_, wait_until='load')
+            await waitfn(pg, "() => window.LibraryPWA && window.LibraryPWA.nav().ready",
+                         what='the reading order on ' + where_)
+            await pg.evaluate("() => window.scrollTo({top: 600, behavior: 'instant'})")
+            await pg.wait_for_timeout(900)
+            got = await pg.evaluate(LASTBY, 'breast-cancer')
+            ok('%s records nothing: lastBy is still BC-500' % where_,
+               bool(got) and got['url'].endswith('/BC-500.html'), got and got['url'])
+
+        # the clinical front door keeps Contents and offers the place beside it
+        await pg.goto(base + 'breast-cancer/index.html', wait_until='load')
+        if await waitfn(pg, "() => { const g = document.querySelector('.cta > .go');"
+                            " return !!g && g.textContent.trim().startsWith('Continue at'); }",
+                        what='a first .go "Continue at ..." on the clinical front door'):
+            await pg.wait_for_timeout(300)
+            r = await pg.evaluate("""() => { const b = document.querySelector('.cta > .btn');
+              const g = document.querySelector('.cta > .go');
+              return {main: b.querySelector('.btn-main') ? b.querySelector('.btn-main').textContent.trim() : b.textContent.trim(),
+                      go: g.textContent.trim(), href: g.getAttribute('href'),
+                      gos: document.querySelectorAll('.cta > .btn').length}; }""")
+            want = 'Continue at %s \u00b7 %s' % (c500['num'], c500['title'])
+            ok('the reference front door keeps Contents as its primary', r['main'] == 'Contents'
+               and r['gos'] == 1, r)
+            ok('and its first text link is "%s"' % want[:40], r['go'] == want
+               and r['href'].endswith('/BC-500.html'), r)
+
+        # the physics front door: Continue reading, with Begin kept
+        await pg.goto(base + 'newton-to-mtheory/index.html', wait_until='load')
+        if await waitsel(pg, '.cta > .btn[data-resumed]'):
+            r = await pg.evaluate("""() => { const b = document.querySelector('.cta > .btn');
+              const g = document.querySelector('.cta > .go');
+              return {main: b.querySelector('.btn-main').textContent.trim(),
+                      sub: b.querySelector('.btn-sub').textContent.trim(),
+                      href: b.getAttribute('href'), aria: b.getAttribute('aria-label'),
+                      go: g.textContent.trim(), goHref: g.getAttribute('href')}; }""")
+            sub = '%s \u00b7 %s' % (c11['num'], c11['title'])
+            ok('the sequential front door\'s primary reads Continue reading over %s' % c11['num'],
+               r['main'] == 'Continue reading' and r['sub'] == sub
+               and r['href'].endswith('/ch1-1.html') and sub in (r['aria'] or ''), r)
+            first = phys['chapters'][0]['href']
+            ok('and Begin is its first text link, to %s' % first,
+               r['go'] == 'Begin' and r['goHref'] == first, r)
+
+        # the physics contents marks the row and offers the way back
+        await pg.goto(base + 'newton-to-mtheory/contents.html', wait_until='load')
+        if await waitsel(pg, '.clist li[data-last]'):
+            r = await pg.evaluate("""() => { const li = [...document.querySelectorAll('.clist li[data-last]')];
+              const j = document.querySelector('.pwa-jump a');
+              const part = document.querySelector('h2.part-head');
+              return {n: li.length, href: li[0].querySelector('a').getAttribute('href'),
+                      tag: (li[0].querySelector('.tag.last') || {}).textContent || null,
+                      jump: j ? j.textContent.trim() : null, jumpHref: j ? j.getAttribute('href') : null,
+                      above: !!j && !!part && !!(j.compareDocumentPosition(part) & Node.DOCUMENT_POSITION_FOLLOWING)}; }""")
+            ok('the physics contents marks %s "Last read", once' % c11['num'],
+               r['n'] == 1 and r['href'] == 'ch1-1.html' and r['tag'] == 'Last read', r)
+            ok('with "Jump to where you were" above the first part',
+               r['jump'] == 'Jump to where you were' and r['above']
+               and (r['jumpHref'] or '').endswith('/ch1-1.html'), r)
+
+        # continue.html?b= lands on the book's place, not the library's last page
+        await pg.goto(base + 'continue.html?b=newton-to-mtheory', wait_until='load')
+        try:
+            await pg.wait_for_url('**/newton-to-mtheory/ch1-1.html', timeout=5000)
+        except Exception:
+            pass
+        ok('continue.html?b=newton-to-mtheory lands on ch1-1', pg.url.endswith('/ch1-1.html'),
+           pg.url.split('/library/')[-1])
+        await pg.goto(base + 'continue.html', wait_until='load')
+        try:
+            await pg.wait_for_url('**/breast-cancer/BC-500.html', timeout=5000)
+        except Exception:
+            pass
+        ok('continue.html lands on the most recent place, BC-500', pg.url.endswith('/BC-500.html'),
+           pg.url.split('/library/')[-1])
+
+        # the hub's strip, most recent first, one tap to the chapter
+        await pg.goto(base + 'index.html', wait_until='load')
+        if await waitsel(pg, 'section[data-continue]:not([hidden]) li', state='visible'):
+            r = await pg.evaluate("""() => [...document.querySelectorAll('section[data-continue] li a')]
+              .map(a => [a.dataset.book, a.getAttribute('href'),
+                         a.querySelector('.c-ch').textContent.trim()])""")
+            ok('the hub\'s Continue strip lists BC-500, then ch1-1',
+               [x[0] for x in r] == ['breast-cancer', 'newton-to-mtheory']
+               and r[0][1].endswith('/BC-500.html') and r[1][1].endswith('/ch1-1.html')
+               and r[0][2].startswith(c500['num'] + ' \u00b7 '), r)
+            await pg.click('section[data-continue] li a')
+            await pg.wait_for_load_state('load')
+            ok('one tap on its first row opens BC-500', pg.url.endswith('/breast-cancer/BC-500.html'),
+               pg.url.split('/library/')[-1])
+    finally:
+        await ctx.close()
+
+
+async def hub_tiles(br, base):
+    """Four tiles, each a status line in its own unit and an offline chip; no
+    second list of the same books; and Tab onto each tile brings its weather
+    (body[data-focus]) and its ring in the tile's accent (C2-tile-focus)."""
+    ctx = await br.new_context(viewport={'width': 1280, 'height': 900}, service_workers='block')
+    ctx.set_default_timeout(TIMEOUT)
+    pg = await ctx.new_page()
+    try:
+        await pg.goto(base + 'index.html', wait_until='load')
+        n = len(library.books())
+        await waitfn(pg, "() => [...document.querySelectorAll('.book button[data-offline]')]"
+                         ".every(b => !b.hidden && b.textContent.trim())",
+                     timeout=8000, what='every tile\'s offline chip')
+        r = await pg.evaluate("""() => ({
+          tiles: [...document.querySelectorAll('article.book')].map(t => ({
+            slug: t.dataset.slug,
+            count: (t.querySelector('.count') || {}).textContent || '',
+            chip: (t.querySelector('button[data-offline]') || {}).textContent || ''})),
+          lists: document.querySelectorAll('.pwa-shelf, .pwa-row').length,
+          store: !!document.querySelector('p[data-store]:not([hidden]) button')})""")
+        bad = [t for t in r['tiles'] if not t['count'].strip() or not t['chip'].strip()
+               or 'planned' in t['count'] or t['count'].startswith('0 ')]
+        ok('%d tiles, each with a status line in its own unit and an offline chip' % n,
+           len(r['tiles']) == n and not bad, bad or [t['count'] for t in r['tiles']])
+        ok('no separate "Read offline" list; one storage line with Reset',
+           r['lists'] == 0 and r['store'], r)
+
+        seen = {}
+        await pg.evaluate("() => document.activeElement && document.activeElement.blur()")
+        for _ in range(40):
+            await pg.keyboard.press('Tab')
+            s = await pg.evaluate("""() => {
+              const a = document.activeElement, t = a && a.closest && a.closest('article.book');
+              if (!t || a.tagName !== 'A') return null;
+              const cs = getComputedStyle(t);
+              const probe = document.createElement('i');
+              probe.style.color = 'var(--bk-hue)'; t.appendChild(probe);
+              const hue = getComputedStyle(probe).color; probe.remove();
+              return {slug: t.dataset.slug, focus: document.body.getAttribute('data-focus'),
+                      style: cs.outlineStyle, width: parseFloat(cs.outlineWidth),
+                      color: cs.outlineColor, hue: hue}; }""")
+            if s and s['slug'] not in seen:
+                seen[s['slug']] = s
+            if len(seen) == n:
+                break
+        for bk in library.books():
+            s = seen.get(bk.slug)
+            ok('Tab onto the %s tile sets body[data-focus] and draws its accent ring' % bk.slug,
+               bool(s) and s['focus'] == bk.slug and s['style'] == 'solid' and s['width'] >= 2
+               and s['color'] == s['hue'], s)
+    finally:
+        await ctx.close()
+
+
 async def main():
     from playwright.async_api import async_playwright
     base = 'http://127.0.0.1:%d/library/' % PORT
@@ -1043,6 +1226,24 @@ async def main():
                else '%d equations' % r['n'])
             await pg.close()
 
+        # ------------------------------------------------- the returning reader
+        # Where a reader was, offered back to them wherever they arrive
+        # (DESIGN.md sections 6 to 8; NAV-01, NAV-14, FD-19, C1-clinical-resume).
+        # One reader, one browser: ch1-1 read to 40%, then BC-500. pwa.js
+        # records lastBy on a chapter and nowhere else; the hub's Continue
+        # strip lists the two books most recent first; continue.html?b= lands
+        # on the book's place; the physics contents marks the row; the
+        # sequential front door's primary becomes "Continue reading" with
+        # Begin kept as the first text link, and the reference front door
+        # keeps Contents and gains "Continue at ...".
+        print('\nthe returning reader')
+        async with section('the returning reader'):
+            await returning_reader(br, base)
+
+        # --------------------------------------------------- the hub's tiles
+        async with section('the hub tiles'):
+            await hub_tiles(br, base)
+
         # --------------------------------------------------- the masked sweep
         async with section('the masked-overflow sweep'):
             await sweep(br, base)
@@ -1068,7 +1269,9 @@ if __name__ == '__main__':
           '          included, carries one bar in one row with the theme button last, the '
           'brand at one x and the book\'s destinations under '
           'Menu\n          on a phone; an OS-dark reader stays dark and a press '
-          'sticks; every equation carries one number, and nothing new\n'
+          'sticks; a returning reader is offered their place on the hub, the front doors, the\n'
+          '          contents and continue.html?b=; Tab onto a hub tile brings its weather and ring; '
+          'every equation carries one number, and nothing new\n'
           '          passes the viewport with the shell unmasked '
           '(%d KNOWN entries, each owned by the package that removes it)'
           % sum(len(v) for v in KNOWN.values()))
