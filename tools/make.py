@@ -103,7 +103,11 @@ SHELL = """<!DOCTYPE html>
 {katexcss}
 </style>
 <style>
-{bookcss}
+{bookcss}{themecss}
+</style>
+<style>
+{navcss}
+:root{{--lib-bar-h:0px}}
 </style>
 </head>
 <body>
@@ -154,6 +158,14 @@ async def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT, exist_ok=True)
     kcss, bcss, rt = katex_css_inlined(), library.read(os.path.join(library.ASSETS, "book.css")), runtime_js()
+    # The book's own palette, as docs/ appends it to book.css, so a Dropbox copy
+    # of the clinical book is not printed in the physics book's blue. Then
+    # nav.css, which carries the library's type stacks, the drawer and the
+    # theme-toggle fallback (#themer), and then the bar height at 0: there is
+    # no bar in these files, and scroll padding, the sidebar's top and
+    # anything else sized from --lib-bar-h must not leave room for one.
+    tcss = library.themecss(BOOK)
+    ncss = library.read(os.path.join(library.ASSETS, "nav.css"))
     n = 0
 
     async with async_playwright() as pw:
@@ -178,6 +190,7 @@ async def main():
             body = body.replace('href="chapters/', 'href="')
             library.write(dest, SHELL.format(
                 title=title, book=BOOK.title, katexcss=kcss, bookcss=bcss, sbhead=sbhead,
+                themecss=tcss, navcss=ncss,
                 toc=toc, body=body, wide=wide, runtime=rt, extra=extra))
 
         for num, slug, title, part, _m in bp.FLAT:

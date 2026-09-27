@@ -14,21 +14,31 @@
 <meta name="apple-mobile-web-app-title" content="Library">
 <meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#101216" media="(prefers-color-scheme:dark)">
-<script>try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)document.documentElement.classList.add('standalone');</script>
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="assets/pwa.js" defer></script>
 <!--/PWA-->
 <title>A Library</title>
 <meta name="description" content="Books built from first principles: From Newton to M-Theory, The Long Argument, The Ages of Thought, Breast Cancer.">
 <style>
 *{box-sizing:border-box}
+/* The same role names every book page uses (DESIGN.md section 3), in both
+   themes, so the library bar, the offline shelf in pwa.css and anything else
+   that reads --bg, --paper or --ink finds the hub's own colours rather than a
+   literal fallback. --ink-faint is the palest ink a word may use: 4.96:1 on
+   the ground and 5.36:1 on a tile in light, 5.78:1 and 5.48:1 in dark. */
 :root{
-  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Charter,Georgia,Cambria,serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#878d99; --rule:#dcdfe5;
+  --serif:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+    "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --sans:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    "Helvetica Neue",Arial,sans-serif);
+  --bg:#f4f3f0; --paper:#ffffff;
+  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#646975; --rule:#dcdfe5;
+  --accent-ink:var(--ink);
+  color-scheme:light;
 }
 html,body{margin:0;height:100%}
 body{
-  font-family:var(--serif); color:var(--ink); background:#f4f3f0;
+  font-family:var(--serif); color:var(--ink); background:var(--bg);
   -webkit-font-smoothing:antialiased; position:relative; overflow-x:hidden;
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
 }
@@ -72,16 +82,16 @@ body[data-focus] .field.base{opacity:0}
     linear-gradient(180deg, rgba(var(--fg),var(--wg)), rgba(var(--fg2),calc(var(--wg)*1.6)))}
 .field[data-book="newton-to-mtheory"]{--a-rgb:27,75,128;--a2-rgb:127,176,232}
 body[data-focus="newton-to-mtheory"] .field[data-book="newton-to-mtheory"]{opacity:1}
-body[data-focus="newton-to-mtheory"] .book[data-slug="newton-to-mtheory"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
-.field[data-book="the-long-argument"]{--a-rgb:163,35,43;--a2-rgb:201,73,74}
+body[data-focus="newton-to-mtheory"] .book[data-slug="newton-to-mtheory"]{opacity:1;filter:none;border-color:var(--bk-hue);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+.field[data-book="the-long-argument"]{--a-rgb:163,35,43;--a2-rgb:228,99,95}
 body[data-focus="the-long-argument"] .field[data-book="the-long-argument"]{opacity:1}
-body[data-focus="the-long-argument"] .book[data-slug="the-long-argument"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
-.field[data-book="the-ages-of-thought"]{--a-rgb:168,86,42;--a2-rgb:208,130,76}
+body[data-focus="the-long-argument"] .book[data-slug="the-long-argument"]{opacity:1;filter:none;border-color:var(--bk-hue);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+.field[data-book="the-ages-of-thought"]{--a-rgb:147,65,42;--a2-rgb:217,127,92}
 body[data-focus="the-ages-of-thought"] .field[data-book="the-ages-of-thought"]{opacity:1}
-body[data-focus="the-ages-of-thought"] .book[data-slug="the-ages-of-thought"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+body[data-focus="the-ages-of-thought"] .book[data-slug="the-ages-of-thought"]{opacity:1;filter:none;border-color:var(--bk-hue);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
 .field[data-book="breast-cancer"]{--a-rgb:142,42,95;--a2-rgb:216,120,166}
 body[data-focus="breast-cancer"] .field[data-book="breast-cancer"]{opacity:1}
-body[data-focus="breast-cancer"] .book[data-slug="breast-cancer"]{opacity:1;filter:none;border-color:var(--bk-accent);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
+body[data-focus="breast-cancer"] .book[data-slug="breast-cancer"]{opacity:1;filter:none;border-color:var(--bk-hue);box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}
 
 
 .wrap{position:relative;z-index:1;max-width:64rem;margin:0 auto;padding:clamp(2.5rem,7vh,5rem) 1.4rem 4rem}
@@ -91,7 +101,10 @@ header.lede{max-width:38rem;margin:0 0 clamp(2rem,5vh,3.4rem)}
   text-transform:uppercase;color:var(--ink-faint);margin:0 0 .9rem}
 h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
   font-weight:600;margin:0 0 1rem}
-.lede p{font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
+/* not the eyebrow, which is also a <p> in the lede and lost to this rule: it
+   rendered at 18px bold with 4px tracking, louder than anything but the h1
+   (FD-05) */
+.lede > p:not(.eyebrow){font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
 
 /* ---------- the shelf ---------- */
 .shelf{display:grid;grid-template-columns:repeat(2,1fr);gap:1.15rem}
@@ -108,27 +121,35 @@ h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
   transition:transform .3s ease,box-shadow .3s ease,opacity .4s ease,
              border-color .3s ease,background .4s ease;
 }
+/* --bk-hue is the tile's accent in the active theme: --bk-accent on paper,
+   --bk-accent-2 (the book's accent_dark) on the dark ground, where the light
+   accents measured 2.0 to 3.4:1 (FD-03, NAV-12, PDA-04). Both are stamped on
+   the tile by hub(); the swap is below, keyed on data-theme. */
+.book{--bk-hue:var(--bk-accent)}
 .book:hover,.book:focus-visible{
   transform:translateY(-3px);
-  border-color:var(--bk-accent);
+  border-color:var(--bk-hue);
   box-shadow:0 14px 40px rgba(20,22,28,.14);
-  outline:none;
 }
+.book:hover{outline:none}
+/* a real ring in the tile's own colour: the focused tile used to differ from
+   its neighbours only by a 1px border at 2:1 (PDA-04) */
+.book:focus-visible{outline:2px solid var(--bk-hue);outline-offset:3px}
 /* the other books recede rather than disappear — still readable, plainly not the subject */
 body[data-focus] .book{opacity:.34;filter:saturate(.5)}
 body[data-focus] .book[data-live="1"]:hover,
 body[data-focus] .book[data-live="1"]:focus-visible{opacity:1;filter:none}
 
-.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-accent);margin:0 0 1.1rem}
+.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-hue);margin:0 0 1.1rem}
 .book .kicker{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--bk-accent);margin:0 0 .6rem}
+  text-transform:uppercase;color:var(--bk-hue);margin:0 0 .6rem}
 .book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.08;letter-spacing:-.02em;
   font-weight:600;margin:0 0 .7rem}
 .book p{font-size:.95rem;line-height:1.55;color:var(--ink-soft);margin:0}
 .book .foot{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
   margin-top:1.5rem;font-family:var(--sans);font-size:.78rem;color:var(--ink-faint)}
 .book .count{font-weight:650;color:var(--ink-soft)}
-.book .go{color:var(--bk-accent);font-weight:650}
+.book .go{color:var(--bk-hue);font-weight:650}
 .book[data-live="0"]{cursor:default}
 .book[data-live="0"] .go{color:var(--ink-faint)}
 
@@ -154,19 +175,46 @@ footer a{color:inherit}
   .shelf{gap:.9rem}
   .book{min-height:14rem;padding:1.3rem 1.2rem 1.15rem}
 }
+/* ---------- dark ----------
+   Keyed on data-theme, which the boot script in <head> stamps before first
+   paint from the reader's choice or, failing one, from the OS. The hub used
+   to read only the media query, so it ignored the theme a reader had chosen
+   and sat dark under html[data-theme=light] (NAV-02, FD-02). The media query
+   is kept only as the fallback for a page no script has stamped. :root[data-theme="dark"]{--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root[data-theme="dark"] .book{background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root[data-theme="dark"] .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
 @media (prefers-color-scheme:dark){
-  :root{--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#787d87;--rule:#31353d;
-        --w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
-  body{background:#101216}
-  .book{background:rgba(24,27,32,.66)}
-  /* the accents were chosen against paper; on a dark ground the book's lighter
-     variant is the one that reads, so the two swap roles. */
-  .field{--fg:var(--a2-rgb); --fg2:var(--a-rgb)}
-  .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+:root:not([data-theme]){--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root:not([data-theme]) .book{background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root:not([data-theme]) .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+} is
+   filled in by hub() from HUB_DARK, once for each of the two selectors. */
+:root[data-theme="dark"]{--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root[data-theme="dark"] .book{background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)}
+:root[data-theme="dark"] .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root[data-theme="dark"] .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme]){--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
+:root:not([data-theme]) .book{background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)}
+:root:not([data-theme]) .field{--fg:var(--a2-rgb);--fg2:var(--a-rgb)}
+:root:not([data-theme]) .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
 }
 </style>
+<!--NAVCSS-->
+<link rel="stylesheet" href="assets/nav.css">
+<!--/NAVCSS-->
 </head>
 <body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library">
+  <a class="nav-brand" href="index.html" aria-current="page">A Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<span class="skip-target" id="text" tabindex="-1"></span>
+<!--/NAV-->
 <div class="field base"></div>
 <div class="field" data-book="newton-to-mtheory" data-style="lightcone"></div><div class="field" data-book="the-long-argument" data-style="marginalia"></div><div class="field" data-book="the-ages-of-thought" data-style="plain"></div><div class="field" data-book="breast-cancer" data-style="plain"></div>
 <div class="wrap">
@@ -177,7 +225,7 @@ footer a{color:inherit}
   trust it is marked as such, so you always know what you are standing on.</p>
 </header>
 <main class="shelf">
-<a class="book" data-slug="newton-to-mtheory" data-live="1" href="newton-to-mtheory/index.html" style="--bk-accent:#1b4b80"><div><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2>From Newton to M-Theory</h2><p>Special relativity, general relativity, quantum mechanics, quantum field theory, the Standard Model and string theory — derived, not asserted.</p></div><div class="foot"><span class="count">37 of 76 chapters</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-long-argument" data-live="1" href="the-long-argument/index.html" style="--bk-accent:#a3232b"><div><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2>The Long Argument</h2><p>Eight arguments that never finished — read in pairs, across the centuries that kept reopening them.</p></div><div class="foot"><span class="count">8 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-ages-of-thought" data-live="1" href="the-ages-of-thought/index.html" style="--bk-accent:#a8562a"><div><div class="rule"></div><p class="kicker">An atlas</p><h2>The Ages of Thought</h2><p>Ten ages, and the people who argued their way from one to the next.</p></div><div class="foot"><span class="count">0 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="breast-cancer" data-live="1" href="breast-cancer/index.html" style="--bk-accent:#8e2a5f"><div><div class="rule"></div><p class="kicker">A working reference</p><h2>Breast Cancer</h2><p>Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both.</p></div><div class="foot"><span class="count">98 of 98 chapters</span><span class="go">Read &rarr;</span></div></a>
+<a class="book" data-slug="newton-to-mtheory" data-live="1" href="newton-to-mtheory/index.html" style="--bk-accent:#1b4b80;--bk-accent-2:#7fb0e8"><div><div class="rule"></div><p class="kicker">A build-it-yourself book</p><h2>From Newton to M-Theory</h2><p>Special relativity, general relativity, quantum mechanics, quantum field theory, the Standard Model and string theory — derived, not asserted.</p></div><div class="foot"><span class="count">37 of 76 chapters</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-long-argument" data-live="1" href="the-long-argument/index.html" style="--bk-accent:#a3232b;--bk-accent-2:#e4635f"><div><div class="rule"></div><p class="kicker">A history in arguments</p><h2>The Long Argument</h2><p>Eight arguments that never finished — read in pairs, across the centuries that kept reopening them.</p></div><div class="foot"><span class="count">8 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="the-ages-of-thought" data-live="1" href="the-ages-of-thought/index.html" style="--bk-accent:#93412a;--bk-accent-2:#d97f5c"><div><div class="rule"></div><p class="kicker">An atlas</p><h2>The Ages of Thought</h2><p>Ten ages, and the people who argued their way from one to the next.</p></div><div class="foot"><span class="count">0 chapters planned</span><span class="go">Read &rarr;</span></div></a><a class="book" data-slug="breast-cancer" data-live="1" href="breast-cancer/index.html" style="--bk-accent:#8e2a5f;--bk-accent-2:#d878a6"><div><div class="rule"></div><p class="kicker">A working reference</p><h2>Breast Cancer</h2><p>Biology, heterogeneity, and the decisions that follow, for oncologists who have to act on both.</p></div><div class="foot"><span class="count">98 of 98 chapters</span><span class="go">Read &rarr;</span></div></a>
 </main>
 <footer>Every page works with the network switched off. <a href="https://github.com/Elkhanany">Source</a>.</footer>
 </div>

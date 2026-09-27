@@ -62,7 +62,8 @@ import library
 BAR_PAGES = {
     'newton-to-mtheory':   ['index.html', 'contents.html', 'ch2-1.html',
                             'ledger.html', 'throughline.html'],
-    'the-long-argument':   ['index.html', 'contents.html'],
+    # no contents page: a book with nothing written builds none (NAV-04)
+    'the-long-argument':   ['index.html'],
     'the-ages-of-thought': ['index.html'],
     'breast-cancer':       ['index.html', 'contents.html', 'BC-500.html',
                             'stories.html', 'trials.html'],
@@ -496,8 +497,10 @@ async def main():
             for pagename in BAR_PAGES[bk.slug]:
                 async with section('the bar on %s/%s' % (bk.slug, pagename)):
                     pg = await opened(br, base + bk.slug + '/' + pagename)
+                    # the book's destinations, then Library, which sits outside
+                    # the group so that it never folds under Menu on a phone
                     got = await pg.eval_on_selector_all(
-                        '.topnav-links a',
+                        '.topnav-links a, .topnav .up',
                         'els => els.map(e => [e.getAttribute("href"), e.textContent.trim()])')
                     got = [tuple(x) for x in got]
                     ok('%s/%s offers what book.json declares' % (bk.slug, pagename),
@@ -526,75 +529,254 @@ async def main():
                 await pg.close()
 
         # ------------------------------------------------------ the phone drawer
-        # The drawer is the whole of the navigation on a phone: the bar is at
-        # the top of a five-thousand word chapter and the reader is not.
+        # The drawer holds the chapter's sections and its neighbours, and
+        # nothing the bar already offers: the destinations are under the bar's
+        # Menu on a phone, and the theme control is the bar's (NAV-07). The
+        # rows pwa.js and book.js used to add for them must stay gone.
         print('\nthe drawer')
+        GONE = ('() => ({dest: document.querySelectorAll("#mnav .mn-dest").length,'
+                ' foot: document.querySelectorAll("#mnav .mn-foot").length,'
+                ' theme: document.querySelectorAll("#mn-theme").length})')
         for slug, chap in (('breast-cancer', 'BC-500.html'),
                            ('newton-to-mtheory', 'ch2-1.html')):
-            bk = library.book(slug)
-            want = [i['label'] for i in bk.nav_items()]
-            async with section('%s drawer destinations' % slug):
+            async with section('%s drawer' % slug):
                 pg = await opened(br, base + slug + '/' + chap, 390, 780)
-                if await waitsel(pg, '#mnav .mn-dest'):
-                    got = await pg.eval_on_selector_all(
-                        '#mnav .mn-dest > *', 'els => els.map(e => e.textContent.trim())')
-                    ok('%s drawer offers what the bar offers' % slug, got == want, got)
+                if await waitsel(pg, '#mnav .mn-seq'):
                     if await click(pg, '#mnav-btn'):
                         await pg.wait_for_timeout(250)
-                        ok('the destinations are reachable without scrolling the chapter',
-                           await pg.is_visible('#mnav .mn-dest .up'))
-                    dup = await pg.eval_on_selector_all(
-                        '#mnav .mn-foot a', 'els => els.length')
-                    ok('no second way to the contents page under them', dup == 0, dup)
+                        ok('%s drawer opens with its prev/next row in view' % slug,
+                           await pg.is_visible('#mnav .mn-seq .next'))
+                    g = await pg.evaluate(GONE)
+                    ok('%s drawer carries no destinations, footer or theme button' % slug,
+                       g == {'dest': 0, 'foot': 0, 'theme': 0}, g)
                 await pg.close()
 
-            # on the contents page the drawer still lists them, and the entry
-            # for the page you are on has stopped being a control
+            # the contents page builds a drawer too; outside the sequence it
+            # has no prev/next row, and it carries nothing the bar has
             async with section('%s drawer on the contents page' % slug):
                 pg = await opened(br, base + slug + '/contents.html', 390, 780)
-                if await waitsel(pg, '#mnav .mn-dest'):
-                    kinds = await pg.eval_on_selector_all(
-                        '#mnav .mn-dest > *', 'els => els.map(e => e.tagName)')
-                    ok('%s contents page keeps the destinations' % slug,
-                       kinds.count('SPAN') == 1 and 'A' in kinds, kinds)
+                if await waitsel(pg, '#mnav'):
+                    await waitfn(pg, "() => window.LibraryPWA && window.LibraryPWA.nav().ready",
+                                 what='the reading order (LibraryPWA.nav().ready)')
+                    await pg.wait_for_timeout(150)
+                    g = await pg.evaluate(GONE)
+                    ok('%s contents drawer carries no destinations, footer or theme button'
+                       % slug, g == {'dest': 0, 'foot': 0, 'theme': 0}, g)
                 seq = await pg.query_selector('#mnav .mn-seq')
                 ok('and no prev/next, being outside the sequence', seq is None)
                 await pg.close()
 
         # ------------------------------------------------------ the bar under pressure
-        # The bar carries a title, up to four links and, on one page, a
-        # floating theme toggle sitting over it. It has to lose none of them.
-        # Squeezing the title was the first answer and it squeezed the physics
-        # book's to zero pixels; the bar wraps instead. These are the three
-        # widths that decide it: a small phone, the phone everything else here
-        # is checked at, and a desktop.
+        # One row at every width, with the theme button last and inside it.
+        # The bar used to wrap to two rows and hold a gutter open for a toggle
+        # that floated over its last link (NAV-03). These are the widths that
+        # decide it: a small phone, the phone everything else here is checked
+        # at, and a desktop. At the two phone widths the destinations are
+        # folded under Menu, so only what is on screen is tested for overlap.
         print('\nthe bar under pressure')
-        for slug, pagename in (('newton-to-mtheory', 'index.html'),     # four links + toggle
-                               ('newton-to-mtheory', 'ch2-1.html'),     # four links + drawer
-                               ('breast-cancer', 'index.html'),         # four links, no toggle
-                               ('the-ages-of-thought', 'index.html')):  # one link, own chrome
+        BAR_FIT = """() => {
+          const bar = document.querySelector('.topnav');
+          const vis = e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+            return cs.display !== 'none' && cs.visibility === 'visible' && r.width > 0 && r.height > 0; };
+          const b = bar.querySelector('.nav-brand');
+          const t = bar.querySelector('.nav-theme');
+          const items = [...bar.querySelectorAll('.nav-brand, .nav-menu, .topnav-links a, .up')]
+            .filter(vis);
+          const tr = t ? t.getBoundingClientRect() : null;
+          const hit = (a, c) => a.right > c.left + 1 && a.left < c.right - 1
+                             && a.bottom > c.top + 1 && a.top < c.bottom - 1;
+          const over = tr ? items.filter(e => hit(e.getBoundingClientRect(), tr))
+                                 .map(e => e.textContent.trim()) : [];
+          const br = bar.getBoundingClientRect();
+          const kids = [...bar.children].filter(vis);
+          return {clipped: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1,
+                  spill: kids.some(e => e.getBoundingClientRect().right > innerWidth + 1),
+                  theme: !!t && vis(t) && bar.contains(t),
+                  inside: !!tr && tr.left >= br.left - 1 && tr.right <= br.right + 1
+                          && tr.top >= br.top - 1 && tr.bottom <= br.bottom + 1,
+                  last: kids.length > 0 && kids[kids.length - 1] === t,
+                  over: over, h: Math.round(br.height * 10) / 10};
+        }"""
+        for slug, pagename in (('newton-to-mtheory', 'index.html'),     # three links + Library
+                               ('newton-to-mtheory', 'ch2-1.html'),     # the same, and a drawer
+                               ('breast-cancer', 'index.html'),         # three links + Library
+                               ('the-ages-of-thought', 'index.html'),   # Library only, own chrome
+                               ('', 'index.html')):                     # the hub: brand and theme
             for w in (320, 390, 1400):
-                async with section('the bar on %s/%s at %d' % (slug, pagename, w)):
-                    pg = await opened(br, base + slug + '/' + pagename, w, 800)
-                    r = await pg.evaluate("""() => {
-                      const bar = document.querySelector('.topnav');
-                      const b = bar.querySelector('.nav-brand');
-                      const L = bar.querySelector('.topnav-links');
-                      const t = document.getElementById('themer');
-                      const on = t && getComputedStyle(t).display !== 'none';
-                      let over = false;
-                      if (on) { const c = t.getBoundingClientRect(), a = L.getBoundingClientRect();
-                        over = a.right > c.left + 1 && a.left < c.right
-                            && a.bottom > c.top + 1 && a.top < c.bottom - 1; }
-                      return {clipped: b.scrollWidth > b.clientWidth + 1,
-                              spill: L.getBoundingClientRect().right > window.innerWidth + 1,
-                              over: over};
-                    }""")
-                    ok('%s/%s at %d keeps its title, links and toggle apart'
-                       % (slug, pagename, w),
-                       not (r['clipped'] or r['spill'] or r['over']),
-                       [k for k in ('clipped', 'spill', 'over') if r[k]])
+                where_ = (slug + '/' if slug else '') + pagename
+                async with section('the bar on %s at %d' % (where_, w)):
+                    pg = await opened(br, base + where_, w, 800)
+                    r = await pg.evaluate(BAR_FIT)
+                    bad = [k for k in ('clipped', 'spill') if r[k]]
+                    bad += [k for k in ('theme', 'inside', 'last') if not r[k]]
+                    if r['over']:
+                        bad.append('theme button over %s' % r['over'])
+                    ok('%s at %d: one row, title, links and theme button apart, the theme '
+                       'button last and inside the bar' % (where_, w), not bad,
+                       bad or 'bar %spx' % r['h'])
                     await pg.close()
+
+        # ---- the bar is at most 48px on a phone, on every page that has one
+        print('\nthe bar on a phone')
+        ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                   is_mobile=True, service_workers='block')
+        ctx.set_default_timeout(TIMEOUT)
+        for where_ in ['index.html'] + ['%s/%s' % (bk.slug, p) for bk in library.books()
+                                        for p in BAR_PAGES[bk.slug]]:
+            async with section('the bar height on %s' % where_):
+                pg = await ctx.new_page()
+                await pg.goto(base + where_, wait_until='load')
+                await pg.wait_for_timeout(250)
+                h = await pg.evaluate(
+                    "() => document.querySelector('.topnav').getBoundingClientRect().height")
+                ok('%s: the bar is one row at 390 touch (<=48px)' % where_, h <= 48, h)
+                await pg.close()
+        await ctx.close()
+
+        # ---- Menu, at 390: exactly the book's destinations, in 48px rows,
+        # with Library and the theme button still in the bar
+        print('\nthe menu')
+        for bk in library.books():
+            dests = [i['label'] for i in bk.nav_items() if i['key'] != 'library']
+            for pagename in BAR_PAGES[bk.slug][:1] + [p for p in BAR_PAGES[bk.slug][1:]
+                                                     if p.startswith(('ch', 'BC-'))]:
+                where_ = '%s/%s' % (bk.slug, pagename)
+                async with section('the menu on %s' % where_):
+                    ctx = await br.new_context(viewport={'width': 390, 'height': 844},
+                                               has_touch=True, is_mobile=True,
+                                               service_workers='block')
+                    ctx.set_default_timeout(TIMEOUT)
+                    pg = await ctx.new_page()
+                    await pg.goto(base + where_, wait_until='load')
+                    await pg.wait_for_timeout(250)
+                    menu = await pg.query_selector('.topnav .nav-menu')
+                    if not dests:
+                        ok('%s: no Menu, having nothing to fold' % where_, menu is None)
+                        await ctx.close()
+                        continue
+                    ok('%s: the Menu is shown and wired' % where_,
+                       menu is not None and await menu.is_visible())
+                    if menu is not None and await menu.is_visible():
+                        await menu.tap()
+                        await pg.wait_for_timeout(200)
+                        r = await pg.evaluate("""() => {
+                          const vis = e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+                            return cs.display !== 'none' && cs.visibility === 'visible' && r.height > 0; };
+                          const rows = [...document.querySelectorAll('#nav-dest a')].filter(vis);
+                          const up = document.querySelector('.topnav .up');
+                          const th = document.querySelector('.topnav .nav-theme');
+                          const bar = document.querySelector('.topnav').getBoundingClientRect();
+                          const inbar = e => { const r = e.getBoundingClientRect();
+                            return vis(e) && r.top >= bar.top - 1 && r.bottom <= bar.bottom + 1; };
+                          return {rows: rows.map(e => e.textContent.trim()),
+                                  minh: Math.min(...rows.map(e => e.getBoundingClientRect().height)),
+                                  expanded: document.querySelector('.nav-menu').getAttribute('aria-expanded'),
+                                  up: !!up && inbar(up), theme: !!th && inbar(th)};
+                        }""")
+                        ok('%s: Menu lists exactly the destinations' % where_,
+                           r['rows'] == dests and r['expanded'] == 'true', r['rows'])
+                        ok('%s: each row is at least 48px' % where_, r['minh'] >= 48, r['minh'])
+                        ok('%s: Library and the theme button stay in the bar' % where_,
+                           r['up'] and r['theme'], r)
+                        await pg.keyboard.press('Escape')
+                        await pg.wait_for_timeout(150)
+                        shut = await pg.evaluate("""() => ({
+                          open: document.querySelector('.topnav').classList.contains('menu-open'),
+                          focus: document.activeElement === document.querySelector('.nav-menu')})""")
+                        ok('%s: Escape closes it and returns focus to Menu' % where_,
+                           not shut['open'] and shut['focus'], shut)
+                    await ctx.close()
+
+        # ---- the brand sits at the bar's inset, at the same x on every page
+        print('\nthe brand does not move')
+        for w in (1280, 1680):
+            ctx = await br.new_context(viewport={'width': w, 'height': 900},
+                                       service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            xs = {}
+            for where_ in ['index.html'] + ['%s/%s' % (bk.slug, p) for bk in library.books()
+                                            for p in BAR_PAGES[bk.slug]]:
+                async with section('the brand on %s at %d' % (where_, w)):
+                    pg = await ctx.new_page()
+                    await pg.goto(base + where_, wait_until='load')
+                    await pg.wait_for_timeout(200)
+                    xs[where_] = await pg.evaluate("""() => {
+                      const bar = document.querySelector('.topnav');
+                      return {x: bar.querySelector('.nav-brand').getBoundingClientRect().left,
+                              inset: parseFloat(getComputedStyle(bar).paddingLeft),
+                              up: (bar.querySelector('.up') || {getBoundingClientRect: () => ({left: null})})
+                                    .getBoundingClientRect().left};
+                    }""")
+                    await pg.close()
+            await ctx.close()
+            got = sorted(set(round(v['x'], 1) for v in xs.values()))
+            ok('at %d the brand has one x on every barred page, at the inset' % w,
+               got and got[-1] - got[0] <= 1 and all(abs(v['x'] - v['inset']) <= 1
+                                                      for v in xs.values()),
+               {k: round(v['x'], 1) for k, v in xs.items()} if len(got) > 1 else got)
+            for bk in library.books():
+                ups = sorted(set(round(xs[k]['up'], 1) for k in xs
+                                 if k.startswith(bk.slug + '/') and xs[k]['up'] is not None))
+                if ups:
+                    ok('at %d %s keeps Library at one x on every page type' % (w, bk.slug),
+                       ups[-1] - ups[0] <= 1, ups)
+
+        # ---- one theme, decided once, and a press that sticks
+        # A reader whose OS is dark, arriving with nothing stored, gets dark on
+        # every page, and nothing is written until they press the button. The
+        # library used to switch them to light at the first chapter and then
+        # remember light as their choice (NAV-02, PDA-01).
+        print('\nthe theme')
+        async with section('the theme journey'):
+            ctx = await br.new_context(viewport={'width': 1280, 'height': 900},
+                                       color_scheme='dark', service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            seen = []
+            for where_ in ('index.html', 'breast-cancer/index.html',
+                           'breast-cancer/contents.html', 'breast-cancer/BC-500.html',
+                           'breast-cancer/trials.html', 'newton-to-mtheory/index.html'):
+                await pg.goto(base + where_, wait_until='load')
+                await pg.wait_for_timeout(250)
+                seen.append((where_, await pg.evaluate(
+                    "() => document.documentElement.getAttribute('data-theme')")))
+            ok('an OS-dark first visit is dark on every page', all(t == 'dark' for _w, t in seen),
+               [x for x in seen if x[1] != 'dark'] or '%d pages' % len(seen))
+            stored = await pg.evaluate("() => localStorage.getItem('library:v1')")
+            ok('and nothing about the theme is stored until the reader chooses',
+               not stored or ('"look"' not in stored and '"theme"' not in stored), stored)
+            await pg.goto(base + 'breast-cancer/BC-500.html', wait_until='load')
+            await pg.wait_for_timeout(250)
+            ok('BC-500 has the bar\'s theme button, wired',
+               await pg.evaluate("() => { const b = document.querySelector('.topnav .nav-theme');"
+                                 " return !!b && !b.hidden &&"
+                                 " document.documentElement.classList.contains('theme-wired'); }"))
+            if await click(pg, '.topnav .nav-theme'):
+                await pg.wait_for_timeout(200)
+                now = await pg.evaluate("""() => ({t: document.documentElement.getAttribute('data-theme'),
+                  pressed: document.querySelector('.topnav .nav-theme').getAttribute('aria-pressed'),
+                  look: (JSON.parse(localStorage.getItem('library:v1') || '{}') || {}).look})""")
+                ok('pressing it on BC-500 turns the page light and records the choice',
+                   now == {'t': 'light', 'pressed': 'false', 'look': 'light'}, now)
+                await pg.goto(base + 'breast-cancer/contents.html', wait_until='load')
+                await pg.wait_for_timeout(200)
+                t = await pg.evaluate("() => document.documentElement.getAttribute('data-theme')")
+                ok('and the next page opens light, the OS still dark', t == 'light', t)
+            await ctx.close()
+
+        # ---- the hub has the same bar, with the theme button
+        async with section('the hub bar'):
+            pg = await opened(br, base + 'index.html', 1280, 900)
+            r = await pg.evaluate("""() => {
+              const bar = document.querySelector('.topnav');
+              const b = bar && bar.querySelector('.nav-theme');
+              return {bar: !!bar, theme: !!b && !b.hidden,
+                      brand: bar ? bar.querySelector('.nav-brand').textContent.trim() : null,
+                      current: bar ? bar.querySelector('.nav-brand').getAttribute('aria-current') : null};
+            }""")
+            ok('the hub carries the bar, named and marked current, with the theme button',
+               r == {'bar': True, 'theme': True, 'brand': 'A Library', 'current': 'page'}, r)
+            await pg.close()
 
         # ---------------------------------------------------- nothing scrolls sideways
         # A page that scrolls sideways on a phone puts part of itself where a
@@ -684,9 +866,11 @@ if __name__ == '__main__':
         print('\nnavcheck: %d failure(s): %s' % (len(fails), ', '.join(fails)))
         raise SystemExit(1)
     print('\nnavcheck: the reading order, the drawer, the keyboard and the '
-          'standalone back all behave in both chaptered books, and every book '
-          'offers\n          the same navigation on every page, on both '
-          'surfaces, at every width; every equation carries one number, and '
-          'nothing new\n          passes the viewport with the shell unmasked '
+          'standalone back all behave in both chaptered books; every page, the '
+          'hub\n          included, carries one bar in one row with the theme '
+          'button last, the brand at one x and the book\'s destinations under '
+          'Menu\n          on a phone; an OS-dark reader stays dark and a press '
+          'sticks; every equation carries one number, and nothing new\n'
+          '          passes the viewport with the shell unmasked '
           '(%d KNOWN entries, each owned by the package that removes it)'
           % sum(len(v) for v in KNOWN.values()))

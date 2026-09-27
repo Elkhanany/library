@@ -201,15 +201,35 @@ STATUSBAR = '<meta name="apple-mobile-web-app-status-bar-style" content="default
 # Standalone is detected in JS rather than with @media (display-mode:standalone),
 # which is unreliable on iOS; navigator.standalone is the signal that works, so
 # every standalone-only rule keys off html.standalone.
+#
+# THE THEME (DESIGN.md section 4). This is the one place a page's theme is
+# decided, before first paint, in this order:
+#   1. library:v1.look -- written only when the reader presses the bar's theme
+#      button (pwa.js) or the fallback toggle (book.js);
+#   2. nmt-theme -- the older key, which was also only ever written by a press;
+#   3. the OS setting.
+# library:v1.theme is never read. pwa.js used to write it passively on every
+# page load, so the first light page an OS-dark reader opened pinned the whole
+# library to light for good (NAV-02, PDA-01).
+#
+# It also adds "js" to <html>, which nav.css keys on to reserve the slots of the
+# bar's two buttons before pwa.js un-hides them, so nothing in the bar moves
+# when the script arrives.
+THEME_JS = (
+    "var t='';"
+    "try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||"
+    "localStorage.getItem('nmt-theme')||''}catch(e){}"
+    "if(t!=='dark'&&t!=='light')"
+    "t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';"
+    "d.setAttribute('data-theme',t);")
+
 BOOT = (
-    "<script>"
-    "try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');"
-    "var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}"
-    "if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';"
-    "document.documentElement.setAttribute('data-theme',t);"
+    "<script>(function(){var d=document.documentElement;"
+    + THEME_JS +
+    "d.classList.add('js');"
     "if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)"
-    "document.documentElement.classList.add('standalone');"
-    "</script>")
+    "d.classList.add('standalone');"
+    "})();</script>")
 
 
 def head(bk, depth):
@@ -222,13 +242,15 @@ def head(bk, depth):
     return value, so the two paths cannot disagree."""
     up = "../" * depth
     if bk is None:
-        # The hub has no theme toggle: its dark mode is purely a media query, so
-        # the browser picks the bar colour with the media attribute rather than
-        # anything JavaScript has to keep in sync.
+        # The pair is right before any script runs. Once the reader has chosen
+        # a theme that is not the OS's, pwa.js rewrites both to the resolved
+        # --bg, so the browser chrome follows the page rather than the OS.
         theme = ('<meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme:light)">\n'
                  '<meta name="theme-color" content="#101216" media="(prefers-color-scheme:dark)">')
         title, icons = "Library", "icons/"
     else:
+        # The paper colour, until pwa.js sets it to the page's resolved --bg on
+        # load and after every theme change (PDA-14).
         theme = '<meta name="theme-color" content="%s">' % bk.theme_color
         title, icons = bk.short_name, "icons/"
 
@@ -428,6 +450,11 @@ def shell_files():
 # has to be fetched. offline.html is what a reader sees when the network is gone
 # and the page they asked for was never stored, so it must render from its own
 # bytes alone -- a fallback that needs a fetch to look right is not a fallback.
+#
+# The theme is resolved inline, in <head>, by the same three steps as BOOT
+# (THEME_JS), and both [data-theme] values are styled, so a reader who chose
+# dark on a light OS is not flashed a light page here. The media query is kept
+# only for a page no script has stamped.
 
 PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -435,10 +462,12 @@ PAGE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>%(title)s</title>
+<script>(function(){var d=document.documentElement;%(theme)s})();</script>
 <style>
-:root{color-scheme:light dark;--ink:#16181d;--soft:#565b66;--paper:#f4f3f0;--rule:#dcdfe5}
+:root{color-scheme:light;--ink:#16181d;--soft:#565b66;--paper:#f4f3f0;--rule:#dcdfe5}
+:root[data-theme="dark"]{color-scheme:dark;--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}
 @media (prefers-color-scheme:dark){
-  :root{--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}}
+  :root:not([data-theme]){color-scheme:dark;--ink:#e6e6e2;--soft:#a9adb6;--paper:#101216;--rule:#31353d}}
 html,body{margin:0;height:100%%}
 body{background:var(--paper);color:var(--ink);display:grid;place-items:center;
   padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));
@@ -467,6 +496,7 @@ li a{display:block;border:0;border-radius:0;padding:14px 2px}
 
 def emit_pages(bks):
     library.write(os.path.join(DOCS, "offline.html"), PAGE % {
+        "theme": THEME_JS,
         "title": "Offline — A Library",
         "body": ("<h1>Not stored on this device</h1>"
                  "<p>You are offline, and this page was never downloaded. "
@@ -479,6 +509,7 @@ def emit_pages(bks):
     # redirects, so the shortcut is a real "carry on where I was" rather than a
     # second copy of the shelf.
     library.write(os.path.join(DOCS, "continue.html"), PAGE % {
+        "theme": THEME_JS,
         "title": "Continue reading",
         "body": ('<h1>Continue reading</h1>'
                  '<p id="m">Looking for where you left off\u2026</p>'

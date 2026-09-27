@@ -32,51 +32,10 @@ def mathcss(bk):
             if bk.has("math") else "")
 
 
-# What shared/assets/book.css itself declares. A book whose theme agrees with
-# these adds nothing and its stylesheet stays byte-identical, which is why the
-# physics book -- for whom the house stylesheet was written -- needs no override.
-CSS_DEFAULTS = {"accent": "#1b4b80", "accent_dark": "#7fb0e8",
-                "ink": "#1b1b1d", "paper": "#fbfaf7"}
-
-
-def _mix(a, b, t):
-    """a, moved t of the way toward b. Both are #rrggbb."""
-    x, y = _rgb(a).split(","), _rgb(b).split(",")
-    return "#" + "".join("%02x" % round(int(p) + (int(q) - int(p)) * t)
-                         for p, q in zip(x, y))
-
-
-def themecss(bk):
-    """The book's own colours, appended to the house stylesheet.
-
-    book.css names the physics book's palette because it was written for it,
-    and forty variables is too many for every book to restate. So a book
-    declares the four it actually chooses in book.json and the cascade does the
-    rest. The soft washes behind callouts are derived rather than declared:
-    they have to sit on this book's paper, and a book should not have to hand
-    tune eight tints to change one accent.
-    """
-    t, light, dark = bk.theme, [], []
-    paper = t.get("paper") or CSS_DEFAULTS["paper"]
-    if paper != CSS_DEFAULTS["paper"]:
-        light += ["--bg:" + paper,
-                  "--bg-alt:" + _mix(paper, t.get("ink") or CSS_DEFAULTS["ink"], .045)]
-    if t.get("ink") and t["ink"] != CSS_DEFAULTS["ink"]:
-        light.append("--ink:" + t["ink"])
-    if t.get("accent") and t["accent"] != CSS_DEFAULTS["accent"]:
-        light += ["--accent:" + t["accent"],
-                  "--accent-soft:" + _mix(t["accent"], paper, .90)]
-    if t.get("accent_dark") and t["accent_dark"] != CSS_DEFAULTS["accent_dark"]:
-        dark += ["--accent:" + t["accent_dark"],
-                 "--accent-soft:" + _mix(t["accent_dark"], "#15171b", .90)]
-    if not light and not dark:
-        return ""
-    out = ["\n/* ---------- %s, from book.json ---------- */" % bk.slug]
-    if light:
-        out.append(":root{%s}" % ";".join(light))
-    if dark:
-        out.append('html[data-theme="dark"]{%s}' % ";".join(dark))
-    return "\n".join(out) + "\n"
+# The book's own colours: library.themecss(), shared with make.py so the
+# Dropbox build carries the same palette as docs/. Imported under this name
+# because helpers outside tools/ call webbuild.themecss(bk).
+themecss = library.themecss
 
 
 # The top bar is emitted by tools/nav.py over the finished tree, for the same
@@ -265,14 +224,24 @@ def landing_page(bk, stats):
 
 HUB_CSS = """
 *{box-sizing:border-box}
+/* The same role names every book page uses (DESIGN.md section 3), in both
+   themes, so the library bar, the offline shelf in pwa.css and anything else
+   that reads --bg, --paper or --ink finds the hub's own colours rather than a
+   literal fallback. --ink-faint is the palest ink a word may use: 4.96:1 on
+   the ground and 5.36:1 on a tile in light, 5.78:1 and 5.48:1 in dark. */
 :root{
-  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Charter,Georgia,Cambria,serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#878d99; --rule:#dcdfe5;
+  --serif:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+    "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --sans:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    "Helvetica Neue",Arial,sans-serif);
+  --bg:#f4f3f0; --paper:#ffffff;
+  --ink:#16181d; --ink-soft:#565b66; --ink-faint:#646975; --rule:#dcdfe5;
+  --accent-ink:var(--ink);
+  color-scheme:light;
 }
 html,body{margin:0;height:100%}
 body{
-  font-family:var(--serif); color:var(--ink); background:#f4f3f0;
+  font-family:var(--serif); color:var(--ink); background:var(--bg);
   -webkit-font-smoothing:antialiased; position:relative; overflow-x:hidden;
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
 }
@@ -323,7 +292,10 @@ header.lede{max-width:38rem;margin:0 0 clamp(2rem,5vh,3.4rem)}
   text-transform:uppercase;color:var(--ink-faint);margin:0 0 .9rem}
 h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
   font-weight:600;margin:0 0 1rem}
-.lede p{font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
+/* not the eyebrow, which is also a <p> in the lede and lost to this rule: it
+   rendered at 18px bold with 4px tracking, louder than anything but the h1
+   (FD-05) */
+.lede > p:not(.eyebrow){font-size:clamp(1rem,2vw,1.14rem);line-height:1.6;color:var(--ink-soft);margin:0;max-width:34rem}
 
 /* ---------- the shelf ---------- */
 .shelf{display:grid;grid-template-columns:repeat(2,1fr);gap:1.15rem}
@@ -340,27 +312,35 @@ h1{font-size:clamp(2.1rem,5.2vw,3.3rem);line-height:1.04;letter-spacing:-.025em;
   transition:transform .3s ease,box-shadow .3s ease,opacity .4s ease,
              border-color .3s ease,background .4s ease;
 }
+/* --bk-hue is the tile's accent in the active theme: --bk-accent on paper,
+   --bk-accent-2 (the book's accent_dark) on the dark ground, where the light
+   accents measured 2.0 to 3.4:1 (FD-03, NAV-12, PDA-04). Both are stamped on
+   the tile by hub(); the swap is below, keyed on data-theme. */
+.book{--bk-hue:var(--bk-accent)}
 .book:hover,.book:focus-visible{
   transform:translateY(-3px);
-  border-color:var(--bk-accent);
+  border-color:var(--bk-hue);
   box-shadow:0 14px 40px rgba(20,22,28,.14);
-  outline:none;
 }
+.book:hover{outline:none}
+/* a real ring in the tile's own colour: the focused tile used to differ from
+   its neighbours only by a 1px border at 2:1 (PDA-04) */
+.book:focus-visible{outline:2px solid var(--bk-hue);outline-offset:3px}
 /* the other books recede rather than disappear — still readable, plainly not the subject */
 body[data-focus] .book{opacity:.34;filter:saturate(.5)}
 body[data-focus] .book[data-live="1"]:hover,
 body[data-focus] .book[data-live="1"]:focus-visible{opacity:1;filter:none}
 
-.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-accent);margin:0 0 1.1rem}
+.book .rule{width:2.4rem;height:3px;border-radius:2px;background:var(--bk-hue);margin:0 0 1.1rem}
 .book .kicker{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--bk-accent);margin:0 0 .6rem}
+  text-transform:uppercase;color:var(--bk-hue);margin:0 0 .6rem}
 .book h2{font-size:clamp(1.5rem,3.1vw,2rem);line-height:1.08;letter-spacing:-.02em;
   font-weight:600;margin:0 0 .7rem}
 .book p{font-size:.95rem;line-height:1.55;color:var(--ink-soft);margin:0}
 .book .foot{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
   margin-top:1.5rem;font-family:var(--sans);font-size:.78rem;color:var(--ink-faint)}
 .book .count{font-weight:650;color:var(--ink-soft)}
-.book .go{color:var(--bk-accent);font-weight:650}
+.book .go{color:var(--bk-hue);font-weight:650}
 .book[data-live="0"]{cursor:default}
 .book[data-live="0"] .go{color:var(--ink-faint)}
 
@@ -386,17 +366,39 @@ footer a{color:inherit}
   .shelf{gap:.9rem}
   .book{min-height:14rem;padding:1.3rem 1.2rem 1.15rem}
 }
-@media (prefers-color-scheme:dark){
-  :root{--ink:#e6e6e2;--ink-soft:#a9adb6;--ink-faint:#787d87;--rule:#31353d;
-        --w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17}
-  body{background:#101216}
-  .book{background:rgba(24,27,32,.66)}
-  /* the accents were chosen against paper; on a dark ground the book's lighter
-     variant is the one that reads, so the two swap roles. */
-  .field{--fg:var(--a2-rgb); --fg2:var(--a-rgb)}
-  .field.base{background-image:radial-gradient(120% 80% at 50% -10%,rgba(150,160,180,.06) 0%,transparent 60%)}
-}
+/* ---------- dark ----------
+   Keyed on data-theme, which the boot script in <head> stamps before first
+   paint from the reader's choice or, failing one, from the OS. The hub used
+   to read only the media query, so it ignored the theme a reader had chosen
+   and sat dark under html[data-theme=light] (NAV-02, FD-02). The media query
+   is kept only as the fallback for a page no script has stamped. HUBDARK is
+   filled in by hub() from HUB_DARK, once for each of the two selectors. */
+HUBDARK
 """
+
+# The dark theme, as (selector suffix, declarations). hub() writes it twice:
+# under :root[data-theme="dark"], and under :root:not([data-theme]) inside the
+# prefers-color-scheme media query, so the two can never drift apart.
+HUB_DARK = (
+    ("", "--bg:#101216;--paper:#181b20;--ink:#e6e6e2;--ink-soft:#a9adb6;"
+         "--ink-faint:#8a8f99;--rule:#31353d;color-scheme:dark;"
+         "--w1:.40;--w2:.30;--w3:.11;--wg:.13;--wt:.17"),
+    # the accents were chosen against paper; on a dark ground the book's
+    # lighter variant is the one that reads, so the two swap roles, in the
+    # weather and on the tile alike
+    (" .book", "background:rgba(24,27,32,.66);--bk-hue:var(--bk-accent-2)"),
+    (" .field", "--fg:var(--a2-rgb);--fg2:var(--a-rgb)"),
+    (" .field.base", "background-image:radial-gradient(120% 80% at 50% -10%,"
+                     "rgba(150,160,180,.06) 0%,transparent 60%)"),
+)
+
+
+def hub_dark():
+    def block(scope):
+        return "\n".join("%s%s{%s}" % (scope, sel, decl) for sel, decl in HUB_DARK)
+    return (block(':root[data-theme="dark"]')
+            + "\n@media (prefers-color-scheme:dark){\n"
+            + block(":root:not([data-theme])") + "\n}")
 
 HUB_JS = """
 (function () {
@@ -425,6 +427,46 @@ def _rgb(hexcolour):
     return "%d,%d,%d" % tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
+def _luminance(hexcolour):
+    def lin(v):
+        v /= 255.0
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (int(x) for x in _rgb(hexcolour).split(","))
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
+def _contrast(a, b):
+    x, y = _luminance(a), _luminance(b)
+    return (max(x, y) + 0.05) / (min(x, y) + 0.05)
+
+
+# The tile grounds the kicker and "Read" sit on: rgba(255,255,255,.72) over the
+# light hub, rgba(24,27,32,.66) over the dark one (HUB_CSS, HUB_DARK).
+TILE_LIGHT, TILE_DARK = "#fcfcfb", "#15181d"
+
+
+def _legible(accent, ground, floor=4.5):
+    """The book's accent, or the nearest mix of it toward white (on a dark
+    ground) or black (on a light one) that reads at `floor` on `ground`.
+
+    A book chooses its accents against its own paper. On the hub they are also
+    text -- the tile's kicker and "Read" -- on a ground the book never saw, and
+    an accent_dark that is fine as a rule can be 3.8:1 as a word. Derived here
+    rather than typed into book.json, so a book whose colours already pass is
+    emitted unchanged."""
+    if _contrast(accent, ground) >= floor:
+        return accent
+    to = "#ffffff" if _luminance(ground) < 0.2 else "#000000"
+    a = [int(x) for x in _rgb(accent).split(",")]
+    b = [int(x) for x in _rgb(to).split(",")]
+    for step in range(1, 21):
+        t = step / 20.0
+        c = "#" + "".join("%02x" % round(p + (q - p) * t) for p, q in zip(a, b))
+        if _contrast(c, ground) >= floor:
+            return c
+    return to
+
+
 def _field_css(bk):
     """A background for one book, mixed from its own accent.
 
@@ -438,7 +480,7 @@ def _field_css(bk):
     return (f'.field[data-book="{bk.slug}"]{{--a-rgb:{_rgb(a)};--a2-rgb:{_rgb(a2)}}}\n'
             f'body[data-focus="{bk.slug}"] .field[data-book="{bk.slug}"]{{opacity:1}}\n'
             f'body[data-focus="{bk.slug}"] .book[data-slug="{bk.slug}"]'
-            f'{{opacity:1;filter:none;border-color:var(--bk-accent);'
+            f'{{opacity:1;filter:none;border-color:var(--bk-hue);'
             f'box-shadow:0 14px 44px -14px rgba(var(--a-rgb),.55)}}\n')
 
 
@@ -464,7 +506,8 @@ def hub(results):
         attrs = f' href="{href}"' if live else ""
         tiles.append(
             f'<{tag} class="book" data-slug="{bk.slug}" data-live="{1 if live else 0}"{attrs}'
-            f' style="--bk-accent:{bk.theme.get("accent", "#333")}">'
+            f' style="--bk-accent:{_legible(bk.theme.get("accent", "#333333"), TILE_LIGHT)};'
+            f'--bk-accent-2:{_legible(bk.theme.get("accent_dark") or bk.theme.get("accent", "#999999"), TILE_DARK)}">'
             f'<div><div class="rule"></div>'
             f'<p class="kicker">{html.escape(bk.eyebrow)}</p>'
             f'<h2>{html.escape(bk.title)}</h2>'
@@ -476,7 +519,7 @@ def hub(results):
     field_divs = "".join(
         f'<div class="field" data-book="{bk.slug}" '
         f'data-style="{bk.theme.get("field", "plain")}"></div>' for bk, _n, _s in results)
-    css = HUB_CSS.replace("BOOKFIELDS", "".join(fields))
+    css = HUB_CSS.replace("BOOKFIELDS", "".join(fields)).replace("HUBDARK", hub_dark())
 
     page = f"""<!DOCTYPE html>
 <html lang="en">
@@ -586,7 +629,11 @@ async def build_book(bk, browser):
                      count_into_stats=True)
         n += 1
 
-    pages = [("index", "contents", "Parts", f"Every chapter of {bk.title}.")]
+    # No contents page for a book with nothing written (NAV-04, FD-15): it was
+    # a heading over planned titles, or over nothing at all, and nav_items()
+    # no longer offers it.
+    pages = ([("index", "contents", "Parts", f"Every chapter of {bk.title}.")]
+             if bk.written() else [])
     if bk.has("ledger"):
         pages.append(("ledger", "ledger", "Ledger",
                       "Every mathematical object in the book: where it was defined, "

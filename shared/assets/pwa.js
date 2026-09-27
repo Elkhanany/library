@@ -14,56 +14,224 @@
 (function () {
   'use strict';
 
-  /* file:// has no origin a worker can be registered against, and the Dropbox
-   * build is opened exactly that way. Leave immediately rather than throwing. */
-  if (location.protocol === 'file:') return;
-
   var KEY = 'library:v1';
   var $ = function (s, r) { return (r || document).querySelector(s); };
+  var html = document.documentElement;
 
   function load() {
-    try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
     catch (e) { return {}; }
   }
   function save(s) {
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
   }
 
+  var state = load();
+
+  /* ================================================================ the bar
+   * Everything in this first part works on any page that carries the library
+   * bar, file:// included, because none of it needs a worker: the theme
+   * button, the Menu, and the skip link. The app layer proper starts below the
+   * file:// check. */
+
+  /* ---------------------------------------------------------------- colour
+   * A custom property's value cannot be read as a colour: getPropertyValue()
+   * returns the unresolved color-mix() text, and a computed colour serialises
+   * as color(srgb ...), which not every consumer accepts. So a colour is
+   * resolved by setting var(--x) on a probe element, painting the probe's
+   * computed colour into a 1x1 canvas, and reading the pixel back as #rrggbb
+   * (DESIGN.md section 3). book.js has its own copy as NMT.color(). */
+  var probe = null, cx = null;
+  function resolve(name) {
+    try {
+      if (!getComputedStyle(html).getPropertyValue(name).trim()) return '';
+      var host = document.body || html;
+      if (!probe) {
+        probe = document.createElement('i');
+        probe.setAttribute('aria-hidden', 'true');
+        probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;' +
+                              'visibility:hidden;pointer-events:none';
+      }
+      if (probe.parentNode !== host) host.appendChild(probe);
+      probe.style.color = 'var(' + name + ')';
+      var c = getComputedStyle(probe).color;
+      if (!cx) {
+        var cv = document.createElement('canvas');
+        cv.width = cv.height = 1;
+        cx = cv.getContext('2d', { willReadFrequently: true });
+      }
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = '#010203';
+      cx.fillStyle = c;
+      if (cx.fillStyle === '#010203') return '';     /* the canvas could not read it */
+      cx.fillRect(0, 0, 1, 1);
+      var d = cx.getImageData(0, 0, 1, 1).data;
+      if (d[3] < 255) return 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3] / 255).toFixed(3) + ')';
+      return '#' + [d[0], d[1], d[2]].map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+    } catch (e) { return ''; }
+  }
+
+  /* The browser's own chrome follows the page (PDA-14): every theme-color meta
+   * is set to the ground the page is actually painted in, --bg where the page
+   * has one and --paper on the two philosophy books. On the hub that is the
+   * media pair, which then agrees with the reader's choice rather than the
+   * OS's. */
+  function themeColor() {
+    var c = resolve('--bg') || resolve('--paper');
+    if (!c || c.charAt(0) !== '#') return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+      if (m.getAttribute('content') !== c) m.setAttribute('content', c);
+    });
+  }
+
+  /* ----------------------------------------------------------------- theme
+   * The boot script in <head> decided the theme before first paint (pwa.py
+   * BOOT: library:v1.look, then nmt-theme, then the OS). This wires the one
+   * control, button.nav-theme, the last item in the bar on every page. Nothing
+   * is written until the reader presses it: the old passive write of the
+   * current theme pinned OS-dark readers to light (NAV-02, PDA-01). */
+  function dark() { return html.getAttribute('data-theme') === 'dark'; }
+
+  function paintThemeButtons() {
+    var on = dark();
+    document.querySelectorAll('button.nav-theme').forEach(function (b) {
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Switch to light' : 'Switch to dark';
+    });
+  }
+
+  function flipTheme() {
+    var t = dark() ? 'light' : 'dark';
+    html.setAttribute('data-theme', t);
+    state.look = t;
+    delete state.theme;          /* the passive key, never read again */
+    save(state);
+    /* The older key too, so a page this shell has not replaced yet -- whose
+     * book.js still reads nmt-theme -- opens in the theme the reader chose. */
+    try { localStorage.setItem('nmt-theme', t); } catch (e) { /* private mode */ }
+    paintThemeButtons();
+    themeColor();
+    try { window.dispatchEvent(new CustomEvent('library:theme', { detail: { theme: t } })); }
+    catch (e) { /* no CustomEvent constructor: the attribute observers still fire */ }
+  }
+
+  function wireTheme() {
+    var bs = document.querySelectorAll('button.nav-theme');
+    if (!bs.length) return;
+    bs.forEach(function (b) {
+      if (b.getAttribute('data-wired')) return;
+      b.setAttribute('data-wired', '1');
+      b.addEventListener('click', flipTheme);
+      b.hidden = false;
+    });
+    /* book.js reads this at window load: with it, no floating #themer. */
+    html.classList.add('theme-wired');
+    paintThemeButtons();
+  }
+
+  /* Anything else that flips the attribute -- book.js's fallback toggle on a
+   * page this shell reaches before its own button is wired -- keeps the
+   * button's state and the browser chrome in step. */
+  new MutationObserver(function () { paintThemeButtons(); themeColor(); })
+    .observe(html, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ------------------------------------------------------------------ menu
+   * At 640px and below the book's destinations fold under one button, and
+   * Library and the theme button stay in the bar (DESIGN.md section 6).
+   * Escape closes it and gives focus back to the button; so do a tap outside
+   * it and choosing a link. */
+  function wireMenu() {
+    var bar = $('.topnav');
+    var btn = bar && bar.querySelector('button.nav-menu');
+    var panel = btn && document.getElementById(btn.getAttribute('aria-controls') || 'nav-dest');
+    if (!btn || !panel || btn.getAttribute('data-wired')) return;
+    btn.setAttribute('data-wired', '1');
+
+    function open() { return bar.classList.contains('menu-open'); }
+    function set(on, refocus) {
+      bar.classList.toggle('menu-open', on);
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (!on && refocus) btn.focus();
+    }
+    btn.addEventListener('click', function () { set(!open()); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && open()) set(false, true);
+    });
+    document.addEventListener('click', function (e) {
+      if (open() && !btn.contains(e.target) && !panel.contains(e.target)) set(false);
+    });
+    panel.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('a')) set(false);
+    });
+    addEventListener('resize', function () { if (open() && innerWidth > 640) set(false); });
+    btn.hidden = false;
+  }
+
+  /* ------------------------------------------------------------- skip link
+   * nav.py puts "Skip to text" first on every page, aimed at #text. A page
+   * whose own markup names its text keeps that target. Otherwise nav.py left a
+   * placeholder just after the bar (.skip-target), and the id moves from it to
+   * the page's own main, .main, .app or .hero, in that order of preference, so
+   * on a chapter the skip passes the sidebar too. Following the link focuses
+   * the target, so the next Tab starts inside the text. */
+  function wireSkip() {
+    var target = document.getElementById('text');
+    if (!target || target.classList.contains('skip-target')) {
+      var sels = ['main', '.main', '.app', '.hero'], found = null;
+      for (var i = 0; i < sels.length && !found; i++) found = $(sels[i]);
+      if (found) {
+        if (!found.id) {
+          if (target) target.removeAttribute('id');
+          found.id = 'text';
+        }
+        target = found;
+      }
+    }
+    if (!target) return;
+    document.querySelectorAll('a.skip').forEach(function (a) {
+      if (a.getAttribute('data-wired')) return;
+      a.setAttribute('data-wired', '1');
+      if (a.getAttribute('href') !== '#' + target.id) a.setAttribute('href', '#' + target.id);
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus();
+      });
+    });
+  }
+
+  function wireBar() { wireTheme(); wireMenu(); wireSkip(); themeColor(); }
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', wireBar);
+  else wireBar();
+  /* the stylesheets may still have been arriving the first time */
+  addEventListener('load', themeColor);
+
+  /* file:// has no origin a worker can be registered against, and the Dropbox
+   * build is opened exactly that way. Leave now rather than throwing. */
+  if (location.protocol === 'file:') return;
+
+  /* The book this page belongs to. The bar says so (nav.py stamps data-book),
+   * and whenever it does the page sits one directory down, so ROOT is '../'.
+   * That is right however docs/ is served: under the Pages project prefix,
+   * at the root of a local preview, or on a custom domain. Deriving both from
+   * the path assumed the prefix, and a root-served page lost the drawer's
+   * prev/next, the arrow keys and position memory without a word (NAV-19).
+   * The path is the fallback, for a page with no bar. */
   var parts = location.pathname.split('/').filter(Boolean);
   var SLUG = null, ROOT = './';
-
-  /* The book a page belongs to is the directory it sits in, and the hub is the
-   * only page with no such directory. Derived from the path rather than stamped
-   * into the page, so it cannot go stale. */
   (function () {
+    var tn = document.querySelector('.topnav[data-book]');
+    if (tn) {
+      SLUG = tn.getAttribute('data-book') || null;
+      ROOT = '../';
+      return;
+    }
     var f = parts[parts.length - 1] || '';
     var isFile = /\.html?$/.test(f);
     var dirs = isFile ? parts.slice(0, -1) : parts.slice();
     /* dirs[0] is the Pages project prefix ("library"); a book adds one more. */
     if (dirs.length >= 2) { SLUG = dirs[dirs.length - 1]; ROOT = '../'; }
   })();
-
-  var state = load();
-
-  /* ---------------------------------------------------------------- theme
-   * The inline boot script stamped data-theme before first paint. book.js owns
-   * the toggle and writes its own key; rather than editing book.js -- which
-   * also ships to the Dropbox build, where a slip would break the toggle on
-   * every page at once -- watch the attribute it sets and mirror it. */
-  var meta = document.querySelector('meta[name="theme-color"]:not([media])');
-  function syncTheme() {
-    var t = document.documentElement.getAttribute('data-theme') || 'light';
-    if (state.theme !== t) { state.theme = t; save(state); }
-    if (meta) {
-      var dark = meta.getAttribute('data-dark');
-      var light = meta.getAttribute('data-light') || meta.content;
-      if (!meta.getAttribute('data-light')) meta.setAttribute('data-light', light);
-      if (dark) meta.content = (t === 'dark') ? dark : light;
-    }
-  }
-  new MutationObserver(syncTheme).observe(document.documentElement,
-    { attributes: true, attributeFilter: ['data-theme'] });
-  syncTheme();
 
   /* ------------------------------------------------------- reading position
    * Where the reader was, per page, so the hub can offer to continue and a
@@ -529,50 +697,6 @@
     if (k && HERE >= 0) k.textContent = k.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
   }
 
-  /* ---- the destinations
-   * The same links the top bar carries, in the drawer that is the whole of the
-   * navigation on a phone. book.js gives the drawer one way out of the chapter,
-   * "All chapters", because that is the only one a file:// build can know
-   * about. A book with a trial registry and a stories index has three more, and
-   * a reader holding a phone had to scroll back to the top of a five-thousand
-   * word chapter to reach any of them.
-   *
-   * Taken from nav.json rather than read off the bar in the page, so it is the
-   * same list on a chapter whose bar has scrolled away, in an installed app
-   * with no browser chrome, and offline. */
-
-  function drawerLinks() {
-    var panel = document.getElementById('mnav');
-    if (!panel || panel.querySelector('.mn-dest')) return;
-    if (!NAV || !NAV.links || NAV.links.length < 2) return;
-
-    var here = file(location.pathname);
-    var box = document.createElement('div');
-    box.className = 'mn-dest';
-    NAV.links.forEach(function (item) {
-      /* The page you are on is not somewhere to go. It stays in the list, so
-       * the list is the same shape on every page, and stops being a control. */
-      var on = file(item.href) === here;
-      var el = document.createElement(on ? 'span' : 'a');
-      if (!on) el.href = item.href;
-      else el.setAttribute('aria-current', 'page');
-      if (item.key === 'library') el.className = 'up';
-      el.textContent = item.label;
-      box.appendChild(el);
-    });
-
-    var foot = panel.querySelector('.mn-foot');
-    if (foot) {
-      panel.insertBefore(box, foot);
-      /* book.js's "All chapters" is now the first entry of this list. Two
-       * controls to the same page, one above the other, is worse than either. */
-      var back = foot.querySelector('a');
-      if (back) back.remove();
-    } else {
-      panel.appendChild(box);
-    }
-  }
-
   /* The same fact on the other surface. The sidebar is the desktop drawer and
    * already names the chapter; without this, position is something only a
    * phone reader is told. */
@@ -588,10 +712,9 @@
    * rather than depend on which handler runs first, try once now and once after
    * a frame. */
   function whenDrawer() {
-    drawerLinks();
     drawerNav();
     sidebarPosition();
-    requestAnimationFrame(function () { drawerLinks(); drawerNav(); });
+    requestAnimationFrame(function () { drawerNav(); });
   }
 
   /* ---- the keyboard */
@@ -654,9 +777,10 @@
       if (file(NAV.chapters[i].href) === here) { HERE = i; break; }
     }
     /* Not gated on HERE. The prev/next row and the position are meaningless on
-     * the contents page or the trial registry, and drawerNav() declines to
-     * draw them there; the destinations are exactly as useful on those pages as
-     * in a chapter, and returning early used to take them away. */
+     * the contents page or the trial registry, and drawerNav() and
+     * sidebarPosition() decline to draw them there themselves. The book's
+     * destinations are no longer repeated in the drawer: the bar carries them,
+     * under Menu on a phone (NAV-07). */
     if (document.readyState === 'loading') {
       addEventListener('DOMContentLoaded', whenDrawer);
     } else {

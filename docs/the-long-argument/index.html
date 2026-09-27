@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Argument">
 <meta name="theme-color" content="#e7e9ed">
-<script>try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)document.documentElement.classList.add('standalone');</script>
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="../assets/pwa.js" defer></script>
 <!--/PWA-->
 <title>The Long Argument</title>
@@ -29,26 +29,36 @@
    ============================================================ */
 :root{
   color-scheme: light;
+  /* --ink-3 is the palest ink a WORD may use: 4.5:1 on the darkest ground it
+     sits on (--sunk) and 4.9:1 on the paper. --ink-4 is for rules and hairlines
+     only, never for text (DESIGN.md section 3; R-12, PDA-06). */
   --paper:#e7e9ed;  --surface:#f7f8fa;  --surface-2:#eef0f4;  --sunk:#dee1e7;
-  --ink:#12161d;    --ink-2:#4a5261;    --ink-3:#7b8390;      --ink-4:#a7aeba;
+  --ink:#12161d;    --ink-2:#4a5261;    --ink-3:#5e6470;      --ink-4:#a7aeba;
   --rule:#c8cdd6;   --rule-2:#dadee5;
   --rubric:#a3232b; --rubric-soft:#c9494a; --rubric-wash:rgba(163,35,43,.09);
+  /* the accent as a WORD, which the library bar reads first: the rubric is
+     6.1:1 on the paper in light and 5.6:1 in dark */
+  --accent-ink:var(--rubric);
   --shadow:0 1px 2px rgba(18,22,29,.07), 0 8px 24px -12px rgba(18,22,29,.22);
   --s1:#1F6FB2; --s2:#C25A2B; --s3:#0E8F72; --s4:#B58500;
   --s5:#C86E97; --s6:#2F7A2A; --s7:#4B3D9E; --s8:#D14340; --s9:#5c6472;
   --focus:#1F6FB2;
   --lane-h:19px; --bar-h:13px;
-  --f-disp:"Spectral",Georgia,"Times New Roman",serif;
-  --f-ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  /* The library's faces (DESIGN.md section 2), defined once in nav.css. No font
+     is fetched: this page used to name two it never shipped. */
+  --f-disp:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+           "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --f-ui:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+         "Helvetica Neue",Arial,sans-serif);
+  --f-mono:var(--lib-mono,ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme: dark;
     --paper:#0f1218; --surface:#171b23; --surface-2:#1d222b; --sunk:#0a0d12;
-    --ink:#e8eaee;   --ink-2:#a6adba;   --ink-3:#767e8c;   --ink-4:#545c69;
+    --ink:#e8eaee;   --ink-2:#a6adba;   --ink-3:#8a92a0;   --ink-4:#545c69;
     --rule:#2b313b;  --rule-2:#212730;
-    --rubric:#e4635f; --rubric-soft:#b9403d; --rubric-wash:rgba(228,99,95,.13);
+    --rubric:#e4635f; --rubric-soft:#b9403d; --rubric-wash:rgba(228,99,95,.10);
     --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -12px rgba(0,0,0,.7);
     --s1:#4A93D8; --s2:#D26E3E; --s3:#1BAA88; --s4:#B58609;
     --s5:#C87095; --s6:#4E9E45; --s7:#8B80E8; --s8:#DE5C58; --s9:#8792a3;
@@ -58,9 +68,9 @@
 :root[data-theme="dark"]{
   color-scheme: dark;
   --paper:#0f1218; --surface:#171b23; --surface-2:#1d222b; --sunk:#0a0d12;
-  --ink:#e8eaee;   --ink-2:#a6adba;   --ink-3:#767e8c;   --ink-4:#545c69;
+  --ink:#e8eaee;   --ink-2:#a6adba;   --ink-3:#8a92a0;   --ink-4:#545c69;
   --rule:#2b313b;  --rule-2:#212730;
-  --rubric:#e4635f; --rubric-soft:#b9403d; --rubric-wash:rgba(228,99,95,.13);
+  --rubric:#e4635f; --rubric-soft:#b9403d; --rubric-wash:rgba(228,99,95,.10);
   --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -12px rgba(0,0,0,.7);
   --s1:#4A93D8; --s2:#D26E3E; --s3:#1BAA88; --s4:#B58609;
   --s5:#C87095; --s6:#4E9E45; --s7:#8B80E8; --s8:#DE5C58; --s9:#8792a3;
@@ -83,24 +93,29 @@ em{font-style:italic;font-family:var(--f-disp);font-size:1.03em}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 .top{display:flex;align-items:center;gap:18px;padding:0 16px;height:52px;flex:none;
      background:var(--surface);border-bottom:1px solid var(--rule);position:relative;z-index:40}
-.brand{display:flex;align-items:baseline;gap:9px;flex:none}
-/* Only ever shown on a phone, where the library bar above it is hidden. It is
-   the sole route back, so it is a full touch target rather than a glyph. */
-.brand .back{display:none;align-items:center;justify-content:center;
-     width:34px;height:44px;margin-left:-8px;flex:none;
-     color:var(--rubric);font-size:19px;text-decoration:none;line-height:1}
-.brand h1{font-family:var(--f-disp);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em}
-.brand .sub{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
-     font-weight:500;padding-left:9px;border-left:2px solid var(--rubric)}
+/* The masthead: the title and its "2,600 years" line, on wide screens only. It
+   is the book's cover, so it stays; it is not a link, because the library bar
+   above it already names the book and leaves for the library. Below 1000px the
+   bar is the one place the book is named, and the header starts at its tabs
+   (NAV-11, FD-08). The h1 is always there for a screen reader. */
+.mast{display:flex;align-items:baseline;gap:10px;flex:none;color:var(--ink)}
+.mast .mt{font-family:var(--f-disp);font-weight:400;font-size:1.3rem;letter-spacing:-.01em;
+     line-height:1;white-space:nowrap}
+.mast .sub{font-family:var(--f-ui);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:700;line-height:1.1;padding-left:10px;
+     border-left:2px solid var(--rubric);white-space:nowrap}
+@media (max-width:999.98px){.mast{display:none}}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+     clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 nav.tabs{display:flex;gap:2px;margin-left:4px}
-nav.tabs button{padding:6px 12px;border-radius:5px;font-size:13px;color:var(--ink-2);font-weight:500}
+nav.tabs button{padding:6px 12px;border-radius:5px;font-size:13px;color:var(--ink-2);font-weight:600}
 nav.tabs button:hover{background:var(--surface-2);color:var(--ink)}
-nav.tabs button[aria-selected="true"]{background:var(--rubric-wash);color:var(--rubric);font-weight:600}
+nav.tabs button[aria-selected="true"]{background:var(--rubric-wash);color:var(--rubric)}
 .spacer{flex:1}
 .search{position:relative;flex:none}
 .search input{width:210px;padding:6px 10px 6px 28px;border:1px solid var(--rule);border-radius:6px;
      background:var(--paper);font-size:13px}
-.search input::placeholder{color:var(--ink-4)}
+.search input::placeholder{color:var(--ink-3)}
 .search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .results{position:absolute;top:36px;right:0;width:400px;max-height:60vh;overflow-y:auto;
      background:var(--surface);border:1px solid var(--rule);border-radius:8px;box-shadow:var(--shadow);
@@ -108,9 +123,10 @@ nav.tabs button[aria-selected="true"]{background:var(--rubric-wash);color:var(--
 .results:empty{display:none}
 .results button{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;padding:7px 9px;border-radius:5px}
 .results button:hover,.results button.on{background:var(--surface-2)}
-.results .rn{font-family:var(--f-disp);font-size:14px;font-weight:600}
+.results .rn{font-family:var(--f-disp);font-size:14.5px;font-weight:700}
 .results .ry{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);flex:none;margin-left:auto}
-.results .rk{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4);flex:none}
+.results .rk{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+     font-weight:700;flex:none;min-width:3.4em}
 .iconbtn{width:30px;height:30px;display:grid;place-items:center;border-radius:6px;color:var(--ink-2)}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 main{flex:1;min-height:0;position:relative}
@@ -121,7 +137,7 @@ main{flex:1;min-height:0;position:relative}
 .toolbar{display:flex;align-items:center;gap:14px;padding:7px 16px;flex:none;
      border-bottom:1px solid var(--rule);background:var(--surface-2);flex-wrap:wrap}
 .grp{display:flex;align-items:center;gap:5px}
-.grp>label{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-right:2px}
+.grp>label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;margin-right:2px}
 .seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--paper)}
 .seg button{padding:4px 10px;font-size:12px;color:var(--ink-2);border-right:1px solid var(--rule)}
 .seg button:last-child{border-right:0}
@@ -131,8 +147,8 @@ main{flex:1;min-height:0;position:relative}
       border:1px solid var(--rule);font-size:11.5px;color:var(--ink-2);background:var(--paper);white-space:nowrap}
 .chip:hover{border-color:var(--ink-4)}
 .chip .sw{width:9px;height:9px;border-radius:2px;flex:none}
-.chip[aria-pressed="false"]{opacity:.4}
-.chip[aria-pressed="false"] .sw{background:var(--ink-4)!important}
+.chip[aria-pressed="false"]{color:var(--ink-3)}
+.chip[aria-pressed="false"] .sw{background:transparent!important;box-shadow:inset 0 0 0 1px var(--ink-4)}
 .zoom{display:flex;align-items:center;gap:4px}
 .zoom button{width:24px;height:24px;border:1px solid var(--rule);border-radius:5px;display:grid;place-items:center;
      background:var(--paper);font-size:15px;line-height:1;color:var(--ink-2)}
@@ -147,13 +163,13 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .rail{flex:none;width:118px;border-right:1px solid var(--rule);background:var(--surface);
       display:flex;flex-direction:column;z-index:22;position:relative}
 .railhead{height:56px;flex:none;border-bottom:1px solid var(--rule);display:flex;flex-direction:column}
-.rh{height:30px;display:flex;align-items:center;padding:0 10px;font-size:9.5px;letter-spacing:.11em;
-    text-transform:uppercase;font-weight:600;color:var(--ink-4)}
+.rh{height:30px;display:flex;align-items:center;padding:0 10px;font-size:.7rem;letter-spacing:.1em;
+    text-transform:uppercase;font-weight:700;color:var(--ink-3)}
 .rh2{height:26px;border-top:1px solid var(--rule-2)}
 .railbody{flex:1;padding:10px 10px 0;overflow:hidden}
-.rtitle{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;color:var(--ink-3);
+.rtitle{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-3);
         padding-bottom:6px;border-bottom:1px solid var(--rubric-soft)}
-.rnote{margin-top:8px;font-family:var(--f-disp);font-size:10.5px;line-height:1.45;color:var(--ink-4);font-style:italic}
+.rnote{margin-top:8px;font-family:var(--f-disp);font-size:11.5px;line-height:1.45;color:var(--ink-3);font-style:italic}
 .scrollMain{flex:1;min-width:0;overflow:auto;position:relative}
 .canvas{position:relative;min-width:100%}
 .tlhead{position:sticky;top:0;z-index:20;background:var(--paper);
@@ -162,7 +178,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .era{position:absolute;top:4px;height:22px;border-left:1px solid var(--rule);
      display:flex;align-items:center;padding:0 8px;overflow:hidden;cursor:pointer;border-radius:0 3px 3px 0}
 .era:hover{background:var(--surface-2)}
-.era span{font-family:var(--f-disp);font-size:12px;font-weight:600;color:var(--ink-2);
+.era span{font-family:var(--f-disp);font-size:12px;font-weight:700;color:var(--ink-2);
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .era:hover span{color:var(--rubric)}
 .era.act{background:var(--rubric-wash)}
@@ -170,7 +186,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .ruler{position:relative;height:26px;border-bottom:1px solid var(--rule)}
 .tick{position:absolute;top:0;bottom:0;border-left:1px solid var(--rule-2)}
 .tick.maj{border-left-color:var(--rule)}
-.tick b{position:absolute;left:4px;top:5px;font-family:var(--f-mono);font-size:10px;
+.tick b{position:absolute;left:4px;top:5px;font-family:var(--f-mono);font-size:11px;
         font-weight:400;color:var(--ink-3);white-space:nowrap}
 .tick.maj b{color:var(--ink-2);font-weight:500}
 .lanes{position:relative}
@@ -180,7 +196,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .bar i{position:absolute;inset:0;border-radius:2px;background:var(--c);opacity:.88}
 .bar.unc i{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%);
                     mask-image:linear-gradient(90deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)}
-.bar b{position:relative;font-family:var(--f-disp);font-size:11px;font-weight:600;line-height:1;
+.bar b{position:relative;font-family:var(--f-disp);font-size:11px;font-weight:700;line-height:1;
        white-space:nowrap;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none}
 .bar.out{padding:0}
 .bar.out i{right:auto;width:var(--w)}
@@ -189,8 +205,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .bar:hover{z-index:6}
 .bar.fl i{left:0;width:11px;height:11px;top:1px;border-radius:2px;transform:rotate(45deg);opacity:.95}
 .bar.fl.out b{margin-left:17px}
-.lanes.dim .bar:not(.sel):not(.rel){opacity:.34}
-.lanes.dim .bar.rel{opacity:.8}
+.lanes.dim .bar.rel i{opacity:.85}
 .bar.sel{z-index:8}
 .bar.sel i{opacity:1;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink)}
 .band{position:absolute;top:0;bottom:0;background:var(--rubric-wash);
@@ -202,10 +217,10 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 /* ---------- event lanes ---------- */
 .evwrap{flex:none;display:flex;border-top:2px solid var(--rule);background:var(--surface)}
 .evrail{padding:0}
-.rtop{height:20px;display:flex;align-items:center;padding:0 10px;font-size:9.5px;letter-spacing:.11em;
-      text-transform:uppercase;font-weight:600;color:var(--ink-3);border-bottom:1px solid var(--rubric-soft)}
-.rrow{height:25px;display:flex;align-items:center;padding:0 10px;font-size:10px;color:var(--ink-3);
-      border-bottom:1px dotted var(--rule);font-weight:500}
+.rtop{height:20px;display:flex;align-items:center;padding:0 10px;font-size:.7rem;letter-spacing:.1em;
+      text-transform:uppercase;font-weight:700;color:var(--ink-3);border-bottom:1px solid var(--rubric-soft)}
+.rrow{height:25px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--ink-3);
+      border-bottom:1px dotted var(--rule);font-weight:400;line-height:1.2}
 .rrow:last-child{border-bottom:0}
 .scrollEv{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .scrollEv::-webkit-scrollbar{display:none}
@@ -217,23 +232,26 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
        box-shadow:0 0 0 2px var(--surface)}
 .ev .m.span{border-radius:2px;height:5px;background:var(--ink-4)}
 .ev.r .m{background:var(--rubric)}
-.ev em{font-family:var(--f-disp);font-style:normal;font-size:10.5px;color:var(--ink-2);white-space:nowrap;
+.ev em{font-family:var(--f-disp);font-style:normal;font-size:11px;color:var(--ink-2);white-space:nowrap;
        line-height:1;pointer-events:none}
-.ev.r em{color:var(--rubric);font-weight:600}
+.ev.r em{color:var(--rubric);font-weight:700}
 .ev:hover{z-index:9}
 .ev:hover em{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
 .ev.hide em{display:none}
-.evcanvas.dim .ev:not(.in){opacity:.3}
+/* With a thinker chosen, the events outside his lifetime step back by their
+   markers and their weight, never by fading the words (PDA-06). */
+.evcanvas.dim .ev:not(.in) .m{opacity:.3}
+.evcanvas.dim .ev:not(.in) em{color:var(--ink-3);font-weight:400}
 .evcanvas.dim .ev.in .m{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--rubric-wash)}
 
 /* ---------- tooltip ---------- */
 .tip{position:fixed;z-index:90;max-width:320px;background:var(--surface);border:1px solid var(--rule);
      border-radius:7px;box-shadow:var(--shadow);padding:9px 11px;pointer-events:none;display:none}
 .tip.on{display:block}
-.tip .t{font-family:var(--f-disp);font-size:14px;font-weight:600;line-height:1.25}
+.tip .t{font-family:var(--f-disp);font-size:14.5px;font-weight:700;line-height:1.25}
 .tip .y{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-top:1px}
 .tip .d{font-size:12px;color:var(--ink-2);margin-top:5px;line-height:1.45}
-.tip .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4);margin-top:6px}
+.tip .k{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;margin-top:6px}
 
 /* ---------- drawer ---------- */
 .drawer{position:fixed;top:52px;right:0;bottom:0;width:min(470px,92vw);background:var(--surface);
@@ -246,7 +264,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .dhead .close{position:absolute;top:12px;right:12px;width:28px;height:28px;display:grid;place-items:center;
      border-radius:6px;color:var(--ink-3);font-size:17px;line-height:1}
 .dhead .close:hover{background:var(--surface-2);color:var(--ink)}
-.dhead h2{font-family:var(--f-disp);font-size:23px;font-weight:600;margin:0 34px 3px 0;line-height:1.15;
+.dhead h2{font-family:var(--f-disp);font-size:24px;font-weight:400;margin:0 34px 3px 0;line-height:1.15;
      letter-spacing:-.015em}
 .dmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:7px}
 .dates{font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
@@ -257,7 +275,7 @@ select.sel{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;backgr
 .one{font-family:var(--f-disp);font-size:16.5px;line-height:1.45;color:var(--ink);margin:16px 0 0;
      padding-left:13px;border-left:2px solid var(--rubric)}
 .sec{margin-top:22px}
-.sec>h3{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:600;
+.sec>h3{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
      margin:0 0 9px;padding-bottom:5px;border-bottom:1px solid var(--rule-2)}
 .ideas{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
 .ideas li{font-family:var(--f-disp);font-size:14.2px;line-height:1.52;color:var(--ink);
@@ -271,16 +289,16 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
      font-family:var(--f-ui)}
 .links{display:flex;flex-direction:column;gap:11px}
 .linkrow{display:flex;gap:9px;align-items:flex-start}
-.linkrow>.kind{flex:none;width:76px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
-     color:var(--ink-4);font-weight:600;padding-top:4px}
+.linkrow>.kind{flex:none;width:84px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:700;padding-top:5px}
 .linkset{display:flex;flex-wrap:wrap;gap:5px}
 .pchip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font-size:12px;
      background:var(--surface-2);color:var(--ink);border:1px solid transparent;font-family:var(--f-disp)}
 .pchip:hover{border-color:var(--rule);background:var(--paper)}
 .pchip .sw{width:7px;height:7px;border-radius:2px;flex:none}
 .pchip.echo{border:1px dashed var(--rule);background:transparent}
-.enote{font-size:11.5px;color:var(--ink-3);font-family:var(--f-disp);font-style:italic;
-     margin:3px 0 0 85px;line-height:1.45}
+.enote{font-size:12.5px;color:var(--ink-3);font-family:var(--f-disp);font-style:italic;
+     margin:3px 0 0 93px;line-height:1.45}
 .thset{display:flex;flex-wrap:wrap;gap:5px}
 .thchip{padding:3px 9px;border-radius:20px;font-size:11.5px;border:1px solid var(--rule);color:var(--ink-2)}
 .thchip:hover{border-color:var(--rubric-soft);color:var(--rubric)}
@@ -290,13 +308,14 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
       border-bottom:1px solid var(--rule-2);align-items:baseline}
 .wrow:last-child{border-bottom:0}
 .wy{font-family:var(--f-mono);font-size:11px;color:var(--ink-2);white-space:nowrap}
-.wage{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-4);white-space:nowrap;text-align:right}
+.wage{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);white-space:nowrap;text-align:right}
 .wt{font-size:13px;line-height:1.4}
-.wt b{font-family:var(--f-disp);font-weight:600;font-size:13.5px;display:block}
+.wt b{font-family:var(--f-disp);font-weight:700;font-size:13.5px;display:block}
 .wt.r b{color:var(--rubric)}
 .wt span{color:var(--ink-3);font-size:12px;font-family:var(--f-disp);line-height:1.45;display:block;margin-top:2px}
-.wcat{display:inline-block;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-4);
-      border:1px solid var(--rule);border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.wcat{display:inline-block;font-family:var(--f-ui);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--ink-3);font-weight:700;border:1px solid var(--rule);border-radius:3px;padding:0 4px;
+      margin-left:6px;vertical-align:1px}
 .more{font-size:12px;color:var(--rubric);font-weight:500;margin-top:9px}
 .more:hover{text-decoration:underline}
 .empty{font-size:13px;color:var(--ink-3);font-style:italic;font-family:var(--f-disp)}
@@ -317,8 +336,8 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
 .netrail{flex:none;width:118px;border-right:1px solid var(--rule);background:var(--surface);
          position:relative;overflow:hidden}
 .netrailin{position:absolute;inset:0}
-.nrow{position:absolute;left:0;right:0;padding:6px 10px 0;font-size:9.5px;letter-spacing:.09em;
-      text-transform:uppercase;font-weight:600;color:var(--ink-3);border-top:1px solid var(--rule-2);
+.nrow{position:absolute;left:0;right:0;padding:6px 10px 0;font-size:.7rem;letter-spacing:.08em;
+      text-transform:uppercase;font-weight:700;color:var(--ink-3);border-top:1px solid var(--rule-2);
       line-height:1.25}
 .netscroll{flex:1;min-width:0;overflow:auto}
 #net{display:block}
@@ -330,17 +349,22 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
 #net.foc .edge.far{opacity:.22;stroke-width:1.2}
 #net .nd{cursor:pointer}
 #net .nd circle{stroke:var(--paper);stroke-width:1.5}
-#net .nd text{font-family:var(--f-disp);font-size:10px;fill:var(--ink-2);pointer-events:none}
+#net .nd text{font-family:var(--f-disp);font-size:11px;fill:var(--ink-2);pointer-events:none}
 #net .nd:hover circle{stroke:var(--ink);stroke-width:2}
 #net .nd:hover text{fill:var(--ink)}
-#net.foc .nd{opacity:.22}
-#net.foc .nd.on,#net.foc .nd.up,#net.foc .nd.down{opacity:1}
+/* With a thinker in focus, those outside his line step back: the dot fades and
+   the name drops to the palest word ink, still at full strength. Opacity on the
+   whole node put those names at about 1.5:1 (DESIGN.md section 1, principle 5). */
+#net.foc .nd:not(.on):not(.up):not(.down) circle{opacity:.22}
+#net.foc .nd:not(.on):not(.up):not(.down) text{fill:var(--ink-3);font-weight:400}
+#net.foc .nd:not(.on):not(.up):not(.down):hover circle{opacity:1}
+#net.foc .nd:not(.on):not(.up):not(.down):hover text{fill:var(--ink)}
 #net .nd.on circle{stroke:var(--ink);stroke-width:2.5}
-#net .nd.on text{fill:var(--ink);font-weight:600}
-#net .rowlab{font-family:var(--f-ui);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
-     fill:var(--ink-4);font-weight:600}
+#net .nd.on text{fill:var(--ink);font-weight:700}
+#net .rowlab{font-family:var(--f-ui);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+     fill:var(--ink-3);font-weight:700}
 #net .rowline{stroke:var(--rule-2);stroke-width:1}
-#net .yr{font-family:var(--f-mono);font-size:9.5px;fill:var(--ink-4)}
+#net .yr{font-family:var(--f-mono);font-size:11px;fill:var(--ink-3)}
 #net .vline{stroke:var(--rule-2);stroke-width:1}
 
 /* ---------- threads view ---------- */
@@ -350,7 +374,7 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
 .lede strong{color:var(--ink);font-weight:600}
 .thread{margin-bottom:34px;padding-bottom:8px}
 .thead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-.thead h3{font-family:var(--f-disp);font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+.thead h3{font-family:var(--f-disp);font-size:21px;font-weight:700;margin:0;letter-spacing:-.01em}
 .thead .q{font-family:var(--f-disp);font-style:italic;font-size:15px;color:var(--rubric)}
 .thread>p{font-size:13.5px;color:var(--ink-2);margin:0 0 14px;max-width:70ch;line-height:1.55}
 .trail{position:relative;overflow-x:auto;padding:12px 0 6px}
@@ -362,8 +386,8 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
      box-shadow:0 0 0 3px var(--paper);margin-top:7px}
 .tnode .nm{font-family:var(--f-disp);font-size:11.5px;line-height:1.2;text-align:center;color:var(--ink-2);
      word-break:break-word}
-.tnode .yr{font-family:var(--f-mono);font-size:9.5px;color:var(--ink-4)}
-.tnode:hover .nm{color:var(--ink);font-weight:600}
+.tnode .yr{font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
+.tnode:hover .nm{color:var(--ink);font-weight:700}
 .tnode:hover .dot{transform:scale(1.25)}
 
 /* ---------- reading path ---------- */
@@ -372,35 +396,35 @@ blockquote cite{display:block;margin-top:7px;font-size:11px;font-style:normal;co
       display:flex;flex-direction:column;gap:9px}
 .pairhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .pairhead .arrow{color:var(--rubric);font-size:15px}
-.pairname{font-family:var(--f-disp);font-size:16px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.pairname{font-family:var(--f-disp);font-size:16px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
 .pairname:hover{color:var(--rubric)}
 .pairname .sw{width:8px;height:8px;border-radius:2px}
 .pair .w{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);
      background:var(--surface-2);padding:6px 9px;border-radius:5px;line-height:1.5}
 .pair .why{font-family:var(--f-disp);font-size:13.5px;line-height:1.55;color:var(--ink-2);margin:0}
 .twocol{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;margin-top:34px}
-.listbox h4{font-family:var(--f-disp);font-size:16px;font-weight:600;margin:0 0 4px}
+.listbox h4{font-family:var(--f-disp);font-size:17px;font-weight:700;margin:0 0 4px}
 .listbox>p{font-size:13px;color:var(--ink-3);margin:0 0 12px;line-height:1.5}
 .tl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .tl-list li{border-bottom:1px solid var(--rule-2)}
 .tl-list button{display:flex;width:100%;gap:9px;align-items:baseline;padding:8px 4px;text-align:left}
 .tl-list button:hover{background:var(--surface-2)}
 .tl-list .sw{width:8px;height:8px;border-radius:2px;flex:none;transform:translateY(-1px)}
-.tl-list .nm{font-family:var(--f-disp);font-size:14px;font-weight:600}
+.tl-list .nm{font-family:var(--f-disp);font-size:14.5px;font-weight:700}
 .tl-list .wk{font-family:var(--f-disp);font-size:13px;color:var(--ink-2);font-style:italic}
-h2.vh{font-family:var(--f-disp);font-size:26px;font-weight:600;margin:0 0 6px;letter-spacing:-.015em}
+h2.vh{font-family:var(--f-disp);font-size:28px;font-weight:400;margin:0 0 6px;letter-spacing:-.015em}
 
 /* ---------- era popover / legend note ---------- */
 .eranote{position:fixed;z-index:70;max-width:390px;background:var(--surface);border:1px solid var(--rule);
      border-radius:9px;box-shadow:var(--shadow);padding:14px 16px;display:none}
 .eranote.on{display:block}
-.eranote h4{font-family:var(--f-disp);font-size:16px;font-weight:600;margin:0 0 2px}
+.eranote h4{font-family:var(--f-disp);font-size:17px;font-weight:700;margin:0 0 2px}
 .eranote .r{font-family:var(--f-mono);font-size:11px;color:var(--rubric);margin-bottom:7px}
 .eranote p{font-family:var(--f-disp);font-size:13.5px;line-height:1.55;color:var(--ink-2);margin:0}
 .eranote .x{position:absolute;top:8px;right:10px;color:var(--ink-3);font-size:15px;line-height:1}
 
 @media (max-width:1000px){
-  .brand .sub,.hint{display:none}
+  .hint{display:none}
   .top{gap:10px;padding:0 10px}
   .search input{width:130px}
   .drawer{width:100vw;top:0}
@@ -418,36 +442,41 @@ nav.tabs{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{flex:none}
 .t-narrow{display:none}
-/* Making the strip scrollable is not enough on a phone: the title, the search
-   field and the theme button leave it about 130 physical pixels, which is one
-   tab and a sliver, and a 130px scroll track is not a gesture anyone finds.
-   Below 700px the tabs take a row of their own, so the strip is as wide as the
-   screen and the swipe has somewhere to go. 700 and not 1000 because a phone
-   held sideways is 844px and everything fits on one line there. */
-@media (max-width:700px){
-  .top{flex-wrap:wrap;height:auto;row-gap:0;padding-top:0;padding-bottom:0}
-  .brand{order:1;align-items:center;min-height:48px}
-  .search{order:2;margin-left:auto;display:flex;align-items:center;min-height:48px}
-  #theme{order:3}
-  nav.tabs{order:4;flex:1 0 100%;width:100%;margin:0 -8px;padding:0 8px;
-     border-top:1px solid var(--rule)}
-  nav.tabs button{padding:8px 7px}
-  /* "Reading path" alone is a sixth of the strip; shortened, all six tabs fit
-     a 390px screen with nothing to scroll to at all. */
-  .t-wide{display:none}
-  .t-narrow{display:inline}
-}
+/* When the strip does have to scroll, its cut edge fades, so a reader can see
+   there is more of it (FD-08). Set from script, which knows whether it scrolls. */
+nav.tabs.more-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent);
+     mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent)}
+nav.tabs.more-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 30px);
+     mask-image:linear-gradient(90deg,transparent,#000 30px)}
+nav.tabs.more-l.more-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 30px,#000 calc(100% - 30px),transparent);
+     mask-image:linear-gradient(90deg,transparent,#000 30px,#000 calc(100% - 30px),transparent)}
 @media (max-width:1000px){
   .top{gap:8px;padding:0 8px}
-  .brand h1{font-size:16px}
   nav.tabs{flex:1 1 auto;margin-left:0}
   nav.tabs button{padding:6px 9px}
   .spacer{display:none}
   .search{flex:none}
-  .search input{width:34px;padding-left:26px;transition:width .18s}
+  /* the field folds to its magnifier, and opens when it is used */
+  .search input{width:34px;padding-left:30px}
+  .search svg{left:11px}
   .search input:focus{width:150px}
   .studybar{padding:0 6px}
   .studybar .lab{display:none}
+}
+@media (max-width:1000px) and (prefers-reduced-motion:no-preference){
+  .search input{transition:width .18s}
+}
+/* From 1000 to 1180px the masthead, the six tabs and a 210px search field
+   did not fit one row. The strip scrolled under its fade, and at 1001px the
+   sixth tab sat wholly beyond it, where a mouse could not reach it. Here that
+   tab takes its short name, the row's gaps close up and the field narrows, so
+   all six tabs show beside the masthead. Before the touch rules, so a coarse
+   pointer keeps its folded field. */
+@media (min-width:1000.02px) and (max-width:1179.98px){
+  .top{gap:12px}
+  .t-wide{display:none}
+  .t-narrow{display:inline}
+  .search input{width:140px;text-overflow:ellipsis}
 }
 
 /* ---------- iOS ----------
@@ -458,12 +487,14 @@ nav.tabs button{flex:none}
    safe-area padding keeps the drawer's controls clear of the home indicator. */
 @media (pointer:coarse){
   .search input,select.sel,input,select,textarea{font-size:16px}
-  .search input{width:40px;padding-left:28px}
+  .search input{width:44px;padding-left:36px}
+  .search svg{left:16px}
   .search input:focus{width:min(210px,52vw)}
   nav.tabs button,.seg button,.zoom button,.iconbtn,.stab,select.sel,.search input{min-height:44px}
   .iconbtn{flex:none;width:44px;height:44px}
   .zoom button{width:36px}
-  .chip,.thchip,.pchip,.argchip,.cnode{min-height:40px}
+  /* every chip a finger presses is the library's 44px (PDA-10) */
+  .chip,.thchip,.pchip,.argchip,.cnode,.snav a,.sgo button,.sgo a{min-height:44px}
   .tl-list button,.results button,.plate,.nfrow button{min-height:44px}
   .dhead .close{width:44px;height:44px;top:8px;right:8px}
   .drawer{padding-bottom:env(safe-area-inset-bottom)}
@@ -476,6 +507,28 @@ nav.tabs button{flex:none}
          padding-right:max(8px,env(safe-area-inset-right))}
   }
 }
+/* ---------- a phone: one row of chrome ----------
+   The header held the title, the search field and the theme button, and the
+   tabs took a second row under it: with the library bar that was 137px before
+   the toolbar. The bar names the book and holds the theme now, so the tabs and
+   a folded search share one 44px row (NAV-11, PDA-08). The studies' strip and
+   their section index fold too: the strip moves into the study, above its
+   title, and scrolls away with it, and the index is no longer pinned. What stays
+   on screen while a study is read is the bar and this row. */
+@media (max-width:700px){
+  .top{height:auto;min-height:44px;gap:4px;padding-top:0;padding-bottom:0}
+  nav.tabs{flex:1 1 auto;margin:0}
+  nav.tabs button{padding:0 8px;min-height:44px;border-radius:0}
+  nav.tabs button[aria-selected="true"]{background:transparent;box-shadow:inset 0 -2px 0 var(--rubric)}
+  .search{flex:none;display:flex;align-items:center;min-height:44px}
+  .results{width:min(400px,calc(100vw - 16px))}
+  /* "Reading path" alone is a sixth of the strip */
+  .t-wide{display:none}
+  .t-narrow{display:inline}
+  #v-study .studybar{height:auto;min-height:40px;padding:0 10px;
+     border-bottom:1px solid var(--rule);background:var(--surface-2)}
+  #v-study .stab{margin-top:6px}
+}
 
 /* ---------- quieter chrome ----------
    The toolbar carried four labelled control groups and nine bordered tradition
@@ -487,12 +540,13 @@ nav.tabs button{flex:none}
    controls. */
 .toolbar{gap:16px;padding:9px 18px;background:var(--surface);row-gap:8px}
 .grp{gap:7px}
-.grp>label{font-size:9.5px;letter-spacing:.13em;color:var(--ink-4);font-weight:600;opacity:.85}
+.grp>label{font-size:.7rem;letter-spacing:.1em;color:var(--ink-3);font-weight:700}
 
 /* tradition filters: colour and word, nothing else */
 #streamChips{gap:2px;margin-left:2px;padding-left:14px;border-left:1px solid var(--rule-2)}
 #streamChips .chip{border:0;background:transparent;padding:3px 7px;border-radius:5px;
-  font-size:11px;color:var(--ink-3);transition:color .15s,background .15s}
+  font-size:11px;color:var(--ink-3)}
+@media (prefers-reduced-motion:no-preference){#streamChips .chip{transition:color .15s,background .15s}}
 #streamChips .chip:hover{background:var(--surface-2);color:var(--ink)}
 #streamChips .chip[aria-pressed="true"],#streamChips .chip.on{color:var(--ink);background:var(--surface-2)}
 #streamChips .chip .sw{width:8px;height:8px;border-radius:50%}
@@ -568,20 +622,20 @@ body>nav{flex:none}
   scrollbar-width:none}
 .studybar::-webkit-scrollbar{display:none}
 .studybar.on{display:flex}
-.studybar .lab{flex:none;align-self:center;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--ink-4);font-weight:600;padding-right:12px;margin-right:4px;border-right:1px solid var(--rule-2)}
+.studybar .lab{flex:none;align-self:center;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:700;padding-right:12px;margin-right:4px;border-right:1px solid var(--rule-2)}
 .stab{flex:none;display:inline-flex;align-items:center;gap:7px;padding:0 9px 0 11px;margin:4px 3px 0 0;
   border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;background:transparent;
   font-family:var(--f-disp);font-size:12.5px;color:var(--ink-2);white-space:nowrap;position:relative}
 .stab .sw{width:7px;height:7px;border-radius:2px;flex:none}
 .stab>span:not(.sw):not(.x){overflow:hidden;text-overflow:ellipsis;max-width:170px}
 .stab:hover{background:var(--surface);color:var(--ink)}
-.stab[aria-selected="true"]{background:var(--paper);border-color:var(--rule);color:var(--ink);font-weight:600}
+.stab[aria-selected="true"]{background:var(--paper);border-color:var(--rule);color:var(--ink);font-weight:700}
 .stab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--paper)}
-.stab .x{width:15px;height:15px;display:grid;place-items:center;border-radius:3px;font-size:13px;
-  line-height:1;color:var(--ink-4);flex:none}
+.stab .x{width:18px;height:18px;display:grid;place-items:center;border-radius:3px;font-size:14px;
+  line-height:1;color:var(--ink-3);flex:none}
 .stab .x:hover{background:var(--rubric-wash);color:var(--rubric)}
-.studybar .closeall{flex:none;align-self:center;margin-left:auto;padding:0 8px;font-size:11px;color:var(--ink-4)}
+.studybar .closeall{flex:none;align-self:center;margin-left:auto;padding:0 8px;font-size:12px;color:var(--ink-3)}
 .studybar .closeall:hover{color:var(--rubric)}
 
 /* ---------- the page ---------- */
@@ -589,11 +643,11 @@ body>nav{flex:none}
 .shero{padding:34px 0 22px;border-bottom:1px solid var(--rule);margin-bottom:30px;position:relative}
 .shero::before{content:"";position:absolute;left:-34px;top:34px;bottom:22px;width:3px;
   background:var(--c);border-radius:2px;opacity:.85}
-.skick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.13em;
-  text-transform:uppercase;font-weight:600;color:var(--ink-3);margin-bottom:11px}
+.skick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:700;color:var(--ink-3);margin-bottom:11px}
 .skick .sw{width:9px;height:9px;border-radius:2px;background:var(--c)}
-.skick .dot{color:var(--ink-4)}
-.shero h2{font-family:var(--f-disp);font-size:clamp(30px,4.4vw,46px);font-weight:600;margin:0;
+.skick .dot{color:var(--ink-3)}
+.shero h2{font-family:var(--f-disp);font-size:clamp(30px,4.4vw,46px);font-weight:400;margin:0;
   letter-spacing:-.025em;line-height:1.03}
 .sdates{font-family:var(--f-mono);font-size:13px;color:var(--ink-2);margin-top:9px}
 .ssub{font-family:var(--f-disp);font-size:clamp(17px,2.2vw,21px);font-style:italic;color:var(--rubric);
@@ -603,8 +657,8 @@ body>nav{flex:none}
 /* ---------- section navigation ---------- */
 .snav{position:sticky;top:0;z-index:12;display:flex;gap:2px;flex-wrap:wrap;padding:9px 0 9px;
   margin-bottom:6px;background:var(--paper);border-bottom:1px solid var(--rule-2)}
-.snav a{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--ink-4);
-  text-decoration:none;padding:4px 9px;border-radius:5px}
+.snav a{display:inline-flex;align-items:center;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;color:var(--ink-3);text-decoration:none;padding:4px 9px;border-radius:5px}
 .snav a:hover{background:var(--surface-2);color:var(--ink)}
 .snav a.on{color:var(--rubric);background:var(--rubric-wash)}
 
@@ -614,13 +668,13 @@ body>nav{flex:none}
 .scol{min-width:0}
 .ssec{margin-top:38px;scroll-margin-top:56px}
 .ssec:first-child{margin-top:26px}
-.ssec>h3{font-family:var(--f-ui);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+.ssec>h3{font-family:var(--f-ui);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
   color:var(--ink-3);font-weight:700;margin:0 0 4px}
-.ssec>.sh{font-family:var(--f-disp);font-size:23px;font-weight:600;letter-spacing:-.015em;margin:0 0 16px;
+.ssec>.sh{font-family:var(--f-disp);font-size:24px;font-weight:700;letter-spacing:-.015em;margin:0 0 16px;
   padding-bottom:9px;border-bottom:1px solid var(--rule-2)}
 .sp{font-family:var(--f-disp);font-size:16.5px;line-height:1.66;color:var(--ink);margin:0 0 17px;max-width:72ch}
 .sp:last-child{margin-bottom:0}
-.sp strong{font-weight:600}
+.sp strong{font-weight:700}
 .ssec .sp:first-of-type::first-letter{font-size:1em}
 
 /* ---------- a work ---------- */
@@ -630,10 +684,10 @@ body>nav{flex:none}
   background:var(--c);box-shadow:0 0 0 3px var(--paper)}
 .wk:hover{border-left-color:var(--c)}
 .wkh{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:9px}
-.wkh h4{font-family:var(--f-disp);font-size:19px;font-weight:600;font-style:italic;margin:0;
+.wkh h4{font-family:var(--f-disp);font-size:19px;font-weight:700;font-style:italic;margin:0;
   letter-spacing:-.01em;line-height:1.25}
 .wky{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap}
-.wkk{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);font-weight:600;
+.wkk{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
   border:1px solid var(--rule-2);border-radius:3px;padding:1px 5px}
 .wk .sp{font-size:15.5px;line-height:1.62;color:var(--ink-2);margin-bottom:12px}
 .wk .sp:last-child{margin-bottom:0}
@@ -642,32 +696,34 @@ body>nav{flex:none}
 .saside{display:flex;flex-direction:column;gap:15px;position:sticky;top:52px}
 @media (max-width:1080px){.saside{position:static}}
 .scard{border:1px solid var(--rule-2);border-radius:9px;background:var(--surface);padding:13px 15px 14px}
-.scard>h4{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
+.scard>h4{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
   margin:0 0 9px;padding-bottom:6px;border-bottom:1px solid var(--rule-2)}
 .scard .sp{font-size:13.5px;line-height:1.55;color:var(--ink-2);margin-bottom:9px}
 .scard blockquote{background:transparent;padding:0;border-left:2px solid var(--rubric);padding-left:12px}
 .scard blockquote p{font-size:13.5px;line-height:1.5}
-.scard .linkrow>.kind{width:66px}
+.scard .linkrow>.kind{width:72px}
 .scard .enote{margin-left:0}
 .scard .world{gap:0}
-.scard .wrow{grid-template-columns:46px 1fr;gap:9px;padding:6px 0}
+/* the date takes the room it needs: "1618-1648" is 60px of mono and ran into
+   the event's name in a 46px track (R-18) */
+.scard .wrow{grid-template-columns:auto 1fr;gap:10px;padding:6px 0}
 .scard .wt b{font-size:12.5px}
 .scard .wt span{display:none}
 .caveat{border-color:var(--rubric-soft);background:var(--rubric-wash)}
 .caveat>h4{color:var(--rubric);border-bottom-color:var(--rubric-soft)}
 .caveat .sp{color:var(--ink);margin-bottom:0}
 .sgo{display:flex;flex-direction:column;gap:4px}
-.sgo button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
-  padding:8px 10px;border-radius:6px;font-size:12.5px;color:var(--ink-2);text-align:left}
-.sgo button:hover{background:var(--surface-2);color:var(--ink)}
-.sgo button i{font-style:normal;color:var(--rubric)}
+.sgo button,.sgo a{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  padding:8px 10px;border-radius:6px;font-size:12.5px;color:var(--ink-2);text-align:left;text-decoration:none}
+.sgo button:hover,.sgo a:hover{background:var(--surface-2);color:var(--ink)}
+.sgo button i,.sgo a i{font-style:normal;color:var(--rubric)}
 .sempty{font-family:var(--f-disp);font-style:italic;color:var(--ink-3);font-size:15px;
   border-left:2px solid var(--rule);padding-left:16px;max-width:60ch;line-height:1.6}
 
 /* ---------- foot of the study ---------- */
 .sfoot{margin-top:52px;padding-top:20px;border-top:1px solid var(--rule);display:flex;gap:14px;
   flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink-3)}
-.sfoot .nxt{display:inline-flex;align-items:center;gap:7px;font-family:var(--f-disp);font-size:14px;
+.sfoot .nxt{display:inline-flex;align-items:center;gap:7px;font-family:var(--f-disp);font-size:14.5px;
   color:var(--ink-2)}
 .sfoot .nxt:hover{color:var(--rubric)}
 
@@ -686,25 +742,33 @@ body>nav{flex:none}
 .tgh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:9px;margin-bottom:16px;
   border-bottom:1px solid var(--rule)}
 .tgh .sw{width:11px;height:11px;border-radius:3px;align-self:center}
-.tgh h3{font-family:var(--f-disp);font-size:21px;font-weight:600;margin:0;letter-spacing:-.015em}
+.tgh h3{font-family:var(--f-disp);font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em}
 .tgh .full{font-size:12.5px;color:var(--ink-3);font-family:var(--f-disp)}
-.tgh .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--ink-4)}
+.tgh .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
 .plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(226px,1fr));gap:13px;
   grid-auto-flow:dense}
 .plate{display:flex;flex-direction:column;align-items:stretch;gap:0;text-align:left;
   border:1px solid var(--rule-2);border-radius:9px;background:var(--surface);
   padding:13px 15px 12px;position:relative;overflow:hidden;
-  transition:border-color .18s,transform .18s,box-shadow .18s,background .18s}
+  transition:border-color .18s,box-shadow .18s,background .18s}
+/* The lift is motion, so it moves only for a reader who has not asked for less
+   (PDA-02): no transform, and no transition of one, under reduce. */
+@media (prefers-reduced-motion:no-preference){
+  .plate{transition:border-color .18s,transform .18s,box-shadow .18s,background .18s}
+}
 .plate::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);opacity:.9}
 .plate:hover,.plate:focus-visible{border-color:var(--rule);transform:translateY(-2px);
   box-shadow:var(--shadow);background:var(--paper)}
-.plate .pyr{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-4);margin-bottom:5px}
-.plate .pn{font-family:var(--f-disp);font-size:17px;font-weight:600;line-height:1.15;letter-spacing:-.015em;
+@media (prefers-reduced-motion:reduce){
+  .plate,.plate:hover,.plate:focus-visible,.plate:active{transform:none;transition:none}
+}
+.plate .pyr{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-bottom:5px}
+.plate .pn{font-family:var(--f-disp);font-size:17px;font-weight:700;line-height:1.15;letter-spacing:-.015em;
   color:var(--ink);margin-bottom:4px}
 .plate .psch{font-size:11px;color:var(--ink-3);margin-bottom:9px}
 .plate .pone{font-family:var(--f-disp);font-size:13.5px;line-height:1.5;color:var(--ink-2);margin:0 0 11px}
-.plate .pmeta{margin-top:auto;display:flex;flex-wrap:wrap;gap:5px;align-items:center;
-  font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-4);font-weight:600}
+.plate .pmeta{margin-top:auto;display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;
+  font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
 .plate .pmeta b{font-weight:700;color:var(--ink-3)}
 .plate .pmeta .has{color:var(--rubric)}
 .plate .pq{font-family:var(--f-disp);font-style:italic;font-size:14px;line-height:1.5;color:var(--ink-2);
@@ -725,11 +789,11 @@ body>nav{flex:none}
   width:100%;text-align:left;padding:9px 6px;border-bottom:1px solid var(--rule-2)}
 .tkline:hover{background:var(--surface-2)}
 .tkline .sw{width:9px;height:9px;border-radius:2px;align-self:center}
-.tkline .pn{font-family:var(--f-disp);font-size:15px;font-weight:600}
-.tkline .pyr{font-family:var(--f-mono);font-size:11px;color:var(--ink-4)}
+.tkline .pn{font-family:var(--f-disp);font-size:15px;font-weight:700}
+.tkline .pyr{font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
 .tkline .pone{font-family:var(--f-disp);font-size:13.5px;color:var(--ink-2);line-height:1.45}
-.tkline .pmeta{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-4);
-  font-weight:600;white-space:nowrap}
+.tkline .pmeta{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:700;white-space:nowrap}
 @media (max-width:1000px){
   .tkline{grid-template-columns:15px 1fr}
   .tkline .pone,.tkline .pmeta{display:none}
@@ -766,7 +830,8 @@ body>nav{flex:none}
 :root{--lane-h:24px; --bar-h:9px; --lab-h:12px; --lab-size:11px;
       --bar-edge:rgba(18,22,29,.16)}
 @media (min-height:1000px){:root{--lane-h:26px}}
-@media (max-height:759px){:root{--lane-h:20px;--bar-h:8px;--lab-h:11px;--lab-size:10px}}
+/* shorter lanes on a short window, but never a name below 11px */
+@media (max-height:759px){:root{--lane-h:21px;--bar-h:8px;--lab-h:12px;--lab-size:11px}}
 :root[data-theme="dark"]{--bar-edge:rgba(255,255,255,.12)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bar-edge:rgba(255,255,255,.12)}}
 
@@ -780,25 +845,25 @@ body>nav{flex:none}
 .era::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;
      background:var(--rubric-soft);opacity:.5}
 .era:nth-child(2n){background:var(--surface-2)}
-.era span{font-family:var(--f-disp);font-size:12.5px;font-weight:600;color:var(--ink-3);
-     letter-spacing:.004em;line-height:1.2}
-.era i{font-family:var(--f-mono);font-style:normal;font-size:8.5px;color:var(--ink-4);
-     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3}
+.era span{font-family:var(--f-disp);font-size:12.5px;font-weight:700;color:var(--ink-2);
+     letter-spacing:.004em;line-height:1.15}
+.era i{font-family:var(--f-mono);font-style:normal;font-size:11px;color:var(--ink-3);
+     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2}
 .era:hover span,.era.act span{color:var(--ink)}
 .era:hover{background:var(--surface)}
 .era.act{background:var(--rubric-wash)}
-.era.act i{color:var(--rubric-soft)}
+.era.act i{color:var(--rubric)}
 
 .ruler{height:24px;border-bottom:1px solid var(--rule)}
 .tick{top:0;bottom:0;border-left:0}
 .tick::after{content:"";position:absolute;left:0;bottom:0;width:1px;height:5px;background:var(--rule)}
 .tick.maj::after{height:9px;background:var(--ink-4)}
-.tick b{position:absolute;left:5px;bottom:6px;top:auto;font-family:var(--f-mono);font-size:10px;
-     font-variant-numeric:tabular-nums;color:var(--ink-4);font-weight:400;white-space:nowrap}
-.tick.maj b{color:var(--ink-2);font-weight:500}
-.tick.epoch b{color:var(--rubric);font-weight:600}
+.tick b{position:absolute;left:5px;bottom:5px;top:auto;font-family:var(--f-mono);font-size:11px;
+     font-variant-numeric:tabular-nums;color:var(--ink-3);font-weight:400;white-space:nowrap}
+.tick.maj b{color:var(--ink-2);font-weight:400}
+.tick.epoch b{color:var(--rubric);font-weight:700}
 .tick.nowtick::after{background:var(--rubric-soft);height:9px}
-.tick.nowtick b{color:var(--rubric);font-weight:600;letter-spacing:.08em;font-size:9px}
+.tick.nowtick b{color:var(--rubric);font-weight:700;letter-spacing:.02em;font-size:11px}
 
 /* ---------- the lane: name over rule ---------- */
 .bar{position:absolute;height:var(--lane-h);display:block;padding:0;cursor:pointer;z-index:3;
@@ -823,7 +888,7 @@ body>nav{flex:none}
 .bar.ub i::before{display:none}
 .bar.ud i::after{display:none}
 .bar b{position:absolute;left:0;top:0;height:var(--lab-h);line-height:var(--lab-h);
-     font-family:var(--f-disp);font-size:var(--lab-size);font-weight:600;letter-spacing:-.002em;
+     font-family:var(--f-disp);font-size:var(--lab-size);font-weight:700;letter-spacing:-.002em;
      color:var(--ink-2);white-space:nowrap;text-shadow:none;pointer-events:none;z-index:4;
      margin:0}
 .bar:hover b,.bar:focus-visible b,.bar.sel b{color:var(--ink)}
@@ -837,7 +902,11 @@ body>nav{flex:none}
 /* the peek: the names that did not fit, on demand, over a scrap of paper */
 .bar.pk b{display:block!important;color:var(--ink);z-index:7;padding:0 4px;margin-left:-4px;
      border-radius:2px;background:var(--paper);box-shadow:0 0 0 1px var(--paper)}
-.lanes.dim .bar:not(.sel):not(.rel) b{color:var(--ink-4)}
+/* With a thinker chosen, everyone unrelated steps back by rule and weight: the
+   rule fades, the name drops to regular in the palest ink a word may use. It
+   used to fade the whole bar, name included, to a third (PDA-06). */
+.lanes.dim .bar:not(.sel):not(.rel) i{opacity:.3}
+.lanes.dim .bar:not(.sel):not(.rel) b{color:var(--ink-3);font-weight:400}
 .bar.sel i{box-shadow:inset 0 0 0 1px var(--bar-edge),
            0 0 0 1.5px var(--paper),0 0 0 2.5px var(--rubric)}
 
@@ -858,13 +927,12 @@ body>nav{flex:none}
    which the page had written and then hidden in a popover, is set in it. */
 .eranote-in{position:absolute;z-index:1;overflow:hidden;text-align:left;padding:0;
      font-family:var(--f-disp);font-style:italic;font-size:13px;line-height:20px;
-     color:var(--ink-4);display:-webkit-box;-webkit-box-orient:vertical;cursor:pointer;
-     transition:color .18s}
-.eranote-in:hover{color:var(--ink-3)}
+     color:var(--ink-3);display:-webkit-box;-webkit-box-orient:vertical;cursor:pointer}
+.eranote-in:hover{color:var(--ink-2)}
 .eranote-in.clip{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent);
              mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent)}
-.eranote-in b{display:block;font-style:normal;font-weight:600;font-size:9.5px;letter-spacing:.13em;
-     text-transform:uppercase;color:var(--ink-4);opacity:.8;margin-bottom:5px}
+.eranote-in b{display:block;font-family:var(--f-ui);font-style:normal;font-weight:700;font-size:.7rem;
+     letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
 
 /* ---------- the world band ---------- */
 .evwrap{--evrows:2;--evrowh:16px;--evdust:9px;position:relative}
@@ -873,8 +941,8 @@ body>nav{flex:none}
 .rrow{height:calc(var(--evrows)*var(--evrowh) + var(--evdust) + 5px);align-items:flex-start;
      padding:5px 10px 0;border-bottom:1px solid var(--rule-2)}
 .ev{height:var(--evrowh)}
-.ev em{font-size:10.5px;color:var(--ink-3)}
-.ev.r em{color:var(--rubric);font-weight:600}
+.ev em{font-size:11px;color:var(--ink-3)}
+.ev.r em{color:var(--rubric);font-weight:700}
 .ev .m{width:6px;height:6px;box-shadow:0 0 0 2px var(--surface)}
 .ev.hide{height:var(--evdust);opacity:.72}
 .ev.hide em{display:none}
@@ -892,12 +960,14 @@ body>nav{flex:none}
 .rail{width:132px}
 .railbody{padding:9px 10px 0;overflow:hidden}
 #streamChips{display:flex;flex-direction:column;gap:0;margin:9px 0 0;padding:0;border-left:0}
-#streamChips .chip{width:100%;justify-content:flex-start;gap:7px;font-size:10.5px;padding:2.5px 3px;
+#streamChips .chip{width:100%;justify-content:flex-start;gap:7px;font-size:11px;padding:2.5px 3px;
      border-radius:3px;color:var(--ink-3);line-height:1.25;white-space:nowrap}
 #streamChips .chip .sw{width:7px;height:7px;border-radius:1px}
 #streamChips .chip[aria-pressed="true"]{color:var(--ink-2);background:transparent}
-#streamChips .chip[aria-pressed="false"]{opacity:1;color:var(--ink-4)}
-#streamChips .chip[aria-pressed="false"] .sw{background:var(--ink-4)!important;opacity:.5}
+/* a tradition switched off: its swatch empties and its name turns italic; the
+   word itself stays legible */
+#streamChips .chip[aria-pressed="false"]{opacity:1;color:var(--ink-3);font-style:italic}
+#streamChips .chip[aria-pressed="false"] .sw{background:transparent!important;box-shadow:inset 0 0 0 1px var(--ink-4)}
 #streamChips .chip:hover{background:var(--surface-2);color:var(--ink)}
 .rnote{margin-top:11px;border-top:1px solid var(--rule-2);padding-top:9px}
 .toolbar{flex-wrap:nowrap;padding:0 18px;gap:18px;height:40px}
@@ -933,15 +1003,15 @@ body>nav{flex:none}
   box-shadow:inset -1px -1px 0 var(--rule-2)}
 .glyph b{font-family:var(--f-logic);font-size:17px;font-weight:400;color:var(--rubric);
   min-width:19px;text-align:center;line-height:1}
-.glyph span{font-size:11.5px;color:var(--ink-2);line-height:1.35}
-.glyph i{display:block;font-style:normal;font-size:10px;color:var(--ink-4)}
+.glyph span{font-size:12px;color:var(--ink-2);line-height:1.35}
+.glyph i{display:block;font-style:normal;font-size:11px;color:var(--ink-3)}
 
 /* ---------- a chain ---------- */
 .chain{margin-bottom:52px;scroll-margin-top:20px}
 .chhead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;padding-bottom:10px;
   margin-bottom:4px;border-bottom:1px solid var(--rule)}
-.chhead h3{font-family:var(--f-disp);font-size:22px;font-weight:600;margin:0;letter-spacing:-.015em}
-.chhead .n{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-4)}
+.chhead h3{font-family:var(--f-disp);font-size:23px;font-weight:700;margin:0;letter-spacing:-.015em}
+.chhead .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
 .chain>p.chd{font-family:var(--f-disp);font-size:15px;line-height:1.6;color:var(--ink-2);
   margin:0 0 16px;max-width:74ch}
 
@@ -952,11 +1022,11 @@ body>nav{flex:none}
   text-align:left;padding:8px 12px 9px;border:1px solid var(--rule-2);border-radius:7px;
   background:var(--surface);max-width:210px;min-width:132px;transition:border-color .16s,background .16s}
 .cnode:hover{border-color:var(--rubric-soft);background:var(--paper)}
-.cnode .cn{font-family:var(--f-disp);font-size:13px;font-weight:600;line-height:1.25;color:var(--ink)}
-.cnode .cw{font-size:10.5px;color:var(--ink-3);line-height:1.3}
-.cnode .cy{font-family:var(--f-mono);font-size:9px;color:var(--ink-4);line-height:1.35;
+.cnode .cn{font-family:var(--f-disp);font-size:13.5px;font-weight:700;line-height:1.25;color:var(--ink)}
+.cnode .cw{font-size:11px;color:var(--ink-3);line-height:1.3}
+.cnode .cy{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);line-height:1.35;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:2px}
-.carrow{flex:none;align-self:center;padding:0 9px;color:var(--rubric-soft);font-size:14px}
+.carrow{flex:none;align-self:center;padding:0 9px;color:var(--rubric);font-size:14px}
 
 /* ---------- one argument ---------- */
 .arg{border:1px solid var(--rule-2);border-radius:10px;background:var(--surface);
@@ -964,12 +1034,12 @@ body>nav{flex:none}
 .arg:target{border-color:var(--rubric-soft);box-shadow:0 0 0 3px var(--rubric-wash)}
 .arg.hit{border-color:var(--rubric-soft);box-shadow:0 0 0 3px var(--rubric-wash)}
 .arghead{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:3px}
-.arghead h4{font-family:var(--f-disp);font-size:20px;font-weight:600;margin:0;letter-spacing:-.015em}
-.sysbadge{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
-  font-weight:600;color:var(--rubric);background:var(--rubric-wash);border-radius:4px;padding:2px 7px;
+.arghead h4{font-family:var(--f-disp);font-size:21px;font-weight:700;margin:0;letter-spacing:-.015em}
+.sysbadge{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--rubric);background:var(--rubric-wash);border-radius:4px;padding:2px 7px;
   white-space:nowrap}
 .argby{font-size:12px;color:var(--ink-3);margin:0 0 10px}
-.argby b{font-weight:600;color:var(--ink-2)}
+.argby b{font-weight:700;color:var(--ink-2)}
 .argsub{font-family:var(--f-disp);font-style:italic;font-size:15px;line-height:1.5;color:var(--ink-2);
   margin:0 0 14px;max-width:74ch}
 .argclaim{font-family:var(--f-disp);font-size:15.5px;line-height:1.55;color:var(--ink);margin:0 0 16px;
@@ -981,8 +1051,8 @@ body>nav{flex:none}
 .argkey .kk{display:flex;align-items:baseline;gap:8px;font-size:12px;color:var(--ink-2)}
 .argkey .kk b{font-family:var(--f-logic);font-size:15px;font-weight:400;color:var(--ink);
   white-space:nowrap}
-.argkey .lab{width:100%;font-size:9px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--ink-4);font-weight:700;margin-bottom:1px}
+.argkey .lab{width:100%;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:700;margin-bottom:1px}
 
 /* the derivation */
 .deriv{margin:0 0 16px;border-left:1px solid var(--rule);padding-left:0}
@@ -991,10 +1061,10 @@ body>nav{flex:none}
 .dline:last-child{border-bottom:0}
 .dline.concl{background:var(--rubric-wash);margin-left:-1px;border-left:2px solid var(--rubric);
   padding-left:14px;border-radius:0 4px 4px 0}
-.dn{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-4);text-align:right}
+.dn{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);text-align:right}
 .df{font-family:var(--f-logic);font-size:17px;line-height:1.4;color:var(--ink);
   overflow-x:auto;white-space:nowrap;padding-bottom:1px}
-.dk{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-4);font-weight:600;
+.dk{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
   white-space:nowrap;justify-self:end}
 .dline.concl .dk{color:var(--rubric)}
 .dd{grid-column:2 / -1;font-family:var(--f-disp);font-size:13.5px;line-height:1.55;color:var(--ink-2);
@@ -1006,7 +1076,7 @@ body>nav{flex:none}
 /* the readings */
 .argfoot{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px 26px;
   padding-top:15px;border-top:1px solid var(--rule-2)}
-.argfoot h5{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-4);
+.argfoot h5{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
   font-weight:700;margin:0 0 6px}
 .argfoot p{font-family:var(--f-disp);font-size:13.5px;line-height:1.6;color:var(--ink-2);margin:0}
 .argfoot .verdict h5{color:var(--rubric)}
@@ -1016,7 +1086,7 @@ body>nav{flex:none}
 
 .arglinks{display:flex;flex-wrap:wrap;gap:7px 16px;align-items:center;margin-top:15px;
   padding-top:13px;border-top:1px solid var(--rule-2)}
-.arglinks .lab{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4);
+.arglinks .lab{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
   font-weight:700}
 .argchip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;
   border:1px solid var(--rule);font-size:11.5px;color:var(--ink-2);background:var(--paper)}
@@ -1026,13 +1096,13 @@ body>nav{flex:none}
 /* ---------- what is deliberately not here ---------- */
 .notformal{margin-top:14px;border:1px solid var(--rule);border-radius:10px;padding:22px 24px;
   background:var(--surface)}
-.notformal h3{font-family:var(--f-disp);font-size:20px;font-weight:600;margin:0 0 8px}
+.notformal h3{font-family:var(--f-disp);font-size:21px;font-weight:700;margin:0 0 8px}
 .notformal>p{font-family:var(--f-disp);font-size:14.5px;line-height:1.65;color:var(--ink-2);
   margin:0 0 18px;max-width:74ch}
 .nflist{display:grid;grid-template-columns:repeat(auto-fill,minmax(292px,1fr));gap:14px 26px}
 .nfrow{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
 .nfrow .sw{width:8px;height:8px;border-radius:2px;transform:translateY(-1px)}
-.nfrow b{font-family:var(--f-disp);font-size:14px;font-weight:600;display:block;margin-bottom:2px}
+.nfrow b{font-family:var(--f-disp);font-size:14.5px;font-weight:700;display:block;margin-bottom:2px}
 .nfrow span{font-size:12.5px;line-height:1.5;color:var(--ink-3);font-family:var(--f-disp)}
 .nfrow button{text-align:left}
 .nfrow button:hover b{color:var(--rubric)}
@@ -1049,7 +1119,7 @@ body>nav{flex:none}
   margin-top:16px;padding:12px 14px;border-radius:8px;border:1px solid var(--rubric-soft);
   background:var(--rubric-wash);text-align:left;transition:background .16s,border-color .16s}
 .studygo:hover{background:var(--surface-2);border-color:var(--rubric)}
-.studygo b{display:block;font-family:var(--f-disp);font-size:14.5px;font-weight:600;color:var(--rubric)}
+.studygo b{display:block;font-family:var(--f-disp);font-size:15px;font-weight:700;color:var(--rubric)}
 .studygo i{display:block;font-style:normal;font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.4}
 .studygo em{font-style:normal;color:var(--rubric);font-size:17px;flex:none}
 
@@ -1096,6 +1166,9 @@ body>nav{flex:none}
   .toolbar::-webkit-scrollbar{display:none}
   .toolbar .grp{flex:none}
   .toolbar .grp>label{display:none}
+  /* the rail's labels fit its 92px on one line */
+  .rtop{padding:0 6px;letter-spacing:.04em;white-space:nowrap}
+  .rtitle{letter-spacing:.05em}
 
   /* The rail's explanatory note was cut mid-word -- "a bracketed end is an
      attested year; a f" -- because the rail body clips what it cannot fit.
@@ -1124,7 +1197,11 @@ body>nav{flex:none}
      of being clipped: the rail sets white-space:nowrap inside an overflow:hidden
      body, which silently cut "Hellenistic & Roman" to "Hellenistic & R". The
      swatch aligns to the first line rather than centring against two. */
-  .rail{width:92px}
+  /* 96px and a tighter inset, so the longest name in the key ("Christendom",
+     70px at 11px in the fallback sans) fits on its line */
+  .rail{width:96px}
+  .railbody{padding-left:6px;padding-right:6px}
+  #streamChips .chip{gap:4px;padding-left:0;padding-right:0}
   #streamChips .chip{white-space:normal;align-items:flex-start;
      line-height:1.3;padding-top:3.5px;padding-bottom:3.5px;
      /* "Christendom" is one word longer than 92px, so wrapping alone does not
@@ -1136,6 +1213,10 @@ body>nav{flex:none}
      text-align:left}
   #streamChips .chip .sw{margin-top:4px}
 }
+/* On a wide screen too, a tradition's name wraps inside the rail rather than
+   running under its edge ("Hellenistic & Roma"). */
+#streamChips .chip{white-space:normal;align-items:flex-start;text-align:left}
+#streamChips .chip .sw{margin-top:4px}
 
 /* ---------- motion ----------
    Nothing here moves anything that carries data. A view change fades and lifts
@@ -1170,6 +1251,9 @@ body>nav{flex:none}
   .view.on{animation:none}
   .drawer{transition:none}
 }
+/* The library bar's button flips the theme; for the frame of the flip nothing
+   transitions, so no chip or plate fades from the old colours to the new. */
+html.retheme *,html.retheme *::before,html.retheme *::after{transition:none!important}
 
 /* ---------- skip links ----------
    Off-screen until focused. A sighted mouse user never sees them; a keyboard
@@ -1197,8 +1281,8 @@ body>nav{flex:none}
 .bar[data-ti="3"] i{height:var(--bar-h)}
 .bar[data-ti="4"] i{height:max(3px,calc(var(--bar-h) - 3px));opacity:.82}
 .bar[data-ti="1"] b{font-size:calc(var(--lab-size) + 1.5px);font-weight:700}
-.bar[data-ti="2"] b{font-weight:650}
-.bar[data-ti="4"] b{opacity:.85}
+/* the long tail is quieter by weight, not by fading its names */
+.bar[data-ti="4"] b{font-weight:400}
 
 /* The band a tier occupies, tinted just enough to read as a region. */
 .tierband{position:absolute;left:0;right:0;pointer-events:none;z-index:0}
@@ -1206,9 +1290,14 @@ body>nav{flex:none}
 .tierband.b2{background:rgba(127,127,127,.042)}
 .tierband.b3{background:rgba(127,127,127,.018)}
 .tierband.b4{background:transparent}
+/* The band's name sits in the blank row above the band, where no name can be
+   printed over it. It used to share the first row with the band's earliest
+   names ("SUBSTANTIAL" over "Thales of Miletus", FD-08). The top band has no
+   row above it and keeps its place; its first names start well to the right. */
+.tierband.b2>span,.tierband.b3>span,.tierband.b4>span{transform:translateY(calc(4px - var(--lane-h)))}
 .tierband>span{position:sticky;left:6px;top:0;display:inline-block;
-     font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;
-     color:var(--ink-4);padding:2px 0 0}
+     font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+     color:var(--ink-3);padding:2px 0 0}
 
 /* The slider. One control, four stops, and the count of who is on screen. */
 .tierctl{display:flex;align-items:center;gap:9px}
@@ -1218,6 +1307,65 @@ body>nav{flex:none}
      min-width:8.5em;white-space:nowrap}
 @media (max-width:700px),(max-height:520px){ .tierctl input[type=range]{width:80px} }
 
+/* The timeline's desktop toolbar is one 40px row that does not wrap. Its four
+   labelled groups and the hint need 1280px; below that the argument menu ran
+   under the window's edge and the hint out to 1110px. Under 1280 the row
+   tightens and the slider shortens, and under 1240 the hint, which says what a
+   click on the chart does, is left out. The slider's note keeps one width and
+   takes a second line when it is longer ("13 of 133 · Substantial"), so moving
+   the slider never pushes the menu after it off the row. Only the timeline's
+   row: the Thinkers and Influence rows fit at 1000px with their hints, and the
+   Influence hint is that view's only instruction. */
+@media (min-width:1000.02px) and (min-height:520.02px){
+  .tierctl .tn{width:8.5em;min-width:0;white-space:normal;line-height:1.2}
+}
+@media (min-width:1000.02px) and (max-width:1279.98px) and (min-height:520.02px){
+  #v-timeline .toolbar{gap:12px;padding:0 12px}
+  .tierctl input[type=range]{width:72px}
+}
+@media (min-width:1000.02px) and (max-width:1239.98px) and (min-height:520.02px){
+  #v-timeline .toolbar .spacer,#v-timeline .toolbar .hint{display:none}
+}
+/* Under a finger the same row is wider. Every control is 44px and the argument
+   menu is set at 16px so that iOS does not zoom, which put the menu's right
+   edge at 1059px: past the window on a tablet held sideways at 1024, with the
+   whole app panning under it, and from 1240 to 1340 the hint was squeezed to
+   three or four lines and spilled out of the 40px row. So on a touch screen
+   the row stays tight up to 1366px, the hint waits for 1280px, where it has
+   room for two lines, and below 1100px the Scale and Zoom groups drop their
+   labels, as they do on a phone: those two controls name themselves
+   (Balanced, Proportional, the zoom level), and the labels' 106px are what
+   the menu needs. Every control keeps its 44px. A mouse is not affected. */
+@media (pointer:coarse) and (min-width:1000.02px) and (max-width:1365.98px) and (min-height:520.02px){
+  #v-timeline .toolbar{gap:12px;padding:0 12px}
+  .tierctl input[type=range]{width:72px}
+}
+@media (pointer:coarse) and (min-width:1000.02px) and (max-width:1279.98px) and (min-height:520.02px){
+  #v-timeline .toolbar .spacer,#v-timeline .toolbar .hint{display:none}
+}
+@media (pointer:coarse) and (min-width:1000.02px) and (max-width:1099.98px) and (min-height:520.02px){
+  #v-timeline .toolbar>.grp:first-child>label,#v-timeline .toolbar>.zoom>label{display:none}
+}
+
+/* A phone: the study's section index is not pinned. It sits under the study's
+   title and scrolls away with it, so what stays on screen while a study is read
+   is the library bar and the tab row. Here, after the studies' own rules, so it
+   wins over their sticky index at equal specificity. */
+@media (max-width:700px){ .snav{position:static} }
+
+/* Under a finger, the controls the earlier touch rule missed are 44px too:
+   the tier slider, the tradition switches in the key, a study tab's close,
+   "Close all", "Read next" and "Show all" (PDA-10). Here, after every rule
+   they would otherwise lose to. */
+@media (pointer:coarse){
+  .tierctl input[type=range]{height:44px}
+  #streamChips .chip{min-height:44px;align-items:center}
+  #streamChips .chip .sw{margin-top:0}
+  .stab .x{width:40px;height:44px;margin-right:-9px}
+  .studybar .closeall,.sfoot .nxt,.more{min-height:44px}
+}
+
+
 </style>
 <!--NAVCSS-->
 <link rel="stylesheet" href="../assets/nav.css">
@@ -1225,23 +1373,20 @@ body>nav{flex:none}
 </head>
 <body>
 <!--NAV-->
-<nav class="topnav" aria-label="Site">
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-long-argument">
   <a class="nav-brand two" href="index.html" aria-current="page"><span class="nav-full">The Long Argument</span><span class="nav-short">Argument</span></a>
-  <div class="topnav-links">
-    <a href="contents.html">Chapters</a>
-    <a class="up" href="../index.html">Library</a>
-  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
 </nav>
+<span class="skip-target" id="text" tabindex="-1"></span>
 <!--/NAV-->
 <div class="app">
 <div class="chrome">
 <header class="top">
-  <div class="brand">
-    <a class="back" href="../index.html" aria-label="Back to the library">&larr;</a>
-    <h1>The Long Argument</h1>
-    <div class="sub">2,600 years</div>
-  </div>
-  <nav class="tabs" role="tablist" id="tabs">
+  <h1 class="sr-only">The Long Argument</h1>
+  <div class="mast"><span class="mt" aria-hidden="true">The Long Argument</span><span class="sub">2,600 years</span></div>
+  <nav class="tabs" role="tablist" id="tabs" aria-label="Views">
     <button role="tab" aria-selected="true"  data-v="timeline">Timeline</button>
     <button role="tab" aria-selected="false" data-v="thinkers">Thinkers</button>
     <button role="tab" aria-selected="false" data-v="influence">Influence</button>
@@ -1256,10 +1401,6 @@ body>nav{flex:none}
     <input id="q" type="search" placeholder="Search thinkers, ideas, events" autocomplete="off" aria-label="Search">
     <div class="results" id="results" role="listbox"></div>
   </div>
-  <button class="iconbtn" id="theme" title="Switch light and dark" aria-label="Switch light and dark">
-    <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-      <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z"/></svg>
-  </button>
 </header>
 <div class="studybar" id="studybar" role="tablist" aria-label="Open studies"></div>
 </div>
@@ -2756,6 +2897,11 @@ const START = [["plato","Republic"],["aristotle","Nicomachean Ethics"],["epictet
    THE LONG ARGUMENT  \u2014  application
    ============================================================ */
 const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>[...(r||document).querySelectorAll(s)];
+/* A reader who has asked for less motion gets none: every scripted scroll
+   jumps instead of gliding (PDA-02). Asked each time, so changing the setting
+   with the page open is honoured. */
+const LESS_MOTION=window.matchMedia?matchMedia("(prefers-reduced-motion: reduce)"):null;
+const glide=()=>LESS_MOTION&&LESS_MOTION.matches?"auto":"smooth";
 const byId={}; P.forEach(p=>byId[p.id]=p);
 const SCOL={greek:"var(--s1)",hellenistic:"var(--s2)",islamic:"var(--s3)",christian:"var(--s4)",
             earlymodern:"var(--s5)",c19:"var(--s6)",analytic:"var(--s7)",continental:"var(--s8)",eastern:"var(--s9)"};
@@ -2990,7 +3136,7 @@ function layout(){
     const d=document.createElement("div"); d.className="era"; d.dataset.i=i;
     d.style.left=x+"px"; d.style.width=w+"px";
     d.innerHTML="<span>"+er.n+"</span>"+
-      (w>=132?"<i>"+yr(er.a)+" \u2013 "+(er.b>=2020?"now":yr(er.b))+"</i>":"");
+      (w>=140?"<i>"+yr(er.a)+" \u2013 "+(er.b>=2020?"now":yr(er.b))+"</i>":"");
     d.title=er.n+" ("+yr(er.a)+" \u2013 "+(er.b>=2020?"now":yr(er.b))+") \u2014 click for context";
     erasEl.appendChild(d);
     const c=document.createElement("div"); c.className="eracol"+(i%2?" alt":"");
@@ -3236,14 +3382,23 @@ $$("#scaleSeg button").forEach(b=>b.onclick=()=>{
   layout(); scrollMain.scrollLeft=xOf(yc)-scrollMain.clientWidth/2; syncEv();
 });
 /* scroll sync */
-let lock=false;
-function syncEv(){ lock=true; scrollEv.scrollLeft=scrollMain.scrollLeft; lock=false; }
+/* Scroll events arrive a frame after the scroll, so a flag set around the
+   assignment never saw them: the world band's echo of the chart's own scroll
+   was written back to the chart, a step behind, which stopped every glide
+   after its first frame (an era click moved the chart two pixels). Each side
+   now remembers the position it handed the other and ignores that echo. */
+let evTo=null, mainTo=null;
+function syncEv(){ evTo=scrollMain.scrollLeft; scrollEv.scrollLeft=evTo; }
 let _clampRAF=false;
 scrollMain.addEventListener("scroll",()=>{
-  if(!lock){ lock=true; scrollEv.scrollLeft=scrollMain.scrollLeft; lock=false; }
+  if(mainTo!==null&&Math.abs(scrollMain.scrollLeft-mainTo)<1) mainTo=null;
+  else { evTo=scrollMain.scrollLeft; scrollEv.scrollLeft=evTo; }
   if(!_clampRAF){ _clampRAF=true; requestAnimationFrame(()=>{ _clampRAF=false; clampVertical(); }); }
 });
-scrollEv.addEventListener("scroll",()=>{ if(!lock){ lock=true; scrollMain.scrollLeft=scrollEv.scrollLeft; lock=false; } });
+scrollEv.addEventListener("scroll",()=>{
+  if(evTo!==null&&Math.abs(scrollEv.scrollLeft-evTo)<1){ evTo=null; return; }
+  mainTo=scrollEv.scrollLeft; scrollMain.scrollLeft=mainTo;
+});
 
 /* ---------- tooltip ---------- */
 const tip=$("#tip");
@@ -3281,7 +3436,7 @@ evc.addEventListener("click",ev=>{ const b=ev.target.closest(".ev"); if(b) openE
 erasEl.addEventListener("click",ev=>{
   const d=ev.target.closest(".era"); if(!d) return;
   const i=+d.dataset.i;
-  scrollMain.scrollTo({left:Math.max(0,xOf(ERAS[i].a)-24),behavior:"smooth"});
+  scrollMain.scrollTo({left:Math.max(0,xOf(ERAS[i].a)-24),behavior:glide()});
   openEra(i,ev);
 });
 
@@ -3336,7 +3491,7 @@ function select(id){
   drawer.classList.add("on"); document.body.classList.add("drawn");
   const x=xOf(p.b);
   if(x<scrollMain.scrollLeft+40 || x>scrollMain.scrollLeft+scrollMain.clientWidth-140)
-    scrollMain.scrollTo({left:Math.max(0,x-160),behavior:"smooth"});
+    scrollMain.scrollTo({left:Math.max(0,x-160),behavior:glide()});
   if(NET.built) netFocus(id);
 }
 function deselect(){
@@ -3422,10 +3577,14 @@ function renderDrawer(p){
 }
 $("#dBody").addEventListener("click",ev=>{
   const st=ev.target.closest("[data-study]");
-  if(st){ if(typeof openStudy==="function") openStudy(st.dataset.study); return; }
+  if(st){
+    /* Below 900px the drawer covers the view rather than sharing the window
+       with it, so it closes, or the study would open unseen behind it. */
+    if(!matchMedia("(min-width:900px)").matches) deselect();
+    if(typeof openStudy==="function") openStudy(st.dataset.study); return; }
   const g=ev.target.closest("[data-go]"); if(g){ select(g.dataset.go); return; }
   const t=ev.target.closest("[data-th]"); if(t){ showView("threads");
-    const el=$('#th-'+t.dataset.th); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
+    const el=$('#th-'+t.dataset.th); if(el) el.scrollIntoView({behavior:glide(),block:"start"}); }
 });
 
 /* ---------- event & era popovers ---------- */
@@ -3440,7 +3599,7 @@ function openEvent(i){
   if(alive.length) h+='<div class="sec"><h3>Thinkers alive for this</h3><div class="linkset">'+
     alive.map(p=>{ const age=e.y-p.b;
       return '<button class="pchip" data-go="'+p.id+'"><span class="sw" style="background:'+SCOL[p.tr]+
-      '"></span>'+p.n+(age>=0&&age<110?' <span style="color:var(--ink-4);font-family:var(--f-mono);font-size:10px">'+age+'</span>':'')+'</button>'; }).join("")+'</div></div>';
+      '"></span>'+p.n+(age>=0&&age<110?' <span style="color:var(--ink-3);font-family:var(--f-mono);font-size:11px">'+age+'</span>':'')+'</button>'; }).join("")+'</div></div>';
   $("#dBody").innerHTML=h; $("#dBody").scrollTop=0;
 }
 const en=$("#eranote");
@@ -3528,6 +3687,7 @@ function ensureBuilt(v){
 function showView(v){
   /* "study" is reached from the strip below the header, not from the main
      tabs, so no main tab is lit for it. Everything else behaves as before. */
+  const was=curView();
   $$("#tabs button").forEach(b=>{
     b.setAttribute("aria-selected",String(b.dataset.v===v));
     /* On a phone the strip is wider than the screen, so a tab reached by
@@ -3541,6 +3701,8 @@ function showView(v){
   if(v!=="study"&&typeof sbar!=="undefined"&&sbar)
     $$(".stab",sbar).forEach(b=>b.setAttribute("aria-selected","false"));
   else if(v==="study"&&typeof renderStudyBar==="function") renderStudyBar();
+  /* leaving a study drops its address, as a step Back can undo */
+  if(was==="study"&&v!=="study"&&typeof leaveStudy==="function") leaveStudy(v);
 }
 $("#tabs").addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(b) showView(b.dataset.v); });
 
@@ -3579,7 +3741,7 @@ function buildNet(){
   });
   $("#netrailin").innerHTML=rows.map(r=>'<div class="nrow" style="top:'+(r.y0-8)+'px;height:'+(r.h+16)+
     'px">'+TR[r.k].n+'</div>').join("")+
-    '<div class="nrow" style="top:'+(yCur-8)+'px;border-top:1px solid var(--rule-2);color:var(--ink-4);'+
+    '<div class="nrow" style="top:'+(yCur-8)+'px;border-top:1px solid var(--rule-2);color:var(--ink-3);'+
     'font-family:var(--f-mono);text-transform:none;letter-spacing:0">time &rarr;</div>';
   const NSC=$("#netscroll");
   NSC.addEventListener("scroll",()=>{ $("#netrailin").style.transform="translateY("+(-NSC.scrollTop)+"px)"; });
@@ -3594,9 +3756,11 @@ function buildNet(){
   P.forEach(p=>{
     const q=pos[p.id], big=DEG[p.id]>=5, r=big?5.4:3.8;
     s+='<g class="nd" data-id="'+p.id+'" tabindex="0" role="button"><title>'+p.n+" \u2014 "+span(p)+'</title>'+
-       '<circle cx="'+q.x+'" cy="'+q.y+'" r="'+r+'" fill="'+SCOL[p.tr]+'"/>'+
-       '<text x="'+(q.x+r+3)+'" y="'+(q.y+3.4)+'"'+(big?'':' opacity="0"')+'>'+
-       p.n.replace(/&/g,"&amp;").split(" (")[0]+'</text></g>';
+       '<circle cx="'+q.x+'" cy="'+q.y+'" r="'+r+'" style="fill:'+SCOL[p.tr]+'"/>'+
+       '<text x="'+(q.x+r+3)+'" y="'+(q.y+3.4)+'"'+(big?'':' visibility="hidden"')+'>'+
+       /* the names are already HTML, entities included; escaping them again
+          printed "Ren&eacute; Descartes" on the network */
+       p.n.split(" (")[0]+'</text></g>';
   });
   svg.innerHTML=s;
   svg.addEventListener("click",ev=>{ const g=ev.target.closest(".nd");
@@ -3622,7 +3786,7 @@ function netFocus(id){
   });
   const q=NET.pos[id], wrap=$("#netscroll");
   if(q&&$("#v-influence").classList.contains("on"))
-    wrap.scrollTo({left:Math.max(0,q.x-wrap.clientWidth/2),top:Math.max(0,q.y-wrap.clientHeight/2),behavior:"smooth"});
+    wrap.scrollTo({left:Math.max(0,q.x-wrap.clientWidth/2),top:Math.max(0,q.y-wrap.clientHeight/2),behavior:glide()});
 }
 $("#netClear").onclick=deselect;
 
@@ -3639,8 +3803,8 @@ function renderThreads(){
     const fm=(typeof FORM!=="undefined"?(FORM.args||[]):[]).filter(a=>(a.th||[]).indexOf(k)>=0);
     h+='<section class="thread" id="th-'+k+'"><div class="thead"><h3>'+t.n+'</h3><span class="q">'+t.q+'</span></div>'+
        '<p>'+t.d+'</p>'+
-       (fm.length?'<div class="thset" style="margin:-6px 0 12px"><span class="lab" style="font-size:9px;'+
-         'letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4);font-weight:700;'+
+       (fm.length?'<div class="thset" style="margin:-6px 0 12px"><span class="lab" style="font-size:.7rem;'+
+         'letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;'+
          'align-self:center;margin-right:4px">Set out formally</span>'+
          fm.map(a=>'<button class="thchip" data-arg="'+a.id+'">'+a.n+'</button>').join("")+'</div>':"")+
        '<div class="trail"><div class="trailinner" style="width:'+wide+'px">'+
@@ -3854,7 +4018,7 @@ function renderArg(a){
 function gotoArg(id){
   showView("formal");
   const el=$("#arg-"+id);
-  if(el){ el.scrollIntoView({behavior:"smooth",block:"start"});
+  if(el){ el.scrollIntoView({behavior:glide(),block:"start"});
     el.classList.add("hit"); setTimeout(()=>el.classList.remove("hit"),1400); }
 }
 $("#formalBody").addEventListener("click",ev=>{
@@ -3883,21 +4047,30 @@ function tierOf(id){ const m=MONO[id]; return m&&m.tier?m.tier:4; }
 
 function openStudy(id,quiet){
   if(!hasStudy(id)) return false;
+  const from=curView();
   if(!OPEN.includes(id)){
     OPEN.push(id);
     while(OPEN.length>MAXOPEN){ const gone=OPEN.shift(); if(gone===ACTIVE) ACTIVE=null; }
   }
-  ACTIVE=id; renderStudyBar(); renderStudy(id);
-  if(!quiet) showView("study");
+  const again=ACTIVE===id && from==="study";
+  ACTIVE=id; renderStudyBar();
+  if(!again) renderStudy(id);
+  if(!quiet){
+    if(from!=="study") PRIOR=from;
+    showView("study");
+    markStudy(id,"",from);
+  }
   return true;
 }
+/* Closing the study being read returns to the view it was opened from. Any
+   other open studies stay in the strip. */
 function closeStudy(id){
   const i=OPEN.indexOf(id); if(i<0) return;
   OPEN.splice(i,1);
   if(ACTIVE===id){
     ACTIVE=OPEN[Math.min(i,OPEN.length-1)]||null;
-    if(ACTIVE) renderStudy(ACTIVE);
-    else { sbody.innerHTML=""; if($("#v-study").classList.contains("on")) showView("thinkers"); }
+    if(ACTIVE) renderStudy(ACTIVE); else sbody.innerHTML="";
+    if($("#v-study").classList.contains("on")) showView(PRIOR);
   }
   renderStudyBar();
 }
@@ -3915,10 +4088,75 @@ sbar.addEventListener("click",ev=>{
   const x=ev.target.closest("[data-close]");
   if(x){ ev.stopPropagation(); closeStudy(x.dataset.close); return; }
   if(ev.target.closest("[data-closeall]")){ OPEN.length=0; ACTIVE=null; sbody.innerHTML="";
-    renderStudyBar(); showView("thinkers"); return; }
+    renderStudyBar(); showView($("#v-study").classList.contains("on")?PRIOR:curView()); return; }
   const t=ev.target.closest("[data-open]");
-  if(t){ ACTIVE=t.dataset.open; renderStudyBar(); renderStudy(ACTIVE); showView("study"); }
+  if(t) openStudy(t.dataset.open);
 });
+
+/* ---------- a study has an address (R-13) ----------
+   #study=<id>[&sec=<section>] is pushed when a study is opened and when one of
+   its section tabs is used, and read on load, on Back and on Forward, so a
+   study can be linked, bookmarked, reloaded and left with the browser's own
+   Back. Every entry this page writes carries the view it stands for; leaving a
+   study for another view writes one more, without the address, so Back from
+   there returns to the study and Back again to where the reader began. */
+let PRIOR="timeline", ADDRESSING=false, WANT=null;
+function curView(){ const on=document.querySelector(".view.on"); return on?on.id.replace(/^v-/,""):"timeline"; }
+function readAddr(){
+  const q={};
+  location.hash.replace(/^#/,"").split("&").forEach(kv=>{
+    const i=kv.indexOf("="); if(i>0) q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
+  return q;
+}
+function studyHash(id,sec){ return "#study="+encodeURIComponent(id)+(sec?"&sec="+encodeURIComponent(sec):""); }
+function markStudy(id,sec,from){
+  if(ADDRESSING) return;
+  const h=studyHash(id,sec);
+  if(location.hash===h) return;
+  try{
+    /* the entry being left learns which view it was, so Back can restore it */
+    if(from&&from!=="study") history.replaceState({la:1,v:from},"");
+    history.pushState({la:1,v:"study",study:id,sec:sec||""},"",location.pathname+location.search+h);
+  }catch(e){ /* a sandboxed page: the study still opens, it just has no address */ }
+}
+function leaveStudy(to){
+  if(ADDRESSING||!/(^#|&)study=/.test(location.hash)) return;
+  try{ history.pushState({la:1,v:to},"",location.pathname+location.search); }catch(e){}
+}
+function jumpTo(sec){
+  const el=sec&&$("#s-"+sec,sbody); if(!el) return;
+  el.scrollIntoView({behavior:"auto",block:"start"});
+  $$(".snav a",sbody).forEach(a=>a.classList.toggle("on",a.dataset.jump==="s-"+sec));
+}
+/* Apply the address. The studies arrive after the page does, so an address
+   read before they land is held and applied when they do. */
+function applyAddr(){
+  const q=readAddr(), st=history.state||{};
+  ADDRESSING=true;
+  try{
+    if(q.study){
+      if(!hasStudy(q.study)){
+        /* Until the studies arrive, the id waits for them. After that, an id
+           with no study is not an address of this page, so the address goes
+           back to what the page shows. */
+        if(!document.documentElement.classList.contains("data-ready")){ WANT=q.study; return; }
+        WANT=null;
+        const h=curView()==="study"&&ACTIVE?studyHash(ACTIVE):"";
+        try{ history.replaceState(history.state,"",location.pathname+location.search+h); }catch(e){}
+        return;
+      }
+      WANT=null;
+      if(!(ACTIVE===q.study&&curView()==="study")) openStudy(q.study);
+      if(q.sec) jumpTo(q.sec);
+    } else if((st.la||!location.hash)&&curView()==="study"){
+      /* an entry of ours, or the page's own address: the view it stood for.
+         Any other fragment is an in-page jump (a skip link) and is left alone. */
+      showView(st.v&&st.v!=="study"?st.v:PRIOR);
+    }
+  } finally { ADDRESSING=false; }
+}
+addEventListener("popstate",applyAddr);
+addEventListener("hashchange",applyAddr);
 
 /* ---------- rendering one study ---------- */
 const paras=(a,cls)=>(a||[]).map(t=>'<p class="'+(cls||"sp")+'">'+t+'</p>').join("");
@@ -3956,7 +4194,8 @@ function renderStudy(id){
      (m.sub?'<p class="ssub">'+m.sub+'</p>':"")+
      '<p class="sone">'+p.one+'</p></header>';
 
-  h+='<nav class="snav">'+secs.map((s,i)=>'<a href="#" data-jump="s-'+s[0]+'"'+(i?"":' class="on"')+'>'+s[2]+'</a>').join("")+'</nav>';
+  h+='<nav class="snav" aria-label="Sections">'+secs.map((s,i)=>'<a href="'+studyHash(id,s[0])+'" data-jump="s-'+s[0]+'"'+
+     (i?"":' class="on"')+'>'+s[2]+'</a>').join("")+'</nav>';
 
   h+='<div class="sgrid"><div class="scol">';
   if(m.world&&m.world.length)
@@ -3999,6 +4238,8 @@ function renderStudy(id){
   if(m.caveat) h+='<div class="scard caveat"><h4>Taken on trust</h4><p class="sp">'+m.caveat+'</p></div>';
   h+='<div class="scard sgo"><button data-tl="'+p.id+'"><span>Find them on the timeline</span><i>&rarr;</i></button>'+
      '<button data-net="'+p.id+'"><span>Trace the influence</span><i>&rarr;</i></button>'+
+     /* the same person in the other book, where the lines between them are drawn */
+     '<a href="../the-ages-of-thought/index.html#who='+encodeURIComponent(p.id)+'"><span>See on the atlas</span><i>&rarr;</i></a>'+
      '<button data-idx="1"><span>All thinkers</span><i>&rarr;</i></button></div>';
   h+='</aside></div>';
 
@@ -4019,11 +4260,13 @@ sbody.addEventListener("click",ev=>{
   if(fa){ gotoArg(fa.dataset.arg); return; }
   const j=ev.target.closest("[data-jump]");
   if(j){ ev.preventDefault(); const el=$("#"+j.dataset.jump);
-    if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+    if(el) el.scrollIntoView({behavior:glide(),block:"start"});
+    if(ACTIVE) markStudy(ACTIVE,j.dataset.jump.replace(/^s-/,""),"study");
+    return; }
   const s=ev.target.closest("[data-study]"); if(s){ openStudy(s.dataset.study); return; }
   const g=ev.target.closest("[data-go]");   if(g){ if(!openStudy(g.dataset.go)){ showView("timeline"); select(g.dataset.go);} return; }
   const t=ev.target.closest("[data-th]");   if(t){ showView("threads");
-    const el=$("#th-"+t.dataset.th); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+    const el=$("#th-"+t.dataset.th); if(el) el.scrollIntoView({behavior:glide(),block:"start"}); return; }
   const tl=ev.target.closest("[data-tl]");  if(tl){ showView("timeline"); select(tl.dataset.tl); return; }
   const nt=ev.target.closest("[data-net]"); if(nt){ showView("influence"); select(nt.dataset.net); return; }
   if(ev.target.closest("[data-idx]")) showView("thinkers");
@@ -4130,12 +4373,16 @@ renderThinkers();
 
 
 
-/* ---------- theme ---------- */
-$("#theme").onclick=()=>{
-  const cur=document.documentElement.getAttribute("data-theme");
-  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme",dark?"light":"dark");
-};
+/* ---------- theme ----------
+   The library bar's button flips html[data-theme] (pwa.js); this page has no
+   control of its own. Lanes, bars, events, plates and the network are all
+   painted from CSS variables, so the flip repaints them without script. What
+   script adds hangs off this one observer: for the frame of the flip nothing
+   transitions, so no chip or plate fades from the old colours to the new. */
+if(window.MutationObserver) new MutationObserver(()=>{
+  const h=document.documentElement; h.classList.add("retheme");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove("retheme")));
+}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 /* ---------- keys ---------- */
 addEventListener("keydown",ev=>{
   if(ev.target.tagName==="INPUT") return;
@@ -4234,13 +4481,16 @@ requestAnimationFrame(()=>{
   layout(); syncEv();
 })();
 
-/* ---------- hang the drawer off the real header ---------- */
+/* ---------- hang the drawer off the real header ----------
+   Measured again whenever the chrome changes height, not only on resize: the
+   strip of open studies appears under the header when the first one opens. */
 (function(){
   const h=document.querySelector('.chrome')||document.querySelector('.top'); if(!h) return;
   const set=()=>document.documentElement.style.setProperty(
     '--dtop', Math.round(h.getBoundingClientRect().bottom)+'px');
   set();
   addEventListener('resize',()=>{ clearTimeout(window._dt); window._dt=setTimeout(set,120); });
+  if(window.ResizeObserver) new ResizeObserver(set).observe(h);
 })();
 
 /* ============================================================
@@ -4279,7 +4529,41 @@ requestAnimationFrame(()=>{
        person object, not an id. */
     if(SEL) renderDrawer(SEL);
     document.documentElement.classList.add("data-ready");
+    /* a study asked for by the address can open now */
+    if(WANT||/(^#|&)study=/.test(location.hash)) applyAddr();
   });
+})();
+
+/* ---------- a phone: the studies' strip travels with the study ----------
+   Below 700px the strip of open studies is not a second row of chrome. It
+   moves into the study view, above the study's title, and scrolls away with
+   it; on a wider window it returns under the header. The element moves, so its
+   handlers and state go with it. */
+(function(){
+  const mq=window.matchMedia&&matchMedia("(max-width:700px)");
+  const home=sbar&&sbar.parentElement, into=$("#v-study .scroller");
+  if(!mq||!home||!into) return;
+  function place(){
+    if(mq.matches){ if(sbar.parentElement!==into) into.insertBefore(sbar,into.firstChild); }
+    else if(sbar.parentElement!==home) home.appendChild(sbar);
+  }
+  if(mq.addEventListener) mq.addEventListener("change",place); else if(mq.addListener) mq.addListener(place);
+  place();
+})();
+
+/* ---------- the tab strip says when it has more ----------
+   Where the six tabs do not fit, the strip scrolls; its cut edge fades, so the
+   reader can see there is more of it. */
+(function(){
+  const t=$("#tabs"); if(!t) return;
+  function cue(){
+    const m=t.scrollWidth-t.clientWidth;
+    t.classList.toggle("more-r",m>1&&t.scrollLeft<m-1);
+    t.classList.toggle("more-l",m>1&&t.scrollLeft>1);
+  }
+  t.addEventListener("scroll",cue,{passive:true});
+  addEventListener("resize",cue);
+  cue();
 })();
 
 /* ---------- keyboard routes through the chart ----------

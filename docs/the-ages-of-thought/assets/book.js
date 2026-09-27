@@ -2,33 +2,66 @@
    From Newton to M-Theory — shared behaviour
    ============================================================ */
 
-/* ---------- theme ---------- */
+/* ---------- theme ----------
+   The theme is decided before first paint by the boot script pwa.py puts in
+   <head> (DESIGN.md section 4), and the control is the library bar's own
+   button, which pwa.js wires. This file used to default to 'light' here and
+   overwrite that decision, so an OS-dark reader was switched to light at their
+   first chapter (NAV-02, PDA-01). Now it only fills the gaps:
+
+   - With no data-theme at all (no boot script: the Dropbox build) it resolves
+     the stored nmt-theme, then the OS setting, and stamps that.
+   - At window load, if nothing has wired the bar's button (html.theme-wired
+     absent: the Dropbox build, or an installed copy whose shell is older than
+     this page), it builds the floating #themer, so no page is ever left
+     without a working theme control. Built at load rather than at
+     DOMContentLoaded because pwa.js, deferred, has wired the bar by then. */
 (function () {
-  var t = 'light';
-  try { t = localStorage.getItem('nmt-theme') || 'light'; } catch (e) {}
-  document.documentElement.setAttribute('data-theme', t);
-  window.addEventListener('DOMContentLoaded', function () {
+  var root = document.documentElement;
+  var KEY = 'library:v1';
+  if (root.getAttribute('data-theme') !== 'dark' && root.getAttribute('data-theme') !== 'light') {
+    var t = '';
+    try { t = localStorage.getItem('nmt-theme') || ''; } catch (e) {}
+    if (t !== 'dark' && t !== 'light')
+      t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+  }
+  window.addEventListener('load', function () {
+    if (root.classList.contains('theme-wired') || document.getElementById('themer')) return;
     var b = document.createElement('button');
     b.id = 'themer';
-    b.textContent = t === 'dark' ? 'Light' : 'Dark';
+    b.type = 'button';
+    function paint() {
+      var dark = root.getAttribute('data-theme') === 'dark';
+      b.textContent = dark ? 'Light' : 'Dark';
+      b.title = dark ? 'Switch to light' : 'Switch to dark';
+    }
+    paint();
     b.onclick = function () {
-      var cur = document.documentElement.getAttribute('data-theme');
-      var nxt = cur === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', nxt);
-      b.textContent = nxt === 'dark' ? 'Light' : 'Dark';
-      try { localStorage.setItem('nmt-theme', nxt); } catch (e) {}
-      if (window.NMT && NMT.redrawAll) NMT.redrawAll();
+      var nxt = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', nxt);
+      paint();
+      /* The press is the reader's choice, under both keys the boot script
+         reads, so the next page opens in it whichever shell serves it. The
+         figures redraw from the data-theme observer in NMT below. Written
+         again after a tick: an older pwa.js answers the attribute change by
+         saving its own copy of library:v1, which would put back the look it
+         read at load. */
+      function remember() {
+        try { localStorage.setItem('nmt-theme', nxt); } catch (e) {}
+        try {
+          var s = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+          s.look = nxt;
+          localStorage.setItem(KEY, JSON.stringify(s));
+        } catch (e) {}
+      }
+      remember();
+      setTimeout(remember, 0);
     };
     document.body.appendChild(b);
-    /* tells nav.css that this page has a floating toggle, so the bar holds a
-       gutter open for it. Most pages do not: the two philosophy books carry
-       their own toggle inside their own chrome, and the clinical book's
-       landing page and appendices do not load this file at all. The bar used
-       to reserve five rems on every one of them, which at 390px is the
-       difference between a book's name and "Breast..." -- and, on the physics
-       book, between its name and nothing at all. Same shape as .has-mnav
-       below, set at the same moment, for the same kind of reason. */
-    document.documentElement.classList.add('has-themer');
+    /* An older nav.css keeps a gutter open in the bar for a toggle that says
+       it is there; the current one places it below any bar instead. */
+    root.classList.add('has-themer');
   });
 })();
 
@@ -151,8 +184,7 @@ var NMT = (function () {
   /* ---------- mobile section drawer ---------- */
   /* Below 1000px the sidebar is hidden, which leaves a sixty-thousand-pixel
      chapter with no way through it but the scrollbar. This is the way in: a
-     thumb-reachable button, the top-level sections only, and the theme control
-     that the topnav then no longer has to reserve a gutter for.
+     thumb-reachable button and the top-level sections.
 
      It is appended to <body>, like #themer, so it is never captured by the
      build — the page ships without it and every reader builds their own, which
@@ -210,48 +242,17 @@ var NMT = (function () {
       return a;
     });
 
-    var home = document.querySelector('.sb-home');
-    var back = document.createElement('a');
-    back.href = home ? home.getAttribute('href') : 'contents.html';
-    back.textContent = '← All chapters';
-
-    var themeBtn = document.createElement('button');
-    themeBtn.id = 'mn-theme';
-    themeBtn.type = 'button';
-
-    var foot = document.createElement('div');
-    foot.className = 'mn-foot';
-    foot.appendChild(back);
-    foot.appendChild(themeBtn);
-
+    /* No footer. It held a second theme button and an "All chapters" link:
+       the theme control is the bar's (or, with no bar, the floating #themer),
+       and the way up is the bar and the sidebar's up-link (NAV-07). Nor does
+       it set html.has-mnav any more: that class hid the floating toggle while
+       a drawer existed, which with no theme button in the drawer would leave a
+       Dropbox page on a phone with no theme control at all. */
     panel.appendChild(head);
     panel.appendChild(list);
-    panel.appendChild(foot);
     document.body.appendChild(scrim);
     document.body.appendChild(panel);
     document.body.appendChild(btn);
-    /* tells the stylesheet a drawer exists here, so the floating theme toggle can
-       stand down — on a page that builds no drawer it has to stay */
-    document.documentElement.classList.add('has-mnav');
-
-    /* The toggle itself stays where it was; this is a second handle on it, so
-       the theme is stored and redrawn in exactly one place. */
-    function syncTheme() {
-      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-      themeBtn.textContent = dark ? 'Light mode' : 'Dark mode';
-    }
-    syncTheme();
-    themeBtn.addEventListener('click', function () {
-      var themer = document.getElementById('themer');
-      if (themer) themer.click();
-      else {
-        var nxt = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', nxt);
-        try { localStorage.setItem('nmt-theme', nxt); } catch (e) {}
-        if (window.NMT && NMT.redrawAll) NMT.redrawAll();
-      }
-      syncTheme();
-    });
 
     function isOpen() { return panel.classList.contains('open'); }
     function setOpen(on) {
@@ -301,8 +302,61 @@ var NMT = (function () {
      MiniPlot — a small canvas plotting helper.
      No dependencies. Handles retina, theme colours, axes, grid.
      ============================================================ */
+  /* A colour role, resolved to something a canvas and a string test can both
+     use. getPropertyValue() returns a derived role as unresolved color-mix()
+     text, and a computed colour serialises as color(srgb ...); the chapter
+     figures test for '#' and parse hex. So color() sets var(--x) on a probe,
+     paints the probe's computed colour into a 1x1 canvas and reads the pixel
+     back as #rrggbb (rgba() if it is translucent), cached per theme (DESIGN.md
+     section 3). pwa.js has its own copy for theme-color. */
+  var probe = null, pctx = null, cache = {};
+  function color(name) {
+    var root = document.documentElement;
+    var key = (root.getAttribute('data-theme') || '') + '|' + name;
+    if (cache[key] !== undefined) return cache[key];
+    var out = '';
+    try {
+      if (getComputedStyle(root).getPropertyValue(name).trim()) {
+        var host = document.body || root;
+        if (!probe) {
+          probe = document.createElement('i');
+          probe.setAttribute('aria-hidden', 'true');
+          probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;' +
+                                'visibility:hidden;pointer-events:none';
+        }
+        if (probe.parentNode !== host) host.appendChild(probe);
+        probe.style.color = 'var(' + name + ')';
+        var c = getComputedStyle(probe).color;
+        if (!pctx) {
+          var cv = document.createElement('canvas');
+          cv.width = cv.height = 1;
+          pctx = cv.getContext('2d', { willReadFrequently: true });
+        }
+        pctx.clearRect(0, 0, 1, 1);
+        pctx.fillStyle = '#010203';
+        pctx.fillStyle = c;
+        if (pctx.fillStyle !== '#010203') {
+          pctx.fillRect(0, 0, 1, 1);
+          var d = pctx.getImageData(0, 0, 1, 1).data;
+          out = d[3] < 255
+            ? 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3] / 255).toFixed(3) + ')'
+            : '#' + [d[0], d[1], d[2]].map(function (v) {
+                return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+        }
+      }
+    } catch (e) { out = ''; }
+    /* only a real answer is kept: before the stylesheet arrives there is none */
+    if (out) cache[key] = out;
+    return out;
+  }
+
+  /* What MiniPlot and the chapter figures ask for. A font role (--sans,
+     --serif, --mono) comes back as written; a colour role comes back resolved,
+     so a figure keeps working when its colour is derived rather than typed. */
   function css(v) {
-    return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    var raw = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    if (!raw || /^--(lib-)?(sans|serif|mono)$|^--f-/.test(v)) return raw;
+    return color(v) || raw;
   }
 
   function Plot(canvas, opts) {
@@ -514,6 +568,26 @@ var NMT = (function () {
 
   function redrawAll() { redraws.forEach(function (f) { try { f(); } catch (e) {} }); }
 
+  /* Every figure redraws when the theme changes, whoever changed it: the bar's
+     button announces it with a library:theme event, and anything else (the
+     floating toggle, a test, an older shell) at least changes the attribute.
+     Both paths meet in one frame, so a press redraws once. Registered here,
+     outside the boot handler, so the build's runtime_js() leaves it alone. */
+  var redrawQueued = false;
+  function redrawSoon() {
+    if (redrawQueued) return;
+    redrawQueued = true;
+    (window.requestAnimationFrame || setTimeout)(function () {
+      redrawQueued = false;
+      redrawAll();
+    });
+  }
+  window.addEventListener('library:theme', redrawSoon);
+  if (window.MutationObserver) {
+    new MutationObserver(redrawSoon).observe(document.documentElement,
+      { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
   /* An animated figure writes live values into its readouts, and the build saves
      the finished DOM to disk — so whatever the animation happened to reach in the
      moment before the snapshot gets baked into the file. That made ch0-8 differ
@@ -666,6 +740,6 @@ var NMT = (function () {
     refCards();
     });
 
-  return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, typeset: typeset,
-           onSnapshot: onSnapshot, resetForSnapshot: resetForSnapshot };
+  return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, color: color,
+           typeset: typeset, onSnapshot: onSnapshot, resetForSnapshot: resetForSnapshot };
 })();

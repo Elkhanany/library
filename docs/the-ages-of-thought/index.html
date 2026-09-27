@@ -12,8 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ages">
-<meta name="theme-color" content="#f2ece0">
-<script>try{var s=JSON.parse(localStorage.getItem('library:v1')||'{}');var t=s.theme||localStorage.getItem('nmt-theme')||'';}catch(e){var t='';}if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)document.documentElement.classList.add('standalone');</script>
+<meta name="theme-color" content="#e6dbc3">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="../assets/pwa.js" defer></script>
 <!--/PWA-->
 <title>The Ages of Thought</title>
@@ -42,16 +42,23 @@
   --brass:#b28f52;    --brass-soft:#d4b980; --brass-wash:rgba(178,143,82,.14);
   --brass-ink:#745d34;  /* brass as TEXT: 5.1:1 on the darkest surface */
   --accent:#b5573a;   --accent-deep:#93412a; --accent-wash:rgba(181,87,58,.10);
+  /* The accent as a WORD: the library bar reads this first (DESIGN.md section 3).
+     --accent is for fills; as text it is 3.5:1 on the paper, the deep one 5.0:1. */
+  --accent-ink:#93412a;
   --taught:#b5573a;   --readby:#4f78a4;    --challenged:#7a4a6e; --carried:#2c7a66;
-  --surround:#1d1712;
   --shadow-1:0 1px 2px rgba(43,33,21,.07), 0 6px 18px -10px rgba(43,33,21,.24);
   --shadow-2:0 2px 6px rgba(43,33,21,.10), 0 18px 44px -18px rgba(43,33,21,.34);
   --focus:#2f6ea8;
   --e0:#2f5d78; --e1:#37718f; --e2:#b06038; --e3:#6a4570; --e4:#2c7a66;
   --e5:#a37c26; --e6:#9c3a47; --e7:#3f4d8f; --e8:#5c6f38; --e9:#4a4f57;
-  --f-disp:"Spectral",Georgia,"Times New Roman",serif;
-  --f-ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  /* The library's faces (DESIGN.md section 2), defined once in nav.css. No font
+     is fetched: the atlas used to name two it never shipped, so every reader got
+     a different fallback from the rest of the library. */
+  --f-disp:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+           "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --f-ui:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+         "Helvetica Neue",Arial,sans-serif);
+  --f-mono:var(--lib-mono,ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace);
   --rail-w:262px; --panel-w:344px; --panel-w-open:428px; --top-h:56px;
   --lane-h:66px;
   /* The paper. A little turbulence at seven percent is all it takes to stop
@@ -66,8 +73,8 @@ html[data-theme="dark"]{
   --brass:#c9a86a;    --brass-soft:#8c7443; --brass-wash:rgba(201,168,106,.16);
   --brass-ink:#c9a86a;
   --accent:#d97f5c;   --accent-deep:#b8623f; --accent-wash:rgba(217,127,92,.14);
+  --accent-ink:#d97f5c;   /* 6.2:1 on the dark paper */
   --taught:#d97f5c;   --readby:#86a9cf;    --challenged:#b487ab; --carried:#4fae95;
-  --surround:#0a0806;
   --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 6px 18px -10px rgba(0,0,0,.7);
   --shadow-2:0 2px 6px rgba(0,0,0,.55), 0 18px 44px -18px rgba(0,0,0,.8);
   --focus:#6fa8dc;
@@ -78,14 +85,15 @@ html[data-theme="dark"]{
 [hidden]{display:none !important}
 html,body{height:100%}
 body{
-  margin:0; background:var(--surround); color:var(--ink);
+  margin:0; background:var(--paper); color:var(--ink);
   font-family:var(--f-ui); font-size:13.5px; line-height:1.5;
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   -webkit-text-size-adjust:100%; text-size-adjust:100%; overscroll-behavior:none;
 }
 button,input{font:inherit; color:inherit}
-.k{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
-    color:var(--ink-3) }
+/* the library's label: sans 700, uppercase, never below 11px (DESIGN.md section 2) */
+.k{ font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+    color:var(--ink-3); line-height:1.3 }
 
 /* ---------------------------------------------------------- the frame
    The atlas used to be fixed to the whole window, which was right when it was
@@ -107,9 +115,10 @@ body>nav.topnav{ flex:none }
   background-image:var(--grain); opacity:.07; mix-blend-mode:multiply;
 }
 html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
-@media (min-width:1180px) and (min-height:760px){
-  .atlas{ margin:0 14px 14px; border-radius:16px; box-shadow:var(--shadow-2) }
-}
+/* Full window under the library bar, as the timeline is (DESIGN.md section 5).
+   It used to float as a rounded card on a near-black desk from 1180px, which
+   put the translucent bar over that desk: a muddy strip, and "Library" at
+   2.75:1. The bar now sits on the atlas's own paper, as it does on every book. */
 .atlas>*{ position:relative; z-index:1 }
 
 /* ---------------------------------------------------------- top bar */
@@ -118,21 +127,27 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
   padding:0 16px; border-bottom:1px solid var(--rule); background:var(--surface);
   z-index:40;
 }
-.mark{ display:flex; align-items:center; gap:11px; text-decoration:none; color:inherit; flex:none }
+/* The masthead: the globe, the title and the sub-line, on wide screens only.
+   It is the atlas's cover, so it stays; it is not a link, because the bar above
+   already leaves for the library and names the book. Below 1000px the bar is the
+   only place the book is named, and the header starts at its controls. */
+.mark{ display:flex; align-items:center; gap:11px; flex:none; color:var(--ink) }
 .mark .sig{
   width:34px; height:34px; flex:none; border-radius:9px; background:var(--accent);
   display:grid; place-items:center; box-shadow:var(--shadow-1);
 }
 .mark .sig svg{ width:20px; height:20px; display:block }
-.mark h1{ margin:0; font-family:var(--f-disp); font-size:16px; font-weight:600;
-          letter-spacing:.06em; text-transform:uppercase; line-height:1.1 }
-.mark .sub{ display:block; font-size:9px; letter-spacing:.16em; text-transform:uppercase;
-            color:var(--ink-3); font-weight:600; line-height:1.1; margin-top:2px }
+.mark .tt{ display:block; margin:0; font-family:var(--f-disp); font-size:1.3rem; font-weight:400;
+           letter-spacing:-.01em; line-height:1.05; white-space:nowrap }
+.mark .sub{ display:block; font-family:var(--f-ui); font-size:.7rem; letter-spacing:.1em;
+            text-transform:uppercase; color:var(--ink-3); font-weight:700; line-height:1.2;
+            margin-top:3px; white-space:nowrap }
+@media (max-width:999.98px){ .mark{ display:none } }
 .readout{ display:flex; align-items:center; gap:22px; padding-left:18px;
           border-left:1px solid var(--rule); height:34px; min-width:0 }
 .ro{ display:flex; align-items:center; gap:8px; min-width:0 }
 .ro .sw{ width:14px; height:14px; flex:none; border-radius:4px; background:transparent }
-.ro .v{ font-family:var(--f-disp); font-size:13.5px; font-weight:600; letter-spacing:.02em;
+.ro .v{ font-family:var(--f-disp); font-size:14px; font-weight:700; letter-spacing:0;
         white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; line-height:1.25 }
 .top .spacer{ flex:1 }
 .tbtn{
@@ -183,12 +198,12 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
 }
 .age .thumb svg{ position:absolute; inset:0; width:100%; height:100%; display:block }
 .age .txt{ min-width:0 }
-.age .nm{ display:block; font-family:var(--f-disp); font-size:13.5px; font-weight:600;
+.age .nm{ display:block; font-family:var(--f-disp); font-size:13.5px; font-weight:700;
           line-height:1.18; color:var(--ink); white-space:nowrap; overflow:hidden;
           text-overflow:ellipsis }
-.age .yr{ display:block; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.04em;
+.age .yr{ display:block; font-family:var(--f-mono); font-size:11px; letter-spacing:0;
           color:var(--ink-2); margin-top:2px; white-space:nowrap }
-.age .ct{ display:block; font-size:10.5px; color:var(--ink-3); margin-top:1px; white-space:nowrap;
+.age .ct{ display:block; font-size:11px; color:var(--ink-3); margin-top:1px; white-space:nowrap;
           overflow:hidden; text-overflow:ellipsis }
 .age .ct .brief{ display:none }
 /* An age with nobody shown at this setting is still an age. It is quieter,
@@ -236,10 +251,10 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
       width:100%; text-align:left; padding:7px 9px; border:0; border-radius:7px;
       background:none; cursor:pointer }
 .hit:hover,.hit[aria-selected="true"]{ background:var(--brass-wash) }
-.hit .n{ font-family:var(--f-disp); font-weight:600; font-size:13px }
-.hit .s{ display:block; font-size:10.5px; color:var(--ink-3) }
-.hit .y{ font-family:var(--f-mono); font-size:9.5px; color:var(--ink-3) }
-.hit .hid{ font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-ink);
+.hit .n{ font-family:var(--f-disp); font-weight:700; font-size:14px }
+.hit .s{ display:block; font-size:11px; color:var(--ink-3) }
+.hit .y{ font-family:var(--f-mono); font-size:11px; color:var(--ink-3) }
+.hit .hid{ font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--brass-ink);
            font-weight:700 }
 .nohit{ padding:9px 10px; font-family:var(--f-disp); font-style:italic; font-size:12px;
         color:var(--ink-3) }
@@ -272,7 +287,9 @@ html[data-theme="dark"] .atlas::before{ opacity:.12; mix-blend-mode:screen }
        border:1px solid var(--rule); border-radius:8px; background:var(--surface);
        font-size:11.5px; cursor:pointer; white-space:nowrap; color:var(--ink-2) }
 .kind:hover{ border-color:var(--brass-soft) }
-.kind[aria-pressed="false"]{ opacity:.42 }
+/* a line switched off: quieter by its ground and its swatch, never by fading the word */
+.kind[aria-pressed="false"]{ background:transparent; border-style:dashed; color:var(--ink-3) }
+.kind[aria-pressed="false"] svg{ opacity:.3 }
 .kind svg{ width:24px; height:8px; flex:none; overflow:visible }
 .zoom{ display:flex; align-items:center; gap:4px }
 .zoom button{ height:34px; min-width:34px; border:1px solid var(--rule); background:var(--surface);
@@ -302,25 +319,33 @@ html[data-theme="dark"] .ageband i{ opacity:.11 }
 html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .ageband u{ position:absolute; left:0; top:0; bottom:0; width:1px; background:var(--rule);
             text-decoration:none }
-.ageband s{ position:absolute; top:0; bottom:0; width:1px; background:var(--rule);
+/* the century rule is a border, so the year printed beside it sits on the map's
+   paper and not on the 1px line that carries it */
+.ageband s{ position:absolute; top:0; bottom:0; width:0; border-left:1px solid var(--rule);
             text-decoration:none }
-.ageband s em{ position:sticky; top:26px; display:inline-block; transform:translateX(3px);
-               font-family:var(--f-mono); font-size:9px; font-style:normal;
+.ageband s em{ position:sticky; top:30px; display:inline-block; transform:translateX(3px);
+               font-family:var(--f-mono); font-size:11px; font-style:normal;
                color:var(--ink-3); white-space:nowrap }
 .ageband b{ position:sticky; top:0; display:block; padding:6px 10px 0;
-            font-family:var(--f-disp); font-size:11px; font-weight:600; letter-spacing:.09em;
+            font-family:var(--f-disp); font-size:12px; font-weight:700; letter-spacing:.06em;
             text-transform:uppercase; color:var(--ink-2); white-space:nowrap; overflow:hidden;
             text-overflow:ellipsis }
-.ageband b em{ display:block; font-family:var(--f-mono); font-size:9px; font-style:normal;
-               letter-spacing:.05em; color:var(--ink-3) }
+.ageband b em{ display:block; font-family:var(--f-mono); font-size:11px; font-style:normal;
+               font-weight:400; letter-spacing:0; color:var(--ink-3) }
 .ageband.tight b span{ display:none }
-.tierband{ position:absolute; left:0; right:0; z-index:0; pointer-events:none }
-.tierband i{ position:absolute; inset:0; background:var(--ink); opacity:.04 }
-.tierband.t1 i{ opacity:.06 } .tierband.t2 i{ opacity:.035 } .tierband.t3 i{ opacity:.015 }
-.tierband.t4 i{ opacity:0 }
-.tierband b{ position:sticky; left:8px; display:inline-block; margin-top:3px;
-             font-size:9px; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
-             color:var(--ink-3) }
+.tiertint{ position:absolute; left:0; right:0; z-index:0; pointer-events:none }
+.tiertint i{ position:absolute; inset:0; background:var(--ink); opacity:.04 }
+.tiertint.t1 i{ opacity:.06 } .tiertint.t2 i{ opacity:.035 } .tiertint.t3 i{ opacity:.015 }
+.tiertint.t4 i{ opacity:0 }
+/* A band's name sits on its own line, 4px below the top of its tint and at least
+   5px above the tallest card of the band's first row (see TIERHEAD). The names
+   have a layer of their own over the lines and under the cards, so a line runs
+   under a name rather than over it, and each is hit-tested like any other text. */
+.tiernames{ position:absolute; inset:0; z-index:1; pointer-events:none }
+.tierband{ position:absolute; left:0; right:0 }
+.tierband b{ position:sticky; left:8px; display:inline-block; margin-top:4px;
+             font-size:.7rem; line-height:14px; letter-spacing:.1em; text-transform:uppercase;
+             font-weight:700; color:var(--ink-3); pointer-events:auto }
 
 /* ---------------------------------------------------------- the lines
    Four relations, four looks. Terracotta for teaching, since it is the
@@ -353,11 +378,11 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .who:hover .card{ border-color:var(--brass-soft); box-shadow:var(--shadow-2) }
 .who .card::before{ content:""; position:absolute; left:-1px; top:8px; bottom:8px; width:3px;
                     border-radius:3px; background:var(--eg) }
-.who .n{ display:block; font-family:var(--f-disp); font-weight:600; line-height:1.16;
+.who .n{ display:block; font-family:var(--f-disp); font-weight:700; line-height:1.16;
          letter-spacing:.008em; white-space:nowrap }
-.who .meta{ display:block; font-family:var(--f-mono); font-size:9.5px; color:var(--ink-3);
-            letter-spacing:.03em; margin-top:1px; white-space:nowrap }
-.who .sch{ display:block; font-size:10px; color:var(--ink-2); margin-top:2px; white-space:nowrap;
+.who .meta{ display:block; font-family:var(--f-mono); font-size:11px; color:var(--ink-3);
+            letter-spacing:0; margin-top:1px; white-space:nowrap }
+.who .sch{ display:block; font-size:11px; color:var(--ink-2); margin-top:2px; white-space:nowrap;
            overflow:hidden; text-overflow:ellipsis }
 .who .one{ display:none }
 /* A card is as big as the thinker's weight, on a ramp rather than in steps.
@@ -372,7 +397,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .who .card{ padding:var(--pt,4px) var(--px,8px) var(--pb,5px); border-radius:var(--br,7px) }
 .who .rule{ height:var(--rh,5px) }
 .who[data-bd="3"] .sch{ display:none }
-.who[data-bd="4"] .n{ font-family:var(--f-ui); font-weight:500 }
+.who[data-bd="4"] .n{ font-family:var(--f-ui); font-weight:400 }
 .who[data-bd="4"] .card{ background:var(--surface-2) }
 .who[data-bd="4"] .sch,.who[data-bd="4"] .meta{ display:none }
 .who[data-bd="3"] .n,.who[data-bd="4"] .n{ overflow:hidden; text-overflow:ellipsis }
@@ -383,12 +408,20 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .who.on .card{ border-color:var(--brass); box-shadow:0 0 0 1px var(--brass), var(--shadow-2);
                padding:9px 14px 10px; background:var(--surface) }
 .who.on .n{ font-size:18px !important; white-space:normal; line-height:1.1 }
-.who.on .meta{ font-size:10px; display:block }
-.who.on .sch{ display:block; font-size:11px; margin-top:3px; white-space:normal }
-.who.on .one{ display:block; font-family:var(--f-disp); font-style:italic; font-size:12px;
+.who.on .meta{ font-size:11px; display:block }
+.who.on .sch{ display:block; font-size:12px; margin-top:3px; white-space:normal }
+.who.on .one{ display:block; font-family:var(--f-disp); font-style:italic; font-size:13px;
               line-height:1.4; color:var(--ink-2); margin-top:6px; white-space:normal }
 .who.near .card{ border-color:var(--brass-soft) }
-.who.dim{ opacity:.3 } .who.dim .card{ box-shadow:none }
+/* Everyone not connected to the chosen thinker steps back: the card sinks into
+   the map's own paper, loses its shadow and most of its colour edge, and the
+   name drops to regular weight. The words stay at full strength. It used to be
+   opacity .3 on the whole card, which put the names at 1.5 to 2.4:1 (PDA-06). */
+.who.dim .card{ background:var(--paper); border-color:var(--rule-2); box-shadow:none }
+.who.dim .card::before{ opacity:.25 }
+.who.dim .rule{ opacity:.3 }
+.who.dim .n{ font-weight:400; color:var(--ink-2) }
+.who.dim .sch{ color:var(--ink-3) }
 
 /* ---------------------------------------------------------- the dossier */
 /* Reading takes more room than being offered something to read, so the
@@ -406,33 +439,50 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .hero{ flex:none; position:relative; height:136px; background:var(--eg); overflow:hidden }
 .hero svg{ position:absolute; inset:0; width:100%; height:100%; display:block }
 .hero::after{ content:""; position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(0,0,0,.02) 30%,rgba(0,0,0,.70) 100%) }
-.hero .cap{ position:absolute; left:16px; right:16px; bottom:11px; z-index:2 }
-.hero .kk{ font-size:8.5px; letter-spacing:.17em; text-transform:uppercase; font-weight:700;
-           color:rgba(255,255,255,.72); text-shadow:0 1px 3px rgba(0,0,0,.6) }
-.hero h2{ margin:0; font-family:var(--f-disp); font-size:24px; font-weight:600; color:#fff;
+  background:linear-gradient(180deg,rgba(0,0,0,.02) 30%,rgba(0,0,0,.28) 100%) }
+/* The caption carries its own shade, feathered upward into the picture, so the
+   white type is legible over the palest of the ten age colours in either theme
+   and does not depend on where the drawing happens to be dark. */
+.hero .cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:6px 16px 11px;
+            background-color:rgba(0,0,0,.46); box-shadow:0 -18px 22px -2px rgba(0,0,0,.46) }
+.hero .kk{ font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+           color:rgba(255,255,255,.92); text-shadow:0 1px 3px rgba(0,0,0,.6) }
+.hero h2{ margin:0; font-family:var(--f-disp); font-size:25px; font-weight:400; color:#fff;
           line-height:1.06; letter-spacing:.01em; text-shadow:0 1px 5px rgba(0,0,0,.6) }
-.hero .sl{ font-size:11px; color:rgba(255,255,255,.86); margin-top:3px;
+.hero .sl{ font-size:13px; color:rgba(255,255,255,.94); margin-top:3px;
            text-shadow:0 1px 4px rgba(0,0,0,.7); font-family:var(--f-disp); font-style:italic }
 .tallies{ flex:none; display:flex; border-bottom:1px solid var(--rule) }
 .tally{ flex:1; padding:9px 6px 10px; text-align:center; border-right:1px solid var(--rule-2) }
 .tally:last-child{ border-right:0 }
-.tally .v{ font-family:var(--f-disp); font-size:19px; font-weight:600; line-height:1 }
-.tally .k{ margin-top:3px; font-size:8.5px }
+.tally .v{ font-family:var(--f-disp); font-size:19px; font-weight:700; line-height:1 }
+.tally .k{ margin-top:4px }
 .pscroll{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:15px 17px 22px }
 .sec{ margin-bottom:18px }
-.sec>h3{ margin:0 0 8px; font-size:9px; letter-spacing:.17em; text-transform:uppercase;
+.sec>h3{ margin:0 0 9px; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
          font-weight:700; color:var(--ink-3); padding-bottom:5px; border-bottom:1px solid var(--rule-2) }
-.one-l{ font-family:var(--f-disp); font-size:16px; line-height:1.42; color:var(--ink);
+/* The dossier is read, so it is set in the serif at a reading size (DESIGN.md
+   principle 4). It was 13px system sans, a list of bullets beside a full serif
+   study one book over. */
+.one-l{ font-family:var(--f-disp); font-size:17px; line-height:1.42; color:var(--ink);
         margin:0 0 16px; font-style:italic }
 .sec ul{ margin:0; padding:0; list-style:none }
-.sec li{ font-size:13px; line-height:1.55; color:var(--ink-2); margin-bottom:8px; padding-left:12px;
-         position:relative }
-.sec li::before{ content:""; position:absolute; left:0; top:9px; width:4px; height:4px;
-                 border-radius:50%; background:var(--brass-soft) }
+.sec li{ font-family:var(--f-disp); font-size:15.5px; line-height:1.5; color:var(--ink-2);
+         margin-bottom:9px; padding-left:14px; position:relative }
+.sec li::before{ content:""; position:absolute; left:0; top:.68em; width:5px; height:5px;
+                 border-radius:50%; background:var(--brass) }
 .sec li em{ color:var(--ink); font-style:italic }
-.works{ font-family:var(--f-disp); font-size:13px; line-height:1.55; color:var(--ink-2) }
-.prose{ font-size:13px; line-height:1.6; color:var(--ink-2); margin:0 0 12px }
+.works{ font-family:var(--f-disp); font-size:15px; line-height:1.5; color:var(--ink-2) }
+.prose{ font-family:var(--f-disp); font-size:15.5px; line-height:1.55; color:var(--ink-2); margin:0 0 14px }
+/* the way from a thinker on the map to the long study of him in The Long Argument */
+.study{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+        margin:0 0 18px; padding:10px 12px; border:1px solid var(--brass-soft); border-radius:8px;
+        background:var(--brass-wash); color:var(--ink); text-decoration:none;
+        font-family:var(--f-disp); font-size:15px; font-weight:700 }
+.study small{ display:block; margin-top:3px; font-family:var(--f-ui); font-size:12px; font-weight:400;
+              line-height:1.35; color:var(--ink-2) }
+.study i{ font-style:normal; color:var(--accent-ink); font-size:17px; flex:none }
+.study:hover{ border-color:var(--brass); background:var(--surface-2) }
+.study:focus-visible{ outline:2px solid var(--focus); outline-offset:2px }
 .links{ display:flex; flex-direction:column; gap:5px }
 .link{ display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:9px; width:100%;
        text-align:left; padding:7px 9px; border:1px solid var(--rule-2); border-radius:8px;
@@ -440,34 +490,41 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 .link:hover{ border-color:var(--brass-soft); background:var(--paper) }
 .link:focus-visible{ outline:2px solid var(--focus); outline-offset:1px }
 .link .sw{ width:18px; height:6px; flex:none }
-.link .rel{ font-family:var(--f-mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
-            color:var(--ink-3); display:block }
-.link .nm{ font-family:var(--f-disp); font-weight:600; white-space:nowrap; overflow:hidden;
+.link .rel{ font-family:var(--f-ui); font-size:.7rem; font-weight:700; letter-spacing:.08em;
+            text-transform:uppercase; color:var(--ink-3); display:block }
+.link .nm{ font-family:var(--f-disp); font-weight:700; white-space:nowrap; overflow:hidden;
            text-overflow:ellipsis; display:block }
-.link .yr{ font-family:var(--f-mono); font-size:9.5px; color:var(--ink-3); flex:none }
-.link.off{ opacity:.55 } .link.off .nm{ font-style:italic }
-.link .note{ display:block; font-family:var(--f-disp); font-style:italic; font-size:11.5px;
+.link .yr{ font-family:var(--f-mono); font-size:11px; color:var(--ink-3); flex:none }
+/* someone not on the map at this setting: an open, dashed row on the panel's own
+   ground, the name in regular italic. It was opacity .55 on the whole row. */
+.link.off{ background:transparent; border-style:dashed; border-color:var(--rule) }
+.link.off .nm{ font-style:italic; font-weight:400 }
+.link.off .sw{ opacity:.45 }
+.link .note{ display:block; font-family:var(--f-disp); font-style:italic; font-size:13px;
              line-height:1.4; color:var(--ink-3); margin-top:2px; white-space:normal }
 .more{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;
        padding:8px 10px; border:1px dashed var(--brass-soft); border-radius:8px;
        font-size:12px; color:var(--ink-2) }
-.more button{ height:28px; padding:0 10px; border:1px solid var(--brass); border-radius:7px;
+.more button{ height:32px; padding:0 10px; border:1px solid var(--brass); border-radius:7px;
               background:var(--brass-wash); cursor:pointer; font-size:11.5px; font-weight:600;
               color:var(--ink); white-space:nowrap; flex:none }
 .quote{ border-left:2px solid var(--accent); padding:2px 0 2px 12px; margin:0;
-        font-family:var(--f-disp); font-size:13px; font-style:italic; line-height:1.5; color:var(--ink-2) }
-.quote cite{ display:block; font-style:normal; font-size:10px; color:var(--ink-3); margin-top:5px }
-.guide{ padding:4px 0 }
-.guide .row{ display:flex; gap:12px; align-items:flex-start; margin-bottom:12px }
+        font-family:var(--f-disp); font-size:15px; font-style:italic; line-height:1.5; color:var(--ink-2) }
+.quote cite{ display:block; font-family:var(--f-ui); font-style:normal; font-size:12px; color:var(--ink-3); margin-top:6px }
+/* The guide keeps .pscroll's side padding. Its own rule used to come later at
+   equal specificity and zero it, so the first text a desktop reader saw ran
+   into the panel's rule (FD-09). */
+.pscroll.guide{ padding-top:19px }
+.guide .row{ display:flex; gap:12px; align-items:flex-start; margin-bottom:13px }
 .guide .row .g{ flex:none; width:40px; height:28px; display:grid; place-items:center }
-.guide .row p{ margin:0; font-size:12.5px; line-height:1.5; color:var(--ink-2) }
+.guide .row p{ margin:0; font-family:var(--f-disp); font-size:15px; line-height:1.45; color:var(--ink-2) }
 .guide .row p b{ color:var(--ink); font-family:var(--f-disp) }
 .ppl{ display:flex; flex-wrap:wrap; gap:5px }
-.ppl button{ height:28px; padding:0 10px; border:1px solid var(--rule-2); border-radius:14px;
-             background:var(--surface-2); cursor:pointer; font-size:12px; font-family:var(--f-disp);
-             font-weight:600; color:var(--ink) }
+.ppl button{ height:30px; padding:0 11px; border:1px solid var(--rule-2); border-radius:15px;
+             background:var(--surface-2); cursor:pointer; font-size:13.5px; font-family:var(--f-disp);
+             font-weight:700; color:var(--ink) }
 .ppl button:hover{ border-color:var(--brass-soft); background:var(--paper) }
-.ppl button.off{ color:var(--ink-3); font-weight:500; font-style:italic }
+.ppl button.off{ color:var(--ink-3); font-weight:400; font-style:italic }
 
 /* ---------------------------------------------------------- narrow */
 @media (max-width:1100px){ :root{ --rail-w:222px; --panel-w:300px; --panel-w-open:356px } }
@@ -563,7 +620,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
               padding:6px 8px 6px 14px; border-bottom:1px solid var(--rule-2) }
   .sheethead .grab{ position:absolute; left:50%; top:6px; width:38px; height:4px;
                     margin-left:-19px; border-radius:2px; background:var(--rule) }
-  .sheethead .t{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
+  .sheethead .t{ font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
                  color:var(--ink-3); padding-top:6px }
   .hero{ height:110px }
   .readout{ display:none }
@@ -580,7 +637,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 @media (max-width:1100px) and (max-height:600px) and (orientation:landscape){
   :root{ --top-h:46px; --drawer-w:min(56vw,340px) }
   .mark .sub{ display:none }
-  .mark h1{ font-size:14.5px }
+  .mark .tt{ font-size:1.1rem }
   .mark .sig{ width:28px; height:28px; border-radius:7px }
   .mark .sig svg{ width:17px; height:17px }
   .rails{ padding:5px 9px; gap:5px }
@@ -588,8 +645,8 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
         border-radius:8px }
   .age .thumb{ width:28px; height:28px; border-radius:6px }
   .age .nm{ font-size:11.5px }
-  .age .yr{ font-size:8.5px; display:inline }
-  .age .ct{ display:inline; font-size:8.5px }
+  .age .yr{ font-size:11px; display:inline }
+  .age .ct{ display:inline; font-size:11px }
   .age .ct .full{ display:none }
   .age .ct .brief{ display:inline }
   .age .ct::before{ content:" · " }
@@ -610,28 +667,39 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
   .sheethead{ padding:5px 8px 5px 13px }
   .sheethead .grab{ display:none }        /* nothing to drag down any more */
   .hero{ height:74px }
-  .hero .who-n{ font-size:19px }
-  .hero .sl{ font-size:10px }
+  .hero h2{ font-size:19px }
+  .hero .sl{ font-size:11px }
   .tally{ padding:6px 4px 7px }
   .tally .v{ font-size:15px }
   .pscroll{ padding:11px 13px 18px }
   .sec{ margin-bottom:13px }
-  .one-l{ font-size:14px; margin-bottom:11px }
+  .one-l{ font-size:15px; margin-bottom:11px }
 }
 @media (max-width:700px){
-  .mark h1{ font-size:14px } .mark .sub{ display:none }
-  .seg button{ padding:0 8px } .seg button i{ display:none }
+  :root{ --top-h:48px }
+  .top{ padding:0 10px; gap:10px }
 }
-/* A finger is a finger whatever the screen is: anything it presses is at
-   least thirty-four points tall. */
+/* A finger is a finger whatever the screen is: anything it presses is at least
+   44 points tall, the same --tap the rest of the library uses (PDA-10). */
 @media (pointer:coarse){
-  .tbtn,.more button,.kind,.seg button,.zoom button{ min-height:34px }
-  .link{ min-height:38px }
+  :root{ --tap:44px }
+  .tbtn,.more button,.kind,.zoom button,.lines>summary,.ppl button{ min-height:var(--tap) }
+  .tbtn.icon{ width:var(--tap) }
+  .zoom button{ min-width:var(--tap) }
+  .search input{ height:var(--tap) }
+  .search>svg{ top:15px }
+  .search .clr{ top:4px; right:2px; width:36px; height:36px }
+  .hits{ top:48px }
+  .lines>div{ top:48px }
+  #show{ height:var(--tap) }
+  .link{ min-height:var(--tap) }
+  #sheetClose{ height:var(--tap) !important; padding:0 16px }
 }
 
 @media (prefers-reduced-motion:reduce){
   *{ transition-duration:.01ms !important; animation-duration:.01ms !important }
 }
+html.retheme *,html.retheme *::before,html.retheme *::after{ transition:none !important }
 </style>
 <!--NAVCSS-->
 <link rel="stylesheet" href="../assets/nav.css">
@@ -639,24 +707,19 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
 </head>
 <body>
 <!--NAV-->
-<nav class="topnav" aria-label="Site">
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-ages-of-thought">
   <a class="nav-brand two" href="index.html" aria-current="page"><span class="nav-full">The Ages of Thought</span><span class="nav-short">Ages</span></a>
-  <div class="topnav-links">
-    <a class="up" href="../index.html">Library</a>
-  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
 </nav>
+<span class="skip-target" id="text" tabindex="-1"></span>
 <!--/NAV-->
 <div class="atlas">
 
   <header class="top">
-    <button class="tbtn icon" id="btnRail" aria-expanded="true" aria-controls="rails"
-            aria-label="Hide the ten ages" title="Hide the ten ages">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>
-      </svg>
-    </button>
-    <a class="mark" href="../index.html">
+    <h1 class="vh">The Ages of Thought</h1>
+    <div class="mark">
       <span class="sig" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"
              stroke-linecap="round" stroke-linejoin="round">
@@ -665,8 +728,15 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
           <path d="M12 3.4c-2.6 2.7-3.9 5.6-3.9 8.6s1.3 5.9 3.9 8.6"/>
         </svg>
       </span>
-      <span><h1>The Ages of Thought</h1><span class="sub">An atlas &middot; the library</span></span>
-    </a>
+      <span><span class="tt" aria-hidden="true">The Ages of Thought</span><span class="sub">An atlas of ten ages</span></span>
+    </div>
+    <button class="tbtn icon" id="btnRail" aria-expanded="true" aria-controls="rails"
+            aria-label="Hide the ten ages" title="Hide the ten ages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>
+      </svg>
+    </button>
     <div class="readout" aria-live="polite">
       <div class="ro"><span class="sw" id="roAgeArt" aria-hidden="true"></span>
         <span><span class="k">Age</span><span class="v" id="roAge">All ten</span></span></div>
@@ -674,11 +744,6 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
     </div>
     <span class="spacer"></span>
     <button class="tbtn" id="btnReset" title="Clear the selection" hidden><span class="wide">Clear selection</span><span class="nar">Clear</span></button>
-    <button class="tbtn icon" id="btnTheme" aria-label="Switch between light and dark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>
-    </button>
   </header>
 
   <div class="body">
@@ -709,17 +774,18 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
           <output class="shown" id="showNote" for="show"></output>
         </div>
         <div class="grp linesg" role="group" aria-label="Which lines to draw">
+          <span class="k" aria-hidden="true">Lines</span>
           <details class="lines" id="lines" open><summary>Lines <span aria-hidden="true">&#9662;</span></summary><div>
           <button class="kind" data-k="taught" aria-pressed="true" title="One taught the other">
-            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h17" stroke="var(--taught)" stroke-width="1.8"/>
-              <path d="M17 1.2 23 4l-6 2.8z" fill="var(--taught)"/></svg><span>taught</span></button>
+            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h17" style="stroke:var(--taught)" stroke-width="1.8"/>
+              <path d="M17 1.2 23 4l-6 2.8z" style="fill:var(--taught)"/></svg><span>taught</span></button>
           <button class="kind" data-k="read" aria-pressed="true" title="The later one read the earlier">
-            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" stroke="var(--readby)" stroke-width="1.2"/></svg><span>read by</span></button>
+            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" style="stroke:var(--readby)" stroke-width="1.2"/></svg><span>read by</span></button>
           <button class="kind" data-k="reacted" aria-pressed="true" title="The later one argued against the earlier">
-            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" stroke="var(--challenged)" stroke-width="1.4"
+            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" style="stroke:var(--challenged)" stroke-width="1.4"
               stroke-dasharray="4 3"/></svg><span>challenged by</span></button>
           <button class="kind" data-k="transmitted" aria-pressed="true" title="A text carried across a language or an age">
-            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" stroke="var(--carried)" stroke-width="1.5"
+            <svg viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4h23" style="stroke:var(--carried)" stroke-width="1.5"
               stroke-dasharray="1.5 3.5" stroke-linecap="round"/></svg><span>carried by</span></button>
           </div></details>
         </div>
@@ -735,6 +801,7 @@ html[data-theme="dark"] .ageband.on i{ opacity:.22 }
         <div class="canvas" id="canvas">
           <div class="ages-bg" id="agesbg"></div>
           <svg class="wires" id="wires" aria-hidden="true"></svg>
+          <div class="tiernames" id="tiernames"></div>
           <div id="folk"></div>
         </div>
       </div>
@@ -936,6 +1003,12 @@ SCENES.streams = function () { return "<svg viewBox=\"0 0 160 74\" preserveAspec
 var $  = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
 
+/* A reader who has asked for less motion gets none: every scripted scroll
+   jumps instead of gliding (PDA-02). Asked each time, so a change of the
+   setting while the page is open is honoured. */
+var LESS_MOTION = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+function glide() { return LESS_MOTION && LESS_MOTION.matches ? "auto" : "smooth"; }
+
 /* ---------------------------------------------------------- state */
 var D = null, BY = {}, OUT = {}, IN = {};
 var DEFAULT_SHOW = 12;              /* the opening view: the twelve heaviest */
@@ -996,7 +1069,15 @@ function textW(s, font) {
   if (_wcache[k] === undefined) { _mc.font = font; _wcache[k] = _mc.measureText(s).width; }
   return _wcache[k];
 }
-var METAFONT = '9px "IBM Plex Mono",monospace', SCHFONT = '10px system-ui,sans-serif';
+/* The faces the cards are drawn in, read from the stylesheet (the library's
+   stacks, via nav.css), so the packer measures exactly what the card will show. */
+function faceOf(name, dflt) {
+  var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || dflt;
+}
+var F_DISP = faceOf("--f-disp", "Georgia,serif"), F_UI = faceOf("--f-ui", "system-ui,sans-serif"),
+    F_MONO = faceOf("--f-mono", "monospace");
+var METAFONT = "11px " + F_MONO, SCHFONT = "11px " + F_UI;
 var BIG_W = 250;                     /* the centrepiece card */
 
 /* How big a card is, as a ramp from the lightest thinker in the book to the
@@ -1013,12 +1094,12 @@ function heft(p) {
   return HEFT_HI > HEFT_LO ? (p.w - HEFT_LO) / (HEFT_HI - HEFT_LO) : 1;
 }
 function lerp(p, a, b) { return a + heft(p) * (b - a); }
-function nameSize(p) { return Math.round(lerp(p, 10.5, 16) * 100) / 100; }
+function nameSize(p) { return Math.round(lerp(p, 11, 16) * 100) / 100; }
 /* the measurement font must be the one the card will actually be drawn in,
    or the packer reserves the wrong width */
 function cardFont(p) {
-  return p.bd === 4 ? '500 ' + nameSize(p) + "px system-ui,sans-serif"
-                    : '600 ' + nameSize(p) + 'px "Spectral",Georgia,serif';
+  return p.bd === 4 ? "400 " + nameSize(p) + "px " + F_UI
+                    : "700 " + nameSize(p) + "px " + F_DISP;
 }
 /* the horizontal room a card needs beyond its longest line: padding, border
    and the slack the old per-band table allowed */
@@ -1119,7 +1200,13 @@ function extent(p) {
 }
 
 /* ---------------------------------------------------------- the y-layout */
-var LANE = 70, BIG_EXTRA = 64, BANDGAP = 24, GAP = 14, TOPPAD = 40, BOTPAD = 30, PAD = TOPPAD;
+var LANE = 70, BIG_EXTRA = 64, BANDGAP = 24, GAP = 14, TOPPAD = 70, BOTPAD = 30, PAD = TOPPAD;
+/* A band's name has a line of its own above the band's first row. The largest
+   cards stand up to 21px above their row, which put them over the name ("MOVED
+   IT MOST" under Socrates), so every band opens with TIERHEAD more room and the
+   name sits in it. TOPPAD keeps the first band's name clear of the ages' names
+   and the century years, which hold the top 47px of the map. */
+var TIERHEAD = 20;
 /* Rows are not all the same height: the chosen thinker's row is taller, so
    the centrepiece card has room of its own instead of lying across the row
    above. laneY() reads the row tops the layout worked out. */
@@ -1142,8 +1229,10 @@ function buildLayout() {
     base += ends.length;
     if (ends.length) gapsAfter[base - 1] = true;
   }
-  var tops = [], hs = [], y = 0, big = SEL ? row[SEL] : -1;
+  var tops = [], hs = [], y = 0, big = SEL ? row[SEL] : -1, heads = {};
+  for (var t2 = 1; t2 <= 4; t2++) if (bands[t2].rows) heads[bands[t2].start] = true;
   for (var r = 0; r < base; r++) {
+    if (heads[r]) y += TIERHEAD;
     tops[r] = y;
     hs[r] = LANE + (r === big ? BIG_EXTRA : 0);
     y += hs[r] + (gapsAfter[r] && r < base - 1 ? BANDGAP : 0);
@@ -1181,13 +1270,18 @@ function renderGround() {
     }
     s += "</div>";
   });
+  var names = "";
   for (var t = 1; t <= 4; t++) {
     var bd = LAY.bands[t];
     if (!bd || !bd.rows) continue;
-    s += '<div class="tierband t' + t + '" style="top:' + (laneY(bd.start) - 24) + "px;height:" +
-         (laneY(bd.start + bd.rows) - laneY(bd.start) + 8) + 'px"><i></i><b>' + esc(BANDNAME[t]) + "</b></div>";
+    /* the band's tint reaches up over its name's line; where it ends is unchanged */
+    var ty = laneY(bd.start) - 24 - TIERHEAD, last = bd.start + bd.rows >= LAY.rows;
+    s += '<div class="tiertint t' + t + '" style="top:' + ty + "px;height:" +
+         (laneY(bd.start + bd.rows) - laneY(bd.start) + 8 + (last ? TIERHEAD : 0)) + 'px"><i></i></div>';
+    names += '<div class="tierband t' + t + '" style="top:' + ty + 'px"><b>' + esc(BANDNAME[t]) + "</b></div>";
   }
   bg.innerHTML = s;
+  $("#tiernames").innerHTML = names;
   $("#canvas").style.width = SCALE.total.toFixed(1) + "px";
   $("#canvas").style.height = h + "px";
 }
@@ -1347,11 +1441,11 @@ function nWorks(p) {
   }, 0);
 }
 function swatch(k) {
-  var st = { taught: 'stroke="var(--taught)" stroke-width="2"',
-             read: 'stroke="var(--readby)" stroke-width="1.3"',
-             reacted: 'stroke="var(--challenged)" stroke-width="1.5" stroke-dasharray="3.5 2.5"',
-             transmitted: 'stroke="var(--carried)" stroke-width="1.6" stroke-dasharray="1.2 3" stroke-linecap="round"',
-             echo: 'stroke="var(--ink-4)" stroke-width="1.2" stroke-dasharray="2 2.5"' }[k] || "";
+  var st = { taught: 'style="stroke:var(--taught)" stroke-width="2"',
+             read: 'style="stroke:var(--readby)" stroke-width="1.3"',
+             reacted: 'style="stroke:var(--challenged)" stroke-width="1.5" stroke-dasharray="3.5 2.5"',
+             transmitted: 'style="stroke:var(--carried)" stroke-width="1.6" stroke-dasharray="1.2 3" stroke-linecap="round"',
+             echo: 'style="stroke:var(--ink-4)" stroke-width="1.2" stroke-dasharray="2 2.5"' }[k] || "";
   return '<svg class="sw" viewBox="0 0 18 6" aria-hidden="true"><path d="M0 3h18" ' + st + "/></svg>";
 }
 function hero(i, kk, title, sub) {
@@ -1400,7 +1494,11 @@ function dossier(p) {
     '<div class="pscroll">' +
       (p.sch ? '<div class="k" style="margin-bottom:4px">' + esc(p.sch) + "</div>" : "") +
       (p.one ? '<p class="one-l">' + rich(p.one) + "</p>" : "") +
-      '<div class="sec"><h3>Key ideas</h3><ul>' + p.ideas.map(function (t) { return "<li>" + rich(t) + "</li>"; }).join("") + "</ul></div>" +
+      /* every thinker on the map has a long study one book over, under the same id */
+      '<a class="study" href="../the-long-argument/index.html#study=' + encodeURIComponent(p.id) + '">' +
+        '<span>Read the full study<small>In The Long Argument: the world around ' + esc(p.n.split(" (")[0]) +
+        ', the life, the works and what came of them</small></span><i aria-hidden="true">&rarr;</i></a>' +
+      '<div class="sec"><h3>Key ideas</h3><ul>'  + p.ideas.map(function (t) { return "<li>" + rich(t) + "</li>"; }).join("") + "</ul></div>" +
       (p.works.length ? '<div class="sec"><h3>Works</h3><div class="works">' + p.works.map(rich).join(" ") + "</div></div>" : "") +
       (all.length ? '<div class="sec"><h3>Connections</h3><div class="links">' +
           all.slice().sort(sortRel).map(row).join("") + "</div>" +
@@ -1440,19 +1538,19 @@ function guide() {
     '<p class="one-l" style="font-size:16px">Ten ages, ' + D.people.length +
       ' thinkers, and a line wherever one taught, read or argued with another.</p>' +
     '<div class="row"><div class="g"><svg viewBox="0 0 40 28" width="40" height="28" aria-hidden="true">' +
-      '<rect x="2" y="4" width="36" height="13" rx="4" fill="var(--surface-2)" stroke="var(--rule)"/>' +
-      '<rect x="2" y="21" width="26" height="5" rx="2.5" fill="var(--e1)"/></svg></div>' +
+      '<rect x="2" y="4" width="36" height="13" rx="4" style="fill:var(--surface-2);stroke:var(--rule)"/>' +
+      '<rect x="2" y="21" width="26" height="5" rx="2.5" style="fill:var(--e1)"/></svg></div>' +
       "<p>A card is a thinker; the bar beneath it is the lifespan, to scale. Choose one and the atlas turns to it.</p></div>" +
     '<div class="row"><div class="g"><svg viewBox="0 0 40 28" width="40" height="28" aria-hidden="true">' +
-      '<rect x="0" y="0" width="13" height="28" fill="var(--e1)" opacity=".3"/>' +
-      '<rect x="13" y="0" width="13" height="28" fill="var(--e4)" opacity=".3"/>' +
-      '<rect x="26" y="0" width="14" height="28" fill="var(--e7)" opacity=".3"/></svg></div>' +
+      '<rect x="0" y="0" width="13" height="28" style="fill:var(--e1)" opacity=".3"/>' +
+      '<rect x="13" y="0" width="13" height="28" style="fill:var(--e4)" opacity=".3"/>' +
+      '<rect x="26" y="0" width="14" height="28" style="fill:var(--e7)" opacity=".3"/></svg></div>' +
       "<p>Left to right is time, in ten ages; top to bottom is how much a thinker moved.</p></div>" +
     '<div class="row"><div class="g"><svg viewBox="0 0 40 28" width="40" height="28" aria-hidden="true">' +
-      '<path d="M2 7h30" stroke="var(--taught)" stroke-width="2.2"/>' +
-      '<path d="M2 15h34" stroke="var(--readby)" stroke-width="1.4"/>' +
-      '<path d="M2 23h34" stroke="var(--challenged)" stroke-width="1.6" stroke-dasharray="3.5 2.5"/></svg></div>' +
-      "<p>The colour of a line is what passed between two people. The switches above name them.</p></div>" +
+      '<path d="M2 7h30" style="stroke:var(--taught)" stroke-width="2.2"/>' +
+      '<path d="M2 15h34" style="stroke:var(--readby)" stroke-width="1.4"/>' +
+      '<path d="M2 23h34" style="stroke:var(--challenged)" stroke-width="1.6" stroke-dasharray="3.5 2.5"/></svg></div>' +
+      "<p>The colour of a line is what passed between two people. The Lines menu in the toolbar names each kind, and turns it on or off.</p></div>" +
     "</div>";
 }
 
@@ -1536,7 +1634,7 @@ function reveal(id) {
      foot of one four points below the edge and called that visible. */
   if (y < top + 10 || y + h > top + sc.clientHeight - 6)
     top = Math.max(0, y - Math.max(10, (sc.clientHeight - h) * 0.4));
-  if (left !== sc.scrollLeft || top !== sc.scrollTop) sc.scrollTo({ left: left, top: top, behavior: "smooth" });
+  if (left !== sc.scrollLeft || top !== sc.scrollTop) sc.scrollTo({ left: left, top: top, behavior: glide() });
 }
 
 /* Pressing an age goes there. If nobody in it is showing, the setting widens
@@ -1587,7 +1685,7 @@ function frameAge(i) {
     setZoom(Z * room / (sp.hi - sp.lo));
     sp = ageSpan(i);
   }
-  sc.scrollTo({ left: Math.max(0, sp.lo - 20), top: 0, behavior: "smooth" });
+  sc.scrollTo({ left: Math.max(0, sp.lo - 20), top: 0, behavior: glide() });
 }
 
 /* How full the map is. The slider hands this a count, not a tier: the
@@ -1943,12 +2041,6 @@ function bind() {
   };
   try { if (localStorage.getItem("atlas:rail") === "0") setRail(false, false); } catch (e) { }
 
-  $("#btnTheme").onclick = function () {
-    var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try { var st = JSON.parse(localStorage.getItem("library:v1") || "{}"); st.theme = next;
-          localStorage.setItem("library:v1", JSON.stringify(st)); } catch (e) { }
-  };
   window.addEventListener("popstate", function () { readHash(false); });
   var t;
   addEventListener("resize", function () {
@@ -1960,6 +2052,20 @@ function bind() {
 }
 
 /* ---------------------------------------------------------- start */
+/* ---------------------------------------------------------- the theme
+   The library bar's button flips html[data-theme] (pwa.js); the atlas has no
+   control of its own. Everything here is painted from CSS variables, so the
+   flip repaints the cards, lines, bands and plates by itself. What script adds
+   hangs off this one observer: for the frame of the flip, transitions are held,
+   so no card or row fades from the old colours to the new ones. */
+function retheme() {
+  var h = document.documentElement;
+  h.classList.add("retheme");
+  requestAnimationFrame(function () { requestAnimationFrame(function () { h.classList.remove("retheme"); }); });
+}
+if (window.MutationObserver)
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
 function start(data) {
   D = data;
   BY = {}; D.people.forEach(function (p) { BY[p.id] = p; });

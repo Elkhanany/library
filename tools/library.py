@@ -170,13 +170,14 @@ class Book:
             derived[key] = {"key": key, "label": label, "href": href}
             order.append(key)
 
-        # The contents page is offered when there are chapters on it, written
-        # or merely planned. The Long Argument has eight planned and none
-        # written, and its contents page is the plan -- worth reaching. The
-        # Ages of Thought is an atlas with no curriculum at all, and its
-        # contents page is a heading over nothing, so it is not offered.
-        if self.flat:
-            add("chapters", "Chapters", "contents.html")
+        # The contents page is offered only when there is a chapter on it to
+        # read. A contents page of planned titles and nothing else is a dead
+        # end (NAV-04): The Long Argument's showed "0 of 8 chapters built" over
+        # eight grey rows, and the build no longer writes one for a book with
+        # nothing written (webbuild.build_book). One name per destination,
+        # everywhere it is offered: "Contents" (DESIGN section 7).
+        if self.written():
+            add("chapters", "Contents", "contents.html")
         if self.has("throughline"):
             add("throughline", "In Plain Terms", "throughline.html")
         if self.has("ledger"):
@@ -271,6 +272,43 @@ class Book:
 
     def __repr__(self):
         return f"<Book {self.slug}: {len(self.written())}/{len(self.flat)} chapters>"
+
+
+def themecss(bk):
+    """The book's own colours, appended to the house stylesheet by both builds.
+
+    A book chooses four colours in book.json "theme" -- paper, ink, accent and
+    accent_dark -- and this emits exactly those as the roles book.css derives
+    everything else from: --bg (the paper), --ink and --accent on :root, and
+    --accent again (accent_dark) under html[data-theme="dark"]. Nothing more
+    (DESIGN.md section 3).
+
+    It used to emit static --bg-alt and --accent-soft as well. A later :root
+    rule of the same specificity wins in both themes, so the clinical book's
+    dark sidebar and drawer kept a light ground under light ink. book.css now
+    mixes every other role from these four with color-mix(), in each theme, so
+    a book's tint reaches its rules, washes and dark ground without anyone
+    hand-tuning a tint.
+
+    Emitted whole for every book that declares a theme, rather than only where
+    it differs from book.css's own defaults: the defaults are the house
+    stylesheet's business and can change under a book without it noticing.
+    webbuild.py appends this to docs/<slug>/assets/book.css; make.py inlines it
+    after book.css in every page of the Dropbox build.
+    """
+    t = bk.theme or {}
+    light = ["--%s:%s" % (role, t[key])
+             for role, key in (("bg", "paper"), ("ink", "ink"), ("accent", "accent"))
+             if t.get(key)]
+    dark = ["--accent:%s" % t["accent_dark"]] if t.get("accent_dark") else []
+    if not light and not dark:
+        return ""
+    out = ["\n/* ---------- %s, from book.json ---------- */" % bk.slug]
+    if light:
+        out.append(":root{%s}" % ";".join(light))
+    if dark:
+        out.append('html[data-theme="dark"]{%s}' % ";".join(dark))
+    return "\n".join(out) + "\n"
 
 
 def slugs():
