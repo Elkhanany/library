@@ -205,23 +205,75 @@ body{
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
 }
 
-/* ---------- layout ---------- */
-.wrap{display:flex;gap:0;align-items:flex-start;max-width:82rem;margin:0 auto}
+/* ---------- the frame ----------
+   The chapter shell (DESIGN.md section 5). The sidebar is flush to the
+   viewport's left edge above 1000px, its ground reaching x = 0, and its text
+   sits at --lib-inset, the bar's own inset, so the brand and the sidebar's
+   first line share one x. The column is the reading measure. Nothing is
+   centred on a frame width any more: a centred .wrap floated the sidebar as a
+   grey slab in mid-page at 1920 and left the bar's brand out of line (R-10,
+   NAV-17). The sidebar's top and height under the bar are nav.css's, beside
+   the bar's height; the values here are for a page with no bar (the Dropbox
+   build).
+
+   --breakout is the margin track: 0 below 1200px, and from 1200px the free
+   space right of the column, capped at 18rem. Hanging equation numbers and
+   wide figures read it. It is a registered length so that it computes to a
+   number on .main, where a percentage in it would otherwise be resolved
+   against whichever box used it. From 1200px .main is an inline-size
+   container, so an evidence table can bleed across all of it (100cqi) rather
+   than stop at the track; and .wrap is one too, so that .main can measure its
+   free space in the page's width without counting a scrollbar. From 1500px
+   the column and its margin are centred in the space right of the sidebar. */
+@property --breakout{syntax:'<length>';inherits:true;initial-value:0px}
+
+.wrap{display:flex;align-items:flex-start}
 .sidebar{
-  position:sticky;top:0;flex:0 0 16rem;height:100vh;height:100dvh;overflow-y:auto;
-  padding:2rem 1.25rem 3rem;border-right:1px solid var(--rule);
-  font-family:var(--sans);font-size:.8rem;line-height:1.45;background:var(--bg-alt);
+  position:sticky;top:0;flex:0 0 16rem;width:16rem;height:100vh;height:100dvh;
+  overflow-y:auto;overscroll-behavior:contain;
+  padding:2.5rem var(--lib-inset,1.25rem) 3rem;border-right:1px solid var(--rule);
+  font-family:var(--sans);font-size:var(--fs-ui);line-height:1.45;background:var(--bg-alt);
 }
-.main{flex:1 1 auto;min-width:0;padding:2.5rem 3rem 6rem}
+/* The left padding holds the Through-Line's hanging passage numbers; the right
+   is the bar's inset, so a bleeding table ends where the bar's last button
+   does. */
+.main{--breakout:0px;flex:1 1 auto;min-width:0;
+  padding:2.5rem var(--lib-inset,1.25rem) 6rem 4rem}
 .col{max-width:var(--measure)}
 .col.wide{max-width:var(--measure-wide)}
 
+/* 1000px itself goes to the phone chrome, as nav.css's folio bar and book.js
+   do, so no width shows both the sidebar and the folio bar */
 @media (max-width:1000px){
   .sidebar{display:none}
-  .main{padding:1.5rem 1.25rem 5rem}
+  .main{padding:1.5rem var(--gutter) 5rem}
 }
-@media (max-width:640px){
-  .main{padding:1.1rem .9rem 4rem}
+@media (max-width:639.98px){
+  .main{padding:1.1rem var(--gutter) 4rem}
+}
+@media screen and (min-width:1200px){
+  .wrap,.main{container-type:inline-size}
+  /* 100cqi is .wrap's width here, the page less any scrollbar */
+  .main{--breakout:clamp(0px,
+    100cqi - 16rem - 4rem - var(--lib-inset,1.25rem) - var(--measure), 18rem)}
+  /* contents and the Math Ledger: short rows and tables, no margin track */
+  .main:has(> .col.wide){--breakout:0px}
+  /* the table runs from the column's left edge to .main's right content edge;
+     100% is the column, 100cqi is .main's content box. Without container
+     units this is dropped, and the table scrolls inside the column. */
+  .col > .evidence{margin-inline-end:calc(100% - 100cqi)}
+}
+@media screen and (min-width:1500px){
+  .main{padding-left:var(--lib-inset,1.25rem);
+    --breakout:clamp(0px,
+      100cqi - 16rem - 2 * var(--lib-inset,1.25rem) - var(--measure), 18rem)}
+  .main > .col{margin-left:max(0px, (100% - var(--measure) - var(--breakout)) / 2)}
+  .main > .col.wide{margin-left:max(0px, (100% - var(--measure-wide)) / 2)}
+  /* the column is offset by (C - W - B) / 2, so the table takes that back on
+     the left and spans the whole content box: C = 100cqi, W = 100%, B the
+     margin track */
+  .col > .evidence{margin-inline:calc((100% + var(--breakout) - 100cqi) / 2)
+                                 calc((100% - var(--breakout) - 100cqi) / 2)}
 }
 
 /* KaTeX keeps a hidden MathML copy for accessibility and copy-paste; it must never
@@ -247,10 +299,29 @@ body{
 .katex-mathml{position:absolute!important;width:1px!important;height:1px!important;
   overflow:hidden!important;clip:rect(1px,1px,1px,1px)!important;white-space:nowrap!important}
 
-/* ---------- sidebar ---------- */
-.sb-home{display:block;font-weight:600;color:var(--accent);text-decoration:none;
-  font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.4rem}
-.sb-title{margin:0 0 .7rem}
+/* ---------- sidebar ----------
+   Up, across, and the sections (DESIGN.md section 6, Sidebar). The up-link
+   names the part and goes to it in the contents; the folio row is the
+   neighbours by number either side of the position, all written by the build.
+   The position is a label; the arrows and the up-link are controls, sans 600
+   in the soft ink. */
+.sb-home{display:block;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  line-clamp:2;overflow:hidden;margin:0 0 .85rem;
+  font:600 var(--fs-ui)/1.4 var(--sans);color:var(--ink-soft);text-decoration:none}
+.sb-home:hover{color:var(--accent)}
+.sb-folio{display:grid;align-items:center;column-gap:.35rem;margin:0 0 1rem;padding:.3rem 0;
+  grid-template-columns:minmax(2rem,max-content) minmax(0,1fr) minmax(2rem,max-content);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.sb-folio .sb-title{margin:0;text-align:center}
+.sb-title .sb-at{white-space:nowrap}
+/* contents, the ledger and the Through-Line: the page's name alone heads the list */
+.sb-folio > .sb-title:only-child{grid-column:1 / -1;text-align:left}
+.sb-folio:has(> .sb-title:only-child){border:0;padding:0;margin-bottom:.6rem}
+.sb-prev,.sb-next{display:flex;align-items:center;min-height:2.25rem;
+  font:600 var(--fs-ui)/1.2 var(--sans);font-variant-numeric:tabular-nums;
+  color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+.sb-next{justify-content:flex-end}
+a.sb-prev:hover,a.sb-next:hover{color:var(--accent)}
 #sb-toc a{display:block;color:var(--ink-soft);text-decoration:none;
   padding:.28rem 0 .28rem .6rem;border-left:2px solid transparent}
 #sb-toc a:hover{color:var(--accent)}
@@ -321,11 +392,12 @@ h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.c
    Kicker: a small uppercase line in the accent (eyebrows, callout types, the
    story where-line). Label: the same, a little less tracked, in the faint ink
    (sidebar position, problem numbers, story move names, chapter-foot direction,
-   chapter numbers). Uppercase is for one or two short words. */
+   the contents' count line, part numerals and tags). Uppercase is for one or
+   two short words. */
 .kicker,.eyebrow,.callout .ct,.worked>.ct,.col .story .st-where{
   font:700 var(--fs-label)/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase;
   color:var(--accent)}
-.label,.sb-title,.prob .pnum,.col .story .sq-moves dt,.chapnav a span,.cnum{
+.label,.sb-title,.prob .pnum,.col .story .sq-moves dt,.chapnav a>span:first-child,.part-k,.tag{
   font:700 var(--fs-label)/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;
   color:var(--ink-faint)}
 
@@ -622,105 +694,30 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
   .evidence table.trials th:first-child{position:static;box-shadow:none}
 }
 
-/* ---------- nav ---------- */
-.chapnav{display:flex;justify-content:space-between;gap:1rem;margin:4rem 0 0;
-  padding-top:1.5rem;border-top:1px solid var(--rule);font-family:var(--sans);font-size:.85rem}
-.chapnav a{color:var(--accent);max-width:45%}
-.chapnav a span{display:block;margin-bottom:.15rem}
-.chapnav a.next{text-align:right}
-.chapnav .dead{color:var(--ink-faint);opacity:.4}
+/* ---------- chapter foot ----------
+   The end of a chapter (DESIGN.md section 6, Chapter foot; R-07, NAV-15): two
+   cards, the direction as a label, the number and title in the serif, and the
+   neighbour's part under it when it is not this chapter's (data-part, written
+   by the build). The slot of a missing neighbour is kept, so Next never moves
+   to the left on the first chapter.
 
-/* ---------- mobile section drawer ---------- */
-/* Below 1000px the sidebar is gone and a chapter is one uninterrupted scroll.
-   This puts the top-level sections back within reach of a thumb, and takes the
-   theme toggle in with them. Desktop is untouched: the sidebar is still there,
-   and none of this is ever displayed. */
-#mnav-btn,#mnav,#mnav-scrim{display:none}
-
-@media (max-width:1000px){
-  /* The toggle moves into the drawer — but only where there is a drawer to move
-     it into. The landing page has no chapter body and builds none, and must keep
-     its own toggle. book.js sets .has-mnav when it builds one. */
-  html.has-mnav #themer{display:none}
-
-  /* the topnav is sticky and 56px tall here; without this a section jump lands
-     with its heading hidden underneath it */
-  html{scroll-padding-top:4.2rem}
-
-  #mnav-btn{
-    display:flex;align-items:center;justify-content:center;
-    position:fixed;z-index:60;
-    right:calc(.85rem + env(safe-area-inset-right));
-    bottom:calc(1rem + env(safe-area-inset-bottom));
-    width:2.95rem;height:2.95rem;padding:0;
-    border:1px solid var(--rule);border-radius:50%;
-    background:var(--bg-alt);color:var(--ink-soft);cursor:pointer;
-    box-shadow:0 2px 10px rgba(0,0,0,.16);
-    -webkit-tap-highlight-color:transparent;
-  }
-  #mnav-btn:active{background:var(--accent-soft);color:var(--accent)}
-  #mnav-ico{position:relative;display:block;width:1.05rem;height:.72rem}
-  #mnav-ico i{position:absolute;left:0;width:100%;height:1.5px;border-radius:2px;
-    background:currentColor;transition:transform .2s ease,opacity .2s ease}
-  #mnav-ico i:nth-child(1){top:0}
-  #mnav-ico i:nth-child(2){top:50%;margin-top:-.75px}
-  #mnav-ico i:nth-child(3){bottom:0}
-  #mnav-btn.open #mnav-ico i:nth-child(1){transform:translateY(.35rem) rotate(45deg)}
-  #mnav-btn.open #mnav-ico i:nth-child(2){opacity:0}
-  #mnav-btn.open #mnav-ico i:nth-child(3){transform:translateY(-.35rem) rotate(-45deg)}
-
-  #mnav-scrim{display:block;position:fixed;inset:0;z-index:61;
-    background:rgba(0,0,0,.42);opacity:0;pointer-events:none;
-    transition:opacity .24s ease;touch-action:none}
-  #mnav-scrim.open{opacity:1;pointer-events:auto}
-
-  #mnav{
-    display:flex;flex-direction:column;
-    position:fixed;top:0;right:0;z-index:62;
-    width:min(21rem,86vw);height:100%;
-    background:var(--bg-alt);border-left:1px solid var(--rule);
-    box-shadow:-6px 0 24px rgba(0,0,0,.18);
-    font-family:var(--sans);
-    padding:calc(.95rem + env(safe-area-inset-top)) 0 calc(.65rem + env(safe-area-inset-bottom));
-    transform:translateX(101%);visibility:hidden;
-    /* visibility flips at once on the way in, so the panel can take focus
-       immediately, and waits for the slide to finish on the way out */
-    transition:transform .24s ease,visibility 0s linear .24s;
-    overscroll-behavior:contain;
-  }
-  #mnav.open{transform:none;visibility:visible;
-    transition:transform .24s ease,visibility 0s linear 0s}
-
-  .mn-head{padding:0 1.15rem .7rem;border-bottom:1px solid var(--rule)}
-  .mn-kicker{margin:0 0 .25rem;font-size:.66rem;font-weight:700;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--ink-faint)}
-  .mn-title{margin:0;font-size:.98rem;font-weight:650;line-height:1.3;color:var(--ink)}
-
-  .mn-list{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.35rem 0 .6rem}
-  .mn-list a{display:block;padding:.72rem 1.15rem;font-size:.88rem;line-height:1.35;
-    color:var(--ink-soft);text-decoration:none;border-left:3px solid transparent;
-    -webkit-tap-highlight-color:transparent}
-  .mn-list a.active{color:var(--accent);border-left-color:var(--accent);
-    background:var(--accent-soft);font-weight:650}
-
-  .mn-foot{display:flex;align-items:center;justify-content:space-between;gap:.8rem;
-    padding:.7rem 1.15rem 0;border-top:1px solid var(--rule)}
-  .mn-foot a{font-size:.78rem;font-weight:600;color:var(--accent);text-decoration:none}
-  #mn-theme{border:1px solid var(--rule);border-radius:20px;background:var(--paper);
-    color:var(--ink-soft);padding:.4rem .85rem;font-family:var(--sans);font-size:.76rem;
-    font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+   The drawer (#mnav) and the floating #themer that used to follow are in
+   nav.css, which every page loads and the Dropbox build inlines. */
+.chapnav{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin:var(--sp-7) 0 0}
+.chapnav a{display:block;min-height:56px;padding:.8rem 1rem .85rem;
+  border:1px solid var(--rule);border-radius:var(--r-m);
+  font:400 1.0625rem/1.35 var(--serif);color:var(--ink);text-decoration:none}
+.chapnav a>span:first-child{display:block;margin:0 0 .3rem}
+.chapnav a[data-part]::after{content:attr(data-part);display:block;margin-top:.4rem;
+  font:400 var(--fs-small)/1.35 var(--sans);color:var(--ink-soft)}
+.chapnav a.next{grid-column:2;text-align:right}
+.chapnav a:hover,.chapnav a:focus-visible{border-color:var(--accent)}
+.chapnav a:hover{color:var(--accent)}
+@media (max-width:639.98px){
+  .chapnav{grid-template-columns:minmax(0,1fr);gap:var(--sp-3)}
+  .chapnav a.next{grid-column:auto}
+  .chapnav .dead{display:none}
 }
-
-@media (prefers-reduced-motion:reduce){
-  #mnav,#mnav-scrim,#mnav-ico i{transition:none}
-}
-
-/* ---------- theme toggle ---------- */
-#themer{position:fixed;top:.8rem;right:.9rem;z-index:50;cursor:pointer;
-  border:1px solid var(--rule);background:var(--bg-alt);color:var(--ink-soft);
-  border-radius:20px;padding:.3rem .7rem;font-family:var(--sans);font-size:.72rem;
-  font-weight:600;letter-spacing:.04em}
-#themer:hover{color:var(--accent);border-color:var(--accent)}
 
 /* ---------- print / PDF ----------
    Print is always the light theme: the dark roles above are screen-only, so a
@@ -730,8 +727,8 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
    there the accent prints in the ink. */
 @media print{
   :root[data-theme="dark"]:root{--accent:var(--ink)}
-  .sidebar,#themer,.chapnav,#mnav,#mnav-btn,#mnav-scrim{display:none!important}
-  .wrap{display:block;max-width:none}
+  .sidebar,.sb-folio,#themer,.chapnav,#mnav,#mnav-btn,#mnav-scrim{display:none!important}
+  .wrap{display:block}
   .main{padding:0}
   .col,.col.wide{max-width:none}
   body{font-size:10.5pt;line-height:1.5;background:#fff;color:#000}
@@ -745,41 +742,98 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
   .callout,.worked,figure.fig{border-color:#bbb}
 }
 
-/* ---------- index page ---------- */
-.col .hero{padding:1rem 0 2rem;border-bottom:1px solid var(--rule);margin-bottom:2.5rem}
-.part{margin:2.8rem 0 0}
-.part-head{font-family:var(--sans);font-size:.74rem;font-weight:700;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--accent);margin:0 0 .3rem}
-.part-sub{font-size:.95rem;color:var(--ink-soft);font-style:italic;margin:0 0 1rem}
-.clist{list-style:none;margin:0;padding:0}
-.clist li{display:flex;gap:.9rem;align-items:baseline;padding:.42rem 0;
-  border-bottom:1px solid var(--rule-soft)}
-.cnum{flex:0 0 2.6rem;font-variant-numeric:tabular-nums}
-.clist a{font-weight:600}
-.clist a:hover{text-decoration:underline}
-.clist .pending{color:var(--ink-faint);font-weight:400}
-.tag{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;padding:.12rem .42rem;border-radius:var(--r-s);margin-left:.5rem;
-  background:var(--familiar-soft);color:var(--familiar);white-space:nowrap}
-.tag.ready{background:var(--insight-soft);color:var(--insight)}
-/* marks a chapter whose prose has been rebuilt in the plain-language register */
-.tag.clear{background:var(--familiar-soft);color:var(--familiar)}
+/* ---------- contents ----------
+   The page is the book's table of contents, not a second front door (NAV-05,
+   FD-10, FD-16; DESIGN.md section 6, Contents). A head of three lines; then
+   each part as its numeral (a label, with "n of m written" while the part is
+   incomplete, drawn from data-count), its title in the serif and its
+   subtitle in italic; then the rows, the serif titles in ink. A planned title
+   is italic in the soft ink with no link and no label of its own: the legend
+   under the count line says so once. One hairline falls between parts.
 
-/* ---------- Through-Line ---------- */
-.callout.plain.bridge{background:transparent;border:0;border-left:3px solid var(--plain);
-  padding:.2rem 0 .2rem 1.1rem;margin:3rem 0 2rem;font-size:1.04rem;font-style:italic;
+   From 640px Find a chapter (input.toc-find, which book.js puts in the head)
+   stands beside the title instead of under it, so the first chapter stays
+   near the top of the page. */
+.toc-head{margin:0 0 var(--sp-3)}
+/* a list, so it starts a little higher than a chapter's eyebrow does */
+@media (min-width:1000.02px){.main:has(> .col > .toc-head){padding-top:2rem}}
+.toc-head .eyebrow{margin:0 0 .35rem}
+.toc-head h1{margin:0 0 .4rem}
+.toc-count{margin:0}
+.toc-legend{margin:.3rem 0 0;font-size:var(--fs-small);font-style:italic;line-height:1.4;
   color:var(--ink-soft)}
+input.toc-find{display:block;box-sizing:border-box;width:100%;height:2.5rem;margin:var(--sp-3) 0 0;
+  padding:0 .8rem;border:1px solid var(--rule);border-radius:var(--r-m);
+  background:var(--paper);color:var(--ink);
+  /* 16px: iOS zooms the page into any smaller field it focuses */
+  font:400 1rem/1.2 var(--sans)}
+input.toc-find::placeholder{color:var(--ink-faint);opacity:1}
+input.toc-find:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (min-width:640px){
+  .toc-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--sp-5);
+    align-items:end}
+  .toc-head > *{grid-column:1}
+  .toc-head > .toc-find{grid-column:2;grid-row:2 / span 2;align-self:end;
+    width:15rem;margin:0 0 .1rem}
+}
+@media (pointer:coarse){input.toc-find{height:44px}}
+
+.part{padding:var(--sp-4) 0 var(--sp-3)}
+.toc-head + .part{padding-top:var(--sp-2)}
+.part + .part{border-top:1px solid var(--rule)}
+/* The heading's text is the curriculum label, "Part IX · Title"; the
+   separator is kept for whoever reads that text and hidden here. The anchor
+   lands with the numeral in view under the bar. */
+h2.part-head{margin:0 0 .3rem;font-size:clamp(1.3rem, 1.1rem + .8vw, 1.6rem);font-weight:var(--fw-title);
+  line-height:1.2;letter-spacing:-.01em}
+.part-head .part-k{display:block;margin:0 0 .3rem;letter-spacing:.1em}
+.part-head .part-k[data-count]::after{content:" \00b7  " attr(data-count)}
+.part-head .part-sep{display:none}
+.part-sub{margin:0 0 var(--sp-2);font-size:var(--fs-small);font-style:italic;line-height:1.45;
+  color:var(--ink-soft)}
+.clist{list-style:none;margin:0;padding:0}
+.clist li{display:flex;align-items:baseline;gap:.9rem;margin:0;padding:0}
+.cnum{flex:0 0 2.6rem;font:600 var(--fs-ui)/1.3 var(--sans);font-variant-numeric:tabular-nums;
+  color:var(--ink-faint)}
+.clist a,.clist .pending{flex:1 1 auto;min-width:0;padding:.28rem 0;line-height:1.4;
+  color:var(--ink);font-weight:400}
+.clist a:hover,.clist a:focus-visible{color:var(--accent)}
+.clist .pending{color:var(--ink-soft);font-style:italic}
+.clist .tag{flex:none;margin-left:auto}
+/* The reader's place, marked by pwa.js: a 3px accent rule in the gutter and a
+   filled "Last read" tag, the only filled tag there is. */
+.clist li[data-last]{margin-left:calc(-.75rem - 3px);padding-left:.75rem;
+  border-left:3px solid var(--accent)}
+.tag.last{padding:.15rem .4rem;border-radius:var(--r-s);background:var(--accent);color:var(--bg)}
+@media (max-width:639.98px){
+  .clist li{gap:.6rem}
+  .cnum{flex-basis:2.3rem}
+}
+
+/* ---------- the Through-Line ----------
+   Continuous prose, so it keeps the reading measure. Above 1000px the passage
+   numbers hang in the space left of the column (.main's left padding holds
+   them), so the passages themselves take the full measure; below that they
+   stand above each passage. A bridge between parts is prose in roman under
+   the plain hue's rule, and only its first paragraph, the thesis, is in
+   italic. */
+.callout.plain.bridge{--surface:var(--bg);background:transparent;border:0;
+  border-left:3px solid var(--plain);border-radius:0;
+  padding:.2rem 0 .2rem 1.1rem;margin:var(--sp-7) 0 var(--sp-6);
+  font-size:1em;line-height:inherit;font-style:normal;color:var(--ink)}
+.callout.plain.bridge > p:first-child{font-style:italic}
 .callout.plain.bridge p:last-child{margin-bottom:0}
 /* the closing passage ends the essay, so it gets a rule above it and a little air */
 .callout.plain.bridge.tl-closing{border-top:1px solid var(--rule);padding-top:2rem;
   margin-top:4.5rem;margin-bottom:3rem}
-.tl-item{position:relative;padding-left:3.4rem;margin:0 0 1.6rem}
-.tl-num{position:absolute;left:0;top:.35rem;font-family:var(--sans);font-size:.72rem;
-  font-weight:600;letter-spacing:.05em;color:var(--ink-soft)}
+.tl-item{position:relative;margin:0 0 1.6rem}
+.tl-num{display:block;margin:0 0 .3rem;font:600 .72rem/1.3 var(--sans);letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;color:var(--ink-soft);white-space:nowrap}
 .tl-item p{margin-bottom:.75rem}
 .tl-item p:last-child{margin-bottom:0}
-@media (max-width:640px){.tl-item{padding-left:0}
-  .tl-num{position:static;display:block;margin-bottom:.3rem}}
+@media screen and (min-width:1000.02px){
+  .tl-num{position:absolute;top:.4rem;right:calc(100% + .75rem);margin:0}
+}
 
 /* ---------- site top navigation ----------
    Moved to shared/assets/nav.css, which tools/nav.py links from every page in
@@ -821,8 +875,7 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
      leaving a 7px digit on a phone. */
   .cite{padding:.35em .45em;margin:0 -.15em}
   .col .trial,.col .gloss,.xref{padding:.15em 0}
-  /* the mobile navigation drawer's own footer, and the controls under a figure */
-  .mn-foot a,.mn-foot button{display:inline-flex;align-items:center;min-height:44px}
+  /* the controls under a figure */
   .ctrl button,.ctrls button{min-height:44px;padding-top:.4rem;padding-bottom:.4rem}
   /* a 16px slider is hard to catch with a thumb; the track keeps its look */
   .ctrl input[type=range]{height:44px;background:transparent}
@@ -832,11 +885,10 @@ th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
   details.grind>summary{min-height:44px}
   .prob details>summary{min-height:44px}
   /* the chapter list is navigation, not prose: the anchor itself is the
-     44px target, rather than a row around a shorter link */
-  .clist li{min-height:44px;padding-top:.3rem;padding-bottom:.3rem}
-  .clist li:has(>span>a){padding-top:0;padding-bottom:0}
-  .clist li>span:not(.cnum){display:flex;flex-wrap:wrap;align-items:baseline}
-  .clist li>span>a{display:block;min-height:44px;padding:.5rem 0}
+     44px target, rather than a row around a shorter link (PDA-10) */
+  .clist a{display:flex;align-items:center;min-height:44px;padding-block:.35rem}
+  /* the sidebar's arrows, on a touch screen wide enough to have a sidebar */
+  .sb-prev,.sb-next{min-height:44px}
 }
 
 /* ---------- the-ages-of-thought, from book.json ---------- */

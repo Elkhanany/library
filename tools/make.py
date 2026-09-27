@@ -93,6 +93,15 @@ def runtime_js():
     return js
 
 
+# The sidebar's section list without the spy's state (webbuild.TOC_JS).
+TOC_JS = """() => {
+                const t = document.getElementById('sb-toc').cloneNode(true);
+                t.querySelectorAll('.active, [aria-current]').forEach(a => {
+                  a.classList.remove('active'); a.removeAttribute('aria-current');
+                  if (!a.className) a.removeAttribute('class'); });
+                return t.innerHTML; }"""
+
+
 SHELL = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,12 +121,11 @@ SHELL = """<!DOCTYPE html>
 </head>
 <body>
 <div class="wrap">
-<nav class="sidebar">
-  <a class="sb-home" href="index.html">← Newton to M-Theory</a>
-  <p class="sb-title">{sbhead}</p>
+<nav class="sidebar" aria-label="Chapter sections">
+{side}
   <div id="sb-toc">{toc}</div>
 </nav>
-<main class="main">
+<main class="main" id="text">
 <div class="col{wide}">
 {body}
 </div>
@@ -171,7 +179,7 @@ async def main():
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
 
-        async def render(src, title, sbhead, wide, extra, dest):
+        async def render(src, title, side, wide, extra, dest):
             pg = await b.new_page(viewport={"width": 1280, "height": 1000})
             await pg.goto("file://" + src)
             await pg.wait_for_timeout(2400)
@@ -180,7 +188,7 @@ async def main():
             await pg.evaluate("() => { if (window.NMT && NMT.resetForSnapshot) NMT.resetForSnapshot(); }")
             await pg.wait_for_timeout(60)
             body = await pg.evaluate("document.querySelector('.main .col').innerHTML")
-            toc = await pg.evaluate("document.getElementById('sb-toc').innerHTML")
+            toc = await pg.evaluate(TOC_JS)
             left = await pg.evaluate(
                 "(document.body.innerText.match(/\\\\[a-zA-Z]+\\{/g)||[]).length")
             bad = await pg.evaluate("document.querySelectorAll('.katex-error').length")
@@ -189,7 +197,7 @@ async def main():
                 print(f"   !! {os.path.basename(dest)}: {left} unrendered, {bad} katex errors")
             body = body.replace('href="chapters/', 'href="')
             library.write(dest, SHELL.format(
-                title=title, book=BOOK.title, katexcss=kcss, bookcss=bcss, sbhead=sbhead,
+                title=title, book=BOOK.title, katexcss=kcss, bookcss=bcss, side=side,
                 themecss=tcss, navcss=ncss,
                 toc=toc, body=body, wide=wide, runtime=rt, extra=extra))
 
@@ -200,17 +208,22 @@ async def main():
             raw = library.read(BOOK.chapter_path(slug))
             m = re.search(r"<!--SCRIPT-->(.*?)<!--/SCRIPT-->", raw, re.S)
             extra = "<script>\n" + m.group(1) + "\n</script>" if m else ""
-            await render(src, f"{num} {title}", f"Ch {num}", "", extra,
-                         os.path.join(OUT, slug + ".html"))
+            # Here the contents page is index.html, so a chapter's up-link goes
+            # to index.html#sec-<i>; and there is no pwa.js, so the arrows'
+            # titles name no arrow keys.
+            await render(src, f"{num} {title}",
+                         bp.sidebar_head("chapter", slug, contents="index.html", keys=False),
+                         "", extra, os.path.join(OUT, slug + ".html"))
             n += 1
 
-        TITLES = {"index": "Contents", "ledger": "Math Ledger",
-                  "throughline": "The Through-Line"}
-        for name, sbhead in (("index", "Parts"), ("ledger", "Ledger"),
-                             ("throughline", "Through-Line")):
+        # One name per destination, as on the site (webbuild.py). Only the
+        # contents page and the ledger take the wide column.
+        for name, page, title, wide in (("index", "contents", "Contents", " wide"),
+                                        ("ledger", "ledger", "Math Ledger", " wide"),
+                                        ("throughline", "throughline", "In Plain Terms", "")):
             src = os.path.join(STAGE, name + ".html")
             if os.path.exists(src):
-                await render(src, TITLES[name], sbhead, " wide", "",
+                await render(src, title, bp.sidebar_head(page), wide, "",
                              os.path.join(OUT, name + ".html"))
         await b.close()
 

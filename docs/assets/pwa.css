@@ -10,12 +10,14 @@
  * and a toast on the philosophy timeline each look like the page they are on.
  */
 
+/* The top of the library's stacking scale (nav.css --lib-z-*): above the
+ * folio bar, the drawer and the reference card. */
 .pwa-toast,
 .pwa-offline {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: var(--lib-z-toast, 80);
   font-family: var(--sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 13.5px;
   line-height: 1.45;
@@ -36,6 +38,12 @@
   background: var(--ink, #1b1b1d);
   color: var(--paper, #fbfaf7);
   box-shadow: 0 6px 26px rgba(0, 0, 0, .3);
+}
+
+/* Where the folio bar holds the foot of the screen (below 1000px on a
+ * chapter), the toast sits a clear gap above it rather than on it. */
+@media (max-width: 1000px) {
+  html.has-folio .pwa-toast { bottom: calc(3rem + env(safe-area-inset-bottom, 0px) + 1rem); }
 }
 
 .pwa-toast button {
@@ -214,60 +222,11 @@ html.standalone .pwa-back {
 html.standalone .pwa-back:hover,
 html.standalone .pwa-back:focus-visible { color: var(--ink, #1b1b1d); }
 
-/* -------------------------------------------------- chapter navigation
- * The prev/next row pwa.js adds to book.js's drawer. Styled here rather than
- * in book.css because the drawer is the book's and this row is the app
- * layer's: a file:// build has the drawer and none of this.
- *
- * Two equal columns whatever the chapter titles are, and the first and last
- * chapters keep the shape with a disabled span, so the control a thumb aims
- * for sits in the same place on every page of the book. */
-
-.mn-seq {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .5rem;
-  margin: 0 0 .9rem;
-  padding: 0 0 .9rem;
-  border-bottom: 1px solid var(--rule, #dfdcd6);
-}
-
-.mn-seq > * {
-  display: block;
-  min-width: 0;
-  padding: .5rem .6rem;
-  border: 1px solid var(--rule, #dfdcd6);
-  border-radius: .5rem;
-  color: var(--ink, #1b1b1d);
-  text-decoration: none;
-  font-size: 13px;
-  line-height: 1.3;
-}
-
-.mn-seq > span { opacity: .45; }
-.mn-seq > a:hover { border-color: currentColor; }
-.mn-seq .next { text-align: right; }
-
-.mn-seq .mn-dir {
-  display: block;
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--ink-soft, #565b66);
-  margin-bottom: .15rem;
-}
-
-/* Two lines at most. A chapter title in this book runs to sixty characters and
-   the drawer is half a phone wide; without the clamp one title pushes the other
-   control off its row. */
-.mn-seq .mn-ch {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* The drawer's prev/next row (.mn-seq) is styled in nav.css now, with the
+ * rest of the drawer: book.js builds it from the chapter foot, and pwa.js
+ * adds it only to a page whose book.js is older than that. */
 
 @media print {
   .pwa-toast, .pwa-offline, .pwa-install, .pwa-shelf,
-  .pwa-back, .mn-seq { display: none !important; }
+  .pwa-back { display: none !important; }
 }

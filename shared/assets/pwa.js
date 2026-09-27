@@ -265,7 +265,17 @@
     /* Only worth restoring if they were meaningfully into the page. */
     if (rec && rec.y > 400) {
       addEventListener('load', function () {
-        requestAnimationFrame(function () { window.scrollTo(0, rec.y); });
+        requestAnimationFrame(function () {
+          /* At once: the page's smooth scrolling would otherwise carry the
+           * reader through the chapter to their place. */
+          try { window.scrollTo({ top: rec.y, left: 0, behavior: 'instant' }); }
+          catch (e) { window.scrollTo(0, rec.y); }
+          /* book.js answers this: the sidebar, the drawer and the folio say
+           * where the reader now is, and the chrome is shown (DESIGN.md
+           * section 6, the spy). */
+          try { window.dispatchEvent(new CustomEvent('library:restored', { detail: { y: rec.y } })); }
+          catch (e) { /* no CustomEvent: the scroll event still reaches the spy */ }
+        });
       });
     }
   }
@@ -622,24 +632,22 @@
   if (!SLUG) addEventListener('DOMContentLoaded', function () { shelf(); });
 
   /* ------------------------------------------------------ chapter navigation
-   * One reading order per book, in nav.json, and one set of controls over it,
-   * so the two chaptered books navigate identically instead of merely looking
-   * alike. Everything here is additive: with the file missing, the fetch
-   * failing, or JavaScript off, every page still carries the top bar, the
-   * section sidebar and the prev/next pair at the foot of the chapter that it
-   * carried before.
-   *
-   * Three surfaces, because a book is read on three:
+   * One reading order per book, in nav.json, for the one thing only a script
+   * with the whole book in view can do: the arrow keys. Everything else about
+   * moving through a book is written into the page at build and read from it
+   * there (DESIGN.md section 8): the sidebar's up-link and folio row, the
+   * chapter foot, and from those, book.js's folio bar and drawer. That is
+   * what lets the Dropbox build, which has no nav.json and no pwa.js,
+   * navigate the same way.
    *
    *   desktop     the arrow keys, which is what a keyboard is for
-   *   phone       prev/next inside the drawer, reachable without scrolling
-   *               past the chapter to find them
+   *   phone       book.js's folio bar and drawer
    *   standalone  a back control, because a home-screen app has no browser
    *               chrome to provide one
    *
-   * The drawer is book.js's, built from the chapter's own H2s. This adds a row
-   * to it rather than building a second one, so a reader has one drawer with
-   * everything in it and not two that each know half. */
+   * The position ("Chapter 68 of 98") is written into the sidebar at build,
+   * and the drawer's kicker copies it; this no longer appends one to either,
+   * which printed it twice once the build wrote it. */
 
   var NAV = null;          /* the book's reading order, once fetched */
   var HERE = -1;           /* this page's index in it, or -1 off-book */
@@ -660,7 +668,11 @@
 
   function go(c) { if (c) location.href = c.href; }
 
-  /* ---- the drawer row */
+  /* ---- the drawer row, for an older page
+   * book.js builds the prev/next row itself now, from the chapter foot. A
+   * stored page whose book.js predates that builds a drawer without one; it
+   * gets the row from the reading order here, as it always did, so its
+   * drawer keeps its neighbours under this shell. */
 
   function drawerNav() {
     var panel = document.getElementById('mnav');
@@ -673,47 +685,30 @@
 
     var row = document.createElement('div');
     row.className = 'mn-seq';
-    [['prev', prev, 'Previous'], ['next', next, 'Next']].forEach(function (spec) {
+    [['prev', prev, 'Previous', 'No previous chapter'],
+     ['next', next, 'Next', 'No next chapter']].forEach(function (spec) {
       var c = spec[1];
-      /* A disabled span rather than no element at all: the first and last
-       * chapters then keep the same two-column shape as every other, so the
-       * control a thumb is aiming for does not move between pages. */
+      /* A span rather than no element at all: the first and last chapters
+       * then keep the same two-column shape as every other, so the control a
+       * thumb is aiming for does not move between pages. */
       var el = document.createElement(c ? 'a' : 'span');
       el.className = spec[0];
       if (c) el.href = c.href;
       el.innerHTML = '<span class="mn-dir"></span><span class="mn-ch"></span>';
       el.querySelector('.mn-dir').textContent = spec[2];
-      el.querySelector('.mn-ch').textContent = c ? label(c) : '—';
+      el.querySelector('.mn-ch').textContent = c ? label(c) : spec[3];
       row.appendChild(el);
     });
 
     var list = panel.querySelector('.mn-list');
     if (list) panel.insertBefore(row, list); else panel.appendChild(row);
-
-    /* Where in the book this is. The drawer already names the chapter; this
-     * says how much of the book is behind and ahead of it, which is the thing
-     * a contents page makes you leave the chapter to find out. */
-    var k = panel.querySelector('.mn-kicker');
-    if (k && HERE >= 0) k.textContent = k.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
   }
 
-  /* The same fact on the other surface. The sidebar is the desktop drawer and
-   * already names the chapter; without this, position is something only a
-   * phone reader is told. */
-  function sidebarPosition() {
-    var t = document.querySelector('.sidebar .sb-title');
-    if (!t || HERE < 0 || t.dataset.pos) return;
-    t.dataset.pos = '1';
-    t.textContent = t.textContent + ' · ' + (HERE + 1) + ' of ' + NAV.count;
-  }
-
-  /* book.js builds the drawer on DOMContentLoaded and only when the chapter has
-   * at least two H2s to list. Both scripts are waiting on the same event, so
-   * rather than depend on which handler runs first, try once now and once after
-   * a frame. */
+  /* book.js builds the drawer on DOMContentLoaded. Both scripts are waiting on
+   * the same event, so rather than depend on which handler runs first, try
+   * once now and once after a frame. */
   function whenDrawer() {
     drawerNav();
-    sidebarPosition();
     requestAnimationFrame(function () { drawerNav(); });
   }
 
@@ -776,11 +771,10 @@
     for (var i = 0; i < NAV.chapters.length; i++) {
       if (file(NAV.chapters[i].href) === here) { HERE = i; break; }
     }
-    /* Not gated on HERE. The prev/next row and the position are meaningless on
-     * the contents page or the trial registry, and drawerNav() and
-     * sidebarPosition() decline to draw them there themselves. The book's
-     * destinations are no longer repeated in the drawer: the bar carries them,
-     * under Menu on a phone (NAV-07). */
+    /* Not gated on HERE. The prev/next row is meaningless on the contents
+     * page or the trial registry, and drawerNav() declines to draw it there
+     * itself. The book's destinations are not repeated in the drawer: the bar
+     * carries them, under Menu on a phone (NAV-07). */
     if (document.readyState === 'loading') {
       addEventListener('DOMContentLoaded', whenDrawer);
     } else {

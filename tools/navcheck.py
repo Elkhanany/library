@@ -38,6 +38,19 @@ inside a section() that turns an unexpected exception into one FAIL for that
 block. A redesign that renames one selector therefore reports every test it
 breaks, not the first one followed by a traceback.
 
+WHERE THE READER IS, AND THE PHONE'S CHROME
+
+Below 1000px the sidebar's jobs move to the folio bar and the drawer
+(DESIGN.md section 6), and both are built by book.js from the page itself: the
+folio's arrows carry the neighbours' numbers and go where the chapter foot
+goes, the foot ends above the folio, the drawer's first row is the way up to
+the chapter's part in the contents (checked against the contents page's own
+part ids), and headroom takes the bar and the folio away on reading down and
+brings them back on a deliberate scroll up but not on a 20px nudge. On a
+desktop the sidebar's active entry is checked after a jump and after scrolling
+up, the two cases the old observer got wrong. On the clinical contents page,
+"Find a chapter" filters to the rows that match and Escape restores every row.
+
 TWO CHECKS THE RESTYLE DEPENDS ON
 
 - Equation numbers. The build numbers every .eq and runtime_js() switches the
@@ -106,9 +119,8 @@ SWEEP_WIDTHS = (390, 1280)
 # SWEEP_JS describes it. New offenders fail; so does an entry here that no
 # longer reproduces. The list only shrinks.
 KNOWN = {
-    # the evidence tables bleed 2px past a 390px phone (PDA-09: the bleed and
-    # .main's padding disagree); W3-CLINIC puts the phone bleed on --gutter
-    ('breast-cancer/BC-900.html', 390): {'div.col>div.evidence': 'W3-CLINIC'},
+    # (the evidence tables' 2px bleed past a 390px phone, PDA-09, went when
+    # W2-FRAME put .main's phone padding on --gutter, which the bleed uses)
     # the sitting-break labels are white-space:nowrap and run up to 2049px wide,
     # clipped by the shell (PDA-09, R-03); W4-MATH lets them wrap
     ('newton-to-mtheory/ch4-6.html', 390): {'p.pause>span': 'W4-MATH'},
@@ -188,6 +200,12 @@ def serve():
     httpd = socketserver.TCPServer(('127.0.0.1', PORT), Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
+
+
+def json_of(path):
+    import json
+    with open(path, encoding='utf-8') as f:
+        return json.load(f)
 
 
 def ok(name, cond, detail=''):
@@ -303,6 +321,29 @@ async def opened(br, url, width=1400, height=900):
 
 READY = "() => window.LibraryPWA && window.LibraryPWA.nav().index >= 0"
 
+# The folio bar below 1000px (DESIGN.md section 6): where it is, what its
+# arrows say and where they go, and where the chapter foot ends.
+FOLIO = """() => {
+  const f = document.querySelector('.folio');
+  if (!f) return null;
+  const r = f.getBoundingClientRect();
+  const p = f.querySelector('.folio-prev'), n = f.querySelector('.folio-next');
+  const nav = document.querySelector('.chapnav');
+  return {top: Math.round(r.top), shown: r.top < innerHeight - 10 && r.height > 0,
+          prev: p ? p.textContent.trim() : '', next: n ? n.textContent.trim() : '',
+          nextHref: n ? n.getAttribute('href') : null,
+          chapnavBottom: nav ? Math.round(nav.getBoundingClientRect().bottom) : null};
+}"""
+TO_END = ("() => window.scrollTo({top: document.documentElement.scrollHeight - innerHeight,"
+          " behavior: 'instant'})")
+# Where the bar and the folio are: headroom moves them by transform.
+CHROME = """() => {
+  const b = document.querySelector('.topnav').getBoundingClientRect();
+  const f = document.querySelector('.folio').getBoundingClientRect();
+  return {barOut: b.bottom <= 0.5, folioOut: f.top >= innerHeight - 0.5,
+          barIn: b.top >= -0.5, folioIn: f.bottom <= innerHeight + 0.5, y: Math.round(scrollY)};
+}"""
+
 
 async def chaptered(br, base, slug, chap):
     # The neighbours and the count come from the book's own reading
@@ -338,6 +379,9 @@ async def chaptered(br, base, slug, chap):
             ok('kicker shows the position', ' of %d' % total in kick, repr(kick))
             sb = await text(pg, '.sidebar .sb-title')
             ok('the sidebar says the same', ' of %d' % total in sb, repr(sb))
+            # written once, at build: pwa.js no longer appends a second copy
+            ok('the position appears exactly once', sb.count(' of ') == 1 and kick == sb.strip(),
+               repr(sb))
             # the row must be reachable without scrolling the chapter
             if await click(pg, '#mnav-btn'):
                 await pg.wait_for_timeout(250)
@@ -485,6 +529,158 @@ async def main():
             await pg.wait_for_timeout(400)
             ok('single-page book raises nothing', not errs, errs[:1])
             await pg.close()
+
+        # ------------------------------------------------------ the folio bar
+        # Below 1000px: numbered arrows read from the chapter foot, the next
+        # one going to the next chapter (C1-folio-arrows), with the chapter
+        # foot ending above it at the end of the page (NAV-06). Then headroom:
+        # reading down takes the bar and the folio out of view, a deliberate
+        # scroll up (48px or more) brings them back, and a nudge up to re-read
+        # a line does not (C1-headroom-handles).
+        print('\nthe folio bar and headroom at 390')
+        for slug, chap in (('breast-cancer', 'BC-500.html'),
+                           ('newton-to-mtheory', 'ch2-1.html')):
+            async with section('%s folio and headroom' % slug):
+                order = json_of(os.path.join(DOCS, slug, 'nav.json'))
+                hrefs = [c['href'] for c in order['chapters']]
+                prev_c, next_c = (order['chapters'][hrefs.index(chap) + d] for d in (-1, 1))
+                ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                           is_mobile=True, service_workers='block')
+                ctx.set_default_timeout(TIMEOUT)
+                pg = await ctx.new_page()
+                await pg.goto(base + slug + '/' + chap, wait_until='load')
+                if await waitsel(pg, '.folio'):
+                    await pg.wait_for_timeout(300)
+                    f = await pg.evaluate(FOLIO)
+                    ok('%s: the folio bar is there at 390' % chap, f['shown'], f)
+                    ok('%s: its \u203a names the next chapter (%s)' % (chap, next_c['num']),
+                       next_c['num'] in f['next'], repr(f['next']))
+                    ok('%s: and goes to it' % chap, f['nextHref'] == next_c['href'], f['nextHref'])
+                    ok('%s: its \u2039 names the previous chapter (%s)' % (chap, prev_c['num']),
+                       prev_c['num'] in f['prev'], repr(f['prev']))
+                    await pg.evaluate(TO_END)
+                    await pg.wait_for_timeout(450)
+                    f = await pg.evaluate(FOLIO)
+                    ok('%s: at the end, the folio is shown and the chapter foot ends above it'
+                       % chap, f['shown'] and f['chapnavBottom'] is not None
+                       and f['chapnavBottom'] <= f['top'] + 0.5, f)
+                    await pg.evaluate("() => window.scrollTo({top: 0, behavior: 'instant'})")
+                    await pg.wait_for_timeout(300)
+                    async def at_y(y):
+                        await pg.evaluate("(y) => window.scrollTo({top: y, behavior: 'instant'})", y)
+                        await pg.wait_for_timeout(450)
+                        return await pg.evaluate(CHROME)
+                    c = await at_y(1500)
+                    ok('%s: 1500px down takes the bar and the folio out of view' % chap,
+                       c['barOut'] and c['folioOut'], c)
+                    c = await at_y(1480)
+                    ok('%s: a 20px nudge up leaves them out' % chap, c['barOut'] and c['folioOut'], c)
+                    await at_y(1580)
+                    c = await at_y(1380)
+                    ok('%s: 200px up brings both back' % chap, c['barIn'] and c['folioIn'], c)
+                await ctx.close()
+
+        # ------------------------------------------------------ the spy
+        # The active sidebar entry is the heading above the bar's bottom edge
+        # plus 24px, after a jump and after scrolling up, where the old
+        # observer marked nothing or the section below (NAV-08).
+        print('\nthe sidebar spy')
+        async with section('the spy on ch1-1'):
+            ctx = await br.new_context(viewport={'width': 1280, 'height': 900},
+                                       service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            await pg.goto(base + 'newton-to-mtheory/ch1-1.html', wait_until='load')
+            await pg.wait_for_timeout(500)
+            SPY = """() => {
+              const bar = document.querySelector('.topnav').getBoundingClientRect();
+              const edge = Math.max(0, bar.top) + bar.height + 24;
+              const hs = [...document.querySelectorAll('.main h2[id], .main h3[id]')];
+              const links = new Set([...document.querySelectorAll('#sb-toc a')].map(a => a.getAttribute('href')));
+              let at = -1;
+              hs.forEach((h, i) => { const r = h.getBoundingClientRect(); if ((r.width || r.height) && r.top < edge) at = i; });
+              let want = null;
+              for (let i = at; i >= 0 && !want; i--) if (links.has('#' + hs[i].id)) want = '#' + hs[i].id;
+              const a = document.querySelector('#sb-toc a.active');
+              return {active: a ? a.getAttribute('href') : null, want: want,
+                      n: document.querySelectorAll('#sb-toc a.active').length};
+            }"""
+            await pg.evaluate("() => window.scrollTo({top: (document.documentElement.scrollHeight"
+                              " - innerHeight) * .4, behavior: 'instant'})")
+            await pg.wait_for_timeout(300)
+            r = await pg.evaluate(SPY)
+            ok('after scrollTo(40%) the active entry is the section being read',
+               r['active'] is not None and r['active'] == r['want'] and r['n'] == 1, r)
+            await pg.evaluate("() => window.scrollBy({top: -600, behavior: 'instant'})")
+            await pg.wait_for_timeout(300)
+            r = await pg.evaluate(SPY)
+            ok('and after scrolling up 600px', r['active'] is not None and r['active'] == r['want']
+               and r['n'] == 1, r)
+            await ctx.close()
+
+        # ------------------------------------------------------ the way up on a phone
+        # The drawer's first row is the sidebar's up-link: the chapter's part in
+        # the contents (C1-phone-up). The part's id is read from the contents
+        # page itself, so this checks the link lands on a real heading.
+        print('\nthe way up on a phone')
+        async with section('the drawer up-link on BC-500'):
+            import re as _re
+            order = json_of(os.path.join(DOCS, 'breast-cancer', 'nav.json'))
+            part = next(c['part'] for c in order['chapters'] if c['href'] == 'BC-500.html')
+            src = open(os.path.join(DOCS, 'breast-cancer', 'contents.html'), encoding='utf-8').read()
+            ids = {' '.join(_re.sub(r'<[^>]+>', '', t).split()): i for i, t in
+                   _re.findall(r'<h2 class="part-head" id="(sec-\d+)">(.*?)</h2>', src, _re.S)}
+            want = 'contents.html#' + ids.get(part, '?')
+            ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                       is_mobile=True, service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            await pg.goto(base + 'breast-cancer/BC-500.html', wait_until='load')
+            if await waitsel(pg, '#mnav-btn'):
+                await pg.tap('#mnav-btn')
+                await pg.wait_for_timeout(450)
+                up = await pg.query_selector('#mnav a.mn-up')
+                href = up and await up.get_attribute('href')
+                ok('BC-500 at 390: the open drawer\'s up-row goes to %s' % want, href == want, href)
+                ok('and is visible, first in the sheet, at least 48px tall',
+                   bool(up) and await up.is_visible() and await pg.evaluate("""() => {
+                     const u = document.querySelector('#mnav a.mn-up');
+                     const first = [...document.querySelectorAll('#mnav > *')].find(e => e.textContent.trim());
+                     return first === u && u.getBoundingClientRect().height >= 48; }"""))
+            await ctx.close()
+
+        # ------------------------------------------------------ find a chapter
+        # The contents page's search box filters the rows by number and title,
+        # hides the parts with nothing left, and Escape puts every row back
+        # (C1-lookup).
+        print('\nfind a chapter')
+        async with section('find a chapter on breast-cancer/contents.html'):
+            total = json_of(os.path.join(DOCS, 'breast-cancer', 'nav.json'))['count']
+            ctx = await br.new_context(viewport={'width': 390, 'height': 844}, has_touch=True,
+                                       is_mobile=True, service_workers='block')
+            ctx.set_default_timeout(TIMEOUT)
+            pg = await ctx.new_page()
+            await pg.goto(base + 'breast-cancer/contents.html', wait_until='load')
+            ROWS = """() => { const vis = e => e.getClientRects().length > 0;
+              const rows = [...document.querySelectorAll('.clist li')];
+              return {n: document.querySelectorAll('input.toc-find').length, rows: rows.length,
+                      shown: rows.filter(vis).map(r => r.textContent.replace(/\\s+/g, ' ').trim()),
+                      parts: [...document.querySelectorAll('h2.part-head')].filter(vis).length}; }"""
+            if await waitsel(pg, 'input.toc-find'):
+                r = await pg.evaluate(ROWS)
+                ok('one Find a chapter box', r['n'] == 1, r['n'])
+                await pg.fill('input.toc-find', 'HER2')
+                await pg.wait_for_timeout(150)
+                r = await pg.evaluate(ROWS)
+                ok('typing HER2 leaves only the rows that match',
+                   r['shown'] and all('her2' in t.lower() for t in r['shown']),
+                   '%d rows: %s' % (len(r['shown']), r['shown'][:3]))
+                await pg.press('input.toc-find', 'Escape')
+                await pg.wait_for_timeout(150)
+                r = await pg.evaluate(ROWS)
+                ok('Escape restores all %d' % total, len(r['shown']) == total == r['rows'],
+                   '%d of %d' % (len(r['shown']), r['rows']))
+            await ctx.close()
 
         # ---------------------------------------------------------------- the bar
         # The same destinations on every page of a book, and the same ones the
@@ -865,10 +1061,12 @@ if __name__ == '__main__':
     if fails:
         print('\nnavcheck: %d failure(s): %s' % (len(fails), ', '.join(fails)))
         raise SystemExit(1)
-    print('\nnavcheck: the reading order, the drawer, the keyboard and the '
-          'standalone back all behave in both chaptered books; every page, the '
-          'hub\n          included, carries one bar in one row with the theme '
-          'button last, the brand at one x and the book\'s destinations under '
+    print('\nnavcheck: the reading order, the drawer, the folio bar, headroom, the '
+          'keyboard and the standalone back all behave in both chaptered books;\n'
+          '          the sidebar marks the section being read; Find a chapter filters '
+          'the contents; every page, the hub\n'
+          '          included, carries one bar in one row with the theme button last, the '
+          'brand at one x and the book\'s destinations under '
           'Menu\n          on a phone; an OS-dark reader stays dark and a press '
           'sticks; every equation carries one number, and nothing new\n'
           '          passes the viewport with the shell unmasked '

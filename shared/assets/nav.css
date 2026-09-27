@@ -57,6 +57,11 @@
   --lib-z-sheet: 60;
   --lib-z-card: 70;
   --lib-z-toast: 80;
+
+  /* This shell styles the folio bar and the sheet drawer. book.js reads it
+     and, on an older shell that has neither, builds the floating drawer
+     button that shell does style instead. */
+  --lib-folio: 1;
 }
 
 @media (max-width: 640px) {
@@ -403,76 +408,428 @@ html.standalone .topnav:not(:has(.pwa-back))::before {
 .skip-target { display: block; height: 0; overflow: hidden; }
 
 
-/* ================================================== the chapter drawer
- * Copied, not moved, from book.css (DESIGN.md section 10), so the drawer is
- * styled wherever nav.css is: on every docs page, and inlined into the Dropbox
- * build. Identical to the originals except for what the bar has taken over:
- * the drawer no longer carries a theme button or a footer (#mn-theme,
- * .mn-foot), nor hides the floating toggle while it exists, nor sets scroll
- * padding for a 56px bar. W2 deletes the originals from book.css and makes the
- * drawer a bottom sheet here. */
-#mnav-btn,#mnav,#mnav-scrim{display:none}
+/* ================================================ the phone's chrome
+ * Below 1000px, on the chapter shell (DESIGN.md section 6): the folio bar at
+ * the foot of the screen, the drawer as a bottom sheet, and headroom, which
+ * takes the bar and the folio out of view while the reader reads down.
+ * book.js builds all three and nothing of them is saved by the build. Here
+ * rather than in book.css so they are styled wherever nav.css is: on every
+ * docs page, and inlined into the Dropbox build. Every value that book.css's
+ * older drawer rules set is restated, so an older book.css under this shell
+ * cannot pull the sheet back into a side panel. */
 
-@media (max-width:1000px){
-  #mnav-btn{
-    display:flex;align-items:center;justify-content:center;
-    position:fixed;z-index:60;
-    right:calc(.85rem + env(safe-area-inset-right));
-    bottom:calc(1rem + env(safe-area-inset-bottom));
-    width:2.95rem;height:2.95rem;padding:0;
-    border:1px solid var(--rule);border-radius:50%;
-    background:var(--bg-alt);color:var(--ink-soft);cursor:pointer;
-    box-shadow:0 2px 10px rgba(0,0,0,.16);
-    -webkit-tap-highlight-color:transparent;
+.folio, #mnav-btn, #mnav, #mnav-scrim { display: none; }
+
+@media (max-width: 1000px) {
+
+  /* ---------- the folio bar ----------
+   * "‹ 67", the section being read (which opens the drawer), "69 ›". The
+   * arrows carry chapter numbers because they jump chapters, not sections.
+   * It follows the bar in the DOM, so Tab reaches it next, and the page gets
+   * room below its last line so nothing is ever under it (NAV-06). */
+  .folio {
+    display: flex;
+    align-items: stretch;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--lib-z-folio, 40);
+    box-sizing: border-box;
+    height: calc(3rem + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    padding: 0 max(.25rem, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
+             max(.25rem, env(safe-area-inset-left, 0px));
+    background: var(--bg, #fbfaf7);
+    background: color-mix(in srgb, var(--bg, #fbfaf7) 94%, transparent);
+    -webkit-backdrop-filter: saturate(160%) blur(10px);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-top: 1px solid var(--rule, #e0ddd5);
+    font: 600 .8125rem/1.2 var(--lib-sans);
+    letter-spacing: normal;
+    text-transform: none;
   }
-  #mnav-btn:active{background:var(--accent-soft);color:var(--accent)}
-  #mnav-ico{position:relative;display:block;width:1.05rem;height:.72rem}
-  #mnav-ico i{position:absolute;left:0;width:100%;height:1.5px;border-radius:2px;
-    background:currentColor;transition:transform .2s ease,opacity .2s ease}
-  #mnav-ico i:nth-child(1){top:0}
-  #mnav-ico i:nth-child(2){top:50%;margin-top:-.75px}
-  #mnav-ico i:nth-child(3){bottom:0}
-  #mnav-btn.open #mnav-ico i:nth-child(1){transform:translateY(.35rem) rotate(45deg)}
-  #mnav-btn.open #mnav-ico i:nth-child(2){opacity:0}
-  #mnav-btn.open #mnav-ico i:nth-child(3){transform:translateY(-.35rem) rotate(-45deg)}
+  html.has-folio body { padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0px)); }
 
-  #mnav-scrim{display:block;position:fixed;inset:0;z-index:61;
-    background:rgba(0,0,0,.42);opacity:0;pointer-events:none;
-    transition:opacity .24s ease;touch-action:none}
-  #mnav-scrim.open{opacity:1;pointer-events:auto}
+  .folio .folio-prev,
+  .folio .folio-next {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .1rem;
+    box-sizing: border-box;
+    min-width: 3.25rem;
+    height: 3rem;
+    margin: 0;
+    padding: 0 .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .folio a:hover { color: var(--accent, #1b4b80); }
+  /* a missing neighbour keeps its slot: the edge of the sequence, not a control */
+  .folio .folio-off { color: var(--rule, #e0ddd5); }
+  .folio .g { display: block; flex: none; }
 
-  #mnav{
-    display:flex;flex-direction:column;
-    position:fixed;top:0;right:0;z-index:62;
-    width:min(21rem,86vw);height:100%;
-    background:var(--bg-alt);border-left:1px solid var(--rule);
-    box-shadow:-6px 0 24px rgba(0,0,0,.18);
-    font-family:var(--sans);
-    padding:calc(.95rem + env(safe-area-inset-top)) 0 calc(.65rem + env(safe-area-inset-bottom));
-    transform:translateX(101%);visibility:hidden;
-    /* visibility flips at once on the way in, so the panel can take focus
+  /* #mnav-btn keeps its id (navcheck, the arrow keys, older scripts) and is
+   * restyled here from the floating circle it used to be. */
+  .folio #mnav-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    position: static;
+    box-sizing: border-box;
+    width: auto;
+    height: 3rem;
+    margin: 0;
+    padding: 0 .5rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--ink, #1b1b1d);
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .folio #mnav-btn .folio-sec {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .folio #mnav-btn .g { color: var(--ink-soft, #4a4a50); }
+  .folio a:active,
+  .folio #mnav-btn:active { background: color-mix(in srgb, var(--ink, #1b1b1d) 7%, transparent); }
+  .folio :focus-visible { outline: 2px solid var(--accent, #1b4b80); outline-offset: -3px; }
+
+  /* ---------- the floating button, for an older page ----------
+   * A page whose book.js predates the folio appends #mnav-btn to <body> as a
+   * round button. It keeps working under this shell (C2-sw-mixed). It sits
+   * above the sheet, where that page's script turns it into the close
+   * control, and the sheet leaves room for it. */
+  body > #mnav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    z-index: calc(var(--lib-z-sheet, 60) + 1);
+    right: calc(.85rem + env(safe-area-inset-right, 0px));
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    width: 2.95rem;
+    height: 2.95rem;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    background: var(--bg-alt);
+    color: var(--ink-soft);
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .16);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body > #mnav-btn:active { background: var(--accent-soft); color: var(--accent); }
+  body:has(> #mnav-btn) #mnav { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+  #mnav-ico { position: relative; display: block; width: 1.05rem; height: .72rem; }
+  #mnav-ico i {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  #mnav-ico i:nth-child(1) { top: 0; }
+  #mnav-ico i:nth-child(2) { top: 50%; margin-top: -.75px; }
+  #mnav-ico i:nth-child(3) { bottom: 0; }
+  #mnav-btn.open #mnav-ico i:nth-child(1) { transform: translateY(.35rem) rotate(45deg); }
+  #mnav-btn.open #mnav-ico i:nth-child(2) { opacity: 0; }
+  #mnav-btn.open #mnav-ico i:nth-child(3) { transform: translateY(-.35rem) rotate(-45deg); }
+
+  /* ---------- the drawer: a bottom sheet ----------
+   * In the reference sheet's idiom (PDA-07): 14px top corners, a handle, the
+   * scrim, at most 80% of the screen, and every row inset 1.15rem on both
+   * sides (NAV-07). In order: the way up, the head with a visible Close, the
+   * neighbours, the sections. */
+  #mnav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--lib-z-scrim, 50);
+    background: rgba(0, 0, 0, .42);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .24s ease;
+    touch-action: none;
+  }
+  #mnav-scrim.open { opacity: 1; pointer-events: auto; }
+
+  #mnav {
+    --surface: var(--bg-alt);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: var(--lib-z-sheet, 60);
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: auto;
+    max-width: 36rem;
+    height: auto;
+    max-height: 80vh;
+    max-height: 80dvh;
+    margin: 0 auto;
+    padding: 0 0 calc(.5rem + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-alt, #f3f2ee);
+    border: 1px solid var(--rule, #e0ddd5);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -10px 34px rgba(0, 0, 0, .2);
+    font-family: var(--lib-sans);
+    transform: translateY(calc(100% + 1rem));
+    visibility: hidden;
+    /* visibility flips at once on the way in, so the sheet can take focus
        immediately, and waits for the slide to finish on the way out */
-    transition:transform .24s ease,visibility 0s linear .24s;
-    overscroll-behavior:contain;
+    transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .26s;
+    overscroll-behavior: contain;
+    outline: none;
   }
-  #mnav.open{transform:none;visibility:visible;
-    transition:transform .24s ease,visibility 0s linear 0s}
+  #mnav.open {
+    transform: none;
+    visibility: visible;
+    transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s linear 0s;
+  }
+  #mnav.dragging { transition: none; }
 
-  .mn-head{padding:0 1.15rem .7rem;border-bottom:1px solid var(--rule)}
-  .mn-kicker{margin:0 0 .25rem;font-size:.66rem;font-weight:700;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--ink-faint)}
-  .mn-title{margin:0;font-size:.98rem;font-weight:650;line-height:1.3;color:var(--ink)}
+  /* The handle, and the head it belongs to, take a drag rather than a scroll. */
+  #mnav .mn-grab {
+    display: flex;
+    justify-content: center;
+    flex: none;
+    padding: .55rem 0 .3rem;
+    color: color-mix(in srgb, var(--ink, #1b1b1d) 28%, var(--bg-alt, #f3f2ee));
+    cursor: grab;
+  }
+  #mnav .mn-grab svg { display: block; }
+  #mnav .mn-grab,
+  #mnav .mn-up,
+  #mnav .mn-head { touch-action: none; }
 
-  .mn-list{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.35rem 0 .6rem}
-  .mn-list a{display:block;padding:.72rem 1.15rem;font-size:.88rem;line-height:1.35;
-    color:var(--ink-soft);text-decoration:none;border-left:3px solid transparent;
-    -webkit-tap-highlight-color:transparent}
-  .mn-list a.active{color:var(--accent);border-left-color:var(--accent);
-    background:var(--accent-soft);font-weight:650}
+  /* 1. Up: the phone's way to the part in the contents. */
+  #mnav .mn-up {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex: none;
+    box-sizing: border-box;
+    min-height: 48px;
+    margin: 0;
+    padding: .35rem 1.15rem;
+    border-bottom: 1px solid var(--rule, #e0ddd5);
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font: 600 .875rem/1.3 var(--lib-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-up span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  #mnav .mn-up .g { flex: none; }
+  #mnav .mn-up:hover { color: var(--accent, #1b4b80); }
+
+  /* 2. The head: where this is, what it is called, and Close. */
+  #mnav .mn-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0 .75rem;
+    flex: none;
+    margin: 0;
+    padding: .8rem 1.15rem .85rem;
+    border: 0;
+  }
+  #mnav .mn-grab + .mn-head { padding-top: .35rem; }
+  #mnav .mn-hd { flex: 1 1 0; min-width: 0; }
+  /* an older page's head: the kicker and the title straight inside it */
+  #mnav .mn-head > p { flex: 1 0 100%; }
+  #mnav .mn-kicker {
+    margin: 0 0 .3rem;
+    font: 700 var(--fs-label, .7rem)/1.3 var(--lib-sans);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint, #63636a);
+  }
+  #mnav .mn-title {
+    margin: 0;
+    font: 400 1.0625rem/1.3 var(--serif, var(--lib-serif));
+    color: var(--ink, #1b1b1d);
+  }
+  #mnav .mn-close {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    box-sizing: border-box;
+    height: 2.75rem;
+    margin: -.2rem -.35rem 0 0;
+    padding: 0 .75rem 0 .6rem;
+    border: 1px solid var(--rule, #e0ddd5);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft, #4a4a50);
+    font: 600 .8125rem/1 var(--lib-sans);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-close:hover { color: var(--ink, #1b1b1d); border-color: var(--ink-faint, #63636a); }
+
+  /* 3. The neighbours: two equal cards whatever the titles are, and a
+     missing one keeps its slot, so a thumb finds them in the same place on
+     every page. The styles moved here from pwa.css with the row itself. */
+  #mnav .mn-seq {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+    flex: none;
+    margin: 0 1.15rem;
+    padding: 0 0 .85rem;
+    border-bottom: 1px solid var(--rule, #e0ddd5);
+  }
+  #mnav .mn-seq > * {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .15rem;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 3.5rem;
+    margin: 0;
+    padding: .5rem .7rem;
+    border: 1px solid var(--rule, #e0ddd5);
+    border-radius: 6px;
+    background: var(--paper, var(--bg, #fbfaf7));
+    color: var(--ink, #1b1b1d);
+    text-decoration: none;
+    font: 400 .9375rem/1.3 var(--serif, var(--lib-serif));
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-seq > a:hover,
+  #mnav .mn-seq > a:focus-visible { border-color: var(--accent, #1b4b80); }
+  #mnav .mn-seq .next { align-items: flex-end; text-align: right; }
+  #mnav .mn-seq > span { background: transparent; border-style: dashed; color: var(--ink-soft, #4a4a50); }
+  #mnav .mn-seq .mn-dir {
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+    margin: 0;
+    font: 700 var(--fs-label, .7rem)/1.3 var(--lib-sans);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint, #63636a);
+  }
+  #mnav .mn-seq .mn-dir .g { width: 12px; height: 12px; }
+  /* Two lines at most: a title runs to sixty characters and the card is half
+     a phone wide. */
+  #mnav .mn-seq .mn-ch {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  /* 4. The sections: the only part of the sheet that scrolls. */
+  #mnav .mn-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    margin: 0;
+    padding: .35rem 0 .25rem;
+  }
+  #mnav .mn-head + .mn-list { border-top: 1px solid var(--rule, #e0ddd5); }
+  #mnav .mn-list:empty { display: none; }
+  #mnav .mn-list a {
+    display: block;
+    box-sizing: border-box;
+    min-height: 44px;
+    margin: 0;
+    padding: .7rem 1.15rem .7rem calc(1.15rem - 3px);
+    border-left: 3px solid transparent;
+    color: var(--ink-soft, #4a4a50);
+    text-decoration: none;
+    font: 400 .9375rem/1.35 var(--lib-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mnav .mn-list a:hover { color: var(--ink, #1b1b1d); }
+  #mnav .mn-list a.active {
+    color: var(--accent, #1b4b80);
+    border-left-color: var(--accent, #1b4b80);
+    background: var(--accent-soft, #e8eef5);
+    font-weight: 600;
+  }
+  #mnav :focus-visible { outline: 2px solid var(--accent, #1b4b80); outline-offset: -2px; }
+
+  /* ---------- headroom ----------
+   * html.chrome-hidden takes the bar up and the folio down, by transform
+   * only. In the installed app the bar leaves its status-bar strip behind. */
+  .topnav,
+  .folio { transition: transform .22s ease; }
+  html.chrome-hidden .topnav { transform: translateY(calc(-100% + env(safe-area-inset-top, 0px))); }
+  html.chrome-hidden .folio { transform: translateY(100%); }
 }
 
-@media (prefers-reduced-motion:reduce){
-  #mnav,#mnav-scrim,#mnav-ico i{transition:none}
+/* The reference sheet's head takes a drag, as the drawer's does (book.js). */
+.refcard.sheet .rc-head { touch-action: none; cursor: grab; }
+
+@media (prefers-reduced-motion: reduce) {
+  #mnav, #mnav-scrim, #mnav-ico i, .topnav, .folio { transition: none; }
+}
+
+/* Forced colours keep the glyphs (inline SVG in currentColor); these keep the
+ * edges and the marks that are drawn with a border or a fill. */
+@media (forced-colors: active) {
+  .folio { border-top-color: CanvasText; }
+  #mnav { border-color: CanvasText; }
+  #mnav .mn-seq > * { border-color: CanvasText; }
+  #mnav .mn-list a.active { border-left-color: Highlight; }
+  #mnav-ico i { forced-color-adjust: none; background: ButtonText; }
+  /* an svg's own colour is not forced: let the glyph take its control's */
+  .folio #mnav-btn .g, .folio .g, #mnav .g { color: inherit; }
+}
+
+
+/* ========================================= contents: find a chapter
+ * book.js inserts input.toc-find after the contents head's count line;
+ * book.css styles it with the rest of the head. This is only its status
+ * line, which says "No chapter matches" and is otherwise out of sight but
+ * still read out when it changes. */
+.toc-none {
+  margin: .6rem 0 0;
+  font: 600 .875rem/1.4 var(--lib-sans);
+  color: var(--ink-soft, #4a4a50);
+}
+.toc-none:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 
@@ -482,7 +839,7 @@ html.standalone .topnav:not(:has(.pwa-back))::before {
  * absent): the Dropbox build, which has no bar and no pwa.js, and an installed
  * copy whose shell is older than the page. It is the only theme control on
  * such a page, so it is never hidden for the drawer's sake. */
-#themer{position:fixed;top:.8rem;right:.9rem;z-index:50;cursor:pointer;
+#themer{position:fixed;top:.8rem;right:.9rem;z-index:var(--lib-z-bar, 40);cursor:pointer;
   border:1px solid var(--rule);background:var(--bg-alt);color:var(--ink-soft);
   border-radius:20px;padding:.3rem .7rem;font-family:var(--sans);font-size:.72rem;
   font-weight:600;letter-spacing:.04em}
@@ -496,7 +853,9 @@ html.standalone .topnav:not(:has(.pwa-back))::before {
 /* A bar is a way of leaving the page. On paper there is nowhere to go, and the
  * rest of the furniture is hidden here too. */
 @media print {
-  .topnav, .skip, .topnav-links, #themer, #mnav, #mnav-btn, #mnav-scrim {
+  .topnav, .skip, .topnav-links, #themer, #mnav, #mnav-btn, #mnav-scrim,
+  .folio, .mn-seq, input.toc-find, .toc-none {
     display: none !important;
   }
+  html.has-folio body { padding-bottom: 0; }
 }

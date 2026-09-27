@@ -145,20 +145,14 @@ var NMT = (function () {
     return hs;
   }
 
-  /* Highlight the entry for whichever heading was last scrolled past. */
-  function spy(box, headings) {
-    var links = Array.prototype.slice.call(box.querySelectorAll('a'));
-    if (!links.length) return;
-    var obs = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        var m = box.querySelector('a[href="#' + e.target.id + '"]');
-        if (!m) return;
-        links.forEach(function (l) { l.classList.remove('active'); });
-        m.classList.add('active');
-      });
-    }, { rootMargin: '0px 0px -75% 0px' });
-    headings.forEach(function (h) { obs.observe(h); });
+  /* The words a heading is known by in a list or a label: without KaTeX's hidden
+     MathML copy, which textContent would otherwise read out a second time. */
+  function headingText(h) {
+    var c = h.cloneNode(true);
+    [].forEach.call(c.querySelectorAll('.katex-mathml, .eqnum'), function (e) {
+      if (e.parentNode) e.parentNode.removeChild(e);
+    });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
   /* ---------- sidebar TOC ---------- */
@@ -177,40 +171,117 @@ var NMT = (function () {
         box.appendChild(a);
       });
     }
-    if (!box.children.length) return;
-    spy(box, hs);
+    /* Which entry is active is decided by the spy below, from layout, after
+       the boot. Nothing is marked here: the build saves this list. */
   }
 
-  /* ---------- mobile section drawer ---------- */
+  /* ---------- the phone's chrome: folio bar and drawer ---------- */
   /* Below 1000px the sidebar is hidden, which leaves a sixty-thousand-pixel
-     chapter with no way through it but the scrollbar. This is the way in: a
-     thumb-reachable button and the top-level sections.
+     chapter with no way through it but the scrollbar. Two things put the
+     sidebar's jobs back within reach of a thumb (DESIGN.md section 6):
 
-     It is appended to <body>, like #themer, so it is never captured by the
-     build — the page ships without it and every reader builds their own, which
-     is what keeps the handlers attached to the markup they belong to. */
+     - the folio bar, fixed at the foot of the screen: the previous chapter
+       ("‹ 67"), the section being read, which opens the drawer, and the next
+       chapter ("69 ›"). The arrows carry chapter numbers because they jump
+       chapters, not sections.
+     - the drawer, a bottom sheet: the way up to the part ("← Part XII · …"),
+       the position and the title with a visible Close, the previous and next
+       chapters as cards, and the sections.
+
+     Neighbours are read from the chapter foot (.chapnav a.prev and a.next) and
+     the way up from the sidebar (.sb-home), both written by the build, so the
+     Dropbox build, which has no nav.json, navigates the same way.
+
+     None of this is inside .main .col or #sb-toc, so the build never saves it:
+     every reader builds their own, with the handlers attached. The folio sits
+     right after the bar, so it is the next thing Tab reaches (PDA-05); the
+     sheet and its scrim are appended to <body>.
+
+     A shell older than this file (an installed copy that has not taken the
+     update yet) has no folio styles. The shell announces them with
+     --lib-folio in nav.css; without it the drawer button is appended to <body>
+     as the floating button that shell knows how to draw. */
+
+  /* Glyphs are inline SVG in currentColor, so they survive forced colours
+     (PDA-07: the three-bar icon drawn with background:currentColor did not). */
+  function glyph(d, size, filled) {
+    return '<svg class="g" viewBox="0 0 16 16" width="' + size + '" height="' + size +
+      '" aria-hidden="true" focusable="false"><path d="' + d + '" ' +
+      (filled ? 'fill="currentColor"' :
+        'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"') +
+      '/></svg>';
+  }
+  var G = {
+    prev: glyph('M10 3.5 5.5 8l4.5 4.5', 16),
+    next: glyph('M6 3.5 10.5 8 6 12.5', 16),
+    up: glyph('M13 8H3.5M7.5 4 3.5 8l4 4', 16),
+    close: glyph('M4.5 4.5l7 7M11.5 4.5l-7 7', 16),
+    caret: glyph('M4 10.25h8L8 5.5z', 12, true),
+    grab: '<svg viewBox="0 0 36 4" width="36" height="4" aria-hidden="true" focusable="false">' +
+          '<rect width="36" height="4" rx="2" fill="currentColor"/></svg>'
+  };
+
+  /* A neighbour as the chapter foot names it: its href, its number and its
+     title. The card's direction label and any part line are set aside, and
+     the number is the first "67 · " or "1.2 · " in what is left. */
+  function neighbour(dir) {
+    var a = document.querySelector('.chapnav a.' + dir);
+    if (!a) return null;
+    var c = a.cloneNode(true);
+    [].forEach.call(c.querySelectorAll('*'), function (e) {
+      var s = (e.textContent || '').replace(/\s+/g, ' ').trim();
+      if (e.parentNode && (/^[‹←<\s]*(previous|next)( chapter)?[\s›→>]*$/i.test(s) ||
+                           /^part\s+[0-9ivxlcdm]+\b/i.test(s)))
+        e.parentNode.removeChild(e);
+    });
+    var t = (c.textContent || '').replace(/\s+/g, ' ').trim();
+    var m = t.match(/(\d+(?:\.\d+)*)\s*·\s*/);
+    var num = m ? m[1] : '', title = m ? t.slice(m.index + m[0].length).trim() : t;
+    if (!m) {
+      /* the number in an element of its own, with no separator after it */
+      var parts = [], w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT, null, false);
+      while (w.nextNode()) parts.push(w.currentNode.nodeValue);
+      var m2 = parts.join(' ').replace(/\s+/g, ' ').trim().match(/^(\d+(?:\.\d+)*)\s+(.+)$/);
+      if (m2) { num = m2[1]; title = m2[2]; }
+    }
+    return { href: a.getAttribute('href'), num: num, title: title,
+             label: num ? num + ' · ' + title : title };
+  }
+
+  var mnav = null;          /* the drawer's controls, once built */
+
   function buildMobileNav(hs) {
     if (document.getElementById('mnav')) return;
     if (!document.querySelector('.main')) return;
     var h2s = hs.filter(function (h) { return h.tagName === 'H2'; });
     /* Two reasons to build the drawer and they are separate. A chapter with
        several sections needs the list, to jump between them. A chapter in a
-       book's reading sequence needs the prev/next row and the position, which
-       pwa.js adds to this panel, and it needs them however few sections it has.
-       The sidebar title is what marks a page as sitting in such a sequence: a
-       standalone page such as the trial registry carries none and still builds
-       no drawer. Gating both on the section count is what took the navigation
-       away from a one-section chapter. */
-    var inSequence = !!document.querySelector('.sb-title');
-    if (h2s.length < 2 && !inSequence) return;
+       book's reading sequence needs the way up, the position and the
+       neighbours, however few sections it has. The sidebar title is what
+       marks a page as sitting in such a sequence: a standalone page such as
+       the trial registry carries none and builds no drawer. */
+    var sbTitle = document.querySelector('.sb-title');
+    if (h2s.length < 2 && !sbTitle) return;
+
+    var body = document.body, root = document.documentElement;
+    var modern = !!getComputedStyle(root).getPropertyValue('--lib-folio').trim();
+    var contents = !!document.querySelector('.main h2.part-head');
+    var idle = contents ? 'Parts' : 'Sections';
+    var foot = document.querySelector('.chapnav');
 
     var btn = document.createElement('button');
     btn.id = 'mnav-btn';
     btn.type = 'button';
     btn.setAttribute('aria-controls', 'mnav');
     btn.setAttribute('aria-expanded', 'false');
-    btn.setAttribute('aria-label', 'Sections in this chapter');
-    btn.innerHTML = '<span id="mnav-ico"><i></i><i></i><i></i></span>';
+    if (modern) {
+      btn.innerHTML = '<span class="folio-sec"></span>' + G.caret;
+      btn.firstChild.textContent = idle;
+      btn.setAttribute('aria-label', idle);
+    } else {
+      btn.setAttribute('aria-label', 'Sections in this chapter');
+      btn.innerHTML = '<span id="mnav-ico"><i></i><i></i><i></i></span>';
+    }
 
     var scrim = document.createElement('div');
     scrim.id = 'mnav-scrim';
@@ -218,84 +289,336 @@ var NMT = (function () {
     var panel = document.createElement('nav');
     panel.id = 'mnav';
     panel.tabIndex = -1;
-    panel.setAttribute('aria-label', 'Sections in this chapter');
+    panel.setAttribute('aria-label', contents ? 'Parts' : 'Sections and chapters');
     panel.setAttribute('aria-hidden', 'true');
+    if (modern) panel.innerHTML = '<span class="mn-grab" aria-hidden="true">' + G.grab + '</span>';
 
-    var sbTitle = document.querySelector('.sb-title');
+    /* 1. The way up: the sidebar's own up-link, at least 48px tall. */
+    var home = document.querySelector('.sidebar .sb-home');
+    if (home) {
+      var up = document.createElement('a');
+      up.className = 'mn-up';
+      up.setAttribute('href', home.getAttribute('href') || 'contents.html');
+      up.innerHTML = G.up + '<span></span>';
+      up.lastChild.textContent = (home.textContent || '').replace(/^[\s←‹<]+/, '')
+                                                          .replace(/\s+/g, ' ').trim();
+      panel.appendChild(up);
+    }
+
+    /* 2. The head: the position (the sidebar's title, written at build), the
+       title, and a Close a reader can see. */
     var h1 = document.querySelector('.main h1');
     var head = document.createElement('div');
     head.className = 'mn-head';
-    head.innerHTML = '<p class="mn-kicker"></p><p class="mn-title"></p>';
-    head.querySelector('.mn-kicker').textContent = sbTitle ? sbTitle.textContent : 'Sections';
-    head.querySelector('.mn-title').textContent = h1 ? h1.textContent : document.title;
+    head.innerHTML = '<div class="mn-hd"><p class="mn-kicker"></p><p class="mn-title"></p></div>' +
+                     '<button class="mn-close" type="button">' + G.close + '<span>Close</span></button>';
+    head.querySelector('.mn-kicker').textContent =
+      sbTitle ? sbTitle.textContent.replace(/\s+/g, ' ').trim() : idle;
+    head.querySelector('.mn-title').textContent = h1 ? headingText(h1) : document.title;
+    panel.appendChild(head);
 
+    /* 3. The neighbours, as cards. A missing one keeps its slot as a span, so
+       the first and last chapters have the same shape as every other. */
+    if (foot) {
+      var row = document.createElement('div');
+      row.className = 'mn-seq';
+      [['prev', 'Previous', 'No previous chapter'], ['next', 'Next', 'No next chapter']]
+        .forEach(function (s) {
+          var n = neighbour(s[0]);
+          var el = document.createElement(n ? 'a' : 'span');
+          el.className = s[0];
+          if (n) el.setAttribute('href', n.href);
+          el.innerHTML = '<span class="mn-dir">' + (s[0] === 'prev' ? G.prev : '') + '<span></span>' +
+                         (s[0] === 'next' ? G.next : '') + '</span><span class="mn-ch"></span>';
+          el.querySelector('.mn-dir span').textContent = s[1];
+          el.querySelector('.mn-ch').textContent = n ? n.label : s[2];
+          row.appendChild(el);
+        });
+      panel.appendChild(row);
+    }
+
+    /* 4. The sections. */
     var list = document.createElement('div');
     list.className = 'mn-list';
-    /* One section is not a list. The panel still gets the element, so the
-       prev/next row keeps its insertion point and the open handler keeps its
-       query target, but nothing is put in it to jump between. */
-    var links = (h2s.length < 2 ? [] : h2s).map(function (h) {
+    h2s.forEach(function (h) {
       var a = document.createElement('a');
       a.href = '#' + h.id;
-      a.textContent = h.textContent;
+      a.textContent = headingText(h);
       list.appendChild(a);
-      return a;
     });
-
-    /* No footer. It held a second theme button and an "All chapters" link:
-       the theme control is the bar's (or, with no bar, the floating #themer),
-       and the way up is the bar and the sidebar's up-link (NAV-07). Nor does
-       it set html.has-mnav any more: that class hid the floating toggle while
-       a drawer existed, which with no theme button in the drawer would leave a
-       Dropbox page on a phone with no theme control at all. */
-    panel.appendChild(head);
     panel.appendChild(list);
-    document.body.appendChild(scrim);
-    document.body.appendChild(panel);
-    document.body.appendChild(btn);
+
+    /* The folio bar: 44px arrows built from the chapter foot, with the drawer
+       button between them. A missing neighbour keeps its slot, so the centre
+       never moves; a page with no chapter foot (contents, ledger) has empty
+       slots. */
+    function arrow(dir) {
+      var n = foot ? neighbour(dir) : null, el;
+      if (n) {
+        el = document.createElement('a');
+        el.setAttribute('href', n.href);
+        el.setAttribute('aria-label', (dir === 'prev' ? 'Previous' : 'Next') + ' chapter: ' + n.label);
+        el.innerHTML = dir === 'prev' ? G.prev + '<span></span>' : '<span></span>' + G.next;
+        el.querySelector('span').textContent = n.num;
+      } else {
+        el = document.createElement('span');
+        el.setAttribute('aria-hidden', 'true');
+        if (foot) el.innerHTML = dir === 'prev' ? G.prev : G.next;
+      }
+      el.className = 'folio-' + dir + (n ? '' : ' folio-off');
+      return el;
+    }
+
+    if (modern) {
+      var folio = document.createElement('nav');
+      folio.className = 'folio';
+      folio.setAttribute('aria-label', contents ? 'Parts' : 'Chapter');
+      folio.appendChild(arrow('prev'));
+      folio.appendChild(btn);
+      folio.appendChild(arrow('next'));
+      var bar = document.querySelector('.topnav');
+      if (bar && bar.parentNode) bar.parentNode.insertBefore(folio, bar.nextSibling);
+      else body.insertBefore(folio, body.firstChild);
+      root.classList.add('has-folio');
+      body.appendChild(scrim);
+      body.appendChild(panel);
+    } else {
+      body.appendChild(scrim);
+      body.appendChild(panel);
+      body.appendChild(btn);
+    }
 
     function isOpen() { return panel.classList.contains('open'); }
-    function setOpen(on) {
+    function setOpen(on, refocus) {
       btn.classList.toggle('open', on);
       panel.classList.toggle('open', on);
       scrim.classList.toggle('open', on);
+      root.classList.toggle('mnav-open', on);
       btn.setAttribute('aria-expanded', on ? 'true' : 'false');
       panel.setAttribute('aria-hidden', on ? 'false' : 'true');
-      btn.setAttribute('aria-label', on ? 'Close sections' : 'Sections in this chapter');
+      if (!modern) btn.setAttribute('aria-label', on ? 'Close sections' : 'Sections in this chapter');
       if (on) {
-        var act = list.querySelector('a.active');
-        if (act) act.scrollIntoView({ block: 'nearest' });
+        chromeShow();
+        spyNow(true);
+        keepInView(list.querySelector('a.active'), list);
         panel.focus({ preventScroll: true });
-      } else {
+      } else if (refocus) {
         btn.focus({ preventScroll: true });
       }
     }
 
-    btn.addEventListener('click', function () { setOpen(!isOpen()); });
-    scrim.addEventListener('click', function () { setOpen(false); });
+    btn.addEventListener('click', function () { setOpen(!isOpen(), true); });
+    scrim.addEventListener('click', function () { setOpen(false, true); });
+    head.querySelector('.mn-close').addEventListener('click', function () { setOpen(false, true); });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && isOpen()) setOpen(false);
+      if (e.key === 'Escape' && isOpen()) setOpen(false, true);
     });
     window.addEventListener('resize', function () {
-      if (isOpen() && window.innerWidth > 1000) setOpen(false);
+      if (isOpen() && window.innerWidth > 1000) setOpen(false, false);
     });
 
-    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    links.forEach(function (a) {
+    /* Tab stays inside the open sheet: behind it is a page under a scrim. */
+    panel.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab' || !isOpen()) return;
+      var f = [].filter.call(panel.querySelectorAll('a[href], button'), function (x) {
+        return x.getClientRects().length > 0;
+      });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1], at = document.activeElement;
+      if (e.shiftKey && (at === first || at === panel)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (at === last || at === panel)) { e.preventDefault(); first.focus(); }
+    });
+
+    /* The handle is real: dragging the head of the sheet down closes it. */
+    dragToClose(panel, function (t) {
+      return !!(t && t.closest && t.closest('.mn-grab, .mn-up, .mn-head'));
+    }, function () { setOpen(false, true); });
+
+    [].forEach.call(list.querySelectorAll('a'), function (a) {
       a.addEventListener('click', function (e) {
         e.preventDefault();
         var id = a.getAttribute('href').slice(1);
         var t = document.getElementById(id);
-        setOpen(false);
+        setOpen(false, false);
         if (!t) return;
-        t.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+        jumping();
+        t.scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
         /* replace rather than push: tapping a section is a scroll, not a
            navigation, and it should not take over the back button. */
         if (history.replaceState) history.replaceState(null, '', '#' + id);
+        /* From the keyboard, the reader continues from the heading. */
+        if (e.detail === 0) {
+          if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1');
+          t.focus({ preventScroll: true });
+        }
       });
     });
 
-    spy(list, h2s);
+    mnav = { btn: btn, panel: panel, list: list, idle: idle,
+             label: modern ? btn.querySelector('.folio-sec') : null };
+    SPY = null;             /* collect again, with the drawer's list */
+  }
+
+  /* ---------- dragging a sheet closed ----------
+     The drawer and the reference sheet both draw a handle. Dragging the head
+     of either down more than 64px closes it; less, and it springs back. Pointer
+     capture starts only once the drag has begun, so a tap on a link or on
+     Close in the head is still a tap. The head's touch-action is none (nav.css),
+     so the browser does not take the gesture for a scroll. */
+  function dragToClose(sheet, isHead, close) {
+    var y0 = null, pid = null, dy = 0, live = false;
+    sheet.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0 || !isHead(e.target)) return;
+      y0 = e.clientY; pid = e.pointerId; dy = 0; live = false;
+    });
+    sheet.addEventListener('pointermove', function (e) {
+      if (y0 === null || e.pointerId !== pid) return;
+      dy = e.clientY - y0;
+      if (!live) {
+        if (dy < -12) { y0 = null; return; }        /* a drag up is not a close */
+        if (dy < 6) return;
+        live = true;
+        try { sheet.setPointerCapture(pid); } catch (x) { /* already released */ }
+        sheet.classList.add('dragging');
+        sheet.style.transition = 'none';
+      }
+      sheet.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
+      e.preventDefault();
+    });
+    function end(e) {
+      if (y0 === null || e.pointerId !== pid) return;
+      var was = live, far = live && dy > 64 && e.type === 'pointerup';
+      y0 = null; pid = null; live = false;
+      if (!was) return;
+      sheet.classList.remove('dragging');
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+      /* a drag that ends over a link is not a click on it */
+      var swallow = function (ev) { ev.preventDefault(); ev.stopPropagation(); };
+      sheet.addEventListener('click', swallow, true);
+      setTimeout(function () { sheet.removeEventListener('click', swallow, true); }, 0);
+      if (far) close();
+    }
+    sheet.addEventListener('pointerup', end);
+    sheet.addEventListener('pointercancel', end);
+  }
+
+  /* ---------- find a chapter (contents pages) ----------
+     One search box after the contents head's count line. It filters the rows
+     by number and title as the reader types, hides a part with no match, says
+     so when nothing matches, and clears on Escape. It is built from the page
+     itself, so it works offline and in the Dropbox build. The build saves
+     .main .col, so the box and its status line are inserted only if they are
+     not there already, and the wiring (a property, not an attribute) is never
+     saved. */
+  function norm(s) {
+    s = String(s || '').toLowerCase();
+    if (s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return s.replace(/[·•,;:()\[\]"“”‘’']/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function findChapter() {
+    var col = document.querySelector('.main .col');
+    if (!col) return;
+    var rows = col.querySelectorAll('.clist li');
+    if (!rows.length) return;
+
+    var input = col.querySelector('input.toc-find');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'search';
+      input.className = 'toc-find';
+      input.placeholder = 'Find a chapter';
+      input.setAttribute('aria-label', 'Find a chapter');
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('spellcheck', 'false');
+      input.setAttribute('enterkeyhint', 'search');
+      var head = col.querySelector('.toc-head');
+      var count = head && head.querySelector('.toc-count');
+      if (head && !count) {
+        [].some.call(head.querySelectorAll('p, div, span'), function (e) {
+          var t = e.textContent || '';
+          if (/\d/.test(t) && /\bchapters?\b/i.test(t) && !e.querySelector('p, div')) { count = e; return true; }
+          return false;
+        });
+      }
+      if (count) count.parentNode.insertBefore(input, count.nextSibling);
+      else if (head) head.appendChild(input);
+      else {
+        var first = col.querySelector('h2.part-head, .clist');
+        while (first && first.parentElement !== col &&
+               first.parentElement.firstElementChild === first) first = first.parentElement;
+        if (!first || !first.parentNode) return;
+        first.parentNode.insertBefore(input, first);
+      }
+    }
+    var note = input.parentNode.querySelector('.toc-none');
+    if (!note) {
+      note = document.createElement('p');
+      note.className = 'toc-none';
+      note.setAttribute('role', 'status');
+      note.setAttribute('aria-live', 'polite');
+      input.parentNode.insertBefore(note, input.nextSibling);
+    }
+    if (input._wired) return;
+    input._wired = true;
+
+    var items = [].map.call(rows, function (li) {
+      var c = li.cloneNode(true);
+      [].forEach.call(c.querySelectorAll('.tag, .katex-mathml'), function (e) {
+        if (e.parentNode) e.parentNode.removeChild(e);
+      });
+      var n = li.querySelector('.cnum');
+      return { li: li, num: n ? n.textContent.trim() : '', text: norm(c.textContent), ok: true };
+    });
+
+    /* A part is its head and what follows it up to the next part: the wrapper
+       that holds exactly one part head, or else the head and its siblings. */
+    var parts = [].map.call(col.querySelectorAll('h2.part-head'), function (h) {
+      var els = [];
+      var w = h.parentElement;
+      if (w && w !== col && w.querySelectorAll('h2.part-head').length === 1) els = [w];
+      else {
+        els = [h];
+        for (var s = h.nextElementSibling; s && !(s.matches && s.matches('h2.part-head')); s = s.nextElementSibling)
+          els.push(s);
+      }
+      var mine = items.filter(function (it) {
+        return els.some(function (e) { return e.contains(it.li); });
+      });
+      return { els: els, items: mine };
+    });
+
+    function show(e, on) { e.style.display = on ? '' : 'none'; }
+    function run() {
+      var q = norm(input.value);
+      var words = q ? q.split(' ') : [];
+      var numeric = /^\d+(\.\d*)?$/.test(q);
+      var shown = 0;
+      items.forEach(function (it) {
+        it.ok = !q || (numeric ? it.num.indexOf(q) === 0
+                               : words.every(function (w) { return it.text.indexOf(w) >= 0; }));
+        show(it.li, it.ok);
+        if (it.ok) shown++;
+      });
+      parts.forEach(function (p) {
+        if (!p.items.length) return;
+        var any = p.items.some(function (it) { return it.ok; });
+        p.els.forEach(function (e) { show(e, any); });
+      });
+      var msg = q && !shown ? 'No chapter matches' : '';
+      if (note.textContent !== msg) note.textContent = msg;
+    }
+    input.addEventListener('input', run);
+    input.addEventListener('search', run);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && input.value) {
+        e.preventDefault();
+        input.value = '';
+        run();
+      }
+    });
+    if (input.value) run();
   }
 
   /* ============================================================
@@ -626,6 +949,11 @@ var NMT = (function () {
       document.body.appendChild(card);
       card.addEventListener('mouseenter', function () { clearTimeout(hideT); });
       card.addEventListener('mouseleave', schedHide);
+      /* The sheet's handle is real, as the drawer's is: drag its head down
+         more than 64px and it closes. */
+      dragToClose(card, function (t) {
+        return !!(scrim && t && t.closest && t.closest('.rc-head'));
+      }, function () { close(); });
     }
 
     function entry(a) {
@@ -661,8 +989,10 @@ var NMT = (function () {
       close(true);
       openFor = a;
       card.className = 'refcard' + (asSheet ? ' sheet' : '');
-      card.innerHTML = (asSheet ? '<span class="rc-close"></span>' : '') +
-        '<span class="rc-n">Reference ' + (a.textContent || '').trim() + '</span>' +
+      var n = '<span class="rc-n">Reference ' + (a.textContent || '').trim() + '</span>';
+      /* On a sheet, the handle and the label are its head, the part a thumb
+         drags (nav.css makes it touch-action:none). */
+      card.innerHTML = (asSheet ? '<div class="rc-head"><span class="rc-close"></span>' + n + '</div>' : n) +
         li.innerHTML;
       a.setAttribute('aria-expanded', 'true');
       if (asSheet) {
@@ -731,14 +1061,228 @@ var NMT = (function () {
     addEventListener('resize', function () { close(); });
   }
 
+  /* ---------- where the reader is: the spy ----------
+     One answer for three surfaces: the sidebar's section list, the drawer's
+     list and the folio's label (NAV-08). The active entry is the last heading
+     whose top is above the bar's visible bottom edge plus 24px (0 + 24 while
+     headroom has the bar out of view). Nothing is active only above the first
+     heading. It is computed from layout, on a scroll throttled to one frame,
+     on load, on hashchange, on resize and after pwa.js restores a position,
+     rather than from an observer that only saw headings entering a band at
+     the top, which was wrong on every scroll up and empty after any jump.
+
+     The sidebar keeps the active entry in view by scrolling itself, never the
+     page. These listeners are registered here, outside the boot handler, so
+     runtime_js() leaves them alone (DESIGN.md section 8). */
+  var SPY = null, booted = false;
+  var DOC = document.documentElement;
+
+  function narrow() { return !!(window.matchMedia && matchMedia('(max-width: 1000px)').matches); }
+  function still() { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+
+  function spyCollect() {
+    var hs = [].slice.call(document.querySelectorAll('.main h2[id], .main h3[id]'));
+    function links(box) {
+      var m = {};
+      if (box) [].forEach.call(box.querySelectorAll('a[href^="#"]'), function (a) {
+        m[a.getAttribute('href').slice(1)] = a;
+      });
+      return m;
+    }
+    var sb = links(document.getElementById('sb-toc'));
+    var mn = links(mnav && mnav.list);
+    /* Whatever an earlier script or an older build left marked is cleared:
+       nothing is active until it has been measured. */
+    [].forEach.call(document.querySelectorAll('#sb-toc a.active, #mnav .mn-list a.active'), function (a) {
+      a.classList.remove('active');
+      a.removeAttribute('aria-current');
+    });
+    SPY = { hs: hs, at: undefined, sbOn: null, mnOn: null,
+            sb: hs.map(function (h) { return sb[h.id] || null; }),
+            mn: hs.map(function (h) { return mn[h.id] || null; }) };
+  }
+
+  /* The bar's visible bottom edge: 0 with no bar (the Dropbox build) or while
+     headroom has it hidden; otherwise where it ends when shown, even halfway
+     through the transition back. */
+  function chromeEdge() {
+    var bar = document.querySelector('.topnav');
+    if (!bar || DOC.classList.contains('chrome-hidden')) return 0;
+    var r = bar.getBoundingClientRect();
+    return r.height ? Math.max(0, r.top) + r.height : 0;
+  }
+
+  /* The nearest scrolling box between el and stop, and el kept inside it. */
+  function keepInView(el, stop) {
+    if (!el || !stop) return;
+    for (var box = el.parentElement; box; box = box.parentElement) {
+      var o = getComputedStyle(box).overflowY;
+      if ((o === 'auto' || o === 'scroll') && box.scrollHeight > box.clientHeight + 1) break;
+      if (box === stop) return;
+    }
+    if (!box || !box.clientHeight) return;
+    var b = box.getBoundingClientRect(), r = el.getBoundingClientRect(), pad = 16;
+    if (r.top < b.top + pad) box.scrollTop -= b.top + pad - r.top;
+    else if (r.bottom > b.bottom - pad) box.scrollTop += r.bottom - b.bottom + pad;
+  }
+
+  function mark(was, now) {
+    if (was === now) return now;
+    if (was) { was.classList.remove('active'); was.removeAttribute('aria-current'); }
+    if (now) { now.classList.add('active'); now.setAttribute('aria-current', 'location'); }
+    return now;
+  }
+
+  function spyNow(force) {
+    if (!booted) return;
+    if (!SPY) spyCollect();
+    var edge = chromeEdge() + 24, at = -1, i, k;
+    for (i = 0; i < SPY.hs.length; i++) {
+      var r = SPY.hs[i].getBoundingClientRect();
+      if (!r.width && !r.height) continue;         /* not rendered: inside a closed <details> */
+      if (r.top < edge) at = i; else break;
+    }
+    if (at === SPY.at && !force) return;
+    SPY.at = at;
+
+    var sl = null, h2 = -1;
+    for (k = at; k >= 0 && !sl; k--) sl = SPY.sb[k];
+    for (k = at; k >= 0; k--) if (SPY.hs[k].tagName === 'H2') { h2 = k; break; }
+    var ml = h2 >= 0 ? SPY.mn[h2] : null;
+
+    SPY.sbOn = mark(SPY.sbOn, sl);
+    if (sl) keepInView(sl, document.querySelector('.sidebar') || sl.parentElement);
+    SPY.mnOn = mark(SPY.mnOn, ml);
+    if (ml && mnav && mnav.panel.classList.contains('open')) keepInView(ml, mnav.list);
+
+    if (mnav && mnav.label) {
+      var t = h2 >= 0 ? (ml ? ml.textContent : headingText(SPY.hs[h2]))
+            : at >= 0 ? headingText(SPY.hs[at]) : mnav.idle;
+      if (mnav.label.textContent !== t) {
+        mnav.label.textContent = t;
+        mnav.btn.setAttribute('aria-label', t === mnav.idle ? t : mnav.idle + ': ' + t);
+      }
+    }
+  }
+
+  /* ---------- headroom ----------
+     Below 1000px, on the chapter shell, reading down takes the bar and the
+     folio out of view (html.chrome-hidden; transforms only, nav.css). They
+     come back on a deliberate scroll up: 48px of it, counted from the last
+     downward movement, or a flick. A nudge up to re-read a line does not
+     bring back 100px of chrome. They always show above 120px, in the last
+     1.5 viewports of the page, while keyboard focus is in the bar or the
+     folio, and while the drawer or the bar's menu is open. */
+  var HR = { y: 0, up: 0, down: 0, t: [], jumpTill: 0, shell: null };
+
+  function chromeHidden(on) {
+    if (DOC.classList.contains('chrome-hidden') === on) return;
+    DOC.classList.toggle('chrome-hidden', on);
+    spyNow(true);
+  }
+  function chromeShow() { HR.up = HR.down = 0; chromeHidden(false); }
+
+  /* An in-page jump (a section in the drawer, a cross-reference, a restored
+     position) leaves the chrome where it is until the scroll it started ends,
+     so the heading lands below the bar the scroll padding allowed for. */
+  function jumping() { HR.jumpTill = Date.now() + 3000; HR.up = HR.down = 0; }
+
+  function holding() {
+    if (document.querySelector('#mnav.open, .topnav.menu-open')) return true;
+    var a = document.activeElement;
+    if (!a || !a.closest || !a.closest('.topnav, .folio')) return false;
+    try { return a.matches(':focus-visible'); } catch (e) { return true; }
+  }
+
+  function flick(now) {
+    var s = HR.t;
+    if (s.length < 3) return false;
+    var a = s[0], b = s[s.length - 1], dt = b[0] - a[0];
+    return dt >= 24 && (a[1] - b[1]) / dt > 1;       /* up, faster than 1000px/s */
+  }
+
+  function headroom(y, now) {
+    var dy = y - HR.y;
+    HR.y = y;
+    if (HR.shell === null) HR.shell = !!document.querySelector('.wrap .main, .wrap .sidebar');
+    if (!HR.shell || !narrow()) { HR.up = HR.down = 0; chromeHidden(false); return; }
+    var H = DOC.scrollHeight, vh = window.innerHeight;
+    if (y < 0 || y > H - vh + 1) return;              /* the rubber band at either end */
+    HR.t.push([now, y]);
+    while (HR.t.length && now - HR.t[0][0] > 150) HR.t.shift();
+    if (y <= 120 || y >= H - 1.5 * vh || holding()) { chromeShow(); return; }
+    if (dy > 0) {
+      HR.up = 0;
+      HR.down += dy;
+      if (HR.down > 8 && Date.now() >= HR.jumpTill) chromeHidden(true);
+    } else if (dy < 0) {
+      HR.down = 0;
+      HR.up -= dy;
+      if (HR.up >= 48 || flick(now)) chromeShow();
+    }
+  }
+
+  var ticking = false;
+  function frame() {
+    ticking = false;
+    if (!booted) return;
+    var y = window.pageYOffset || DOC.scrollTop || 0;
+    headroom(y, window.performance && performance.now ? performance.now() : Date.now());
+    spyNow(false);
+  }
+  function soon() {
+    if (ticking) return;
+    ticking = true;
+    (window.requestAnimationFrame || setTimeout)(frame);
+  }
+
+  window.addEventListener('scroll', soon, { passive: true });
+  window.addEventListener('resize', function () { if (SPY) SPY.at = undefined; soon(); });
+  window.addEventListener('scrollend', function () {
+    if (HR.jumpTill) { HR.jumpTill = 0; HR.up = HR.down = 0; }
+  });
+  window.addEventListener('hashchange', function () { jumping(); chromeShow(); soon(); });
+  window.addEventListener('load', function () {
+    HR.y = window.pageYOffset || 0;
+    spyNow(true);
+  });
+  /* pwa.js has put the reader back where they were */
+  window.addEventListener('library:restored', function () {
+    HR.y = window.pageYOffset || 0;
+    jumping();
+    chromeShow();
+    spyNow(true);
+  });
+  /* A link to a place on this page is a jump too. The flag goes up here, in
+     the click, before the scroll the link starts; a link whose handler kept it
+     from jumping (a citation that opens its sheet on a thumb) is not one. */
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return;
+    var a = e.target && e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href').length > 1) { jumping(); chromeShow(); }
+  });
+  document.addEventListener('focusin', function () { if (holding()) chromeShow(); });
+
   /* ---------- boot ---------- */
   window.addEventListener('DOMContentLoaded', function () {
     /* numbered at build time */
     var hs = sectionHeadings();
     buildTOC(hs);
     buildMobileNav(hs);
+    findChapter();
     refCards();
     });
+
+  /* The spy's first answer, once the boot has built the lists it marks.
+     Registered after the boot handler, so it runs after it. A page opened at
+     a #fragment is a jump: the browser's scroll to it does not hide the
+     chrome. */
+  window.addEventListener('DOMContentLoaded', function () {
+    booted = true;
+    HR.y = window.pageYOffset || 0;
+    if (location.hash) jumping();
+    spyNow(true);
+  });
 
   return { Plot: Plot, figure: figure, redrawAll: redrawAll, css: css, color: color,
            typeset: typeset, onSnapshot: onSnapshot, resetForSnapshot: resetForSnapshot };

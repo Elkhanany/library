@@ -59,12 +59,11 @@ SHELL = """<!DOCTYPE html>
 </head>
 <body>
 <div class="wrap">
-<nav class="sidebar">
-  <a class="sb-home" href="contents.html">← All chapters</a>
-  <p class="sb-title">{sbhead}</p>
+<nav class="sidebar" aria-label="Chapter sections">
+{side}
   <div id="sb-toc">{toc}</div>
 </nav>
-<main class="main">
+<main class="main" id="text">
 <div class="col{wide}">
 {body}
 </div>
@@ -130,6 +129,31 @@ WORDCOUNT_JS = """() => {
                 return (d.textContent.match(/[A-Za-z0-9\u2019'-]+/g) || []).length; }"""
 
 
+# The sidebar's section list as the page left it, minus the spy's state: the
+# active entry depends on where the build's browser happened to be scrolled,
+# and no state class may be saved into a file (DESIGN.md section 8).
+TOC_JS = """() => {
+                const t = document.getElementById('sb-toc').cloneNode(true);
+                t.querySelectorAll('.active, [aria-current]').forEach(a => {
+                  a.classList.remove('active'); a.removeAttribute('aria-current');
+                  if (!a.className) a.removeAttribute('class'); });
+                return t.innerHTML; }"""
+
+
+def start_stats(bk):
+    """Where the book starts, for a front door's primary (DESIGN.md section 6,
+    Front matter): {{START_HREF}}, {{START_NUM}} and {{START_TITLE}}, from the
+    first written chapter. Facts are built, not typed: the label moves by itself
+    the day an earlier chapter is written. A book with nothing written starts
+    at its front door."""
+    w = bk.written()
+    if not w:
+        return {"START_HREF": "index.html", "START_NUM": "", "START_TITLE": ""}
+    num, slug, title = w[0][0], w[0][1], w[0][2]
+    return {"START_HREF": slug + ".html", "START_NUM": html.escape(str(num)),
+            "START_TITLE": html.escape(title)}
+
+
 def extra_pages(bk, stats):
     """Standalone pages a book declares for itself, beyond the built-in ones.
 
@@ -163,13 +187,13 @@ def landing_page(bk, stats):
     if not os.path.exists(tplf):
         library.write(os.path.join(bk.out, "index.html"),
             SHELL.format(mathcss=mathcss(bk), title="Contents", desc=html.escape(bk.tagline),
-                         sbhead="Parts", toc="", wide=" wide", extra="",
+                         side=bp.sidebar_head("contents"), toc="", wide=" wide", extra="",
                          book=html.escape(bk.title),
                          body=f'<p class="eyebrow">{html.escape(bk.eyebrow)}</p>'
                               f'<h1>{html.escape(bk.title)}</h1>'
                               f'<p class="subtitle">{html.escape(bk.tagline)}</p>'
                               f'<p>{bk.cfg.get("blurb", "")}</p>'
-                              f'<p><a href="contents.html">All chapters &rarr;</a></p>'))
+                              f'<p><a href="contents.html">Contents &rarr;</a></p>'))
         return 0
 
     tpl = library.read(tplf)
@@ -593,7 +617,7 @@ async def build_book(bk, browser):
     n = 0
     stats = {"words": 0, "eq": 0, "boxes": 0, "planned": len(bp.FLAT)}
 
-    async def render(src, title, desc, sbhead, wide, extra, dest,
+    async def render(src, title, desc, side, wide, extra, dest,
                      count_into_stats=False):
         pg = await browser.new_page(viewport={"width": 1280, "height": 1000})
         await pg.goto("file://" + src)
@@ -604,7 +628,7 @@ async def build_book(bk, browser):
         await pg.wait_for_timeout(60)
         body = await pg.evaluate("document.querySelector('.main .col').innerHTML")
         words = await pg.evaluate(WORDCOUNT_JS)
-        toc = await pg.evaluate("document.getElementById('sb-toc').innerHTML")
+        toc = await pg.evaluate(TOC_JS)
         await pg.close()
         body = body.replace('href="chapters/', 'href="')
         if count_into_stats:
@@ -612,7 +636,7 @@ async def build_book(bk, browser):
             stats["eq"] += len(re.findall(r'class="katex"', body))
             stats["boxes"] += len(re.findall(r'class="callout plain"', body))
         library.write(dest, SHELL.format(mathcss=mathcss(bk), title=title, desc=html.escape(desc),
-                                         sbhead=sbhead, toc=toc, body=body,
+                                         side=side, toc=toc, body=body,
                                          wide=wide, extra=extra,
                                          book=html.escape(bk.title)))
 
@@ -625,28 +649,31 @@ async def build_book(bk, browser):
         extra = "<script>\n" + m.group(1) + "\n</script>" if m else ""
         await render(src, f"{num} {title}",
                      f"Chapter {num} of {bk.title}: {title}.",
-                     f"Ch {num}", "", extra, os.path.join(out, slug + ".html"),
-                     count_into_stats=True)
+                     bp.sidebar_head("chapter", slug), "", extra,
+                     os.path.join(out, slug + ".html"), count_into_stats=True)
         n += 1
 
     # No contents page for a book with nothing written (NAV-04, FD-15): it was
     # a heading over planned titles, or over nothing at all, and nav_items()
-    # no longer offers it.
-    pages = ([("index", "contents", "Parts", f"Every chapter of {bk.title}.")]
+    # no longer offers it. One name per destination (NAV-09): the <title> and
+    # the sidebar say what the bar says. Only the contents page and the ledger,
+    # whose lines are short rows and tables, take the wide column; the
+    # Through-Line is continuous prose and keeps the reading measure.
+    pages = ([("index", "contents", "contents", " wide", f"Every chapter of {bk.title}.")]
              if bk.written() else [])
     if bk.has("ledger"):
-        pages.append(("ledger", "ledger", "Ledger",
+        pages.append(("ledger", "ledger", "ledger", " wide",
                       "Every mathematical object in the book: where it was defined, "
                       "what for, and where it is spent."))
     if bk.has("throughline"):
-        pages.append(("throughline", "throughline", "Through-Line",
+        pages.append(("throughline", "throughline", "throughline", "",
                       "The whole book in plain language, with no mathematics."))
-    for name, outname, sbhead, desc in pages:
+    for name, outname, page, wide, desc in pages:
         src = os.path.join(STAGE, name + ".html")
         if os.path.exists(src):
-            t = {"index": "Chapters", "ledger": "Math Ledger",
-                 "throughline": "In Plain Terms"}[name]
-            await render(src, t, desc, sbhead, " wide", "",
+            t = {"contents": "Contents", "ledger": "Math Ledger",
+                 "throughline": "In Plain Terms"}[page]
+            await render(src, t, desc, bp.sidebar_head(page), wide, "",
                          os.path.join(out, outname + ".html"))
 
     def human(x):
@@ -659,6 +686,7 @@ async def build_book(bk, browser):
     page_stats = {"CH": f"{n} / {stats['planned']}", "WORDS": human(stats["words"]),
                   "EQ": human(stats["eq"]), "BOXES": str(stats["boxes"]),
                   "PARTS": str(len(bp.PARTS))}
+    page_stats.update(start_stats(bk))
     extra_pages(bk, page_stats)
     landing_page(bk, page_stats)
     return n, stats
