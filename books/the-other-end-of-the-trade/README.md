@@ -43,37 +43,77 @@ prose.
 
 ## Where the import departs from the app
 
+How things are shown:
+
 - 8D writes `MA(|returns|)` inside a table cell, which the app's markdown reads as two cell
   breaks and renders as a torn row. Here a pipe inside parentheses is kept as text.
-- The EV bet builder's second preset was captioned "EV ≈ +$0.0125/toss" in the app; its own
-  numbers (25% at +$35, 75% at −$1) give +$8.00, as the prose says. The figure labels its
-  presets by name only.
-- The CNDR-versus-SPX figure draws the app's stand-in series, which the app's data file
-  describes as synthetic. The figure says so in its caption.
-- The position picker put a short call's breakeven at K − P and a short put's at K + P. A
-  short position breaks even where the long one does, K + P for a call and K − P for a put,
-  which is where its own payoff line crosses zero.
-- The IV rank widget's reading had "top-heavy" and "bottom-heavy" the wrong way round: a
-  history of low days with a few spikes (its own "spiky, bottom-heavy" preset) gives a
-  percentile above the rank, not below it. The figure names each shape correctly.
-- The multiple-timeframe widget read the higher timeframe's trend from the SMA five bars
-  back, but 350 bars make 14 higher-timeframe bars, which leave a 10-bar SMA only five
-  values, so the read was "—" on every seed. The figure reads four bars back.
-- The hedging friction widget kept each schedule's hedge and costs but left them out of the
-  P&L, so its four curves were one curve. The figure adds the delta the stale hedge leaves
-  open and the cost of each rebalance; hedging on every bar gives the app's curve.
-- The AR(1) explorer called |φ| ≥ 0.85 near-non-stationary on both sides, with "variance
-  scales faster than linearly". Its own paths narrow as φ goes toward −1, so the figure
-  reads that end as the strong mean reversion it draws.
-- The higher-order Greeks widget computed color as (−Γ/2T)(1 + d₁d₂/σ√T), which is negative
-  at every spot, while its own card and chapter 5D call color positive and large at the
-  money. The figure draws ∂Γ/∂t, (Γ/2T)(1 + d₁(2rT − d₂σ√T)/σ√T), checked against a
-  numerical derivative. Its heatmap, labelled strike × DTE, varies spot with the strike
-  fixed, and is labelled spot × DTE. Its notes put charm's peak at the money (the curve
-  peaks a short way either side of the strike) and volga's at 10–15 and 85–90 delta (about
-  8–12 and 92–95 across the sliders); the notes now say what the curves show.
 - Figures never move until the reader asks. The app's animations start from a button here,
   and honour reduced motion.
+- The Greek surface (5C), drawn with three.js in the app, is a wireframe the reader turns
+  with a view-angle and a tilt slider. Tables the app tinted cell by cell (the DTE matrix in
+  10K, the Mag 7 correlations in 10J) are drawn on a canvas, since a figure adds no CSS.
+- The CNDR-versus-SPX figure draws the app's stand-in series, which the app's data file
+  describes as synthetic. The figure says so in its caption.
+
+Where a widget contradicted its own maths or the prose, the figure follows the maths:
+
+- 1C, EV bet builder: the second preset was captioned "EV ≈ +$0.0125/toss"; its own
+  numbers (25% at +$35, 75% at −$1) give +$8.00, as the prose says. The presets are
+  labelled by name only.
+- 2B, AR(1) explorer: |φ| ≥ 0.85 was "near-non-stationary" on both sides, with "variance
+  scales faster than linearly". Its own paths narrow as φ goes toward −1, so the figure
+  reads that end as the strong mean reversion it draws.
+- 5A, position picker: a short call's breakeven was put at K − P and a short put's at
+  K + P. A short position breaks even where the long one does, where its payoff crosses zero.
+- 5C, Greek surface: the axis labelled strike varies spot, with the strike fixed at 100. It
+  is labelled spot.
+- 5D, higher-order Greeks: color was computed as (−Γ/2T)(1 + d₁d₂/σ√T), negative at every
+  spot, while the widget's card and the chapter call it positive and large at the money. The
+  figure draws ∂Γ/∂t, (Γ/2T)(1 + d₁(2rT − d₂σ√T)/σ√T), checked against a numerical
+  derivative. The heatmap labelled strike × DTE varies spot, and says so. The notes put
+  charm's peak at the money and volga's at 10–15 and 85–90 delta; the curves peak a short
+  way either side of the strike, and at about 8–12 and 92–95 delta.
+- 5F, pin risk: moving the strike could leave spot outside its own slider's range and off
+  the chart; spot now stays in range. "Pin probability" is the gauge 1 − 2|Δ − 0.5|, and
+  the caption says so.
+- 5G, IV rank against percentile: the reading had "top-heavy" and "bottom-heavy" the wrong
+  way round. A history of low days with a few spikes gives a percentile above the rank.
+- 6E, gamma hedge simulator: the heading gave a long option's P&L,
+  ½Γ·S²·[(dS/S)² − σ²·dt], for a dealer who is short; the caption gives the short sign.
+  Kept as the app has them: theta accrues a trading day per bar while time to expiry falls a
+  calendar day, and the calls expire at bar 30 of 50, which the caption says.
+- 6E, dollar-gamma units: the sanity check named fixed parameters but printed the live
+  value; the caption gives the fixed $46.2k. At zero gamma the short-call convention read
+  "long γ" (−0 ≥ 0); the label now comes from the convention.
+- 7A, hedging friction: each schedule's hedge and costs were kept but left out of the P&L,
+  so the four curves were one. The figure adds the delta the stale hedge leaves open and the
+  cost of each rebalance; hedging on every bar gives the app's curve.
+- 8B, effective vol: the variable in σ/(1 − κ·G) was labelled GEX, but it is the prose's
+  G, the negation of published GEX, and is labelled so. "Trigger stress (GEX flips + to −)"
+  moved it the wrong way, from +0.6 to −0.6, and damped the vol it meant to amplify; it now
+  runs G from −0.6 to +0.6. "Damped" covered up to 1.67× amplification; the middle band is
+  split at zero. The marker for the current G never drew, and now does.
+- 9A, vanna feedback loop: short puts are long delta, so the opening hedge is short stock,
+  not "long ~410 shares"; the dealer's delta shift reads longer, as step 3 says; step 4
+  sells the readout's 11,000 shares, not 110; the diagram lights each station when the
+  step reaches it, not one step early.
+- 9A, VIX strip builder: kept as the app computes it. The smile moves with the forward, so
+  the SPX shock barely moves the index (18.507, 18.505, 18.503), and the caption says so.
+- 9B, gamma by DTE: the note put the 4-hour peak at "roughly 8.5×" the 30-day one; the
+  maths gives 13.5× (the chapter's table, 13.4×). The slider labelled log scale was linear,
+  and is now logarithmic.
+- 10E, multiple timeframes: the higher timeframe's trend was read from the SMA five bars
+  back, but 350 bars make 14 higher-timeframe bars, which leave a 10-bar SMA five values,
+  so the read was "—" on every seed. The figure reads four bars back.
+- 10F, composite scorecard: the composite was shown rounded beside a bucket chosen on the
+  unrounded value, so 9.6 read "+10 Neutral". It is shown to one decimal, cut toward zero.
+- 10H, pre-earnings IV ramp: the verdict said the binary outcome went against whenever
+  exiting beat holding, including when the move was up; each clause now appears only when
+  true, and a gap under $0.50 reads as similar outcomes.
+- 10J and 10K keep the app's data where it differs from the prose: the calm correlations
+  run 0.35–0.70 against the text's 0.5–0.8, and the DTE buckets start LEAPS at 180 days
+  against the text's 365. The DTE matrix's caption says so, and the Mag 7 caption calls
+  both of its matrices illustrative.
 
 ## Noticed in the prose, left as written
 
@@ -86,6 +126,14 @@ The prose is imported word for word, so these stay until they are changed in the
 - 7B, after the higher-order Greeks figure: "Gamma peaks sharply at-the-money. Crank the
   days-to-expiry slider down and watch the peak grow". That figure, like the app's widget,
   draws vanna, charm, volga, speed and color, not gamma.
+- 8A: dealers "net short calls (from buying retail calls)". Buying calls from retail would
+  make the dealers long them.
+- 9A, after the VIX strip builder: "a 1% downside move in SPX re-prices the put wing far more
+  than a 1% upside move re-prices the call wing". The widget moves its whole smile with the
+  forward, so it cannot show this; its shock barely moves the index either way.
+- 9A, after the vanna feedback loop: "Initial delta-hedge: long approximately 410 shares".
+  A dealer short puts is long delta and hedges by shorting stock, and 1,000 contracts of
+  100 make the hedge tens of thousands of shares. The figure above it says short stock.
 
 ## Changing the book
 
