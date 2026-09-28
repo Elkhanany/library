@@ -1,0 +1,184 @@
+<!--
+name: CNDR against SPX
+source: src/interactives/CNDRvsSPXHistorical.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl"><input type="checkbox" id="{{uid}}-tr" checked><label for="{{uid}}-tr">SPX total return</label></div>
+    <div class="ctrl"><input type="checkbox" id="{{uid}}-pr"><label for="{{uid}}-pr">SPX price return</label></div>
+    <div class="ctrl"><input type="checkbox" id="{{uid}}-ev" checked><label for="{{uid}}-ev">event markers</label></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-cndr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-trc"></output></div>
+    <div class="ctrl"><output id="{{uid}}-prc"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+  </div>
+  <figcaption><b>The iron condor index against the index it is written on.</b> CNDR, a systematic
+  SPX iron condor index, against the S&amp;P 500's total return and price return, each indexed
+  to 100 at the end of June 1986 and drawn on a log scale. These three series are synthetic,
+  illustrative stand-ins shaped like the published record, not market data. Tick a series or
+  the event markers to show or hide them; the readouts give each series' compound annual growth
+  over the 38.5 years and the total-return index's multiple of CNDR at the end of
+  2024.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  /* the app's src/refdata/cndr-spx-history.json, "synthetic-stub-v1":
+     date, CNDR, SPX total return, SPX price return, indexed to 100 */
+  var DATA = [
+    ['1986-06-30', 100.0, 100.0, 100.0],
+    ['1987-06-30', 108.5, 130.1, 124.8],
+    ['1987-12-31', 78.4, 107.4, 101.7],
+    ['1988-12-31', 92.6, 125.1, 116.4],
+    ['1989-12-31', 104.3, 164.7, 151.3],
+    ['1990-12-31', 102.0, 159.6, 145.5],
+    ['1991-12-31', 116.8, 208.2, 188.0],
+    ['1992-12-31', 124.2, 224.0, 200.0],
+    ['1993-12-31', 130.5, 246.3, 218.0],
+    ['1994-12-31', 128.7, 249.4, 218.0],
+    ['1995-12-31', 142.6, 342.9, 297.8],
+    ['1996-12-31', 152.3, 421.6, 363.0],
+    ['1997-12-31', 162.7, 562.2, 477.5],
+    ['1998-08-31', 144.1, 547.0, 458.0],
+    ['1998-12-31', 158.8, 722.7, 605.5],
+    ['1999-12-31', 166.4, 874.4, 726.6],
+    ['2000-12-31', 162.0, 794.7, 654.4],
+    ['2001-12-31', 156.5, 700.4, 568.4],
+    ['2002-12-31', 142.3, 545.7, 437.5],
+    ['2003-12-31', 162.9, 702.2, 558.1],
+    ['2004-12-31', 175.4, 778.5, 614.5],
+    ['2005-12-31', 184.2, 816.6, 638.4],
+    ['2006-12-31', 198.1, 945.5, 731.7],
+    ['2007-12-31', 208.9, 997.5, 763.1],
+    ['2008-09-30', 184.5, 859.4, 651.4],
+    ['2008-10-31', 132.6, 711.2, 533.6],
+    ['2008-12-31', 131.4, 628.4, 466.3],
+    ['2009-12-31', 158.8, 795.0, 581.4],
+    ['2010-12-31', 172.9, 914.7, 656.7],
+    ['2011-12-31', 174.6, 934.0, 656.7],
+    ['2012-12-31', 195.4, 1083.1, 754.2],
+    ['2013-12-31', 226.1, 1434.3, 990.4],
+    ['2014-12-31', 240.5, 1629.7, 1115.2],
+    ['2015-12-31', 244.6, 1651.6, 1112.4],
+    ['2016-12-31', 263.7, 1849.1, 1232.4],
+    ['2017-12-31', 287.4, 2252.4, 1486.3],
+    ['2018-02-05', 240.2, 2167.4, 1432.6],
+    ['2018-12-31', 268.8, 2152.5, 1396.8],
+    ['2019-12-31', 298.6, 2825.7, 1813.4],
+    ['2020-03-23', 234.1, 2113.4, 1348.7],
+    ['2020-12-31', 286.3, 3343.0, 2113.6],
+    ['2021-12-31', 314.8, 4302.8, 2696.1],
+    ['2022-12-31', 300.1, 3520.4, 2174.5],
+    ['2023-12-31', 348.7, 4447.2, 2719.6],
+    ['2024-12-31', 392.5, 5556.7, 3367.3]
+  ];
+  var EVENTS = [
+    ['1987-12-31', 'Black Monday'],
+    ['2008-10-31', 'GFC'],
+    ['2018-02-05', 'Volmageddon'],
+    ['2020-03-23', 'COVID crash']
+  ];
+
+  /* days since 1970-01-01 for a yyyy-mm-dd date (civil calendar), so the
+     figure reads its dates without a Date object */
+  function days(s) {
+    var y = +s.slice(0, 4), m = +s.slice(5, 7), d = +s.slice(8, 10);
+    y -= m <= 2 ? 1 : 0;
+    var era = Math.floor(y / 400), yoe = y - era * 400;
+    var doy = Math.floor((153 * (m + (m > 2 ? -3 : 9)) + 2) / 5) + d - 1;
+    return era * 146097 + yoe * 365 + Math.floor(yoe / 4) - Math.floor(yoe / 100) + doy - 719468;
+  }
+  function year(s) { return 1970 + days(s) / 365.2425; }
+
+  /* the app's readouts: compound annual growth over the span, in years of
+     365.25 days, and the total-return index over CNDR at the end */
+  var first = DATA[0], last = DATA[DATA.length - 1];
+  var span = (days(last[0]) - days(first[0])) / 365.25;
+  function cagr(k) { return Math.pow(last[k] / first[k], 1 / span) - 1; }
+  DL.out(U + '-cndr', 'CNDR CAGR = ' + (cagr(1) * 100).toFixed(2) + '%');
+  DL.out(U + '-trc', 'SPX TR CAGR = ' + (cagr(2) * 100).toFixed(2) + '%');
+  DL.out(U + '-prc', 'SPX PR CAGR = ' + (cagr(3) * 100).toFixed(2) + '%');
+  DL.out(U + '-gap', 'TR / CNDR ratio = ' + (last[2] / last[1]).toFixed(2) + '×');
+
+  var xs = DATA.map(function (r) { return year(r[0]); });
+  var LOG = Math.log10;
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var showTR = DL.checked(U + '-tr'), showPR = DL.checked(U + '-pr'),
+        showEv = DL.checked(U + '-ev');
+    var series = [{ k: 1, label: 'CNDR', color: DL.color('plain'), width: 1.8 }];
+    if (showTR) series.push({ k: 2, label: 'SPX TR', color: DL.color('insight'), width: 1.8 });
+    if (showPR) series.push({ k: 3, label: 'SPX PR', color: DL.color('insight'), width: 1.4,
+                              dash: [4, 3] });
+    /* the app's y axis: log scale from 80 up to the tallest series shown */
+    var top = 0;
+    series.forEach(function (s) { DATA.forEach(function (r) { top = Math.max(top, r[s.k]); }); });
+    var ymin = LOG(80), ymax = LOG(top * 1.08);
+    var xmin = xs[0] - 0.5, xmax = xs[xs.length - 1] + 0.5;
+    var font = '11px ' + DL.color('sans');
+
+    /* event labels in rows above the plot, each as near its line as the
+       labels already placed allow */
+    var pad = { l: 46, r: 12, t: 12, b: 24 }, placed = [], rows = 0;
+    if (showEv) {
+      var probe = new NMT.Plot(c, { xmin: xmin, xmax: xmax, ymin: ymin, ymax: ymax, pad: pad });
+      probe.g.font = font;
+      var used = [];
+      EVENTS.forEach(function (e) {
+        var px = probe.X(year(e[0])), w = probe.g.measureText(e[1]).width;
+        var x0 = Math.min(Math.max(px - w / 2, 2), probe.w - w - 2);
+        for (var r = 0; ; r++) {
+          used[r] = used[r] || [];
+          var free = used[r].every(function (s) { return x0 + w + 8 <= s[0] || x0 >= s[1] + 8; });
+          if (free) { used[r].push([x0, x0 + w]); placed.push({ e: e, x0: x0, w: w, row: r }); break; }
+        }
+      });
+      rows = used.length;
+      pad = { l: 46, r: 12, t: 8 + rows * 14, b: 24 };
+    }
+    var p = new NMT.Plot(c, { xmin: xmin, xmax: xmax, ymin: ymin, ymax: ymax, pad: pad });
+    var span10 = ymax - ymin, mult = span10 < 1.2 ? [1, 2, 3, 4, 5, 7] : [1, 2, 5], ys = [];
+    for (var dec = 1; dec <= 5; dec++) {
+      mult.forEach(function (m) {
+        var v = LOG(m * Math.pow(10, dec));
+        if (v >= ymin && v <= ymax) ys.push(v);
+      });
+    }
+    var ticksX = p.w < 520 ? [1990, 2000, 2010, 2020] : [1990, 1995, 2000, 2005, 2010, 2015, 2020];
+    DL.axes(p, { xs: ticksX, ys: ys, yAxis: true, yAt: xmin,
+                 x: function (v) { return String(v); },
+                 y: function (v) { return DL.num(Math.pow(10, v), 0); } });
+
+    if (showEv) {
+      var warn = DL.color('warn');
+      placed.forEach(function (q) {
+        var x = year(q.e[0]), ly = 8 + q.row * 14 + 11;
+        p.g.save();
+        p.g.strokeStyle = DL.fade(warn, 0.75); p.g.lineWidth = 1; p.g.setLineDash([3, 3]);
+        p.g.beginPath(); p.g.moveTo(p.X(x) + 0.5, p.Y(ymin)); p.g.lineTo(p.X(x) + 0.5, ly + 2); p.g.stroke();
+        p.g.restore();
+        p.g.font = font;
+        p.g.fillStyle = DL.color('paper');
+        p.g.fillRect(q.x0 - 2, ly - 11, q.w + 4, 13);
+        p.text(xmin, ymax, q.e[1], { dx: q.x0 - p.X(xmin), dy: ly - p.Y(ymax), font: font,
+                                     baseline: 'alphabetic', color: warn });
+      });
+    }
+    series.forEach(function (s) {
+      DL.line(p, xs, DATA.map(function (r) { return LOG(r[s.k]); }),
+              { color: s.color, width: s.width, dash: s.dash });
+    });
+    /* the key, on a patch of paper so the event lines pass behind it */
+    p.g.font = font;
+    var kw = series.reduce(function (a, s) { return a + 33 + p.g.measureText(s.label).width; }, 0);
+    p.g.fillStyle = DL.color('paper');
+    p.g.fillRect(pad.l + 6, pad.t + 4, kw - 6, 16);
+    DL.legend(p, series.map(function (s) {
+      return { label: s.label, color: s.color, dash: s.dash }; }));
+  });
+  DL.bind([U + '-tr', U + '-pr', U + '-ev'], draw);
+})();
+</script>

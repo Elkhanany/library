@@ -81,7 +81,8 @@ source: src/interactives/PreEarningsIVRamp.jsx
     var p = new NMT.Plot(c, { xmin: -s.n, xmax: 1, ymin: ymin, ymax: ymax,
                               pad: { l: 44, r: 16, t: 20, b: 24 } });
     var unit = p.X(1) - p.X(0), xs = [];
-    for (var d = 1; d >= -s.n; d--) if (unit >= 30 || d >= 0 || (1 - d) % 2 === 0) xs.push(d);
+    /* every day when there is room, else every other day back from T+1 */
+    for (var d = 1; d >= -s.n; d--) if (unit >= 30 || (1 - d) % 2 === 0) xs.push(d);
     DL.axes(p, { xs: xs.reverse(), ny: 4, x: tick, y: yfmt, yAt: -s.n });
     p.text(-s.n, ymax, title, { dy: -6, color: DL.color('ink-soft'), font: '600 11px ' + DL.color('sans') });
     return p;
@@ -135,8 +136,8 @@ source: src/interactives/PreEarningsIVRamp.jsx
     /* the app's verdict on the stock, each clause said only when it is true */
     var vk, vt;
     if (shown === 0) {
-      vk = 'A draw.';
-      vt = 'Exit-T-1 and hold-through produced similar outcomes on this single scenario.';
+      vk = 'Exit-T-1 and hold-through produced similar outcomes on this single scenario.';
+      vt = '';
     } else if (delta > 0) {
       vk = 'Exit-T-1 discipline outperformed by ' + DL.usd(shown, 0) + ' on stock.';
       vt = s.move < 0
