@@ -173,5 +173,6 @@ python3 tools/spx.py --verify
 ```
 
 A new `##` subsection has to be given a chapter in `outline.json`; the tool fails on one that
-belongs to none. A new widget needs a figure in `figures/`: copy the shape of an existing one,
+belongs to none. `tools/stylecheck.py` reports on this book but never writes to it, even with
+`--fix`: its style findings are in the app's prose, and belong there. A new widget needs a figure in `figures/`: copy the shape of an existing one,
 keep the rules in `FIGURES.md`, and try it with `python3 tools/spxfig.py <id>`.
