@@ -65,8 +65,27 @@ prose.
 - The AR(1) explorer called |φ| ≥ 0.85 near-non-stationary on both sides, with "variance
   scales faster than linearly". Its own paths narrow as φ goes toward −1, so the figure
   reads that end as the strong mean reversion it draws.
+- The higher-order Greeks widget computed color as (−Γ/2T)(1 + d₁d₂/σ√T), which is negative
+  at every spot, while its own card and chapter 5D call color positive and large at the
+  money. The figure draws ∂Γ/∂t, (Γ/2T)(1 + d₁(2rT − d₂σ√T)/σ√T), checked against a
+  numerical derivative. Its heatmap, labelled strike × DTE, varies spot with the strike
+  fixed, and is labelled spot × DTE. Its notes put charm's peak at the money (the curve
+  peaks a short way either side of the strike) and volga's at 10–15 and 85–90 delta (about
+  8–12 and 92–95 across the sliders); the notes now say what the curves show.
 - Figures never move until the reader asks. The app's animations start from a button here,
   and honour reduced motion.
+
+## Noticed in the prose, left as written
+
+The prose is imported word for word, so these stay until they are changed in the app.
+
+- 2B asks the reader to "watch the simulated paths fan out as you push the weight toward
+  ±1". They fan out toward +1 and draw in toward −1.
+- 5D: "With K < S, d₁ and d₂ are typically negative". With the strike below spot both are
+  positive; the conclusion, negative vanna, holds because d₂ > 0.
+- 7B, after the higher-order Greeks figure: "Gamma peaks sharply at-the-money. Crank the
+  days-to-expiry slider down and watch the peak grow". That figure, like the app's widget,
+  draws vanna, charm, volga, speed and color, not gamma.
 
 ## Changing the book
 
