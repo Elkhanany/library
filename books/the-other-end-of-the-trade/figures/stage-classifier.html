@@ -96,15 +96,17 @@ source: src/interactives/StageClassifier.jsx
                               pad: { l: 40, r: 12, t: 8 + rows * 16, b: 24 } });
     DL.axes(p, { nx: 7, ny: 5 });
 
-    /* background: one band per classified bar */
-    var g = p.g, top = p.Y(hi), h = p.Y(lo) - top, bw = p.X(1) - p.X(0), fills = {};
+    /* background: each bar is the stage it was classified as, painted as one
+       band per run of bars in the same stage so translucent bands never overlap */
+    var g = p.g, top = p.Y(hi), h = p.Y(lo) - top, fills = {};
     [1, 2, 3, 4].forEach(function (k) { fills[k] = DL.fade(DL.color(STAGES[k].role), 0.16); });
     DL.clip(p);
-    stages.forEach(function (s, i) {
-      if (!s) return;
-      g.fillStyle = fills[s];
-      g.fillRect(p.X(i), top, bw + 0.5, h);
-    });
+    for (var i = 0, j; i < stages.length; i = j) {
+      for (j = i + 1; j < stages.length && stages[j] === stages[i]; j++);
+      if (!stages[i]) continue;
+      g.fillStyle = fills[stages[i]];
+      g.fillRect(Math.round(p.X(i)), top, Math.round(p.X(j)) - Math.round(p.X(i)), h);
+    }
     g.restore();
 
     DL.line(p, xs, sma, { color: DL.fade(DL.color('accent'), 0.75), width: 1.4 });

@@ -564,7 +564,7 @@ var DL = (function () {
     var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
     g.save();
     g.font = '11px ' + color('sans');
-    g.textBaseline = 'middle';
+    g.textAlign = 'left'; g.textBaseline = 'middle';
     items.forEach(function (it) {
       g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
       if (it.box) g.fillRect(x, y - 4, 12, 8);
