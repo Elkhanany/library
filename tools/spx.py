@@ -357,6 +357,7 @@ class Chapter:
         self.m, self.figs, self.gloss, self.c = m, figs, gloss, c
         self.errs, self.ids, self.scripts = [], {}, []
         self.fig_uses, self.ideas, self.math, self.eqs, self.eqrefs = {}, [], [], [], []
+        self.written = True
         # every display in page order, by its label or None: book.js numbers them all
         self.displays = []
         self.h2 = 0
@@ -841,7 +842,9 @@ def questions_file(m):
 def number_xeqs(m, figs, gloss, out, chapters, draft):
     """Give each [eq:<slug>/<label>] the number its display has on its own page,
     rendering any chapter this pass did not."""
-    errs, cache = [], dict(chapters)
+    errs = []
+    # a chapter this pass rendered as a stub (--draft, --preview) is numbered from its text
+    cache = {k: ch for k, ch in chapters.items() if ch.written}
 
     def target(slug):
         if slug not in cache:
@@ -850,6 +853,7 @@ def number_xeqs(m, figs, gloss, out, chapters, draft):
             if c is not None and m.written(c):
                 ch = Chapter(m, figs, gloss, c)
                 ch.render(library.read(m.path(c)))
+                ch.written = True
             cache[slug] = ch
         return cache[slug]
 
@@ -889,6 +893,7 @@ def generate(m, draft=False, only=None, preview=None):
                 errs.append("%s: chapters/%s.md is not written" % (c["num"], c["slug"]))
             continue
         ch = Chapter(m, figs, gloss, c)
+        ch.written = text is not None
         if c["slug"] == "r1":
             intro = ch.blocks(text.split("\n")) if text else ""
             html = ch.render("")

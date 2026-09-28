@@ -76,7 +76,8 @@ def markdown_prose(text):
     not sentences, and a list item is measured as its own sentence."""
     text = re.sub(r"```.*?```", " ", text, flags=re.S)
     text = re.sub(r"\\\[.*?\\\]", " ", text, flags=re.S)
-    text = re.sub(r"\\\((.+?)\\\)", "x", text, flags=re.S)
+    # a capital, so that a sentence opening with maths is split from the one before it
+    text = re.sub(r"\\\((.+?)\\\)", "X", text, flags=re.S)
     out = []
     for para in re.split(r"\n\s*\n", text):
         lines = [l for l in para.split("\n")
