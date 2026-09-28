@@ -50,6 +50,21 @@ prose.
   presets by name only.
 - The CNDR-versus-SPX figure draws the app's stand-in series, which the app's data file
   describes as synthetic. The figure says so in its caption.
+- The position picker put a short call's breakeven at K − P and a short put's at K + P. A
+  short position breaks even where the long one does, K + P for a call and K − P for a put,
+  which is where its own payoff line crosses zero.
+- The IV rank widget's reading had "top-heavy" and "bottom-heavy" the wrong way round: a
+  history of low days with a few spikes (its own "spiky, bottom-heavy" preset) gives a
+  percentile above the rank, not below it. The figure names each shape correctly.
+- The multiple-timeframe widget read the higher timeframe's trend from the SMA five bars
+  back, but 350 bars make 14 higher-timeframe bars, which leave a 10-bar SMA only five
+  values, so the read was "—" on every seed. The figure reads four bars back.
+- The hedging friction widget kept each schedule's hedge and costs but left them out of the
+  P&L, so its four curves were one curve. The figure adds the delta the stale hedge leaves
+  open and the cost of each rebalance; hedging on every bar gives the app's curve.
+- The AR(1) explorer called |φ| ≥ 0.85 near-non-stationary on both sides, with "variance
+  scales faster than linearly". Its own paths narrow as φ goes toward −1, so the figure
+  reads that end as the strong mean reversion it draws.
 - Figures never move until the reader asks. The app's animations start from a button here,
   and honour reduced motion.
 

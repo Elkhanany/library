@@ -1,0 +1,67 @@
+<!--
+name: IV move converter
+source: src/interactives/IVMoveConverter.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="140"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-iv">annual IV (e.g. VIX)</label>
+      <input type="range" id="{{uid}}-iv" min="5" max="100" step="1" value="20">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-day"></output></div>
+    <div class="ctrl"><output id="{{uid}}-week"></output></div>
+    <div class="ctrl"><output id="{{uid}}-month"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Annual implied vol, read as the moves it prices.</b> Set an annualized
+  implied volatility such as the VIX; the bars are the one-sigma moves it implies over one day
+  (IV / 16, the rule of 16), one week (IV / √52) and one month (IV / √12). The moves grow
+  with the square root of time: a month of 21 trading days moves about 4.6 times as far as a
+  day, not 21 times. At 16 the daily move is exactly 1%.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IV = DL.$(U + '-iv');
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var vol = parseFloat(IV.value);
+    /* the app's three conversions: the rule of 16 for a day, square-root-of-time
+       scaling for a week and a month */
+    var day = vol / 16, week = vol / Math.sqrt(52), month = vol / Math.sqrt(12);
+    var verdict = vol === 16 ? 'Exact parity at VIX 16.'
+                : vol > 16 ? 'Above rule-of-16 baseline.' : 'Below rule-of-16 baseline.';
+
+    /* a fixed scale, so the bars grow as the vol does: 100% annual is 28.9% a month */
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 30, ymin: 0, ymax: 3,
+                              pad: { l: 62, r: 50, t: 6, b: 26 } });
+    DL.axes(p, { xs: [0, 5, 10, 15, 20, 25, 30], ys: [], y: false,
+                 x: function (v) { return v + '%'; } });
+    var rows = [
+      { y: 2.5, v: day, label: '1 day', col: DL.color('accent'), a: 0.75 },
+      { y: 1.5, v: week, label: '1 week', col: DL.color('familiar'), a: 0.75 },
+      { y: 0.5, v: month, label: '1 month', col: DL.color('familiar'), a: 0.5 }
+    ];
+    rows.forEach(function (r) {
+      DL.hbars(p, [r.y], [r.v], { h: 0.56, color: DL.fade(r.col, r.a) });
+      p.text(0, r.y, r.label, { dx: -8, align: 'right', baseline: 'middle',
+                                color: DL.color('ink-soft'), font: '11px ' + DL.color('sans') });
+      p.text(r.v, r.y, DL.num(r.v, 2) + '%', { dx: 6, baseline: 'middle', color: r.col,
+                                               font: '11px ' + DL.color('sans') });
+    });
+
+    DL.out(U + '-iv-o', vol.toFixed(0) + '%');
+    DL.out(U + '-day', '1-day move (1σ) = ' + DL.num(day, 2) + '%');
+    DL.out(U + '-week', '1-week move (1σ) = ' + DL.num(week, 2) + '%');
+    DL.out(U + '-month', '1-month move (1σ) = ' + DL.num(month, 2) + '%');
+    DL.out(U + '-vk', verdict);
+    DL.out(U + '-vt', 'With σ_annual = ' + vol.toFixed(0) + '%, the rule of 16 estimates the ' +
+           'daily move at ' + vol.toFixed(0) + ' / 16 = ' + DL.num(day, 2) + '%.');
+  });
+  DL.bind([U + '-iv'], draw);
+})();
+</script>

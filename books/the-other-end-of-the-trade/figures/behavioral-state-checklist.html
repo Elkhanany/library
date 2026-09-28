@@ -1,0 +1,100 @@
+<!--
+name: behavioral state checklist
+source: src/interactives/BehavioralStateChecklist.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Factor and scoring guide</th><th>Score sᵢ</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial"><label for="{{uid}}-sleep">Sleep last night</label>
+        <span class="ev-meta">≥7 hrs = 1.0; 6h = 0.7; &lt;5h = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-sleep" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-sleep-o" for="{{uid}}-sleep"></output></div></td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial"><label for="{{uid}}-lossWindow">Days since last loss</label>
+        <span class="ev-meta">&gt;3 = 1.0; 1-3 = 0.6; same day = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-lossWindow" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-lossWindow-o" for="{{uid}}-lossWindow"></output></div></td></tr>
+      <tr id="{{uid}}-r2"><td class="c-trial"><label for="{{uid}}-winStreak">Recent winning streak</label>
+        <span class="ev-meta">none = 1.0; 3-5 wins = 0.7; &gt;5 = 0.5</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-winStreak" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-winStreak-o" for="{{uid}}-winStreak"></output></div></td></tr>
+      <tr id="{{uid}}-r3"><td class="c-trial"><label for="{{uid}}-preCommit">Plan written in advance?</label>
+        <span class="ev-meta">yes-clean = 1.0; rough notes = 0.6; in head = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-preCommit" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-preCommit-o" for="{{uid}}-preCommit"></output></div></td></tr>
+      <tr id="{{uid}}-r4"><td class="c-trial"><label for="{{uid}}-fomo">FOMO signal</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-fomo" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-fomo-o" for="{{uid}}-fomo"></output></div></td></tr>
+      <tr id="{{uid}}-r5"><td class="c-trial"><label for="{{uid}}-screen">Screen time today</label>
+        <span class="ev-meta">under 2h = 1.0; 2-4h = 0.7; over 4h = 0.4</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-screen" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-screen-o" for="{{uid}}-screen"></output></div></td></tr>
+      <tr id="{{uid}}-r6"><td class="c-trial"><label for="{{uid}}-external">External stress</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-external" min="0.1" max="1" step="0.05" value="1">
+        <output id="{{uid}}-external-o" for="{{uid}}-external"></output></div></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-prod"></output></div>
+    <div class="ctrl"><output id="{{uid}}-avg"></output></div>
+    <div class="ctrl"><output id="{{uid}}-bind"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One bad factor sets the whole score.</b> Score each of seven behavioral
+  factors from 0.1 to 1.0 by the guide under its name; the readiness score is their product,
+  S = ∏ sᵢ, and trades taken with a low S are systematically worse. S of 0.5 or more is green,
+  0.20 or more yellow, and anything lower red. Because the form is multiplicative, one factor
+  at 0.2 (poor sleep, or a fresh loss) holds S at 0.2 or less whatever the other six say: the
+  highlighted row is that binding factor, as in the conviction score of Section 12B.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  /* the app's seven factors, in its order, with the name its readout prints */
+  var ITEMS = [
+    { key: 'sleep', label: 'sleep last night' },
+    { key: 'lossWindow', label: 'days since last loss' },
+    { key: 'winStreak', label: 'recent winning streak' },
+    { key: 'preCommit', label: 'plan written in advance?' },
+    { key: 'fomo', label: 'FOMO signal' },
+    { key: 'screen', label: 'screen time today' },
+    { key: 'external', label: 'external stress' }
+  ];
+
+  function update() {
+    var vals = ITEMS.map(function (it) { return DL.val(U + '-' + it.key); });
+    var product = vals.reduce(function (a, b) { return a * b; }, 1);
+    var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    /* the binding factor: the first strictly below 1 with the lowest score */
+    var bind = -1, low = 1;
+    vals.forEach(function (v, i) { if (v < low) { low = v; bind = i; } });
+
+    var verdict;
+    if (product >= 0.5) {
+      verdict = ['GREEN.', 'Behavioral state supports normal sizing. Trade your plan.'];
+    } else if (product >= 0.20) {
+      verdict = ['YELLOW.', 'Behavioral state is degraded. Reduce size by 30-50% or skip new ' +
+                 'entries; manage existing only.'];
+    } else {
+      verdict = ['RED.', 'State is compromised. No new positions. Reduce existing exposure if ' +
+                 'possible. The cost of trading in this state typically exceeds the cost of ' +
+                 'missing today.'];
+    }
+
+    ITEMS.forEach(function (it, i) {
+      DL.out(U + '-' + it.key + '-o', vals[i].toFixed(2));
+      var row = DL.$(U + '-r' + i), on = i === bind;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+    DL.out(U + '-prod', 'product score S = ' + product.toFixed(3));
+    DL.out(U + '-avg', 'average factor = ' + avg.toFixed(3));
+    DL.out(U + '-bind', 'binding = ' + (bind < 0 ? '—' : ITEMS[bind].label));
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind(ITEMS.map(function (it) { return U + '-' + it.key; }), update);
+  DL.figure('fig-' + U, update);
+})();
+</script>
