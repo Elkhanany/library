@@ -80,9 +80,12 @@ def page(ids, draft=False):
         for m in re.finditer(r'<label for="([^"]+)"', markup):
             if 'id="%s"' % m.group(1) not in markup:
                 errs.append("%s: <label for=\"%s\"> names no element" % (fid, m.group(1)))
-        for m in re.finditer(r'<input\b[^>]*\bid="([^"]+)"', markup):
-            if 'for="%s"' % m.group(1) not in markup and "aria-label" not in m.group(0):
-                errs.append("%s: input #%s has no <label for> and no aria-label" % (fid, m.group(1)))
+        for m in re.finditer(r"<(input|select|textarea)\b[^>]*>", markup):
+            tag, idm = m.group(0), re.search(r'\bid="([^"]+)"', m.group(0))
+            if "aria-label" in tag or (idm and 'for="%s"' % idm.group(1) in markup):
+                continue
+            errs.append("%s: %s %s has no <label for> and no aria-label"
+                        % (fid, m.group(1), "#" + idm.group(1) if idm else "without an id"))
         for m in re.finditer(r"<button\b[^>]*>", markup):
             if 'type="button"' not in m.group(0):
                 errs.append("%s: a button without type=\"button\"" % fid)

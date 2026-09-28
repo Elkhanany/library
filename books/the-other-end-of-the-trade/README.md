@@ -52,8 +52,9 @@ How things are shown:
 - The Greek surface (5C), drawn with three.js in the app, is a wireframe the reader turns
   with a view-angle and a tilt slider. Tables the app tinted cell by cell (the DTE matrix in
   10K, the Mag 7 correlations in 10J) are drawn on a canvas, since a figure adds no CSS.
-- The CNDR-versus-SPX figure draws the app's stand-in series, which the app's data file
-  describes as synthetic. The figure says so in its caption.
+- The CNDR-versus-SPX figure (11.2) draws the app's stand-in series, which the app's data
+  file describes as synthetic, and says so in its caption. Its dates sit on a time axis;
+  the app spaced its points evenly whatever their dates.
 
 Where a widget contradicted its own maths or the prose, the figure follows the maths:
 
@@ -114,6 +115,26 @@ Where a widget contradicted its own maths or the prose, the figure follows the m
   run 0.35–0.70 against the text's 0.5–0.8, and the DTE buckets start LEAPS at 180 days
   against the text's 365. The DTE matrix's caption says so, and the Mag 7 caption calls
   both of its matrices illustrative.
+- 11.0, strategy selection tree: kept word for word, including where its rules differ from
+  the chapter's matrix. The time-horizon answer feeds no rule, which the caption says;
+  bearish, rich IV and a negative catalyst give the trend list, not the matrix's diagonal
+  put spread and bear call spread; bullish, cheap IV and a positive catalyst leave out the
+  call debit spread.
+- 12A, retail haircut: the verdict tested the Sharpe ratio against 0.5 while naming the
+  "~0.40" buy-and-hold baseline, so 0.462 was called below 0.40; it tests against 0.40.
+  Total drag read "NaN%" at a paper Sharpe of 0; it is computed as 1 − h₁h₂h₃h₄.
+- 12C, position-size clarifier: dragging the entry below the stop kept the old stop, which
+  floored the stop distance at $0.01 and sized thousands of contracts; the stop now moves
+  with the entry. At a size of zero the risk ratio reads "—".
+- 12C, position-size calculator: "notional at stop" was the planned risk × 50, a notional
+  only when the stop is 2% from the price, and is labelled "notional at a 2% stop".
+- 12C, behavioural checklist: the note's example of a factor at 0.2 was poor sleep, which
+  its own rubric scores 0.3 at under five hours; the caption uses a same-day loss.
+- 12F, vega monitor: the flat, half and full hedge buttons set the target vega to none,
+  half or all of the book's, so "full hedge" always bought nothing. They are labelled
+  target vega: flat, half, full. "Other" used a beta of 1.00 no reader could set, not the
+  table's 0.50; the overlay said buy even when the target called for selling; the DTE
+  input fed no computation and is gone.
 
 ## Noticed in the prose, left as written
 
@@ -134,6 +155,12 @@ The prose is imported word for word, so these stay until they are changed in the
 - 9A, after the vanna feedback loop: "Initial delta-hedge: long approximately 410 shares".
   A dealer short puts is long delta and hedges by shorting stock, and 1,000 contracts of
   100 make the hedge tens of thousands of shares. The figure above it says short stock.
+- 12D, Example 2: "R=0.55 → C = 0.343". With Example 1's other factors the product is
+  0.341. Example 4 takes a trade at C = 0.282 "at reduced size", where the conviction
+  figure in 12B passes anything below 0.3.
+- 12F, after the vega monitor: each position has "DTE, delta" inputs, and the overlay's
+  targets are "flat vega, half-vega, or full hedge". The app's widget had no delta input,
+  its DTE fed nothing, and its "full hedge" left the book's vega where it was.
 
 ## Changing the book
 
