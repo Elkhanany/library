@@ -219,7 +219,49 @@ DD = 0.90 → recovery = 9.00 (900%)</pre>
 
 <p>The equity risk premium is the baseline against which everything in this book competes. When a strategy claims "edge," the right comparison is not "is this better than nothing?" — it's "is this better than the variance risk premium / equity risk premium combination that I could harvest passively?" That comparison is the operational frame for the rest of the curriculum.</p>
 
-<figure class="fig" id="fig-deflated-sharpe-calculator"><figcaption><b>Figure to come:</b> deflated-sharpe-calculator</figcaption></figure>
+<figure class="fig" id="fig-deflated-sharpe-calculator">
+  <canvas id="deflated-sharpe-calculator-c" data-h="230"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-sr">observed Sharpe</label>
+      <input type="range" id="deflated-sharpe-calculator-sr" min="0.5" max="5" step="0.05" value="1.8">
+      <output id="deflated-sharpe-calculator-sr-o" for="deflated-sharpe-calculator-sr"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-n">sample size N</label>
+      <input type="range" id="deflated-sharpe-calculator-n" min="50" max="5000" step="10" value="252">
+      <output id="deflated-sharpe-calculator-n-o" for="deflated-sharpe-calculator-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-trials">trials run</label>
+      <input type="range" id="deflated-sharpe-calculator-trials" min="1" max="5000" step="1" value="100">
+      <output id="deflated-sharpe-calculator-trials-o" for="deflated-sharpe-calculator-trials"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-skew">return skew</label>
+      <input type="range" id="deflated-sharpe-calculator-skew" min="-2" max="2" step="0.1" value="-0.5">
+      <output id="deflated-sharpe-calculator-skew-o" for="deflated-sharpe-calculator-skew"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-kurt">return kurtosis</label>
+      <input type="range" id="deflated-sharpe-calculator-kurt" min="3" max="15" step="0.1" value="5">
+      <output id="deflated-sharpe-calculator-kurt-o" for="deflated-sharpe-calculator-kurt"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="deflated-sharpe-calculator-emax"></output></div>
+    <div class="ctrl"><output id="deflated-sharpe-calculator-z"></output></div>
+    <div class="ctrl"><output id="deflated-sharpe-calculator-psr"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="deflated-sharpe-calculator-vk"></b> <span id="deflated-sharpe-calculator-vt"></span></p>
+  <p class="readout" id="deflated-sharpe-calculator-why"></p>
+  <figcaption><b>The more strategies tried, the higher the bar.</b> The deflated Sharpe ratio
+  sets an observed Sharpe against the best one expected from luck alone across the trials run;
+  the sample size, skew and kurtosis set how far above that benchmark it has to sit. The curve
+  is the probability that the strategy is real at each observed Sharpe, with the dot at the
+  chosen one, the vertical line at the chance benchmark and the horizontal lines at the 50% and
+  95% thresholds. Add trials and the whole curve slides to the right.</figcaption>
+</figure>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -788,7 +830,7 @@ var DL = (function () {
     var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
     g.save();
     g.font = '11px ' + color('sans');
-    g.textBaseline = 'middle';
+    g.textAlign = 'left'; g.textBaseline = 'middle';
     items.forEach(function (it) {
       g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
       if (it.box) g.fillRect(x, y - 4, 12, 8);
@@ -892,5 +934,90 @@ var DL = (function () {
     DL.out(U + '-es', 'ES₉₅ = ' + DL.num(es, 2));
   });
   DL.bind([U + '-skew'], draw);
+})();
+
+/* ---------- deflated-sharpe-calculator ---------- */
+(function () {
+  var U = 'deflated-sharpe-calculator';
+  var GAMMA = 0.5772156649;   /* Euler's constant, as the app */
+
+  /* the app's computation: the expected best Sharpe by chance across the
+     trials, the standard error of the observed Sharpe given N, skew and
+     kurtosis, and the probability N(z) that the observed one beats chance */
+  function calc(sr, n, trials, skew, kurt) {
+    var nt = Math.max(trials, 1);
+    var emax = Math.sqrt(2 * Math.log(nt)) - GAMMA / Math.sqrt(2 * Math.log(nt));
+    var varSR = (1 - skew * sr + ((kurt - 1) / 4) * sr * sr) / (n - 1);
+    var sd = Math.sqrt(Math.max(varSR, 1e-9));
+    var z = (sr - emax) / Math.max(sd, 1e-9);
+    return { nt: nt, emax: emax, z: z, psr: Math.max(0, Math.min(1, DL.N(z))) };
+  }
+  /* one trial sends the benchmark to minus infinity; say so rather than a dash */
+  function fmt(x, d) {
+    if (x === Infinity) return '∞';
+    if (x === -Infinity) return DL.MINUS + '∞';
+    return DL.num(x, d);
+  }
+  function verdict(psr) {
+    if (psr >= 0.95) return ['Above threshold.', 'Evidence of real edge.', 'insight'];
+    if (psr >= 0.5) return ['Mixed.', 'Plausibly real, plausibly luck.', 'accent'];
+    return ['Below threshold.', 'Indistinguishable from a selection-bias artifact.', 'plain'];
+  }
+
+  /* The app starts N at 252, a year of trading days, which the slider's steps of 10
+     cannot hold; keep it until the reader moves the slider, as the app does. */
+  var nSlider = DL.$(U + '-n'), nVal = 252;
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sr = DL.val(U + '-sr'), n = nVal, trials = DL.val(U + '-trials'),
+        skew = DL.val(U + '-skew'), kurt = DL.val(U + '-kurt');
+    var r = calc(sr, n, trials, skew, kurt), v = verdict(r.psr);
+
+    var p = new NMT.Plot(c, { xmin: 0.5, xmax: 5, ymin: 0, ymax: 1.1,
+                              pad: { l: 58, r: 14, t: 16, b: 34 },
+                              xlabel: 'observed Sharpe', ylabel: 'P(real)' });
+    DL.axes(p, { xs: [1, 2, 3, 4, 5], ys: [0, 0.5, 0.95],
+                 x: function (t) { return DL.num(t, 0); },
+                 y: function (t) { return Math.round(t * 100) + '%'; } });
+    /* the verdict lines: 95% is real, 50% is mixed */
+    DL.hline(p, 0.95, { color: DL.fade(DL.color('insight'), 0.8), dash: [3, 3] });
+    DL.hline(p, 0.5, { color: DL.fade(DL.color('accent'), 0.8), dash: [3, 3] });
+
+    var xs = [], ys = [];
+    for (var i = 0; i <= 360; i++) {
+      var x = 0.5 + 4.5 * i / 360;
+      xs.push(x);
+      ys.push(calc(x, n, trials, skew, kurt).psr);
+    }
+    DL.line(p, xs, ys, { color: DL.color('ink-soft'), width: 2 });
+
+    if (isFinite(r.emax) && r.emax >= 0.5 && r.emax <= 5) {
+      DL.vline(p, r.emax, { color: DL.color('familiar'), dash: [4, 4], width: 1.3 });
+      var right = p.X(r.emax) > p.w / 2;
+      p.text(r.emax, 1.1, 'max by chance ' + DL.num(r.emax, 2),
+             { dx: right ? -5 : 5, dy: 12, align: right ? 'right' : 'left',
+               font: '11px ' + DL.color('sans'), color: DL.color('familiar') });
+    }
+    p.dot(sr, r.psr, { r: 5, color: DL.color(v[2]), ring: true });
+
+    DL.out(U + '-sr-o', DL.num(sr, 2));
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-trials-o', String(trials));
+    DL.out(U + '-skew-o', DL.num(skew, 1));
+    DL.out(U + '-kurt-o', DL.num(kurt, 1));
+    DL.out(U + '-emax', 'max SR by chance = ' + fmt(r.emax, 3));
+    DL.out(U + '-z', 'z-score vs chance = ' + fmt(r.z, 3));
+    DL.out(U + '-psr', 'P(strategy is real) = ' + DL.num(r.psr * 100, 1) + '%');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    DL.out(U + '-why', 'With ' + r.nt + ' strategy variant' + (r.nt === 1 ? '' : 's') +
+           ' tried, the best Sharpe expected by chance alone is ' + fmt(r.emax, 2) +
+           '. An observed Sharpe of ' + DL.num(sr, 2) + ' counts as evidence of edge only if' +
+           ' it beats that benchmark by enough standard deviations to clear the 95% threshold.');
+  });
+  function readN() { nVal = parseFloat(nSlider.value); draw(); }
+  nSlider.addEventListener('input', readN);
+  nSlider.addEventListener('change', readN);
+  DL.bind([U + '-sr', U + '-trials', U + '-skew', U + '-kurt'], draw);
 })();
 <!--/SCRIPT-->

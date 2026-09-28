@@ -135,7 +135,35 @@ where sign_i = +1 for calls, −1 for puts</pre>
 
 <h2 id="try-toggling-the-assumption">5 · Try toggling the assumption</h2>
 
-<figure class="fig" id="fig-gex-profile-builder"><figcaption><b>Figure to come:</b> gex-profile-builder</figcaption></figure>
+<figure class="fig" id="fig-gex-profile-builder">
+  <canvas id="gex-profile-builder-c" data-h="240"></canvas>
+  <canvas id="gex-profile-builder-k" data-h="130"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="gex-profile-builder-shift">spot shift from $100</label>
+      <input type="range" id="gex-profile-builder-shift" min="-12" max="12" step="0.5" value="0">
+      <output id="gex-profile-builder-shift-o" for="gex-profile-builder-shift"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Sign convention" id="gex-profile-builder-conv">
+      <label>sign convention</label>
+      <button type="button" data-v="standard" class="on" aria-pressed="true">JPM-era</button>
+      <button type="button" data-v="zeroDTE" aria-pressed="false">0DTE-era</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gex-profile-builder-spot"></output></div>
+    <div class="ctrl"><output id="gex-profile-builder-gex"></output></div>
+    <div class="ctrl"><output id="gex-profile-builder-flip"></output></div>
+  </div>
+  <figcaption><b>One book of open interest, two opposite readings.</b> Dealer GEX,
+  Σ Γ·OI·100·S²·0.01·sign, for a made-up book of puts and calls at nine strikes around 100
+  (30 days to expiry, 18% vol), at every spot from 85 to 115; below, each strike's part at the
+  current spot, which the spot shift moves. The JPM-era convention signs calls +1 and puts −1
+  (dealers long calls, short puts); the 0DTE-era convention, with retail selling premium,
+  reverses both. Switch between them and the profile turns upside down: the gamma flip stays
+  put, but the side of it where hedging dampens moves becomes the side where it amplifies
+  them.</figcaption>
+</figure>
 
 <p>This is not a minor calibration issue. It is the dominant source of model risk in every public GEX product, and the reason "GEX flipped negative today" claims should be received with skepticism unless you know which sign convention the publisher uses and whether it matches the actual flow regime in the product you're trading.</p>
 
@@ -746,7 +774,7 @@ var DL = (function () {
     var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
     g.save();
     g.font = '11px ' + color('sans');
-    g.textBaseline = 'middle';
+    g.textAlign = 'left'; g.textBaseline = 'middle';
     items.forEach(function (it) {
       g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
       if (it.box) g.fillRect(x, y - 4, 12, 8);
@@ -819,5 +847,151 @@ var DL = (function () {
     }
   }
   DL.figure('fig-' + U, update);
+})();
+
+/* ---------- gex-profile-builder ---------- */
+(function () {
+  var U = 'gex-profile-builder';
+  var SH = DL.$(U + '-shift');
+  var conv = DL.seg(U + '-conv', update);
+  var S0 = 100, SIGMA = 0.18, T = 30 / 365, PAD_L = 52, PAD_R = 14, st;
+
+  /* the app's illustrative open interest: puts below and at 100, calls at and above */
+  var OI = [
+    { K: 88, type: 'put', oi: 18000 }, { K: 92, type: 'put', oi: 32000 },
+    { K: 95, type: 'put', oi: 55000 }, { K: 98, type: 'put', oi: 42000 },
+    { K: 100, type: 'put', oi: 60000 }, { K: 100, type: 'call', oi: 70000 },
+    { K: 102, type: 'call', oi: 38000 }, { K: 105, type: 'call', oi: 55000 },
+    { K: 108, type: 'call', oi: 22000 }, { K: 112, type: 'call', oi: 14000 }
+  ];
+  function sign(type, c) {
+    return c === 'standard' ? (type === 'call' ? 1 : -1) : (type === 'call' ? -1 : 1);
+  }
+  /* one line of open interest in dollars of dealer gamma per 1% move */
+  function gex(S, o, c) {
+    return DL.bsGamma(S, o.K, T, SIGMA) * S * S * 0.01 * o.oi * 100 * sign(o.type, c);
+  }
+
+  /* the app's profile on spot 85 to 115 in steps of 0.5; the flip is the first
+     grid spot whose sign differs from the one before it */
+  function compute() {
+    var c = conv(), shift = parseFloat(SH.value), curS = S0 + shift;
+    var xs = [], ys = [], flip = null, cur = null, i;
+    for (var S = 85; S <= 115; S += 0.5) {
+      var tot = 0;
+      OI.forEach(function (o) { tot += gex(S, o, c); });
+      xs.push(S); ys.push(tot);
+    }
+    for (i = 1; i < ys.length; i++) {
+      if (Math.sign(ys[i]) !== Math.sign(ys[i - 1])) { flip = xs[i]; break; }
+    }
+    for (i = 0; i < xs.length; i++) if (Math.abs(xs[i] - curS) < 0.3) { cur = ys[i]; break; }
+    var by = {}, ks = [];
+    OI.forEach(function (o) {
+      if (!(o.K in by)) { by[o.K] = 0; ks.push(o.K); }
+      by[o.K] += gex(curS, o, c);
+    });
+    ks.sort(function (a, b) { return a - b; });
+    st = { shift: shift, curS: curS, xs: xs, ys: ys, flip: flip, cur: cur, ks: ks,
+           kg: ks.map(function (k) { return by[k]; }) };
+  }
+  compute();
+
+  /* dollars in billions, a true minus, no sign on a zero */
+  function bn(x, d) {
+    var s = DL.num(Math.abs(x) / 1e9, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function yfmt(v, step) {
+    return Math.abs(v) < step * 1e-6 ? '$0' : bn(v, Math.max(0, -Math.floor(Math.log10(step / 1e9) + 1e-9)));
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  function title(p, s) {
+    p.text(p.o.xmin, p.o.ymax, s, { dx: 4 - PAD_L, dy: -6, font: font(), color: DL.color('ink-soft') });
+  }
+  /* tick labels along the bottom, leaving out any that would touch the named mark */
+  function bottom(p, xs, fmt, x, text, color) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(text).width, px = Math.max(2 + w / 2, Math.min(p.w - 2 - w / 2, p.X(x)));
+    var shown = xs.filter(function (v) {
+      return Math.abs(p.X(v) - px) > (g.measureText(fmt(v)).width + w) / 2 + 10;
+    });
+    g.restore();
+    DL.xticks(p, shown, fmt);
+    p.text(p.invX(px), p.o.ymin, text, { dy: 6, align: 'center', baseline: 'top', font: font(), color: color });
+  }
+
+  /* a label on a paper ground, so a vertical line passing under it stays readable */
+  function note(p, x, y, s, o) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x) + (o.dx || 0), py = p.Y(y) + (o.dy || 0);
+    var x0 = o.align === 'right' ? px - w : px, y0 = o.baseline === 'top' ? py : py - 13;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.88);
+    g.fillRect(x0 - 3, y0 - 1, w + 6, 15);
+    g.restore();
+    o.font = font();
+    p.text(x, y, s, o);
+  }
+
+  var drawProfile = DL.figure(U + '-c', function (c) {
+    /* the app's scale leaves a tenth over the largest value; a little more here
+       keeps the two regime labels clear of the curve on a phone */
+    var yMax = Math.max.apply(null, st.ys.map(Math.abs)) * 1.2;
+    var p = new NMT.Plot(c, { xmin: 85, xmax: 115, ymin: -yMax, ymax: yMax,
+                              pad: { l: PAD_L, r: PAD_R, t: 20, b: 24 } });
+    var xs = [85, 90, 95, 100, 105, 110, 115], ty = DL.ticks(-yMax, yMax, 4);
+    DL.axes(p, { xs: xs, ys: ty.vals, x: false, y: function (v) { return yfmt(v, ty.step); } });
+    DL.band(p, st.xs, st.ys.map(function (v) { return Math.max(v, 0); }), 0,
+            DL.fade(DL.color('insight'), 0.15));
+    DL.band(p, st.xs, st.ys.map(function (v) { return Math.min(v, 0); }), 0,
+            DL.fade(DL.color('plain'), 0.15));
+    DL.line(p, st.xs, st.ys, { color: DL.color('accent'), width: 1.8 });
+    var fam = DL.color('familiar');
+    if (st.flip != null) {
+      DL.vline(p, st.flip, { color: fam, dash: [4, 3], width: 1.2 });
+      p.text(st.flip, yMax, 'flip $' + st.flip.toFixed(1),
+             { dx: 4, dy: -6, font: font(), color: fam });
+    }
+    DL.vline(p, st.curS, { color: fam, width: 1.4 });
+    bottom(p, xs, String, st.curS, 'S = $' + st.curS.toFixed(1), fam);
+    /* each regime's name goes on the side where the curve has the other sign */
+    var negLeft = st.ys[0] < 0;
+    note(p, negLeft ? 85 : 115, yMax, '↑ positive GEX · dampening',
+         { dx: negLeft ? 6 : -6, dy: 5, align: negLeft ? 'left' : 'right', baseline: 'top',
+           color: DL.color('insight') });
+    note(p, negLeft ? 115 : 85, -yMax, '↓ negative GEX · amplifying',
+         { dx: negLeft ? -6 : 6, dy: -5, align: negLeft ? 'right' : 'left', baseline: 'bottom',
+           color: DL.color('plain') });
+  });
+
+  var drawStrikes = DL.figure(U + '-k', function (c) {
+    var n = st.ks.length, m = Math.max.apply(null, st.kg.map(Math.abs)) * 1.1;
+    var idx = st.ks.map(function (k, i) { return i; });
+    var p = new NMT.Plot(c, { xmin: -0.6, xmax: n - 0.4, ymin: -m, ymax: m,
+                              pad: { l: PAD_L, r: PAD_R, t: 20, b: 22 } });
+    var ty = DL.ticks(-m, m, 3);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.6,
+                 y: function (v) { return yfmt(v, ty.step); } });
+    var up = DL.fade(DL.color('insight'), 0.65), dn = DL.fade(DL.color('plain'), 0.65);
+    DL.bars(p, idx, st.kg, { w: 0.62, color: function (v) { return v >= 0 ? up : dn; } });
+    DL.xticks(p, idx, function (x, i) { return String(st.ks[i]); });
+    title(p, 'per-strike contribution at current spot');
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-shift-o', (st.shift >= 0 ? '+' : DL.MINUS) + Math.abs(st.shift).toFixed(1));
+    DL.out(U + '-spot', 'spot = $' + st.curS.toFixed(1));
+    DL.out(U + '-gex', 'total GEX = ' + (st.cur == null ? '—' : bn(st.cur, 3)));
+    DL.out(U + '-flip', 'gamma flip = ' + (st.flip ? '$' + st.flip.toFixed(1) : 'n/a'));
+    drawProfile();
+    drawStrikes();
+  }
+  update();
+  DL.bind([U + '-shift'], update);
 })();
 <!--/SCRIPT-->
