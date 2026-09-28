@@ -13,6 +13,7 @@ understands, the way tools/bc.py does for the clinical book:
     chapters/*.md + glossary/*.json
       + figures/*.html                 ->  src/<slug>.html   prose, maths, callouts, figures
     chapters/*.md                      ->  FIGURE-IDEAS.md   where a new figure would help
+    notes/*.md                         ->  QUESTIONS.md      what the rewrite asks the author
 
 What the markdown becomes:
 
@@ -32,7 +33,8 @@ What the markdown becomes:
     ``` block ```                 a preformatted block (pre.aligned when its meaning is in
                                   its columns)
 
-    python3 tools/spx.py                 regenerate curriculum.json, src/ and FIGURE-IDEAS.md
+    python3 tools/spx.py                 regenerate curriculum.json, src/, FIGURE-IDEAS.md
+                                         and QUESTIONS.md
     python3 tools/spx.py --draft         the same, with a stub for a chapter not yet written
     python3 tools/spx.py --check         fail if anything generated is stale, for CI
     python3 tools/spx.py --verify        prove every word of the markdown reaches the page
@@ -64,6 +66,7 @@ FIGS = os.path.join(DIR, "figures")
 SRC = os.path.join(DIR, "src")
 SOURCE = os.path.join(DIR, "source")
 IDEAS = os.path.join(DIR, "FIGURE-IDEAS.md")
+QUESTIONS = os.path.join(DIR, "QUESTIONS.md")
 KATEX = os.path.join(library.VENDOR, "katex", "katex.min.js")
 
 FENCE = re.compile(r"^```(\S*)\s*$")
@@ -802,6 +805,29 @@ def ideas_file(m, ideas):
     return "\n".join(head + out).rstrip() + "\n"
 
 
+def questions_file(m):
+    """Each notes file's "Questions for the author", in the book's order."""
+    out = []
+    total = 0
+    for c in m.chapters:
+        path = os.path.join(NOTES, c["slug"] + ".md")
+        if not os.path.exists(path):
+            continue
+        mo = re.search(r"^## Questions for the author[ \t]*\n(.*?)(?=^## |\Z)", library.read(path),
+                       re.M | re.S)
+        body = mo.group(1).strip() if mo else ""
+        n = len(re.findall(r"^- ", body, re.M))
+        if not n:
+            continue
+        total += n
+        out += ["## %s · %s" % (c["num"], c["title"]), "", body, ""]
+    head = ["# Questions for the author", "",
+            "%d question%s the rewrite raised, collected by `tools/spx.py` from the \"Questions for "
+            "the author\" in `notes/*.md`. Answer them there, or in the chapter, not here."
+            % (total, "s" * (total != 1)), ""]
+    return "\n".join(head + out).rstrip() + "\n"
+
+
 def generate(m, draft=False, only=None, preview=None):
     figs = Figures()
     gloss, errs = glossary()
@@ -835,6 +861,7 @@ def generate(m, draft=False, only=None, preview=None):
         errs += DUPLICATES
         out[os.path.join(DIR, "curriculum.json")] = curriculum(m, maths)
         out[IDEAS] = ideas_file(m, ideas)
+        out[QUESTIONS] = questions_file(m)
     return out, errs, placed, chapters
 
 
@@ -1116,7 +1143,8 @@ def main():
             print("  stale  " + os.path.relpath(p, library.ROOT))
         if stale or orphans:
             sys.exit("out of date. Run: python3 tools/spx.py")
-        print("spx: curriculum.json, FIGURE-IDEAS.md and %d chapters are current, with %d figures placed"
+        print("spx: curriculum.json, FIGURE-IDEAS.md, QUESTIONS.md and %d chapters are current, "
+              "with %d figures placed"
               % (len(chapters), sum(len(v) for v in placed.values())))
         return
     for p in orphans:

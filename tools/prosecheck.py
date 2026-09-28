@@ -81,14 +81,23 @@ def markdown_prose(text):
     for para in re.split(r"\n\s*\n", text):
         lines = [l for l in para.split("\n")
                  if l.strip() and not re.match(r"\s*(\||:::|\[FIGURE|\{#eq:)", l)]
-        if not lines:
+        if not lines or re.match(r"\s*#", lines[0]):
             continue
-        joined = " ".join(re.sub(r"^\s*(#+|[-*]|\d+\.|\?\?|!!|>)\s+", "", l) for l in lines)
-        joined = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", joined)
-        joined = re.sub(r"[*`]", "", joined)
-        if re.match(r"\s*#", lines[0]):
-            continue
-        out.append(joined)
+        # A list item (or a check's question or answer) is a piece of its own, with the
+        # lines that continue it, so it never runs on into the item before it.
+        pieces = []
+        for l in lines:
+            if re.match(r"\s*([-*]|\d+\.|\?\?|!!)\s+", l) or not pieces:
+                pieces.append([])
+            pieces[-1].append(re.sub(r"^\s*(#+|[-*]|\d+\.|\?\?|!!|>)\s+", "", l))
+        for piece in pieces:
+            joined = " ".join(piece)
+            # A bold run-in label ("**Step 2: each line.**") is a heading, not a sentence.
+            joined = re.sub(r"^\s*\*\*[^*]{1,60}?[.:]\*\*\s+", "", joined)
+            joined = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", joined)
+            joined = re.sub(r"[*`]", "", joined)
+            if joined.strip():
+                out.append(joined)
     return out
 
 
