@@ -41,14 +41,20 @@ source: src/interactives/TaxDragComparison.jsx
   </div>
   <figcaption><b>The same pre-tax P&amp;L, two tax regimes.</b> $100,000 compounds for the
   chosen horizon at the annual P&amp;L after tax, taxed as SPY short-term gains at the ordinary
-  rate (federal plus state) or as 1256 gains on XSP or SPX, 60% long-term and 40% short-term.
-  The bars are the terminal wealth. The model holds the long-term rate at 20% at every bracket
-  and charges state tax only on the 40% short-term share.</figcaption>
+  rate (federal plus state) or as 1256 gains on XSP or SPX, 60% at the long-term rate that goes
+  with the federal bracket (0% up to the 12% bracket, 15% from 22% to 35%, 20% at 37%) and 40%
+  at the ordinary rate, with state tax on the whole gain. The bars are the terminal wealth. The
+  model leaves out the 3.8% surtax.</figcaption>
 </figure>
 <script>
 (function () {
   var U = '{{uid}}';
-  var LT_CAP = 0.20, START = 100000;
+  var START = 100000;
+  /* The long-term rate that goes with a federal bracket, simplified to the
+     bracket boundaries: 0% up to the 12% bracket, 20% in the top bracket, 15%
+     between. The app's widget held it at 20% in every bracket, so at a low
+     bracket it taxed a 1256 contract more heavily than ordinary income. */
+  function ltRate(fed) { return fed <= 0.12 + 1e-9 ? 0 : fed >= 0.37 - 1e-9 ? 0.20 : 0.15; }
 
   /* ticks in dollars, K/M/B/T, with only the decimals a tick needs */
   function money(v) {
@@ -63,10 +69,11 @@ source: src/interactives/TaxDragComparison.jsx
     var fed = DL.val(U + '-fed'), state = DL.val(U + '-st'),
         pl = DL.val(U + '-pl'), years = DL.val(U + '-yr');
 
-    /* the app's arithmetic: ordinary rate on SPY; 60% at the long-term cap
-       and 40% at the ordinary rate on a 1256 contract */
+    /* the ordinary rate on SPY; on a 1256 contract, 60% at the long-term rate
+       and 40% at the federal rate. State tax falls on the whole gain in both
+       (the app's widget charged it only on the 40%). */
     var ordRate = fed + state;
-    var sectionRate = 0.6 * LT_CAP + 0.4 * (fed + state);
+    var sectionRate = 0.6 * ltRate(fed) + 0.4 * fed + state;
     var spyAfter = pl * (1 - ordRate), sectionAfter = pl * (1 - sectionRate);
     var spyTerminal = START * Math.pow(1 + spyAfter, years);
     var sectionTerminal = START * Math.pow(1 + sectionAfter, years);
