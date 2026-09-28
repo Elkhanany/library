@@ -65,8 +65,13 @@ def shell(title, body, side="", toc="", chapter=None, extra_js="", wide=False, b
     # set the words between any two dollar signs in a paragraph as a formula.
     kcss = kjs = ""
     if BOOK.has("math"):
+        # A book with maths that also writes money (The Other End of the
+        # Trade) sets book.json "math_delimiters": "brackets", and book.js
+        # then typesets only between \( \) and \[ \].
+        brackets = BOOK.features.get("math_delimiters") == "brackets"
         kcss = f"""<link rel="stylesheet" href="{k}/katex.min.css"
-      onerror="this.onerror=null;this.href='{CDN}/katex.min.css'">"""
+      onerror="this.onerror=null;this.href='{CDN}/katex.min.css'">""" + (
+            "\n<script>window.NMT_NO_DOLLAR_MATH=true;</script>" if brackets else "")
         kjs = f"""<script defer src="{k}/katex.min.js"
         onerror="this.onerror=null;var s=document.createElement('script');s.src='{CDN}/katex.min.js';document.head.appendChild(s)"></script>
 <script defer src="{k}/auto-render.min.js"

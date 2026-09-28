@@ -68,16 +68,23 @@
 var NMT = (function () {
   var redraws = [];
 
-  /* ---------- KaTeX ---------- */
+  /* ---------- KaTeX ----------
+     A book that writes money sets window.NMT_NO_DOLLAR_MATH on its staged
+     page (tools/build.py, book.json "math_delimiters": "brackets"), and its
+     maths is then only ever between \( \) and \[ \]: a dollar sign is a price. */
   function typeset() {
     if (!window.renderMathInElement) return;
+    var delims = [
+      { left: '$$', right: '$$', display: true },
+      { left: '\\[', right: '\\]', display: true },
+      { left: '$', right: '$', display: false },
+      { left: '\\(', right: '\\)', display: false }
+    ];
+    if (window.NMT_NO_DOLLAR_MATH) {
+      delims = delims.filter(function (d) { return d.left.charAt(0) !== '$'; });
+    }
     renderMathInElement(document.body, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '\\[', right: '\\]', display: true },
-        { left: '$', right: '$', display: false },
-        { left: '\\(', right: '\\)', display: false }
-      ],
+      delimiters: delims,
       throwOnError: false,
       strict: false,
       macros: {

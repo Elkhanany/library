@@ -9,6 +9,8 @@ for any book so the rule can be checked rather than remembered.
 
     python3 tools/prosecheck.py                    # every book with prose data
     python3 tools/prosecheck.py the-long-argument  # one
+    python3 tools/prosecheck.py the-other-end-of-the-trade 1a 1b
+                                                   # chapters of a book written in markdown
 
 SCOPE. The 15-18 target was measured on narrative prose about people. It does
 not apply to the formal layer, whose `claim` fields state one proposition each
@@ -68,25 +70,59 @@ def walk(obj, path=""):
             yield from walk(v, "%s.%s" % (path, k) if path else k)
 
 
-def report(slug):
+def markdown_prose(text):
+    """The running prose of a markdown chapter, one paragraph a string. Tables,
+    code, maths, figure markers and the lines that open and close a callout are
+    not sentences, and a list item is measured as its own sentence."""
+    text = re.sub(r"```.*?```", " ", text, flags=re.S)
+    text = re.sub(r"\\\[.*?\\\]", " ", text, flags=re.S)
+    text = re.sub(r"\\\((.+?)\\\)", "x", text, flags=re.S)
+    out = []
+    for para in re.split(r"\n\s*\n", text):
+        lines = [l for l in para.split("\n")
+                 if l.strip() and not re.match(r"\s*(\||:::|\[FIGURE|\{#eq:)", l)]
+        if not lines:
+            continue
+        joined = " ".join(re.sub(r"^\s*(#+|[-*]|\d+\.|\?\?|!!|>)\s+", "", l) for l in lines)
+        joined = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", joined)
+        joined = re.sub(r"[*`]", "", joined)
+        if re.match(r"\s*#", lines[0]):
+            continue
+        out.append(joined)
+    return out
+
+
+def report(slug, only=None):
     d = os.path.join(library.BOOKS, slug, "src", "data")
-    if not os.path.isdir(d):
+    md = os.path.join(library.BOOKS, slug, "chapters")
+    items = []
+    if os.path.isdir(d):
+        for f in sorted(os.listdir(d)):
+            if f.endswith(".json"):
+                items += list(walk(json.loads(library.read(os.path.join(d, f))), f[:-5]))
+    elif os.path.isdir(md):
+        for f in sorted(os.listdir(md)):
+            if f.endswith(".md") and (not only or f[:-3] in only):
+                items += [(f[:-3], p) for p in markdown_prose(library.read(os.path.join(md, f)))]
+    else:
         return False
     allsent, worst, chains = [], [], 0
-    for f in sorted(os.listdir(d)):
-        if not f.endswith(".json"):
-            continue
-        data = json.loads(library.read(os.path.join(d, f)))
-        for path, text in walk(data, f[:-5]):
-            for s in sentences(text):
-                n = len(words(s))
-                allsent.append(n)
-                c = chained(s)
-                chains += c
-                if n >= 34 or c:
-                    worst.append((n, c, path, s))
+    per = {}
+    for path, text in items:
+        for s in sentences(text):
+            n = len(words(s))
+            allsent.append(n)
+            per.setdefault(path.split(".")[0], []).append(n)
+            c = chained(s)
+            chains += c
+            if n >= 34 or c:
+                worst.append((n, c, path, s))
     if not allsent:
         return False
+    if os.path.isdir(md) and not os.path.isdir(d):
+        for name, ns in per.items():
+            print("   %-8s %4d sentences, mean %4.1f words, longest %d"
+                  % (name, len(ns), sum(ns) / float(len(ns)), max(ns)))
     allsent.sort()
     mean = sum(allsent) / float(len(allsent))
     p95 = allsent[int(.95 * len(allsent))]
@@ -104,6 +140,8 @@ def report(slug):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    slugs = args or library.slugs()
-    if not any(report(s) for s in slugs):
-        print("no book in %s ships prose data under src/data/" % ", ".join(slugs))
+    # prosecheck.py BOOK CHAPTER...: only those chapters of a markdown book
+    slugs = args[:1] if len(args) > 1 else (args or library.slugs())
+    only = set(args[1:]) or None
+    if not any(report(s, only) for s in slugs):
+        print("no book in %s ships prose data under src/data/ or chapters/" % ", ".join(slugs))
