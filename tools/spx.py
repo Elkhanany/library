@@ -20,6 +20,8 @@ What the markdown becomes:
     ## Heading / ### Heading      a numbered section / a subsection
     \\( ... \\)  and  \\[ ... \\]      inline and display maths, typeset by KaTeX; a display
                                   is a numbered .eq, and {#eq:x} under it names it for [eq:x]
+    [eq:5c/bsm]                   the number of display eq:bsm in Chapter 5C, "(5C.4)",
+                                  linked to it
     ::: kind Title ... :::        a callout (where, plain, insight, practice, rule, warn,
                                   familiar, recap), "What you need first" (tools), a worked
                                   example (worked), a derivation to open (grind), or
@@ -79,6 +81,8 @@ LABEL = re.compile(r"^\s*\{#eq:([a-z0-9-]+)\}\s*$")
 MDLINK = re.compile(r"\[([^\]\[]+)\]\((https?://[^)\s]+)\)")
 GLOSS = re.compile(r"\[\[([^\]\|]+?)(?:\|([^\]]+?))?\]\]")
 EQREF = re.compile(r"\[eq:([a-z0-9-]+)\]")
+XEQREF = re.compile(r"\[eq:(\d{1,2}[a-z]|r\d)/([a-z0-9-]+)\]")
+XEQ = re.compile("\x01([a-z0-9]+)/([a-z0-9-]+)\x01")
 CHREF = re.compile(r"\bChapter (\d{1,2}[A-Z]|R\d)\b")
 PARTREF = re.compile(r"\bPart ([IVX]+)\b(?!\s*·)")
 
@@ -353,6 +357,8 @@ class Chapter:
         self.m, self.figs, self.gloss, self.c = m, figs, gloss, c
         self.errs, self.ids, self.scripts = [], {}, []
         self.fig_uses, self.ideas, self.math, self.eqs, self.eqrefs = {}, [], [], [], []
+        # every display in page order, by its label or None: book.js numbers them all
+        self.displays = []
         self.h2 = 0
         self.heading_now = ""
 
@@ -424,6 +430,9 @@ class Chapter:
         def eqref(mo):
             self.eqrefs.append(mo.group(1))
             return keep('<a class="eqref" href="#e-%s"></a>' % mo.group(1))
+        # another chapter's display: numbered once every chapter is rendered (number_xeqs)
+        t = XEQREF.sub(lambda mo: keep('<a class="xref xeq" href="%s.html#e-%s">\x01%s/%s\x01</a>'
+                                       % (mo.group(1), mo.group(2), mo.group(1), mo.group(2))), t)
         t = EQREF.sub(eqref, t)
         t = MDLINK.sub(lambda mo: keep('<a href="%s">%s</a>' % (attr(mo.group(2)), esc(mo.group(1)))), t)
         t = esc(t)
@@ -504,6 +513,7 @@ class Chapter:
 
     def display(self, body, label):
         self.math.append((body, True))
+        self.displays.append(label)
         if label:
             if label in self.eqs:
                 self.fail("the label eq:%s is used twice" % label)
@@ -828,6 +838,42 @@ def questions_file(m):
     return "\n".join(head + out).rstrip() + "\n"
 
 
+def number_xeqs(m, figs, gloss, out, chapters, draft):
+    """Give each [eq:<slug>/<label>] the number its display has on its own page,
+    rendering any chapter this pass did not."""
+    errs, cache = [], dict(chapters)
+
+    def target(slug):
+        if slug not in cache:
+            c = m.by_slug.get(slug)
+            ch = None
+            if c is not None and m.written(c):
+                ch = Chapter(m, figs, gloss, c)
+                ch.render(library.read(m.path(c)))
+            cache[slug] = ch
+        return cache[slug]
+
+    for path in sorted(out):
+        if "\x01" not in out[path]:
+            continue
+        where = m.by_slug[os.path.basename(path)[:-5]]["num"]
+
+        def num(mo):
+            slug, label = mo.group(1), mo.group(2)
+            ch = target(slug)
+            if ch is None:
+                if not (draft and slug in m.by_slug):
+                    errs.append("%s: [eq:%s/%s] names no written chapter" % (where, slug, label))
+                return "(?)"
+            if label not in ch.displays:
+                errs.append("%s: [eq:%s/%s] names no display in Chapter %s"
+                            % (where, slug, label, ch.c["num"]))
+                return "(?)"
+            return "(%s.%d)" % (ch.c["num"], ch.displays.index(label) + 1)
+        out[path] = XEQ.sub(num, out[path])
+    return errs
+
+
 def generate(m, draft=False, only=None, preview=None):
     figs = Figures()
     gloss, errs = glossary()
@@ -857,6 +903,7 @@ def generate(m, draft=False, only=None, preview=None):
             ideas[c["slug"]] = ch.ideas
         for fid in ch.fig_uses:
             placed.setdefault(fid, []).append(c["num"])
+    errs += number_xeqs(m, figs, gloss, out, chapters, draft or preview is not None)
     if not only:
         errs += DUPLICATES
         out[os.path.join(DIR, "curriculum.json")] = curriculum(m, maths)
@@ -1029,6 +1076,7 @@ def md_words(text):
             i += 1
             continue
         line = GLOSS.sub(lambda mo: mo.group(1), line)
+        line = XEQREF.sub(" ", line)
         line = EQREF.sub(" ", line)
         line = MDLINK.sub(lambda mo: mo.group(1), line)
         if re.fullmatch(r"\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*", line):
@@ -1048,6 +1096,7 @@ def md_words(text):
 def html_words(frag):
     frag = re.sub(r"<!--SCRIPT-->.*?<!--/SCRIPT-->", "", frag, flags=re.S)
     frag = re.sub(r'<figure class="fig".*?</figure>', " ", frag, flags=re.S)
+    frag = re.sub(r'<a class="xref xeq"[^>]*>.*?</a>', " ", frag)
     frag = re.sub(r'<p class="eyebrow">.*?</p>|<h1>.*?</h1>|<p class="subtitle">.*?</p>', " ", frag)
     frag = re.sub(r"(<h2[^>]*>)\d+ · ", r"\1", frag)
     frag = re.sub(r'<p class="pnum">Question \d+</p>|<summary>Answer</summary>', " ", frag)
