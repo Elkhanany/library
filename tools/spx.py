@@ -216,6 +216,9 @@ class Sources:
 
 # ------------------------------------------------------------------ glossary
 
+DUPLICATES = []
+
+
 def glossary():
     """Every entry in glossary/*.json, keyed by the term in lower case."""
     out, errs = {}, []
@@ -237,7 +240,9 @@ def glossary():
             if re.search(r"\[\[|\\\(|\\\[|\$", e["def"]):
                 errs.append("glossary/%s: %r: a definition takes no marks or maths" % (f, term))
             if k in out and out[k]["def"] != e["def"]:
-                errs.append("glossary: %r is defined in both %s and %s" % (term, out[k]["file"], f))
+                # Writers working in parallel can add the same term. The first
+                # file's entry is used; a full build refuses until one is left.
+                DUPLICATES.append("glossary: %r is defined in both %s and %s" % (term, out[k]["file"], f))
                 continue
             out[k] = {"term": term, "def": e["def"], "chapter": e.get("chapter", ""), "file": f}
     return out, errs
@@ -825,6 +830,7 @@ def generate(m, draft=False, only=None):
         for fid in ch.fig_uses:
             placed.setdefault(fid, []).append(c["num"])
     if not only:
+        errs += DUPLICATES
         out[os.path.join(DIR, "curriculum.json")] = curriculum(m, maths)
         out[IDEAS] = ideas_file(m, ideas)
     return out, errs, placed, chapters
@@ -934,8 +940,10 @@ def facts(m, slug, src):
         have = " ".join(library.read(m.path(d)) for d in sharing)
         have_nums = canon_numbers(have)
         nums, names = facts_of(text)
-        lost_n = sorted(n for n in nums if n not in have_nums and n not in notes)
-        lost_w = sorted(w for w in names if w not in have and w not in notes)
+        note_nums = canon_numbers(notes)
+        lost_n = sorted(n for n in nums if n not in have_nums and n not in note_nums)
+        lost_w = sorted(w for w in names if w not in have
+                        and not re.search(r"(?<!\w)%s(?!\w)" % re.escape(w), notes))
         if lost_n or lost_w:
             print("  %s  (%s)" % (ref, ", ".join(d["num"] for d in sharing) or "no chapter written"))
             if lost_n:

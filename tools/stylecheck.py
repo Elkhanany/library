@@ -362,12 +362,14 @@ def _walk(obj, path=''):
             yield from _walk(v, '%s.%s' % (path, k) if path else k)
 
 
-def prose(text, label):
+def prose(text, label, dollars=True):
     """Blank out everything that is not prose, keeping every offset.
 
     Offsets have to survive so that --fix can write back into the original
     file. So each non-prose span is replaced by spaces of the same length
-    rather than removed."""
+    rather than removed. dollars=False is for a book whose maths is only ever
+    between \\( \\) and \\[ \\] (book.json "math_delimiters": "brackets"):
+    there a dollar sign is a price, and the words between two of them are prose."""
     def blank(m):
         return ' ' * (m.end() - m.start())
 
@@ -384,10 +386,19 @@ def prose(text, label):
         t = re.sub(r'<script.*?</script>|<style.*?</style>', blank, t, flags=re.S)
         t = re.sub(r'<[^>]+>', blank, t)
         t = re.sub(r'&[a-zA-Z]+;|&#\d+;', blank, t)
-    return _mask_tex(t)
+    return _mask_tex(t, dollars)
 
 
-def _mask_tex(t):
+def _dollar_tex(slug):
+    """False for a book that never writes maths between dollar signs."""
+    try:
+        cfg = json.loads(open(os.path.join(ROOT, 'books', slug, 'book.json'), encoding='utf-8').read())
+    except (OSError, ValueError):
+        return True
+    return cfg.get('features', {}).get('math_delimiters') != 'brackets'
+
+
+def _mask_tex(t, dollars=True):
     """Blank every TeX span, scanning once from the left.
 
     Two passes, one for `$$` and one for `$`, get the pairing wrong as soon as
@@ -399,10 +410,10 @@ def _mask_tex(t):
     `\\(...\\)` and `\\[...\\]` are handled too, for the books that use them."""
     out, i, n = [], 0, len(t)
     while i < n:
-        if t.startswith('$$', i):
+        if dollars and t.startswith('$$', i):
             j = t.find('$$', i + 2)
             j = n if j < 0 else j + 2
-        elif t[i] == '$':
+        elif dollars and t[i] == '$':
             j = t.find('$', i + 1)
             j = n if j < 0 or j - i > 400 else j + 1
         elif t.startswith('\\[', i):
@@ -470,7 +481,7 @@ def findings(slug, want_level=None):
     order = {l: i for i, l in enumerate(LEVELS)}
     cut = order.get(want_level, len(LEVELS))
     for label, path, raw in corpus(slug):
-        t = prose(raw, label)
+        t = prose(raw, label, _dollar_tex(slug))
         for rule in RULES:
             lv = level_for(slug, rule)
             if lv == 'off' or order[lv] > cut:
