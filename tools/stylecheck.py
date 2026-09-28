@@ -66,12 +66,16 @@ DEVIATIONS = [
      "randomised, tumour, oestrogen, haematological, centre. 4,681 words across "
      "the four books. Kept because it is consistent, because the clinical book's "
      "own sources are split between American and British journals, and because "
-     "changing it would edit quoted trial names and endpoint wording."),
+     "changing it would edit quoted trial names and endpoint wording. The Other End "
+     "of the Trade is the exception and is American: its subject is US markets, its "
+     "sources are American, and it was written to the guide from the start."),
     ("Second person", "https://developers.google.com/style/person",
      "The guide asks the writer to address the reader as 'you'. These are "
      "expository references rather than tutorials. Nobody is being walked "
      "through a task, so there is no second party to address. First person "
-     "plural is still avoided, which is the half of that rule that does apply."),
+     "plural is still avoided, which is the half of that rule that does apply. "
+     "The Other End of the Trade teaches, walks its reader through tasks, and "
+     "addresses them as 'you'; the physics book does too."),
     ("Contractions", "https://developers.google.com/style/contractions",
      "The guide prefers 'don't' and 'can't'. The corpus carries 299 contractions "
      "in a million words, which is to say it does not use them. A clinical "

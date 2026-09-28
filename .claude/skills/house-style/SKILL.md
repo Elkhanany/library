@@ -204,8 +204,8 @@ Six deviations, printed in full by `stylecheck.py --deviations`. In short:
 
 | | the guide asks | this library | why |
 |---|---|---|---|
-| Spelling | American | **British** | 4,681 words, consistent; changing it would edit quoted trial names |
-| Person | second person, "you" | **third person** | these are references, not tutorials; nobody is being walked through a task |
+| Spelling | American | **British** | 4,681 words, consistent; changing it would edit quoted trial names. *The Other End of the Trade* is American: a US-market subject, American sources |
+| Person | second person, "you" | **third person** | these are references, not tutorials; nobody is being walked through a task. *The Other End of the Trade* teaches and walks its reader through tasks, so it takes "you", as the physics book does |
 | Contractions | *don't*, *can't* | **full forms** | 299 contractions in a million words; the corpus does not use them |
 | Em dash | unspaced | **spaced, or none** | the house typographic convention, 1,504 of them; the clinical book uses none at all |
 | Word list | Google product names | **not applicable** | no book here has a product in it |
