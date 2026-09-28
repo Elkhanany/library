@@ -214,10 +214,10 @@ RULES = [
          # `early-phase`, `family-based` and Wittgenstein's `fly-bottle` end in
          # -ly without being adverbs, and they are the commonest hyphenated
          # words in this corpus, so the nouns and adjectives are excluded by
-         # name.
+         # name. A capitalised word is a name, not an adverb (`Kelly-sized`).
          find=lambda t: [(m.start(), m.group(0), m.group(0).replace('-', ' ', 1))
                          for m in re.finditer(
-                             r'\b(?!(?:ear|on|ho|ug|sil|fami|supp|rep|imp|app|'
+                             r'\b(?![A-Z])(?!(?:ear|on|ho|ug|sil|fami|supp|rep|imp|app|'
                              r'multip|ang|month|dai|year|hour|week|time|cost|'
                              r'qua|assemb|f|p|s|jol|wobb|cudd|love|live|like)ly-)'
                              r'\w+ly-\w+\b', t)],
