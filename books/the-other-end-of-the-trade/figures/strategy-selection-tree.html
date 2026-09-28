@@ -1,0 +1,143 @@
+<!--
+name: strategy selection tree
+source: src/interactives/StrategySelectionTree.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls" role="group" aria-label="Direction" id="{{uid}}-d">
+    <div class="ctrl"><label>1 · direction</label></div>
+    <div class="ctrl"><button type="button" data-v="bull" class="on" aria-pressed="true">Bullish</button>
+      <button type="button" data-v="bear" aria-pressed="false">Bearish</button>
+      <button type="button" data-v="neutral" aria-pressed="false">Neutral / range</button></div>
+    <div class="ctrl"><button type="button" data-v="longvol" aria-pressed="false">Long vol (move expected, direction unknown)</button></div>
+    <div class="ctrl"><button type="button" data-v="shortvol" aria-pressed="false">Short vol (no move expected)</button></div>
+  </div>
+  <div class="ctrls" role="group" aria-label="Time horizon" id="{{uid}}-h">
+    <div class="ctrl"><label>2 · time horizon</label></div>
+    <div class="ctrl"><button type="button" data-v="days" aria-pressed="false">Days</button>
+      <button type="button" data-v="weeks" class="on" aria-pressed="true">Weeks</button>
+      <button type="button" data-v="months" aria-pressed="false">Months</button></div>
+  </div>
+  <div class="ctrls" role="group" aria-label="IV regime" id="{{uid}}-iv">
+    <div class="ctrl"><label>3 · IV regime</label></div>
+    <div class="ctrl"><button type="button" data-v="cheap" aria-pressed="false">Cheap (IVp &lt; 30)</button>
+      <button type="button" data-v="normal" class="on" aria-pressed="true">Normal (30-70)</button></div>
+    <div class="ctrl"><button type="button" data-v="rich" aria-pressed="false">Rich (&gt; 70)</button></div>
+  </div>
+  <div class="ctrls" role="group" aria-label="Catalyst" id="{{uid}}-cat">
+    <div class="ctrl"><label>4 · catalyst</label></div>
+    <div class="ctrl"><button type="button" data-v="none" class="on" aria-pressed="true">None / trend-driven</button></div>
+    <div class="ctrl"><button type="button" data-v="pos" aria-pressed="false">Catalyst (positive)</button>
+      <button type="button" data-v="neg" aria-pressed="false">Catalyst (negative)</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Recommended structures (ranked)</th><th>Note</th></tr></thead>
+    <tbody id="{{uid}}-l0" hidden>
+      <tr class="on"><td class="c-trial">★ Call debit spread<span class="ev-meta">Preferred</span></td><td>Defined risk, capital efficient for cheap IV</td></tr>
+      <tr><td class="c-trial">2. Long call</td><td>Pure directional; IV is cheap so premium is fair</td></tr>
+      <tr><td class="c-trial">3. Shares + LEAP (PMCC)</td><td>If horizon extends to months</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l1" hidden>
+      <tr class="on"><td class="c-trial">★ Long call<span class="ev-meta">Preferred</span></td><td>Cheap IV + bullish catalyst = max convex upside</td></tr>
+      <tr><td class="c-trial">2. Call ratio backspread</td><td>Tail-explosion bet for free or small credit</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l2">
+      <tr class="on"><td class="c-trial">★ Call debit spread<span class="ev-meta">Preferred</span></td><td>Balanced cost vs upside cap</td></tr>
+      <tr><td class="c-trial">2. Put credit spread</td><td>Capture VRP on the bullish thesis</td></tr>
+      <tr><td class="c-trial">3. Shares</td><td>If horizon ≥ weeks and IV not a factor</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l3" hidden>
+      <tr class="on"><td class="c-trial">★ Put credit spread<span class="ev-meta">Preferred</span></td><td>Sell the rich put-side IV; bullish exposure</td></tr>
+      <tr><td class="c-trial">2. Cash-secured XSP put</td><td>Tax-efficient retail VRP harvest</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l4" hidden>
+      <tr class="on"><td class="c-trial">★ Diagonal call spread<span class="ev-meta">Preferred</span></td><td>Long back-month, short front-month near implied-move</td></tr>
+      <tr><td class="c-trial">2. Put credit spread</td><td>Avoid long calls — vol crush risk</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l5" hidden>
+      <tr class="on"><td class="c-trial">★ Long put<span class="ev-meta">Preferred</span></td><td>Cheap IV + bearish thesis = clean expression</td></tr>
+      <tr><td class="c-trial">2. Put debit spread</td><td>Defined-risk version</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l6" hidden>
+      <tr class="on"><td class="c-trial">★ Put debit spread<span class="ev-meta">Preferred</span></td><td>Balanced cost</td></tr>
+      <tr><td class="c-trial">2. Bear call spread</td><td>Credit version if you don't want directional debit</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l7" hidden>
+      <tr class="on"><td class="c-trial">★ Bear call spread<span class="ev-meta">Preferred</span></td><td>Capture rich IV with capped risk</td></tr>
+      <tr><td class="c-trial">2. Put debit spread</td><td>If you want directional debit despite expensive premium</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l8" hidden>
+      <tr class="on"><td class="c-trial">★ Long calendar / diagonal<span class="ev-meta">Preferred</span></td><td>Long forward vol; cheap entry</td></tr>
+      <tr><td class="c-trial">2. Long strangle</td><td>If range is expected to break</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l9" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor<span class="ev-meta">Preferred</span></td><td>Defined-risk income; size small per CNDR empirical data</td></tr>
+      <tr><td class="c-trial">2. Credit spread (either side)</td><td>Pick the side with richer skew</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l10" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor (at IVp &gt; 80)<span class="ev-meta">Preferred</span></td><td>Sized very small; wing breaks dominate long-run</td></tr>
+      <tr><td class="c-trial">2. Iron butterfly</td><td>Tighter zone, larger credit</td></tr>
+      <tr><td class="c-trial">3. Short strangle (margin only)</td><td>Only if PM permits and kill rules pre-committed</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l11" hidden>
+      <tr class="on"><td class="c-trial">★ Long straddle / strangle<span class="ev-meta">Preferred</span></td><td>Cheap IV + imminent move = positive convexity bet</td></tr>
+      <tr><td class="c-trial">2. Ratio backspread</td><td>Asymmetric long convexity for cheap entry</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l12" hidden>
+      <tr class="on"><td class="c-trial">★ Calendar / diagonal<span class="ev-meta">Preferred</span></td><td>Long forward vol while short event vol — captures the IV-crush asymmetry</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l13" hidden>
+      <tr class="on"><td class="c-trial">★ Long straddle<span class="ev-meta">Preferred</span></td><td>If a catalyst arrives</td></tr>
+      <tr><td class="c-trial">2. Long calendar (back-month)</td><td>Vega-positive with controlled theta</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l14" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor at IVp &gt; 80<span class="ev-meta">Preferred</span></td><td>Defined risk; size small</td></tr>
+      <tr><td class="c-trial">2. Short strangle (margin only)</td><td>Naked convexity for size; demanding regime check</td></tr>
+      <tr><td class="c-trial">3. Calendar (sell front, buy back)</td><td>If term-structure is backwardated</td></tr>
+    </tbody>
+    <tbody id="{{uid}}-l15" hidden>
+      <tr class="on"><td class="c-trial">★ No clean fit<span class="ev-meta">Preferred</span></td><td>Re-check IV regime; short vol in non-rich IV is structural negative EV</td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>The four-question filter, as a lookup.</b> Answer the four questions and the
+  table lists the structures the app's rules recommend for that combination, ranked, with the
+  preferred one starred. The rules are distilled from the selection matrix above: direction,
+  IV regime and catalyst choose the list, and the time horizon enters only through the notes. A
+  combination the rules do not cover returns no clean fit.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var dir = DL.seg(U + '-d', update), hor = DL.seg(U + '-h', update),
+      ivr = DL.seg(U + '-iv', update), cat = DL.seg(U + '-cat', update);
+
+  /* the app's recommend(): its chain of rules, in its order, each ending in
+     one of the sixteen ranked lists (the horizon is asked but no rule reads it) */
+  function leaf(d, iv, c) {
+    if (d === 'bull' && iv === 'cheap' && c === 'none') return 0;
+    if (d === 'bull' && iv === 'cheap' && c === 'pos') return 1;
+    if (d === 'bull' && iv === 'normal') return 2;
+    if (d === 'bull' && iv === 'rich' && c === 'none') return 3;
+    if (d === 'bull' && iv === 'rich' && c === 'pos') return 4;
+    if (d === 'bear' && iv === 'cheap') return 5;
+    if (d === 'bear' && iv === 'normal') return 6;
+    if (d === 'bear' && iv === 'rich') return 7;
+    if (d === 'neutral' && iv === 'cheap') return 8;
+    if (d === 'neutral' && iv === 'normal') return 9;
+    if (d === 'neutral' && iv === 'rich') return 10;
+    if (d === 'longvol' && iv === 'cheap' && c !== 'none') return 11;
+    if (d === 'longvol' && iv === 'rich' && c !== 'none') return 12;
+    if (d === 'longvol') return 13;
+    if (d === 'shortvol' && iv === 'rich') return 14;
+    return 15;
+  }
+  function update() {
+    hor();
+    var k = leaf(dir(), ivr(), cat());
+    for (var j = 0; j < 16; j++) {
+      var body = DL.$(U + '-l' + j), show = j === k;
+      if (body.hidden === show) body.hidden = !show;
+    }
+  }
+  DL.figure('fig-' + U, update);
+})();
+</script>
