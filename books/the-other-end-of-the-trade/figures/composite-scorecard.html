@@ -1,0 +1,160 @@
+<!--
+name: composite scorecard
+source: src/interactives/CompositeScorecard.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <canvas id="{{uid}}-g" data-h="78"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-vol">volatility / fear</label>
+      <input type="range" id="{{uid}}-vol" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-vol-o" for="{{uid}}-vol"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-credit">credit</label>
+      <input type="range" id="{{uid}}-credit" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-credit-o" for="{{uid}}-credit"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-rates">rates</label>
+      <input type="range" id="{{uid}}-rates" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-rates-o" for="{{uid}}-rates"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-dollar">dollar / FX</label>
+      <input type="range" id="{{uid}}-dollar" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-dollar-o" for="{{uid}}-dollar"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-comm">commodities</label>
+      <input type="range" id="{{uid}}-comm" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-comm-o" for="{{uid}}-comm"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-global">global / overnight</label>
+      <input type="range" id="{{uid}}-global" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-global-o" for="{{uid}}-global"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-trend">trend</label>
+      <input type="range" id="{{uid}}-trend" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-trend-o" for="{{uid}}-trend"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sentiment">sentiment</label>
+      <input type="range" id="{{uid}}-sentiment" min="-1" max="1" step="0.05" value="0.2">
+      <output id="{{uid}}-sentiment-o" for="{{uid}}-sentiment"></output>
+    </div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Eight readings, one bias.</b> Each slider scores one dimension of market
+  state from −1 (most bearish) to +1 (most bullish). The top panel shows each score times its
+  weight, in points of the composite, over a pale track as wide as that weight allows; the
+  composite is their sum, placed on the −100 to +100 scale below, whose shaded bands are the
+  five regime buckets. Every dimension starts at +0.20, which puts the composite at +20, a
+  bull tilt.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  /* the app's eight dimensions and their weights, in percent */
+  var DIMS = [
+    { id: 'vol', label: 'volatility / fear', w: 18 },
+    { id: 'credit', label: 'credit', w: 15 },
+    { id: 'rates', label: 'rates', w: 12 },
+    { id: 'dollar', label: 'dollar / FX', w: 10 },
+    { id: 'comm', label: 'commodities', w: 8 },
+    { id: 'global', label: 'global / overnight', w: 10 },
+    { id: 'trend', label: 'trend', w: 17 },
+    { id: 'sentiment', label: 'sentiment', w: 10 }
+  ];
+  var BUCKETS = [
+    { lo: -100, hi: -40, name: 'Strong bear', role: 'plain', a: 0.26,
+      strategy: 'Defensive only. Mechanical foundation sleeves continue; no new tactical positions.' },
+    { lo: -40, hi: -10, name: 'Bear tilt', role: 'plain', a: 0.11,
+      strategy: 'Long trades suspended; tactical shorts permitted if in mandate.' },
+    { lo: -10, hi: 10, name: 'Neutral', role: 'accent', a: 0.13,
+      strategy: 'Take only the highest-conviction setups. Size at 50%.' },
+    { lo: 10, hi: 40, name: 'Bull tilt', role: 'insight', a: 0.11,
+      strategy: 'Long trades permitted at 70-80% of intended size.' },
+    { lo: 40, hi: 100, name: 'Strong bull', role: 'insight', a: 0.26,
+      strategy: 'New long swing trades permitted at full intended size.' }
+  ];
+
+  /* The composite is sum(score x weight) x 100, as the app. Scores move in
+     steps of 0.05 and weights are whole percents, so the composite lies on a
+     grid of 0.05 points: k counts those steps, exactly, with no rounding
+     noise at a bucket edge. The buckets are the app's: >= 40, >= 10, > -10,
+     > -40, the rest. */
+  function score(d) { return parseFloat(DL.$(U + '-' + d.id).value); }
+  function steps() {
+    return DIMS.reduce(function (k, d) { return k + Math.round(score(d) * 20) * d.w; }, 0);
+  }
+  function bucket(k) {
+    return k >= 800 ? BUCKETS[4] : k >= 200 ? BUCKETS[3] : k > -200 ? BUCKETS[2]
+         : k > -800 ? BUCKETS[1] : BUCKETS[0];
+  }
+  /* shown to one decimal, cut toward zero, so the number never reads as
+     past an edge its bucket has not crossed (39.95 shows as +39.9) */
+  function shown(k) {
+    var tenths = (k < 0 ? -1 : 1) * Math.floor(Math.abs(k) / 2);
+    return DL.signed(tenths / 10, 1);
+  }
+
+  function sgn(v) { return (v >= 0 ? '+' : '') + DL.num(v, 2); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var k = steps(), comp = k / 20, B = bucket(k);
+    var font = '11px ' + DL.color('sans');
+
+    /* each dimension's part of the composite, in points */
+    var narrow = (c.clientWidth || 640) < 520;
+    var p = new NMT.Plot(c, { xmin: -20, xmax: 20, ymin: 0, ymax: 8, grid: true,
+      pad: narrow ? { l: 10, r: 12, t: 14, b: 22 } : { l: 150, r: 14, t: 6, b: 22 } });
+    DL.axes(p, { xs: [-20, -10, 0, 10, 20], ys: [], y: false, yAt: 0,
+                 x: function (v) { return DL.signed(v, 0); } });
+    var track = DL.fade(DL.color('ink-faint'), 0.16), h = narrow ? 0.34 : 0.46;
+    DIMS.forEach(function (d, i) {
+      var y = 7.5 - i, part = score(d) * d.w;
+      DL.hbars(p, [y], [d.w], { base: -d.w, h: h, color: track });
+      if (part !== 0) DL.hbars(p, [y], [part], { h: h,
+          color: DL.fade(DL.color(part > 0 ? 'insight' : 'plain'), 0.85) });
+      var name = d.label + ' · ' + d.w + '%';
+      if (narrow) p.text(-20, y, name, { dx: 2, dy: -(h / 2) * (p.Y(0) - p.Y(1)) - 2,
+                          color: DL.color('ink-soft'), font: font });
+      else p.text(-20, y, name, { dx: -8, align: 'right', baseline: 'middle',
+                   color: DL.color('ink-soft'), font: font });
+    });
+    DL.vline(p, 0, { color: DL.color('rule'), width: 1.4 });
+
+    /* the composite on the bucket scale */
+    var c2 = DL.$(U + '-g');
+    var q = new NMT.Plot(c2, { xmin: -100, xmax: 100, ymin: 0, ymax: 1, grid: false,
+                               pad: { l: 14, r: 14, t: 22, b: 22 } });
+    DL.axes(q, { xs: [-100, -40, -10, 10, 40, 100], ys: [], y: false, yAxis: false, grid: false,
+                 x: function (v) { return DL.signed(v, 0); } });
+    var slim = (c2.clientWidth || 640) < 520;
+    BUCKETS.forEach(function (R) {
+      var on = R === B, col = DL.color(R.role);
+      q.path([[R.lo, 0], [R.hi, 0], [R.hi, 1], [R.lo, 1]],
+             { close: true, fill: DL.fade(col, on ? Math.min(0.5, R.a * 2.2) : R.a), color: null });
+      if (on || !slim)
+        q.text((R.lo + R.hi) / 2, 0.5, R.name.toLowerCase(), { align: 'center', baseline: 'middle',
+               color: on ? DL.color('ink') : DL.color('ink-soft'), font: (on ? '600 ' : '') + font });
+    });
+    q.seg(comp, 0, comp, 1, { color: DL.color('ink'), width: 2.2 });
+    var label = 'composite ' + shown(k);
+    q.g.font = '600 ' + font;
+    var half = q.g.measureText(label).width / 2 + 2, px = q.X(comp);
+    var at = Math.min(Math.max(px, half), q.w - half);
+    q.text(comp, 1, label, { dx: at - px, dy: -5, align: 'center', color: DL.color('ink'),
+           font: '600 ' + font });
+
+    DIMS.forEach(function (d) { DL.out(U + '-' + d.id + '-o', sgn(score(d))); });
+    DL.out(U + '-vk', B.name + ', composite ' + shown(k) + '.');
+    DL.out(U + '-vt', B.strategy);
+  });
+  DL.bind(DIMS.map(function (d) { return U + '-' + d.id; }), draw);
+})();
+</script>

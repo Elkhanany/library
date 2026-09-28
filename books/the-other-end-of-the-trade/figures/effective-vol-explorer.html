@@ -1,0 +1,158 @@
+<!--
+name: effective vol explorer
+source: src/interactives/EffectiveVolExplorer.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-sigma">underlying σ</label>
+      <input type="range" id="{{uid}}-sigma" min="0.1" max="0.5" step="0.01" value="0.2">
+      <output id="{{uid}}-sigma-o" for="{{uid}}-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-kappa">feedback strength κ</label>
+      <input type="range" id="{{uid}}-kappa" min="0" max="2" step="0.05" value="0.5">
+      <output id="{{uid}}-kappa-o" for="{{uid}}-kappa"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-g">destabilizing gamma G</label>
+      <input type="range" id="{{uid}}-g" min="-1" max="1" step="0.02" value="0">
+      <output id="{{uid}}-g-o" for="{{uid}}-g"></output>
+    </div>
+    <div class="ctrl">
+      <button type="button" id="{{uid}}-stress">trigger stress</button>
+      <output id="{{uid}}-day"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-su"></output></div>
+    <div class="ctrl"><output id="{{uid}}-kg"></output></div>
+    <div class="ctrl"><output id="{{uid}}-se"></output></div>
+    <div class="ctrl"><output id="{{uid}}-amp"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The same information vol, damped or amplified by feedback.</b> The curve is
+  σ<sub>eff</sub> = σ / (1 − κ·G) across the destabilizing gamma G, the negation of published
+  GEX (positive when dealers are net short gamma), for the underlying σ and feedback strength κ
+  set by the sliders; the dashed lines mark σ and the current G. Trigger stress to walk G from
+  −0.6 to +0.6 over five days, published GEX flipping from positive to negative, and watch
+  effective vol climb. Raise κ and the curve bends up toward the singularity at G = 1/κ, where
+  the denominator vanishes; the curve is cut at 200%, and past that point the readouts hold at
+  100 times σ.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SIG = DL.$(U + '-sigma'), KAP = DL.$(U + '-kappa'), GG = DL.$(U + '-g');
+  /* the stress run: G from −0.6 to +0.6 in five daily steps, 600 ms apart;
+     the day stays on show for two seconds after the last one, as in the app */
+  var DAYS = 5, STEP = 600, HOLD = 2000, G0 = -0.6, G1 = 0.6, anim = null;
+
+  /* the app's σ_eff = σ / (1 − κ·G), held at 100·σ once the denominator is
+     below 0.001 */
+  function effectiveVol(sigma, kappa, g) {
+    var denom = 1 - kappa * g;
+    if (denom <= 0.001) return sigma * 100;
+    return sigma / denom;
+  }
+  /* the app's thresholds on κ·G (0.7 and −0.3), with its middle band, which it
+     called damped and roughly equal to the underlying for κ·G up to 0.4 (an
+     amplification of up to 1.67 times), split at zero so that each name is true */
+  function regime(d) {
+    if (d > 0.7) return ['Explosive.', 'Feedback is approaching the singular limit.'];
+    if (d > 0) return ['Amplifying.', 'Effective vol is above the underlying.'];
+    if (d === 0) return ['Neutral.', 'Effective vol equals the underlying.'];
+    if (d > -0.3) return ['Damped.', 'Effective vol is below the underlying.'];
+    return ['Strongly damped.', 'Dealer hedging compresses vol.'];
+  }
+  function sgn(x, d) { return (x >= 0 ? '+' : DL.MINUS) + Math.abs(x).toFixed(d); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    /* the app's sweep: G from −1 in float steps of 0.02 (its last point is 0.98),
+       σ_eff cut at 200%; its axis runs to 150% or to the top of the curve */
+    var xs = [], ys = [];
+    for (var x = -1; x <= 1; x += 0.02) { xs.push(x); ys.push(Math.min(effectiveVol(sigma, kappa, x), 2)); }
+    var ymax = Math.max(1.5, Math.max.apply(null, ys));
+    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: ymax, xlabel: 'destabilizing gamma G',
+                              pad: { l: 44, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ny: 4,
+                 x: function (v) { return DL.num(v, 1); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    var fam = DL.color('familiar'), acc = DL.color('accent');
+    DL.hline(p, sigma, { color: fam, dash: [3, 3], width: 1.2 });
+    p.text(-1, sigma, 'σ underlying', { dx: 4, dy: -4, font: font(), color: fam });
+    DL.vline(p, g, { color: acc, dash: [2, 2], width: 1.2 });
+    DL.line(p, xs, ys, { color: acc, width: 2 });
+    p.dot(g, Math.min(effectiveVol(sigma, kappa, g), ymax), { r: 4, color: acc, ring: true });
+    p.text(-1, ymax, 'σ²_eff = σ² / (1 − κ·G)²', { dx: 4 - 44, dy: -6, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    var eff = effectiveVol(sigma, kappa, g), d = kappa * g, v = regime(d);
+    DL.out(U + '-sigma-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kappa-o', kappa.toFixed(2));
+    DL.out(U + '-g-o', sgn(g, 2));
+    DL.out(U + '-su', 'underlying σ = ' + (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kg', 'κ·G = ' + sgn(d, 2));
+    DL.out(U + '-se', 'effective σ = ' + (eff * 100).toFixed(0) + '%');
+    DL.out(U + '-amp', 'amplification = ' + (eff / sigma).toFixed(2) + '×');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    draw();
+  }
+
+  function setG(x) { GG.value = x.toFixed(2); }
+  function stop() {
+    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
+  }
+  function stress() {
+    stop();
+    if (DL.still()) {
+      setG(G1);
+      DL.out(U + '-day', 'day ' + DAYS + '/' + DAYS);
+      update();
+      return;
+    }
+    setG(G0);
+    DL.out(U + '-day', '');
+    update();
+    anim = { start: null, day: 0, id: 0 };
+    function frame(ts) {
+      if (!anim) return;
+      if (anim.start == null) anim.start = ts;
+      var el = ts - anim.start, day = Math.min(DAYS, Math.floor(el / STEP));
+      if (day !== anim.day) {
+        anim.day = day;
+        setG(G0 + (G1 - G0) * day / DAYS);
+        DL.out(U + '-day', 'day ' + day + '/' + DAYS);
+        update();
+      }
+      if (el >= DAYS * STEP + HOLD) {
+        DL.out(U + '-day', '');
+        anim = null;
+        return;
+      }
+      anim.id = requestAnimationFrame(frame);
+    }
+    anim.id = requestAnimationFrame(frame);
+  }
+  /* the saved page is the first state: no stress run, G at its default */
+  function reset() {
+    stop();
+    GG.value = GG.defaultValue;
+    DL.out(U + '-day', '');
+    update();
+  }
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
+
+  update();
+  DL.$(U + '-stress').addEventListener('click', stress);
+  DL.bind([U + '-sigma', U + '-kappa'], update);
+  /* moving G by hand ends a stress run, as it clears the app's day counter */
+  DL.bind([U + '-g'], function () { stop(); DL.out(U + '-day', ''); update(); });
+})();
+</script>

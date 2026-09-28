@@ -1,0 +1,113 @@
+<!--
+name: position size calculator
+source: src/interactives/PositionSizeCalculator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-port">portfolio size</label>
+      <input type="range" id="{{uid}}-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="{{uid}}-port-o" for="{{uid}}-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-risk">risk per trade</label>
+      <input type="range" id="{{uid}}-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="{{uid}}-risk-o" for="{{uid}}-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-stop">stop distance ($)</label>
+      <input type="range" id="{{uid}}-stop" min="0.5" max="50" step="0.5" value="2">
+      <output id="{{uid}}-stop-o" for="{{uid}}-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mult">contract multiplier</label>
+      <input type="range" id="{{uid}}-mult" min="1" max="500" step="1" value="100">
+      <output id="{{uid}}-mult-o" for="{{uid}}-mult"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-b"></output></div>
+    <div class="ctrl"><output id="{{uid}}-l"></output></div>
+    <div class="ctrl"><output id="{{uid}}-n"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-risk-d"></output></div>
+    <div class="ctrl"><output id="{{uid}}-risk-p"></output></div>
+    <div class="ctrl"><output id="{{uid}}-notional"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through scenario</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="{{uid}}-g2l"></td><td data-label="% of portfolio" id="{{uid}}-g2p"></td></tr>
+      <tr id="{{uid}}-g3"><td class="c-trial">3× gap (severe)</td><td data-label="Loss" id="{{uid}}-g3l"></td><td data-label="% of portfolio" id="{{uid}}-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Sizing from an explicit loss budget.</b> The loss budget B_exp is the portfolio
+  times the risk per trade, the loss per contract L_max is the stop distance times the contract
+  multiplier, and the position is n = ⌊B_exp / L_max⌋ contracts; set the portfolio to $500k and
+  the stop to $20 for the worked example above. The stress test prices a gap through the stop
+  of two and three times its distance, marking a loss above 3% or 5% of the portfolio, and the
+  verdict reads the 2× gap: under 3% is green, under 5% yellow, and beyond that red. The
+  notional readout assumes, as the app does, that the stop is 2% of the price.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        stopDistance = DL.val(U + '-stop'), multiplier = DL.val(U + '-mult');
+    var B_exp = portfolio * riskPct;
+    var L_max = stopDistance * multiplier;
+    var n = Math.floor(B_exp / L_max);
+    var actualRisk = n * L_max;
+    var actualRiskPct = (actualRisk / portfolio) * 100;
+    /* the app's "notional at stop": n × stop × multiplier × 50, the notional
+       of n contracts priced at fifty stop distances, a stop 2% below entry */
+    var notional = n * stopDistance * multiplier * 50;
+    var gap2x = n * L_max * 2, gap3x = n * L_max * 3;
+    var gap2xPct = (gap2x / portfolio) * 100, gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (gap2xPct < 3) verdict = ['GREEN.', '2× gap-through still under 3% portfolio loss.'];
+    else if (gap2xPct < 5) verdict = ['YELLOW.', '2× gap-through approaches 5%; consider reducing.'];
+    else verdict = ['RED.', '2× gap-through exceeds 5%; reduce size.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-stop-o', '$' + stopDistance.toFixed(2));
+    DL.out(U + '-mult-o', String(multiplier));
+
+    DL.out(U + '-b', 'loss budget B_exp = $' + loc(B_exp));
+    DL.out(U + '-l', 'loss per unit L_max = $' + loc(L_max));
+    DL.out(U + '-n', 'n = ⌊B_exp / L_max⌋ = ' + DL.num(n, 0) + ' contracts');
+    DL.out(U + '-risk-d', 'planned risk = $' + loc(actualRisk));
+    DL.out(U + '-risk-p', 'planned risk % = ' + actualRiskPct.toFixed(2) + '%');
+    DL.out(U + '-notional', 'notional at a 2% stop = $' + loc(notional));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '⁠$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '⁠$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-stop', U + '-mult'], update);
+  DL.figure('fig-' + U, update);
+})();
+</script>

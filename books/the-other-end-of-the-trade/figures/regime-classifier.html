@@ -28,11 +28,11 @@ source: src/interactives/RegimeClassifier.jsx
   <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
   <p class="readout">▸ <span id="{{uid}}-b0"></span><br>▸ <span id="{{uid}}-b1"></span><br>▸ <span id="{{uid}}-b2"></span><br>▸ <span id="{{uid}}-b3"></span></p>
   <figcaption><b>Three readings, one regime.</b> Each input earns a score: net dealer GEX
-  from −2 (above +$4B per 1% move) to +2 (below −$3B), the VIX level from −1 (under 15) to +2
-  (30 and over), the term structure from −2 (steep contango) to +2 (deep backwardation). The
-  bars add the three scores along the line from −5 to +6, and the shaded band the sum lands in
-  names the regime and its strategy. Positive GEX with contango lands in Stable; negative GEX
-  with backwardation lands in Stress.</figcaption>
+  from −2 (above +$4B per 1% move) to +2 (−$3B or below), the VIX level from −1 (under 15) to
+  +2 (30 or over), and the term structure from −2 (steep contango) to +2 (deep backwardation).
+  The bars add the three along a line from −5 to +6, and the shaded band where the sum lands
+  names the regime and its strategy. Positive GEX with contango pulls toward Stable; negative
+  GEX with backwardation pulls toward Stress.</figcaption>
 </figure>
 <script>
 (function () {
@@ -41,9 +41,9 @@ source: src/interactives/RegimeClassifier.jsx
 
   var TERMS = {
     steepContango: { label: 'Steep contango', desc: 'VIX9D < VIX < VIX3M; clear upward slope', risk: -2 },
-    shallowContango: { label: 'Shallow contango', desc: 'Mild upward slope; nothing structural', risk: -1 },
-    flat: { label: 'Flat', desc: 'Front and back essentially equal', risk: 0 },
-    shallowBackwardation: { label: 'Shallow backwardation', desc: 'Front a hair above back; early stress signal', risk: 1 },
+    shallowContango: { label: 'Shallow contango', desc: 'mild upward slope; nothing structural', risk: -1 },
+    flat: { label: 'Flat', desc: 'front and back essentially equal', risk: 0 },
+    shallowBackwardation: { label: 'Shallow backwardation', desc: 'front a hair above back; early stress signal', risk: 1 },
     deepBackwardation: { label: 'Deep backwardation', desc: 'VIX9D > VIX > VIX3M; classic crisis curve', risk: 2 }
   };
 
@@ -89,8 +89,10 @@ source: src/interactives/RegimeClassifier.jsx
     var parts = [gexScore(g), vixScore(v), t.risk];
     var score = parts[0] + parts[1] + parts[2], reg = regimeOf(score);
 
-    var p = new NMT.Plot(c, { xmin: -5.5, xmax: 6.5, ymin: 0, ymax: 4.6, grid: false,
-                              pad: { l: 58, r: 8, t: 6, b: 24 } });
+    /* on a phone the two narrow bands' names would touch: two lines of names */
+    var narrow = (c.clientWidth || 640) < 520, top = narrow ? 5.1 : 4.6;
+    var p = new NMT.Plot(c, { xmin: -5.5, xmax: 6.5, ymin: 0, ymax: top, grid: false,
+                              pad: { l: 66, r: 8, t: 6, b: 24 } });
     var xs = [];
     for (var k = -5; k <= 6; k++) xs.push(k);
     DL.axes(p, { xs: xs, ys: [], y: false, yAxis: false, grid: false,
@@ -98,12 +100,12 @@ source: src/interactives/RegimeClassifier.jsx
 
     /* the four regimes as bands on the score line, the chosen one darker */
     var font = '11px ' + DL.color('sans');
-    REGIMES.forEach(function (R) {
+    REGIMES.forEach(function (R, i) {
       var on = R === reg, col = DL.color(R.role);
-      p.path([[R.lo, 0], [R.hi, 0], [R.hi, 4.6], [R.lo, 4.6]],
+      p.path([[R.lo, 0], [R.hi, 0], [R.hi, top], [R.lo, top]],
              { close: true, fill: DL.fade(col, on ? R.alpha * 2.4 : R.alpha), color: null });
-      p.text((R.lo + R.hi) / 2, 4.6, R.name, { dy: 4, align: 'center', baseline: 'top',
-             color: col, font: (on ? '600 ' : '') + font });
+      p.text((R.lo + R.hi) / 2, top, R.name, { dy: narrow && i % 2 ? 19 : 4, align: 'center',
+             baseline: 'top', color: col, font: (on ? '600 ' : '') + font });
     });
     DL.vline(p, 0, { color: DL.color('ink-faint') });
 

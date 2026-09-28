@@ -1,0 +1,238 @@
+<!--
+name: Greek surface
+source: src/interactives/GreekSurface3D.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="340"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Greek" id="{{uid}}-greek">
+      <label>Greek</label>
+      <button type="button" data-v="delta" aria-pressed="false">Δ delta</button>
+      <button type="button" data-v="gamma" class="on" aria-pressed="true">Γ gamma</button>
+      <button type="button" data-v="vega" aria-pressed="false">ν vega</button>
+      <button type="button" data-v="theta" aria-pressed="false">Θ theta</button>
+      <button type="button" data-v="vanna" aria-pressed="false">vanna</button>
+      <button type="button" data-v="charm" aria-pressed="false">charm</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-sig">implied vol σ</label>
+      <input type="range" id="{{uid}}-sig" min="0.08" max="0.5" step="0.01" value="0.22">
+      <output id="{{uid}}-sig-o" for="{{uid}}-sig"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="{{uid}}-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-az">view angle</label>
+      <input type="range" id="{{uid}}-az" min="0" max="360" step="1" value="45">
+      <output id="{{uid}}-az-o" for="{{uid}}-az"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-el">tilt</label>
+      <input type="range" id="{{uid}}-el" min="10" max="80" step="1" value="28">
+      <output id="{{uid}}-el-o" for="{{uid}}-el"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-act"></output></div>
+    <div class="ctrl"><output id="{{uid}}-live"></output></div>
+    <div class="ctrl"><output id="{{uid}}-kind"></output></div>
+  </div>
+  <figcaption><b>A Greek over spot and days to expiry.</b> One Black-Scholes Greek of an option
+  struck at K = 100 (r = 4%), drawn as a wireframe over spot from 70 to 130 and 1 to 90 days to
+  expiry: theta is per calendar day and vega per vol point. Heights run from the surface's lowest
+  value at the floor to its highest at the top, marked on the vertical axis; positive values are
+  drawn in the accent color and negative ones in rose, stronger the further from zero. Turn the
+  surface with the view angle slider and tilt it with the tilt slider. Watch gamma collapse into a
+  sharp peak at the money as expiry nears, the 1/√T divergence of the text.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LABEL = { delta: 'Δ delta', gamma: 'Γ gamma', vega: 'ν vega', theta: 'Θ theta',
+                vanna: 'vanna', charm: 'charm' };
+  var greek = DL.seg(U + '-greek', function () { draw(); });
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* the app's Greeks, r = 4%, q = 0, time floored at 0.0005 years */
+  function computeGreek(id, S, K, Tyr, sigma, opt) {
+    var r = 0.04;
+    if (Tyr < 0.0005) Tyr = 0.0005;
+    switch (id) {
+      case 'delta': return DL.bsDelta(S, K, Tyr, sigma, opt);
+      case 'gamma': return DL.bsGamma(S, K, Tyr, sigma);
+      case 'vega': return S * DL.phi(DL.d1(S, K, Tyr, sigma, r, 0)) * Math.sqrt(Tyr) / 100;
+      case 'theta': {
+        var D1 = DL.d1(S, K, Tyr, sigma, r, 0), D2 = D1 - sigma * Math.sqrt(Tyr);
+        var term1 = -(S * DL.phi(D1) * sigma) / (2 * Math.sqrt(Tyr));
+        if (opt === 'call') return (term1 - r * K * Math.exp(-r * Tyr) * DL.N(D2)) / 365;
+        return (term1 + r * K * Math.exp(-r * Tyr) * DL.N(-D2)) / 365;
+      }
+      case 'vanna': return DL.bsVanna(S, K, Tyr, sigma);
+      case 'charm': return DL.bsCharm(S, K, Tyr, sigma, opt);
+    }
+    return 0;
+  }
+
+  /* The app's mesh: 32 × 32 points, spot from 0.7K to 1.3K with the strike
+     held at K = 100, and 1 to 90 days. World axes as the app's three.js
+     scene: x = 4(S − K)/K across, z from −2 (1 day) to 2 (90 days), and the
+     height y = 2.5 × (v − min)/(max − min). */
+  var NS = 32, NT = 32, K = 100;
+  function mesh(id, sigma, opt) {
+    var pts = [], lo = Infinity, hi = -Infinity;
+    for (var i = 0; i < NS; i++) {
+      var S = K * 0.7 + (i / (NS - 1)) * (K * 1.3 - K * 0.7);
+      for (var j = 0; j < NT; j++) {
+        var T = 1 + (j / (NT - 1)) * (90 - 1);
+        var v = computeGreek(id, S, K, T / 365, sigma, opt);
+        pts.push({ x: ((S - K) / K) * 4, z: ((T - 1) / (90 - 1)) * 4 - 2, v: v });
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+    }
+    var range = hi - lo || 1;
+    pts.forEach(function (q) { q.y = (q.v - lo) / range * 2.5; });
+    return { pts: pts, lo: lo, hi: hi, range: range };
+  }
+
+  /* a value on the vertical axis, to the precision its range needs */
+  function tick(v, span) {
+    var d = Math.max(0, 2 - Math.floor(Math.log10(Math.max(span, 1e-12))));
+    return DL.num(v, Math.min(d, 6));
+  }
+
+  var XW = 1.2, ZW = 2, YH = 2.5, R = Math.sqrt(XW * XW + ZW * ZW);
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var id = greek(), opt = type(), sigma = DL.val(U + '-sig');
+    var azDeg = DL.val(U + '-az'), elDeg = DL.val(U + '-el');
+    var az = azDeg * Math.PI / 180, el = elDeg * Math.PI / 180;
+    var ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el);
+
+    /* An orthographic view from azimuth az (0 looks along the DTE axis,
+       45 is the app's opening camera at (4, 3, 4)) and elevation el.
+       u runs right across the screen, w up it, and d towards the viewer
+       along the floor, which orders the quads back to front. */
+    function P(x, y, z) {
+      var d = x * sa + z * ca;
+      return { u: x * ca - z * sa, w: y * ce - d * se, d: d };
+    }
+    /* the frame is fixed for every angle, so turning never rescales */
+    var p = new NMT.Plot(c, { xmin: -R, xmax: R, ymin: -R * se, ymax: YH * ce + R * se,
+                              equal: true, grid: false, pad: { l: 58, r: 34, t: 26, b: 30 } });
+    var g = p.g, font = '11px ' + DL.color('sans');
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
+
+    var m = mesh(id, sigma, opt);
+    var sp = m.pts.map(function (q) { var r = P(q.x, q.y, q.z); r.v = q.v; return r; });
+    function X(r) { return p.X(r.u); }
+    function Y(r) { return p.Y(r.w); }
+
+    /* the floor, and the vertical axis at its leftmost corner */
+    var corners = [[-XW, -ZW], [XW, -ZW], [XW, ZW], [-XW, ZW]].map(function (xz) {
+      var r = P(xz[0], 0, xz[1]); r.x = xz[0]; r.z = xz[1]; return r;
+    });
+    g.save();
+    g.strokeStyle = DL.color('rule'); g.lineWidth = 1;
+    g.beginPath();
+    corners.forEach(function (r, k) { if (k) g.lineTo(X(r), Y(r)); else g.moveTo(X(r), Y(r)); });
+    g.closePath(); g.stroke();
+    var left = corners.reduce(function (a, b) { return b.u < a.u ? b : a; });
+    var top = P(left.x, YH, left.z);
+    g.strokeStyle = DL.color('ink-faint');
+    g.beginPath(); g.moveTo(X(left), Y(left)); g.lineTo(X(top), Y(top)); g.stroke();
+    g.restore();
+
+    /* the surface: quads from the back to the front, each painted over
+       what is behind it, coloured by the sign and size of its value */
+    var quads = [];
+    for (var i = 0; i < NS - 1; i++) {
+      for (var j = 0; j < NT - 1; j++) {
+        var a = i * NT + j, b = a + NT;
+        quads.push([a, b, b + 1, a + 1]);
+      }
+    }
+    quads.forEach(function (q) {
+      q.d = (sp[q[0]].d + sp[q[1]].d + sp[q[2]].d + sp[q[3]].d) / 4;
+      q.v = (sp[q[0]].v + sp[q[1]].v + sp[q[2]].v + sp[q[3]].v) / 4;
+    });
+    quads.sort(function (a, b) { return a.d - b.d; });
+    var paper = DL.color('paper'), pos = DL.color('accent'), neg = DL.color('plain');
+    g.save();
+    g.lineWidth = 0.7; g.lineJoin = 'round';
+    quads.forEach(function (q) {
+      var t = q.v >= 0 ? q.v / Math.max(m.hi, 1e-6) : Math.abs(q.v) / Math.max(Math.abs(m.lo), 1e-6);
+      t = Math.min(1, Math.max(0, t));
+      var col = q.v >= 0 ? pos : neg;
+      g.beginPath();
+      g.moveTo(X(sp[q[0]]), Y(sp[q[0]]));
+      g.lineTo(X(sp[q[1]]), Y(sp[q[1]]));
+      g.lineTo(X(sp[q[2]]), Y(sp[q[2]]));
+      g.lineTo(X(sp[q[3]]), Y(sp[q[3]]));
+      g.closePath();
+      g.fillStyle = paper; g.fill();
+      g.fillStyle = DL.fade(col, 0.05 + 0.3 * t); g.fill();
+      g.strokeStyle = DL.fade(col, 0.3 + 0.7 * t); g.stroke();
+    });
+    g.restore();
+
+    /* labels: the vertical axis's name and ends, then spot and DTE along
+       the two floor edges nearest the reader */
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    function say(r, dx, dy, s, o) {
+      p.text(r.u, r.w, s, { dx: dx, dy: dy, align: o.align || 'center',
+                            baseline: o.baseline || 'middle', color: o.color || faint, font: font });
+    }
+    say(top, 0, -8, LABEL[id], { baseline: 'bottom', color: soft });
+    say(top, -7, 0, tick(m.hi, Math.max(Math.abs(m.hi), Math.abs(m.lo))), { align: 'right' });
+    say(left, -7, 0, tick(m.lo, Math.max(Math.abs(m.hi), Math.abs(m.lo))), { align: 'right' });
+    if (m.lo < 0 && m.hi > 0) {
+      var zero = P(left.x, (0 - m.lo) / m.range * YH, left.z);
+      g.save();
+      g.strokeStyle = DL.color('ink-faint'); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(X(zero) - 4, Y(zero)); g.lineTo(X(zero), Y(zero)); g.stroke();
+      g.restore();
+      say(zero, -7, 0, '0', { align: 'right' });
+    }
+
+    var near = corners.reduce(function (a, b) { return b.d > a.d ? b : a; });
+    var mid = P(0, 0, 0);
+    /* an edge of the floor through the nearest corner: its two end values
+       and its name, set off the edge away from the floor's centre */
+    function edge(a, b, lo, hi, name) {
+      var ex = X(b) - X(a), ey = Y(b) - Y(a), len = Math.sqrt(ex * ex + ey * ey) || 1;
+      var nx = -ey / len, ny = ex / len;
+      var mx = (X(a) + X(b)) / 2 - p.X(mid.u), my = (Y(a) + Y(b)) / 2 - p.Y(mid.w);
+      if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; }
+      var o = { align: nx > 0.35 ? 'left' : nx < -0.35 ? 'right' : 'center',
+                baseline: ny > 0.35 ? 'top' : ny < -0.35 ? 'bottom' : 'middle' };
+      var along = 0.1;
+      [[a, lo, along], [b, hi, 1 - along]].forEach(function (e) {
+        var r = { u: a.u + (b.u - a.u) * e[2], w: a.w + (b.w - a.w) * e[2] };
+        say(r, nx * 7, ny * 7, e[1], o);
+      });
+      o.color = soft;
+      say({ u: (a.u + b.u) / 2, w: (a.w + b.w) / 2 }, nx * 9, ny * 9, name, o);
+    }
+    edge(P(-XW, 0, near.z), P(XW, 0, near.z), '70', '130', 'spot S');
+    edge(P(near.x, 0, -ZW), P(near.x, 0, ZW), '1d', '90d', 'DTE');
+
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-az-o', azDeg + '°');
+    DL.out(U + '-el-o', elDeg + '°');
+    DL.out(U + '-act', 'active Greek = ' + LABEL[id]);
+    DL.out(U + '-live', 'at ATM, 30 DTE = ' +
+           DL.num(computeGreek(id, K, K, 30 / 365, sigma, opt), 4));
+    DL.out(U + '-kind', 'type = ' + opt);
+  });
+  DL.bind([U + '-sig', U + '-az', U + '-el'], draw);
+})();
+</script>

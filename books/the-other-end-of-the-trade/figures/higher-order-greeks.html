@@ -1,0 +1,179 @@
+<!--
+name: higher-order Greeks
+source: src/interactives/HigherOrderGreeks.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Greek" id="{{uid}}-greek">
+      <button type="button" data-v="vanna" class="on" aria-pressed="true">vanna</button>
+      <button type="button" data-v="charm" aria-pressed="false">charm</button>
+      <button type="button" data-v="volga" aria-pressed="false">volga</button>
+      <button type="button" data-v="speed" aria-pressed="false">speed</button>
+      <button type="button" data-v="color" aria-pressed="false">color</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="View" id="{{uid}}-view">
+      <label>view</label>
+      <button type="button" data-v="line" class="on" aria-pressed="true">line</button>
+      <button type="button" data-v="heatmap" aria-pressed="false">heatmap (spot × DTE)</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-t">days to expiry</label>
+      <input type="range" id="{{uid}}-t" min="5" max="120" step="1" value="30">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-s">implied vol σ</label>
+      <input type="range" id="{{uid}}-s" min="0.1" max="0.6" step="0.01" value="0.25">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Greek</th><th class="c-other" id="{{uid}}-name"></th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Definition</td><td class="c-other" id="{{uid}}-def"></td></tr>
+      <tr><td class="c-trial">What it means</td><td class="c-other" id="{{uid}}-desc"></td></tr>
+      <tr><td class="c-trial">Where it peaks</td><td class="c-other" id="{{uid}}-peak"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>Five higher-order Greeks, drawn against spot.</b> The chosen Greek of an option
+  struck at K = 100 (r = 4%, no dividends), across spot from 70 to 130, for the days to expiry
+  and implied vol on the sliders; the heatmap draws it over spot and days to expiry at once,
+  amber where it is positive and red where it is negative. Vanna changes sign at the strike,
+  positive on the OTM-call side and negative on the OTM-put side. Shorten the days to expiry
+  and charm and color grow and crowd in toward the strike; both are per year of time.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 100, R = 0.04;
+  var TS = DL.$(U + '-t'), SS = DL.$(U + '-s');
+  var greek = DL.seg(U + '-greek', function () { draw(); });
+  var view = DL.seg(U + '-view', function () { draw(); });
+
+  /* the app's card for each Greek. Two lines are corrected to the maths the
+     figure draws: charm and volga peak where the comments say, not where the
+     app's card said (see the notes in value()). */
+  var INFO = {
+    vanna: { name: 'Vanna', def: '∂Δ/∂σ = ∂ν/∂S', tone: 'familiar',
+             desc: 'How delta changes when IV moves. Drives the post-FOMC vol-crush rally.',
+             peak: 'Largest for moderately OTM options. Sign asymmetric across the strike.' },
+    charm: { name: 'Charm', def: '∂Δ/∂t', tone: 'accent',
+             desc: 'How delta changes as time passes. Operates on calendar time including weekends.',
+             peak: 'Largest a little either side of the strike, not at it, close to expiration. ' +
+                   'Scales like 1/T.' },
+    volga: { name: 'Volga (Vomma)', def: '∂²V/∂σ² = ∂ν/∂σ', tone: 'familiar',
+             desc: 'Vega’s sensitivity to vol itself. Captures vega convexity.',
+             peak: 'Largest in the wings, near call deltas of 10 and 90. ATM volga ≈ 0.' },
+    speed: { name: 'Speed', def: '∂Γ/∂S = ∂³V/∂S³', tone: 'plain',
+             desc: 'Gamma’s sensitivity to spot. For 0DTE, a 1% spot move can flip the gamma profile.',
+             peak: 'Highest for moderately OTM/ITM options.' },
+    color: { name: 'Color', def: '∂Γ/∂t', tone: 'insight',
+             desc: 'Gamma decay. Negative for OTM near expiry; positive and large for ATM.',
+             peak: 'Largest for ATM options close to expiry.' }
+  };
+
+  /* One Greek at spot S, T in years, as the app computes it (q = 0), except color.
+     The app's color, (-Γ / 2T)(1 + d1 d2 / σ√T), is negative at every spot, which
+     contradicts its own card and the text (positive and largest at the money).
+     The figure draws ∂Γ/∂t with time running forward: (Γ / 2T)(1 + d1 (2rT - d2 σ√T) / σ√T).
+     Charm (the app's call charm) and volga peak about 15-20 delta and about 8-10 delta
+     either side of the strike; the cards say so. */
+  function value(g, S, T, sigma) {
+    var D1, D2, gm;
+    switch (g) {
+      case 'vanna': return DL.bsVanna(S, K, T, sigma, R, 0);
+      case 'charm': return DL.bsCharm(S, K, T, sigma, 'call', R, 0);
+      case 'volga':
+        D1 = DL.d1(S, K, T, sigma, R, 0); D2 = D1 - sigma * Math.sqrt(T);
+        return S * DL.phi(D1) * Math.sqrt(T) * D1 * D2 / sigma;
+      case 'speed':
+        D1 = DL.d1(S, K, T, sigma, R, 0); gm = DL.bsGamma(S, K, T, sigma, R, 0);
+        return -(gm / S) * (D1 / (sigma * Math.sqrt(T)) + 1);
+      case 'color':
+        if (T <= 0) return 0;
+        D1 = DL.d1(S, K, T, sigma, R, 0); D2 = D1 - sigma * Math.sqrt(T);
+        gm = DL.bsGamma(S, K, T, sigma, R, 0);
+        return gm / (2 * T) * (1 + D1 * (2 * R * T - D2 * sigma * Math.sqrt(T)) / (sigma * Math.sqrt(T)));
+    }
+    return 0;
+  }
+
+  function lineChart(c, g, T, sigma) {
+    var xs = [], ys = [];
+    for (var S = 70; S <= 130; S += 1) { xs.push(S); ys.push(value(g, S, T, sigma)); }
+    var lo = 0, hi = 0;
+    ys.forEach(function (v) { if (isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+    var span = (hi - lo) || 1;
+    var p = new NMT.Plot(c, { xmin: 70, xmax: 130, ymin: lo - span * 0.04, ymax: hi + span * 0.06,
+                              pad: { l: 50, r: 14, t: 22, b: 28 } });
+    DL.axes(p, { xs: [70, 80, 90, 100, 110, 120, 130], ny: 4 });
+    var tone = DL.color(INFO[g].tone), acc = DL.color('accent'), sans = '11px ' + DL.color('sans');
+    DL.vline(p, K, { color: DL.fade(acc, 0.5), dash: [3, 3] });
+    p.text(K, p.o.ymax, 'K = ' + K, { align: 'center', dy: -5, color: acc, font: sans });
+    DL.line(p, xs, ys, { color: tone, width: 2 });
+    p.text(70, p.o.ymax, g + ' vs spot S', { dy: -5, color: tone, font: sans });
+  }
+
+  /* the app's heatmap: 50 spots from 70 to 130 by 30 expiries from 1 to 90 days,
+     amber for positive and red for negative, alpha by size against the largest */
+  var NX = 50, NY = 30, SMIN = 70, SMAX = 130, TMIN = 1, TMAX = 90;
+  function heatmap(c, g, sigma) {
+    var dS = (SMAX - SMIN) / (NX - 1), dT = (TMAX - TMIN) / (NY - 1), cells = [], vmax = 0;
+    for (var i = 0; i < NX; i++) {
+      var S = SMIN + i * dS;
+      for (var j = 0; j < NY; j++) {
+        var T = TMIN + j * dT, v = value(g, S, T / 365, sigma);
+        if (!isFinite(v)) v = 0;
+        vmax = Math.max(vmax, Math.abs(v));
+        cells.push([S, T, v]);
+      }
+    }
+    vmax = vmax || 1;
+    var p = new NMT.Plot(c, { xmin: SMIN - dS / 2, xmax: SMAX + dS / 2, ymin: TMIN - dT / 2,
+                              ymax: TMAX + dT / 2, pad: { l: 50, r: 14, t: 22, b: 28 }, grid: false });
+    DL.axes(p, { xs: [70, 80, 90, 100, 110, 120, 130], ys: [1, 30, 60, 90],
+                 x: function (v) { return String(v); }, y: function (v) { return v + 'd'; } });
+    var pos = DL.color('accent'), neg = DL.color('plain'), g2 = p.g;
+    cells.forEach(function (cl) {
+      var a = Math.min(Math.abs(cl[2]) / vmax, 1) * 0.9;
+      g2.fillStyle = DL.fade(cl[2] >= 0 ? pos : neg, a);
+      var x0 = p.X(cl[0] - dS / 2), x1 = p.X(cl[0] + dS / 2);
+      var y0 = p.Y(cl[1] + dT / 2), y1 = p.Y(cl[1] - dT / 2);
+      g2.fillRect(x0, y0, x1 - x0 + 0.5, y1 - y0 + 0.5);
+    });
+    DL.vline(p, K, { color: DL.fade(DL.color('familiar'), 0.7), dash: [3, 3] });
+    var sans = '11px ' + DL.color('sans');
+    p.text(p.o.xmin, p.o.ymax, g + ' · spot × DTE', { dy: -6, color: DL.color('ink-soft'), font: sans });
+    /* the key, top right: +max and −max */
+    g2.save();
+    g2.font = sans; g2.textBaseline = 'middle';
+    var right = p.w - p.o.pad.r, y = p.o.pad.t - 11;
+    var wNeg = g2.measureText(DL.MINUS + 'max').width, wPos = g2.measureText('+max').width;
+    var xNeg = right - wNeg - 16, xPos = xNeg - 14 - wPos - 16;
+    g2.fillStyle = DL.fade(pos, 0.9); g2.fillRect(xPos, y - 4, 12, 8);
+    g2.fillStyle = DL.color('ink-soft'); g2.fillText('+max', xPos + 16, y);
+    g2.fillStyle = DL.fade(neg, 0.9); g2.fillRect(xNeg, y - 4, 12, 8);
+    g2.fillStyle = DL.color('ink-soft'); g2.fillText(DL.MINUS + 'max', xNeg + 16, y);
+    g2.restore();
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var g = greek(), mode = view(), T = parseInt(TS.value, 10), sigma = parseFloat(SS.value);
+    if (mode === 'line') lineChart(c, g, T / 365, sigma);
+    else heatmap(c, g, sigma);
+    var heat = mode !== 'line';
+    if (TS.disabled !== heat) TS.disabled = heat;
+    var info = INFO[g];
+    DL.out(U + '-t-o', heat ? '1 → 90d, up the y-axis' : T + 'd');
+    DL.out(U + '-s-o', Math.round(sigma * 100) + '%');
+    DL.out(U + '-name', info.name);
+    DL.out(U + '-def', info.def);
+    DL.out(U + '-desc', info.desc);
+    DL.out(U + '-peak', info.peak);
+  });
+  DL.bind([U + '-t', U + '-s'], draw);
+})();
+</script>

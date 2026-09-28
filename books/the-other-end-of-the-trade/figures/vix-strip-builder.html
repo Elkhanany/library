@@ -1,0 +1,139 @@
+<!--
+name: VIX strip builder
+source: src/interactives/VIXStripBuilder.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-iv" data-h="130"></canvas>
+  <canvas id="{{uid}}-q" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-atm">ATM IV</label>
+      <input type="range" id="{{uid}}-atm" min="0.08" max="0.45" step="0.005" value="0.18">
+      <output id="{{uid}}-atm-o" for="{{uid}}-atm"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-ps">put skew steepness</label>
+      <input type="range" id="{{uid}}-ps" min="0" max="0.4" step="0.01" value="0.18">
+      <output id="{{uid}}-ps-o" for="{{uid}}-ps"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cs">call skew steepness</label>
+      <input type="range" id="{{uid}}-cs" min="0" max="0.2" step="0.005" value="0.04">
+      <output id="{{uid}}-cs-o" for="{{uid}}-cs"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="SPX shock" id="{{uid}}-shock">
+      <label>SPX shock</label>
+      <button type="button" data-v="-0.01" aria-pressed="false">−1%</button>
+      <button type="button" data-v="0" class="on" aria-pressed="true">0%</button>
+      <button type="button" data-v="0.01" aria-pressed="false">+1%</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-vix"></output></div>
+    <div class="ctrl"><output id="{{uid}}-f"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pw"></output></div>
+    <div class="ctrl"><output id="{{uid}}-cw"></output></div>
+  </div>
+  <figcaption><b>The VIX, computed from one strip of options.</b> Top, a toy 30-day implied
+  vol smile σ(K) over strikes 70 to 130, one apart, around a forward of 100, set by the ATM IV
+  and the steepness of each wing. Below, each strike's term (ΔK/K²)·e<sup>rT</sup>·Q(K), with
+  Q the out-of-the-money put below the forward or the call at or above it; the computed VIX is
+  100 × √[(2/T) × their sum], with T = 30/365 and r = 4%. The index follows the ATM IV almost
+  point for point and the skews move it far less; the SPX shock carries the whole smile along
+  with the forward, so it barely moves the index at all.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var ATM = DL.$(U + '-atm'), PS = DL.$(U + '-ps'), CS = DL.$(U + '-cs');
+  var shock = DL.seg(U + '-shock', update);
+  var T = 30 / 365, R = 0.04, X0 = 69, X1 = 131, PAD_L = 40, PAD_R = 14;
+  var XS = [80, 90, 100, 110, 120], st;
+
+  /* the app's strip: strikes 70 to 130 one apart; a two-slope smile in
+     log-moneyness around the forward F, floored at 5%; the OTM put below F,
+     the call at and above it, priced by bsPrice(F, K, T, σ, type, r, 0);
+     each strike adds (ΔK/K²)·e^rT·Q and the VIX is 100·√((2/T)·Σ) */
+  function compute() {
+    var atm = parseFloat(ATM.value), ps = parseFloat(PS.value), cs = parseFloat(CS.value);
+    var F = 100 * (1 + parseFloat(shock()));
+    var ks = [], ivs = [], cons = [], puts = [], sum = 0, put = 0, call = 0;
+    for (var K = 70; K <= 130; K += 1) {
+      var m = Math.log(K / F);
+      var iv = Math.max(0.05, m < 0 ? atm - ps * m : atm - cs * m);
+      var isPut = K < F;
+      var Q = DL.bsPrice(F, K, T, iv, isPut ? 'put' : 'call', R, 0);
+      var dK = 1, c = (dK / (K * K)) * Math.exp(R * T) * Q;
+      ks.push(K); ivs.push(iv); cons.push(c); puts.push(isPut);
+      sum += c;
+      if (isPut) put += c; else call += c;
+    }
+    st = { F: F, ks: ks, ivs: ivs, cons: cons, puts: puts, atm: atm, ps: ps, cs: cs,
+           vix: 100 * Math.sqrt((2 / T) * sum), putShare: put / (put + call) };
+  }
+  compute();
+
+  function label(p, x, y, s, o) {
+    o.font = '11px ' + DL.color('sans');
+    p.text(x, y, s, o);
+  }
+  /* a panel's title, in the row above the plot, from the canvas's left edge */
+  function title(p, s, color) {
+    label(p, X0, p.o.ymax, s, { dx: 4 - PAD_L, dy: -6, color: color });
+  }
+
+  var drawIv = DL.figure(U + '-iv', function (c) {
+    var lo = Math.min.apply(null, st.ivs) * 0.95, hi = Math.max.apply(null, st.ivs) * 1.05;
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: lo, ymax: hi,
+                              pad: { l: PAD_L, r: PAD_R, t: 22, b: 8 } });
+    DL.axes(p, { xs: XS, ys: DL.ticks(lo, hi, 4).vals, x: false,
+                 y: function (v, s) {
+                   return DL.num(v * 100, Math.max(0, -Math.floor(Math.log10(s * 100) + 1e-9))) + '%';
+                 } });
+    DL.vline(p, st.F, { color: DL.color('familiar'), dash: [3, 3], width: 1.2 });
+    DL.line(p, st.ks, st.ivs, { color: DL.color('accent'), width: 1.8 });
+    title(p, 'implied vol smile σ(K)', DL.color('accent'));
+  });
+
+  var drawQ = DL.figure(U + '-q', function (c) {
+    var hi = Math.max.apply(null, st.cons) * 1.1;
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: 0, ymax: hi,
+                              pad: { l: PAD_L, r: PAD_R, t: 22, b: 26 } });
+    var ty = DL.ticks(0, hi * 1e4, 3);
+    DL.axes(p, { xs: XS, ys: ty.vals.map(function (v) { return v / 1e4; }), x: false,
+                 y: function (v) { return DL.num(v * 1e4, ty.step < 1 ? 1 : 0); } });
+    var cPut = DL.fade(DL.color('plain'), 0.6), cCall = DL.fade(DL.color('insight'), 0.6);
+    DL.bars(p, st.ks, st.cons, { w: 0.6, color: function (v, i) { return st.puts[i] ? cPut : cCall; } });
+    DL.vline(p, st.F, { color: DL.color('familiar'), dash: [3, 3], width: 1.2 });
+    /* the forward is named on the strike axis; a strike label it would touch is left out */
+    var g = p.g, fText = 'F = ' + st.F.toFixed(1);
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    var fw = g.measureText(fText).width;
+    var shown = XS.filter(function (v) {
+      return Math.abs(p.X(v) - p.X(st.F)) > (g.measureText(String(v)).width + fw) / 2 + 12;
+    });
+    g.restore();
+    DL.xticks(p, shown);
+    label(p, st.F, 0, fText, { dy: 6, align: 'center', baseline: 'top', color: DL.color('familiar') });
+    title(p, 'variance contribution (ΔK/K²)·e^(rT)·Q(K), ×10⁻⁴', DL.color('ink-soft'));
+    label(p, 71, hi * 0.55, 'puts', { color: DL.color('plain') });
+    label(p, 129, hi * 0.55, 'calls', { align: 'right', color: DL.color('insight') });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-atm-o', (st.atm * 100).toFixed(1) + '%');
+    DL.out(U + '-ps-o', st.ps.toFixed(2));
+    DL.out(U + '-cs-o', st.cs.toFixed(3));
+    DL.out(U + '-vix', 'computed VIX = ' + st.vix.toFixed(2));
+    DL.out(U + '-f', 'forward = ' + st.F.toFixed(1));
+    DL.out(U + '-pw', 'put wing share = ' + (st.putShare * 100).toFixed(0) + '%');
+    DL.out(U + '-cw', 'call wing share = ' + ((1 - st.putShare) * 100).toFixed(0) + '%');
+    drawIv();
+    drawQ();
+  }
+  update();
+  DL.bind([U + '-atm', U + '-ps', U + '-cs'], update);
+})();
+</script>

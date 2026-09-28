@@ -1,0 +1,125 @@
+<!--
+name: retail haircut decomposition
+source: src/interactives/RetailHaircutDecomposition.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="184"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-sr">paper Sharpe</label>
+      <input type="range" id="{{uid}}-sr" min="0" max="3" step="0.05" value="1">
+      <output id="{{uid}}-sr-o" for="{{uid}}-sr"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h1">h₁ · out-of-sample</label>
+      <input type="range" id="{{uid}}-h1" min="0.5" max="1" step="0.01" value="0.8">
+      <output id="{{uid}}-h1-o" for="{{uid}}-h1"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h2">h₂ · execution</label>
+      <input type="range" id="{{uid}}-h2" min="0.5" max="1" step="0.01" value="0.85">
+      <output id="{{uid}}-h2-o" for="{{uid}}-h2"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h3">h₃ · tax</label>
+      <input type="range" id="{{uid}}-h3" min="0.5" max="1" step="0.01" value="0.85">
+      <output id="{{uid}}-h3-o" for="{{uid}}-h3"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h4">h₄ · behavior</label>
+      <input type="range" id="{{uid}}-h4" min="0.5" max="1" step="0.01" value="0.8">
+      <output id="{{uid}}-h4-o" for="{{uid}}-h4"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-user"></output></div>
+    <div class="ctrl"><output id="{{uid}}-drag"></output></div>
+    <div class="ctrl"><output id="{{uid}}-bind"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Four haircuts between the backtest and the account.</b> Paper Sharpe × h₁ × h₂
+  × h₃ × h₄ = user Sharpe: each bar is the Sharpe left after one more layer of friction
+  (out-of-sample, execution, tax, behavior), and the binding constraint is the layer with the
+  largest drag. The dashed line is buy-and-hold SPX, which delivers a user Sharpe of roughly
+  0.40 after retail-typical tax and behavior haircuts; a strategy that ends below it is paying
+  you to underperform the index. The starting haircuts sit inside the typical ranges above and
+  turn a paper Sharpe of 1.0 into 0.46.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LAYERS = [
+    { key: 'h1', name: 'out-of-sample' },
+    { key: 'h2', name: 'execution' },
+    { key: 'h3', name: 'tax' },
+    { key: 'h4', name: 'behavior' }
+  ];
+  var LABELS = ['Paper', '× h₁', '× h₁h₂', '× h₁h₂h₃', 'User Sharpe'];
+  /* the app's baseline: buy-and-hold SPX, about 0.40 user Sharpe */
+  var BASE = 0.40;
+
+  /* a label centred on x, kept inside the canvas */
+  function tag(p, x, y, s, color, dy) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var w = p.g.measureText(s).width, px = p.X(x);
+    var at = Math.min(Math.max(px, w / 2 + 2), p.w - w / 2 - 2);
+    p.text(x, y, s, { dx: at - px, dy: dy, align: 'center', color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var paper = DL.val(U + '-sr');
+    var h = LAYERS.map(function (l) { return DL.val(U + '-' + l.key); });
+    var values = [paper, paper * h[0], paper * h[0] * h[1], paper * h[0] * h[1] * h[2],
+                  paper * h[0] * h[1] * h[2] * h[3]];
+    var user = values[4];
+    var maxBar = Math.max.apply(null, values.concat([0.01]));
+    /* the binding constraint: the first layer with the largest drag 1 - h */
+    var bind = 0;
+    for (var i = 1; i < 4; i++) if (1 - h[i] > 1 - h[bind]) bind = i;
+    /* the verdict sets the user Sharpe against the 0.40 baseline it names */
+    var above = user >= BASE;
+
+    /* bars top to bottom: paper at y = 5, user Sharpe at y = 1 */
+    var p = new NMT.Plot(c, { xmin: 0, xmax: Math.max(maxBar, BASE), ymin: 0.45, ymax: 5.55,
+                              pad: { l: 84, r: 46, t: 22, b: 6 }, grid: false });
+    DL.axes(p, { x: false, y: false, grid: false });
+    var start = DL.fade(DL.color('accent'), 0.6), mid = DL.fade(DL.color('familiar'), 0.45),
+        end = DL.fade(DL.color(above ? 'insight' : 'plain'), 0.7);
+    var ys = [5, 4, 3, 2, 1];
+    /* the baseline first, so the bars and their values sit over it */
+    DL.vline(p, BASE, { color: DL.color('ink-soft'), dash: [4, 4], width: 1.2 });
+    tag(p, BASE, 5.55, 'SPX buy-and-hold ≈ 0.40', DL.color('ink-soft'), -6);
+    DL.hbars(p, ys, values, { h: 0.62, color: function (v, k) {
+      return k === 0 ? start : k === 4 ? end : mid; } });
+    var font = '11px ' + DL.color('sans'), paperC = DL.color('paper');
+    values.forEach(function (v, k) {
+      p.text(0, ys[k], LABELS[k], { dx: -8, align: 'right', baseline: 'middle', font: font,
+                                    color: DL.color(k === 4 ? 'ink' : 'ink-soft') });
+      var s = v.toFixed(3);
+      p.g.font = font;
+      p.g.fillStyle = paperC;
+      p.g.fillRect(p.X(v) + 3, p.Y(ys[k]) - 7, p.g.measureText(s).width + 6, 14);
+      p.text(v, ys[k], s, { dx: 6, baseline: 'middle', font: font,
+                            color: DL.color(k === 4 ? (above ? 'insight' : 'plain') : 'ink-soft') });
+    });
+
+    DL.out(U + '-sr-o', paper.toFixed(2));
+    LAYERS.forEach(function (l, k) { DL.out(U + '-' + l.key + '-o', h[k].toFixed(2)); });
+    DL.out(U + '-user', 'user Sharpe = ' + user.toFixed(3));
+    /* 1 - user / paper, which is 1 - h1 h2 h3 h4 whatever the paper Sharpe,
+       so a paper Sharpe of zero still has a drag */
+    var drag = paper > 0 ? 1 - user / paper : 1 - h[0] * h[1] * h[2] * h[3];
+    DL.out(U + '-drag', 'total drag = ' + (drag * 100).toFixed(1) + '%');
+    DL.out(U + '-bind', 'binding = ' + LAYERS[bind].name + ' (' + ((1 - h[bind]) * 100).toFixed(0) + '%)');
+    if (above) {
+      DL.out(U + '-vk', 'Above the buy-and-hold baseline.');
+      DL.out(U + '-vt', 'Edge is plausibly real.');
+    } else {
+      DL.out(U + '-vk', 'Below the SPX buy-and-hold baseline (~0.40 user Sharpe).');
+      DL.out(U + '-vt', 'The paper strategy does not survive the haircut.');
+    }
+  });
+  DL.bind([U + '-sr', U + '-h1', U + '-h2', U + '-h3', U + '-h4'], draw);
+})();
+</script>

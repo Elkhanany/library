@@ -1,0 +1,184 @@
+<!--
+name: gamma hedge simulator
+source: src/interactives/GammaHedgeSim.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-bar">bar</label>
+      <input type="range" id="{{uid}}-bar" min="0" max="50" step="1" value="0">
+      <output id="{{uid}}-bar-o" for="{{uid}}-bar"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Playback">
+      <button type="button" id="{{uid}}-play">play</button>
+      <button type="button" id="{{uid}}-pause">pause</button>
+      <button type="button" id="{{uid}}-reset">reset</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-spot"></output></div>
+    <div class="ctrl"><output id="{{uid}}-delta"></output></div>
+    <div class="ctrl"><output id="{{uid}}-trade"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-theta"></output></div>
+    <div class="ctrl"><output id="{{uid}}-cost"></output></div>
+    <div class="ctrl"><output id="{{uid}}-net"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The short-gamma dealer chases the move.</b> A dealer who sold 1,000
+  at-the-money calls (strike $100, 30 days, IV 20%) holds delta × 100,000 shares as the hedge
+  along one simulated path of 50 daily bars. Press play or drag the bar slider: the bars at the
+  top are the shares the dealer buys (up) or sells (down) on each bar, at full height from 3,000
+  shares, and the hedge buys as the price rises and sells as it falls. The dealer's P&amp;L per bar is
+  ½Γ·S²·[σ²·dt − (dS/S)²]: the theta income ½Γ·S²·σ²·dt, less the cost of rebalancing,
+  ½Γ·(dS)², the buy-high, sell-low loss of short gamma. The calls run out at bar 30 deep in the
+  money, so from there the hedge stays at 100,000 shares and trades nothing.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var BAR = DL.$(U + '-bar');
+
+  /* The app's path: seed 13, 50 bars of drift 0.12% and 1.1% noise from 100. */
+  var path = [{ t: 0, S: 100 }];
+  (function () {
+    var rng = DL.rng(13), S = 100;
+    for (var i = 1; i <= 50; i++) {
+      S *= 1 + (0.0012 + 0.011 * DL.gauss(rng));
+      path.push({ t: i, S: S });
+    }
+  })();
+
+  /* The dealer is short 1,000 calls, K = 100, IV 20%, 30 days (r = 4%), and
+     holds delta × 100,000 shares. Time left falls a day per bar (floored at
+     0.001 years); theta income accrues at dt = 1/252 a bar, the rebalancing
+     cost at ½Γ·(dS)², as in the app. Each bar depends only on the bars
+     before it, so the whole history is computed once. */
+  var sigma = 0.2, TT = 30 / 365, K = 100, contracts = 1000, dt = 1 / 252;
+  var hist = [];
+  (function () {
+    var cumTheta = 0, cumGammaCost = 0, lastSpot = 100;
+    for (var i = 0; i < path.length; i++) {
+      var p = path[i];
+      var remT = Math.max(0.001, TT - p.t / 365);
+      var d = DL.bsDelta(p.S, K, remT, sigma, 'call');
+      var g = DL.bsGamma(p.S, K, remT, sigma);
+      var shares = Math.round(d * contracts * 100);
+      if (i > 0) {
+        cumTheta += 0.5 * g * p.S * p.S * sigma * sigma * dt * contracts * 100;
+        var dS = p.S - lastSpot;
+        cumGammaCost += 0.5 * g * dS * dS * contracts * 100;
+      }
+      hist.push({ t: p.t, S: p.S, delta: d, shares: shares, cumTheta: cumTheta,
+                  cumGammaCost: cumGammaCost, net: cumTheta - cumGammaCost });
+      lastSpot = p.S;
+    }
+  })();
+  var LAST = path.length - 1;
+  var allS = path.map(function (q) { return q.S; });
+  var yMin = Math.min.apply(null, allS) * 0.98, yMax = Math.max.apply(null, allS) * 1.02;
+
+  var step = 0;
+  var FLOW_Y = 34, FLOW_H = 20, MAX_FLOW = 3000;
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: LAST, ymin: yMin, ymax: yMax,
+                              pad: { l: 44, r: 54, t: 66, b: 26 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50], ys: [yMin, (yMin + yMax) / 2, yMax],
+                 x: function (v) { return v === 0 ? 'bar 0' : String(v); },
+                 y: function (v) { return '$' + v.toFixed(0); } });
+    var g = p.g, font = '11px ' + DL.color('sans');
+    var cAcc = DL.color('accent'), cSpot = DL.color('familiar'),
+        cBuy = DL.color('insight'), cSell = DL.color('plain');
+
+    /* the strike */
+    p.seg(0, K, LAST, K, { color: DL.fade(cAcc, 0.45), width: 1, dash: [3, 3] });
+    p.text(LAST, K, 'K=$' + K, { dx: 6, baseline: 'middle', color: cAcc, font: font });
+
+    /* the path: all of it faint, the part walked so far solid */
+    DL.line(p, path.map(function (q) { return q.t; }), allS,
+            { color: DL.fade(cSpot, 0.25), width: 1.4 });
+    var walked = path.slice(0, step + 1);
+    if (walked.length > 1)
+      DL.line(p, walked.map(function (q) { return q.t; }), walked.map(function (q) { return q.S; }),
+              { color: cSpot, width: 1.8 });
+
+    /* the dealer's trades, a band above the chart: buys up, sells down */
+    g.save();
+    g.strokeStyle = DL.color('rule'); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(p.X(0), FLOW_Y + 0.5); g.lineTo(p.X(LAST), FLOW_Y + 0.5); g.stroke();
+    var bw = Math.max(2, (p.X(1) - p.X(0)) * 0.62);
+    for (var i = 1; i <= step; i++) {
+      var flow = hist[i].shares - hist[i - 1].shares;
+      if (!flow) continue;
+      var bh = Math.min(FLOW_H, Math.abs(flow) / MAX_FLOW * FLOW_H);
+      g.fillStyle = DL.fade(flow > 0 ? cBuy : cSell, 0.75);
+      g.fillRect(p.X(hist[i].t) - bw / 2, flow > 0 ? FLOW_Y - bh : FLOW_Y + 1, bw, bh);
+    }
+    g.font = font; g.textBaseline = 'middle';
+    g.textAlign = 'right'; g.fillStyle = DL.color('ink-faint');
+    g.fillText('flow', p.X(0) - 7, FLOW_Y);
+    g.textAlign = 'left';
+    g.fillStyle = cBuy; g.fillText('▲ buys', p.X(LAST) + 6, FLOW_Y - 10);
+    g.fillStyle = cSell; g.fillText('▼ sells', p.X(LAST) + 6, FLOW_Y + 11);
+    g.restore();
+
+    /* where the walk has got to */
+    var cur = hist[step];
+    g.save();
+    g.strokeStyle = DL.fade(cAcc, 0.3); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(p.X(cur.t) + 0.5, FLOW_Y - FLOW_H - 2);
+    g.lineTo(p.X(cur.t) + 0.5, p.Y(yMin)); g.stroke();
+    g.restore();
+    p.dot(cur.t, cur.S, { r: 4, color: cAcc, ring: true });
+
+    var prev = hist[step - 1], trade = prev ? cur.shares - prev.shares : 0;
+    DL.out(U + '-bar-o', step + '/' + LAST);
+    DL.out(U + '-spot', 'spot = $' + cur.S.toFixed(2));
+    DL.out(U + '-delta', 'current delta = ' + cur.delta.toFixed(3));
+    DL.out(U + '-trade', 'shares this bar = ' + (trade === 0 ? '0' : DL.signed(trade, 0)));
+    /* signed as the app writes them, but a plain $0 before the first bar */
+    function money(x, sign) {
+      var s = DL.usd(Math.abs(x), 0);
+      return s === '$0' ? s : sign + s;
+    }
+    DL.out(U + '-theta', 'theta income = ' + money(cur.cumTheta, '+'));
+    DL.out(U + '-cost', 'gamma rebal cost = ' + money(cur.cumGammaCost, DL.MINUS));
+    DL.out(U + '-net', 'net dealer P&L = ' + money(cur.net, cur.net >= 0 ? '+' : DL.MINUS));
+    var over = cur.cumGammaCost > cur.cumTheta;
+    DL.out(U + '-vk', over ? 'Realized exceeded implied:' : 'Realized stayed below implied:');
+    DL.out(U + '-vt', over ? 'the rebalancing cost so far is more than the theta income.'
+                           : 'the rebalancing cost so far is no more than the theta income.');
+  });
+
+  /* Playback: nothing moves until play is pressed. One bar every 220 ms, as
+     the app; reduced motion jumps straight to the last bar. */
+  var raf = null, last = 0, acc = 0;
+  function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  function show(s) { step = s; BAR.value = s; draw(); }
+  function tick(ts) {
+    if (!last) last = ts;
+    acc += ts - last; last = ts;
+    var s = step;
+    while (acc >= 220 && s < LAST) { acc -= 220; s++; }
+    if (s !== step) show(s);
+    raf = s < LAST ? requestAnimationFrame(tick) : null;
+  }
+  function play() {
+    stop();
+    if (DL.still()) { show(LAST); return; }
+    show(0);
+    last = 0; acc = 0;
+    raf = requestAnimationFrame(tick);
+  }
+  function reset() { stop(); show(0); }
+
+  DL.$(U + '-play').addEventListener('click', play);
+  DL.$(U + '-pause').addEventListener('click', stop);
+  DL.$(U + '-reset').addEventListener('click', reset);
+  DL.bind([U + '-bar'], function () { stop(); step = parseInt(BAR.value, 10); draw(); });
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
+})();
+</script>

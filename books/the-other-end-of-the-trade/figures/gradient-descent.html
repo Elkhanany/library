@@ -1,0 +1,86 @@
+<!--
+name: gradient descent
+source: src/interactives/GradientDescent.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-lr">learning rate η</label>
+      <input type="range" id="{{uid}}-lr" min="0.01" max="1.2" step="0.01" value="0.05">
+      <output id="{{uid}}-lr-o" for="{{uid}}-lr"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-n">steps</label>
+      <input type="range" id="{{uid}}-n" min="1" max="30" step="1" value="15">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-start"></output></div>
+    <div class="ctrl"><output id="{{uid}}-end"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dist"></output></div>
+  </div>
+  <figcaption><b>Too small a step crawls; too large a step overshoots.</b> Gradient descent on
+  the convex loss L(w) = (w − 0.5)² + 0.2, starting from w = −1, each step moving w by
+  −η × ∂L/∂w. Set the learning rate η and the number of steps; the dots are the iterates, from
+  the start (red) to where the last step lands (green). At η = 0.5 the first step lands exactly
+  on the optimum; above 0.5 every step overshoots it and the path zigzags, and from η = 1 up it
+  never settles: at 1 it bounces between −1 and 2, and above 1 it diverges.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LR = DL.$(U + '-lr'), NS = DL.$(U + '-n');
+
+  function loss(w) { return (w - 0.5) * (w - 0.5) + 0.2; }
+  /* the app's descent: from w = -1, w <- w - eta * 2 (w - 0.5) */
+  function descend(lr, steps) {
+    var w = -1.0, path = [{ w: w, L: loss(w) }];
+    for (var i = 0; i < steps; i++) {
+      var grad = 2 * (w - 0.5);
+      w = w - lr * grad;
+      path.push({ w: w, L: loss(w) });
+    }
+    return path;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var lr = parseFloat(LR.value), steps = parseInt(NS.value, 10);
+    var traj = descend(lr, steps), first = traj[0], last = traj[traj.length - 1];
+    var top = loss(-2);   /* the curve is drawn on w in [-2, 3]; 6.45 at either end */
+    var p = new NMT.Plot(c, { xmin: -2, xmax: 3, ymin: 0, ymax: top,
+                              pad: { l: 40, r: 14, t: 20, b: 30 } });
+    DL.axes(p, { xs: [-2, -1, 0, 1, 2, 3], ys: [0, 2, 4, 6], yAt: -2,
+                 x: function (v) { return DL.num(v, 0); }, y: function (v) { return DL.num(v, 0); } });
+    DL.vline(p, 0.5, { color: DL.fade(DL.color('insight'), 0.55), dash: [3, 3] });
+    p.text(0.5, top, 'optimum', { align: 'center', dy: -4, color: DL.color('insight'),
+                                  font: '11px ' + DL.color('sans') });
+    p.fn(loss, { color: DL.fade(DL.color('accent'), 0.75), width: 1.6, N: 240 });
+    p.text(2.2, loss(2.2), 'L(w)', { dx: 10, baseline: 'top', color: DL.color('accent'),
+                                     font: '11px ' + DL.color('sans') });
+    p.text(3, 0, 'w', { align: 'right', dx: -4, dy: -5, color: DL.color('ink-soft'),
+                        font: 'italic 12px ' + DL.color('serif') });
+
+    /* the iterates; a diverging path leaves the window, so its marks are clipped to it */
+    var fam = DL.color('familiar');
+    p.path(traj.map(function (q) { return [q.w, q.L]; }), { color: DL.fade(fam, 0.8), width: 1.4 });
+    DL.clip(p);
+    traj.forEach(function (q, i) { if (i > 0) p.dot(q.w, q.L, { r: 3, color: fam }); });
+    p.dot(first.w, first.L, { r: 5, color: DL.color('plain'), ring: true });
+    p.dot(last.w, last.L, { r: 5, color: DL.color('insight'), ring: true });
+    p.g.restore();
+    if (last.w < -2 || last.w > 3) {
+      p.text(3, top, 'end off the chart', { align: 'right', dy: -4, color: DL.color('plain'),
+                                            font: '11px ' + DL.color('sans') });
+    }
+
+    DL.out(U + '-lr-o', DL.num(lr, 2));
+    DL.out(U + '-n-o', String(steps));
+    DL.out(U + '-start', 'start w = ' + DL.num(first.w, 3));
+    DL.out(U + '-end', 'end w = ' + DL.num(last.w, 3));
+    DL.out(U + '-dist', 'distance to optimum = ' + DL.num(Math.abs(last.w - 0.5), 4));
+  });
+  DL.bind([U + '-lr', U + '-n'], draw);
+})();
+</script>
