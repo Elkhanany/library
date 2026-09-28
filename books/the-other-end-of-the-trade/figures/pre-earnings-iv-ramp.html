@@ -1,0 +1,156 @@
+<!--
+name: pre-earnings IV ramp
+source: src/interactives/PreEarningsIVRamp.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-iv" data-h="160"></canvas>
+  <canvas id="{{uid}}-px" data-h="160"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-days">days before earnings</label>
+      <input type="range" id="{{uid}}-days" min="3" max="14" step="1" value="7">
+      <output id="{{uid}}-days-o" for="{{uid}}-days"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-amb">ambient IV</label>
+      <input type="range" id="{{uid}}-amb" min="0.10" max="0.60" step="0.01" value="0.22">
+      <output id="{{uid}}-amb-o" for="{{uid}}-amb"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-evt">event IV peak</label>
+      <input type="range" id="{{uid}}-evt" min="0.20" max="1.5" step="0.05" value="0.80">
+      <output id="{{uid}}-evt-o" for="{{uid}}-evt"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-drift">daily drift</label>
+      <input type="range" id="{{uid}}-drift" min="-0.01" max="0.02" step="0.001" value="0.005">
+      <output id="{{uid}}-drift-o" for="{{uid}}-drift"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-move">earnings move</label>
+      <input type="range" id="{{uid}}-move" min="-0.20" max="0.20" step="0.005" value="0.03">
+      <output id="{{uid}}-move-o" for="{{uid}}-move"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Plan</th><th>Stock P&amp;L (100 sh)</th><th>Call P&amp;L (1 ctr)</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial">exit T−1 discipline</td><td data-label="Stock P&amp;L (100 sh)" id="{{uid}}-es"></td><td data-label="Call P&amp;L (1 ctr)" id="{{uid}}-ec"></td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial">hold through earnings</td><td data-label="Stock P&amp;L (100 sh)" id="{{uid}}-hs"></td><td data-label="Call P&amp;L (1 ctr)" id="{{uid}}-hc"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Exit before the event, or hold through it.</b> A synthetic run-up to earnings:
+  a $100 stock moves by the daily drift each day to T-day, while its implied vol climbs in a
+  straight line from the ambient level to the event peak on T-day. The actual earnings move
+  lands on T+1, when IV is crushed to 85% of ambient. The call is the $100 strike, priced by
+  Black-Scholes with 30 days to run after T-day, and the table sets selling at the close on T−1
+  against holding through the event, for 100 shares and one contract.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['days', 'amb', 'evt', 'drift', 'move'];
+
+  /* the app's path: a straight-line IV ramp to the event peak on T-day, the
+     daily drift through T-day, the earnings move and a crush to 85% of
+     ambient on T+1; the call is the $100 strike with 30 days left at T-day */
+  function path(n, amb, evt, drift, move) {
+    var out = [], spot = 100;
+    for (var d = 0; d < n + 2; d++) {
+      var k = n - d, iv;
+      if (k > 0) iv = amb + (evt - amb) * (1 - k / n);
+      else if (k === 0) iv = evt;
+      else iv = amb * 0.85;
+      if (d > 0 && k >= 0) spot = spot * (1 + drift);
+      else if (k === -1) spot = spot * (1 + move);
+      var T = Math.max(0.01, (n + 30 - d) / 365);
+      out.push({ day: d - n, spot: spot, iv: iv * 100, call: DL.bsPrice(spot, 100, T, iv, 'call') });
+    }
+    return out;
+  }
+  function state() {
+    var v = IDS.map(function (id) { return parseFloat(DL.$(U + '-' + id).value); });
+    return { n: Math.round(v[0]), amb: v[1], evt: v[2], drift: v[3], move: v[4] };
+  }
+  function money(x) { return (x >= 0 ? '+' : '') + DL.usd(x, 0); }
+  function tick(v) { return v === 0 ? 'T' : v < 0 ? 'T' + DL.MINUS + (-v) : 'T+' + v; }
+
+  /* one panel: a day axis from T-n to T+1, a title and a flagged day in the band above */
+  function panel(c, s, ymin, ymax, yfmt, title) {
+    var p = new NMT.Plot(c, { xmin: -s.n, xmax: 1, ymin: ymin, ymax: ymax,
+                              pad: { l: 44, r: 16, t: 20, b: 24 } });
+    var unit = p.X(1) - p.X(0), xs = [];
+    for (var d = 1; d >= -s.n; d--) if (unit >= 30 || d >= 0 || (1 - d) % 2 === 0) xs.push(d);
+    DL.axes(p, { xs: xs.reverse(), ny: 4, x: tick, y: yfmt, yAt: -s.n });
+    p.text(-s.n, ymax, title, { dy: -6, color: DL.color('ink-soft'), font: '600 11px ' + DL.color('sans') });
+    return p;
+  }
+  function flag(p, x, text, color) {
+    DL.vline(p, x, { color: color, dash: [3, 3], width: 1.2 });
+    p.text(x, p.o.ymax, text, { dy: -6, align: 'center', color: color, font: '11px ' + DL.color('sans') });
+  }
+
+  /* one draw paints both canvases; it is registered on the first */
+  var draw = DL.figure(U + '-iv', function (c) {
+    var s = state(), data = path(s.n, s.amb, s.evt, s.drift, s.move);
+    var xs = data.map(function (q) { return q.day; });
+
+    /* IV ramp and crush, from zero */
+    var ivs = data.map(function (q) { return q.iv; });
+    var top = Math.ceil(Math.max.apply(null, ivs) * 1.15 / 10) * 10;
+    var p = panel(c, s, 0, top, function (v) { return DL.num(v, 0) + '%'; }, 'IV ramp and crush');
+    flag(p, 0, 'earnings', DL.color('plain'));
+    DL.line(p, xs, ivs, { color: DL.color('accent'), width: 2 });
+
+    /* the stock's path, on its own range */
+    var c2 = DL.$(U + '-px'), px = data.map(function (q) { return q.spot; });
+    var lo = Math.min.apply(null, px), hi = Math.max.apply(null, px), m = Math.max(0.5, (hi - lo) * 0.12);
+    var q = panel(c2, s, lo - m, hi + m, function (v, st) { return '$' + DL.num(v, st < 1 ? 1 : 0); },
+                  'stock price path');
+    DL.vline(q, 0, { color: DL.color('plain'), dash: [3, 3], width: 1.2 });
+    flag(q, -1, 'exit T' + DL.MINUS + '1', DL.color('familiar'));
+    DL.line(q, xs, px, { color: DL.color('familiar'), width: 2 });
+
+    /* exit at the close on T-1 against holding to T+1 */
+    var start = data[0].call, t1 = data[s.n - 1], end = data[data.length - 1];
+    var exitStock = (t1.spot - 100) * 100, exitCall = (t1.call - start) * 100;
+    var holdStock = (end.spot - 100) * 100, holdCall = (end.call - start) * 100;
+    var delta = exitStock - holdStock, shown = Math.round(Math.abs(delta));
+
+    DL.out(U + '-days-o', s.n + 'd');
+    DL.out(U + '-amb-o', DL.num(s.amb * 100, 0) + '%');
+    DL.out(U + '-evt-o', DL.num(s.evt * 100, 0) + '%');
+    DL.out(U + '-drift-o', DL.num(s.drift * 100, 2) + '%/d');
+    DL.out(U + '-move-o', (s.move >= 0 ? '+' : '') + DL.num(s.move * 100, 1) + '%');
+    DL.out(U + '-es', money(exitStock));
+    DL.out(U + '-ec', money(exitCall));
+    DL.out(U + '-hs', money(holdStock));
+    DL.out(U + '-hc', money(holdCall));
+    [shown > 0 && delta > 0, shown > 0 && delta < 0].forEach(function (on, i) {
+      var row = DL.$(U + '-r' + i);
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+
+    /* the app's verdict on the stock, each clause said only when it is true */
+    var vk, vt;
+    if (shown === 0) {
+      vk = 'A draw.';
+      vt = 'Exit-T-1 and hold-through produced similar outcomes on this single scenario.';
+    } else if (delta > 0) {
+      vk = 'Exit-T-1 discipline outperformed by ' + DL.usd(shown, 0) + ' on stock.';
+      vt = s.move < 0
+        ? 'The binary outcome went against; declining to absorb it ' +
+          (exitStock > 0 ? 'preserved the pre-earnings drift profit.' : 'kept the loss to the pre-earnings drift.')
+        : 'Holding through added T-day\'s negative drift, which the earnings move did not make back.';
+    } else {
+      vk = 'Hold-through outperformed by ' + DL.usd(shown, 0) + ' this time.';
+      vt = 'But that is a one-realization outcome: across many trials, the negative skew of ' +
+           'single-name earnings moves makes exit-T-1 dominant in expectation.';
+    }
+    DL.out(U + '-vk', vk);
+    DL.out(U + '-vt', vt);
+  });
+  DL.bind(IDS.map(function (id) { return U + '-' + id; }), draw);
+})();
+</script>

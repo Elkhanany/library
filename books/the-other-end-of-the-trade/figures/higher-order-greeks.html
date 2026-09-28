@@ -45,12 +45,13 @@ source: src/interactives/HigherOrderGreeks.jsx
       <tr><td class="c-trial">Where it peaks</td><td class="c-other" id="{{uid}}-peak"></td></tr>
     </tbody>
   </table></div></div>
-  <figcaption><b>Five higher-order Greeks, drawn against spot.</b> The chosen Greek of an option
-  struck at K = 100 (r = 4%, no dividends), across spot from 70 to 130, for the days to expiry
-  and implied vol on the sliders; the heatmap draws it over spot and days to expiry at once,
-  amber where it is positive and red where it is negative. Vanna changes sign at the strike,
-  positive on the OTM-call side and negative on the OTM-put side. Shorten the days to expiry
-  and charm and color grow and crowd in toward the strike; both are per year of time.</figcaption>
+  <figcaption><b>Five higher-order Greeks, drawn against spot.</b> The curve is the chosen Greek
+  of an option struck at K = 100 (r = 4%, no dividends), across spot from 70 to 130, at the days
+  to expiry and implied vol on the sliders; the heatmap draws it over spot and 1 to 90 days to
+  expiry at once, amber where it is positive and red where it is negative. Vanna changes sign at
+  the strike, positive on the OTM-call side and negative on the OTM-put side. Shorten the days
+  to expiry, and charm and color grow and crowd in toward the strike; both are measured per
+  year.</figcaption>
 </figure>
 <script>
 (function () {
@@ -60,20 +61,22 @@ source: src/interactives/HigherOrderGreeks.jsx
   var greek = DL.seg(U + '-greek', function () { draw(); });
   var view = DL.seg(U + '-view', function () { draw(); });
 
-  /* the app's card for each Greek. Two lines are corrected to the maths the
-     figure draws: charm and volga peak where the comments say, not where the
-     app's card said (see the notes in value()). */
+  /* the app's card for each Greek, with two "where it peaks" lines corrected to
+     the curves drawn: charm is largest at about 10-20 delta either side of the
+     strike and small at it (the app said "near the money"), and volga at call
+     deltas of about 8-12 and 92-95 over the sliders' range (the app said 10-15
+     and 85-90) */
   var INFO = {
     vanna: { name: 'Vanna', def: '∂Δ/∂σ = ∂ν/∂S', tone: 'familiar',
              desc: 'How delta changes when IV moves. Drives the post-FOMC vol-crush rally.',
              peak: 'Largest for moderately OTM options. Sign asymmetric across the strike.' },
     charm: { name: 'Charm', def: '∂Δ/∂t', tone: 'accent',
              desc: 'How delta changes as time passes. Operates on calendar time including weekends.',
-             peak: 'Largest a little either side of the strike, not at it, close to expiration. ' +
-                   'Scales like 1/T.' },
+             peak: 'Largest a short way either side of the strike, not at it; the peaks grow ' +
+                   'like 1/T as expiration approaches.' },
     volga: { name: 'Volga (Vomma)', def: '∂²V/∂σ² = ∂ν/∂σ', tone: 'familiar',
              desc: 'Vega’s sensitivity to vol itself. Captures vega convexity.',
-             peak: 'Largest in the wings, near call deltas of 10 and 90. ATM volga ≈ 0.' },
+             peak: 'Maximum at call deltas around 8-12 and 92-95. ATM volga ≈ 0.' },
     speed: { name: 'Speed', def: '∂Γ/∂S = ∂³V/∂S³', tone: 'plain',
              desc: 'Gamma’s sensitivity to spot. For 0DTE, a 1% spot move can flip the gamma profile.',
              peak: 'Highest for moderately OTM/ITM options.' },
@@ -82,12 +85,11 @@ source: src/interactives/HigherOrderGreeks.jsx
              peak: 'Largest for ATM options close to expiry.' }
   };
 
-  /* One Greek at spot S, T in years, as the app computes it (q = 0), except color.
-     The app's color, (-Γ / 2T)(1 + d1 d2 / σ√T), is negative at every spot, which
-     contradicts its own card and the text (positive and largest at the money).
-     The figure draws ∂Γ/∂t with time running forward: (Γ / 2T)(1 + d1 (2rT - d2 σ√T) / σ√T).
-     Charm (the app's call charm) and volga peak about 15-20 delta and about 8-10 delta
-     either side of the strike; the cards say so. */
+  /* One Greek at spot S, T in years (q = 0), as the app computes it except for
+     color. The app's color, (-Γ / 2T)(1 + d1 d2 / σ√T), is negative at every spot,
+     against its own card and the text (positive and largest at the money). The
+     figure draws ∂Γ/∂t with time running forward, which is what the card and the
+     text describe: (Γ / 2T)(1 + d1 (2rT - d2 σ√T) / σ√T). */
   function value(g, S, T, sigma) {
     var D1, D2, gm;
     switch (g) {
@@ -121,7 +123,7 @@ source: src/interactives/HigherOrderGreeks.jsx
     DL.vline(p, K, { color: DL.fade(acc, 0.5), dash: [3, 3] });
     p.text(K, p.o.ymax, 'K = ' + K, { align: 'center', dy: -5, color: acc, font: sans });
     DL.line(p, xs, ys, { color: tone, width: 2 });
-    p.text(70, p.o.ymax, g + ' vs spot S', { dy: -5, color: tone, font: sans });
+    p.text(70, p.o.ymax, g + ' vs spot', { dy: -5, color: tone, font: sans });
   }
 
   /* the app's heatmap: 50 spots from 70 to 130 by 30 expiries from 1 to 90 days,

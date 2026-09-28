@@ -1,0 +1,172 @@
+<!--
+name: vanna feedback loop
+source: src/interactives/VannaFeedbackLoop.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="310"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-step">step</label>
+      <input type="range" id="{{uid}}-step" min="0" max="5" step="1" value="0">
+      <output id="{{uid}}-step-o" for="{{uid}}-step"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Play the loop">
+      <button type="button" id="{{uid}}-play">play</button>
+      <button type="button" id="{{uid}}-pause">pause</button>
+      <button type="button" id="{{uid}}-reset">reset</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-spx"></output></div>
+    <div class="ctrl"><output id="{{uid}}-vix"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dd"></output></div>
+    <div class="ctrl"><output id="{{uid}}-flow"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The vanna loop, one step at a time.</b> A stylized pass through the loop: a
+  dealer short 1,000 out-of-the-money SPX puts at the 4400 strike, with spot at 4500 and VIX at
+  20. Move the step slider or press play: spot falls, implied vol rises, vanna pushes the put
+  delta more negative, the dealer finds itself longer than hedged and sells stock, and the
+  selling feeds the next pass. The readouts give spot, VIX, the dealer's delta shift and the
+  stock sold, in shares for the 1,000 contracts of 100; every number is an illustrative input,
+  not the output of a model.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SL = DL.$(U + '-step'), LAST = 5, PACE = 1700, anim = null;
+
+  /* the app's six stylized steps. dDelta is the change in the put's delta per
+     contract; the dealer is short the puts, so the dealer's own delta moves the
+     other way, longer, which is what the hedge sells. Two corrections to the
+     app's text: the short puts are long delta, so the opening hedge is short
+     stock (the app said long ~410 shares), and the hedge in step 4 is the
+     readout's 11,000 shares (the app's text said 110) */
+  var STEPS = [
+    { label: 'setup', short: 'setup', dSpot: 0, dVix: 0, dDelta: 0, sold: 0,
+      desc: 'Dealer is short 1,000 SPX OTM puts (K = 4400) against an institutional hedger. ' +
+            'The short puts are long delta, so the initial delta hedge is a short stock ' +
+            'position. Spot 4500, VIX 20, IV at this strike 23%.' },
+    { label: 'spot −1%', short: 'spot ↓', dSpot: -0.01, dVix: 0, dDelta: -0.04, sold: 0,
+      desc: 'SPX drops 1% from 4500 to 4455. Mechanical sellers and dealer hedges are starting ' +
+            'to cascade. The spot move alone shifts the put delta toward more negative through Γ.' },
+    { label: 'VIX +8%', short: 'VIX ↑', dSpot: -0.01, dVix: 0.08, dDelta: -0.04, sold: 0,
+      desc: 'Stress lifts implied vol across the curve. VIX moves 20 → 21.6 (+8%). At the put ' +
+            'strike, IV rises from 23% to roughly 24.8%.' },
+    { label: 'vanna fires', short: 'vanna', dSpot: -0.01, dVix: 0.08, dDelta: -0.11, sold: 0,
+      desc: '∂Δ/∂σ is large and negative for OTM puts. The vol move alone deepens put delta by ' +
+            'another ~0.07. Dealer is now effectively longer the underlying than they should be.' },
+    { label: 'hedge', short: 'sell', dSpot: -0.01, dVix: 0.08, dDelta: -0.11, sold: 110,
+      desc: 'To re-flatten delta, dealer sells 11,000 SPX-equivalent shares (0.11 of delta on ' +
+            '1,000 contracts of 100). Across the street, that scales to significant flow into ' +
+            'a thin book.' },
+    { label: 'loop', short: 'loop', dSpot: -0.025, dVix: 0.18, dDelta: -0.2, sold: 195,
+      desc: 'Hedge selling pushes SPX lower → VIX rises further → vanna fires again → more ' +
+            'selling. Each pass is smaller in normal markets; in stress, the system can become ' +
+            'locally unstable.' }
+  ];
+  /* the loop's five stations, on a ring of radius 1; station k lights at step k + 1 */
+  var NODES = [
+    { x: 0, y: 1, label: 'SPX ↓', desc: 'spot falls' },
+    { x: 0.95, y: 0.31, label: 'VIX ↑', desc: 'vol bid' },
+    { x: 0.59, y: -0.81, label: 'put Δ', desc: 'more negative' },
+    { x: -0.59, y: -0.81, label: 'dealer sells', desc: 're-hedge' },
+    { x: -0.95, y: 0.31, label: 'feedback', desc: 'loop' }
+  ];
+  var R = 0.42;
+
+  function step() { return parseInt(SL.value, 10); }
+  function font(w) { return (w ? '600 ' : '') + '11px ' + DL.color('sans'); }
+
+  /* an arrow from station a to station b, stopping short of both circles */
+  function arrow(p, a, b, color, width) {
+    var dx = b.x - a.x, dy = b.y - a.y, L = Math.sqrt(dx * dx + dy * dy), ux = dx / L, uy = dy / L;
+    var gap = R + 5 / (p.X(1) - p.X(0)), head = 9 / (p.X(1) - p.X(0)), wing = 4 / (p.X(1) - p.X(0));
+    var sx = a.x + ux * gap, sy = a.y + uy * gap, ex = b.x - ux * gap, ey = b.y - uy * gap;
+    p.seg(sx, sy, ex - ux * head * 0.6, ey - uy * head * 0.6, { color: color, width: width });
+    p.path([[ex, ey], [ex - ux * head - uy * wing, ey - uy * head + ux * wing],
+            [ex - ux * head + uy * wing, ey - uy * head - ux * wing]],
+           { close: true, fill: color, color: null });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var k = step(), act = k - 1;
+    var p = new NMT.Plot(c, { xmin: -1.4, xmax: 1.4, ymin: -1.26, ymax: 1.45, equal: true,
+                              grid: false, pad: { l: 6, r: 6, t: 6, b: 6 } });
+    var g = p.g, rp = R * (p.X(1) - p.X(0));
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, p.w, p.h);
+    var hot = DL.color('plain'), cold = DL.color('rule'), dim = DL.color('ink-faint');
+    NODES.forEach(function (n, i) {
+      /* the arrow into a station lights once the loop has reached it; the one
+         back to the start lights on the last step, when the loop closes */
+      var lit = i < 4 ? k >= i + 2 : k >= LAST;
+      arrow(p, n, NODES[(i + 1) % NODES.length], lit ? hot : dim, lit ? 1.6 : 1);
+    });
+    NODES.forEach(function (n, i) {
+      var on = i === act, past = i < act;
+      g.save();
+      g.beginPath();
+      g.arc(p.X(n.x), p.Y(n.y), rp, 0, 2 * Math.PI);
+      g.fillStyle = on ? DL.fade(hot, 0.14) : DL.color('paper');
+      g.fill();
+      g.strokeStyle = on ? hot : past ? DL.fade(hot, 0.45) : cold;
+      g.lineWidth = on ? 2 : 1;
+      g.stroke();
+      g.restore();
+      p.text(n.x, n.y, n.label, { dy: -7, align: 'center', baseline: 'middle', font: font(on),
+                                  color: on ? DL.color('ink') : past ? hot : DL.color('ink-soft') });
+      p.text(n.x, n.y, n.desc, { dy: 9, align: 'center', baseline: 'middle', font: font(false),
+                                 color: on ? DL.color('ink-soft') : DL.color('ink-faint') });
+    });
+  });
+
+  function render() {
+    var k = step(), s = STEPS[k];
+    var shift = -s.dDelta * 1000 * 100, sold = s.sold * 100;
+    DL.out(U + '-step-o', k + ' · ' + s.label);
+    DL.out(U + '-spx', 'SPX = ' + DL.num(4500 * (1 + s.dSpot), 1));
+    DL.out(U + '-vix', 'VIX = ' + DL.num(20 * (1 + s.dVix), 2));
+    DL.out(U + '-dd', 'dealer Δ shift = ' + (shift === 0 ? '0' : DL.signed(shift, 0) + ' sh'));
+    DL.out(U + '-flow', 'hedge flow = ' + (sold === 0 ? '—' : DL.num(sold, 0) + ' sh sold'));
+    DL.out(U + '-vk', 'Step ' + k + ' · ' + s.short + '.');
+    DL.out(U + '-vt', s.desc);
+    draw();
+  }
+
+  function stop() {
+    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
+  }
+  function goTo(k) {
+    if (String(SL.value) !== String(k)) SL.value = k;
+    render();
+  }
+  /* play: a step every 1.7 s from where the reader is (from the start if at the
+     end), stopping at the last; under reduced motion, straight to the last */
+  function play() {
+    stop();
+    var from = step() >= LAST ? 0 : step();
+    if (DL.still()) { goTo(LAST); return; }
+    goTo(from);
+    anim = { t0: null, id: 0 };
+    function frame(ts) {
+      if (!anim) return;
+      if (anim.t0 == null) anim.t0 = ts;
+      var k = Math.min(LAST, from + Math.floor((ts - anim.t0) / PACE));
+      if (k !== step()) goTo(k);
+      if (k >= LAST) { anim = null; return; }
+      anim.id = requestAnimationFrame(frame);
+    }
+    anim.id = requestAnimationFrame(frame);
+  }
+  function reset() { stop(); goTo(0); }
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(function () { stop(); goTo(SL.defaultValue); });
+
+  render();
+  DL.$(U + '-play').addEventListener('click', play);
+  DL.$(U + '-pause').addEventListener('click', stop);
+  DL.$(U + '-reset').addEventListener('click', reset);
+  DL.bind([U + '-step'], function () { stop(); render(); });
+})();
+</script>

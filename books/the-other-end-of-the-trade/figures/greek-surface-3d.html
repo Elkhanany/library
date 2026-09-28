@@ -4,16 +4,14 @@ source: src/interactives/GreekSurface3D.jsx
 -->
 <figure class="fig" id="fig-{{uid}}">
   <canvas id="{{uid}}-c" data-h="340"></canvas>
-  <div class="ctrls">
-    <div class="ctrl" role="group" aria-label="Greek" id="{{uid}}-greek">
-      <label>Greek</label>
-      <button type="button" data-v="delta" aria-pressed="false">Δ delta</button>
-      <button type="button" data-v="gamma" class="on" aria-pressed="true">Γ gamma</button>
-      <button type="button" data-v="vega" aria-pressed="false">ν vega</button>
-      <button type="button" data-v="theta" aria-pressed="false">Θ theta</button>
-      <button type="button" data-v="vanna" aria-pressed="false">vanna</button>
-      <button type="button" data-v="charm" aria-pressed="false">charm</button>
-    </div>
+  <div class="ctrls ctrl" role="group" aria-label="Greek" id="{{uid}}-greek">
+    <label>Greek</label>
+    <button type="button" data-v="delta" aria-pressed="false">Δ delta</button>
+    <button type="button" data-v="gamma" class="on" aria-pressed="true">Γ gamma</button>
+    <button type="button" data-v="vega" aria-pressed="false">ν vega</button>
+    <button type="button" data-v="theta" aria-pressed="false">Θ theta</button>
+    <button type="button" data-v="vanna" aria-pressed="false">vanna</button>
+    <button type="button" data-v="charm" aria-pressed="false">charm</button>
   </div>
   <div class="ctrls">
     <div class="ctrl">
@@ -46,11 +44,11 @@ source: src/interactives/GreekSurface3D.jsx
   </div>
   <figcaption><b>A Greek over spot and days to expiry.</b> One Black-Scholes Greek of an option
   struck at K = 100 (r = 4%), drawn as a wireframe over spot from 70 to 130 and 1 to 90 days to
-  expiry: theta is per calendar day and vega per vol point. Heights run from the surface's lowest
-  value at the floor to its highest at the top, marked on the vertical axis; positive values are
-  drawn in the accent color and negative ones in rose, stronger the further from zero. Turn the
-  surface with the view angle slider and tilt it with the tilt slider. Watch gamma collapse into a
-  sharp peak at the money as expiry nears, the 1/√T divergence of the text.</figcaption>
+  expiry, with theta per calendar day and vega per vol point. Heights run from the surface's
+  lowest value at the floor to its highest at the top, as marked on the vertical axis, and
+  positive and negative values take two colors, stronger the further from zero. Turn the surface
+  with the view angle slider and tilt it with the tilt slider; watch gamma collapse into a sharp
+  peak at the money as expiry nears, the 1/√T divergence of the text.</figcaption>
 </figure>
 <script>
 (function () {
@@ -126,7 +124,7 @@ source: src/interactives/GreekSurface3D.jsx
     }
     /* the frame is fixed for every angle, so turning never rescales */
     var p = new NMT.Plot(c, { xmin: -R, xmax: R, ymin: -R * se, ymax: YH * ce + R * se,
-                              equal: true, grid: false, pad: { l: 58, r: 34, t: 26, b: 30 } });
+                              equal: true, grid: false, pad: { l: 46, r: 28, t: 26, b: 30 } });
     var g = p.g, font = '11px ' + DL.color('sans');
     g.clearRect(0, 0, p.w, p.h);
     g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
@@ -145,7 +143,10 @@ source: src/interactives/GreekSurface3D.jsx
     g.beginPath();
     corners.forEach(function (r, k) { if (k) g.lineTo(X(r), Y(r)); else g.moveTo(X(r), Y(r)); });
     g.closePath(); g.stroke();
-    var left = corners.reduce(function (a, b) { return b.u < a.u ? b : a; });
+    /* the leftmost corner; square to an axis, the nearer of the two */
+    var left = corners.reduce(function (a, b) {
+      return b.u < a.u - 1e-9 || (Math.abs(b.u - a.u) <= 1e-9 && b.d > a.d) ? b : a;
+    });
     var top = P(left.x, YH, left.z);
     g.strokeStyle = DL.color('ink-faint');
     g.beginPath(); g.moveTo(X(left), Y(left)); g.lineTo(X(top), Y(top)); g.stroke();
@@ -184,46 +185,86 @@ source: src/interactives/GreekSurface3D.jsx
     });
     g.restore();
 
-    /* labels: the vertical axis's name and ends, then spot and DTE along
-       the two floor edges nearest the reader */
-    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
-    function say(r, dx, dy, s, o) {
-      p.text(r.u, r.w, s, { dx: dx, dy: dy, align: o.align || 'center',
-                            baseline: o.baseline || 'middle', color: o.color || faint, font: font });
+    /* Labels: the vertical axis's name and its two ends, then spot and DTE
+       along the two floor edges through the corner nearest the reader. Each
+       has a rim of paper so it reads over the mesh. The names and the ends
+       of the scale are always set, kept inside the canvas; the edges' end
+       values and the zero mark only where they clear what is already set. */
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), placed = [];
+    function rect(px, py, w, align, base) {
+      var x0 = align === 'left' ? px : align === 'right' ? px - w : px - w / 2;
+      var y0 = base === 'top' ? py : base === 'bottom' ? py - 12 : py - 6;
+      return { x0: x0, y0: y0, x1: x0 + w, y1: y0 + 12 };
     }
-    say(top, 0, -8, LABEL[id], { baseline: 'bottom', color: soft });
-    say(top, -7, 0, tick(m.hi, Math.max(Math.abs(m.hi), Math.abs(m.lo))), { align: 'right' });
-    say(left, -7, 0, tick(m.lo, Math.max(Math.abs(m.hi), Math.abs(m.lo))), { align: 'right' });
-    if (m.lo < 0 && m.hi > 0) {
-      var zero = P(left.x, (0 - m.lo) / m.range * YH, left.z);
+    function say(r, dx, dy, s, o) {
+      var align = o.align || 'center', base = o.baseline || 'middle';
       g.save();
-      g.strokeStyle = DL.color('ink-faint'); g.lineWidth = 1;
-      g.beginPath(); g.moveTo(X(zero) - 4, Y(zero)); g.lineTo(X(zero), Y(zero)); g.stroke();
+      g.font = font;
+      var b = rect(p.X(r.u) + dx, p.Y(r.w) + dy, g.measureText(s).width, align, base);
+      if (o.optional) {
+        var clash = b.x0 < 2 || b.y0 < 2 || b.x1 > p.w - 2 || b.y1 > p.h - 2 ||
+          placed.some(function (q) {
+            return b.x0 < q.x1 + 3 && q.x0 < b.x1 + 3 && b.y0 < q.y1 + 1 && q.y0 < b.y1 + 1;
+          });
+        if (clash) { g.restore(); return; }
+      } else {
+        var sx = Math.max(0, 2 - b.x0) - Math.max(0, b.x1 - (p.w - 2));
+        var sy = Math.max(0, 2 - b.y0) - Math.max(0, b.y1 - (p.h - 2));
+        dx += sx; dy += sy;
+        b = { x0: b.x0 + sx, y0: b.y0 + sy, x1: b.x1 + sx, y1: b.y1 + sy };
+      }
+      placed.push(b);
+      g.textAlign = align; g.textBaseline = base;
+      g.strokeStyle = paper; g.lineWidth = 3; g.lineJoin = 'round';
+      g.strokeText(s, p.X(r.u) + dx, p.Y(r.w) + dy);
       g.restore();
-      say(zero, -7, 0, '0', { align: 'right' });
+      p.text(r.u, r.w, s, { dx: dx, dy: dy, align: align, baseline: base,
+                            color: o.color || faint, font: font });
     }
 
-    var near = corners.reduce(function (a, b) { return b.d > a.d ? b : a; });
+    /* the nearest corner; square to an axis, the right-hand one, so the
+       labelled edges keep clear of the vertical axis on the left */
+    var near = corners.reduce(function (a, b) {
+      return b.d > a.d + 1e-9 || (Math.abs(b.d - a.d) <= 1e-9 && b.u > a.u) ? b : a;
+    });
     var mid = P(0, 0, 0);
-    /* an edge of the floor through the nearest corner: its two end values
-       and its name, set off the edge away from the floor's centre */
+    /* an edge of the floor through the nearest corner, and the side of it
+       away from the floor's centre */
     function edge(a, b, lo, hi, name) {
       var ex = X(b) - X(a), ey = Y(b) - Y(a), len = Math.sqrt(ex * ex + ey * ey) || 1;
       var nx = -ey / len, ny = ex / len;
       var mx = (X(a) + X(b)) / 2 - p.X(mid.u), my = (Y(a) + Y(b)) / 2 - p.Y(mid.w);
       if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; }
-      var o = { align: nx > 0.35 ? 'left' : nx < -0.35 ? 'right' : 'center',
-                baseline: ny > 0.35 ? 'top' : ny < -0.35 ? 'bottom' : 'middle' };
-      var along = 0.1;
-      [[a, lo, along], [b, hi, 1 - along]].forEach(function (e) {
-        var r = { u: a.u + (b.u - a.u) * e[2], w: a.w + (b.w - a.w) * e[2] };
-        say(r, nx * 7, ny * 7, e[1], o);
-      });
-      o.color = soft;
-      say({ u: (a.u + b.u) / 2, w: (a.w + b.w) / 2 }, nx * 9, ny * 9, name, o);
+      return { a: a, b: b, lo: lo, hi: hi, name: name, nx: nx, ny: ny, len: len,
+               align: nx > 0.35 ? 'left' : nx < -0.35 ? 'right' : 'center',
+               baseline: ny > 0.35 ? 'top' : ny < -0.35 ? 'bottom' : 'middle' };
     }
-    edge(P(-XW, 0, near.z), P(XW, 0, near.z), '70', '130', 'spot S');
-    edge(P(near.x, 0, -ZW), P(near.x, 0, ZW), '1d', '90d', 'DTE');
+    var edges = [edge(P(-XW, 0, near.z), P(XW, 0, near.z), '70', '130', 'spot S'),
+                 edge(P(near.x, 0, -ZW), P(near.x, 0, ZW), '1d', '90d', 'DTE')];
+
+    var big = Math.max(Math.abs(m.hi), Math.abs(m.lo));
+    say(top, 0, -8, LABEL[id], { baseline: 'bottom', color: soft });
+    say(top, -7, 0, tick(m.hi, big), { align: 'right' });
+    say(left, -7, 0, tick(m.lo, big), { align: 'right' });
+    edges.forEach(function (e) {
+      say({ u: (e.a.u + e.b.u) / 2, w: (e.a.w + e.b.w) / 2 }, e.nx * 9, e.ny * 9, e.name,
+          { align: e.align, baseline: e.baseline, color: soft });
+    });
+    if (m.lo < 0 && m.hi > 0) {
+      var zero = P(left.x, (0 - m.lo) / m.range * YH, left.z);
+      g.save();
+      g.strokeStyle = faint; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(X(zero) - 4, Y(zero)); g.lineTo(X(zero), Y(zero)); g.stroke();
+      g.restore();
+      say(zero, -7, 0, '0', { align: 'right', optional: true });
+    }
+    edges.forEach(function (e) {
+      if (e.len < 60) return;
+      [[e.lo, 0.1], [e.hi, 0.9]].forEach(function (end) {
+        say({ u: e.a.u + (e.b.u - e.a.u) * end[1], w: e.a.w + (e.b.w - e.a.w) * end[1] },
+            e.nx * 7, e.ny * 7, end[0], { align: e.align, baseline: e.baseline, optional: true });
+      });
+    });
 
     DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
     DL.out(U + '-az-o', azDeg + '°');
