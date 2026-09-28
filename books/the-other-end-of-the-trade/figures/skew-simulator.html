@@ -1,0 +1,89 @@
+<!--
+name: skew simulator
+source: src/interactives/SkewSimulator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-skew">skewness</label>
+      <input type="range" id="{{uid}}-skew" min="-4" max="4" step="0.1" value="-1.5">
+      <output id="{{uid}}-skew-o" for="{{uid}}-skew"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-mean"></output></div>
+    <div class="ctrl"><output id="{{uid}}-std"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sk"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-es"></output></div>
+  </div>
+  <figcaption><b>The same Sharpe, two different distributions.</b> A return distribution with
+  its skewness set by the slider, in units of σ. The bars left of −1.645σ are the worst 5% of
+  outcomes; the dashed line is the mean and the solid one the expected shortfall of that tail,
+  ES₉₅. Push the skew negative and the Sharpe ratio barely moves while the tail grows much
+  fatter.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var slider = DL.$(U + '-skew');
+
+  /* the app's skew-normal, 81 bins on [-4, 4], normalised to unit mass */
+  function distribution(alpha) {
+    var bins = 81, lo = -4, hi = 4, dx = (hi - lo) / (bins - 1), total = 0, raw = [];
+    for (var i = 0; i < bins; i++) {
+      var x = lo + i * dx, z = x - (alpha < 0 ? 0.4 : -0.4);
+      var v = 2 * DL.phi(z) * DL.N(alpha * z);
+      total += v;
+      raw.push({ x: x, p: v });
+    }
+    return raw.map(function (b) { return { x: b.x, p: b.p / total }; });
+  }
+  function moments(dist) {
+    var m = 0, v = 0, s = 0;
+    dist.forEach(function (b) { m += b.x * b.p; });
+    dist.forEach(function (b) { var d = b.x - m; v += d * d * b.p; s += d * d * d * b.p; });
+    var sd = Math.sqrt(v);
+    return { mean: m, std: sd, skew: s / (sd * sd * sd), sharpe: m / sd };
+  }
+  function es95(dist) {
+    var cum = 0, tail = 0, mass = 0;
+    for (var i = 0; i < dist.length; i++) {
+      var b = dist[i];
+      if (cum + b.p < 0.05) { tail += b.x * b.p; mass += b.p; }
+      else { var need = 0.05 - cum; tail += b.x * need; mass += need; break; }
+      cum += b.p;
+    }
+    return tail / mass;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var skew = parseFloat(slider.value);
+    var dist = distribution(skew), m = moments(dist), es = es95(dist);
+    var pMax = Math.max.apply(null, dist.map(function (b) { return b.p; })) * 1.18;
+    var p = new NMT.Plot(c, { xmin: -4.1, xmax: 4.1, ymin: 0, ymax: pMax,
+                              pad: { l: 14, r: 14, t: 16, b: 30 } });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], ny: 4, y: false, yAxis: false,
+                 x: function (v) { return (v < 0 ? DL.MINUS + (-v) : v) + 'σ'; } });
+    var tail = DL.fade(DL.color('plain'), 0.75), body = DL.fade(DL.color('accent'), 0.55);
+    DL.bars(p, dist.map(function (b) { return b.x; }), dist.map(function (b) { return b.p; }),
+            { w: 0.085, color: function (v, i) { return dist[i].x <= -1.645 ? tail : body; } });
+    DL.vline(p, m.mean, { color: DL.color('familiar'), dash: [4, 4], width: 1.3 });
+    DL.vline(p, es, { color: DL.color('plain'), width: 1.5 });
+    p.text(m.mean, pMax, 'μ = ' + DL.num(m.mean, 2),
+           { dx: 5, dy: 14, color: DL.color('familiar') });
+    p.text(es, pMax, 'ES₉₅ = ' + DL.num(es, 2),
+           { dx: -5, dy: 14, align: 'right', color: DL.color('plain') });
+    p.text(-4.1, pMax * 0.22, 'left tail (5%)', { dx: 4, color: DL.color('plain') });
+
+    DL.out(U + '-skew-o', DL.num(skew, 1));
+    DL.out(U + '-mean', 'mean μ = ' + DL.num(m.mean, 3));
+    DL.out(U + '-std', 'std σ = ' + DL.num(m.std, 3));
+    DL.out(U + '-sk', 'skew = ' + DL.num(m.skew, 2));
+    DL.out(U + '-sr', 'Sharpe (blind to skew) = ' + DL.num(m.sharpe, 2));
+    DL.out(U + '-es', 'ES₉₅ = ' + DL.num(es, 2));
+  });
+  DL.bind([U + '-skew'], draw);
+})();
+</script>

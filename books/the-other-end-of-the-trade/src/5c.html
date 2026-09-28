@@ -1,0 +1,1313 @@
+<p class="eyebrow">Part V · Options · Chapter 5C</p>
+
+<h1>The five primary Greeks</h1>
+
+<p>Greeks are the language of risk in options trading. Each Greek measures how an option's price changes when one specific input moves, holding the others constant. They are not predictive — they are <strong>sensitivities</strong>. A skilled trader uses Greeks like the dashboard gauges of a car: not to predict the road, but to understand the vehicle's response to inputs.</p>
+
+<div class="callout brick">
+<p><em>Greeks do not give you edge. Edge is having a better forecast of volatility than the market has priced in. Greeks describe the vehicle you have chosen to express that forecast.</em></p>
+</div>
+
+<p>The five primary Greeks at a glance:</p>
+
+<ul>
+<li><strong>Δ Delta</strong> — directional exposure</li>
+<li><strong>Γ Gamma</strong> — curvature / convexity (how delta changes)</li>
+<li><strong>Θ Theta</strong> — time decay</li>
+<li><strong>ν Vega</strong> — volatility sensitivity</li>
+<li><strong>ρ Rho</strong> — interest rate sensitivity</li>
+</ul>
+
+<h2 id="delta-directional-exposure">1 · Delta — directional exposure</h2>
+
+<p><strong>Delta is the partial derivative of the option's value with respect to spot:</strong></p>
+
+<pre>Δ = ∂V/∂S</pre>
+
+<p>In plain language: if the underlying moves up by one dollar, the option moves up by approximately delta dollars. For a call, delta lives between 0 and 1. For a put, between −1 and 0. Deep ITM options have delta close to ±1 (they behave almost identically to the underlying). Deep OTM options have delta close to 0 (they barely react). ATM options have delta near ±0.5.</p>
+
+<p>The Black-Scholes closed form for call delta is:</p>
+
+<pre>Δ_call = e^(-qT) × N(d1)
+
+where d1 = [ln(S/K) + (r − q + ½σ²)T] / (σ√T)</pre>
+
+<p>N(·) is the cumulative distribution function of the standard normal. q is the continuous dividend yield, r is the risk-free rate, T is time to expiration, σ is implied volatility. We'll unpack this formula in detail in <a class="xref" href="6c.html">Section 6C</a>; for now, treat it as a black box.</p>
+
+<p><strong>Delta is the hedge ratio</strong> — the number of shares per contract required to neutralize first-order spot exposure. For a European call, delta equals e^(-qT) × N(d₁). N(d₁) has a geometric interpretation as a risk-neutral probability under the <em>share-numeraire</em> measure, but it is <strong>not</strong> the standard risk-neutral probability of finishing in-the-money — that is N(d₂) = N(d₁ − σ√T), which is smaller by approximately σ√T.</p>
+
+<p>The retail convention conflates them: traders say "30-delta puts have a 30% chance of being assigned." That's informally close to right for short-dated near-the-money options, but it is technically incorrect — the actual ITM probability is N(d₂), and the gap can be a full vol point or two for higher-vol or longer-dated options. The reliable interpretation of delta is mechanical (hedge ratio), not probabilistic.</p>
+
+<div class="callout brick">
+<p><strong>Probability Map — N(d₁), N(d₂), and Delta</strong></p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Quantity</th><th class="c-other">Formula</th><th class="c-endpoint">Meaning</th></tr></thead><tbody><tr><td class="c-trial" data-label="Quantity">N(d₂)</td><td class="c-other" data-label="Formula">N(d₁ − σ√T)</td><td class="c-endpoint" data-label="Meaning">Standard risk-neutral ITM probability</td></tr><tr><td class="c-trial" data-label="Quantity">N(d₁)</td><td class="c-other" data-label="Formula">from BSM</td><td class="c-endpoint" data-label="Meaning">Share-numeraire probability</td></tr><tr><td class="c-trial" data-label="Quantity">Call delta</td><td class="c-other" data-label="Formula">e^(-qT)·N(d₁)</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (shares per contract / 100)</td></tr><tr><td class="c-trial" data-label="Quantity">Put delta</td><td class="c-other" data-label="Formula">-e^(-qT)·(1−N(d₁))</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (negative)</td></tr></tbody></table></div></div>
+
+<p>When traders say "30-delta," they mean a hedge ratio of 0.30. Often informally called "30% chance of ITM," but the true risk-neutral ITM probability is N(d₂), lower by approximately σ√T.</p>
+</div>
+
+<figure class="fig" id="fig-delta-probability-map">
+  <canvas id="delta-probability-map-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="delta-probability-map-s">spot S</label>
+      <input type="range" id="delta-probability-map-s" min="4500" max="7500" step="5" value="6000">
+      <output id="delta-probability-map-s-o" for="delta-probability-map-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="delta-probability-map-k">strike K</label>
+      <input type="range" id="delta-probability-map-k" min="4500" max="7500" step="5" value="6000">
+      <output id="delta-probability-map-k-o" for="delta-probability-map-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="delta-probability-map-dte">DTE</label>
+      <input type="range" id="delta-probability-map-dte" min="1" max="365" step="1" value="30">
+      <output id="delta-probability-map-dte-o" for="delta-probability-map-dte"></output>
+    </div>
+    <div class="ctrl">
+      <label for="delta-probability-map-iv">IV σ</label>
+      <input type="range" id="delta-probability-map-iv" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="delta-probability-map-iv-o" for="delta-probability-map-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="delta-probability-map-r">risk-free r</label>
+      <input type="range" id="delta-probability-map-r" min="0" max="0.10" step="0.005" value="0.04">
+      <output id="delta-probability-map-r-o" for="delta-probability-map-r"></output>
+    </div>
+    <div class="ctrl">
+      <label for="delta-probability-map-q">dividend yield q</label>
+      <input type="range" id="delta-probability-map-q" min="0" max="0.05" step="0.001" value="0.015">
+      <output id="delta-probability-map-q-o" for="delta-probability-map-q"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="delta-probability-map-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Quantity</th><th>Value</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">N(d₁)</td><td data-label="Value" id="delta-probability-map-nd1"></td><td data-label="Meaning">share-numeraire probability</td></tr>
+      <tr class="on"><td class="c-trial" id="delta-probability-map-dk"></td><td data-label="Value" id="delta-probability-map-dv"></td><td data-label="Meaning">hedge ratio (shares per contract ÷ 100)</td></tr>
+      <tr><td class="c-trial" id="delta-probability-map-pk"></td><td data-label="Value" id="delta-probability-map-pv"></td><td data-label="Meaning">risk-neutral ITM probability</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="delta-probability-map-diff"></output></div>
+    <div class="ctrl"><output id="delta-probability-map-gap"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="delta-probability-map-vk"></b> <span id="delta-probability-map-vt"></span></p>
+  <figcaption><b>N(d₁), delta and N(d₂) are three different numbers.</b> The standard normal
+  density with d₁ and d₂ marked, σ√T apart; the shaded area is the risk-neutral probability of
+  finishing in the money, N(d₂) for a call and 1 − N(d₂) for a put. The table sets it beside
+  N(d₁) and the delta, the hedge ratio. Lengthen the time to expiry or raise the IV and the gap
+  between |Δ| and P(ITM) opens.</figcaption>
+</figure>
+
+<p><strong>Delta as share-equivalent exposure.</strong> The operative interpretation: a 0.50-delta call contract behaves like 50 shares of the underlying (delta × multiplier of 100). The dealer who has sold this call needs to hedge by buying 50 share-equivalents of the underlying — <a class="xref" href="6d.html">Section 6D</a> returns to this. The share-equivalent interpretation is what makes delta hedging mechanically possible.</p>
+
+<h2 id="gamma-curvature">2 · Gamma — curvature</h2>
+
+<p><strong>Gamma is the second derivative of the option value with respect to spot, or equivalently the first derivative of delta with respect to spot:</strong></p>
+
+<pre>Γ = ∂²V/∂S² = ∂Δ/∂S</pre>
+
+<p>Gamma measures how delta itself changes as the underlying moves. <strong>Positive gamma</strong> is favorable for long option holders: directional exposure accelerates in the right direction as the underlying moves. If you're long a call and the underlying rises, your delta increases, so you participate in additional upside even faster. <strong>Negative gamma</strong> is unfavorable: short option holders see their delta move against them as the underlying moves.</p>
+
+<p>The Black-Scholes formula for gamma:</p>
+
+<pre>Γ = e^(-qT) × φ(d1) / (S × σ × √T)</pre>
+
+<p>where φ(·) is the standard normal density function (the bell-curve height, not the CDF area).</p>
+
+<p>Three crucial features of this formula. First, <strong>gamma is the same for a call and the corresponding put with the same strike</strong> — put-call parity (<a class="xref" href="5f.html">Section 5F</a>) guarantees it. Second, <strong>gamma is maximized at-the-money</strong>: the bell-curve density φ(d1) peaks when its argument is zero, which happens approximately when spot equals strike. Third, and this is the explosive observation, <strong>gamma is proportional to 1/√T</strong>. As time to expiration shrinks toward zero, ATM gamma diverges to infinity.</p>
+
+<p>The 1/√T divergence is not a mathematical curiosity. It is the dominant feature of modern intraday microstructure, because 0DTE options live exactly in this regime. We return to this in <a class="xref" href="6e.html">Section 6E</a> and <a class="xref" href="9b.html">Section 9B</a>.</p>
+
+<h2 id="theta-time-decay">3 · Theta — time decay</h2>
+
+<p><strong>Theta is the partial derivative of the option value with respect to time, typically expressed as the negative change per day:</strong></p>
+
+<pre>Θ = ∂V/∂t (per unit time; usually displayed as ∂V/∂t per calendar day)</pre>
+
+<p>Theta measures the daily P&amp;L from one calendar day passing, holding all other inputs constant. <strong>Long options have negative theta</strong> — every day, all else equal, the option loses value as the remaining time shrinks. <strong>Short options have positive theta</strong> — every day, the writer accrues a positive bookkeeping gain as the time value decays.</p>
+
+<p>The Black-Scholes formula for theta is messy (it has different forms for calls vs puts depending on whether dividends are present), but the structure is the same: theta is negative for long positions, positive for short, largest in magnitude for ATM options, and growing as 1/√T near expiration — the mirror image of gamma's blow-up.</p>
+
+<p><strong>Theta is not edge.</strong> The most common retail misconception about options: "I sell options to collect theta." Theta is the bookkeeping number that shows up in your daily P&amp;L. It is not the source of profit. The source of profit is the variance risk premium — the structural overprice of implied volatility relative to realized volatility, which option <em>buyers</em> are willing to pay. Theta is just the path through which the VRP shows up over time. A short premium strategy is profitable only if realized volatility comes in below what was implied at entry; if realized exceeds implied, the strategy loses money despite "collecting theta" all the way through.</p>
+
+<p><a class="xref" href="7a.html">Section 7A</a> will derive the formal relationship between theta and gamma, showing that they are mathematically linked: in a Black-Scholes framework, the long-option holder pays theta in exchange for gamma; the short-option holder receives theta in exchange for accepting negative gamma. The trade-off is exact, not approximate, and it's the central mathematical engine behind every dealer-hedging story in <a class="xref" href="6a.html">Section 6</a> and beyond.</p>
+
+<h2 id="vega-volatility-sensitivity">4 · Vega — volatility sensitivity</h2>
+
+<p><strong>Vega is the partial derivative of the option value with respect to implied volatility:</strong></p>
+
+<pre>ν = ∂V/∂σ</pre>
+
+<div class="callout brick">
+<p><strong>Display convention note.</strong> The formula above gives ∂V per <strong>unit of σ</strong>, where σ = 1.0 represents 100% annualized vol. Most trading platforms display vega as <strong>∂V per 1 vol point</strong> (i.e., per 1 percentage point of IV change). To convert: <strong>divide the formula value by 100</strong>. A platform showing "Vega = $4.50" means the position will gain $4.50 if IV rises from, say, 18.0% to 19.0% — not if σ doubles from 1.0 to 2.0. This is a high-frequency source of beginner arithmetic error when computing vega by hand.</p>
+</div>
+
+<p>Vega measures the option's exposure to changes in the market's expected volatility, holding everything else constant. <strong>Long options have positive vega</strong> — they gain value when IV rises. <strong>Short options have negative vega</strong> — they lose value when IV rises. This is the direct mechanical link between options trading and the broader volatility market.</p>
+
+<p>The Black-Scholes formula:</p>
+
+<pre>ν = S × e^(-qT) × φ(d1) × √T</pre>
+
+<p>Vega is positive for both long calls and long puts. It's largest for long-dated ATM options (the √T factor grows with T, unlike gamma's 1/√T). It's smaller for short-dated options because there's less time for volatility to affect the option's price.</p>
+
+<p><strong>Operational consequence.</strong> A long ATM 30-day SPX call has substantial positive vega — perhaps $10 of P&amp;L per 1 vol-point rise in IV at SPX 6000. A long ATM 0DTE SPX call has nearly zero vega — IV moves at expiration don't matter to the option's payoff. This is why vol-targeting and volatility surface strategies are concentrated in longer-dated options: those are where the vega lives.</p>
+
+<h2 id="rho-interest-rate-sensitivity">5 · Rho — interest rate sensitivity</h2>
+
+<p><strong>Rho is the partial derivative of the option value with respect to the risk-free rate:</strong></p>
+
+<pre>ρ = ∂V/∂r</pre>
+
+<p>For most short-term equity options, rho is negligible — the option's value barely changes when rates move by typical daily amounts. Rho becomes relevant for long-dated options (LEAPS, 1-2 year expirations) and during rate-regime shifts (the 2022-2023 Fed hiking cycle moved option valuations measurably through the rho channel for the first time in over a decade).</p>
+
+<p>The Black-Scholes formula:</p>
+
+<pre>ρ_call = K × T × e^(-rT) × N(d2)
+ρ_put  = -K × T × e^(-rT) × N(-d2)
+
+where d2 = d1 − σ√T</pre>
+
+<p>Calls have positive rho (higher rates favor calls because higher rates increase the forward price of the underlying). Puts have negative rho (the reverse). For our purposes — focused on near-term SPX options where rho is a third-order concern — rho is mostly relevant when discussing how the entire vol surface reprices during rate-regime changes.</p>
+
+<figure class="fig" id="fig-five-greeks-simulator">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="five-greeks-simulator-s">spot S</label>
+      <input type="range" id="five-greeks-simulator-s" min="70" max="130" step="0.5" value="100">
+      <output id="five-greeks-simulator-s-o" for="five-greeks-simulator-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="five-greeks-simulator-k">strike K</label>
+      <input type="range" id="five-greeks-simulator-k" min="70" max="130" step="1" value="100">
+      <output id="five-greeks-simulator-k-o" for="five-greeks-simulator-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="five-greeks-simulator-t">days to expiry</label>
+      <input type="range" id="five-greeks-simulator-t" min="1" max="180" step="1" value="30">
+      <output id="five-greeks-simulator-t-o" for="five-greeks-simulator-t"></output>
+    </div>
+    <div class="ctrl">
+      <label for="five-greeks-simulator-sig">implied vol σ</label>
+      <input type="range" id="five-greeks-simulator-sig" min="0.05" max="0.8" step="0.01" value="0.25">
+      <output id="five-greeks-simulator-sig-o" for="five-greeks-simulator-sig"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="five-greeks-simulator-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+    <div class="ctrl"><output id="five-greeks-simulator-prem"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Greek</th><th>Value</th><th>Measures</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Δ delta</td><td data-label="Value" id="five-greeks-simulator-g0"></td><td data-label="Measures">∂V/∂S, share-equivalent exposure (× 100 per contract)</td></tr>
+      <tr><td class="c-trial">Γ gamma</td><td data-label="Value" id="five-greeks-simulator-g1"></td><td data-label="Measures">∂Δ/∂S, how fast delta changes</td></tr>
+      <tr><td class="c-trial">Θ theta</td><td data-label="Value" id="five-greeks-simulator-g2"></td><td data-label="Measures">∂V/∂t, daily P&amp;L from time passing</td></tr>
+      <tr><td class="c-trial">ν vega</td><td data-label="Value" id="five-greeks-simulator-g3"></td><td data-label="Measures">∂V/∂σ, P&amp;L per 1 vol point</td></tr>
+      <tr><td class="c-trial">ρ rho</td><td data-label="Value" id="five-greeks-simulator-g4"></td><td data-label="Measures">∂V/∂r, P&amp;L per 1% rate change</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="five-greeks-simulator-sh">what-if spot shift</label>
+      <input type="range" id="five-greeks-simulator-sh" min="-10" max="10" step="0.1" value="0">
+      <output id="five-greeks-simulator-sh-o" for="five-greeks-simulator-sh"></output>
+    </div>
+  </div>
+  <canvas id="five-greeks-simulator-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl"><output id="five-greeks-simulator-fo"></output></div>
+    <div class="ctrl"><output id="five-greeks-simulator-so"></output></div>
+    <div class="ctrl"><output id="five-greeks-simulator-full"></output></div>
+    <div class="ctrl"><output id="five-greeks-simulator-err"></output></div>
+  </div>
+  <figcaption><b>Five Greeks, and how far delta and gamma reach.</b> The Black-Scholes Greeks of
+  one option (r = 4%, no dividend) in trading-screen units: theta per calendar day, vega per vol
+  point, rho per 1% of rate. The chart moves spot by up to $10 either way and sets the full
+  reprice against delta alone and against delta plus the ½Γ·ΔS² correction. For a small move
+  delta captures most of the change; what the gamma term leaves over, with vol and time held
+  fixed, comes from speed and higher spot derivatives, and it grows with the move and with lower
+  vol or fewer days.</figcaption>
+</figure>
+
+<figure class="fig" id="fig-greek-surface-3d">
+  <canvas id="greek-surface-3d-c" data-h="340"></canvas>
+  <div class="ctrls ctrl" role="group" aria-label="Greek" id="greek-surface-3d-greek">
+    <label>Greek</label>
+    <button type="button" data-v="delta" aria-pressed="false">Δ delta</button>
+    <button type="button" data-v="gamma" class="on" aria-pressed="true">Γ gamma</button>
+    <button type="button" data-v="vega" aria-pressed="false">ν vega</button>
+    <button type="button" data-v="theta" aria-pressed="false">Θ theta</button>
+    <button type="button" data-v="vanna" aria-pressed="false">vanna</button>
+    <button type="button" data-v="charm" aria-pressed="false">charm</button>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="greek-surface-3d-sig">implied vol σ</label>
+      <input type="range" id="greek-surface-3d-sig" min="0.08" max="0.5" step="0.01" value="0.22">
+      <output id="greek-surface-3d-sig-o" for="greek-surface-3d-sig"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="greek-surface-3d-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="greek-surface-3d-az">view angle</label>
+      <input type="range" id="greek-surface-3d-az" min="0" max="360" step="1" value="45">
+      <output id="greek-surface-3d-az-o" for="greek-surface-3d-az"></output>
+    </div>
+    <div class="ctrl">
+      <label for="greek-surface-3d-el">tilt</label>
+      <input type="range" id="greek-surface-3d-el" min="10" max="80" step="1" value="28">
+      <output id="greek-surface-3d-el-o" for="greek-surface-3d-el"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="greek-surface-3d-act"></output></div>
+    <div class="ctrl"><output id="greek-surface-3d-live"></output></div>
+    <div class="ctrl"><output id="greek-surface-3d-kind"></output></div>
+  </div>
+  <figcaption><b>A Greek over spot and days to expiry.</b> One Black-Scholes Greek of an option
+  struck at K = 100 (r = 4%), drawn as a wireframe over spot from 70 to 130 and 1 to 90 days to
+  expiry, with theta per calendar day and vega per vol point. Heights run from the surface's
+  lowest value at the floor to its highest at the top, as marked on the vertical axis, and
+  positive and negative values take two colors, stronger the further from zero. Turn the surface
+  with the view angle slider and tilt it with the tilt slider; watch gamma collapse into a sharp
+  peak at the money as expiry nears, the 1/√T divergence of the text.</figcaption>
+</figure>
+
+<h2 id="the-gamma-theta-tradeoff-the-most-important-relationship">6 · The gamma-theta tradeoff (the most important relationship)</h2>
+
+<p>Within the Black-Scholes-Merton framework, gamma and theta are inseparably linked. You cannot have one without the other. If you're long an option you have positive gamma (favorable) and must pay for it through negative theta. If you're short you have negative gamma (unfavorable) and are compensated for it through positive theta.</p>
+
+<p>The formal statement, which we'll derive properly in <a class="xref" href="7a.html">Section 7A</a>:</p>
+
+<pre>Long option P&amp;L over interval dt:
+dΠ ≈ ½ × Γ × S² × [(dS/S)² − σ_impl² × dt]</pre>
+
+<p>Read this as: <strong>over each interval, a delta-hedged long option earns gamma times the difference between realized squared return and implied variance.</strong> This is the single most important equation in the entire framework.</p>
+
+<p>Some consequences:</p>
+
+<ul>
+<li><p><strong>Long gamma earns when realized volatility exceeds implied.</strong> If the underlying makes bigger moves than the IV at entry predicted, the delta-hedged long-option position scalps gamma — buy low, sell high in the underlying hedge — and the cumulative scalping gain exceeds the theta paid.</p></li>
+<li><p><strong>Short gamma earns when realized falls below implied.</strong> If the underlying makes smaller moves than IV predicted, the short-option position keeps the theta and avoids losing money on the gamma hedges.</p></li>
+<li><p><strong>Theta is the "rent" paid for owning gamma.</strong> It's the price you pay for having a position that benefits from movement. Selling gamma collects that rent.</p></li>
+<li><p><strong>Variance risk premium is the operative bet.</strong> Every delta-hedged option position is fundamentally a bet on realized vs implied volatility. Nothing more, nothing less. The directional exposure is hedged away; what remains is the spread between realized and implied.</p></li>
+</ul>
+
+<p>This decomposition is what justifies the entire framework of <a class="xref" href="6a.html">Section 6</a> onward. The dealer who has sold an option to a customer and delta-hedged it is making this exact bet: that realized vol will come in below the IV at which they sold. If realized exceeds implied, they lose money to the customer's gamma. If realized is below implied, they keep the spread. The variance risk premium is, in aggregate, the empirical observation that this trade has paid for the dealer historically — implied has averaged higher than realized.</p>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- delta-probability-map ---------- */
+(function () {
+  var U = 'delta-probability-map';
+  var IDS = ['s', 'k', 'dte', 'iv', 'r', 'q'];
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* a label beside a marker line, flipped to the left near the right edge */
+  function tag(p, x, y, s, color) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var right = p.X(x) + 4 + p.g.measureText(s).width > p.w - 4;
+    p.text(x, y, s, { dx: right ? -4 : 4, align: right ? 'right' : 'left', baseline: 'middle',
+                      color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var spot = DL.val(U + '-s'), strike = DL.val(U + '-k'), dte = DL.val(U + '-dte'),
+        iv = DL.val(U + '-iv'), rate = DL.val(U + '-r'), div = DL.val(U + '-q');
+    var optType = type();
+
+    var T = dte / 365;
+    var r = DL.bsm(spot, strike, T, iv, rate, div);
+    var delta = optType === 'call' ? r.callDelta : r.putDelta;
+    var itmProb = optType === 'call' ? r.Nd2 : 1 - r.Nd2;
+    var diff = Math.abs(delta) - itmProb, gap = Math.abs(diff);
+
+    /* the app's density plot: phi on [-4, 4], its peak at 92% of the height */
+    var zMin = -4, zMax = 4, peak = DL.phi(0);
+    var p = new NMT.Plot(c, { xmin: zMin, xmax: zMax, ymin: 0, ymax: peak / 0.92,
+                              pad: { l: 14, r: 14, t: 38, b: 28 }, grid: false });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], y: false, yAxis: false,
+                 x: function (v) { return DL.num(v, 0); } });
+    var d1c = Math.max(zMin, Math.min(zMax, r.d1)), d2c = Math.max(zMin, Math.min(zMax, r.d2));
+
+    /* P(ITM) as an area: left of d2 for a call, right of it for a put */
+    var lo = optType === 'call' ? zMin : d2c, hi = optType === 'call' ? d2c : zMax;
+    var zs = [], hs = [];
+    for (var i = 0; i <= 160; i++) {
+      var z = zMin + (zMax - zMin) * i / 160;
+      if (z > lo && z < hi) { zs.push(z); hs.push(DL.phi(z)); }
+    }
+    zs.unshift(lo); hs.unshift(DL.phi(lo)); zs.push(hi); hs.push(DL.phi(hi));
+    DL.band(p, zs, hs, 0, DL.fade(DL.color('insight'), 0.18));
+
+    p.fn(DL.phi, { color: DL.color('accent'), width: 1.6 });
+    p.seg(d1c, 0, d1c, p.invY(10), { color: DL.color('familiar'), width: 1.4, dash: [2, 2] });
+    p.seg(d2c, 0, d2c, p.invY(25), { color: DL.color('insight'), width: 1.4, dash: [2, 2] });
+    /* the two labels ride above the curve, d1 on the top line */
+    tag(p, d1c, p.invY(10), 'd₁ = ' + DL.num(r.d1, 2), DL.color('familiar'));
+    tag(p, d2c, p.invY(25), 'd₂ = ' + DL.num(r.d2, 2), DL.color('insight'));
+
+    var call = optType === 'call';
+    DL.out(U + '-s-o', String(spot));
+    DL.out(U + '-k-o', String(strike));
+    DL.out(U + '-dte-o', dte + 'd');
+    DL.out(U + '-iv-o', (iv * 100).toFixed(0) + '%');
+    DL.out(U + '-r-o', (rate * 100).toFixed(1) + '%');
+    DL.out(U + '-q-o', (div * 100).toFixed(2) + '%');
+    DL.out(U + '-nd1', DL.num(r.Nd1, 4));
+    DL.out(U + '-dk', call ? 'Call Δ = e^(−qT)·N(d₁)' : 'Put Δ = e^(−qT)·(N(d₁) − 1)');
+    DL.out(U + '-dv', DL.num(delta, 4));
+    DL.out(U + '-pk', call ? 'N(d₂) = P(ITM)' : '1 − N(d₂) = P(ITM)');
+    DL.out(U + '-pv', DL.num(itmProb, 4));
+    DL.out(U + '-diff', '|Δ| − P(ITM) = ' + DL.signed(diff, 4));
+    DL.out(U + '-gap', 'absolute gap = ' + DL.num(gap, 4));
+    if (gap < 0.005) {
+      DL.out(U + '-vk', 'Δ and P(ITM) are within 0.005.');
+      DL.out(U + '-vt', 'The retail shortcut, delta as the probability of finishing in the ' +
+                        'money, barely fails here.');
+    } else {
+      DL.out(U + '-vk', '|Δ| ' + (diff > 0 ? 'exceeds' : 'falls short of') +
+                        ' P(ITM) by a meaningful margin.');
+      DL.out(U + '-vt', 'Reading delta as the probability of finishing in the money loses ' +
+                        'accuracy as σ√T, the distance from d₁ down to d₂, grows with vol and time.');
+    }
+  });
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
+})();
+
+/* ---------- five-greeks-simulator ---------- */
+(function () {
+  var U = 'five-greeks-simulator';
+  var IDS = ['s', 'k', 't', 'sig', 'sh'];
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* a signed dollar amount, as the app writes its what-if readouts */
+  function dollars(x, d) {
+    var a = Math.abs(x);
+    return (x < 0 && Number(a.toFixed(d)) !== 0 ? DL.MINUS : '+') + '$' + DL.num(a, d);
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var S = DL.val(U + '-s'), K = DL.val(U + '-k'), T = DL.val(U + '-t'),
+        sigma = DL.val(U + '-sig'), shift = DL.val(U + '-sh'), opt = type();
+
+    /* the app's Greeks: r = 4%, q = 0; vega per vol point, theta per
+       calendar day, rho per 1% of rate */
+    var Tyr = T / 365, r = 0.04;
+    var D1 = DL.d1(S, K, Tyr, sigma, r, 0);
+    var D2 = D1 - sigma * Math.sqrt(Tyr);
+    var delta = DL.bsDelta(S, K, Tyr, sigma, opt, r, 0);
+    var gamma = DL.bsGamma(S, K, Tyr, sigma, r, 0);
+    var vega = (S * DL.phi(D1) * Math.sqrt(Tyr)) / 100;
+    var theta = (function () {
+      if (Tyr <= 0) return 0;
+      var term1 = -(S * DL.phi(D1) * sigma) / (2 * Math.sqrt(Tyr));
+      if (opt === 'call') return (term1 - r * K * Math.exp(-r * Tyr) * DL.N(D2)) / 365;
+      return (term1 + r * K * Math.exp(-r * Tyr) * DL.N(-D2)) / 365;
+    })();
+    var rho = opt === 'call' ? (K * Tyr * Math.exp(-r * Tyr) * DL.N(D2)) / 100
+                             : (-K * Tyr * Math.exp(-r * Tyr) * DL.N(-D2)) / 100;
+    var price = DL.bsPrice(S, K, Tyr, sigma, opt, r, 0);
+
+    /* first order, second order and the full reprice, for any shift */
+    function full(x) { return DL.bsPrice(S + x, K, Tyr, sigma, opt, r, 0) - price; }
+    function first(x) { return delta * x; }
+    function second(x) { return delta * x + 0.5 * gamma * x * x; }
+
+    var xs = [], f = [], a = [], b = [];
+    for (var i = 0; i <= 200; i++) {
+      var x = -10 + 20 * i / 200;
+      xs.push(x); f.push(full(x)); a.push(first(x)); b.push(second(x));
+    }
+    var all = f.concat(a, b), lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+    var room = Math.max(hi - lo, 0.5) * 0.08;
+    var p = new NMT.Plot(c, { xmin: -10, xmax: 10, ymin: lo - room, ymax: hi + room,
+                              pad: { l: 48, r: 14, t: 26, b: 30 }, grid: true });
+    DL.axes(p, { xs: [-10, -5, 0, 5, 10], ny: 5,
+                 x: function (v) { return v === 0 ? '$0' : dollars(v, 0); },
+                 y: function (v, st) { return DL.usd(v, st < 1 ? (st < 0.1 ? 2 : 1) : 0); } });
+    var cF = DL.color('insight'), cA = DL.color('familiar'), cB = DL.color('accent');
+    p.seg(shift, p.o.ymin, shift, p.o.ymax, { color: DL.color('ink-faint'), width: 1, dash: [3, 3] });
+    DL.line(p, xs, a, { color: cA, width: 1.6, dash: [5, 4] });
+    DL.line(p, xs, b, { color: cB, width: 1.6 });
+    DL.line(p, xs, f, { color: cF, width: 2.2 });
+    p.dot(shift, first(shift), { r: 3.5, color: cA, ring: true });
+    p.dot(shift, second(shift), { r: 3.5, color: cB, ring: true });
+    p.dot(shift, full(shift), { r: 3.5, color: cF, ring: true });
+    p.g.textAlign = 'left';   /* DL.legend keeps whatever alignment was set last */
+    DL.legend(p, [{ label: 'full reprice', color: cF },
+                  { label: 'Δ·ΔS', color: cA, dash: [5, 4] },
+                  { label: '+ ½Γ·ΔS²', color: cB }], { dx: -44, dy: -26 });
+
+    var fullDeltaP = full(shift), firstOrderDeltaP = first(shift),
+        secondOrderDeltaP = second(shift), higherOrderError = fullDeltaP - secondOrderDeltaP;
+
+    DL.out(U + '-s-o', DL.usd(S, 1));
+    DL.out(U + '-k-o', DL.usd(K, 0));
+    DL.out(U + '-t-o', T + 'd');
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-prem', 'premium = ' + DL.usd(price, 2) + ' per share');
+    DL.out(U + '-g0', DL.num(delta, 3));
+    DL.out(U + '-g1', DL.num(gamma, 4));
+    DL.out(U + '-g2', DL.num(theta, 3));
+    DL.out(U + '-g3', DL.num(vega, 3));
+    DL.out(U + '-g4', DL.num(rho, 3));
+    DL.out(U + '-sh-o', dollars(shift, 1));
+    DL.out(U + '-fo', 'Δ·ΔS = ' + dollars(firstOrderDeltaP, 3));
+    DL.out(U + '-so', 'Δ·ΔS + ½Γ·ΔS² = ' + dollars(secondOrderDeltaP, 3));
+    DL.out(U + '-full', 'full reprice = ' + dollars(fullDeltaP, 3));
+    DL.out(U + '-err', 'higher-order error = ' + dollars(higherOrderError, 4));
+  });
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
+})();
+
+/* ---------- greek-surface-3d ---------- */
+(function () {
+  var U = 'greek-surface-3d';
+  var LABEL = { delta: 'Δ delta', gamma: 'Γ gamma', vega: 'ν vega', theta: 'Θ theta',
+                vanna: 'vanna', charm: 'charm' };
+  var greek = DL.seg(U + '-greek', function () { draw(); });
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* the app's Greeks, r = 4%, q = 0, time floored at 0.0005 years */
+  function computeGreek(id, S, K, Tyr, sigma, opt) {
+    var r = 0.04;
+    if (Tyr < 0.0005) Tyr = 0.0005;
+    switch (id) {
+      case 'delta': return DL.bsDelta(S, K, Tyr, sigma, opt);
+      case 'gamma': return DL.bsGamma(S, K, Tyr, sigma);
+      case 'vega': return S * DL.phi(DL.d1(S, K, Tyr, sigma, r, 0)) * Math.sqrt(Tyr) / 100;
+      case 'theta': {
+        var D1 = DL.d1(S, K, Tyr, sigma, r, 0), D2 = D1 - sigma * Math.sqrt(Tyr);
+        var term1 = -(S * DL.phi(D1) * sigma) / (2 * Math.sqrt(Tyr));
+        if (opt === 'call') return (term1 - r * K * Math.exp(-r * Tyr) * DL.N(D2)) / 365;
+        return (term1 + r * K * Math.exp(-r * Tyr) * DL.N(-D2)) / 365;
+      }
+      case 'vanna': return DL.bsVanna(S, K, Tyr, sigma);
+      case 'charm': return DL.bsCharm(S, K, Tyr, sigma, opt);
+    }
+    return 0;
+  }
+
+  /* The app's mesh: 32 × 32 points, spot from 0.7K to 1.3K with the strike
+     held at K = 100, and 1 to 90 days. World axes as the app's three.js
+     scene: x = 4(S − K)/K across, z from −2 (1 day) to 2 (90 days), and the
+     height y = 2.5 × (v − min)/(max − min). */
+  var NS = 32, NT = 32, K = 100;
+  function mesh(id, sigma, opt) {
+    var pts = [], lo = Infinity, hi = -Infinity;
+    for (var i = 0; i < NS; i++) {
+      var S = K * 0.7 + (i / (NS - 1)) * (K * 1.3 - K * 0.7);
+      for (var j = 0; j < NT; j++) {
+        var T = 1 + (j / (NT - 1)) * (90 - 1);
+        var v = computeGreek(id, S, K, T / 365, sigma, opt);
+        pts.push({ x: ((S - K) / K) * 4, z: ((T - 1) / (90 - 1)) * 4 - 2, v: v });
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+    }
+    var range = hi - lo || 1;
+    pts.forEach(function (q) { q.y = (q.v - lo) / range * 2.5; });
+    return { pts: pts, lo: lo, hi: hi, range: range };
+  }
+
+  /* a value on the vertical axis, to the precision its range needs */
+  function tick(v, span) {
+    var d = Math.max(0, 2 - Math.floor(Math.log10(Math.max(span, 1e-12))));
+    return DL.num(v, Math.min(d, 6));
+  }
+
+  var XW = 1.2, ZW = 2, YH = 2.5, R = Math.sqrt(XW * XW + ZW * ZW);
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var id = greek(), opt = type(), sigma = DL.val(U + '-sig');
+    var azDeg = DL.val(U + '-az'), elDeg = DL.val(U + '-el');
+    var az = azDeg * Math.PI / 180, el = elDeg * Math.PI / 180;
+    var ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el);
+
+    /* An orthographic view from azimuth az (0 looks along the DTE axis,
+       45 is the app's opening camera at (4, 3, 4)) and elevation el.
+       u runs right across the screen, w up it, and d towards the viewer
+       along the floor, which orders the quads back to front. */
+    function P(x, y, z) {
+      var d = x * sa + z * ca;
+      return { u: x * ca - z * sa, w: y * ce - d * se, d: d };
+    }
+    /* the frame is fixed for every angle, so turning never rescales */
+    var p = new NMT.Plot(c, { xmin: -R, xmax: R, ymin: -R * se, ymax: YH * ce + R * se,
+                              equal: true, grid: false, pad: { l: 46, r: 28, t: 26, b: 30 } });
+    var g = p.g, font = '11px ' + DL.color('sans');
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
+
+    var m = mesh(id, sigma, opt);
+    var sp = m.pts.map(function (q) { var r = P(q.x, q.y, q.z); r.v = q.v; return r; });
+    function X(r) { return p.X(r.u); }
+    function Y(r) { return p.Y(r.w); }
+
+    /* the floor, and the vertical axis at its leftmost corner */
+    var corners = [[-XW, -ZW], [XW, -ZW], [XW, ZW], [-XW, ZW]].map(function (xz) {
+      var r = P(xz[0], 0, xz[1]); r.x = xz[0]; r.z = xz[1]; return r;
+    });
+    g.save();
+    g.strokeStyle = DL.color('rule'); g.lineWidth = 1;
+    g.beginPath();
+    corners.forEach(function (r, k) { if (k) g.lineTo(X(r), Y(r)); else g.moveTo(X(r), Y(r)); });
+    g.closePath(); g.stroke();
+    /* the leftmost corner; square to an axis, the nearer of the two */
+    var left = corners.reduce(function (a, b) {
+      return b.u < a.u - 1e-9 || (Math.abs(b.u - a.u) <= 1e-9 && b.d > a.d) ? b : a;
+    });
+    var top = P(left.x, YH, left.z);
+    g.strokeStyle = DL.color('ink-faint');
+    g.beginPath(); g.moveTo(X(left), Y(left)); g.lineTo(X(top), Y(top)); g.stroke();
+    g.restore();
+
+    /* the surface: quads from the back to the front, each painted over
+       what is behind it, colored by the sign and size of its value */
+    var quads = [];
+    for (var i = 0; i < NS - 1; i++) {
+      for (var j = 0; j < NT - 1; j++) {
+        var a = i * NT + j, b = a + NT;
+        quads.push([a, b, b + 1, a + 1]);
+      }
+    }
+    quads.forEach(function (q) {
+      q.d = (sp[q[0]].d + sp[q[1]].d + sp[q[2]].d + sp[q[3]].d) / 4;
+      q.v = (sp[q[0]].v + sp[q[1]].v + sp[q[2]].v + sp[q[3]].v) / 4;
+    });
+    quads.sort(function (a, b) { return a.d - b.d; });
+    var paper = DL.color('paper'), pos = DL.color('accent'), neg = DL.color('plain');
+    g.save();
+    g.lineWidth = 0.7; g.lineJoin = 'round';
+    quads.forEach(function (q) {
+      var t = q.v >= 0 ? q.v / Math.max(m.hi, 1e-6) : Math.abs(q.v) / Math.max(Math.abs(m.lo), 1e-6);
+      t = Math.min(1, Math.max(0, t));
+      var col = q.v >= 0 ? pos : neg;
+      g.beginPath();
+      g.moveTo(X(sp[q[0]]), Y(sp[q[0]]));
+      g.lineTo(X(sp[q[1]]), Y(sp[q[1]]));
+      g.lineTo(X(sp[q[2]]), Y(sp[q[2]]));
+      g.lineTo(X(sp[q[3]]), Y(sp[q[3]]));
+      g.closePath();
+      g.fillStyle = paper; g.fill();
+      g.fillStyle = DL.fade(col, 0.05 + 0.3 * t); g.fill();
+      g.strokeStyle = DL.fade(col, 0.3 + 0.7 * t); g.stroke();
+    });
+    g.restore();
+
+    /* Labels: the vertical axis's name and its two ends, then spot and DTE
+       along the two floor edges through the corner nearest the reader. Each
+       has a rim of paper so it reads over the mesh. The names and the ends
+       of the scale are always set, kept inside the canvas; the edges' end
+       values and the zero mark only where they clear what is already set. */
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), placed = [];
+    function rect(px, py, w, align, base) {
+      var x0 = align === 'left' ? px : align === 'right' ? px - w : px - w / 2;
+      var y0 = base === 'top' ? py : base === 'bottom' ? py - 12 : py - 6;
+      return { x0: x0, y0: y0, x1: x0 + w, y1: y0 + 12 };
+    }
+    function say(r, dx, dy, s, o) {
+      var align = o.align || 'center', base = o.baseline || 'middle';
+      g.save();
+      g.font = font;
+      var b = rect(p.X(r.u) + dx, p.Y(r.w) + dy, g.measureText(s).width, align, base);
+      if (o.optional) {
+        var clash = b.x0 < 2 || b.y0 < 2 || b.x1 > p.w - 2 || b.y1 > p.h - 2 ||
+          placed.some(function (q) {
+            return b.x0 < q.x1 + 3 && q.x0 < b.x1 + 3 && b.y0 < q.y1 + 1 && q.y0 < b.y1 + 1;
+          });
+        if (clash) { g.restore(); return; }
+      } else {
+        var sx = Math.max(0, 2 - b.x0) - Math.max(0, b.x1 - (p.w - 2));
+        var sy = Math.max(0, 2 - b.y0) - Math.max(0, b.y1 - (p.h - 2));
+        dx += sx; dy += sy;
+        b = { x0: b.x0 + sx, y0: b.y0 + sy, x1: b.x1 + sx, y1: b.y1 + sy };
+      }
+      placed.push(b);
+      g.textAlign = align; g.textBaseline = base;
+      g.strokeStyle = paper; g.lineWidth = 3; g.lineJoin = 'round';
+      g.strokeText(s, p.X(r.u) + dx, p.Y(r.w) + dy);
+      g.restore();
+      p.text(r.u, r.w, s, { dx: dx, dy: dy, align: align, baseline: base,
+                            color: o.color || faint, font: font });
+    }
+
+    /* the nearest corner; square to an axis, the right-hand one, so the
+       labeled edges keep clear of the vertical axis on the left */
+    var near = corners.reduce(function (a, b) {
+      return b.d > a.d + 1e-9 || (Math.abs(b.d - a.d) <= 1e-9 && b.u > a.u) ? b : a;
+    });
+    var mid = P(0, 0, 0);
+    /* an edge of the floor through the nearest corner, and the side of it
+       away from the floor's center */
+    function edge(a, b, lo, hi, name) {
+      var ex = X(b) - X(a), ey = Y(b) - Y(a), len = Math.sqrt(ex * ex + ey * ey) || 1;
+      var nx = -ey / len, ny = ex / len;
+      var mx = (X(a) + X(b)) / 2 - p.X(mid.u), my = (Y(a) + Y(b)) / 2 - p.Y(mid.w);
+      if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; }
+      return { a: a, b: b, lo: lo, hi: hi, name: name, nx: nx, ny: ny, len: len,
+               align: nx > 0.35 ? 'left' : nx < -0.35 ? 'right' : 'center',
+               baseline: ny > 0.35 ? 'top' : ny < -0.35 ? 'bottom' : 'middle' };
+    }
+    var edges = [edge(P(-XW, 0, near.z), P(XW, 0, near.z), '70', '130', 'spot S'),
+                 edge(P(near.x, 0, -ZW), P(near.x, 0, ZW), '1d', '90d', 'DTE')];
+
+    var big = Math.max(Math.abs(m.hi), Math.abs(m.lo));
+    say(top, 0, -8, LABEL[id], { baseline: 'bottom', color: soft });
+    say(top, -7, 0, tick(m.hi, big), { align: 'right' });
+    say(left, -7, 0, tick(m.lo, big), { align: 'right' });
+    edges.forEach(function (e) {
+      say({ u: (e.a.u + e.b.u) / 2, w: (e.a.w + e.b.w) / 2 }, e.nx * 9, e.ny * 9, e.name,
+          { align: e.align, baseline: e.baseline, color: soft });
+    });
+    if (m.lo < 0 && m.hi > 0) {
+      var zero = P(left.x, (0 - m.lo) / m.range * YH, left.z);
+      g.save();
+      g.strokeStyle = faint; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(X(zero) - 4, Y(zero)); g.lineTo(X(zero), Y(zero)); g.stroke();
+      g.restore();
+      say(zero, -7, 0, '0', { align: 'right', optional: true });
+    }
+    edges.forEach(function (e) {
+      if (e.len < 60) return;
+      [[e.lo, 0.1], [e.hi, 0.9]].forEach(function (end) {
+        say({ u: e.a.u + (e.b.u - e.a.u) * end[1], w: e.a.w + (e.b.w - e.a.w) * end[1] },
+            e.nx * 7, e.ny * 7, end[0], { align: e.align, baseline: e.baseline, optional: true });
+      });
+    });
+
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-az-o', azDeg + '°');
+    DL.out(U + '-el-o', elDeg + '°');
+    DL.out(U + '-act', 'active Greek = ' + LABEL[id]);
+    DL.out(U + '-live', 'at ATM, 30 DTE = ' +
+           DL.num(computeGreek(id, K, K, 30 / 365, sigma, opt), 4));
+    DL.out(U + '-kind', 'type = ' + opt);
+  });
+  DL.bind([U + '-sig', U + '-az', U + '-el'], draw);
+})();
+<!--/SCRIPT-->

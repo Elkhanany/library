@@ -1,0 +1,93 @@
+<!--
+name: d1 bell curve
+source: src/interactives/D1BellCurve.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot S</label>
+      <input type="range" id="{{uid}}-s" min="70" max="130" step="0.5" value="100">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">strike K</label>
+      <input type="range" id="{{uid}}-k" min="70" max="130" step="1" value="100">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-t">days to expiry</label>
+      <input type="range" id="{{uid}}-t" min="1" max="180" step="1" value="30">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-v">implied vol σ</label>
+      <input type="range" id="{{uid}}-v" min="0.05" max="0.8" step="0.01" value="0.2">
+      <output id="{{uid}}-v-o" for="{{uid}}-v"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="{{uid}}-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-lm"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-d1"></output></div>
+    <div class="ctrl"><output id="{{uid}}-nd"></output></div>
+  </div>
+  <figcaption><b>d₁ is a z-score, and delta is an area.</b> The standard normal density with
+  d₁ = [ln(S/K) + (r − q + ½σ²)T] / (σ√T) marked on it, for the option the sliders set
+  (r = 4%, q = 0). For a call the shaded area left of d₁ is N(d₁), the call's delta; for a put
+  the area to the right is 1 − N(d₁), the size of the put's delta. Move spot through the
+  strike and d₁ slides across the curve, carrying the delta with it.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  function minus(v) { return v < 0 ? DL.MINUS + (-v) : String(v); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var S = DL.val(U + '-s'), K = DL.val(U + '-k'), days = DL.val(U + '-t'), sig = DL.val(U + '-v');
+    var call = type() === 'call', T = days / 365;
+    var D1 = DL.d1(S, K, T, sig), Dc = Math.max(-4, Math.min(4, D1)), nd = DL.N(D1);
+    var top = DL.phi(0) / 0.92;          /* the app puts the peak at 92% of the height */
+    var p = new NMT.Plot(c, { xmin: -4, xmax: 4, ymin: 0, ymax: top,
+                              pad: { l: 14, r: 14, t: 10, b: 38 },
+                              xlabel: 'z (standardized log-moneyness)' });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], ys: [], y: false, yAxis: false, x: minus });
+
+    /* the density on the app's grid, and the tail that is N(d1) or 1 − N(d1) */
+    var zs = [], ps = [], sz = [], sp = [];
+    for (var i = 0; i <= 160; i++) { var z = -4 + i * 0.05; zs.push(z); ps.push(DL.phi(z)); }
+    zs.forEach(function (z, i) {
+      if (call ? z <= Dc : z >= Dc) { sz.push(z); sp.push(ps[i]); }
+    });
+    if (call) { sz.push(Dc); sp.push(DL.phi(Dc)); } else { sz.unshift(Dc); sp.unshift(DL.phi(Dc)); }
+    DL.band(p, sz, sp, 0, DL.fade(DL.color(call ? 'insight' : 'plain'), 0.22));
+    DL.line(p, zs, ps, { color: DL.color('accent'), width: 1.8 });
+    p.seg(Dc, 0, Dc, top, { color: DL.color('familiar'), width: 1.4 });
+
+    var right = Dc < 2.2;
+    p.text(Dc, top, 'd₁ = ' + DL.num(D1, 2),
+           { dx: right ? 5 : -5, dy: 14, align: right ? 'left' : 'right', color: DL.color('familiar') });
+    p.text(call ? -4 : 4, top, call ? 'N(d₁) = ' + DL.num(nd, 3) : '1 − N(d₁) = ' + DL.num(1 - nd, 3),
+           { dx: call ? 6 : -6, dy: 32, align: call ? 'left' : 'right',
+             color: DL.color(call ? 'insight' : 'plain') });
+
+    DL.out(U + '-s-o', DL.usd(S, 1));
+    DL.out(U + '-k-o', DL.usd(K, 0));
+    DL.out(U + '-t-o', days + 'd');
+    DL.out(U + '-v-o', Math.round(sig * 100) + '%');
+    DL.out(U + '-lm', 'ln(S/K) = ' + DL.num(Math.log(S / K), 3));
+    DL.out(U + '-dr', '(r−q+½σ²)·T = ' + DL.num((0.04 + 0.5 * sig * sig) * T, 4));
+    DL.out(U + '-d1', 'd₁ = ' + DL.num(D1, 3));
+    DL.out(U + '-nd', call ? 'N(d₁) = call Δ = ' + DL.num(nd, 3)
+                           : '1−N(d₁) ≈ |put Δ| = ' + DL.num(1 - nd, 3));
+  });
+  DL.bind([U + '-s', U + '-k', U + '-t', U + '-v'], draw);
+})();
+</script>

@@ -1,0 +1,107 @@
+<!--
+name: indicator lab
+source: src/interactives/IndicatorLab.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-p" data-h="160"></canvas>
+  <canvas id="{{uid}}-i" data-h="130"></canvas>
+  <div class="ctrls ctrl" role="group" aria-label="Indicator" id="{{uid}}-ind">
+    <label>indicator</label>
+    <button type="button" data-v="rsi" class="on" aria-pressed="true">RSI</button>
+    <button type="button" data-v="atr" aria-pressed="false">ATR</button>
+    <button type="button" data-v="adx" aria-pressed="false">ADX</button>
+    <button type="button" data-v="bb" aria-pressed="false">close − mid band</button>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">period n</label>
+      <input type="range" id="{{uid}}-n" min="2" max="50" step="1" value="14">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">tape seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="30" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One tape, four instruments.</b> The top panel is the close of a synthetic
+  280-bar price tape, generated from a seed with drifts and volatilities that walk from a base
+  through a markup and a distribution into a markdown. The bottom panel is the chosen
+  indicator on the same bars, with the RSI and ADX thresholds from the text dashed. Change the
+  period n to see how much each one smooths, and the seed to draw a different tape. The fourth
+  choice is the close minus the Bollinger middle band (the n-bar SMA), in price
+  units.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var PERIOD = DL.$(U + '-n'), SEED = DL.$(U + '-seed');
+  var ind = DL.seg(U + '-ind', redraw);
+
+  var INFO = {
+    rsi: { name: 'RSI', lines: [70, 30],
+           text: 'Momentum oscillator: above 70 overbought, below 30 oversold.' },
+    atr: { name: 'ATR', lines: [],
+           text: 'Average true range: the typical bar size, a pure volatility instrument.' },
+    adx: { name: 'ADX', lines: [25, 20],
+           text: 'Trend strength, not direction: above 25 a strong trend, below 20 no trend.' },
+    bb: { name: 'close − mid band', lines: [],
+          text: 'How far the close sits above or below the Bollinger middle band, in price units.' }
+  };
+
+  /* the app's generateOHLC(280, seed), made once per seed */
+  var tape = { seed: null, bars: null };
+  function bars() {
+    var s = parseInt(SEED.value, 10);
+    if (tape.seed !== s) { tape.seed = s; tape.bars = DL.ohlc(280, s); }
+    return tape.bars;
+  }
+  /* the app's four series; the fourth is (close - Bollinger mid) / 1 */
+  function series(d, id, n) {
+    if (id === 'rsi') return DL.rsi(d, n);
+    if (id === 'atr') return DL.atr(d, n);
+    if (id === 'adx') return DL.adx(d, n).adx;
+    var mid = DL.bollinger(d, n, 2).mid;
+    return mid.map(function (m, i) { return m == null ? null : (d[i].close - mid[i]) / 1; });
+  }
+  function index(d) { return d.map(function (_, i) { return i; }); }
+
+  var drawPrice = DL.figure(U + '-p', function (c) {
+    var d = bars(), close = d.map(function (b) { return b.close; });
+    var lo = Math.min.apply(null, close) * 0.98, hi = Math.max.apply(null, close) * 1.02;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: d.length - 1, ymin: lo, ymax: hi,
+                              pad: { l: 40, r: 12, t: 20, b: 8 } });
+    DL.axes(p, { nx: 6, ny: 4, x: false });
+    DL.line(p, index(d), close, { color: DL.color('familiar'), width: 1.4 });
+    p.text(0, hi, 'price', { dy: -5, font: '11px ' + DL.color('sans'), color: DL.color('familiar') });
+  });
+
+  var drawInd = DL.figure(U + '-i', function (c) {
+    var d = bars(), n = parseInt(PERIOD.value, 10), id = ind(), info = INFO[id];
+    var ys = series(d, id, n);
+    var valid = ys.filter(function (v) { return v != null && isFinite(v); });
+    /* the app's scale: the series' range, stretched to take in 0 and 1 */
+    var lo = Math.min.apply(null, valid.concat([0])), hi = Math.max.apply(null, valid.concat([1]));
+    var span = hi - lo;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: d.length - 1,
+                              ymin: lo < 0 ? lo - span * 0.05 : lo, ymax: hi + span * 0.06,
+                              pad: { l: 40, r: 12, t: 20, b: 26 } });
+    DL.axes(p, { nx: 6, ny: 3 });
+    info.lines.forEach(function (v) {
+      if (v < hi) DL.hline(p, v, { color: DL.color('ink-faint'), dash: [3, 3] });
+    });
+    DL.line(p, index(d), ys, { color: DL.color('accent'), width: 1.6 });
+    var label = id === 'bb' ? 'close − mid band, n = ' + n : info.name + '(' + n + ')';
+    p.text(0, p.o.ymax, label, { dy: -5, font: '11px ' + DL.color('sans'), color: DL.color('accent') });
+
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-seed-o', '#' + SEED.value);
+    DL.out(U + '-vk', (id === 'bb' ? 'Close − middle band (n = ' + n + ').' : label + '.'));
+    DL.out(U + '-vt', info.text);
+  });
+
+  function redraw() { drawPrice(); drawInd(); }
+  DL.bind([U + '-n', U + '-seed'], redraw);
+})();
+</script>

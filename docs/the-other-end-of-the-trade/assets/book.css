@@ -1,0 +1,1131 @@
+/* ============================================================
+   A Library: the house style for chapter-shell pages
+   (DESIGN.md sections 2, 3, 5 and 6)
+   ============================================================ */
+
+/* ---------- tokens: type, rhythm, measure ----------
+   The stacks are defined once, as --lib-serif, --lib-sans and --lib-mono, in
+   nav.css, which every page loads. The literal after each var() is the same
+   stack, for a page whose nav.css predates them.
+
+   Weights are declared as they render. None of Iowan, Charter, Palatino or
+   Georgia has a semibold, so a declared 600 came out bold on most machines and
+   semibold on a few. The serif is 400, 400 italic and 700; the sans is 400 for
+   text, 600 for controls and 700 for uppercase labels.
+
+   Every size is in rem, the body's too, so a reader's default font size moves
+   the text, the headings, the spacing and the measure together. --line is the
+   body's own line height and the unit of vertical space between blocks. */
+:root{
+  --serif:var(--lib-serif,"Iowan Old Style",Charter,"Bitstream Charter","Palatino Linotype",
+    "Sitka Text",Palatino,"Source Serif 4","Noto Serif",Georgia,Cambria,serif);
+  --sans:var(--lib-sans,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    "Helvetica Neue",Arial,sans-serif);
+  --mono:var(--lib-mono,ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace);
+
+  --fw-title:400;   /* --fs-display and --fs-title */
+  --fw-head:700;    /* h2, h3 */
+
+  --fs-body:1.1875rem;   /* 19px; 18px from 640 to 999; 17px below 640 */
+  --lh-body:1.66;
+  --line:calc(var(--fs-body) * var(--lh-body));
+  --fs-display:clamp(2.6rem, 1.2rem + 5.4vw, 5rem);
+  --fs-title:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem);
+  --fs-sub:clamp(1.15rem, 1rem + .6vw, 1.4rem);
+  --fs-h2:clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
+  --fs-h3:clamp(1.15rem, 1.06rem + .4vw, 1.3rem);
+  --fs-h4:.95rem;
+  --fs-small:.875rem;
+  --fs-ui:.8125rem;
+  --fs-label:.7rem;
+
+  /* vertical rhythm, in lines of the body text */
+  --sp-eq:calc(.75 * var(--line));          /* display equations, lists */
+  --sp-block:var(--line);                   /* callouts, figures, stories, tables */
+  --sp-h3:calc(1.25 * var(--line));
+  --sp-h3-after:calc(.35 * var(--line));
+  --sp-h2:calc(2 * var(--line));
+  --sp-h2-after:calc(.6 * var(--line));
+  --sp-break:calc(2 * var(--line));         /* sitting breaks */
+  /* small component spacing */
+  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem;
+  --sp-5:1.5rem; --sp-6:2rem; --sp-7:3rem; --sp-8:4.5rem;
+
+  --r-s:3px; --r-m:6px; --r-l:14px;
+
+  /* the measure follows the text size: 35em is about 665px at 19px */
+  --measure:35em;
+  --measure-wide:48em;        /* the contents page and the Math Ledger only */
+  --gutter:var(--lib-inset,1.25rem);
+}
+@media (max-width:999.98px){
+  :root{--fs-body:1.125rem}
+}
+@media (max-width:639.98px){
+  :root{--fs-body:1.0625rem;--lh-body:1.62}
+}
+
+/* ---------- colour ----------
+   A book chooses four colours in book.json (accent, accent_dark, ink, paper),
+   and themecss() appends --bg, --ink and --accent after this file. Every other
+   role is mixed here from those, in each theme, so a book's tint reaches its
+   rules, washes and dark ground. The values outside @supports are the static
+   fallback for a browser without color-mix().
+
+   --ink-faint is the palest ink a WORD may use: 4.5:1 or better on --bg,
+   --bg-alt and --paper in both themes. --rule and --rule-soft are hairlines and
+   are never text. Nothing is de-emphasised with opacity. */
+:root{
+  color-scheme:light;
+  --bg:#fbfaf7;
+  --ink:#1b1b1d;
+  --accent:#1b4b80;
+  --bg-alt:#f3f1ec;
+  --paper:#ffffff;
+  --ink-soft:#4a4a50;
+  --ink-faint:#63636a;
+  --rule:#e0ddd5;
+  --rule-soft:#eceae4;
+  --accent-soft:#e8eff7;
+  --accent-line:currentColor;
+  --warn:#9a4a12;
+  --warn-soft:#fbf0e5;
+  --familiar:#5c3d86;
+  --familiar-soft:#f1ecf8;
+  --insight:#15654a;
+  --insight-soft:#e6f3ee;
+  --grind:#5a5a64;
+  --grind-soft:#f2f2f0;
+  --plain:#9c4257;
+  --plain-soft:#fdf2f4;
+  --plain-rule:#f0dade;
+  /* the ground a component is painted on; scroll-edge cues paint in it */
+  --surface:var(--bg);
+}
+@supports (color: color-mix(in srgb, red, blue)){
+  :root{
+    --bg-alt:color-mix(in srgb, var(--ink) 4.5%, var(--bg));
+    --paper:color-mix(in srgb, #fff 65%, var(--bg));
+    --ink-soft:color-mix(in srgb, var(--ink) 76%, var(--bg));
+    --ink-faint:color-mix(in srgb, var(--ink) 68%, var(--bg));
+    --rule:color-mix(in srgb, var(--ink) 13%, var(--bg));
+    --rule-soft:color-mix(in srgb, var(--ink) 7%, var(--bg));
+    --accent-soft:color-mix(in srgb, var(--accent) 10%, var(--bg));
+    --accent-line:color-mix(in srgb, var(--accent) 45%, transparent);
+    --warn-soft:color-mix(in srgb, var(--warn) 8%, var(--bg));
+    --familiar-soft:color-mix(in srgb, var(--familiar) 8%, var(--bg));
+    --insight-soft:color-mix(in srgb, var(--insight) 8%, var(--bg));
+    --grind-soft:color-mix(in srgb, var(--grind) 8%, var(--bg));
+    --plain-soft:color-mix(in srgb, var(--plain) 8%, var(--bg));
+    --plain-rule:color-mix(in srgb, var(--plain) 18%, var(--bg));
+  }
+}
+
+/* The dark theme redeclares every role whose light formula is wrong on a dark
+   ground. A raised surface (--paper) is a shade LIGHTER than the ground.
+   It is screen-only: a page printed from the dark theme prints in the light
+   roles (see the print block at the end). */
+@media screen{
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#15171b;
+    --ink:#e2e1dc;
+    --accent:#7fb0e8;
+    --bg-alt:#1c1f24;
+    --paper:#191c21;
+    --ink-soft:#a9aab0;
+    --ink-faint:#84868c;
+    --rule:#2e323a;
+    --rule-soft:#252930;
+    --accent-soft:#1a2734;
+    --warn:#e0a06a;
+    --warn-soft:#2b2119;
+    --familiar:#b79ce0;
+    --familiar-soft:#241d31;
+    --insight:#6dc9a5;
+    --insight-soft:#152722;
+    --grind:#9a9ca4;
+    --grind-soft:#1f2228;
+    --plain:#e3a0ac;
+    --plain-soft:#231a1d;
+    --plain-rule:#453035;
+  }
+  @supports (color: color-mix(in srgb, red, blue)){
+    html[data-theme="dark"]{
+      --bg:color-mix(in srgb, var(--accent) 5%, #15171b);
+      --paper:color-mix(in srgb, #fff 3%, var(--bg));
+      --ink-soft:color-mix(in srgb, var(--ink) 74%, var(--bg));
+      --ink-faint:color-mix(in srgb, var(--ink) 60%, var(--bg));
+      /* The light formulas, restated. They are right on a dark ground as they
+         stand, but an older themecss() appended a static light --bg-alt and
+         --accent-soft on :root, which would otherwise reach the dark theme. */
+      --bg-alt:color-mix(in srgb, var(--ink) 4.5%, var(--bg));
+      --rule:color-mix(in srgb, var(--ink) 13%, var(--bg));
+      --rule-soft:color-mix(in srgb, var(--ink) 7%, var(--bg));
+      --accent-soft:color-mix(in srgb, var(--accent) 10%, var(--bg));
+      --accent-line:color-mix(in srgb, var(--accent) 45%, transparent);
+      --warn-soft:color-mix(in srgb, var(--warn) 8%, var(--bg));
+      --familiar-soft:color-mix(in srgb, var(--familiar) 8%, var(--bg));
+      --insight-soft:color-mix(in srgb, var(--insight) 8%, var(--bg));
+      --grind-soft:color-mix(in srgb, var(--grind) 8%, var(--bg));
+      --plain-soft:color-mix(in srgb, var(--plain) 8%, var(--bg));
+      --plain-rule:color-mix(in srgb, var(--plain) 18%, var(--bg));
+    }
+  }
+}
+
+/* grounds that are not the page's */
+.sidebar,#mnav{--surface:var(--bg-alt)}
+
+*{box-sizing:border-box}
+
+/* ---------- scrolling ----------
+   clip, not hidden. overflow-x:hidden on html and body made body a scroll
+   container, and the sticky library bar then stuck to nothing below 1000px.
+   clip creates no scroll container. The scroll padding clears the bar;
+   :root rather than html, so it outranks the drawer block's older html rule. */
+html,body{overflow-x:clip}
+@supports not (overflow:clip){
+  html,body{overflow-x:hidden}
+}
+:root{scroll-padding-top:calc(var(--lib-bar-h, 2.75rem) + .75rem)}
+@media (prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%; text-size-adjust:100%;
+}
+
+/* ---------- the frame ----------
+   The chapter shell (DESIGN.md section 5). The sidebar is flush to the
+   viewport's left edge above 1000px, its ground reaching x = 0, and its text
+   sits at --lib-inset, the bar's own inset, so the brand and the sidebar's
+   first line share one x. The column is the reading measure. Nothing is
+   centred on a frame width any more: a centred .wrap floated the sidebar as a
+   grey slab in mid-page at 1920 and left the bar's brand out of line (R-10,
+   NAV-17). The sidebar's top and height under the bar are nav.css's, beside
+   the bar's height; the values here are for a page with no bar (the Dropbox
+   build).
+
+   --breakout is the margin track: 0 below 1200px, and from 1200px the free
+   space right of the column, capped at 18rem. Hanging equation numbers and
+   wide figures read it. It is a registered length so that it computes to a
+   number on .main, where a percentage in it would otherwise be resolved
+   against whichever box used it. From 1200px .main is an inline-size
+   container, so an evidence table can bleed across all of it (100cqi) rather
+   than stop at the track; and .wrap is one too, so that .main can measure its
+   free space in the page's width without counting a scrollbar. From 1500px
+   the column and its margin are centred in the space right of the sidebar. */
+@property --breakout{syntax:'<length>';inherits:true;initial-value:0px}
+
+.wrap{display:flex;align-items:flex-start}
+.sidebar{
+  position:sticky;top:0;flex:0 0 16rem;width:16rem;height:100vh;height:100dvh;
+  overflow-y:auto;overscroll-behavior:contain;
+  padding:2.5rem var(--lib-inset,1.25rem) 3rem;border-right:1px solid var(--rule);
+  font-family:var(--sans);font-size:var(--fs-ui);line-height:1.45;background:var(--bg-alt);
+}
+/* The left padding holds the Through-Line's hanging passage numbers; the right
+   is the bar's inset, so a bleeding table ends where the bar's last button
+   does. */
+.main{--breakout:0px;flex:1 1 auto;min-width:0;
+  padding:2.5rem var(--lib-inset,1.25rem) 6rem 4rem}
+.col{max-width:var(--measure)}
+.col.wide{max-width:var(--measure-wide)}
+
+/* 1000px itself goes to the phone chrome, as nav.css's folio bar and book.js
+   do, so no width shows both the sidebar and the folio bar */
+@media (max-width:1000px){
+  .sidebar{display:none}
+  .main{padding:1.5rem var(--gutter) 5rem}
+}
+@media (max-width:639.98px){
+  .main{padding:1.1rem var(--gutter) 4rem}
+}
+@media screen and (min-width:1200px){
+  .wrap,.main{container-type:inline-size}
+  /* 100cqi is .wrap's width here, the page less any scrollbar */
+  .main{--breakout:clamp(0px,
+    100cqi - 16rem - 4rem - var(--lib-inset,1.25rem) - var(--measure), 18rem)}
+  /* contents and the Math Ledger: short rows and tables, no margin track */
+  .main:has(> .col.wide){--breakout:0px}
+  /* the table runs from the column's left edge to .main's right content edge;
+     100% is the column, 100cqi is .main's content box. Without container
+     units this is dropped, and the table scrolls inside the column. */
+  .col > .evidence{margin-inline-end:calc(100% - 100cqi)}
+}
+@media screen and (min-width:1500px){
+  .main{padding-left:var(--lib-inset,1.25rem);
+    --breakout:clamp(0px,
+      100cqi - 16rem - 2 * var(--lib-inset,1.25rem) - var(--measure), 18rem)}
+  .main > .col{margin-left:max(0px, (100% - var(--measure) - var(--breakout)) / 2)}
+  .main > .col.wide{margin-left:max(0px, (100% - var(--measure-wide)) / 2)}
+  /* the column is offset by (C - W - B) / 2, so the table takes that back on
+     the left and spans the whole content box: C = 100cqi, W = 100%, B the
+     margin track */
+  .col > .evidence{margin-inline:calc((100% + var(--breakout) - 100cqi) / 2)
+                                 calc((100% - var(--breakout) - 100cqi) / 2)}
+}
+
+/* KaTeX keeps a hidden MathML copy for accessibility and copy-paste; it must never
+   contribute to layout width on a narrow screen.
+
+   Pinning its size was half the answer. The copy is position:absolute, KaTeX
+   gives .katex no position of its own, and nothing between a table cell and the
+   page is positioned either -- so its containing block was the body. An element
+   whose containing block is the body is not clipped by a scroller it merely sits
+   inside, and the rule below that makes a wide table scroll therefore did not
+   hold it: on the Math Ledger at 390px the copies belonging to the far side of
+   six tables sat off the right of the screen and dragged the document 68px wide
+   with them. A one-pixel box still has a left edge.
+
+   So .katex is made the containing block. It is the formula's own outermost
+   element, and every other absolutely positioned thing KaTeX emits already has a
+   positioned ancestor inside it -- .clap, .llap, .rlap, .stretchy,
+   .cd-vert-arrow and .katex-html are all position:relative in the vendored
+   stylesheet -- so this captures the MathML copy and nothing else. Here rather
+   than in shared/vendor/katex/katex.min.css, which is vendored and would lose
+   the patch on the next upgrade. */
+.katex{position:relative}
+.katex-mathml{position:absolute!important;width:1px!important;height:1px!important;
+  overflow:hidden!important;clip:rect(1px,1px,1px,1px)!important;white-space:nowrap!important}
+
+/* ---------- sidebar ----------
+   Up, across, and the sections (DESIGN.md section 6, Sidebar). The up-link
+   names the part and goes to it in the contents; the folio row is the
+   neighbours by number either side of the position, all written by the build.
+   The position is a label; the arrows and the up-link are controls, sans 600
+   in the soft ink. */
+.sb-home{display:block;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  line-clamp:2;overflow:hidden;margin:0 0 .85rem;
+  font:600 var(--fs-ui)/1.4 var(--sans);color:var(--ink-soft);text-decoration:none}
+.sb-home:hover{color:var(--accent)}
+.sb-folio{display:grid;align-items:center;column-gap:.35rem;margin:0 0 1rem;padding:.3rem 0;
+  grid-template-columns:minmax(2rem,max-content) minmax(0,1fr) minmax(2rem,max-content);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.sb-folio .sb-title{margin:0;text-align:center}
+.sb-title .sb-at{white-space:nowrap}
+/* contents, the ledger and the Through-Line: the page's name alone heads the list */
+.sb-folio > .sb-title:only-child{grid-column:1 / -1;text-align:left}
+.sb-folio:has(> .sb-title:only-child){border:0;padding:0;margin-bottom:.6rem}
+.sb-prev,.sb-next{display:flex;align-items:center;min-height:2.25rem;
+  font:600 var(--fs-ui)/1.2 var(--sans);font-variant-numeric:tabular-nums;
+  color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+.sb-next{justify-content:flex-end}
+a.sb-prev:hover,a.sb-next:hover{color:var(--accent)}
+#sb-toc a{display:block;color:var(--ink-soft);text-decoration:none;
+  padding:.28rem 0 .28rem .6rem;border-left:2px solid transparent}
+#sb-toc a:hover{color:var(--accent)}
+#sb-toc a.lvl3{padding-left:1.5rem;font-size:.75rem;color:var(--ink-faint)}
+#sb-toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+
+/* ---------- headings and the chapter head ----------
+   Serif for what is read, headings included. Display and page titles are 400,
+   h2 and h3 are 700; space above a heading marks the section, not a rule. */
+h1,h2,h3{font-family:var(--serif);text-wrap:balance}
+h1{font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.12;
+  letter-spacing:-.015em;margin:var(--sp-1) 0 var(--sp-3)}
+h2{font-size:var(--fs-h2);font-weight:var(--fw-head);line-height:1.22;letter-spacing:-.01em;
+  margin:var(--sp-h2) 0 var(--sp-h2-after)}
+h3{font-size:var(--fs-h3);font-weight:var(--fw-head);line-height:1.3;color:var(--ink);
+  margin:var(--sp-h3) 0 var(--sp-h3-after)}
+h4{font-family:var(--sans);font-size:var(--fs-h4);font-weight:600;line-height:1.35;
+  color:var(--ink-soft);margin:var(--sp-5) 0 var(--sp-2)}
+
+.eyebrow{margin:0 0 .5rem}
+.subtitle{font-size:var(--fs-sub);line-height:1.45;color:var(--ink-soft);font-style:italic;
+  margin:.1rem 0 var(--sp-6);text-wrap:balance}
+
+p{margin:0 0 1.05rem}
+a{color:var(--accent)}
+strong{font-weight:700}
+em{font-style:italic}
+hr{border:0;border-top:1px solid var(--rule);margin:2.5rem 0}
+code{font-family:var(--mono);font-size:.86em;background:var(--bg-alt);
+  padding:.1em .34em;border-radius:var(--r-s)}
+/* A preformatted block: a formula written in plain Unicode, a worked sum, an
+   order book laid out in columns. Mono on the raised surface a figure uses,
+   with its hairline and radius. It wraps rather than scrolls, so a phone
+   reads a long formula on two lines instead of losing its end off the edge. */
+.col pre{--surface:var(--paper);margin:var(--sp-eq) 0;padding:.75rem 1rem;
+  font:400 .86em/1.6 var(--mono);color:var(--ink);background:var(--paper);
+  border:1px solid var(--rule);border-radius:var(--r-m);
+  white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4}
+/* ...except a block whose meaning is in its columns (tools/spx.py marks it):
+   that keeps its layout and scrolls inside its own box. */
+.col pre.aligned{white-space:pre;overflow-wrap:normal;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+
+ul,ol{margin:0 0 1.1rem;padding-left:1.4rem}
+:where(.col) :is(ul,ol){margin:var(--sp-eq) 0}
+:where(.col) :is(li,dd)>:is(ul,ol){margin:var(--sp-1) 0}
+li{margin:.35rem 0}
+
+/* ---------- line breaking ----------
+   Balanced headings, pretty paragraphs, and hyphenation on a phone, where a
+   17px ragged serif full of long clinical terms leaves deep rags. The
+   paragraph rules carry no specificity, so every exclusion below wins. */
+.pause .t,.pause > span:not([class]){text-wrap:balance}
+:where(.col) p{text-wrap:pretty}
+@media (max-width:639.98px){
+  :where(.col) :where(p,li){-webkit-hyphens:auto;hyphens:auto;
+    -webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;
+    hyphenate-limit-chars:6 3 3}
+}
+h1,h2,h3,h4,h5,h6,.eyebrow,.subtitle,.kicker,.label,.sb-title,.cnum,.clist li,.chapnav,
+.callout .ct,.worked>.ct,.prob .pnum,.col .trial,.cite,code,.katex,th,
+.col .story .st-where,.col .story .st-cont,.col .story .sq-moves dt,.evidence .c-trial,
+.evidence th,.ev-title,.chip,.gloss,.pause .k,.tools b,.eqnum,.eqref{
+  -webkit-hyphens:manual;hyphens:manual}
+
+/* ---------- prose links ----------
+   One link style in running text in every book: an underline in a paler
+   accent, full accent on hover. Contents rows, chapter-foot cards, heading
+   links, citations, equation references and chips are not prose links; the
+   selector carries no specificity so their own rules win. */
+:where(.col :is(p,li,dd,td,figcaption) a:not(.cite,.eqref,.chip)),.xref{
+  text-decoration-line:underline;
+  text-decoration-thickness:1px;
+  text-decoration-color:var(--accent-line);
+  text-underline-offset:.18em}
+:where(.col :is(p,li,dd,td,figcaption) a:not(.cite,.eqref,.chip)):hover,.xref:hover{
+  text-decoration-color:var(--accent)}
+:is(h1,h2,h3,h4) a,.clist a,.chapnav a{text-decoration:none}
+
+/* ---------- the two label styles ----------
+   Kicker: a small uppercase line in the accent (eyebrows, callout types, the
+   story where-line). Label: the same, a little less tracked, in the faint ink
+   (sidebar position, problem numbers, story move names, chapter-foot direction,
+   the contents' count line, part numerals and tags). Uppercase is for one or
+   two short words. */
+.kicker,.eyebrow,.callout .ct,.worked>.ct,.col .story .st-where,.col .story .st-cont{
+  font:700 var(--fs-label)/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent)}
+.label,.sb-title,.prob .pnum,.col .story .sq-moves dt,.chapnav a>span:first-child,.part-k,.tag,
+.pause .k,.tools b{
+  font:700 var(--fs-label)/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint)}
+
+/* ---------- callouts ----------
+   One family: a 3px rule in the callout's hue, its wash as the ground, the
+   type as a kicker in the hue, a line of space around it. Each type sets
+   --hue and --surface; nothing else differs. */
+.callout{--hue:var(--accent);--surface:var(--accent-soft);
+  border-left:3px solid var(--hue);background:var(--surface);
+  padding:1rem 1.15rem;margin:var(--sp-block) 0;
+  border-radius:0 var(--r-m) var(--r-m) 0;font-size:.96rem}
+.callout .ct{display:block;margin-bottom:.45rem;color:var(--hue)}
+.callout p:last-child{margin-bottom:0}
+
+.callout.warn{--hue:var(--warn);--surface:var(--warn-soft)}
+.callout.familiar,.callout.interplay{--hue:var(--familiar);--surface:var(--familiar-soft)}
+.callout.insight,.callout.practice{--hue:var(--insight);--surface:var(--insight-soft)}
+.callout.brick{--hue:var(--ink-soft);--surface:var(--bg-alt)}
+
+/* ---------- a chapter's preamble ----------
+   "Where we are" opens a physics chapter and runs four to six paragraphs, so it
+   is set as prose: the kicker, then the text at body size on the page's own
+   ground, with no fill and no rule. A filled panel that long was the heaviest
+   thing on the page and pushed section 1 three phone screens down (R-08).
+   "Tools you'll need" is a list of chapters to have read, with inline maths in
+   it: serif at the small size, a label for its name, and a hairline above. */
+.callout.where{--surface:inherit;--eq-inset:0px;background:none;border:0;border-radius:0;
+  padding:0;font-size:inherit}
+.callout.where .ct{margin-bottom:.4rem}
+.tools{font-family:var(--serif);font-size:var(--fs-small);line-height:1.55;color:var(--ink-soft);
+  background:none;border:0;border-top:1px solid var(--rule);border-radius:0;
+  padding:var(--sp-3) 0 0;margin:var(--sp-block) 0}
+.tools b{margin-right:.15em}
+
+/* ---------- sitting breaks ----------
+   Not a callout: a rule across the column with a few words on it, saying that
+   this is a natural place to stop and what follows. The authored line is
+   "a natural place to stop · the equation is on the table; what follows is
+   ...", up to 228 characters. Set whole in spaced capitals on one line it ran
+   to 1,381px, past the screen (R-03). book.js splits it at the first " · "
+   into the kicker (.k), a label between two rules, and the line (.t), which
+   wraps beneath them as italic serif, balanced, its first letter capitalised
+   here rather than in the text. Nothing in it is nowrap. A page whose script
+   has not run yet shows the unsplit span as the line. */
+.pause{display:grid;grid-template-columns:minmax(1rem,1fr) auto minmax(1rem,1fr);align-items:center;
+  column-gap:1rem;margin:var(--sp-break) 0;text-align:center}
+.pause::before,.pause::after{content:"";grid-row:1;height:1px;background:var(--rule)}
+.pause::before{grid-column:1}
+.pause::after{grid-column:3}
+.pause .k{grid-column:2;grid-row:1;-webkit-user-select:none;user-select:none}
+.pause .t,.pause > span:not([class]){grid-column:1 / -1;grid-row:2;justify-self:center;
+  max-width:32em;margin:.55rem 0 0;white-space:normal;
+  font:italic .95em/1.5 var(--serif);color:var(--ink-soft)}
+.pause .t::first-letter,.pause > span:not([class])::first-letter{text-transform:uppercase}
+
+/* "In plain terms" is the most frequent callout, so it is deliberately calm:
+   a full tinted panel rather than another coloured left-rule competing for
+   attention. */
+.callout.plain{--hue:var(--plain);--surface:var(--plain-soft);
+  border:1px solid var(--plain-rule);border-left:3px solid var(--plain);
+  border-radius:var(--r-m);padding:.95rem 1.15rem;font-size:.97rem;line-height:1.62}
+.callout.plain p{margin-bottom:.7rem}
+.callout.plain p:last-child{margin-bottom:0}
+.callout.plain em{color:var(--ink)}
+.callout.plain .pnum{color:var(--ink-soft);margin-left:.4rem;letter-spacing:.06em}
+@media print{.callout.plain{background:#fdf6f7;border-color:#eddcdf}}
+
+/* ---------- reference apparatus ----------
+   Used by the clinical books, where a paragraph carries citations, named
+   trials and defined terms, and the prose has to stay readable through all
+   three (DESIGN.md section 6, Cards). So each mark is quiet. A citation is a
+   small raised numeral. A trial or a defined term is set as the words around
+   it, serif at text size in ink, with a dotted hairline under it: the one
+   mark in the library that means "this has a card". None of them is a
+   coloured link in running text, because a paragraph with six coloured words
+   in it stops being a paragraph.
+
+   The trial and glossary marks are scoped to the column. Unscoped, .trial
+   reached the registry's <details class="trial"> rows. */
+/* A raised numeral must not open the line it sits on: line-height 0 keeps
+   every baseline-to-baseline gap in a cited paragraph the same (R-05). The
+   raising stays the <sup> element's job. */
+sup{line-height:0}
+.cite{font-family:var(--sans);font-size:.75em;font-weight:600;text-decoration:none;
+  color:var(--accent);padding:0;margin:0}
+.cite:hover{text-decoration:underline}
+.col .trial:not(.chip),.col .gloss{font:inherit;letter-spacing:inherit;color:var(--ink);
+  text-decoration-line:underline;text-decoration-style:dotted;text-decoration-thickness:1px;
+  text-decoration-color:var(--ink-faint);text-underline-offset:.2em;
+  -webkit-text-decoration-skip:none;text-decoration-skip-ink:none}
+.col .trial:not(.chip):hover,.col .gloss:hover,
+.col .trial[aria-expanded="true"],.col .gloss[aria-expanded="true"]{text-decoration-color:var(--accent)}
+.col .trial[tabindex]:focus-visible,.col .gloss[tabindex]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+/* A chapter that is planned but not yet written. Naming it and refusing to
+   link it is the honest form: the reader learns the book intends to cover it
+   and is not sent to a page that does not exist. */
+.xref.pending{color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--rule);
+  cursor:help}
+
+.ct-see{font-family:var(--sans);font-size:.78rem;color:var(--ink-soft);
+  margin:.6rem 0 0 !important}
+.to-come .ct{color:var(--ink-faint)}
+.to-come ol{font-size:.9rem;color:var(--ink-soft);margin-bottom:.2rem}
+
+/* The list is collapsed under a summary (R-07): the card brings each entry
+   to its citation, and on a phone the open list put the next chapter four to
+   ten screens below the prose. book.js opens it for #references and #r-
+   links, before a clicked citation jumps, and for printing. */
+.refs-head{font-size:1.05rem !important;letter-spacing:.04em;text-transform:uppercase;
+  font-family:var(--sans);font-weight:700;color:var(--ink-soft)}
+details.refs-list{margin:0 0 var(--sp-5)}
+details.refs-list > summary{display:inline-flex;align-items:center;gap:.5rem;min-height:2rem;
+  cursor:pointer;list-style:none;font:600 var(--fs-ui)/1.3 var(--sans);color:var(--accent);
+  -webkit-user-select:none;user-select:none}
+details.refs-list > summary::-webkit-details-marker{display:none}
+details.refs-list > summary::before{content:"\25B8";display:inline-block;font-size:.85em;
+  transition:transform .15s}
+details.refs-list[open] > summary::before{transform:rotate(90deg)}
+details.refs-list > summary:hover{text-decoration:underline;text-underline-offset:.18em}
+details.refs-list > summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;
+  border-radius:2px}
+ol.refs{font-size:.88rem;line-height:1.5;color:var(--ink-soft);padding-left:1.6rem;margin-top:var(--sp-3)}
+ol.refs li{margin:.55rem 0;padding-left:.15rem}
+ol.refs li:target{background:var(--accent-soft);border-radius:4px}
+ol.refs em{font-style:italic}
+
+/* ---------- the reference card ----------
+   A chapter runs twenty thousand words and its reference list is at the foot of
+   it. Following a citation there costs the reader their place, which is the
+   usual way a reference book fails on a phone. So the reference comes to the
+   citation instead: a card on a mouse, a sheet on a thumb. Both read the entry
+   out of the page's own list, so there is nothing to fetch and it works with
+   the network off. */
+.refcard{
+  position:fixed;z-index:70;max-width:24rem;
+  --surface:var(--paper);background:var(--paper);color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;
+  padding:.8rem .95rem;font-size:.85rem;line-height:1.5;
+  font-family:var(--serif);
+  box-shadow:0 2px 6px rgba(0,0,0,.08),0 14px 40px -16px rgba(0,0,0,.42);
+  opacity:0;transform:translateY(2px);transition:opacity .13s ease,transform .13s ease;
+  pointer-events:none;
+}
+.refcard.on{opacity:1;transform:none;pointer-events:auto}
+.refcard .rc-n{font-family:var(--sans);font-size:.66rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:.35rem}
+.refcard a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+/* A trial's card and a term's: the name, the facts, and for a trial the one
+   link, to its row in the registry. */
+.refcard .rc-t{display:block;margin:0 0 .3rem;font:700 1.05em/1.3 var(--serif);color:var(--ink)}
+.refcard .rc-f{margin:0;color:var(--ink)}
+.refcard a.rc-go{display:inline-flex;align-items:center;margin-top:.6rem;
+  font:600 var(--fs-ui)/1.3 var(--sans);border-bottom:0}
+.refcard a.rc-go:hover{text-decoration:underline;text-underline-offset:.18em}
+.refcard a:hover{border-bottom-color:var(--accent)}
+
+/* On a thumb the same card becomes a sheet: full width, at the bottom, above the
+   home indicator, and dismissed by the backdrop. The reader never leaves the
+   paragraph, so there is no scroll position to restore. */
+.refcard.sheet{
+  left:0;right:0;bottom:0;top:auto;max-width:none;
+  border:0;border-top:1px solid var(--rule);border-radius:var(--r-l) var(--r-l) 0 0;
+  padding:1.05rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom));
+  font-size:.95rem;max-height:70vh;max-height:70dvh;overflow-y:auto;
+  overscroll-behavior:contain;
+  transform:translateY(100%);transition:transform .2s ease,opacity .2s ease}
+.refcard.sheet.on{transform:none}
+.refscrim{position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.34);
+  opacity:0;transition:opacity .2s ease;-webkit-tap-highlight-color:transparent}
+.refscrim.on{opacity:1}
+.refcard.sheet .rc-close{display:block;width:2.4rem;height:4px;border-radius:2px;
+  background:var(--rule);margin:-.35rem auto .8rem}
+
+.cite[aria-expanded="true"]{background:var(--accent-soft);border-radius:var(--r-s)}
+
+@media (prefers-reduced-motion:reduce){
+  .refcard,.refscrim{transition:none}
+  .refcard.sheet{transform:none}
+}
+@media print{.refcard,.refscrim{display:none!important}}
+
+/* ---------- equations ----------
+   DESIGN.md section 6, Equations and figures.
+
+   Inline maths is 1.045em of the text at every width; it is never shrunk on a
+   phone, where it is read at the same distance as the words around it.
+
+   A display is its own scroller, and it is fitted by book.js (fitMaths):
+   one that overflows its box by a little (to a floor of .9em) is set small
+   enough to fit; one that overflows by more keeps its size and scrolls, with
+   edge shades that say so (.scrolls). From 1200px an unnumbered display too
+   wide for the measure hangs into the margin track instead, and its panel
+   grows with it. The fit is measured on the reader's own page, on load, when
+   the fonts arrive and on a resize, so nothing the build saved decides it.
+
+   The display is centred on the column. Its number sits at the right of the
+   same line when both fit, and book.js drops it below, right-aligned, when
+   they do not (.eq-drop). From 1200px, when the margin track is at least as
+   wide as the hang, the number hangs in the track instead, so every display
+   gets the full measure. The .eq box reaches into the track by --eq-hang,
+   as padding, so the number is inside its own equation's box (a :target highlight covers it, and nothing measures the
+   equation as overflowing); --eq-inset is the distance from an equation's
+   content edge to the column's, inside a panel. */
+.katex{font-size:1.045em}
+.katex-display{margin:var(--sp-eq) 0;padding:.2rem 0;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.eq{position:relative;margin:var(--sp-eq) 0;--eq-gap:.75rem}
+.eq .katex-display{margin:0}
+.eqnum{font-family:var(--sans);font-size:.8rem;line-height:1.3;color:var(--ink-faint);
+  white-space:nowrap;-webkit-user-select:none;user-select:none}
+.eq > .eqnum{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.eq.eq-drop > .eqnum{position:static;display:block;transform:none;text-align:right;margin-top:.1rem}
+.eq:target{--surface:var(--accent-soft);background:var(--accent-soft);border-radius:4px}
+.callout{--eq-inset:1.15rem}
+.callout.plain{--eq-inset:calc(1.15rem + 1px)}
+.worked{--eq-inset:calc(1.3rem + 1px)}
+/* The number hangs only where the margin track holds it: --breakout at least
+   --eq-hang. The track is .main's content width less the measure, so that is
+   a query on .main (the container from 1200px) at 35em (--measure, which a
+   query cannot read) plus 5.5rem (--eq-hang), both resolved at .main's own
+   sizes as --breakout is. A larger default text size narrows the track, and
+   below this width the numbers keep the rule above: on the line, or dropped. */
+@media screen and (min-width:1200px){
+  @container (min-width:calc(35em + 5.5rem)){
+    .main > .col:not(.wide) .eq{--eq-hang:5.5rem;
+      margin-right:calc(-1 * (var(--eq-hang) + var(--eq-inset, 0px)));
+      padding-right:calc(var(--eq-hang) + var(--eq-inset, 0px))}
+    .main > .col:not(.wide) .eq > .eqnum,
+    .main > .col:not(.wide) .eq.eq-drop > .eqnum{position:absolute;display:inline;right:auto;
+      top:50%;transform:translateY(-50%);margin:0;text-align:left;
+      left:calc(100% - var(--eq-hang) + var(--eq-gap))}
+  }
+}
+
+/* An equation reference is a link that also has a card (the equation and its
+   number), so it carries the library's one mark for "this has a card": the
+   dotted hairline. */
+.eqref{font-family:var(--sans);font-size:.85em;color:var(--accent);white-space:nowrap;
+  text-decoration-line:underline;text-decoration-style:dotted;text-decoration-thickness:1px;
+  text-decoration-color:var(--ink-faint);text-underline-offset:.2em;
+  -webkit-text-decoration-skip:none;text-decoration-skip-ink:none}
+.eqref:hover,.eqref[aria-expanded="true"]{text-decoration-color:var(--accent)}
+.eqref:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+/* Scroll edges. A box whose content runs past it shades the edge it runs
+   past, in the ink, under covers painted in the ground the box sits on
+   (--surface), which scroll with the content and hide the shade once that
+   end is reached. On a display book.js adds .scrolls only when it scrolls, so
+   a display that fits paints nothing; a figure (a --paper panel) carries them
+   wherever it scrolls, below 1000px. */
+:root{--edge-shade:rgba(0,0,0,.13)}
+@supports (color: color-mix(in srgb, red, blue)){
+  :root{--edge-shade:color-mix(in srgb, var(--ink) 16%, transparent)}
+}
+.katex-display.scrolls{background:
+  linear-gradient(to right, var(--surface) 35%, transparent) left center / 2.5rem 100% no-repeat local,
+  linear-gradient(to left, var(--surface) 35%, transparent) right center / 2.5rem 100% no-repeat local,
+  linear-gradient(to right, var(--edge-shade), transparent) left center / .9rem 100% no-repeat scroll,
+  linear-gradient(to left, var(--edge-shade), transparent) right center / .9rem 100% no-repeat scroll}
+
+/* The equation card: the display and its number, cloned from the page when
+   it opens, and one link to the equation. Wider than a reference card, as
+   the maths needs; the display is at the text's own size. */
+.refcard.rc-eqcard{max-width:min(40rem, calc(100vw - 24px))}
+.refcard.sheet.rc-eqcard{max-width:none}
+.refcard .rc-eq{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+  column-gap:.75rem;font:400 var(--fs-body)/var(--lh-body) var(--serif);color:var(--ink)}
+.refcard .rc-eq .katex-display{margin:0}
+.refcard .rc-eq .eqnum{text-align:right}
+
+/* ---------- grind boxes ---------- */
+details.grind{--surface:var(--grind-soft);border:1px solid var(--rule);border-radius:var(--r-m);
+  margin:var(--sp-block) 0;background:var(--grind-soft)}
+details.grind>summary{cursor:pointer;padding:.6rem .9rem;font-family:var(--sans);
+  font-size:.82rem;font-weight:600;color:var(--grind);list-style:none;
+  display:flex;align-items:center;gap:.5rem;user-select:none}
+details.grind>summary::-webkit-details-marker{display:none}
+details.grind>summary::before{content:"▸";font-size:.85rem;transition:transform .15s}
+details.grind[open]>summary::before{transform:rotate(90deg)}
+details.grind>summary:hover{color:var(--accent)}
+.grind-body{padding:.2rem 1.1rem 1rem;font-size:.95rem;border-top:1px solid var(--rule-soft)}
+.grind-body>:first-child{margin-top:.9rem}
+
+/* ---------- worked example ---------- */
+.worked{--surface:var(--paper);border:1px solid var(--rule);border-radius:var(--r-m);
+  padding:1.1rem 1.3rem .9rem;margin:var(--sp-block) 0;background:var(--paper)}
+.worked>.ct{display:block;margin-bottom:.6rem}
+
+/* ---------- problems ---------- */
+.problems{margin:2.5rem 0 1rem}
+.prob{border-top:1px solid var(--rule-soft);padding:1.1rem 0 .4rem}
+.prob details{margin-top:.7rem}
+.prob details>summary{cursor:pointer;font-family:var(--sans);font-size:.8rem;font-weight:600;
+  color:var(--accent);list-style:none;display:inline-flex;align-items:center;gap:.4rem;
+  border:1px solid var(--rule);border-radius:20px;padding:.25rem .8rem;user-select:none}
+.prob details>summary::-webkit-details-marker{display:none}
+.prob details>summary::before{content:"+";font-weight:700}
+.prob details[open]>summary::before{content:"−"}
+.prob details[open]>summary{background:var(--accent-soft)}
+.sol{padding:.9rem 0 .3rem;font-size:.96rem;border-left:2px solid var(--rule);
+  padding-left:1rem;margin-top:.9rem}
+
+/* ---------- interactives ---------- */
+figure.fig{--surface:var(--paper);margin:var(--sp-block) 0;padding:1rem;
+  border:1px solid var(--rule);border-radius:var(--r-m);background:var(--paper)}
+figure.fig canvas{display:block;width:100%;height:auto;border-radius:var(--r-s)}
+figcaption{font-family:var(--sans);font-size:.8rem;color:var(--ink-soft);
+  margin-top:.75rem;line-height:1.5}
+figcaption b{color:var(--ink);font-weight:600}
+.ctrls{display:flex;flex-wrap:wrap;gap:1rem 1.6rem;align-items:center;
+  margin-top:.85rem;font-family:var(--sans);font-size:.8rem;color:var(--ink-soft)}
+.ctrl{display:flex;align-items:center;gap:.5rem}
+.ctrl label{white-space:nowrap;font-weight:600}
+.ctrl input[type=range]{width:8.5rem;accent-color:var(--accent)}
+.ctrl output{font-family:var(--mono);font-size:.78rem;color:var(--accent);
+  min-width:3.6rem;display:inline-block}
+.ctrl button{font-family:var(--sans);font-size:.78rem;font-weight:600;cursor:pointer;
+  border:1px solid var(--rule);background:var(--bg-alt);color:var(--ink);
+  border-radius:4px;padding:.3rem .7rem}
+.ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+/* text on an accent fill is the page ground, never #fff: the dark accent is light */
+.ctrl button.on,.ctrl button.on:hover{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+/* Inside a figure: the house data table on the figure's own ground (the
+   pinned column is painted in --surface), the row the controls have chosen,
+   and a line the figure writes as its controls move. */
+figure.fig .evidence{--surface:var(--paper);margin:.85rem 0 0}
+figure.fig table.trials tr.on td{background:var(--accent-soft)}
+figure.fig .readout{margin:.8rem 0 0;font:400 .85rem/1.5 var(--sans);color:var(--ink)}
+figure.fig .readout b{font-weight:600}
+/* something the figure has put away: .ctrl and .ctrls set a display of
+   their own, which would otherwise outrank the hidden attribute */
+figure.fig [hidden]{display:none}
+@media (max-width:640px){
+  .ctrls{gap:.7rem 1rem}
+  .ctrl input[type=range]{width:7rem}
+  /* the readouts carry an inline min-width to stop the numbers jittering as a
+     slider moves; on a phone that guarantee is worth less than the words */
+  .ctrl output,.ctrls output{min-width:0!important}
+}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse;width:100%;margin:1.6rem 0;font-size:.93rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--rule-soft);
+  vertical-align:top}
+th{font-family:var(--sans);font-size:.75rem;font-weight:650;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--rule)}
+/* math must never be uppercased or letter-spaced by table-header styling */
+th .katex,th .katex *{text-transform:none;letter-spacing:normal;font-size:1em}
+
+/* ---------- evidence tables ----------
+   Generated from trials.yaml by an evidence block (DESIGN.md section 6,
+   Evidence tables). bc.py writes the caption's first sentence as p.ev-title
+   and the rest as p.ev-note, above the table; folds Ph, N and Status into a
+   meta line in the trial cell (span.m[data-col]); and gives every cell its
+   column's class and its header as data-label.
+
+   Before this, nowrap uppercase heads forced the table past its box and auto
+   layout gave every column its min-content width: rows 300 to 700px tall and
+   a third of the chapter's height (R-01). Now the heads wrap in sentence
+   case, the prose columns have floors, and the table is as wide as it needs
+   to be (width auto, never narrower than its box). The block bleeds across
+   .main from 1200px (the frame's rules above); inside it .ev-scroll scrolls
+   sideways, never the page, with the trial name pinned. An edge shade and a
+   "more columns" cue (book.js sets .more while columns are hidden to the
+   right) say that it scrolls. There is no vertical cap: on a phone every
+   cell names its column instead. */
+.evidence{--surface:var(--bg);--ev-shade:rgba(0,0,0,.13);
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"t" "n" "s";
+  margin:var(--sp-block) 0}
+@supports (color: color-mix(in srgb, red, blue)){
+  .evidence{--ev-shade:color-mix(in srgb, var(--ink) 16%, transparent)}
+}
+.ev-title,.ev-note{max-width:52em;font-family:var(--sans);font-size:var(--fs-small);line-height:1.45}
+.ev-title{grid-area:t;margin:0 0 .15rem;font-weight:600;color:var(--ink)}
+.ev-note{grid-area:n;margin:0;color:var(--ink-soft)}
+.ev-scroll{grid-area:s;margin-top:.6rem;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  /* the cover (local) scrolls with the table and hides the shade (fixed to
+     the box) once the right end is reached */
+  background:
+    linear-gradient(to left, var(--surface) 35%, transparent) right center / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--ev-shade), transparent) right center / .9rem 100% no-repeat scroll}
+/* The cue sits on the table's top right corner, in the page's ground, while
+   there are columns out of sight to the right. Generated content, so the
+   build never saves it as text; the empty alternative keeps it from being
+   read aloud as part of the table. */
+.evidence.more::after{content:"\2192\00a0 more columns";content:"\2192\00a0 more columns" / "";
+  grid-area:s;align-self:start;justify-self:end;position:relative;z-index:3;
+  margin-top:.6rem;padding:.3rem .15rem .3rem 1.1rem;pointer-events:none;
+  font:600 var(--fs-ui)/1.2 var(--sans);color:var(--accent);white-space:nowrap;
+  background:linear-gradient(to right, transparent, var(--surface) 1rem)}
+
+.evidence table.trials{display:table;width:auto;min-width:100%;max-width:none;overflow:visible;
+  margin:0;border-collapse:collapse;
+  font-family:var(--sans);font-size:var(--fs-small);line-height:1.45;
+  font-variant-numeric:tabular-nums}
+.evidence table.trials th{font:600 var(--fs-small)/1.3 var(--sans);letter-spacing:0;
+  text-transform:none;color:var(--ink-soft);white-space:normal;vertical-align:bottom;
+  padding:.45rem .7rem .5rem;border-bottom:1px solid var(--rule)}
+.evidence table.trials td{padding:.6rem .7rem .65rem;vertical-align:top;
+  border-bottom:1px solid var(--rule-soft)}
+.evidence .c-pop{min-width:17rem}
+.evidence :is(.c-arms,.c-os){min-width:12rem}
+/* the column a reader came for, and the longest: a wider floor here takes
+   more off the table's height than anywhere else */
+.evidence .c-result{min-width:16rem}
+.evidence .c-endpoint{min-width:11rem}
+.evidence .c-other{min-width:7rem}
+.evidence .c-trial{min-width:8.5rem}
+/* the trial column is pinned, painted in the ground the table sits on */
+.evidence table.trials .c-trial{position:sticky;left:0;z-index:1;background:var(--surface);
+  box-shadow:1px 0 0 var(--rule)}
+.evidence table.trials tbody tr:hover td{background:var(--bg-alt)}
+/* in a table the trial name is sans: a cell is operated, not read */
+.evidence .c-trial .trial{font-family:var(--sans);font-weight:600;color:var(--ink);white-space:nowrap}
+.evidence table.trials td sup{white-space:nowrap}
+.evidence .ev-meta{display:block;margin-top:.2rem;font-size:1em;line-height:1.35;color:var(--ink-faint)}
+.evidence .m{white-space:nowrap}
+.evidence .m[data-col="ph"]::before{content:"Phase "}
+.evidence .m[data-col="n"]::before{content:"n = "}
+
+@media (max-width:639.98px){
+  /* The horizontal scroll is deliberate. Stacking nine result columns into cards
+     makes a trial impossible to compare against the one below it, which is the
+     only reason to put them in a table. The block reaches the screen's edges:
+     .main's padding is --gutter here, so the bleed is exactly that (PDA-09). */
+  .col > .evidence{margin-inline:calc(-1 * var(--gutter,1rem))}
+  .ev-title,.ev-note{padding-inline:var(--gutter,1rem)}
+  .evidence table.trials th,.evidence table.trials td{padding:.5rem .55rem .55rem}
+  .evidence table.trials .c-trial{padding-left:var(--gutter,1rem);min-width:0}
+  /* the pinned name may break at its hyphen: DESTINY- / Breast09 */
+  .evidence .c-trial .trial{white-space:normal}
+  /* The two long columns are each about one screen of the scroller wide,
+     so a thumb moves a column at a time and no cell is 20 characters to the
+     line; the others are narrower. */
+  .evidence :is(.c-pop,.c-result){min-width:min(16rem, 100vw - 8rem)}
+  .evidence :is(.c-arms,.c-os,.c-endpoint){min-width:min(13rem, 100vw - 9rem)}
+  /* Every cell names its column, so an endpoint is never read as a result
+     once the head has scrolled away. */
+  .evidence table.trials td:not(:first-child)::before{content:attr(data-label);display:block;
+    margin:0 0 .15rem;font:600 .75rem/1.3 var(--sans);color:var(--ink-soft)}
+  .evidence :is(.c-pop,.c-arms,.c-endpoint,.c-result,.c-os){-webkit-hyphens:auto;hyphens:auto;
+    -webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;hyphenate-limit-chars:6 3 3}
+}
+
+/* ---------- stories ----------
+   The argument a chapter's evidence table is evidence for, and the spine of
+   the section, so it is set in em of the body and never smaller than a
+   callout (R-11): the title outranks the question, the question outranks the
+   moves, and the moves are in ink. A story's second and later appearances
+   in a chapter carry only "<title>, continued" (bc.py). Scoped to the
+   column: the Stories appendix has rows of its own. */
+.col .story{font-size:.95em;margin:var(--sp-block) 0;padding:0 0 0 1rem;
+  border-left:3px solid var(--accent-soft)}
+.col .story .st-where{margin:0 0 .3rem}
+.col .story .st-cont{margin:0 0 .1rem}
+.col .story .st-title{font:700 1.2em/1.25 var(--serif);color:var(--ink);margin:0 0 .4rem;
+  text-wrap:balance}
+.col .story .st-premise{color:var(--ink-soft);margin:0 0 .2rem}
+.col .story .sq{margin:1.1em 0 0}
+.col .story .st-cont + .sq{margin-top:.45em}
+.col .story .sq-ask{font:700 1.05em/1.4 var(--serif);color:var(--ink);margin:0 0 .55em;
+  text-wrap:pretty}
+.col .story .sq-moves{display:grid;grid-template-columns:7.2rem minmax(0,1fr);align-items:baseline;
+  gap:.3em .9rem;margin:0;font-size:1em;line-height:1.55}
+.col .story .sq-moves dd{margin:0;color:var(--ink)}
+.col .story .sq-trials{display:flex;flex-wrap:wrap;gap:.35rem;margin:.7em 0 0}
+/* A chip: the trial's name, and a link to its row in the registry once
+   book.js has made it one (not in the Dropbox build, which has no registry). */
+.col .trial.chip{display:inline-flex;align-items:center;padding:.2rem .5rem;
+  font:600 .75rem/1.3 var(--sans);letter-spacing:.01em;color:var(--ink);text-decoration:none;
+  border:1px solid var(--rule);border-radius:var(--r-s);white-space:nowrap}
+.col a.trial.chip:hover,.col a.trial.chip:focus-visible{border-color:var(--accent);color:var(--accent)}
+.col .trial.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){
+  .col .story{padding-left:.75rem}
+  .col .story .sq-moves{grid-template-columns:minmax(0,1fr);gap:.05rem}
+  .col .story .sq-moves dt{margin-top:.55rem}
+  .col .trial.chip{white-space:normal}
+}
+
+/* ---------- chapter foot ----------
+   The end of a chapter (DESIGN.md section 6, Chapter foot; R-07, NAV-15): two
+   cards, the direction as a label, the number and title in the serif, and the
+   neighbour's part under it when it is not this chapter's (data-part, written
+   by the build). The slot of a missing neighbour is kept, so Next never moves
+   to the left on the first chapter.
+
+   The drawer (#mnav) and the floating #themer that used to follow are in
+   nav.css, which every page loads and the Dropbox build inlines. */
+.chapnav{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin:var(--sp-7) 0 0}
+.chapnav a{display:block;min-height:56px;padding:.8rem 1rem .85rem;
+  border:1px solid var(--rule);border-radius:var(--r-m);
+  font:400 1.0625rem/1.35 var(--serif);color:var(--ink);text-decoration:none}
+.chapnav a>span:first-child{display:block;margin:0 0 .3rem}
+.chapnav a[data-part]::after{content:attr(data-part);display:block;margin-top:.4rem;
+  font:400 var(--fs-small)/1.35 var(--sans);color:var(--ink-soft)}
+.chapnav a.next{grid-column:2;text-align:right}
+.chapnav a:hover,.chapnav a:focus-visible{border-color:var(--accent)}
+.chapnav a:hover{color:var(--accent)}
+@media (max-width:639.98px){
+  .chapnav{grid-template-columns:minmax(0,1fr);gap:var(--sp-3)}
+  .chapnav a.next{grid-column:auto}
+  .chapnav .dead{display:none}
+}
+
+/* ---------- print / PDF ----------
+   Print is always the light theme: the dark roles above are screen-only, so a
+   page printed from the dark theme gets the light roles derived from the
+   book's own paper and ink. The one value book.css cannot recover is the
+   book's light accent (themecss() emits the dark one unconditionally), so
+   there the accent prints in the ink. */
+@media print{
+  :root[data-theme="dark"]:root{--accent:var(--ink)}
+  .sidebar,.sb-folio,#themer,.chapnav,#mnav,#mnav-btn,#mnav-scrim{display:none!important}
+  .wrap{display:block}
+  .main{padding:0}
+  .col,.col.wide{max-width:none}
+  body{font-size:10.5pt;line-height:1.5;background:#fff;color:#000}
+  h1{font-size:20pt} h2{font-size:14pt} h3{font-size:11.5pt}
+  h2,h3,h4{break-after:avoid;page-break-after:avoid}
+  .eq,figure.fig,.worked,.callout,.prob,table{break-inside:avoid;page-break-inside:avoid}
+  /* the number keeps the room at the line's end it had before the fit
+     (book.js unfits for printing), so it can never print over its display */
+  .eq{padding-right:3.5rem}
+  .katex-display.scrolls{background:none}
+  /* A chapter printed for a tumour board keeps its evidence (DESIGN.md
+     section 6, Print): the tables whole, at 8pt, with no floors and no bleed;
+     the references open (book.js, on beforeprint) and without their summary;
+     no scroll cue. */
+  .col .story{break-inside:avoid;page-break-inside:avoid}
+  details.refs-list > summary,.evidence::after{display:none!important}
+  .col > .evidence,.evidence{margin-inline:0!important}
+  .ev-scroll{overflow:visible;background:none}
+  .evidence table.trials{width:100%;min-width:0;font-size:8pt;break-inside:auto;page-break-inside:auto}
+  .evidence table.trials :is(th,td){min-width:0!important;white-space:normal;padding:.2rem .3rem;font-size:8pt}
+  .evidence table.trials tr{break-inside:avoid;page-break-inside:avoid}
+  .evidence table.trials .c-trial{position:static;box-shadow:none;background:none}
+  .evidence .c-trial .trial,.evidence .m{white-space:normal}
+  details.grind,details{break-inside:auto}
+  details.grind>summary,.prob details>summary{color:#555}
+  figure.fig canvas{max-height:8.5cm}
+  a{color:#000;text-decoration:none}
+  .callout,.worked,figure.fig{border-color:#bbb}
+}
+
+/* A closed <details> prints nothing. book.js opens the references on
+   beforeprint; where the browser exposes the details' content box, the print
+   rule opens it too, for a print that fires no event. */
+@media print{
+  details.refs-list::details-content{content-visibility:visible}
+}
+
+/* ---------- contents ----------
+   The page is the book's table of contents, not a second front door (NAV-05,
+   FD-10, FD-16; DESIGN.md section 6, Contents). A head of three lines; then
+   each part as its numeral (a label, with "n of m written" while the part is
+   incomplete, drawn from data-count), its title in the serif and its
+   subtitle in italic; then the rows, the serif titles in ink. A planned title
+   is italic in the soft ink with no link and no label of its own: the legend
+   under the count line says so once. One hairline falls between parts.
+
+   From 640px Find a chapter (input.toc-find, which book.js puts in the head)
+   stands beside the title instead of under it, so the first chapter stays
+   near the top of the page. */
+.toc-head{margin:0 0 var(--sp-3)}
+/* a list, so it starts a little higher than a chapter's eyebrow does */
+@media (min-width:1000.02px){.main:has(> .col > .toc-head){padding-top:2rem}}
+.toc-head .eyebrow{margin:0 0 .35rem}
+.toc-head h1{margin:0 0 .4rem}
+.toc-count{margin:0}
+.toc-legend{margin:.3rem 0 0;font-size:var(--fs-small);font-style:italic;line-height:1.4;
+  color:var(--ink-soft)}
+input.toc-find{display:block;box-sizing:border-box;width:100%;height:2.5rem;margin:var(--sp-3) 0 0;
+  padding:0 .8rem;border:1px solid var(--rule);border-radius:var(--r-m);
+  background:var(--paper);color:var(--ink);
+  /* 16px: iOS zooms the page into any smaller field it focuses */
+  font:400 1rem/1.2 var(--sans)}
+input.toc-find::placeholder{color:var(--ink-faint);opacity:1}
+input.toc-find:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (min-width:640px){
+  .toc-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--sp-5);
+    align-items:end}
+  .toc-head > *{grid-column:1}
+  .toc-head > .toc-find{grid-column:2;grid-row:2 / span 2;align-self:end;
+    width:15rem;margin:0 0 .1rem}
+}
+@media (pointer:coarse){input.toc-find{height:44px}}
+
+.part{padding:var(--sp-4) 0 var(--sp-3)}
+.toc-head + .part{padding-top:var(--sp-2)}
+.part + .part{border-top:1px solid var(--rule)}
+/* The heading's text is the curriculum label, "Part IX · Title"; the
+   separator is kept for whoever reads that text and hidden here. The anchor
+   lands with the numeral in view under the bar. */
+h2.part-head{margin:0 0 .3rem;font-size:clamp(1.3rem, 1.1rem + .8vw, 1.6rem);font-weight:var(--fw-title);
+  line-height:1.2;letter-spacing:-.01em}
+.part-head .part-k{display:block;margin:0 0 .3rem;letter-spacing:.1em}
+.part-head .part-k[data-count]::after{content:" \00b7  " attr(data-count)}
+.part-head .part-sep{display:none}
+.part-sub{margin:0 0 var(--sp-2);font-size:var(--fs-small);font-style:italic;line-height:1.45;
+  color:var(--ink-soft)}
+.clist{list-style:none;margin:0;padding:0}
+.clist li{display:flex;align-items:baseline;gap:.9rem;margin:0;padding:0}
+.cnum{flex:0 0 2.6rem;font:600 var(--fs-ui)/1.3 var(--sans);font-variant-numeric:tabular-nums;
+  color:var(--ink-faint)}
+.clist a,.clist .pending{flex:1 1 auto;min-width:0;padding:.28rem 0;line-height:1.4;
+  color:var(--ink);font-weight:400}
+.clist a:hover,.clist a:focus-visible{color:var(--accent)}
+.clist .pending{color:var(--ink-soft);font-style:italic}
+.clist .tag{flex:none;margin-left:auto}
+/* The reader's place, marked by pwa.js: a 3px accent rule in the gutter and a
+   filled "Last read" tag, the only filled tag there is. */
+.clist li[data-last]{margin-left:calc(-.75rem - 3px);padding-left:.75rem;
+  border-left:3px solid var(--accent)}
+.tag.last{padding:.15rem .4rem;border-radius:var(--r-s);background:var(--accent);color:var(--bg)}
+@media (max-width:639.98px){
+  .clist li{gap:.6rem}
+  .cnum{flex-basis:2.3rem}
+}
+
+/* ---------- the Through-Line ----------
+   Continuous prose, so it keeps the reading measure. Above 1000px the passage
+   numbers hang in the space left of the column (.main's left padding holds
+   them), so the passages themselves take the full measure; below that they
+   stand above each passage. A bridge between parts is prose in roman under
+   the plain hue's rule, and only its first paragraph, the thesis, is in
+   italic. */
+.callout.plain.bridge{--surface:var(--bg);background:transparent;border:0;
+  border-left:3px solid var(--plain);border-radius:0;
+  padding:.2rem 0 .2rem 1.1rem;margin:var(--sp-7) 0 var(--sp-6);
+  font-size:1em;line-height:inherit;font-style:normal;color:var(--ink)}
+.callout.plain.bridge > p:first-child{font-style:italic}
+.callout.plain.bridge p:last-child{margin-bottom:0}
+/* the closing passage ends the essay, so it gets a rule above it and a little air */
+.callout.plain.bridge.tl-closing{border-top:1px solid var(--rule);padding-top:2rem;
+  margin-top:4.5rem;margin-bottom:3rem}
+.tl-item{position:relative;margin:0 0 1.6rem}
+.tl-num{display:block;margin:0 0 .3rem;font:600 .72rem/1.3 var(--sans);letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;color:var(--ink-soft);white-space:nowrap}
+.tl-item p{margin-bottom:.75rem}
+.tl-item p:last-child{margin-bottom:0}
+@media screen and (min-width:1000.02px){
+  .tl-num{position:absolute;top:.4rem;right:calc(100% + .75rem);margin:0}
+}
+
+/* ---------- site top navigation ----------
+   Moved to shared/assets/nav.css, which tools/nav.py links from every page in
+   docs/. The bar has to look the same on the pages that do not load this
+   stylesheet -- the atlas and the timeline are self-contained documents -- and
+   it cannot if the rules that draw it live here. */
+
+
+/* ---------- narrow viewports, including a phone turned sideways ----------
+   These were written for phones and gated at 760px, which is where the bug
+   was: an iPhone in landscape is 844 to 932 CSS pixels, so rotating the
+   device switched off the very rules that keep a wide equation or a wide
+   table reachable. ch4-7's 858px table was clipped with no way to scroll it.
+   The guards now cover a rotated phone and a portrait tablet. The page itself
+   never scrolls sideways: html and body clip (see "scrolling" above). */
+@media (max-width:1000px){
+  /* .col keeps its measure: 35em is wider than any phone column, and on a
+     tablet it is what stops a 120-character line */
+  .wrap,.main{max-width:100%}
+  img,canvas,svg,pre{max-width:100%}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  /* Anything wider than the column was cut rather than scrolled: at 375px an
+     interactive figure lost about 214px off its right edge, readouts included,
+     with nothing to say so. Letting the figure scroll inside itself keeps the
+     content reachable. */
+  figure.fig{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;background:
+    linear-gradient(to right, var(--surface) 35%, transparent) left center / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 35%, transparent) right center / 2.5rem 100% no-repeat local,
+    linear-gradient(to right, var(--edge-shade), transparent) left center / .9rem 100% no-repeat scroll,
+    linear-gradient(to left, var(--edge-shade), transparent) right center / .9rem 100% no-repeat scroll,
+    var(--paper)}
+  .callout,.worked,figure.fig,details.grind,.sol{overflow-wrap:break-word}
+}
+
+/* ---------- touch targets ----------
+   Apple asks for 44pt. Only pointer:coarse is touched, so the desktop keeps its
+   proportions. The bar's own targets are in nav.css, beside the rest of the bar.
+   Inline links inside running prose are left at their natural size on purpose:
+   padding them to 44px would open gaps between the lines of a paragraph, and
+   the 44pt guidance is about standalone controls rather than words in a
+   sentence. */
+@media (pointer:coarse){
+  /* A numeral is not a touch target. Give it the room Apple asks for rather than
+     leaving a 7px digit on a phone. */
+  .cite{position:relative}
+  .cite::after{content:"";position:absolute;inset:-.6em -.5em}
+  .col .trial,.col .gloss,.xref,.col .eqref{padding:.15em 0}
+  /* the controls under a figure */
+  .ctrl button,.ctrls button{min-height:44px;padding-top:.4rem;padding-bottom:.4rem}
+  /* the references' summary, the chips and the card's registry link are
+     controls */
+  details.refs-list > summary,.refcard a.rc-go{min-height:44px}
+  .col .trial.chip{min-height:44px}
+  /* a 16px slider is hard to catch with a thumb; the track keeps its look */
+  .ctrl input[type=range]{height:44px;background:transparent}
+  .ctrl input[type=range]::-webkit-slider-runnable-track{height:4px}
+  .ctrl input[type=range]::-webkit-slider-thumb{margin-top:-8px}
+  /* the grind and problem toggles are controls, not words */
+  details.grind>summary{min-height:44px}
+  .prob details>summary{min-height:44px}
+  /* the chapter list is navigation, not prose: the anchor itself is the
+     44px target, rather than a row around a shorter link (PDA-10) */
+  .clist a{display:flex;align-items:center;min-height:44px;padding-block:.35rem}
+  /* the sidebar's arrows, on a touch screen wide enough to have a sidebar */
+  .sb-prev,.sb-next{min-height:44px}
+}
+
+/* ---------- the-other-end-of-the-trade, from book.json ---------- */
+:root{--bg:#f7f5ef;--ink:#1b1914;--accent:#7c5208}
+html[data-theme="dark"]{--accent:#e6b04a}

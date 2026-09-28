@@ -1,0 +1,93 @@
+<!--
+name: order book walk
+source: src/interactives/OrderBookWalking.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">market buy</label>
+      <input type="range" id="{{uid}}-n" min="1" max="20" step="1" value="3">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-lv"></output></div>
+    <div class="ctrl"><output id="{{uid}}-avg"></output></div>
+    <div class="ctrl"><output id="{{uid}}-slip"></output></div>
+    <div class="ctrl"><output id="{{uid}}-left"></output></div>
+  </div>
+  <figcaption><b>A market buy walks up the ask side.</b> The book from the text: four ask
+  levels above a $2 spread, four bid levels below it, each bar the contracts resting at that
+  price. Set the size of a market buy; it takes the best ask first and then each next level up
+  until it is filled, and the amber part of each bar is what it took. The average fill climbs
+  away from the $115 best ask as the order walks: 20 contracts average $116.65, $1.65 of
+  slippage.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var NS = DL.$(U + '-n');
+  /* the app's book */
+  var BIDS = [{ price: 113, qty: 5 }, { price: 112, qty: 8 }, { price: 111, qty: 10 }, { price: 110, qty: 15 }];
+  var ASKS = [{ price: 115, qty: 3 }, { price: 116, qty: 5 }, { price: 117, qty: 8 }, { price: 118, qty: 12 }];
+  var MAXQ = 15;
+
+  /* the app's walk: take the asks in order until the order is filled */
+  function walk(size) {
+    var remaining = size, fills = [], i = 0;
+    while (remaining > 0 && i < ASKS.length) {
+      var take = Math.min(remaining, ASKS[i].qty);
+      fills.push({ price: ASKS[i].price, qty: take });
+      remaining -= take;
+      i++;
+    }
+    var cost = fills.reduce(function (s, f) { return s + f.price * f.qty; }, 0);
+    var avg = cost / (size - remaining || 1);
+    return { fills: fills, avg: avg, slippage: avg - ASKS[0].price, remaining: remaining };
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var size = parseInt(NS.value, 10), res = walk(size);
+    var eaten = {};
+    res.fills.forEach(function (f) { eaten[f.price] = f.qty; });
+
+    /* a ladder, as the text draws it: asks above, the spread, bids below.
+       Rows sit at y = 1..4 (bids) and 6..9 (asks); bar length is contracts. */
+    var p = new NMT.Plot(c, { xmin: 0, xmax: MAXQ * 2, ymin: 0.4, ymax: 9.6,
+                              pad: { l: 46, r: 10, t: 18, b: 18 } });
+    var g = p.g, sans = '11px ' + DL.color('sans');
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, p.w, p.h);
+    p.seg(0, 0.4, 0, 9.6, { color: DL.color('rule'), width: 1.4 });
+
+    var bid = DL.color('insight'), ask = DL.color('plain'), acc = DL.color('accent');
+    function row(y, lvl, col, took) {
+      DL.hbars(p, [y], [lvl.qty], { h: 0.62, color: DL.fade(col, 0.35) });
+      if (took) DL.hbars(p, [y], [took], { h: 0.62, color: DL.fade(acc, 0.8) });
+      p.text(0, y, '$' + lvl.price, { dx: -8, align: 'right', baseline: 'middle', color: col, font: sans });
+      p.text(lvl.qty, y, String(lvl.qty) + (took ? ' · ' + took + ' filled' : ''),
+             { dx: 6, baseline: 'middle', color: took ? acc : col, font: sans });
+    }
+    ASKS.forEach(function (a, i) { row(6 + i, a, ask, eaten[a.price] || 0); });
+    BIDS.forEach(function (b, i) { row(4 - i, b, bid, 0); });
+
+    var spread = ASKS[0].price - BIDS[0].price, mid = (ASKS[0].price + BIDS[0].price) / 2;
+    var label = 'spread = $' + spread + ' · mid = $' + DL.num(mid, 1);
+    g.font = sans;
+    var lw = g.measureText(label).width;
+    p.seg(0, 5, p.invX(p.X(MAXQ * 2) - lw - 10), 5, { color: DL.fade(acc, 0.55), dash: [3, 3], width: 1 });
+    p.text(MAXQ * 2, 5, label, { align: 'right', baseline: 'middle', color: acc, font: sans });
+    p.text(0, 9.6, 'asks (sellers)', { dx: 2, dy: -4, color: ask, font: sans });
+    p.text(0, 0.4, 'bids (buyers)', { dx: 2, dy: 4, baseline: 'top', color: bid, font: sans });
+
+    DL.out(U + '-n-o', size + (size === 1 ? ' contract' : ' contracts'));
+    DL.out(U + '-lv', 'levels eaten = ' + res.fills.length);
+    DL.out(U + '-avg', 'avg fill price = ' + DL.usd(res.avg, 2));
+    DL.out(U + '-slip', 'slippage = +' + DL.usd(res.slippage, 2));
+    DL.out(U + '-left', 'unfilled = ' + (res.remaining > 0 ? res.remaining : '—'));
+  });
+  DL.bind([U + '-n'], draw);
+})();
+</script>

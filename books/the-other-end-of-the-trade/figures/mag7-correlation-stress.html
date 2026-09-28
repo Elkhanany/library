@@ -1,0 +1,107 @@
+<!--
+name: Mag-7 correlation stress
+source: src/interactives/Mag7CorrelationStress.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="214"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-t">regime stress dial</label>
+      <input type="range" id="{{uid}}-t" min="0" max="1" step="0.01" value="0">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl"><output id="{{uid}}-avg"></output></div>
+  </div>
+  <figcaption><b>Diversification leaves when it is needed.</b> Pairwise correlations of the
+  seven Mag-7 names, from an illustrative calm matrix to an illustrative crisis one, each set at
+  the rough size of mid-2020s realized correlations rather than measured. The dial blends one
+  into the other: the average off-diagonal correlation climbs from 0.52 at calm to 0.88 at
+  crisis, where the seven trade as a single asset. Measure concentration risk against the
+  stress correlation, not the average.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var DIAL = DL.$(U + '-t');
+  var NAMES = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA'];
+  /* the app's two matrices: plausible, not measured */
+  var CALM = [
+    [1.00, 0.60, 0.55, 0.55, 0.50, 0.55, 0.40],
+    [0.60, 1.00, 0.70, 0.60, 0.55, 0.55, 0.40],
+    [0.55, 0.70, 1.00, 0.65, 0.62, 0.55, 0.40],
+    [0.55, 0.60, 0.65, 1.00, 0.55, 0.50, 0.40],
+    [0.50, 0.55, 0.62, 0.55, 1.00, 0.50, 0.35],
+    [0.55, 0.55, 0.55, 0.50, 0.50, 1.00, 0.45],
+    [0.40, 0.40, 0.40, 0.40, 0.35, 0.45, 1.00]
+  ];
+  var STRESS = [
+    [1.00, 0.90, 0.88, 0.88, 0.87, 0.92, 0.85],
+    [0.90, 1.00, 0.92, 0.90, 0.88, 0.91, 0.85],
+    [0.88, 0.92, 1.00, 0.92, 0.91, 0.91, 0.85],
+    [0.88, 0.90, 0.92, 1.00, 0.88, 0.89, 0.84],
+    [0.87, 0.88, 0.91, 0.88, 1.00, 0.90, 0.82],
+    [0.92, 0.91, 0.91, 0.89, 0.90, 1.00, 0.88],
+    [0.85, 0.85, 0.85, 0.84, 0.82, 0.88, 1.00]
+  ];
+  function blend(t) {
+    return CALM.map(function (row, i) {
+      return row.map(function (v, j) { return v + (STRESS[i][j] - v) * t; });
+    });
+  }
+  function offDiag(M) {
+    var s = 0, n = 0;
+    for (var i = 0; i < M.length; i++)
+      for (var j = 0; j < M.length; j++) if (i !== j) { s += M[i][j]; n++; }
+    return n ? s / n : 0;
+  }
+  function regime(t) { return t < 0.25 ? 'Calm' : t < 0.6 ? 'Mixed' : t < 0.85 ? 'Stress' : 'Crisis'; }
+
+  /* the app's scale runs cool to hot over 0.30 to 1.00: here from the
+     theme's familiar to its plain, mixed channel by channel, and denser as
+     the correlation rises (at most half opaque, so the numbers stay legible) */
+  function rgb(c) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    return r ? r[1].split(',').slice(0, 3).map(function (x) { return parseFloat(x); }) : [128, 128, 128];
+  }
+  function heat(v, cool, hot) {
+    var k = Math.max(0, Math.min(1, (v - 0.30) / 0.70));
+    return 'rgba(' + [0, 1, 2].map(function (i) {
+      return Math.round(cool[i] + (hot[i] - cool[i]) * k);
+    }).join(',') + ',' + (0.06 + 0.52 * k).toFixed(3) + ')';
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var t = parseFloat(DIAL.value), M = blend(t), avg = offDiag(M);
+    var w = c.clientWidth || 640, lab = 48;
+    var cell = Math.min(64, (w - lab - 6) / 7), x0 = Math.max(0, (w - lab - 7 * cell) / 2);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 7, ymin: 0, ymax: 7, grid: false,
+      pad: { l: x0 + lab, r: w - x0 - lab - 7 * cell, t: 20, b: 4 } });
+    var g = p.g;
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
+
+    var cool = rgb(DL.color('familiar')), hot = rgb(DL.color('plain'));
+    var self = DL.fade(DL.color('ink-faint'), 0.18);
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), sans = DL.color('sans');
+    var ex = 1.5 / (p.X(1) - p.X(0)), ey = 1.5 / (p.Y(0) - p.Y(1));
+    for (var i = 0; i < 7; i++) {
+      var y = 6 - i;
+      for (var j = 0; j < 7; j++) {
+        p.path([[j + ex, y + ey], [j + 1 - ex, y + ey], [j + 1 - ex, y + 1 - ey], [j + ex, y + 1 - ey]],
+               { close: true, fill: i === j ? self : heat(M[i][j], cool, hot), color: null });
+        p.text(j + 0.5, y + 0.5, DL.num(M[i][j], 2), { align: 'center', baseline: 'middle',
+               color: i === j ? soft : ink, font: '11px ' + sans });
+      }
+      p.text(0, y + 0.5, NAMES[i], { dx: -6, align: 'right', baseline: 'middle', color: soft,
+             font: '10px ' + sans });
+      p.text(i + 0.5, 7, NAMES[i], { dy: -5, align: 'center', color: soft, font: '10px ' + sans });
+    }
+
+    DL.out(U + '-t-o', regime(t));
+    DL.out(U + '-avg', 'avg corr = ' + DL.num(avg, 2));
+  });
+  DL.bind([U + '-t'], draw);
+})();
+</script>

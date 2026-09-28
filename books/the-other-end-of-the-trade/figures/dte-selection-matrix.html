@@ -1,0 +1,126 @@
+<!--
+name: DTE selection matrix
+source: src/interactives/DTESelectionMatrix.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="262"></canvas>
+  <div class="ctrls ctrl" role="group" aria-label="Strategy" id="{{uid}}-strat">
+    <label>strategy</label>
+    <button type="button" data-v="creditSpread" class="on" aria-pressed="true">credit spread</button>
+    <button type="button" data-v="ironCondor" aria-pressed="false">iron condor</button>
+    <button type="button" data-v="longCall" aria-pressed="false">long call</button>
+    <button type="button" data-v="calendar" aria-pressed="false">calendar / diagonal</button>
+    <button type="button" data-v="straddle" aria-pressed="false">long straddle</button>
+    <button type="button" data-v="pmcc" aria-pressed="false">PMCC</button>
+    <button type="button" data-v="gammaScalp" aria-pressed="false">gamma scalp</button>
+    <button type="button" data-v="preEarn" aria-pressed="false">pre-earnings</button>
+  </div>
+  <div class="ctrls ctrl" role="group" aria-label="DTE bucket" id="{{uid}}-dte">
+    <label>DTE bucket</label>
+    <button type="button" data-v="0dte" aria-pressed="false">0DTE</button>
+    <button type="button" data-v="weekly" aria-pressed="false">weekly</button>
+    <button type="button" data-v="shortDated" class="on" aria-pressed="true">short-dated</button>
+    <button type="button" data-v="midDated" aria-pressed="false">mid-dated</button>
+    <button type="button" data-v="longDated" aria-pressed="false">long-dated</button>
+    <button type="button" data-v="leaps" aria-pressed="false">LEAPS</button>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <p class="readout"><b id="{{uid}}-pk"></b> <span id="{{uid}}-pt"></span></p>
+  <figcaption><b>Match the expiry to the strategy.</b> Eight strategies against six DTE
+  buckets, each cell a judgment score from 0 (avoid) to 5 (ideal), not a measurement. Green
+  cells are good fits; red cells mark buckets whose Greek profile fights what the strategy is
+  trying to do. Choose a strategy and a bucket to read their fit and the bucket's profile. The
+  buckets are cut at different days from the table above: here LEAPS starts at 180
+  days.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var DTE = [
+    { key: '0dte', name: '0DTE', short: '0DTE', days: '0', profile: 'extreme gamma, no vega, zero theta-room' },
+    { key: 'weekly', name: 'weekly', short: 'weekly', days: '1-9', profile: 'high gamma, low vega, fast theta' },
+    { key: 'shortDated', name: 'short-dated', short: 'short', days: '10-30', profile: 'balanced gamma/vega/theta, the standard zone' },
+    { key: 'midDated', name: 'mid-dated', short: 'mid', days: '31-60', profile: 'growing vega, declining gamma, slow theta' },
+    { key: 'longDated', name: 'long-dated', short: 'long', days: '61-180', profile: 'vega-dominated, low gamma, slow theta' },
+    { key: 'leaps', name: 'LEAPS', short: 'LEAPS', days: '180+', profile: 'almost pure vega + delta, gamma negligible' }
+  ];
+  /* the app's fit scores, 0 = avoid to 5 = ideal, in the order of DTE */
+  var STRATS = [
+    { key: 'creditSpread', name: 'credit spread (premium-sell)', short: 'credit spread', fits: [2, 4, 5, 4, 2, 0] },
+    { key: 'ironCondor', name: 'iron condor', short: 'iron condor', fits: [2, 3, 5, 5, 3, 1] },
+    { key: 'longCall', name: 'long call (directional)', short: 'long call', fits: [3, 3, 4, 4, 4, 5] },
+    { key: 'calendar', name: 'calendar / diagonal', short: 'calendar', fits: [0, 2, 4, 5, 5, 3] },
+    { key: 'straddle', name: 'long straddle (event vol)', short: 'long straddle', fits: [2, 5, 4, 2, 1, 0] },
+    { key: 'pmcc', name: "poor man's covered call", short: 'PMCC', fits: [0, 1, 2, 3, 4, 5] },
+    { key: 'gammaScalp', name: 'gamma scalp (delta-hedged)', short: 'gamma scalp', fits: [5, 5, 4, 2, 1, 0] },
+    { key: 'preEarn', name: 'pre-earnings momentum (call spread)', short: 'pre-earnings', fits: [1, 3, 5, 3, 1, 0] }
+  ];
+  /* the app's cell tints: red for 0-1, yellow for 2-3, green for 4-5 */
+  var TINT = [['plain', 0.30], ['plain', 0.15], ['warn', 0.18], ['warn', 0.34],
+              ['insight', 0.28], ['insight', 0.46]];
+
+  function find(list, key) {
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return i;
+    return 0;
+  }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  var strat = DL.seg(U + '-strat', function () { draw(); });
+  var dte = DL.seg(U + '-dte', function () { draw(); });
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var si = find(STRATS, strat()), di = find(DTE, dte());
+    var narrow = (c.clientWidth || 640) < 520;
+    var sans = DL.color('sans'), ink = DL.color('ink'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), accent = DL.color('accent');
+    /* the row names set the left margin: measured, in the chosen row's weight */
+    var m = c.getContext('2d'), wide = 0;
+    m.font = '600 11px ' + sans;
+    STRATS.forEach(function (s) { wide = Math.max(wide, m.measureText(narrow ? s.short : s.name).width); });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 6, ymin: 0, ymax: 8, grid: false,
+      pad: { l: Math.ceil(wide) + 12, r: 3, t: 36, b: 4 } });
+    var g = p.g;
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
+
+    /* cells sit 1.5px apart */
+    var ex = 1.5 / (p.X(1) - p.X(0)), ey = 1.5 / (p.Y(0) - p.Y(1));
+    function rect(x0, y0, x1, y1, o) {
+      p.path([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], Object.assign({ close: true }, o));
+    }
+
+    STRATS.forEach(function (s, i) {
+      var y = 7 - i;
+      s.fits.forEach(function (v, j) {
+        rect(j + ex, y + ey, j + 1 - ex, y + 1 - ey,
+             { fill: DL.fade(DL.color(TINT[v][0]), TINT[v][1]), color: null });
+        p.text(j + 0.5, y + 0.5, String(v), { align: 'center', baseline: 'middle',
+               color: ink, font: (i === si && j === di ? '700 ' : '') + '12px ' + sans });
+      });
+      p.text(0, y + 0.5, narrow ? s.short : s.name, { dx: -7, align: 'right', baseline: 'middle',
+             color: i === si ? ink : soft, font: (i === si ? '600 ' : '') + '11px ' + sans });
+    });
+    /* full bucket names over the columns when they fit, else the short ones */
+    m.font = '600 11px ' + sans;
+    var full = DTE.every(function (b) { return m.measureText(b.name).width + 10 < p.X(1) - p.X(0); });
+    DTE.forEach(function (b, j) {
+      p.text(j + 0.5, 8, full ? b.name : b.short, { dy: -17, align: 'center',
+             color: j === di ? ink : soft, font: (j === di ? '600 ' : '') + '11px ' + sans });
+      p.text(j + 0.5, 8, narrow ? b.days : b.days + 'd', { dy: -4, align: 'center', color: faint,
+             font: '10px ' + sans });
+    });
+
+    /* the chosen strategy's row and bucket's column, and the cell where they cross */
+    var y0 = 7 - si;
+    rect(ex / 2, y0 + ey / 2, 6 - ex / 2, y0 + 1 - ey / 2, { color: accent, width: 1.4 });
+    rect(di + ex / 2, ey / 2, di + 1 - ex / 2, 8 - ey / 2, { color: accent, width: 1.4 });
+    rect(di + ex, y0 + ey, di + 1 - ex, y0 + 1 - ey, { color: ink, width: 2 });
+
+    var s = STRATS[si], b = DTE[di], v = s.fits[di];
+    DL.out(U + '-vk', 'Fit ' + v + ' of 5' + (v === 5 ? ' (ideal)' : v === 0 ? ' (avoid)' : '') + '.');
+    DL.out(U + '-vt', cap(s.name) + ', ' + b.name + ' (' + b.days + ' days). Its row, 0DTE to LEAPS: ' +
+           s.fits.join(', ') + '.');
+    DL.out(U + '-pk', cap(b.name) + ' (' + b.days + ' days):');
+    DL.out(U + '-pt', b.profile + '.');
+  });
+})();
+</script>

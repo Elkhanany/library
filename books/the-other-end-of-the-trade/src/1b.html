@@ -1,0 +1,879 @@
+<p class="eyebrow">Part I · Foundation · Chapter 1B</p>
+
+<h1>Log returns and why they're additive</h1>
+
+<p>Before we can talk about volatility, expected value, or compounding coherently, we need a return definition that behaves mathematically. The standard simple percentage return — (P_t − P_{t−1}) / P_{t−1} — has a quiet but fatal flaw: it is <em>asymmetric</em>. A stock that goes up 20% and then comes back to its starting price has, by simple-return arithmetic, gone up 20% and then down 16.67% — two different magnitudes for what is obviously the same-sized round trip. Professionals use logarithmic returns instead, and the reasons run deeper than mere convenience.</p>
+
+<h2 id="two-return-definitions">1 · Two return definitions</h2>
+
+<pre class="aligned">Simple return:   r_t = (P_t − P_{t−1}) / P_{t−1}
+
+Log return:      r_t = ln(P_t / P_{t−1})  =  ln(P_t) − ln(P_{t−1})</pre>
+
+<p>These two definitions agree for small moves (they're equal to first order in the Taylor expansion of ln(1+x) ≈ x), but they diverge for large moves and they have fundamentally different mathematical properties.</p>
+
+<h2 id="property-1-log-returns-are-symmetric">2 · Property 1: log returns are symmetric</h2>
+
+<p>A stock at $100 goes up to $120, then comes back down to $100. Simple returns describe this as:</p>
+
+<pre class="aligned">Up:    (120 − 100) / 100 = +20.0%
+Down:  (100 − 120) / 120 = −16.67%</pre>
+
+<p>Same round trip, two different magnitudes. The asymmetry is real: a 20% gain followed by a 16.67% loss does indeed return to the starting price, because multiplicative returns require a smaller down-percentage to undo a bigger up-percentage. But this asymmetry makes simple returns awkward to reason about.</p>
+
+<p>Log returns describe the same round trip as:</p>
+
+<pre class="aligned">Up:    ln(120/100) = +0.1823
+Down:  ln(100/120) = −0.1823</pre>
+
+<p>The same magnitude in opposite directions. Symmetric. Negation. This matters when you're trying to build intuition about volatility — which is, after all, a measure of magnitude irrespective of direction.</p>
+
+<figure class="fig" id="fig-log-return-symmetry">
+  <canvas id="log-return-symmetry-c" data-h="200"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="log-return-symmetry-up">up move</label>
+      <input type="range" id="log-return-symmetry-up" min="1" max="50" step="0.5" value="20">
+      <output id="log-return-symmetry-up-o" for="log-return-symmetry-up"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="log-return-symmetry-path"></output></div>
+    <div class="ctrl"><output id="log-return-symmetry-simple"></output></div>
+    <div class="ctrl"><output id="log-return-symmetry-log"></output></div>
+  </div>
+  <figcaption><b>The same round trip, measured two ways.</b> A price rises from $100 by the
+  up move on the slider and falls back to $100. The bars are the size of each leg: as simple
+  returns the fall is smaller than the rise, as log returns the two are equal and opposite.
+  The larger the move, the wider the gap between the simple legs.</figcaption>
+</figure>
+
+<h2 id="property-2-log-returns-are-additive-over-time">3 · Property 2: log returns are additive over time</h2>
+
+<p>The multi-period simple return requires chaining multiplications:</p>
+
+<pre>Total simple return over T periods:
+R_total = ∏_{t=1}^{T} (1 + r_t) − 1</pre>
+
+<p>That's a product, not a sum. Annoying to work with, hard to differentiate, hard to bound, and a nightmare in any time-series statistical analysis.</p>
+
+<p>The multi-period log return is just the sum:</p>
+
+<pre>Total log return over T periods:
+r_total = ln(P_T / P_0) = ∑_{t=1}^{T} ln(P_t / P_{t−1}) = ∑_{t=1}^{T} r_t</pre>
+
+<p>This is the <strong>additivity property</strong>: total log return is the sum of period-by-period log returns. The proof is one line — a telescoping product of price ratios collapses to a single ratio, and the log of a single ratio is one log. It is the single most useful property in quantitative finance.</p>
+
+<p>Why does additivity matter operationally?</p>
+
+<p><strong>Volatility scaling becomes clean.</strong> If you assume returns are independent over time, the variance of a sum is the sum of variances, so:</p>
+
+<pre>σ²_total = ∑_{t=1}^{T} σ²_t</pre>
+
+<p>If daily log returns have constant variance σ²_daily, then T-day variance is T·σ²_daily, and T-day standard deviation is σ_daily·√T. This is the famous <strong>square-root-of-time rule</strong>. It only works cleanly for log returns under independence.</p>
+
+<p><strong>Annualization becomes trivial.</strong> Daily log returns annualize as:</p>
+
+<pre>σ_annual = σ_daily × √252</pre>
+
+<p>(252 trading days per year). Weekly: ×√52. Monthly: ×√12. These are exact under the independence assumption, not approximations.</p>
+
+<p><strong>Multi-day stress tests become a clean sum.</strong> If you want to ask "what's the cumulative drawdown over a 5-day stress event?" you sum five log returns. With simple returns you'd be compounding (1+r) terms, which produces convexity errors when the moves are large — exactly when you most want the answer to be accurate.</p>
+
+<p><strong>Distributional assumptions become natural.</strong> The classical Black-Scholes model assumes asset prices follow geometric Brownian motion, which in continuous time means log returns are normally distributed. Under that assumption, the sum of independent normals is normal — so the T-period log return is also normal, with mean Tμ and variance Tσ². No correction. With simple returns, the sum of percentage returns is not even well-defined as a distribution under most reasonable models.</p>
+
+<h2 id="the-it-correction-a-preview">4 · The Itô correction (a preview)</h2>
+
+<p>There's a subtle point that becomes important in <a class="xref" href="7a.html">Section 7</a>. If a stock's instantaneous return is normally distributed with mean μ_dt and variance σ²·dt, the <em>instantaneous log return</em> is NOT normal with mean μ·dt — it's normal with mean (μ − ½σ²)·dt. The −½σ² term is called the <strong>Itô drift correction</strong> or <strong>variance drag</strong>. It arises because the log function is concave: when you log-transform a random variable, you don't just transform the mean by ln(mean) — you also pick up a negative term proportional to variance.</p>
+
+<p>The practical implication: a stock with 10% expected simple return per year and 20% volatility has expected log return of only:</p>
+
+<pre>E[ln(1+r)] ≈ μ − ½σ² = 0.10 − 0.5 × 0.04 = 0.08 = 8%</pre>
+
+<p>The 2% gap between expected simple return and expected log return is variance drag. It's the reason that, all else equal, lower-volatility strategies compound to higher terminal wealth than higher-volatility strategies <em>with the same arithmetic mean return</em>. This is also the mathematical engine behind the Kelly criterion, which we'll cover in 1C and 2E.</p>
+
+<div class="callout brick">
+<p><em>Variance drag is why a sequence of returns +50%, −50%, +50%, −50%, … ends in ruin even though the arithmetic mean is zero. The geometric mean — which is what compounding actually delivers — is √(1.5 × 0.5) − 1 = −13.4% per pair.</em></p>
+</div>
+
+<figure class="fig" id="fig-variance-drag-explorer">
+  <canvas id="variance-drag-explorer-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="variance-drag-explorer-mu">arithmetic mean μ</label>
+      <input type="range" id="variance-drag-explorer-mu" min="-0.2" max="0.5" step="0.01" value="0.1">
+      <output id="variance-drag-explorer-mu-o" for="variance-drag-explorer-mu"></output>
+    </div>
+    <div class="ctrl">
+      <label for="variance-drag-explorer-sigma">volatility σ</label>
+      <input type="range" id="variance-drag-explorer-sigma" min="0.05" max="1.5" step="0.01" value="0.3">
+      <output id="variance-drag-explorer-sigma-o" for="variance-drag-explorer-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="variance-drag-explorer-years">horizon (years)</label>
+      <input type="range" id="variance-drag-explorer-years" min="1" max="30" step="1" value="10">
+      <output id="variance-drag-explorer-years-o" for="variance-drag-explorer-years"></output>
+    </div>
+    <div class="ctrl">
+      <label for="variance-drag-explorer-seed">seed</label>
+      <input type="range" id="variance-drag-explorer-seed" min="1" max="1000" step="1" value="42">
+      <output id="variance-drag-explorer-seed-o" for="variance-drag-explorer-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="variance-drag-explorer-drag"></output></div>
+    <div class="ctrl"><output id="variance-drag-explorer-g"></output></div>
+    <div class="ctrl"><output id="variance-drag-explorer-gap"></output></div>
+    <div class="ctrl"><output id="variance-drag-explorer-ten"></output></div>
+  </div>
+  <p class="readout" aria-live="polite" id="variance-drag-explorer-read"></p>
+  <figcaption><b>What compounding takes from the arithmetic mean.</b> Six simulated wealth
+  paths with arithmetic mean μ and volatility σ, each compounded twice from the same daily
+  shocks, once as simple returns and once as log returns, which is why every pair of lines
+  nearly coincides. The paths gather around e^(Gt), where G = μ − σ²/2, rather than the e^(μt)
+  the arithmetic mean promises, and the gap widens with volatility. Holding μ fixed, doubling
+  volatility from 20% to 40% raises the drag from 2% to 8% a year.</figcaption>
+</figure>
+
+<h2 id="the-convention">5 · The convention</h2>
+
+<p>For the rest of this book, "return" means log return unless otherwise stated. Volatility, Sharpe ratio, variance, drift — all of them assume log returns under the hood. When you see σ_daily × √252 to annualize, that's a log-return convention. When you see a derivation of Black-Scholes invoking dS/S = μ·dt + σ·dW, recognize that as a statement about log returns. Almost every formula in derivatives pricing is more natural in log space.</p>
+
+<p>The one place where simple returns persist is in reporting to non-quant audiences: clients want to hear "the strategy returned 12% this year," not "log return of 0.1133." That's fine. Translate at the boundary, not in the middle of your math.</p>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- log-return-symmetry ---------- */
+(function () {
+  var U = 'log-return-symmetry';
+
+  /* the app's arithmetic: $100 up by the slider's percentage, then back to $100 */
+  function legs(pUp) {
+    var start = 100, mid = start * (1 + pUp / 100), end = start;
+    return { mid: mid,
+             upSimple: (mid - start) / start * 100, downSimple: (end - mid) / mid * 100,
+             upLog: Math.log(mid / start) * 100, downLog: Math.log(end / mid) * 100 };
+  }
+  function pc(x) { return (x > 0 ? '+' : '') + DL.num(x, 2) + '%'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var pUp = DL.val(U + '-up'), r = legs(pUp);
+    var span = r.upSimple * 1.42;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: span, ymin: 0, ymax: 5.2,
+                              pad: { l: 44, r: 14, t: 6, b: 30 }, grid: false });
+    DL.axes(p, { nx: 5, y: false, yAxis: true,
+                 x: function (v) { return DL.num(v, 0) + '%'; } });
+    var simple = DL.color('accent'), log = DL.color('insight');
+    /* each leg's size; the down legs drawn fainter */
+    DL.hbars(p, [4.1, 3.3], [r.upSimple, -r.downSimple],
+             { h: 0.62, color: function (v, i) { return DL.fade(simple, i ? 0.45 : 0.8); } });
+    DL.hbars(p, [1.6, 0.8], [r.upLog, -r.downLog],
+             { h: 0.62, color: function (v, i) { return DL.fade(log, i ? 0.45 : 0.8); } });
+    var soft = DL.color('ink-soft'), f11 = '11px ' + DL.color('sans');
+    [[4.1, 'up'], [3.3, 'down'], [1.6, 'up'], [0.8, 'down']].forEach(function (row) {
+      p.text(0, row[0], row[1], { dx: -6, dy: 1, align: 'right', baseline: 'middle',
+                                  font: f11, color: soft });
+    });
+    [[4.1, r.upSimple], [3.3, r.downSimple], [1.6, r.upLog], [0.8, r.downLog]].forEach(function (row) {
+      p.text(Math.abs(row[1]), row[0], pc(row[1]), { dx: 6, dy: 1, baseline: 'middle',
+                                                   font: f11, color: DL.color('ink') });
+    });
+    p.text(0, 4.95, 'simple returns', { dx: 2, baseline: 'middle', color: simple });
+    p.text(span, 4.95, '|up| ≠ |down|', { dx: -2, align: 'right', baseline: 'middle',
+                                         font: f11, color: DL.color('plain') });
+    p.text(0, 2.45, 'log returns', { dx: 2, baseline: 'middle', color: log });
+    p.text(span, 2.45, '|up| = |down|', { dx: -2, align: 'right', baseline: 'middle',
+                                         font: f11, color: log });
+
+    DL.out(U + '-up-o', DL.num(pUp, 1) + '%');
+    DL.out(U + '-path', 'path = $100 → ' + DL.usd(r.mid, 2) + ' → $100');
+    DL.out(U + '-simple', 'simple returns = ' + pc(r.upSimple) + ' · ' + pc(r.downSimple));
+    DL.out(U + '-log', 'log returns = ' + pc(r.upLog) + ' · ' + pc(r.downLog));
+  });
+  DL.bind([U + '-up'], draw);
+})();
+
+/* ---------- variance-drag-explorer ---------- */
+(function () {
+  var U = 'variance-drag-explorer';
+
+  /* the app's six paths: daily steps, one point kept every 21 days. A compounds
+     the simple return mu dt + sigma sqrt(dt) z; G compounds the log return
+     (mu - sigma^2/2) dt + sigma sqrt(dt) z from the same z. */
+  var memo = { key: null };
+  function paths(mu, sigma, years, seed) {
+    var key = [mu, sigma, years, seed].join();
+    if (memo.key === key) return memo;
+    var nSteps = years * 252, dt = 1 / 252, arith = [], geom = [];
+    for (var p = 0; p < 6; p++) {
+      var r = DL.rng(seed + p), A = 1, G = 1, aP = [A], gP = [G];
+      for (var i = 0; i < nSteps; i++) {
+        var z = DL.gauss(r);
+        A *= 1 + (mu * dt + sigma * Math.sqrt(dt) * z);
+        G *= Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * z);
+        if (i % 21 === 0) { aP.push(A); gP.push(G); }
+      }
+      arith.push(aP); geom.push(gP);
+    }
+    memo = { key: key, arith: arith, geom: geom };
+    return memo;
+  }
+  function tick(v, st) {
+    if (Math.abs(v) >= 1000) return DL.compact(v, 0);
+    return DL.num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 3));
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
+        years = DL.val(U + '-years'), seed = DL.val(U + '-seed');
+    var drag = sigma * sigma / 2, g = mu - drag;
+    /* ten years of the drag, both rates compounded the same (continuous) way */
+    var ten = Math.exp(10 * mu) / Math.exp(10 * g) - 1;
+    var P = paths(mu, sigma, years, seed);
+
+    var lo = 0.5, hi = 1.5;
+    P.arith.concat(P.geom).forEach(function (a) {
+      a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; });
+    });
+    var n = P.arith[0].length;
+    var xs = P.arith[0].map(function (_, i) { return i / (n - 1) * years; });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: years, ymin: lo, ymax: hi + (hi - lo) * 0.22,
+                              pad: { l: 42, r: 14, t: 10, b: 34 }, xlabel: 'years' });
+    DL.axes(p, { nx: 6, ny: 5, yAt: 0, x: tick, y: tick });
+    DL.hline(p, 1, { color: DL.color('ink-faint'), dash: [2, 3] });
+
+    var fam = DL.fade(DL.color('familiar'), 0.5), pla = DL.fade(DL.color('plain'), 0.5);
+    P.arith.forEach(function (a) { DL.line(p, xs, a, { color: fam, width: 1.1 }); });
+    P.geom.forEach(function (a) { DL.line(p, xs, a, { color: pla, width: 1.1 }); });
+    p.fn(function (t) { return Math.exp(mu * t); }, { color: DL.color('ink-soft'), width: 1.6, dash: [5, 4] });
+    p.fn(function (t) { return Math.exp(g * t); }, { color: DL.color('accent'), width: 2.2 });
+
+    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
+    DL.legend(p, [{ label: 'e^(μt)', color: DL.color('ink-soft'), dash: [5, 4] },
+                  { label: 'e^(Gt)', color: DL.color('accent') }]);
+    DL.legend(p, [{ label: 'simple returns', color: DL.color('familiar') },
+                  { label: 'log returns', color: DL.color('plain') }], { dy: 15 });
+
+    DL.out(U + '-mu-o', DL.num(mu * 100, 0) + '%');
+    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
+    DL.out(U + '-years-o', years + 'y');
+    DL.out(U + '-seed-o', String(seed));
+    DL.out(U + '-drag', 'variance drag σ²/2 = ' + DL.num(drag * 100, 2) + '%');
+    DL.out(U + '-g', 'geometric G = ' + DL.num(g * 100, 2) + '%');
+    DL.out(U + '-gap', 'gap A − G = ' + DL.num(drag * 100, 2) + 'pp');
+    DL.out(U + '-ten', '10-yr drag (compounded) = ' + DL.num(ten * 100, 1) + '%');
+    DL.out(U + '-read', 'A strategy with arithmetic mean ' + DL.num(mu * 100, 0) +
+           '% and volatility ' + DL.num(sigma * 100, 0) + '% compounds at only ' +
+           DL.num(g * 100, 2) + '% a year.');
+  });
+  DL.bind([U + '-mu', U + '-sigma', U + '-years', U + '-seed'], draw);
+})();
+<!--/SCRIPT-->

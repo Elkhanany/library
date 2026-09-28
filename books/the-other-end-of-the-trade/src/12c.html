@@ -1,0 +1,1080 @@
+<p class="eyebrow">Part XII · Discipline · Chapter 12C</p>
+
+<h1>The signal-to-trade pipeline and the kill rules</h1>
+
+<p>Every action in your portfolio should pass through the same five-step grammar: <strong>observation → interpretation → trade implication → sizing → invalidation</strong>.</p>
+
+<h2 id="the-five-steps">1 · The five steps</h2>
+
+<p><strong>01 — Observation.</strong> What did I see? A measurable, specific market state. "SPX RSI(2) closed at 5 today, with Stage 2 confirmed by 30-SMA slope &gt; 0.05 and ADX 22." NOT "the market feels oversold."</p>
+
+<p><strong>02 — Interpretation.</strong> What does it mean? Map the observation to a known mechanism. "RSI(2) &lt; 10 during Stage 2 with positive GEX = dealer hedging will fade the pullback, providing mechanical buying support at the EMA."</p>
+
+<p><strong>03 — Trade implication.</strong> What action follows? Specific entry, direction, instrument, and timing.</p>
+
+<p><strong>04 — Sizing.</strong> How big? From explicit loss budget, not intuition.</p>
+
+<p><strong>05 — Invalidation.</strong> What kills the trade? <strong>Pre-committed</strong> in writing. Not "I'll see how it goes."</p>
+
+<h2 id="critical-distinction-risk-vs-position-size">2 · Critical distinction: risk vs position size</h2>
+
+<p>"Risk 1% of portfolio per trade" means: <strong>if the stop is hit, the realized dollar loss equals 1% of total portfolio value</strong>. It does NOT mean "deploy 1% of capital."</p>
+
+<p>Position size = Dollar risk budget / Stop distance.</p>
+
+<p>For $500k risking 1% ($5,000) with $6 stop on $600 underlying:</p>
+
+<ul>
+<li>Position size = $5,000 / $6 = 833 shares</li>
+<li>Notional deployed = 833 × $600 = $500k = <strong>100% of portfolio</strong></li>
+</ul>
+
+<p>Correct sizing: 1% <strong>risk</strong>, 100% <strong>notional</strong>. Acceptability depends on:</p>
+
+<ul>
+<li><strong>Liquidity</strong> — can you exit cleanly under stress?</li>
+<li><strong>Margin</strong> — do you have buying power?</li>
+<li><strong>Correlation</strong> — what's the aggregate risk with existing positions?</li>
+<li><strong>Gap risk</strong> — can the stop blow through?</li>
+</ul>
+
+<p>For options, notional is bounded by premium (long) or collateral (short). The risk-to-notional ratio is structurally different from equity.</p>
+
+<p><strong>Common mistake A:</strong> interpreting "1% sizing" as "1% notional deployed" → under-sizes by 50-100× and the framework's edge never realizes.</p>
+
+<p><strong>Common mistake B:</strong> interpreting "1% risk" as "1% notional" → over-sizes by buying $500k of underlying without thinking about the stop → 5% adverse move = $25k loss, not the planned $5k.</p>
+
+<figure class="fig" id="fig-position-size-clarifier">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="position-size-clarifier-port">portfolio</label>
+      <input type="range" id="position-size-clarifier-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="position-size-clarifier-port-o" for="position-size-clarifier-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-risk">risk per trade</label>
+      <input type="range" id="position-size-clarifier-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="position-size-clarifier-risk-o" for="position-size-clarifier-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-entry">entry</label>
+      <input type="range" id="position-size-clarifier-entry" min="10" max="6500" step="1" value="600">
+      <output id="position-size-clarifier-entry-o" for="position-size-clarifier-entry"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-stop">stop</label>
+      <input type="range" id="position-size-clarifier-stop" min="1" max="599" step="0.5" value="594">
+      <output id="position-size-clarifier-stop-o" for="position-size-clarifier-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-mult">multiplier</label>
+      <input type="range" id="position-size-clarifier-mult" min="1" max="500" step="1" value="100">
+      <output id="position-size-clarifier-mult-o" for="position-size-clarifier-mult"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-margin">margin available</label>
+      <input type="range" id="position-size-clarifier-margin" min="10000" max="5000000" step="1000" value="500000">
+      <output id="position-size-clarifier-margin-o" for="position-size-clarifier-margin"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-clarifier-drisk"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-dist"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-lpc"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-size"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-clarifier-notional"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-npct"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-ratio"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through stress test</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="position-size-clarifier-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="position-size-clarifier-g2l"></td><td data-label="% of portfolio" id="position-size-clarifier-g2p"></td></tr>
+      <tr id="position-size-clarifier-g3"><td class="c-trial">3× gap</td><td data-label="Loss" id="position-size-clarifier-g3l"></td><td data-label="% of portfolio" id="position-size-clarifier-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="position-size-clarifier-vk"></b> <span id="position-size-clarifier-vt"></span></p>
+  <figcaption><b>One percent of risk is not one percent of capital.</b> Set the portfolio, the
+  share of it risked per trade, the entry, the stop and the contract multiplier. The position
+  size is the dollar risk over the loss per contract at the stop, rounded down, and it controls
+  size × entry × multiplier of notional: the defaults risk 1% of $250k and deploy 96% of it.
+  Risk-% controls what you lose if the stop holds; notional-% controls what happens if it does
+  not. The stress test prices a gap through the stop of two and three times the stop distance,
+  marking a loss above 3% or 5% of the portfolio, and the verdict sets the notional against the
+  margin available.</figcaption>
+</figure>
+
+<h2 id="position-sizing-from-explicit-loss-budget">3 · Position sizing from explicit loss budget</h2>
+
+<pre>n ≤ ⌊ B_exp / L_max ⌋
+
+where:
+- B_exp is the explicit dollar loss budget you're willing to absorb on this trade
+- L_max is the per-unit (per-contract or per-share) loss at your stop</pre>
+
+<p><strong>Worked example:</strong> $500,000 portfolio. Maximum risk per trade is 1% = $5,000. Trend Pullback trade on XSP with a clear technical stop $20 below entry.</p>
+
+<pre>B_exp = $5,000
+L_max = $20 × 100 (multiplier) = $2,000 per contract
+n ≤ ⌊5,000 / 2,000⌋ = 2 contracts</pre>
+
+<figure class="fig" id="fig-position-size-calculator">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="position-size-calculator-port">portfolio size</label>
+      <input type="range" id="position-size-calculator-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="position-size-calculator-port-o" for="position-size-calculator-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-risk">risk per trade</label>
+      <input type="range" id="position-size-calculator-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="position-size-calculator-risk-o" for="position-size-calculator-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-stop">stop distance ($)</label>
+      <input type="range" id="position-size-calculator-stop" min="0.5" max="50" step="0.5" value="2">
+      <output id="position-size-calculator-stop-o" for="position-size-calculator-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-mult">contract multiplier</label>
+      <input type="range" id="position-size-calculator-mult" min="1" max="500" step="1" value="100">
+      <output id="position-size-calculator-mult-o" for="position-size-calculator-mult"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-calculator-b"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-l"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-n"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-calculator-risk-d"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-risk-p"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-notional"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through scenario</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="position-size-calculator-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="position-size-calculator-g2l"></td><td data-label="% of portfolio" id="position-size-calculator-g2p"></td></tr>
+      <tr id="position-size-calculator-g3"><td class="c-trial">3× gap (severe)</td><td data-label="Loss" id="position-size-calculator-g3l"></td><td data-label="% of portfolio" id="position-size-calculator-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="position-size-calculator-vk"></b> <span id="position-size-calculator-vt"></span></p>
+  <figcaption><b>Sizing from an explicit loss budget.</b> The loss budget B_exp is the portfolio
+  times the risk per trade, the loss per contract L_max is the stop distance times the contract
+  multiplier, and the position is n = ⌊B_exp / L_max⌋ contracts; set the portfolio to $500k and
+  the stop to $20 for the worked example above. The stress test prices a gap through the stop
+  of two and three times its distance, marking a loss above 3% or 5% of the portfolio, and the
+  verdict reads the 2× gap: under 3% is green, under 5% yellow, and beyond that red. The
+  notional readout assumes, as the app does, that the stop is 2% of the price.</figcaption>
+</figure>
+
+<h2 id="kelly-and-loss-budget-same-framework-different-unit">4 · Kelly and loss-budget — same framework, different unit</h2>
+
+<p><a class="xref" href="2e.html">Section 2E</a> derives the Kelly criterion as the bet fraction that maximizes expected log compound growth. This section's loss-budget rule (n ≤ ⌊B_exp / L_max⌋) sizes from a per-trade dollar cap. A reader emerging from 2E thinks Kelly is the answer; one emerging from here thinks loss-budget is. They are not in conflict; they answer different questions and converge for honest retail-scale edges.</p>
+
+<p><strong>Both frameworks size positions; the question each answers differs.</strong></p>
+
+<ul>
+<li><strong>Kelly maximizes expected log growth.</strong> Output: a <em>capital fraction</em> under an assumed bet-outcome geometry (binary win G / lose L per unit bet). The criterion assumes you have estimated edge correctly and that you are willing to commit the full Kelly bet to a single opportunity.</li>
+<li><strong>Loss-budget bounds dollar loss per trade.</strong> Output: a <em>position size</em> under a stop-distance geometry. The criterion makes no claim about long-run growth optimality — it caps drawdown contribution from any single trade.</li>
+</ul>
+
+<p><strong>Where they converge.</strong> For a typical retail edge — say 52-55% win rate with near-symmetric payoffs — Kelly recommends a fraction in the 4-10% range. Half-Kelly halves that; quarter-Kelly quarters it. For modest edges, the quarter-Kelly dollar bet sits near the dollar loss the loss-budget rule produces at 1% risk per trade with a typical stop distance. The two frameworks land in roughly the same dollar position because the underlying anchor — "size in proportion to honest edge, not to confidence" — is the same.</p>
+
+<p><strong>Where they diverge — case 1: diversification.</strong> Kelly is per-strategy. If you run five uncorrelated strategies each at quarter-Kelly, aggregate exposure is the sum (potentially ~12.5% of capital at risk simultaneously). Loss-budget is per-trade and caps each trade at 1% independently; aggregate is bounded only by the number of simultaneously open trades. For a portfolio running 10 concurrent trades at 1% each, loss-budget tolerates 10% aggregate at-risk capital. Kelly-aggregated comparable portfolios at quarter-Kelly tolerate roughly the same. <strong>The two frameworks agree on aggregate exposure ceilings when you do the arithmetic, which is exactly where retail traders fail to do the arithmetic.</strong></p>
+
+<p><strong>Where they diverge — case 2: edge uncertainty.</strong> Kelly assumes edge is known. Over-estimating edge produces over-betting, and the Kelly utility function is concave — the penalty for over-betting exceeds the gain from under-betting. If your edge estimate has 30% standard error (typical for backtest-derived estimates), point-estimate Kelly betting is meaningfully too aggressive. Loss-budget is robust to this: it caps loss regardless of edge correctness. For traders who don't trust their edge estimate (which is most traders, including this book's intended reader), <strong>loss-budget is the safer first-line tool</strong>; Kelly is a sanity check on whether the aggregate of those loss-budgeted positions is plausible.</p>
+
+<p><strong>Operational rule for this book's framework.</strong> Size individual trades by the loss-budget rule (1% risk per trade, stop-distance-scaled). Use Kelly as a sanity check on the aggregate: if your loss-budget-derived positions across the open book imply ≥30% capital at simultaneous risk, you are effectively past half-Kelly even if no single trade exceeds 1% risk. Either reduce concurrent positions, tighten the per-trade budget, or recheck the edge estimates that justified taking that many trades at once. <a class="xref" href="2e.html">Section 2E</a>'s worked example shows the per-trade chain end-to-end; this section's job is to keep the <em>aggregate</em> honest.</p>
+
+<h2 id="the-25-drawdown-30-day-cool-off">5 · The 25% drawdown / 30-day cool-off</h2>
+
+<p><strong>When portfolio drawdown crosses 25% peak-to-trough, all discretionary tactical activity halts for 30 days.</strong> Mechanical sleeves (if any) continue running; new entries are suspended.</p>
+
+<p>Four reasons: drawdowns produce sub-optimal decision-making; forced halt prevents revenge trading; mechanical systems continue running; knowing the cool-off exists makes the drawdown less catastrophic psychologically.</p>
+
+<p>The 25%/30-day rule is binding regardless of how good the next setup looks. <strong>The rule exists precisely to override your judgment during the period when your judgment is most compromised.</strong></p>
+
+<h2 id="kill-rules-at-three-levels">6 · Kill rules at three levels</h2>
+
+<p><strong>Strategy-level kill rules (per setup):</strong></p>
+
+<ul>
+<li>Trend Pullback: close below the entry-day low OR time stop at 5 days</li>
+<li>Compression Breakout: close back inside the consolidation range OR time stop at 7 days</li>
+<li>Undercut and Reclaim: close below the undercut low OR time stop at 3 days</li>
+<li>IBS + RSI Mean Reversion: 21-EMA reclaim achieved OR time stop at 3 days</li>
+</ul>
+
+<p><strong>Sleeve-level kill rules (per strategy bucket):</strong></p>
+
+<ul>
+<li>If 3 of last 5 swing trades are losers: pause new entries for 1 week, review the framework</li>
+<li>If sleeve drawdown &gt; 15% peak-to-trough: reduce sizing 50% for next month</li>
+<li>If sleeve drawdown &gt; 25% peak-to-trough: pause for 30 days</li>
+</ul>
+
+<p><strong>Portfolio-level kill rules:</strong></p>
+
+<ul>
+<li>Portfolio drawdown &gt; 25% PTP: halt all discretionary tactical for 30 days</li>
+<li>Personal behavioral state degraded: halt new entries for 1 week minimum</li>
+<li>Account margin cushion &lt; 30%: force-deleverage by closing smallest tactical positions first</li>
+</ul>
+
+<figure class="fig" id="fig-behavioral-state-checklist">
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Factor and scoring guide</th><th>Score sᵢ</th></tr></thead>
+    <tbody>
+      <tr id="behavioral-state-checklist-r0"><td class="c-trial"><label for="behavioral-state-checklist-sleep">Sleep last night</label>
+        <span class="ev-meta">≥7 hrs = 1.0; 6h = 0.7; &lt;5h = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-sleep" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-sleep-o" for="behavioral-state-checklist-sleep"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r1"><td class="c-trial"><label for="behavioral-state-checklist-lossWindow">Days since last loss</label>
+        <span class="ev-meta">&gt;3 = 1.0; 1-3 = 0.6; same day = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-lossWindow" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-lossWindow-o" for="behavioral-state-checklist-lossWindow"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r2"><td class="c-trial"><label for="behavioral-state-checklist-winStreak">Recent winning streak</label>
+        <span class="ev-meta">none = 1.0; 3-5 wins = 0.7; &gt;5 = 0.5</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-winStreak" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-winStreak-o" for="behavioral-state-checklist-winStreak"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r3"><td class="c-trial"><label for="behavioral-state-checklist-preCommit">Plan written in advance?</label>
+        <span class="ev-meta">yes-clean = 1.0; rough notes = 0.6; in head = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-preCommit" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-preCommit-o" for="behavioral-state-checklist-preCommit"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r4"><td class="c-trial"><label for="behavioral-state-checklist-fomo">FOMO signal</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-fomo" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-fomo-o" for="behavioral-state-checklist-fomo"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r5"><td class="c-trial"><label for="behavioral-state-checklist-screen">Screen time today</label>
+        <span class="ev-meta">under 2h = 1.0; 2-4h = 0.7; over 4h = 0.4</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-screen" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-screen-o" for="behavioral-state-checklist-screen"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r6"><td class="c-trial"><label for="behavioral-state-checklist-external">External stress</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-external" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-external-o" for="behavioral-state-checklist-external"></output></div></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="behavioral-state-checklist-prod"></output></div>
+    <div class="ctrl"><output id="behavioral-state-checklist-avg"></output></div>
+    <div class="ctrl"><output id="behavioral-state-checklist-bind"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="behavioral-state-checklist-vk"></b> <span id="behavioral-state-checklist-vt"></span></p>
+  <figcaption><b>One bad factor sets the whole score.</b> Score each of seven behavioral
+  factors from 0.1 to 1.0 by the guide under its name; the readiness score is their product,
+  S = ∏ sᵢ, and trades taken with a low S are systematically worse. S of 0.5 or more is green,
+  0.20 or more yellow, and anything lower red. Because the form is multiplicative, one factor
+  at 0.2 (a same-day loss, say) holds S at 0.2 or less whatever the other six say: the
+  highlighted row is that binding factor, as in the conviction score of Section 12B.</figcaption>
+</figure>
+
+<h2 id="the-selectivity-principle">7 · The selectivity principle</h2>
+
+<p>Retail traders bias toward action because action feels productive. Doing nothing feels lazy. <strong>The data systematically rewards the opposite: doing nothing is the highest-EV move on most days.</strong></p>
+
+<p>Empirically, a competent swing trader running this framework should expect:</p>
+
+<ul>
+<li><strong>Most days: no new positions.</strong> 60-70% of days produce no qualifying setups.</li>
+<li><strong>Most weeks: 1-3 new positions</strong> across the entire watchlist.</li>
+<li><strong>Most months: 6-12 positions</strong> with explicit conviction scores ≥ 0.5.</li>
+</ul>
+
+<p>The pipeline imposes selectivity by structure: most observations don't pass interpretation; most interpretations don't pass conviction; the trades that exist have all four gates clear. <strong>This is the system working, not failing.</strong></p>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- position-size-clarifier ---------- */
+(function () {
+  var U = 'position-size-clarifier';
+  var stopBox = DL.$(U + '-stop');
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        entry = DL.val(U + '-entry'), multiplier = DL.val(U + '-mult'),
+        margin = DL.val(U + '-margin');
+    /* the stop slider ends a dollar under the entry, as the app's does; lowering
+       its end pulls the stop down with it, so the stop used is the stop shown */
+    var top = String(Math.max(entry - 1, 1));
+    if (stopBox.max !== top) stopBox.max = top;
+    var stop = parseFloat(stopBox.value);
+
+    var dollarRisk = portfolio * riskPct;
+    var stopDist = Math.max(entry - stop, 0.01);
+    var perContractLoss = stopDist * multiplier;
+    var positionSize = Math.max(Math.floor(dollarRisk / perContractLoss), 0);
+    var notional = positionSize * entry * multiplier;
+    var notionalPct = (notional / portfolio) * 100;
+    var gap2x = positionSize * stopDist * 2 * multiplier;
+    var gap3x = positionSize * stopDist * 3 * multiplier;
+    var gap2xPct = (gap2x / portfolio) * 100;
+    var gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (notional <= margin * 0.7) verdict = ['Margin: GREEN.', 'Within 70% of available margin.'];
+    else if (notional <= margin) verdict = ['Margin: YELLOW.', 'Uses 70–100% of margin.'];
+    else verdict = ['Margin: RED.', 'Exceeds available margin.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-entry-o', '$' + loc(entry));
+    DL.out(U + '-stop-o', '$' + loc(stop));
+    DL.out(U + '-mult-o', String(multiplier));
+    DL.out(U + '-margin-o', '$' + DL.num(margin / 1000, 0) + 'k');
+
+    DL.out(U + '-drisk', 'dollar risk = $' + loc(dollarRisk));
+    DL.out(U + '-dist', 'stop distance = $' + stopDist.toFixed(2));
+    DL.out(U + '-lpc', 'loss / contract = $' + loc(perContractLoss));
+    DL.out(U + '-size', 'position size = ' + DL.num(positionSize, 0));
+    DL.out(U + '-notional', 'notional deployed = $' + loc(notional));
+    DL.out(U + '-npct', 'notional % of portfolio = ' + notionalPct.toFixed(1) + '%');
+    /* with no position there is no notional to set the risk against */
+    DL.out(U + '-ratio', 'planned risk / size ratio = ' +
+           (notional > 0 ? (dollarRisk / notional * 100).toFixed(2) + '%' : '—'));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '\u2060$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '\u2060$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-entry', U + '-stop', U + '-mult', U + '-margin'], update);
+  DL.figure('fig-' + U, update);
+})();
+
+/* ---------- position-size-calculator ---------- */
+(function () {
+  var U = 'position-size-calculator';
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        stopDistance = DL.val(U + '-stop'), multiplier = DL.val(U + '-mult');
+    var B_exp = portfolio * riskPct;
+    var L_max = stopDistance * multiplier;
+    var n = Math.floor(B_exp / L_max);
+    var actualRisk = n * L_max;
+    var actualRiskPct = (actualRisk / portfolio) * 100;
+    /* the app's "notional at stop": n × stop × multiplier × 50, the notional
+       of n contracts priced at fifty stop distances, a stop 2% below entry */
+    var notional = n * stopDistance * multiplier * 50;
+    var gap2x = n * L_max * 2, gap3x = n * L_max * 3;
+    var gap2xPct = (gap2x / portfolio) * 100, gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (gap2xPct < 3) verdict = ['GREEN.', '2× gap-through still under 3% portfolio loss.'];
+    else if (gap2xPct < 5) verdict = ['YELLOW.', '2× gap-through approaches 5%; consider reducing.'];
+    else verdict = ['RED.', '2× gap-through exceeds 5%; reduce size.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-stop-o', '$' + stopDistance.toFixed(2));
+    DL.out(U + '-mult-o', String(multiplier));
+
+    DL.out(U + '-b', 'loss budget B_exp = $' + loc(B_exp));
+    DL.out(U + '-l', 'loss per unit L_max = $' + loc(L_max));
+    DL.out(U + '-n', 'n = ⌊B_exp / L_max⌋ = ' + DL.num(n, 0) + ' contracts');
+    DL.out(U + '-risk-d', 'planned risk = $' + loc(actualRisk));
+    DL.out(U + '-risk-p', 'planned risk % = ' + actualRiskPct.toFixed(2) + '%');
+    DL.out(U + '-notional', 'notional at a 2% stop = $' + loc(notional));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '⁠$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '⁠$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-stop', U + '-mult'], update);
+  DL.figure('fig-' + U, update);
+})();
+
+/* ---------- behavioral-state-checklist ---------- */
+(function () {
+  var U = 'behavioral-state-checklist';
+  /* the app's seven factors, in its order, with the name its readout prints */
+  var ITEMS = [
+    { key: 'sleep', label: 'sleep last night' },
+    { key: 'lossWindow', label: 'days since last loss' },
+    { key: 'winStreak', label: 'recent winning streak' },
+    { key: 'preCommit', label: 'plan written in advance?' },
+    { key: 'fomo', label: 'FOMO signal' },
+    { key: 'screen', label: 'screen time today' },
+    { key: 'external', label: 'external stress' }
+  ];
+
+  function update() {
+    var vals = ITEMS.map(function (it) { return DL.val(U + '-' + it.key); });
+    var product = vals.reduce(function (a, b) { return a * b; }, 1);
+    var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    /* the binding factor: the first strictly below 1 with the lowest score */
+    var bind = -1, low = 1;
+    vals.forEach(function (v, i) { if (v < low) { low = v; bind = i; } });
+
+    var verdict;
+    if (product >= 0.5) {
+      verdict = ['GREEN.', 'Behavioral state supports normal sizing. Trade your plan.'];
+    } else if (product >= 0.20) {
+      verdict = ['YELLOW.', 'Behavioral state is degraded. Reduce size by 30-50% or skip new ' +
+                 'entries; manage existing only.'];
+    } else {
+      verdict = ['RED.', 'State is compromised. No new positions. Reduce existing exposure if ' +
+                 'possible. The cost of trading in this state typically exceeds the cost of ' +
+                 'missing today.'];
+    }
+
+    ITEMS.forEach(function (it, i) {
+      DL.out(U + '-' + it.key + '-o', vals[i].toFixed(2));
+      var row = DL.$(U + '-r' + i), on = i === bind;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+    DL.out(U + '-prod', 'product score S = ' + product.toFixed(3));
+    DL.out(U + '-avg', 'average factor = ' + avg.toFixed(3));
+    DL.out(U + '-bind', 'binding = ' + (bind < 0 ? '—' : ITEMS[bind].label));
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind(ITEMS.map(function (it) { return U + '-' + it.key; }), update);
+  DL.figure('fig-' + U, update);
+})();
+<!--/SCRIPT-->

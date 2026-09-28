@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>7A The PDE: why dealer hedging works at all — The Other End of the Trade</title>
+<meta name="description" content="Chapter 7A of The Other End of the Trade: The PDE: why dealer hedging works at all.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-6">← Part VII · Theory</a>
+  <div class="sb-folio"><a class="sb-prev" href="6f.html" aria-label="Previous chapter: 6F · The hedging frequency vs cost tradeoff" title="Previous chapter: 6F · The hedging frequency vs cost tradeoff (←)">‹ 6F</a><p class="sb-title"><span class="sb-at">Chapter 7A ·</span> <span class="sb-at">31 of 67</span></p><a class="sb-next" href="7b.html" aria-label="Next chapter: 7B · Second-order Greeks in context" title="Next chapter: 7B · Second-order Greeks in context (→)">7B ›</a></div>
+  <div id="sb-toc"><a href="#step-1-geometric-brownian-motion-the-model">Step 1 — Geometric Brownian Motion (the model)</a><a href="#step-2-its-lemma-how-the-option-value-moves">Step 2 — Itô's lemma (how the option value moves)</a><a href="#step-3-the-replicating-portfolio">Step 3 — The replicating portfolio</a><a href="#step-4-no-arbitrage-closure">Step 4 — No-arbitrage closure</a><a href="#step-5-the-black-scholes-merton-pde">Step 5 — The Black-Scholes-Merton PDE</a><a href="#what-this-pde-is-really-telling-you">What this PDE is really telling you</a><a href="#the-hedging-pl-gamma-vs-theta-the-punchline">The hedging P&amp;L: gamma vs theta — the punchline</a><a href="#why-the-dealer-feedback-loop-is-built-into-the-math">Why the dealer feedback loop is built into the math</a><a href="#the-variance-swap-connection">The variance swap connection</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VII · Theory · Chapter 7A</p>
+
+<h1>The PDE: why dealer hedging works at all</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>Up to this point we've described what the dealer does. The question this section answers is <strong>why their delta-hedging strategy is the unique correct strategy</strong>, and what mathematical structure their hedging P&amp;L actually has. This is the most technical section in the document, but it is also the one that justifies every claim that follows.</p>
+
+<p>The derivation proceeds in five steps. Each one builds on the previous, and each is doing a specific piece of intellectual work:</p>
+
+<ol>
+<li><strong>Step 1</strong> — assume the underlying follows geometric Brownian motion (the GBM model)</li>
+<li><strong>Step 2</strong> — apply Itô's lemma to derive how the option value changes</li>
+<li><strong>Step 3</strong> — construct the delta-hedged portfolio and observe it has no stochastic component</li>
+<li><strong>Step 4</strong> — invoke no-arbitrage: a locally risk-free portfolio must earn the risk-free rate</li>
+<li><strong>Step 5</strong> — derive the Black-Scholes-Merton PDE; this is the consistency condition</li>
+</ol>
+
+<p>Then we derive the gamma-theta P&amp;L decomposition that we previewed in <a class="xref" href="5c.html">Section 5C</a> and that drives everything in the dealer-mechanics framework. And finally we connect the option-replication mathematics to variance swaps and VIX construction — the bridge to <a class="xref" href="9a.html">Section 9</a>.</p>
+
+<p>This section is dense. If math is not your native language, read it slowly, accept the steps one at a time, and pay particular attention to the plain-English unpacking that follows each formula. The intellectual payoff is large: by the end of <a class="xref" href="7b.html">Section 7B</a>, you will understand that <strong>every delta-hedged option position is, fundamentally, a bet on realized volatility against implied volatility</strong>, and nothing else. This single insight reorganizes how to think about every options strategy.</p>
+</div>
+
+<hr>
+
+<h2 id="step-1-geometric-brownian-motion-the-model">Step 1 — Geometric Brownian Motion (the model)</h2>
+
+<p>Black and Scholes (1973) and independently Merton (1973) assumed the underlying asset follows a <strong>geometric Brownian motion</strong>:</p>
+
+<pre>dS = μS·dt + σS·dW</pre>
+
+<p>In words: in a small instant of time dt, the price S changes by an amount that has a deterministic component (μS·dt — the <strong>drift</strong>) and a random component (σS·dW — the <strong>diffusion</strong>). The randomness is captured by dW, an infinitesimal increment of a standard Brownian motion. By construction, dW is normally distributed with mean zero and variance dt. Multiplying by σS scales the noise by the current price and the volatility, making volatility "percent per unit time" rather than "dollars per unit time" — which is what we want, because we observe that volatility scales with price level (a $1,000 stock has bigger dollar moves than a $10 stock at the same volatility).</p>
+
+<p>This is the <strong>central modeling assumption</strong> of the entire Black-Scholes framework. Prices wiggle proportionally to themselves, and the log-returns are Gaussian in continuous time. The model is wrong (real returns have fat tails, as we established in <a class="xref" href="1a.html">Section 1A</a>), but it is wrong in ways that can be corrected at the margins without rebuilding the whole framework. For our purposes — establishing the rationale for why dealers hedge the way they do — GBM is fine.</p>
+
+<p>A subtle clarification: the parameter μ here is the <em>instantaneous expected return</em> in simple-return space, not log-return space. By Itô's formula (which we're about to derive), the expected log-return is μ − ½σ² — that's the variance drag we discussed in <a class="xref" href="1b.html">Section 1B</a>. The two parameters live in different return conventions; both are valid; you just have to know which one you're using.</p>
+
+<h2 id="step-2-its-lemma-how-the-option-value-moves">Step 2 — Itô's lemma (how the option value moves)</h2>
+
+<p>The option value V is a function of S and t: V(S, t). When S moves, V moves. The textbook chain rule would say dV = (∂V/∂S) × dS, but <strong>that is wrong here</strong>, because S is stochastic. Itô's lemma — the chain rule for Brownian motion — gives us the correct expansion:</p>
+
+<pre>dV = (∂V/∂t)·dt + (∂V/∂S)·dS + ½·(∂²V/∂S²)·σ²S²·dt</pre>
+
+<p>Why the extra term? Because (dS)² is not zero. For ordinary smooth functions, (dx)² = O(dt²), which we drop in the limit. For Brownian motion, the variance of dS over interval dt is σ²S²·dt — same order as dt itself, which we <strong>must</strong> keep. The ½(∂²V/∂S²)σ²S²·dt term is <strong>gamma showing up explicitly</strong>: it's the quadratic variation contribution that makes options different from linear instruments.</p>
+
+<p>This is the central technical insight of stochastic calculus. The second derivative matters when the underlying is stochastic; it doesn't when the underlying is deterministic. Every "interesting" property of options derives from this single mathematical fact.</p>
+
+<p>Substituting the Greek notation ∂V/∂S = Δ, ∂²V/∂S² = Γ, ∂V/∂t = Θ:</p>
+
+<pre>dV = Θ·dt + Δ·dS + ½·Γ·σ²S²·dt</pre>
+
+<p>Read this: the change in option value over a small time interval has three components — a time-decay piece (Θ·dt), a directional piece (Δ·dS, which moves with the underlying), and a curvature piece (½·Γ·σ²S²·dt, which is always positive for long-option positions and reflects the convexity benefit).</p>
+
+<h2 id="step-3-the-replicating-portfolio">Step 3 — The replicating portfolio</h2>
+
+<p>Consider a portfolio Π that holds the option and a short position of Δ shares (the delta hedge):</p>
+
+<pre>Π = V − Δ·S</pre>
+
+<p>In a small interval, its value changes by:</p>
+
+<pre>dΠ = dV − Δ·dS = (Θ + ½·Γ·σ²S²)·dt + Δ·dS − Δ·dS = (Θ + ½·Γ·σ²S²)·dt</pre>
+
+<p>Look at what just happened. <strong>The dS terms canceled.</strong> The portfolio change has no stochastic component — it is locally risk-free. That is what delta hedging accomplishes: it removes the dW term, leaving only the deterministic dt terms.</p>
+
+<p>This is the mathematical statement of what we said informally in <a class="xref" href="6d.html">Section 6D</a>: a delta-hedged book is, at the instant of hedge, locally directionless. The dW noise from the underlying has been hedged away. The remaining motion of the portfolio is entirely deterministic — driven by theta and gamma alone, at first order.</p>
+
+<h2 id="step-4-no-arbitrage-closure">Step 4 — No-arbitrage closure</h2>
+
+<p>A locally risk-free portfolio must earn the risk-free rate, otherwise there is free money. This is the <strong>no-arbitrage condition</strong> — the most consequential single principle in derivatives pricing. So:</p>
+
+<pre>dΠ = r·Π·dt</pre>
+
+<p>The portfolio earns the risk-free rate r on its current value. Combining this with the Step 3 expression:</p>
+
+<pre>(Θ + ½·Γ·σ²S²)·dt = r·(V − Δ·S)·dt</pre>
+
+<p>Cancel dt from both sides and rearrange:</p>
+
+<pre>Θ + ½·Γ·σ²S² = r·V − r·Δ·S</pre>
+
+<p>Or, written with all derivatives expanded back out:</p>
+
+<pre>∂V/∂t + r·S·∂V/∂S + ½·σ²·S²·∂²V/∂S² = r·V</pre>
+
+<h2 id="step-5-the-black-scholes-merton-pde">Step 5 — The Black-Scholes-Merton PDE</h2>
+
+<pre>∂V/∂t + r·S·∂V/∂S + ½·σ²·S²·∂²V/∂S² = r·V</pre>
+
+<p>This is the celebrated <strong>Black-Scholes-Merton partial differential equation</strong>. (Robert Merton received the 1997 Nobel Memorial Prize in Economics for this work, jointly with Myron Scholes; Fischer Black, who would have shared the prize, had died in 1995.)</p>
+
+<h2 id="what-this-pde-is-really-telling-you">What this PDE is really telling you</h2>
+
+<p>The PDE is not a pricing formula. It is a <strong>consistency condition</strong>: any option price function V(S, t) that doesn't satisfy this equation creates an arbitrage. Solving the PDE with boundary condition V(S, T) = max(S − K, 0) (the payoff of a call at expiration) gives the Black-Scholes call formula:</p>
+
+<pre>C = S·e^(-qT)·N(d1) − K·e^(-rT)·N(d2)</pre>
+
+<p>with d1 and d2 as defined in <a class="xref" href="5c.html">Section 5C</a>. But more profoundly, the PDE encodes the <strong>recipe</strong> by which a dealer can replicate the option using only the underlying and cash. The dealer is not "pricing the option" in some metaphysical sense — the dealer is <strong>manufacturing</strong> the option through dynamic hedging.</p>
+
+<p>This is the deepest insight in the entire framework. An option payoff that looks like it requires unusual cleverness to construct (an asymmetric, convex payoff) can in fact be constructed from a simple time-varying position in the underlying plus cash. The cost of constructing this is exactly the Black-Scholes price — no more, no less, under the model's assumptions. Any deviation from this price creates an arbitrage.</p>
+
+<p>The practical implication: when you buy an option, what you're buying is the right to a payoff that the dealer is going to construct for you through their hedging activity. The premium you pay is the cost of the construction kit plus the dealer's margin plus their compensation for taking residual risks the model doesn't capture (jump risk, transaction costs, fat tails). The variance risk premium we discussed in <a class="xref" href="5e.html">Section 5E</a> is the cumulative spread between what dealers charge and what the model says is fair — the structural compensation they require to be in this business.</p>
+
+<h2 id="the-hedging-pl-gamma-vs-theta-the-punchline">The hedging P&amp;L: gamma vs theta — the punchline</h2>
+
+<p>Now we exploit the PDE to get the most important formula in this entire document. Suppose the dealer delta-hedges continuously but realized volatility (σ_R) differs from the volatility used to price the option (σ_I, the implied vol at entry). Their actual P&amp;L over an interval dt is approximately:</p>
+
+<pre>dΠ ≈ ½·Γ·S²·[(dS/S)² − σ_I²·dt]</pre>
+
+<p>Read that as: <strong>over each interval, the delta-hedged dealer earns gamma times the difference between realized squared return and implied variance.</strong> This is the entire economic content of a delta-hedged option position.</p>
+
+<p>If you are <em>long</em> the option (long gamma) and realized volatility <em>exceeds</em> implied, you make money. Every wiggle in spot lets you scalp gamma — buy low, sell high in your hedge — at a rate that, in aggregate, exceeds the theta you're paying.</p>
+
+<p>If you are <em>long</em> the option and realized falls <em>short</em> of implied, you lose. You bought too much vol.</p>
+
+<p>If you are <em>short</em> the option (short gamma — the dealer's typical position), the signs flip. You earn the implied vol (the theta you collect) and pay the realized vol (the rebalancing losses). A short-gamma dealer <strong>wants quiet markets</strong>. A long-gamma dealer <strong>wants moves</strong>.</p>
+
+<div class="callout brick">
+<p><strong>Under the standard delta-hedged framework, an option position is, at first order, a bet on realized vs. implied volatility — the dominant P&amp;L driver in the absence of large vega or skew dynamics.</strong></p>
+</div>
+
+<p>This is the punchline of the gamma-vs-theta decomposition. Strike selection affects the size of gamma; expiration selection affects the speed of gamma; the IV at entry sets the implied side of the bet — and to first order, the resulting P&amp;L is a function of whether realized exceeded implied.</p>
+
+<p><strong>The honest caveats.</strong> The "nothing more, nothing less" framing skips several real-world second-order effects that matter in practice:</p>
+
+<ul>
+<li><strong>Vega risk on IV moves.</strong> A delta-hedged position is <em>not</em> vega-neutral. If implied vol changes between entry and exit, that mark-to-market vega P&amp;L is a separate component on top of the gamma-vs-realized term. For long-dated options with large vega, this can dominate.</li>
+<li><strong>Discrete hedging.</strong> The decomposition above assumes continuous rebalancing. Real hedging happens discretely, and the <em>path</em> of spot between rebalances introduces variance around the theoretical gamma-scalping P&amp;L. Two traders running the same position with different hedge frequencies will realize different P&amp;L from the same realized vs. implied gap.</li>
+<li><strong>Skew and surface dynamics.</strong> Options that sit on a steep part of the surface accrue P&amp;L from vanna and volga as spot and vol co-move — terms that aren't captured by the simple γ × (RV² − IV²) decomposition.</li>
+<li><strong>Transaction costs.</strong> Hedging is not free. The gamma-scalping P&amp;L is <em>gross</em>; net P&amp;L can be meaningfully smaller, especially in less liquid underlyings or on short-DTE options where rebalancing is frequent.</li>
+</ul>
+
+<p>For most retail-scale, short-to-medium DTE, large-cap-underlying delta-hedged positions, the first-order realized-vs-implied framing captures the bulk of P&amp;L variability. For longer-dated positions, exotic surface trades, or low-liquidity underlyings, the second-order terms matter and should be modeled explicitly.</p>
+
+<figure class="fig" id="fig-realized-vs-implied">
+  <canvas id="realized-vs-implied-spot" data-h="130" width="631" height="130" style="height: 130px;"></canvas>
+  <canvas id="realized-vs-implied-pnl" data-h="170" width="631" height="170" style="height: 170px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="realized-vs-implied-iv">implied vol</label>
+      <input type="range" id="realized-vs-implied-iv" min="0.05" max="0.6" step="0.01" value="0.2">
+      <output id="realized-vs-implied-iv-o" for="realized-vs-implied-iv">20%</output>
+    </div>
+    <div class="ctrl">
+      <label for="realized-vs-implied-rv">realized vol</label>
+      <input type="range" id="realized-vs-implied-rv" min="0.05" max="0.6" step="0.01" value="0.3">
+      <output id="realized-vs-implied-rv-o" for="realized-vs-implied-rv">30%</output>
+    </div>
+    <div class="ctrl">
+      <label for="realized-vs-implied-seed">path seed</label>
+      <input type="range" id="realized-vs-implied-seed" min="1" max="99" step="1" value="7">
+      <output id="realized-vs-implied-seed-o" for="realized-vs-implied-seed">#7</output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Position" id="realized-vs-implied-pos">
+      <label>position</label>
+      <button type="button" data-v="long" class="on" aria-pressed="true">long Γ</button>
+      <button type="button" data-v="short" aria-pressed="false">short Γ</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="realized-vs-implied-real">realized vol = 30.1%</output></div>
+    <div class="ctrl"><output id="realized-vs-implied-term">terminal P&amp;L (long Γ) = +$123</output></div>
+    <div class="ctrl"><output id="realized-vs-implied-sign">predicted sign = positive</output></div>
+  </div>
+  <figcaption><b>A delta-hedged option is a bet on realized against implied.</b> One
+  at-the-money option (strike 100, 60 trading days to expiry) on a simulated spot path whose
+  volatility is the realized-vol setting, top; below, its hedged P&amp;L for one contract, the
+  running sum of ½Γ·S²·[(dS/S)² − σ²·dt] with σ the implied vol, taken one day at a time. Move
+  the path seed for a new path, or flip the position to short gamma. With realized well above
+  implied the long-gamma P&amp;L climbs; with it well below, the P&amp;L bleeds.</figcaption>
+</figure>
+
+<figure class="fig" id="fig-hedging-friction-simulator">
+  <canvas id="hedging-friction-simulator-c" data-h="250" width="631" height="250" style="height: 250px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="hedging-friction-simulator-sig">IV σ</label>
+      <input type="range" id="hedging-friction-simulator-sig" min="0.05" max="0.8" step="0.01" value="0.2">
+      <output id="hedging-friction-simulator-sig-o" for="hedging-friction-simulator-sig">20%</output>
+    </div>
+    <div class="ctrl">
+      <label for="hedging-friction-simulator-dte">DTE</label>
+      <input type="range" id="hedging-friction-simulator-dte" min="5" max="90" step="1" value="30">
+      <output id="hedging-friction-simulator-dte-o" for="hedging-friction-simulator-dte">30d</output>
+    </div>
+    <div class="ctrl">
+      <label for="hedging-friction-simulator-n">contracts</label>
+      <input type="range" id="hedging-friction-simulator-n" min="1" max="500" step="1" value="100">
+      <output id="hedging-friction-simulator-n-o" for="hedging-friction-simulator-n">100</output>
+    </div>
+    <div class="ctrl">
+      <label for="hedging-friction-simulator-bps">transaction cost (bps)</label>
+      <input type="range" id="hedging-friction-simulator-bps" min="0" max="20" step="0.5" value="2">
+      <output id="hedging-friction-simulator-bps-o" for="hedging-friction-simulator-bps">2.0</output>
+    </div>
+    <div class="ctrl">
+      <label for="hedging-friction-simulator-seed">seed</label>
+      <input type="range" id="hedging-friction-simulator-seed" min="1" max="500" step="1" value="7">
+      <output id="hedging-friction-simulator-seed-o" for="hedging-friction-simulator-seed">7</output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Hedge frequency</th><th class="c-other">Final P&amp;L</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Continuous (theoretical)</td><td class="c-other" id="hedging-friction-simulator-f0">−$21,529</td></tr>
+      <tr><td class="c-trial">Intraday (5 hedges/day)</td><td class="c-other" id="hedging-friction-simulator-f1">−$15,167</td></tr>
+      <tr><td class="c-trial">Daily close</td><td class="c-other" id="hedging-friction-simulator-f2">+$11,548</td></tr>
+      <tr><td class="c-trial">Every 3 days</td><td class="c-other" id="hedging-friction-simulator-f3">+$4,471</td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>One path, four hedging schedules.</b> Long at-the-money calls on a $600
+  underlying, delta-hedged along one simulated path of five-minute bars whose volatility equals
+  the implied vol, so hedging continuously earns nothing on average before costs. The curves
+  differ only in how often the hedge is reset, and every reset pays the transaction cost on the
+  shares traded. Across seeds, the less often the hedge is reset the wider the spread of final
+  P&amp;L, while the cost slider hits the most frequent hedger hardest.</figcaption>
+</figure>
+
+<h2 id="why-the-dealer-feedback-loop-is-built-into-the-math">Why the dealer feedback loop is built into the math</h2>
+
+<p>This is also the punchline for why aggregate dealer positioning moves the market. Suppose dealers are collectively short gamma in aggregate. They are mechanically losing money to volatility — and the more volatility there is, the more they lose. To minimize losses they hedge aggressively, which means buying as the market rises and selling as it falls. <strong>That hedging creates volatility</strong>, which makes them lose more, which makes them hedge more.</p>
+
+<p>The feedback loop is mathematically built into the gamma-theta decomposition we just derived. It is not a story or a metaphor. It falls out of the PDE. <a class="xref" href="8b.html">Section 8B</a> will formalize this into the effective-volatility equation that quantifies how dealer feedback amplifies (or dampens) underlying volatility depending on the sign of aggregate dealer gamma.</p>
+
+<h2 id="the-variance-swap-connection">The variance swap connection</h2>
+
+<p>Integrating dΠ ≈ ½ΓS²·[(dS/S)² − σ_I²·dt] over the life of the option and weighting by 1/S² gives, almost exactly, the payoff of a <strong>variance swap</strong>. This is not coincidence — it's the foundation of model-free variance replication and the reason VIX (<a class="xref" href="9a.html">Section 9A</a>) is constructed as a weighted strip of options with 1/K² weights.</p>
+
+<p>Specifically, Demeterfi, Derman, Kamal, and Zou's 1999 Goldman Sachs paper ("More Than You Ever Wanted to Know About Volatility Swaps") showed that a portfolio of options weighted by ΔK/K² across all strikes, when dynamically delta-hedged, replicates the payoff of a variance swap. The intuition: weighting by 1/K² creates a "gamma flat" portfolio (constant gamma per dollar of spot move regardless of where spot is), which is exactly the property required to replicate realized variance.</p>
+
+<p>This is the mathematical thread connecting dealer hedging to VIX. VIX is, fundamentally, the cost of replicating variance through delta-hedged options. Every option you trade contributes some amount of replicated variance to the dealer's book; aggregate dealer gamma is, essentially, the aggregate variance replication exposure of the entire options ecosystem. <a class="xref" href="9a.html">Section 9A</a> returns to this connection in detail.</p>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="6f.html" rel="prev" data-part="Part VI · Dealer Mechanics"><span>Previous</span>6F · The hedging frequency vs cost tradeoff</a>
+<a class="next" href="7b.html" rel="next"><span>Next</span>7B · Second-order Greeks in context</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- realized-vs-implied ---------- */
+(function () {
+  var U = 'realized-vs-implied';
+  var IV = DL.$(U + '-iv'), RV = DL.$(U + '-rv'), SEED = DL.$(U + '-seed');
+  var pos = DL.seg(U + '-pos', update);
+  var sim;
+
+  /* the app's simulation: 60 daily steps of a lognormal path at the realized
+     vol; each step adds ½Γ·S²·[(dS/S)² − σ_I²·dt] at the mid price, ×100 */
+  function simulate(sigmaImp, sigmaReal, seed, position) {
+    var rng = DL.rng(seed), Nsteps = 60, dt = 1 / 252;
+    var S0 = 100, K = 100, T0 = 60 / 252;
+    var spot = [S0], pnl = [0], S = S0, cum = 0, sumR2 = 0;
+    for (var i = 1; i <= Nsteps; i++) {
+      var eps = DL.gauss(rng);
+      var ret = sigmaReal * Math.sqrt(dt) * eps - 0.5 * sigmaReal * sigmaReal * dt;
+      var Snew = S * Math.exp(ret);
+      var remT = Math.max(0.005, T0 - i / 252);
+      var Smid = (S + Snew) / 2;
+      var gamma = DL.bsGamma(Smid, K, remT, sigmaImp);
+      var r = (Snew - S) / S, r2 = r * r;
+      sumR2 += r2;
+      var incr = 0.5 * gamma * Smid * Smid * (r2 - sigmaImp * sigmaImp * dt);
+      cum += (position === 'long' ? 1 : -1) * incr * 100;
+      S = Snew;
+      spot.push(S);
+      pnl.push(cum);
+    }
+    return { spot: spot, pnl: pnl, terminal: cum, realized: Math.sqrt(sumR2 / (Nsteps * dt)) };
+  }
+
+  function compute() {
+    var si = parseFloat(IV.value), sr = parseFloat(RV.value), seed = parseInt(SEED.value, 10);
+    var p = pos();
+    sim = simulate(si, sr, seed, p);
+    sim.position = p;
+    var above = sim.realized > si;
+    var sign = p === 'long' ? (above ? 'positive' : 'negative') : (above ? 'negative' : 'positive');
+    DL.out(U + '-iv-o', (si * 100).toFixed(0) + '%');
+    DL.out(U + '-rv-o', (sr * 100).toFixed(0) + '%');
+    DL.out(U + '-seed-o', '#' + seed);
+    DL.out(U + '-real', 'realized vol = ' + DL.num(sim.realized * 100, 1) + '%');
+    DL.out(U + '-term', 'terminal P&L (' + p + ' Γ) = ' + (sim.terminal >= 0 ? '+' : '') +
+           DL.usd(sim.terminal, 0));
+    DL.out(U + '-sign', 'predicted sign = ' + sign);
+  }
+  compute();
+
+  var steps = [];
+  for (var s = 0; s <= 60; s++) steps.push(s);
+  var PAD = { l: 46, r: 14 };
+
+  var drawSpot = DL.figure(U + '-spot', function (c) {
+    var lo = Math.min.apply(null, sim.spot), hi = Math.max.apply(null, sim.spot);
+    var span = (hi - lo) || 1;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: lo - span * 0.06, ymax: hi + span * 0.06,
+                              pad: { l: PAD.l, r: PAD.r, t: 20, b: 6 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ys: [lo, (lo + hi) / 2, hi], x: false,
+                 y: function (v) { return DL.num(v, 1); } });
+    DL.line(p, steps, sim.spot, { color: DL.color('familiar'), width: 1.6 });
+    p.text(0, p.o.ymax, 'spot path (realized σ)', { dy: -5, font: '11px ' + DL.color('sans'),
+                                                     color: DL.color('familiar') });
+  });
+
+  var drawPnl = DL.figure(U + '-pnl', function (c) {
+    var lo = Math.min.apply(null, sim.pnl.concat([-1])), hi = Math.max.apply(null, sim.pnl.concat([1]));
+    var abs = Math.max(Math.abs(lo), Math.abs(hi)) * 1.1;
+    var col = DL.color(sim.position === 'long' ? 'insight' : 'plain');
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: -abs, ymax: abs,
+                              pad: { l: PAD.l, r: PAD.r, t: 20, b: 26 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ys: [-abs, 0, abs],
+                 y: function (v) { return v === 0 ? '0' : DL.signed(v, 0); } });
+    DL.band(p, steps, sim.pnl, 0, DL.fade(col, 0.12));
+    DL.line(p, steps, sim.pnl, { color: col, width: 1.8 });
+    p.text(0, abs, 'hedged P&L, ½ΓS²[(dS/S)² − σ²dt], ' + sim.position + ' Γ',
+           { dy: -5, font: '11px ' + DL.color('sans'), color: col });
+  });
+
+  function update() { compute(); drawSpot(); drawPnl(); }
+  DL.bind([U + '-iv', U + '-rv', U + '-seed'], update);
+})();
+
+/* ---------- hedging-friction-simulator ---------- */
+(function () {
+  var U = 'hedging-friction-simulator';
+  var SIG = DL.$(U + '-sig'), DTE = DL.$(U + '-dte'), NC = DL.$(U + '-n'),
+      BPS = DL.$(U + '-bps'), SEED = DL.$(U + '-seed');
+  var FREQS = [
+    { label: 'continuous', perDay: 78, role: 'familiar' },
+    { label: '5 per day', perDay: 5, role: 'accent' },
+    { label: 'daily', perDay: 1, role: 'plain' },
+    { label: 'every 3 days', perDay: 1 / 3, role: 'insight' }
+  ];
+  var sim;
+
+  /* The app's model: an arithmetic path of 78 five-minute bars a day at the
+     implied vol, and on each bar the gamma-theta P&L ½Γ·S²·[(dS/S)² − σ²·dt]
+     of the long calls. The app also kept each schedule's hedge, rebalanced
+     every floor(78 / hedges per day) bars at a cost of |Δshares|·S·bps, but
+     never added it to the P&L, so its four curves coincided. Here the part of
+     the calls' delta the stale hedge leaves open, (Δ·N − hedge)·dS, and the
+     cost of each rebalance are added; hedging every bar reproduces the app. */
+  function simulate(sigma, dte, contracts, seed, bps) {
+    var T = dte / 365, nBars = dte * 78, dt = T / nBars, S0 = 600, K = 600;
+    var M = contracts * 100, fee = bps / 10000;
+    var rng = DL.rng(seed), path = [S0];
+    for (var i = 0; i < nBars; i++) {
+      var z = DL.gauss(rng);
+      path.push(path[i] + sigma * Math.sqrt(dt) * S0 * z);
+    }
+    var start = DL.bsDelta(S0, K, T, sigma) * M;
+    return FREQS.map(function (f) {
+      var stride = Math.max(1, Math.floor(78 / f.perDay));
+      var shares = start, prev = start;
+      var pnl = [-Math.abs(start) * S0 * fee];
+      for (var j = 1; j < path.length; j++) {
+        var tau = T - (j / nBars) * T;
+        if (tau <= 0) break;
+        var target = DL.bsDelta(path[j], K, tau, sigma) * M;
+        var open = (prev - shares) * (path[j] - path[j - 1]);
+        var cost = 0;
+        if (j % stride === 0 || j === path.length - 1) {
+          cost = Math.abs(target - shares) * path[j] * fee;
+          shares = target;
+        }
+        var G = DL.bsGamma(path[j], K, tau, sigma);
+        var dollarGamma = G * path[j] * path[j] * 0.5;
+        var ret = (path[j] - path[j - 1]) / path[j - 1];
+        var gammaTerm = dollarGamma * ret * ret * M;
+        var thetaTerm = -dollarGamma * sigma * sigma * dt * M;
+        pnl.push(pnl[pnl.length - 1] + gammaTerm + thetaTerm + open - cost);
+        prev = target;
+      }
+      /* the app's downsampling for the chart, kept at each point's own day */
+      var xs = [], ys = [], step = Math.max(1, Math.floor(pnl.length / 100));
+      for (var k = 0; k < pnl.length; k += step) { xs.push(k / 78); ys.push(pnl[k]); }
+      xs.push((pnl.length - 1) / 78); ys.push(pnl[pnl.length - 1]);
+      return { xs: xs, ys: ys, final: pnl[pnl.length - 1] };
+    });
+  }
+
+  function money(v, st) {
+    if (v === 0) return '$0';
+    var a = Math.abs(st), unit = a >= 1e6 ? 1e6 : a >= 1e3 ? 1e3 : 1;
+    var d = Math.max(0, -Math.floor(Math.log10(a / unit) + 1e-9));
+    return DL.usd(v / unit, d) + (unit === 1e6 ? 'M' : unit === 1e3 ? 'K' : '');
+  }
+
+  function compute() {
+    var sigma = parseFloat(SIG.value), dte = parseInt(DTE.value, 10),
+        n = parseInt(NC.value, 10), bps = parseFloat(BPS.value), seed = parseInt(SEED.value, 10);
+    sim = { dte: dte, runs: simulate(sigma, dte, n, seed, bps) };
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-dte-o', dte + 'd');
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-bps-o', bps.toFixed(1));
+    DL.out(U + '-seed-o', String(seed));
+    sim.runs.forEach(function (r, i) {
+      DL.out(U + '-f' + i, (r.final > 0 ? '+' : '') + DL.usd(r.final, 0));
+    });
+  }
+  compute();
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var lo = Infinity, hi = -Infinity;
+    sim.runs.forEach(function (r) {
+      r.ys.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; });
+    });
+    var span = Math.max(hi - lo, 1e-6);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: sim.dte, ymin: lo - span * 0.06, ymax: hi + span * 0.34,
+                              pad: { l: 50, r: 16, t: 10, b: 28 } });
+    DL.axes(p, { nx: 6, ny: 5, y: money, x: function (v) { return v + 'd'; } });
+    DL.hline(p, 0, { color: DL.color('ink-faint'), dash: [2, 3] });
+    sim.runs.forEach(function (r, i) {
+      DL.line(p, r.xs, r.ys, { color: DL.fade(DL.color(FREQS[i].role), 0.85), width: 1.4 });
+    });
+    var items = FREQS.map(function (f) { return { label: f.label, color: DL.color(f.role) }; });
+    DL.legend(p, items.slice(0, 2));
+    DL.legend(p, items.slice(2), { dy: 16 });
+  });
+
+  function update() { compute(); draw(); }
+  DL.bind([U + '-sig', U + '-dte', U + '-n', U + '-bps', U + '-seed'], update);
+})();
+
+</script>
+</body>
+</html>

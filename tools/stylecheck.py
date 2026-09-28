@@ -334,6 +334,15 @@ def corpus(slug):
                                     os.path.basename(p)):
                 yield path, None, text
         return
+    # A book that tools/spx.py generates (it has an outline.json) is prose
+    # imported word for word from another project, so it too is reported on
+    # and never written to. A correction belongs in the source project, and one
+    # to a figure's caption in its figures/<id>.html; spx.py --check would
+    # reject an edit made to the generated src/*.html.
+    if os.path.exists(os.path.join(d, 'outline.json')):
+        for p in sorted(glob.glob(d + '/src/*.html')):
+            yield os.path.basename(p), None, open(p, encoding='utf-8').read()
+        return
     # This book hand-writes its chapters as src/*.html, so they are source and
     # can be corrected. Blanking preserves every offset, which is what makes
     # writing back safe.

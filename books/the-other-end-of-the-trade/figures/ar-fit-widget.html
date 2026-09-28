@@ -1,0 +1,101 @@
+<!--
+name: AR(1) fit
+source: src/interactives/ARFitWidget.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="True regime of the returns" id="{{uid}}-mode">
+      <label>regime</label>
+      <button type="button" data-v="mr" class="on" aria-pressed="true">mean reversion</button>
+      <button type="button" data-v="momentum" aria-pressed="false">momentum</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-w">weight w</label>
+      <input type="range" id="{{uid}}-w" min="-1.5" max="1.5" step="0.05" value="-0.6">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-b">bias b</label>
+      <input type="range" id="{{uid}}-b" min="-0.005" max="0.005" step="0.0005" value="0">
+      <output id="{{uid}}-b-o" for="{{uid}}-b"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="30" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-sign"></output></div>
+    <div class="ctrl"><output id="{{uid}}-true"></output></div>
+    <div class="ctrl"><output id="{{uid}}-acc"></output></div>
+  </div>
+  <figcaption><b>The sign of w is the regime.</b> The solid line is sixty synthetic returns from
+  an AR(1) with a true weight of −0.55 (mean reversion) or +0.55 (momentum), drawn from the
+  chosen seed; the dashed line is the one-step prediction ŷ<sub>t</sub> = w × r<sub>t−1</sub> +
+  b made with the weight and bias on the sliders. Directional accuracy is the share of steps on
+  which the prediction and the return have the same sign. With b at zero only the sign of w
+  moves it: on the default returns any negative weight scores 66.1% and any positive one
+  32.2%.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var mode = DL.seg(U + '-mode', function () { draw(); });
+
+  /* the app's returns: r_t = ±0.55 r_(t-1) + 0.008 ε, sixty of them from r_0 = 0 */
+  var memo = { key: null };
+  function series(seed, m) {
+    var key = seed + m;
+    if (memo.key === key) return memo.out;
+    var r = DL.rng(seed), coef = m === 'mr' ? -0.55 : 0.55, data = [0];
+    for (var i = 1; i < 60; i++) data.push(coef * data[i - 1] + DL.gauss(r) * 0.008);
+    memo = { key: key, out: data };
+    return data;
+  }
+  function pctTick(v, st) { return DL.num(v * 100, st * 100 < 0.999 ? 1 : 0) + '%'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var w = DL.val(U + '-w'), b = DL.val(U + '-b'), seed = DL.val(U + '-seed'), m = mode();
+    var s = series(seed, m);
+    var pred = s.map(function (v, i) { return i === 0 ? null : w * s[i - 1] + b; });
+    /* directional accuracy as the app counts it: Math.sign of prediction and return agree */
+    var hit = 0, total = 0;
+    for (var i = 1; i < s.length; i++) {
+      if (Math.sign(pred[i]) === Math.sign(s[i])) hit++;
+      total++;
+    }
+    var acc = hit / total * 100;
+
+    /* the app scales to every value drawn; headroom on top keeps the key clear */
+    var lo = Infinity, hi = -Infinity;
+    s.concat(pred).forEach(function (v) {
+      if (v == null) return;
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    });
+    var span = (hi - lo) || 1;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: s.length - 1, ymin: lo - span * 0.04,
+                              ymax: hi + span * 0.2, pad: { l: 44, r: 14, t: 8, b: 26 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50], ny: 5, y: pctTick,
+                 x: function (v) { return String(v); } });
+    var t = s.map(function (_, j) { return j; });
+    DL.line(p, t, s, { color: DL.color('familiar'), width: 1.6 });
+    DL.line(p, t, pred, { color: DL.color('accent'), width: 1.4, dash: [3, 3] });
+    DL.legend(p, [{ label: 'actual', color: DL.color('familiar') },
+                  { label: 'predicted', color: DL.color('accent'), dash: [3, 3] }]);
+
+    var sign = w > 0.05 ? 'momentum' : w < -0.05 ? 'mean reversion' : 'neutral';
+    DL.out(U + '-w-o', DL.num(w, 2));
+    DL.out(U + '-b-o', DL.num(b, 4));
+    DL.out(U + '-seed-o', '#' + seed);
+    DL.out(U + '-sign', 'weight sign = ' + sign);
+    DL.out(U + '-true', 'true regime = ' + (m === 'mr' ? 'mean reversion' : 'momentum'));
+    DL.out(U + '-acc', 'directional accuracy = ' + DL.num(acc, 1) + '%');
+  });
+  DL.bind([U + '-w', U + '-b', U + '-seed'], draw);
+})();
+</script>

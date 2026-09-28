@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>3D Order book mechanics (equity execution side) — The Other End of the Trade</title>
+<meta name="description" content="Chapter 3D of The Other End of the Trade: Order book mechanics (equity execution side).">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-2">← Part III · Markets</a>
+  <div class="sb-folio"><a class="sb-prev" href="3c.html" aria-label="Previous chapter: 3C · Account types, margin, and the 1256 advantage" title="Previous chapter: 3C · Account types, margin, and the 1256 advantage (←)">‹ 3C</a><p class="sb-title"><span class="sb-at">Chapter 3D ·</span> <span class="sb-at">13 of 67</span></p><a class="sb-next" href="3e.html" aria-label="Next chapter: 3E · Execution as negative alpha" title="Next chapter: 3E · Execution as negative alpha (→)">3E ›</a></div>
+  <div id="sb-toc"><a href="#the-books-anatomy">1 · The book's anatomy</a><a href="#where-retail-spy-orders-actually-go">2 · Where retail SPY orders actually go</a><a href="#slippage-and-market-impact">3 · Slippage and market impact</a><a href="#the-retail-order-types-that-actually-matter">4 · The retail order types that actually matter</a><a href="#the-245-trading-regime">5 · The 24/5 trading regime</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part III · Markets · Chapter 3D</p>
+
+<h1>Order book mechanics (equity execution side)</h1>
+
+<p><a class="xref" href="2d.html">Section 2D</a> introduced the order book to support the quant-trading strategy taxonomy. This section is the same mechanism viewed from the cash-equity execution side — what happens between your click and your fill, and why SPY orders go through a different routing path than SPX orders.</p>
+
+<h2 id="the-books-anatomy">1 · The book's anatomy</h2>
+
+<p>Every liquid security has two queues of resting orders: <strong>bids</strong> (buyers willing to take at price X) and <strong>asks</strong> (sellers willing to give at price Y). The highest bid and lowest ask form the National Best Bid and Offer (NBBO) — the regulated reference price for US equities under Reg NMS. Behind them sit deeper levels with worse prices but more quantity available.</p>
+
+<p>For SPY on a typical day, the top of the book is millions of shares deep — bids and asks at the NBBO might each carry 500,000 to 2 million share-equivalents of resting orders across all venues. Behind them, levels 1 cent away in each direction carry similar size. The book is unusually thick relative to most stocks because SPY is the most-traded ETF in the world.</p>
+
+<p>For SPX index options, the book is much thinner per strike because each strike has its own order book and there are thousands of strikes across hundreds of expiries. ATM 0DTE strikes on a typical day might have 500-2,000 contracts at the NBBO; deep OTM strikes might have 5-50 contracts. The spreads are wider in absolute dollar terms (often $0.10 to $0.50 on liquid SPX strikes, vs $0.01-$0.02 on SPY) but the per-contract notional is also 10× larger, so the <em>percentage</em> spread is comparable.</p>
+
+<h2 id="where-retail-spy-orders-actually-go">2 · Where retail SPY orders actually go</h2>
+
+<p>For US equity options and shares, retail orders predominantly do not touch a public exchange book directly. They are routed to a wholesaler — Citadel Securities, Susquehanna, Virtu, Wolverine, Jane Street, Hudson River Trading — who fills the order from their own principal book. The wholesaler returns a small fraction of the captured spread to the broker as Payment for Order Flow (PFOF). For SPX and XSP (index options), there is no wholesaler bypass; orders route directly to the Cboe order book.</p>
+
+<p>Two consequences flow from this routing structure. First, SPY/QQQ retail flow is largely internalized — the "GEX" computed from public OI on these names double-counts what wholesalers cross internally. Second, SPX/XSP flow hits a single transparent book — which is one of several reasons the dealer-mechanics chapters that follow specifically use SPX as their laboratory rather than SPY.</p>
+
+<h2 id="slippage-and-market-impact">3 · Slippage and market impact</h2>
+
+<p><a class="xref" href="2d.html">Section 2D</a>'s discussion of the square-root law of market impact applies directly here. The same effect on a small retail buy is usually negligible — SPY's top of book is many millions of shares deep, so a 100-share retail order has zero market impact. For institutional flow that needs to move millions at a time, slippage and market impact are the dominant execution costs, and they're why iceberg orders, VWAP execution algorithms, and dark pools exist. This is also why dealer hedging flow (<a class="xref" href="6a.html">Section 6</a> onward) uses ES futures rather than spot SPY: the futures book is the most capital-efficient place to absorb large hedging size with minimal market impact.</p>
+
+<h2 id="the-retail-order-types-that-actually-matter">4 · The retail order types that actually matter</h2>
+
+<p>For day-to-day retail use, three order types cover 90% of decisions:</p>
+
+<p><strong>Market order.</strong> Guaranteed fill, no price control. Use only for tiny orders in highly liquid names.</p>
+
+<p><strong>Limit order.</strong> Price control, no fill guarantee. Use when price matters more than execution certainty.</p>
+
+<p><strong>Marketable limit.</strong> Limit set at the NBBO. Behaves like a market order in normal conditions but caps slippage in stress. <strong>The retail default for any order of meaningful size.</strong></p>
+
+<p>The discipline is simple and underappreciated: a marketable limit set at the offer is essentially identical to a market order on normal days, but it protects you from the kind of fat-finger blowup that occurs when an order arrives during a quote dropout, during a fast market, or during a circuit-breaker scenario. The cost of using marketable limits as the default is approximately zero. The benefit is that on the day when something genuinely goes wrong with the quote infrastructure, you don't fill 200 points away from the NBBO. <strong>Always use marketable limits.</strong></p>
+
+<h2 id="the-245-trading-regime">5 · The 24/5 trading regime</h2>
+
+<p>A relatively recent development: as of late 2025 and early 2026, several US brokers (Robinhood, Schwab, Interactive Brokers, etc.) have launched <strong>24/5 equity trading</strong> — extended hours operations that allow trades in major equities (including SPY, QQQ) outside the traditional 9:30-4:00 US session, through partnerships with Blue Ocean ATS and similar overnight venues.</p>
+
+<p>Liquidity in 24/5 sessions is thin compared to RTH. Spreads are wider, often by 5-20× the RTH spread. The Citadel Securities-disclosed data suggests post-market session activity is rising structurally — currently accounting for ~2% of notional and ~6% of shares traded for retail — but it remains a small fraction of total volume. For most retail strategies, 24/5 trading is not yet operationally relevant. For traders who need to respond to overnight news, it provides a path to execute that didn't exist in 2020.</p>
+
+<p>The structural risk: a market order placed during 24/5 hours can fill at prices far from where the underlying will open during RTH. The bid-ask is wider, the depth is thinner, and the participants on the other side are different (often professional liquidity providers willing to quote only at unfavorable prices to retail). Use limit orders only during extended hours. Better, generally: don't trade during extended hours unless you have a specific reason.</p>
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="3c.html" rel="prev"><span>Previous</span>3C · Account types, margin, and the 1256 advantage</a>
+<a class="next" href="3e.html" rel="next"><span>Next</span>3E · Execution as negative alpha</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+
+</body>
+</html>

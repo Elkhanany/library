@@ -1,0 +1,109 @@
+<!--
+name: triple-screen check
+source: src/interactives/MultiTimeframe.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-h" data-h="100"></canvas>
+  <canvas id="{{uid}}-i" data-h="100"></canvas>
+  <canvas id="{{uid}}-l" data-h="100"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-seed">tape seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="30" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-htf"></output></div>
+    <div class="ctrl"><output id="{{uid}}-itf"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ltf"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <p class="readout"><span id="{{uid}}-why"></span></p>
+  <figcaption><b>Three screens on one tape.</b> The same synthetic 350-bar tape at three
+  aggregations, each panel spanning the same stretch of time: 25 bars to one (HTF), 5 to one
+  (ITF) and the raw bars (LTF). The HTF reads direction from the slope of its 10-bar SMA over
+  the last four bars, the ITF reads the sign of its MACD histogram, and the LTF triggers when
+  the close is within 0.5% of the 21-EMA with RSI between 40 and 65. Re-roll the seed: on most
+  tapes at least one screen disagrees.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SEED = DL.$(U + '-seed');
+  /* The app took the HTF slope as (SMA[last] - SMA[last - 5]) / 5. With 350
+     bars there are only 14 HTF bars, so a 10-bar SMA has 5 values and the
+     bar five back is always empty: the app's HTF read was "—" on every seed.
+     Four bars back is the furthest the tape allows. */
+  var BACK = 4;
+
+  var st = { seed: null };
+  function load() {
+    var s = parseInt(SEED.value, 10);
+    if (st.seed === s) return st;
+    var ltf = DL.ohlc(350, s), itf = DL.aggregate(ltf, 5), htf = DL.aggregate(ltf, 25);
+    var htfSma = DL.sma(htf, 10), itfMacd = DL.macd(itf, 12, 26, 9);
+    var ltfEma = DL.ema(ltf, 21), ltfRsi = DL.rsi(ltf, 14);
+
+    var last = htfSma[htfSma.length - 1], prev = htfSma[htfSma.length - 1 - BACK];
+    var slope = null, dir = '—';
+    if (last != null && prev != null) {
+      slope = (last - prev) / BACK;
+      dir = slope > 0.05 ? 'UP' : slope < -0.05 ? 'DOWN' : 'FLAT';
+    }
+    var h = itfMacd.hist[itfMacd.hist.length - 1];
+    var win = h == null ? '—' : h > 0 ? 'BULL window' : 'BEAR window';
+    var r = ltfRsi[ltfRsi.length - 1], close = ltf[ltf.length - 1].close, ema = ltfEma[ltfEma.length - 1];
+    var gap = null, trig = '—';
+    if (r != null && ema != null) {
+      gap = Math.abs(close - ema) / ema;
+      trig = gap < 0.005 && r > 40 && r < 65 ? 'TRIGGER' : 'waiting';
+    }
+    st = { seed: s, ltf: ltf, itf: itf, htf: htf, htfSma: htfSma, ltfEma: ltfEma,
+           slope: slope, dir: dir, h: h, win: win, r: r, gap: gap, trig: trig };
+    return st;
+  }
+
+  /* one screen: the closes at its aggregation, with its moving average */
+  function panel(id, pick, after) {
+    return DL.figure(U + '-' + id, function (c) {
+      var s = load(), o = pick(s);
+      var close = o.bars.map(function (b) { return b.close; });
+      var xs = o.bars.map(function (_, i) { return i; });
+      var lo = Math.min.apply(null, close) * 0.98, hi = Math.max.apply(null, close) * 1.02;
+      var p = new NMT.Plot(c, { xmin: 0, xmax: o.bars.length - 1, ymin: lo, ymax: hi,
+                                pad: { l: 40, r: 12, t: 20, b: 8 } });
+      DL.axes(p, { xs: [], ny: 3, x: false });
+      DL.line(p, xs, close, { color: DL.color(o.role), width: 1.4 });
+      if (o.ma) DL.line(p, xs, o.ma, { color: DL.fade(DL.color('accent'), 0.65), width: 1.2 });
+      p.text(0, hi, o.label, { dy: -5, font: '11px ' + DL.color('sans'), color: DL.color(o.role) });
+      if (after) after(s);
+    });
+  }
+
+  var drawH = panel('h', function (s) {
+    return { bars: s.htf, ma: s.htfSma, role: 'familiar', label: 'HTF · direction (10-bar SMA)' };
+  });
+  var drawI = panel('i', function (s) {
+    return { bars: s.itf, ma: null, role: 'accent', label: 'ITF · timing (MACD histogram)' };
+  });
+  var drawL = panel('l', function (s) {
+    return { bars: s.ltf, ma: s.ltfEma, role: 'familiar', label: 'LTF · entry (21-EMA pullback + RSI)' };
+  }, function (s) {
+    var agree = s.dir === 'UP' && s.win === 'BULL window' && s.trig === 'TRIGGER';
+    DL.out(U + '-seed-o', '#' + s.seed);
+    DL.out(U + '-htf', 'HTF · direction = ' + s.dir);
+    DL.out(U + '-itf', 'ITF · window = ' + s.win);
+    DL.out(U + '-ltf', 'LTF · trigger = ' + s.trig);
+    DL.out(U + '-vk', agree ? 'All three screens agree.' : 'One or more screens disagree.');
+    DL.out(U + '-vt', agree
+      ? "Elder's triple screen says enter, with explicit invalidation per Section 12C."
+      : 'No trade. Wait for confluence.');
+    DL.out(U + '-why', 'HTF slope ' + DL.signed(s.slope, 2) + ' a bar; ITF MACD histogram ' +
+      DL.signed(s.h, 2) + '; LTF close ' + DL.num(s.gap * 100, 2) + '% from its 21-EMA, RSI ' +
+      DL.num(s.r, 1) + '.');
+  });
+
+  DL.bind([U + '-seed'], function () { drawH(); drawI(); drawL(); });
+})();
+</script>

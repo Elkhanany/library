@@ -1,0 +1,121 @@
+<!--
+name: gamma profile by DTE
+source: src/interactives/GammaProfileDTE.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="270"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-dte">DTE (log scale)</label>
+      <input type="range" id="{{uid}}-dte" min="-923" max="159" step="1" value="0">
+      <output id="{{uid}}-dte-o" for="{{uid}}-dte"></output>
+    </div>
+    <div class="ctrl">
+      <button type="button" id="{{uid}}-play" aria-pressed="false">auto-shrink DTE</button>
+      <button type="button" id="{{uid}}-reset">reset</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-atm"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ratio"></output></div>
+    <div class="ctrl"><output id="{{uid}}-root"></output></div>
+  </div>
+  <figcaption><b>Gamma piles into the strike as expiry nears.</b> The gamma of a $100-strike
+  option (σ = 18%) across spot from $92 to $108. The faint lines are fixed references at 30, 7
+  and 1 days to expiry; the bold curve is the DTE on the slider, and the vertical scale follows
+  its peak, so the references flatten as it grows. Drag DTE down, or press auto-shrink to run
+  the clock down to about an hour (and round again from 90 days): at 4 hours the at-the-money
+  peak is about 13 times the 30-day one, the 1/√T divergence of the table above.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SL = DL.$(U + '-dte'), PLAY = DL.$(U + '-play');
+  var K = 100, SIGMA = 0.18, REFS = [30, 7, 1];
+  var LO = 0.05, HI = 90;
+
+  /* The app's slider runs from 0.05 to 90 days and is labelled log scale, so
+     it moves in equal ratios here: 30 x 2^(u/100) days, with u = 0 exactly
+     30 days, clamped to the app's ends. */
+  function fromU(u) { return Math.min(HI, Math.max(LO, 30 * Math.pow(2, u / 100))); }
+  function toU(d) { return Math.round(100 * Math.log(d / 30) / Math.LN2); }
+  var dte = 30;
+
+  /* the app's curves: bsGamma on spot 92, 92.2, ... with the strike at 100 */
+  function grid(T) {
+    var pts = [];
+    for (var s = 92; s <= 108; s += 0.2) pts.push({ S: s, g: DL.bsGamma(s, K, T, SIGMA) });
+    return pts;
+  }
+  function atm(pts) {
+    for (var i = 0; i < pts.length; i++) if (Math.abs(pts[i].S - K) < 0.11) return pts[i].g;
+    return 0;
+  }
+  var BASE = atm(grid(30 / 365));
+  function when(d, unit) { return d >= 1 ? DL.num(d, 1) + unit : DL.num(d * 24, 1) + 'h'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var T = Math.max(dte / 365, 0.0001), live = grid(T), a = atm(live);
+    var top = Math.max.apply(null, live.map(function (q) { return q.g; }).concat([0.01])) * 1.1;
+    var narrow = (c.clientWidth || 640) < 520;
+    var p = new NMT.Plot(c, { xmin: 92, xmax: 108, ymin: 0, ymax: top,
+                              pad: { l: 44, r: 14, t: 28, b: 26 } });
+    DL.axes(p, { xs: [92, 96, 100, 104, 108], ny: 4,
+                 x: function (v) { return v === K ? 'K = $100' : '$' + v; } });
+    DL.vline(p, K, { color: DL.color('ink-faint'), dash: [3, 3] });
+
+    var ref = DL.fade(DL.color('familiar'), 0.7), dashes = [[], [5, 4], [2, 3]];
+    REFS.forEach(function (d, i) {
+      p.fn(function (s) { return DL.bsGamma(s, K, d / 365, SIGMA); },
+           { color: ref, width: 1.2, dash: dashes[i].length ? dashes[i] : null, N: 640 });
+    });
+    p.fn(function (s) { return DL.bsGamma(s, K, T, SIGMA); }, { color: DL.color('accent'), width: 2.2, N: 640 });
+
+    DL.legend(p, [{ label: when(dte, ' DTE'), color: DL.color('accent') }].concat(REFS.map(function (d, i) {
+      return { label: narrow ? d + 'd' : d + ' DTE (ref)', color: ref, dash: dashes[i] };
+    })), { dx: -10, dy: -30 });
+    p.text(92, top, 'Γ', { dx: -8, dy: -6, align: 'right', baseline: 'bottom',
+           color: DL.color('ink-soft'), font: 'italic 13px ' + DL.color('serif') });
+
+    var shown = when(dte, ' days');
+    DL.out(U + '-dte-o', shown);
+    if (SL.getAttribute('aria-valuetext') !== shown) SL.setAttribute('aria-valuetext', shown);
+    DL.out(U + '-atm', 'ATM gamma = ' + DL.num(a, 4));
+    DL.out(U + '-ratio', 'vs 30-DTE baseline = ' + DL.num(a / BASE, 1) + '×');
+    DL.out(U + '-root', '1/√T expectation = ' + DL.num(Math.sqrt(30 / dte), 1) + '×');
+  });
+
+  /* auto-shrink: the app's log-scaled descent, ln(DTE) falling 0.7 a second,
+     round again from 90 days below 0.05; it runs only once pressed, and a
+     reader who asks for reduced motion gets its end, the shortest DTE */
+  var raf = 0, last = 0;
+  function playing(on) {
+    DL.out(PLAY, on ? 'pause auto-shrink' : 'auto-shrink DTE');
+    PLAY.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0; last = 0;
+    playing(false);
+  }
+  function set(d) { dte = d; SL.value = toU(d); draw(); }
+  function tick(now) {
+    if (last) {
+      var next = Math.exp(Math.log(dte) - (now - last) / 1000 * 0.7);
+      set(next < LO ? HI : next);
+    }
+    last = now;
+    raf = requestAnimationFrame(tick);
+  }
+  PLAY.addEventListener('click', function () {
+    if (raf) { stop(); return; }
+    if (DL.still()) { set(LO); return; }
+    playing(true);
+    raf = requestAnimationFrame(tick);
+  });
+  function reset() { stop(); dte = 30; SL.value = 0; draw(); }
+  DL.$(U + '-reset').addEventListener('click', reset);
+  DL.bind([U + '-dte'], function () { stop(); dte = fromU(parseFloat(SL.value)); draw(); });
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
+})();
+</script>

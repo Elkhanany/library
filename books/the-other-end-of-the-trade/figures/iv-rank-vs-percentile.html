@@ -1,0 +1,123 @@
+<!--
+name: IV rank and IV percentile
+source: src/interactives/IVRankVsPercentile.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-cur">current IV</label>
+      <input type="range" id="{{uid}}-cur" min="0.05" max="1" step="0.005" value="0.22">
+      <output id="{{uid}}-cur-o" for="{{uid}}-cur"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mean">mean IV (1y)</label>
+      <input type="range" id="{{uid}}-mean" min="0.05" max="0.5" step="0.005" value="0.18">
+      <output id="{{uid}}-mean-o" for="{{uid}}-mean"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sd">std of IV (1y)</label>
+      <input type="range" id="{{uid}}-sd" min="0.005" max="0.2" step="0.005" value="0.05">
+      <output id="{{uid}}-sd-o" for="{{uid}}-sd"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="1000" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Shape of the IV history" id="{{uid}}-mode">
+      <label>history</label>
+      <button type="button" data-v="normal" class="on" aria-pressed="true">normal</button>
+      <button type="button" data-v="spike" aria-pressed="false">spiky (bottom-heavy)</button>
+      <button type="button" data-v="clustered" aria-pressed="false">clustered</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-rank"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pct"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+    <div class="ctrl"><output id="{{uid}}-mm"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Two ways to say how high implied vol is.</b> A synthetic year of daily
+  implied vol, 252 trading days drawn from the mean and spread on the sliders (the seed picks
+  the draw), with today's IV as the flat line. IV rank places today on the line from the
+  year's low to its high; IV percentile counts the days below it. Choose the spiky history:
+  its rare spikes stretch the high, and at the default 22% the rank falls to about half the
+  percentile, the gap the text describes for typical equity IV.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var mode = DL.seg(U + '-mode', function () { draw(); });
+
+  /* the app's year of IV: seeded normal draws, with rare spikes or AR persistence */
+  function history(mean, sd, shape, seed) {
+    var r = DL.rng(seed), out = [];
+    for (var i = 0; i < 252; i++) {
+      var v = mean + sd * DL.gauss(r);
+      if (shape === 'spike') {
+        if (r() < 0.03) v += sd * 2.5 * Math.abs(DL.gauss(r));
+      } else if (shape === 'clustered') {
+        if (i > 0) v = 0.7 * out[i - 1] + 0.3 * v;
+      }
+      out.push(Math.max(v, 0.03));
+    }
+    return out;
+  }
+  /* The app's reading, with its two shape descriptions the right way round: when
+     the percentile beats the rank, more days sit below today than an even spread
+     over [min, max] would put there, so the history is bottom-heavy. */
+  function reading(rank, pct, gap) {
+    var R = (rank * 100).toFixed(0), P = (pct * 100).toFixed(0);
+    if (Math.abs(gap) < 0.05) return ['IV rank and IV percentile are within 5 points.',
+      'The distribution is roughly uniform across the [min, max] range, so the two metrics ' +
+      'tell you essentially the same thing.'];
+    if (rank > pct) return ['IV rank (' + R + ') is higher than IV percentile (' + P + ').',
+      'The history is top-heavy: most days were at elevated IV, with a few rare lows pulling ' +
+      'the min down. The rank exaggerates how elevated current IV is; trust the percentile.'];
+    return ['IV percentile (' + P + ') is higher than IV rank (' + R + ').',
+      'The history is bottom-heavy: most days were at low IV, with a few large spikes pulling ' +
+      'the max up. The rank understates how elevated current IV is; trust the percentile.'];
+  }
+  function pc(v, d) { return DL.num(v * 100, d) + '%'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var cur = DL.val(U + '-cur'), mean = DL.val(U + '-mean'), sd = DL.val(U + '-sd');
+    var seed = DL.val(U + '-seed'), h = history(mean, sd, mode(), seed);
+    var mn = Math.min.apply(null, h), mx = Math.max.apply(null, h);
+    var rank = (cur - mn) / Math.max(mx - mn, 1e-6);
+    var pct = h.filter(function (v) { return v < cur; }).length / h.length;
+    var gap = rank - pct;
+
+    /* the app scales to [min, max]; the range here also takes in today's IV */
+    var lo = Math.min(mn, cur), hi = Math.max(mx, cur), m = (hi - lo) * 0.08 || 0.01;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 251, ymin: lo - m, ymax: hi + m,
+                              pad: { l: 40, r: 12, t: 10, b: 24 }, xlabel: '252 trading days' });
+    DL.axes(p, { xs: [], ys: [mn, mx], x: false, grid: false, yAxis: false,
+                 y: function (v) { return pc(v, 0); } });
+    DL.hline(p, mn, { color: DL.color('rule') });
+    DL.hline(p, mx, { color: DL.color('rule'), dash: [3, 3] });
+    DL.line(p, h.map(function (_, i) { return i; }), h,
+            { color: DL.fade(DL.color('familiar'), 0.75), width: 1.2 });
+    DL.hline(p, cur, { color: DL.color('accent'), width: 1.6 });
+    var under = p.Y(cur) - p.o.pad.t < 18;
+    p.text(251, cur, 'current ' + pc(cur, 1),
+           { dx: -4, dy: under ? 4 : -4, align: 'right', baseline: under ? 'top' : 'bottom',
+             color: DL.color('accent') });
+
+    var r = reading(rank, pct, gap);
+    DL.out(U + '-cur-o', pc(cur, 1));
+    DL.out(U + '-mean-o', pc(mean, 1));
+    DL.out(U + '-sd-o', pc(sd, 1));
+    DL.out(U + '-seed-o', String(seed));
+    DL.out(U + '-rank', 'IV rank = ' + DL.num(rank * 100, 1));
+    DL.out(U + '-pct', 'IV percentile = ' + DL.num(pct * 100, 1));
+    DL.out(U + '-gap', 'gap (rank − pct) = ' + DL.num(gap * 100, 1) + 'pp');
+    DL.out(U + '-mm', '1y min · max = ' + DL.num(mn * 100, 0) + ' · ' + pc(mx, 0));
+    DL.out(U + '-vk', r[0]);
+    DL.out(U + '-vt', r[1]);
+  });
+  DL.bind([U + '-cur', U + '-mean', U + '-sd', U + '-seed'], draw);
+})();
+</script>

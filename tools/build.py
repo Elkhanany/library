@@ -60,24 +60,31 @@ def shell(title, body, side="", toc="", chapter=None, extra_js="", wide=False, b
     css = library.read(os.path.join(ASSETS, "book.css"))
     js = library.read(os.path.join(ASSETS, "book.js"))
     k = base + "vendor/katex"
+    # KaTeX only for a book with maths (book.json features.math). A book without
+    # has nothing to typeset, and its prose may write money: auto-render would
+    # set the words between any two dollar signs in a paragraph as a formula.
+    kcss = kjs = ""
+    if BOOK.has("math"):
+        kcss = f"""<link rel="stylesheet" href="{k}/katex.min.css"
+      onerror="this.onerror=null;this.href='{CDN}/katex.min.css'">"""
+        kjs = f"""<script defer src="{k}/katex.min.js"
+        onerror="this.onerror=null;var s=document.createElement('script');s.src='{CDN}/katex.min.js';document.head.appendChild(s)"></script>
+<script defer src="{k}/auto-render.min.js"
+        onerror="this.onerror=null;var s=document.createElement('script');s.src='{CDN}/contrib/auto-render.min.js';document.head.appendChild(s)"></script>"""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{html.escape(title)} — {html.escape(TITLE)}</title>
-<link rel="stylesheet" href="{k}/katex.min.css"
-      onerror="this.onerror=null;this.href='{CDN}/katex.min.css'">
+{kcss}
 <style>
 {css}
 </style>
 <script>
 {js}
 </script>
-<script defer src="{k}/katex.min.js"
-        onerror="this.onerror=null;var s=document.createElement('script');s.src='{CDN}/katex.min.js';document.head.appendChild(s)"></script>
-<script defer src="{k}/auto-render.min.js"
-        onerror="this.onerror=null;var s=document.createElement('script');s.src='{CDN}/contrib/auto-render.min.js';document.head.appendChild(s)"></script>
+{kjs}
 </head>
 <body{f' data-chapter="{chapter}"' if chapter else ''}>
 <div class="wrap">

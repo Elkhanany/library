@@ -1,0 +1,105 @@
+<!--
+name: position picker
+source: src/interactives/PositionPicker.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Position" id="{{uid}}-pos">
+      <label>position</label>
+      <button type="button" data-v="longCall" class="on" aria-pressed="true">long call</button>
+      <button type="button" data-v="shortCall" aria-pressed="false">short call</button>
+      <button type="button" data-v="longPut" aria-pressed="false">long put</button>
+      <button type="button" data-v="shortPut" aria-pressed="false">short put</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-k">strike K</label>
+      <input type="range" id="{{uid}}-k" min="70" max="130" step="1" value="100">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-prem">premium</label>
+      <input type="range" id="{{uid}}-prem" min="0.5" max="20" step="0.25" value="3">
+      <output id="{{uid}}-prem-o" for="{{uid}}-prem"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-name"></output></div>
+    <div class="ctrl"><output id="{{uid}}-be"></output></div>
+    <div class="ctrl"><output id="{{uid}}-risk"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The four primitive positions.</b> The payoff at expiration, per share, of a
+  long or short call or put at strike K for a premium P. Choose a position and move the strike
+  and the premium. Green is profit and red is loss; the dashed lines mark the strike and the
+  breakeven (BE), which is K + P for either call and K − P for either put. Max risk is per
+  contract of 100 shares.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var POSITIONS = {
+    longCall: { dir: 1, isPut: false, label: 'long call', desc: 'Right to buy at strike. Long premium.' },
+    shortCall: { dir: -1, isPut: false, label: 'short call', desc: 'Obligated to sell at strike. Short premium.' },
+    longPut: { dir: 1, isPut: true, label: 'long put', desc: 'Right to sell at strike. Long premium.' },
+    shortPut: { dir: -1, isPut: true, label: 'short put', desc: 'Obligated to buy at strike. Short premium.' }
+  };
+  var pos = DL.seg(U + '-pos', function () { draw(); });
+
+  /* a label centred on x, kept inside the canvas */
+  function tag(p, x, y, s, color, dy) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var w = p.g.measureText(s).width, px = p.X(x);
+    var at = Math.min(Math.max(px, w / 2 + 2), p.w - w / 2 - 2);
+    p.text(x, y, s, { dx: at - px, dy: dy, align: 'center', baseline: 'middle', color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var cur = POSITIONS[pos()], K = DL.val(U + '-k'), premium = DL.val(U + '-prem');
+    function payoff(S) {
+      var intrinsic = cur.isPut ? Math.max(K - S, 0) : Math.max(S - K, 0);
+      return cur.dir === 1 ? intrinsic - premium : premium - intrinsic;
+    }
+    /* where the payoff crosses zero: K + P for a call, K - P for a put,
+       long or short (the app moved it the wrong way for the short side) */
+    var breakeven = cur.isPut ? K - premium : K + premium;
+
+    /* the app's PayoffChart: S from 0.6K to 1.4K in 200 steps, the y range
+       the payoff's own, but never inside -10 to +10 */
+    var sMin = K * 0.6, sMax = K * 1.4, xs = [], ys = [];
+    for (var i = 0; i <= 200; i++) {
+      var s = sMin + (sMax - sMin) * i / 200;
+      xs.push(s); ys.push(payoff(s));
+    }
+    var yMin = Math.min.apply(null, ys.concat([-10])), yMax = Math.max.apply(null, ys.concat([10]));
+    var room = (yMax - yMin) * 0.05;
+    var p = new NMT.Plot(c, { xmin: sMin, xmax: sMax, ymin: yMin - room, ymax: yMax + room,
+                              pad: { l: 40, r: 14, t: 34, b: 30 }, grid: false });
+    DL.axes(p, { nx: 5, ys: [yMin, 0, yMax],
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return v > 0 ? '+' + DL.num(v, 0) : DL.num(v, 0); } });
+
+    DL.band(p, xs, ys.map(function (y) { return Math.max(0, y); }), 0, DL.fade(DL.color('insight'), 0.16));
+    DL.band(p, xs, ys.map(function (y) { return Math.min(0, y); }), 0, DL.fade(DL.color('plain'), 0.16));
+    p.seg(K, p.o.ymin, K, p.o.ymax, { color: DL.fade(DL.color('accent'), 0.55), width: 1, dash: [3, 3] });
+    p.seg(breakeven, p.o.ymin, breakeven, p.o.ymax, { color: DL.color('familiar'), width: 1, dash: [2, 3] });
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 2 });
+    tag(p, K, p.o.ymax, 'K = ' + DL.num(K, 0), DL.color('accent'), -22);
+    tag(p, breakeven, p.o.ymax, 'BE = ' + DL.num(breakeven, 2), DL.color('familiar'), -8);
+
+    var risk = cur.dir === 1 ? DL.usd(premium * 100, 0) + ' per contract'
+             : cur.isPut ? DL.usd((K - premium) * 100, 0) + ' (S → 0)' : 'unbounded';
+    DL.out(U + '-k-o', DL.usd(K, 0));
+    DL.out(U + '-prem-o', DL.usd(premium, 2));
+    DL.out(U + '-name', 'position = ' + cur.label);
+    DL.out(U + '-be', 'breakeven = ' + DL.usd(breakeven, 2));
+    DL.out(U + '-risk', 'max risk = ' + risk);
+    DL.out(U + '-vk', cur.label.charAt(0).toUpperCase() + cur.label.slice(1) + '.');
+    DL.out(U + '-vt', cur.desc);
+  });
+  DL.bind([U + '-k', U + '-prem'], draw);
+})();
+</script>

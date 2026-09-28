@@ -1,0 +1,123 @@
+<!--
+name: realized-vs-implied P&L simulator
+source: src/interactives/RealizedVsImplied.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-spot" data-h="130"></canvas>
+  <canvas id="{{uid}}-pnl" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-iv">implied vol</label>
+      <input type="range" id="{{uid}}-iv" min="0.05" max="0.6" step="0.01" value="0.2">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-rv">realized vol</label>
+      <input type="range" id="{{uid}}-rv" min="0.05" max="0.6" step="0.01" value="0.3">
+      <output id="{{uid}}-rv-o" for="{{uid}}-rv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">path seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="99" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Position" id="{{uid}}-pos">
+      <label>position</label>
+      <button type="button" data-v="long" class="on" aria-pressed="true">long Γ</button>
+      <button type="button" data-v="short" aria-pressed="false">short Γ</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-real"></output></div>
+    <div class="ctrl"><output id="{{uid}}-term"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sign"></output></div>
+  </div>
+  <figcaption><b>A delta-hedged option is a bet on realized against implied.</b> One
+  at-the-money option (strike 100, 60 trading days to expiry) on a simulated spot path whose
+  volatility is the realized-vol setting, top; below, its hedged P&amp;L for one contract, the
+  running sum of ½Γ·S²·[(dS/S)² − σ²·dt] with σ the implied vol, taken one day at a time. Move
+  the path seed for a new path, or flip the position to short gamma. With realized well above
+  implied the long-gamma P&amp;L climbs; with it well below, the P&amp;L bleeds.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IV = DL.$(U + '-iv'), RV = DL.$(U + '-rv'), SEED = DL.$(U + '-seed');
+  var pos = DL.seg(U + '-pos', update);
+  var sim;
+
+  /* the app's simulation: 60 daily steps of a lognormal path at the realized
+     vol; each step adds ½Γ·S²·[(dS/S)² − σ_I²·dt] at the mid price, ×100 */
+  function simulate(sigmaImp, sigmaReal, seed, position) {
+    var rng = DL.rng(seed), Nsteps = 60, dt = 1 / 252;
+    var S0 = 100, K = 100, T0 = 60 / 252;
+    var spot = [S0], pnl = [0], S = S0, cum = 0, sumR2 = 0;
+    for (var i = 1; i <= Nsteps; i++) {
+      var eps = DL.gauss(rng);
+      var ret = sigmaReal * Math.sqrt(dt) * eps - 0.5 * sigmaReal * sigmaReal * dt;
+      var Snew = S * Math.exp(ret);
+      var remT = Math.max(0.005, T0 - i / 252);
+      var Smid = (S + Snew) / 2;
+      var gamma = DL.bsGamma(Smid, K, remT, sigmaImp);
+      var r = (Snew - S) / S, r2 = r * r;
+      sumR2 += r2;
+      var incr = 0.5 * gamma * Smid * Smid * (r2 - sigmaImp * sigmaImp * dt);
+      cum += (position === 'long' ? 1 : -1) * incr * 100;
+      S = Snew;
+      spot.push(S);
+      pnl.push(cum);
+    }
+    return { spot: spot, pnl: pnl, terminal: cum, realized: Math.sqrt(sumR2 / (Nsteps * dt)) };
+  }
+
+  function compute() {
+    var si = parseFloat(IV.value), sr = parseFloat(RV.value), seed = parseInt(SEED.value, 10);
+    var p = pos();
+    sim = simulate(si, sr, seed, p);
+    sim.position = p;
+    var above = sim.realized > si;
+    var sign = p === 'long' ? (above ? 'positive' : 'negative') : (above ? 'negative' : 'positive');
+    DL.out(U + '-iv-o', (si * 100).toFixed(0) + '%');
+    DL.out(U + '-rv-o', (sr * 100).toFixed(0) + '%');
+    DL.out(U + '-seed-o', '#' + seed);
+    DL.out(U + '-real', 'realized vol = ' + DL.num(sim.realized * 100, 1) + '%');
+    DL.out(U + '-term', 'terminal P&L (' + p + ' Γ) = ' + (sim.terminal >= 0 ? '+' : '') +
+           DL.usd(sim.terminal, 0));
+    DL.out(U + '-sign', 'predicted sign = ' + sign);
+  }
+  compute();
+
+  var steps = [];
+  for (var s = 0; s <= 60; s++) steps.push(s);
+  var PAD = { l: 46, r: 14 };
+
+  var drawSpot = DL.figure(U + '-spot', function (c) {
+    var lo = Math.min.apply(null, sim.spot), hi = Math.max.apply(null, sim.spot);
+    var span = (hi - lo) || 1;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: lo - span * 0.06, ymax: hi + span * 0.06,
+                              pad: { l: PAD.l, r: PAD.r, t: 20, b: 6 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ys: [lo, (lo + hi) / 2, hi], x: false,
+                 y: function (v) { return DL.num(v, 1); } });
+    DL.line(p, steps, sim.spot, { color: DL.color('familiar'), width: 1.6 });
+    p.text(0, p.o.ymax, 'spot path (realized σ)', { dy: -5, font: '11px ' + DL.color('sans'),
+                                                     color: DL.color('familiar') });
+  });
+
+  var drawPnl = DL.figure(U + '-pnl', function (c) {
+    var lo = Math.min.apply(null, sim.pnl.concat([-1])), hi = Math.max.apply(null, sim.pnl.concat([1]));
+    var abs = Math.max(Math.abs(lo), Math.abs(hi)) * 1.1;
+    var col = DL.color(sim.position === 'long' ? 'insight' : 'plain');
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: -abs, ymax: abs,
+                              pad: { l: PAD.l, r: PAD.r, t: 20, b: 26 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ys: [-abs, 0, abs],
+                 y: function (v) { return v === 0 ? '0' : DL.signed(v, 0); } });
+    DL.band(p, steps, sim.pnl, 0, DL.fade(col, 0.12));
+    DL.line(p, steps, sim.pnl, { color: col, width: 1.8 });
+    p.text(0, abs, 'hedged P&L, ½ΓS²[(dS/S)² − σ²dt], ' + sim.position + ' Γ',
+           { dy: -5, font: '11px ' + DL.color('sans'), color: col });
+  });
+
+  function update() { compute(); drawSpot(); drawPnl(); }
+  DL.bind([U + '-iv', U + '-rv', U + '-seed'], update);
+})();
+</script>

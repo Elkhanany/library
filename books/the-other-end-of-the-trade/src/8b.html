@@ -1,0 +1,920 @@
+<p class="eyebrow">Part VIII · Aggregation · Chapter 8B</p>
+
+<h1>Two regimes, one mechanism</h1>
+
+<p>Everything in the preceding seven chapters compresses to a single regime question: <strong>is the dealer book net long gamma or net short gamma?</strong> The answer determines the sign of the feedback loop and therefore the entire character of intraday price action.</p>
+
+<h2 id="dealers-long-gamma-positive-gex">1 · Dealers long gamma — positive GEX</h2>
+
+<p>When dealers are long gamma in aggregate:</p>
+
+<ul>
+<li>They sell strength, buy weakness</li>
+<li>This produces intraday <strong>mean reversion</strong></li>
+<li>Volatility is <strong>compressed</strong> relative to unhedged levels</li>
+<li>Range trading wins</li>
+<li>Premium selling wins (the realized vol you bet against is suppressed by the dealer hedging)</li>
+<li>Breakouts often fail because the dealer flow fades them</li>
+</ul>
+
+<h2 id="dealers-short-gamma-negative-gex">2 · Dealers short gamma — negative GEX</h2>
+
+<p>When dealers are short gamma in aggregate:</p>
+
+<ul>
+<li>They buy strength, sell weakness</li>
+<li>This produces intraday <strong>momentum</strong></li>
+<li>Volatility is <strong>expanded</strong> relative to unhedged levels</li>
+<li>Trend-following wins</li>
+<li>Long premium wins (realized vol is amplified)</li>
+<li>Mean reversion is dangerous — fades against the move get crushed</li>
+</ul>
+
+<h2 id="same-identical-drift-opposite-character">3 · Same identical drift, opposite character</h2>
+
+<figure class="fig" id="fig-regime-path-sim">
+  <canvas id="regime-path-sim-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer gamma regime" id="regime-path-sim-reg">
+      <label>regime</label>
+      <button type="button" data-v="pos" class="on" aria-pressed="true">positive GEX</button>
+      <button type="button" data-v="neg" aria-pressed="false">negative GEX</button>
+    </div>
+  </div>
+  <figcaption><b>The same shocks, opposite character.</b> Six simulated price paths from 100
+  over 60 steps, each driven by its own seeded run of random returns (0.08% standard deviation
+  a step), the same six runs in both regimes. Each step also carries a feedback term, 0.45
+  times the previous step's return: subtracted when dealers are long gamma (positive GEX),
+  added when they are short it (negative GEX). Switch the regime: under positive GEX the paths
+  cluster around 100, under negative GEX the same shocks fan out.</figcaption>
+</figure>
+
+<p>The visualization makes clear that <strong>the same fundamentals can produce qualitatively different price behavior</strong> depending on the dealer-positioning regime. This is what makes regime-conditional strategy selection (<a class="xref" href="10a.html">Section 10</a>) so important.</p>
+
+<h2 id="the-mathematics-of-feedback">4 · The mathematics of feedback</h2>
+
+<p>Define <strong>G</strong> as the <em>destabilizing gamma component</em>: G &gt; 0 when dealers are net short gamma (pro-trend hedging amplifies moves); G &lt; 0 when dealers are net long gamma (contra-trend hedging dampens). With that sign convention:</p>
+
+<pre>σ_eff² = σ² / (1 − κ · G)²</pre>
+
+<p>where σ is information volatility and κ is the feedback coefficient (proportional to market depth × dealer aggressiveness).</p>
+
+<p><strong>Three regimes:</strong></p>
+
+<ul>
+<li><strong>G &lt; 0</strong> (positive published GEX, dealers long gamma) → 1 − κ·G &gt; 1, so σ_eff &lt; σ. <strong>Stabilized.</strong></li>
+<li><strong>G = 0</strong> → σ_eff = σ. <strong>Neutral.</strong></li>
+<li><strong>G &gt; 0</strong> (negative published GEX, dealers short gamma) → 1 − κ·G &lt; 1, so σ_eff &gt; σ. <strong>Amplified.</strong></li>
+<li><strong>G → +1/κ</strong> (extreme stress) → σ_eff → ∞. <strong>Edge of feedback explosion.</strong></li>
+</ul>
+
+<p>That divergence is, mathematically, what February 5, 2018 (Volmageddon), March 16, 2020 (Great Liquidity Crisis), and August 5, 2024 (yen carry unwind) looked like. <a class="xref" href="8c.html">Section 8C</a> explores the cases in detail.</p>
+
+<h2 id="the-divergence-is-nonlinear-feel-the-table">5 · The divergence is nonlinear — feel the table</h2>
+
+<p>A linear illustration ("at G = 0 we get σ_eff = σ") understates what makes the formula operationally important. Fix σ = 0.15 (15% baseline information vol) and a small illustrative feedback coefficient κ = 0.0010. Sweep G across the regimes:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">G (positioning regime)</th><th style="text-align:right">1 − κG</th><th style="text-align:right">σ_eff</th></tr></thead><tbody><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−800 (deeply stabilizing)</td><td data-label="1 − κG" style="text-align:right">1.80</td><td data-label="σ_eff" style="text-align:right">8.3%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−400 (mildly stabilizing)</td><td data-label="1 − κG" style="text-align:right">1.40</td><td data-label="σ_eff" style="text-align:right">10.7%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">0 (neutral)</td><td data-label="1 − κG" style="text-align:right">1.00</td><td data-label="σ_eff" style="text-align:right">15.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+400 (mildly destabilizing)</td><td data-label="1 − κG" style="text-align:right">0.60</td><td data-label="σ_eff" style="text-align:right">25.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+600 (moderate stress)</td><td data-label="1 − κG" style="text-align:right">0.40</td><td data-label="σ_eff" style="text-align:right">37.5%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+800 (acute stress)</td><td data-label="1 − κG" style="text-align:right">0.20</td><td data-label="σ_eff" style="text-align:right"><strong>75%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+900 (near-critical)</td><td data-label="1 − κG" style="text-align:right">0.10</td><td data-label="σ_eff" style="text-align:right"><strong>150%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+950</td><td data-label="1 − κG" style="text-align:right">0.05</td><td data-label="σ_eff" style="text-align:right">300%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+990 (edge of explosion)</td><td data-label="1 − κG" style="text-align:right">0.01</td><td data-label="σ_eff" style="text-align:right">1,500%</td></tr></tbody></table></div></div>
+
+<p>From G = +800 to G = +900 — a roughly 12% increase in destabilizing positioning — σ_eff doubles, from 75% to 150%. <strong>That's the operational signal: small changes in aggregate positioning produce outsized realized-vol consequences in the stress regime.</strong> It is also why "the gamma flip" matters as a level even though no single trade is responsible — the local sensitivity of σ_eff to G is unbounded as G approaches 1/κ.</p>
+
+<p>κ here is illustrative. In practice κ is regime-fit and varies with depth, dealer aggressiveness, and prevailing positioning concentration. The qualitative shape — slow at the wings, explosive near the critical point — is the universal feature.</p>
+
+<p><strong>Sign convention note</strong>: G is the <em>negation</em> of standard published GEX. When a vendor reports "GEX = +$2.3B" under the JPM-era convention (positive = stabilizing), the corresponding G = −$2.3B in the formula above. Both conventions coexist in practice; always check which one your model or vendor is using before reading the sign.</p>
+
+<figure class="fig" id="fig-effective-vol-explorer">
+  <canvas id="effective-vol-explorer-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="effective-vol-explorer-sigma">underlying σ</label>
+      <input type="range" id="effective-vol-explorer-sigma" min="0.1" max="0.5" step="0.01" value="0.2">
+      <output id="effective-vol-explorer-sigma-o" for="effective-vol-explorer-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="effective-vol-explorer-kappa">feedback strength κ</label>
+      <input type="range" id="effective-vol-explorer-kappa" min="0" max="2" step="0.05" value="0.5">
+      <output id="effective-vol-explorer-kappa-o" for="effective-vol-explorer-kappa"></output>
+    </div>
+    <div class="ctrl">
+      <label for="effective-vol-explorer-g">destabilizing gamma G</label>
+      <input type="range" id="effective-vol-explorer-g" min="-1" max="1" step="0.02" value="0">
+      <output id="effective-vol-explorer-g-o" for="effective-vol-explorer-g"></output>
+    </div>
+    <div class="ctrl">
+      <button type="button" id="effective-vol-explorer-stress">trigger stress</button>
+      <output id="effective-vol-explorer-day"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="effective-vol-explorer-su"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-kg"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-se"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-amp"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="effective-vol-explorer-vk"></b> <span id="effective-vol-explorer-vt"></span></p>
+  <figcaption><b>The same information vol, damped or amplified by feedback.</b> The curve is
+  σ<sub>eff</sub> = σ / (1 − κ·G) across the destabilizing gamma G, the negation of published
+  GEX (positive when dealers are net short gamma), for the underlying σ and feedback strength κ
+  set by the sliders; the dashed lines mark σ and the current G. Trigger stress to walk G from
+  −0.6 to +0.6 over five days, published GEX flipping from positive to negative, and watch
+  effective vol climb. Raise κ and the curve bends up toward the singularity at G = 1/κ, where
+  the denominator vanishes; the curve is cut at 200%, and past that point the readouts hold at
+  100 times σ.</figcaption>
+</figure>
+
+<h2 id="empirical-effect-sizes">6 · Empirical effect sizes</h2>
+
+<p>The dealer-feedback story is real and quantifiable, but its practical effect size is modest on a typical day. Several peer-reviewed papers have measured the effects:</p>
+
+<p><strong>Barbon and Buraschi (2021)</strong> — "Gamma Fragility," SSRN 3725454, revised March 18, 2021. The authors document a link between large aggregate dealers' gamma imbalances and intraday momentum/reversal of stock returns. They find supporting evidence that <strong>intraday momentum (reversal) is explained by the interaction of negative (positive) ex-ante gamma imbalance and illiquidity</strong>. The effect is stronger for the least liquid underlying securities — a key finding, because it suggests SPX itself (highly liquid) has smaller gamma-feedback effects than single-name stocks (less liquid).</p>
+
+<p><strong>Ni, Pearson, Poteshman, and White (2021)</strong> — extension of the original 2005 pinning paper. The follow-up work finds that hedge rebalancing alters the probability of large daily moves (over 300 bps) by 5-14% historically, rising to 13-40% in their later sample.</p>
+
+<p><strong>Dim, Eraker, and Vilkov (2024)</strong> — for the 0DTE-specific regime, find that net market makers' gamma is <strong>on average positive</strong> and <strong>negatively related to future intraday volatility</strong>. The hedging mechanism is consistent with delta-hedging but inconsistent with information-based trading. This is the academic foundation for the claim that 0DTE has, on net, <em>reduced</em> intraday volatility in SPX.</p>
+
+<p><strong>Adams, Dim, Eraker, Fontaine, Ornthanalai, and Vilkov (2025)</strong> — the successor paper — establishes causally that 0DTE presence dampens market volatility, but the dampening operates through longer-dated positions becoming 0DTEs over time, not through 0DTE expiration-day trading.</p>
+
+<p>The episodes that everyone remembers — February 2018, March 2020, the GME squeeze, the August 5, 2024 unwind — are the <strong>right tail</strong> of this distribution, where feedback briefly approached the unstable threshold. Most days, GEX is a probabilistic prior you can use to bias your strategy selection, not a deterministic forecast.</p>
+
+<h2 id="regime-as-decision-boundary">7 · Regime as decision boundary</h2>
+
+<p>For practical trading purposes, the GEX-regime characterization functions as a decision boundary on strategy selection:</p>
+
+<ul>
+<li><strong>Positive GEX, VIX in contango, no event imminent</strong> → premium-selling and mean-reversion strategies are favored. Realized vol will likely undershoot implied; range bets pay; tight stops work.</li>
+<li><strong>Negative GEX, VIX in backwardation, event imminent or recent</strong> → directional and long-vol strategies are favored. Realized vol will likely exceed implied; trend bets pay; wider stops needed.</li>
+<li><strong>Transition regimes</strong> (GEX near zero, VIX in transition) → reduce size, take only the highest-conviction setups, expect choppy intraday action.</li>
+</ul>
+
+<p><a class="xref" href="10f.html">Section 10F</a> formalizes this into the composite regime scorecard. For now, the principle is: <strong>strategy selection should be conditioned on regime, and regime is most concisely characterized by the sign of net dealer gamma combined with the shape of the VIX term structure.</strong></p>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- regime-path-sim ---------- */
+(function () {
+  var U = 'regime-path-sim';
+  var regime = DL.seg(U + '-reg', function () { draw(); });
+
+  /* the app's paths: from 100, each step's return is 0.08%·z plus the feedback
+     −sign·0.45·(previous return), sign +1 for positive GEX and −1 for negative;
+     six paths from the seeds 0, 7, ..., 35, the same six for both regimes */
+  function generate(gexSign, seed) {
+    var rng = DL.rng(seed), out = [100], S = 100, k = 0.45;
+    for (var i = 1; i <= 60; i++) {
+      var baseRet = 0.0008 * DL.gauss(rng);
+      var prev = out[out.length - 1] / (out.length > 1 ? out[out.length - 2] : 100) - 1;
+      var feedback = -gexSign * k * prev;
+      S *= 1 + baseRet + feedback;
+      out.push(S);
+    }
+    return out;
+  }
+  var PATHS = { pos: [], neg: [] };
+  for (var i = 0; i < 6; i++) {
+    PATHS.pos.push(generate(1, i * 7));
+    PATHS.neg.push(generate(-1, i * 7));
+  }
+  /* one frame for both regimes, fitted to all twelve paths, so that switching
+     compares like with like (the app's frame is never narrower than 92 to 108) */
+  var all = [].concat.apply([], PATHS.pos.concat(PATHS.neg));
+  var LO = Math.min.apply(null, all), HI = Math.max.apply(null, all), PY = (HI - LO) * 0.08;
+  var steps = [];
+  for (var t = 0; t <= 60; t++) steps.push(t);
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sc = regime(), col = DL.color(sc === 'pos' ? 'insight' : 'plain');
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: LO - PY, ymax: HI + PY, xlabel: 'step',
+                              pad: { l: 40, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ny: 5, y: function (v) { return DL.num(v, 0); } });
+    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+    PATHS[sc].forEach(function (path, j) {
+      DL.line(p, steps, path, { color: DL.fade(col, 0.45 + j * 0.1), width: 1.3 });
+    });
+    p.text(0, HI + PY, sc === 'pos' ? 'positive GEX · paths cluster' : 'negative GEX · paths fan out',
+           { dy: -6, font: '11px ' + DL.color('sans'), color: col });
+  });
+})();
+
+/* ---------- effective-vol-explorer ---------- */
+(function () {
+  var U = 'effective-vol-explorer';
+  var SIG = DL.$(U + '-sigma'), KAP = DL.$(U + '-kappa'), GG = DL.$(U + '-g');
+  /* the stress run: G from −0.6 to +0.6 in five daily steps, 600 ms apart;
+     the day stays on show for two seconds after the last one, as in the app */
+  var DAYS = 5, STEP = 600, HOLD = 2000, G0 = -0.6, G1 = 0.6, anim = null;
+
+  /* the app's σ_eff = σ / (1 − κ·G), held at 100·σ once the denominator is
+     below 0.001 */
+  function effectiveVol(sigma, kappa, g) {
+    var denom = 1 - kappa * g;
+    if (denom <= 0.001) return sigma * 100;
+    return sigma / denom;
+  }
+  /* the app's thresholds on κ·G (0.7 and −0.3), with its middle band, which it
+     called damped and roughly equal to the underlying for κ·G up to 0.4 (an
+     amplification of up to 1.67 times), split at zero so that each name is true */
+  function regime(d) {
+    if (d > 0.7) return ['Explosive.', 'Feedback is approaching the singular limit.'];
+    if (d > 0) return ['Amplifying.', 'Effective vol is above the underlying.'];
+    if (d === 0) return ['Neutral.', 'Effective vol equals the underlying.'];
+    if (d > -0.3) return ['Damped.', 'Effective vol is below the underlying.'];
+    return ['Strongly damped.', 'Dealer hedging compresses vol.'];
+  }
+  function sgn(x, d) { return (x >= 0 ? '+' : DL.MINUS) + Math.abs(x).toFixed(d); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    /* the app's sweep: G from −1 in float steps of 0.02 (its last point is 0.98),
+       σ_eff cut at 200%; its axis runs to 150% or to the top of the curve */
+    var xs = [], ys = [];
+    for (var x = -1; x <= 1; x += 0.02) { xs.push(x); ys.push(Math.min(effectiveVol(sigma, kappa, x), 2)); }
+    var ymax = Math.max(1.5, Math.max.apply(null, ys));
+    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: ymax, xlabel: 'destabilizing gamma G',
+                              pad: { l: 44, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ny: 4,
+                 x: function (v) { return DL.num(v, 1); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    var fam = DL.color('familiar'), acc = DL.color('accent');
+    DL.hline(p, sigma, { color: fam, dash: [3, 3], width: 1.2 });
+    p.text(-1, sigma, 'σ underlying', { dx: 4, dy: -4, font: font(), color: fam });
+    DL.vline(p, g, { color: acc, dash: [2, 2], width: 1.2 });
+    DL.line(p, xs, ys, { color: acc, width: 2 });
+    p.dot(g, Math.min(effectiveVol(sigma, kappa, g), ymax), { r: 4, color: acc, ring: true });
+    p.text(-1, ymax, 'σ_eff² = σ² / (1 − κ·G)²', { dy: -7, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    var eff = effectiveVol(sigma, kappa, g), d = kappa * g, v = regime(d);
+    DL.out(U + '-sigma-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kappa-o', kappa.toFixed(2));
+    DL.out(U + '-g-o', sgn(g, 2));
+    DL.out(U + '-su', 'underlying σ = ' + (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kg', 'κ·G = ' + sgn(d, 2));
+    DL.out(U + '-se', 'effective σ = ' + (eff * 100).toFixed(0) + '%');
+    DL.out(U + '-amp', 'amplification = ' + (eff / sigma).toFixed(2) + '×');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    draw();
+  }
+
+  function setG(x) { GG.value = x.toFixed(2); }
+  function stop() {
+    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
+  }
+  function stress() {
+    stop();
+    if (DL.still()) {
+      setG(G1);
+      DL.out(U + '-day', 'day ' + DAYS + '/' + DAYS);
+      update();
+      return;
+    }
+    setG(G0);
+    DL.out(U + '-day', '');
+    update();
+    anim = { start: null, day: 0, id: 0 };
+    function frame(ts) {
+      if (!anim) return;
+      if (anim.start == null) anim.start = ts;
+      var el = ts - anim.start, day = Math.min(DAYS, Math.floor(el / STEP));
+      if (day !== anim.day) {
+        anim.day = day;
+        setG(G0 + (G1 - G0) * day / DAYS);
+        DL.out(U + '-day', 'day ' + day + '/' + DAYS);
+        update();
+      }
+      if (el >= DAYS * STEP + HOLD) {
+        DL.out(U + '-day', '');
+        anim = null;
+        return;
+      }
+      anim.id = requestAnimationFrame(frame);
+    }
+    anim.id = requestAnimationFrame(frame);
+  }
+  /* the saved page is the first state: no stress run, G at its default */
+  function reset() {
+    stop();
+    GG.value = GG.defaultValue;
+    DL.out(U + '-day', '');
+    update();
+  }
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
+
+  update();
+  DL.$(U + '-stress').addEventListener('click', stress);
+  DL.bind([U + '-sigma', U + '-kappa'], update);
+  /* moving G by hand ends a stress run, as it clears the app's day counter */
+  DL.bind([U + '-g'], function () { stop(); DL.out(U + '-day', ''); update(); });
+})();
+<!--/SCRIPT-->

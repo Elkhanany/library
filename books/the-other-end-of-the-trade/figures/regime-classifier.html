@@ -1,0 +1,143 @@
+<!--
+name: regime classifier
+source: src/interactives/RegimeClassifier.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="180"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-gex">net dealer GEX</label>
+      <input type="range" id="{{uid}}-gex" min="-10" max="10" step="0.1" value="2">
+      <output id="{{uid}}-gex-o" for="{{uid}}-gex"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-vix">VIX level</label>
+      <input type="range" id="{{uid}}-vix" min="10" max="60" step="0.5" value="18">
+      <output id="{{uid}}-vix-o" for="{{uid}}-vix"></output>
+    </div>
+  </div>
+  <div class="ctrls ctrl" role="group" aria-label="VIX term structure" id="{{uid}}-term">
+    <label>VIX term structure</label>
+    <button type="button" data-v="steepContango" aria-pressed="false">steep contango</button>
+    <button type="button" data-v="shallowContango" class="on" aria-pressed="true">shallow contango</button>
+    <button type="button" data-v="flat" aria-pressed="false">flat</button>
+    <button type="button" data-v="shallowBackwardation" aria-pressed="false">shallow backwardation</button>
+    <button type="button" data-v="deepBackwardation" aria-pressed="false">deep backwardation</button>
+  </div>
+  <p class="readout" id="{{uid}}-desc"></p>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <p class="readout">▸ <span id="{{uid}}-b0"></span><br>▸ <span id="{{uid}}-b1"></span><br>▸ <span id="{{uid}}-b2"></span><br>▸ <span id="{{uid}}-b3"></span></p>
+  <figcaption><b>Three readings, one regime.</b> Each input earns a score: net dealer GEX
+  from −2 (above +$4B per 1% move) to +2 (−$3B or below), the VIX level from −1 (under 15) to
+  +2 (30 or over), and the term structure from −2 (steep contango) to +2 (deep backwardation).
+  The bars add the three along a line from −5 to +6, and the shaded band where the sum lands
+  names the regime and its strategy. Positive GEX with contango pulls toward Stable; negative
+  GEX with backwardation pulls toward Stress.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var GEX = DL.$(U + '-gex'), VIX = DL.$(U + '-vix');
+
+  var TERMS = {
+    steepContango: { label: 'Steep contango', desc: 'VIX9D < VIX < VIX3M; clear upward slope', risk: -2 },
+    shallowContango: { label: 'Shallow contango', desc: 'mild upward slope; nothing structural', risk: -1 },
+    flat: { label: 'Flat', desc: 'front and back essentially equal', risk: 0 },
+    shallowBackwardation: { label: 'Shallow backwardation', desc: 'front a hair above back; early stress signal', risk: 1 },
+    deepBackwardation: { label: 'Deep backwardation', desc: 'VIX9D > VIX > VIX3M; classic crisis curve', risk: 2 }
+  };
+
+  /* the app's classifyRegime(): a score from each input, summed; the regime
+     is the band the sum falls in (score <= -2, <= 0, <= 2, above) */
+  function gexScore(g) { return g > 4 ? -2 : g > 1 ? -1 : g > -1 ? 0 : g > -3 ? 1 : 2; }
+  function vixScore(v) { return v < 15 ? -1 : v < 22 ? 0 : v < 30 ? 1 : 2; }
+  var REGIMES = [
+    { max: -2, lo: -5.5, hi: -1.5, name: 'Stable', role: 'insight', alpha: 0.10,
+      strategy: 'Sell premium · pin trades · tight stops',
+      bullets: ['Mean-reversion is the dominant intraday character',
+                'Range trades preferred over breakouts',
+                'Theta decay accrues smoothly; harvest it',
+                'Watch for VIX term flattening as the early-warning'] },
+    { max: 0, lo: -1.5, hi: 0.5, name: 'Range', role: 'accent', alpha: 0.10,
+      strategy: 'Tactical premium · small directional · normal stops',
+      bullets: ['Mean-reversion works on average but with more variance',
+                'Iron condors and credit spreads still profitable',
+                'Avoid oversizing premium-selling: modest realized vol can sting',
+                'Pinning at high-OI strikes is a useful tiebreaker'] },
+    { max: 2, lo: 0.5, hi: 2.5, name: 'Caution', role: 'plain', alpha: 0.07,
+      strategy: 'Trim premium · favor directional · widen stops',
+      bullets: ['Dealer-feedback sign is becoming uncertain or short-gamma',
+                'Mean-reversion bets carry asymmetric downside',
+                'Long premium and directional trades have better edge',
+                'Watch for gamma flip; cross under stress = regime change'] },
+    { max: Infinity, lo: 2.5, hi: 6.5, name: 'Stress', role: 'plain', alpha: 0.14,
+      strategy: 'Size down · long premium only · no mean-reversion',
+      bullets: ['Dealer book is short gamma; hedging amplifies moves',
+                'Feedback loops can become explosive (Section 8C)',
+                'Implied vol is rich but realized can exceed it',
+                'Liquidity is degraded; slippage on hedges is expensive'] }
+  ];
+  function regimeOf(score) {
+    for (var i = 0; i < REGIMES.length; i++) if (score <= REGIMES[i].max) return REGIMES[i];
+    return REGIMES[REGIMES.length - 1];
+  }
+
+  var term = DL.seg(U + '-term', function () { draw(); });
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var g = parseFloat(GEX.value), v = parseFloat(VIX.value), t = TERMS[term()];
+    var parts = [gexScore(g), vixScore(v), t.risk];
+    var score = parts[0] + parts[1] + parts[2], reg = regimeOf(score);
+
+    /* on a phone the two narrow bands' names would touch: two lines of names */
+    var narrow = (c.clientWidth || 640) < 520, top = narrow ? 5.1 : 4.6;
+    var p = new NMT.Plot(c, { xmin: -5.5, xmax: 6.5, ymin: 0, ymax: top, grid: false,
+                              pad: { l: 66, r: 8, t: 6, b: 24 } });
+    var xs = [];
+    for (var k = -5; k <= 6; k++) xs.push(k);
+    DL.axes(p, { xs: xs, ys: [], y: false, yAxis: false, grid: false,
+                 x: function (x) { return DL.signed(x, 0); } });
+
+    /* the four regimes as bands on the score line, the chosen one darker */
+    var font = '11px ' + DL.color('sans');
+    REGIMES.forEach(function (R, i) {
+      var on = R === reg, col = DL.color(R.role);
+      p.path([[R.lo, 0], [R.hi, 0], [R.hi, top], [R.lo, top]],
+             { close: true, fill: DL.fade(col, on ? R.alpha * 2.4 : R.alpha), color: null });
+      p.text((R.lo + R.hi) / 2, top, R.name, { dy: narrow && i % 2 ? 19 : 4, align: 'center',
+             baseline: 'top', color: col, font: (on ? '600 ' : '') + font });
+    });
+    DL.vline(p, 0, { color: DL.color('ink-faint') });
+
+    /* each input's score as a step from the running sum, then the total */
+    var rows = [{ y: 3.35, name: 'GEX' }, { y: 2.45, name: 'VIX' }, { y: 1.55, name: 'term' }];
+    var at = 0;
+    rows.forEach(function (row, i) {
+      var to = at + parts[i];
+      if (parts[i] !== 0) {
+        DL.hbars(p, [row.y], [to], { base: at, h: 0.5,
+                 color: DL.fade(DL.color(parts[i] > 0 ? 'plain' : 'insight'), 0.8) });
+      } else {
+        p.seg(at, row.y - 0.25, at, row.y + 0.25, { color: DL.color('ink-soft'), width: 2 });
+      }
+      var next = i < 2 ? rows[i + 1].y + 0.25 : 0.65;
+      p.seg(to, row.y - 0.25, to, next, { color: DL.color('ink-faint'), dash: [2, 3], width: 1 });
+      p.text(-5.5, row.y, row.name + ' ' + DL.signed(parts[i], 0),
+             { dx: -7, align: 'right', baseline: 'middle', color: DL.color('ink-soft'), font: font });
+      at = to;
+    });
+    p.dot(score, 0.65, { r: 5.5, color: DL.color(reg.role), ring: true });
+    p.text(-5.5, 0.65, 'score ' + DL.signed(score, 0),
+           { dx: -7, align: 'right', baseline: 'middle', color: DL.color('ink'),
+             font: '600 ' + font });
+
+    DL.out(U + '-gex-o', (g >= 0 ? '+' : '') + DL.usd(g, 1) + 'B / 1%');
+    DL.out(U + '-vix-o', DL.num(v, 1));
+    DL.out(U + '-desc', t.label + ': ' + t.desc + '.');
+    DL.out(U + '-vk', reg.name + ', score ' + DL.signed(score, 0) + '.');
+    DL.out(U + '-vt', reg.strategy + '.');
+    for (var b = 0; b < 4; b++) DL.out(U + '-b' + b, reg.bullets[b]);
+  });
+  DL.bind([U + '-gex', U + '-vix'], draw);
+})();
+</script>

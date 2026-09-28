@@ -1,0 +1,122 @@
+<!--
+name: walk-forward visualizer
+source: src/interactives/WalkForwardCVVisualizer.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-k">windows</label>
+      <input type="range" id="{{uid}}-k" min="3" max="10" step="1" value="5">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mu">true annualized μ</label>
+      <input type="range" id="{{uid}}-mu" min="-0.05" max="0.3" step="0.005" value="0.06">
+      <output id="{{uid}}-mu-o" for="{{uid}}-mu"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sigma">noise σ</label>
+      <input type="range" id="{{uid}}-sigma" min="0.05" max="0.5" step="0.005" value="0.15">
+      <output id="{{uid}}-sigma-o" for="{{uid}}-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="500" step="1" value="1">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-train"></output></div>
+    <div class="ctrl"><output id="{{uid}}-test"></output></div>
+    <div class="ctrl"><output id="{{uid}}-deg"></output></div>
+  </div>
+  <figcaption><b>Walk-forward testing, fold by fold.</b> Ten years of simulated daily returns
+  with a fixed true mean and noise, cut into equal windows: each fold trains on every window
+  before a test window and is then scored on that window alone, so five windows make four
+  folds. The bars are each fold's annualized Sharpe ratio in sample (train) and out of sample
+  (test), and the readouts average them. The true mean never changes, so the scatter from fold
+  to fold is sampling noise; the seed redraws the returns.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+
+  function sharpe(rets) {
+    if (!rets.length) return 0;
+    var mean = 0, v = 0, i;
+    for (i = 0; i < rets.length; i++) mean += rets[i];
+    mean /= rets.length;
+    for (i = 0; i < rets.length; i++) v += (rets[i] - mean) * (rets[i] - mean);
+    var sd = Math.sqrt(v / Math.max(rets.length - 1, 1));
+    return sd > 0 ? (mean / sd) * Math.sqrt(252) : 0;
+  }
+  /* The app's walk-forward: 2,520 daily returns, k equal windows, fold f trains
+     on windows 0..f and tests on window f + 1. The app also multiplies each
+     training set by an "overfit" factor at its default pressure of 0.6; a
+     Sharpe ratio ignores a constant scale, so the factor changes nothing and
+     is kept here only so every number matches the app's. */
+  var PRESSURE = 0.6;
+  function folds(k, mu, sigma, seed) {
+    var nTotal = 2520, r = DL.rng(seed), rets = [];
+    for (var i = 0; i < nTotal; i++) rets.push(mu / 252 + (sigma / Math.sqrt(252)) * DL.gauss(r));
+    var len = Math.floor(nTotal / k), tr = [], te = [];
+    for (var f = 0; f < k; f++) {
+      var trainEnd = (f + 1) * len, testEnd = Math.min(trainEnd + len, nTotal);
+      if (testEnd <= trainEnd) break;
+      var inflation = 1 + PRESSURE * Math.abs(DL.gauss(DL.rng(seed * 7 + f))) * 0.4;
+      tr.push(sharpe(rets.slice(0, trainEnd).map(function (x) { return x * inflation; })));
+      te.push(sharpe(rets.slice(trainEnd, testEnd)));
+    }
+    return { train: tr, test: te };
+  }
+  function avg(a) { return a.reduce(function (s, x) { return s + x; }, 0) / Math.max(a.length, 1); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var k = DL.val(U + '-k'), mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
+        seed = DL.val(U + '-seed');
+    var F = folds(k, mu, sigma, seed), nf = F.train.length;
+    var all = F.train.concat(F.test, [0]);
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), span = Math.max(hi - lo, 0.01);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: nf, ymin: lo - span * (lo < 0 ? 0.14 : 0),
+                              ymax: hi + span * 0.3, pad: { l: 38, r: 10, t: 10, b: 26 } });
+    DL.axes(p, { xs: [], ny: 5, x: false, grid: false, yAxis: true,
+                 y: function (v, st) { return DL.num(v, st < 1 ? 1 : 0); } });
+    DL.hline(p, 0, { color: DL.color('ink-faint'), dash: [2, 3] });
+
+    var fam = DL.color('familiar'), pla = DL.color('plain');
+    var trX = F.train.map(function (_, i) { return i + 0.33; }),
+        teX = F.test.map(function (_, i) { return i + 0.67; });
+    DL.bars(p, trX, F.train, { w: 0.3, color: DL.fade(fam, 0.6) });
+    DL.bars(p, teX, F.test, { w: 0.3, color: DL.fade(pla, 0.6) });
+
+    var band = p.X(1) - p.X(0), f11 = '11px ' + DL.color('sans');
+    if (band >= 52) {   /* the values themselves, where two of them fit side by side */
+      [[trX, F.train, fam], [teX, F.test, pla]].forEach(function (s) {
+        s[1].forEach(function (v, i) {
+          p.text(s[0][i], v, DL.num(v, 1), { align: 'center', font: f11, color: s[2],
+                                            baseline: v >= 0 ? 'bottom' : 'top', dy: v >= 0 ? -3 : 3 });
+        });
+      });
+    }
+    DL.xticks(p, F.train.map(function (_, i) { return i + 0.5; }),
+              function (x, i) { return band >= 46 ? 'fold ' + (i + 1) : String(i + 1); });
+    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
+    var key = [{ label: 'train (in-sample)', color: DL.fade(fam, 0.6), box: true },
+               { label: 'test (out-of-sample)', color: DL.fade(pla, 0.6), box: true }];
+    if (p.w >= 420) DL.legend(p, key);
+    else { DL.legend(p, [key[0]]); DL.legend(p, [key[1]], { dy: 15 }); }
+
+    var aTr = avg(F.train), aTe = avg(F.test);
+    var deg = aTr > 0 ? (1 - aTe / aTr) * 100 : 0;
+    DL.out(U + '-k-o', String(k));
+    DL.out(U + '-mu-o', DL.num(mu * 100, 1) + '%');
+    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
+    DL.out(U + '-seed-o', String(seed));
+    DL.out(U + '-train', 'avg train Sharpe = ' + DL.num(aTr, 2));
+    DL.out(U + '-test', 'avg test Sharpe = ' + DL.num(aTe, 2));
+    DL.out(U + '-deg', 'OOS degradation = ' + DL.num(deg, 0) + '%');
+  });
+  DL.bind([U + '-k', U + '-mu', U + '-sigma', U + '-seed'], draw);
+})();
+</script>

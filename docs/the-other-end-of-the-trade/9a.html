@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>9A VIX: the same mechanism, viewed from above — The Other End of the Trade</title>
+<meta name="description" content="Chapter 9A of The Other End of the Trade: VIX: the same mechanism, viewed from above.">
+
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-8">← Part IX · Vol &amp; Practice</a>
+  <div class="sb-folio"><a class="sb-prev" href="8d.html" aria-label="Previous chapter: 8D · Gamma squeeze identification" title="Previous chapter: 8D · Gamma squeeze identification (←)">‹ 8D</a><p class="sb-title"><span class="sb-at">Chapter 9A ·</span> <span class="sb-at">37 of 67</span></p><a class="sb-next" href="9b.html" aria-label="Next chapter: 9B · 0DTE: the singularity at the strike" title="Next chapter: 9B · 0DTE: the singularity at the strike (→)">9B ›</a></div>
+  <div id="sb-toc"><a href="#the-construction-formula">1 · The construction formula</a><a href="#a-toy-worked-example">2 · A toy worked example</a><a href="#why-vix-rises-asymmetrically-when-spx-falls">3 · Why VIX rises asymmetrically when SPX falls</a><a href="#vix-futures-and-the-roll">4 · VIX futures and the roll</a><a href="#contango-and-the-roll-cost" class="lvl3">Contango and the roll cost</a><a href="#backwardation" class="lvl3">Backwardation</a><a href="#connection-to-dealer-hedging" class="lvl3">Connection to dealer hedging</a><a href="#the-vanna-feedback-during-vix-spikes">5 · The vanna feedback during VIX spikes</a><a href="#vix-is-one-tool-in-a-family">6 · VIX is one tool in a family</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part IX · Vol &amp; Practice · Chapter 9A</p>
+
+<h1>VIX: the same mechanism, viewed from above</h1>
+
+<div class="callout where">
+<span class="ct">About this part</span>
+<p>This is the chapter where theory meets practice. We've built the mathematical and empirical framework; now we apply it. 9A connects everything in Sections 6-8 to the VIX index — how it's constructed, why it's structurally inverse to SPX, and how vanna feedback drives the violence of VIX spikes. 9B addresses the modern 0DTE phenomenon, with the latest 2024-2025 academic findings showing that 0DTE has, on net, dampened SPX volatility. 9C closes with seven practical heuristics for reading the tape through a dealer-mechanics lens, formalized into a regime classifier.</p>
+</div>
+
+<hr>
+
+<p>The VIX is widely called the "fear gauge." That label is qualitatively useful but mathematically imprecise. <strong>The VIX is the model-free 30-day implied volatility of the S&amp;P 500, expressed in annualized percentage points.</strong> The construction starts from a model-free expression for the implied <em>variance</em> of the 30-day SPX log-return distribution (a weighted strip of OTM option prices), then takes the square root and scales by 100. So when you see "VIX = 18," that means the model-free 30-day implied annualized vol of SPX is 18% — not 18 units of variance.</p>
+
+<p>This distinction matters because variance and vol move on different scales: a doubling of implied vol (18 → 36) quadruples implied variance (324 → 1,296). The published VIX number is the <em>vol</em> scale, which is the one a trader's intuition for "how much can the index move" lives on.</p>
+
+<h2 id="the-construction-formula">1 · The construction formula</h2>
+
+<pre>σ²_30d = (2/T) × Σ_i [ΔK_i / K_i²] × e^(rT) × Q(K_i)  − (1/T) × (F/K_0 − 1)²
+
+VIX = 100 × √(σ²_30d)</pre>
+
+<p>The first line computes the annualized 30-day implied variance from the OTM option strip (where T is the 30-day fraction of a year, K_i is each strike, ΔK_i is the strike spacing, Q(K_i) is the mid quote of the OTM option at K_i, F is the SPX forward, K_0 is the strike immediately below F, and r is the risk-free rate). The second line is the published VIX: take the square root to get vol on the σ scale, then multiply by 100 to express as percentage points.</p>
+
+<p>Every term has a meaning that connects back to dealer hedging through the gamma-theta decomposition of <a class="xref" href="7a.html">Section 7A</a>.</p>
+
+<p><strong>The 1/K² weighting is not arbitrary.</strong> It is the coefficient that makes a portfolio of options replicate a variance swap. Demeterfi, Derman, Kamal, and Zou (Goldman Sachs Quantitative Strategies Research Notes, 1999) showed that holding ΔK/K² of each strike across all OTM strikes gives you a position whose P&amp;L is, exactly, total realized variance minus a fixed strike — a variance swap. <strong>VIX is the discrete version of the fair strike of that swap</strong>, scaled and annualized.</p>
+
+<p>The connection to gamma is direct. A delta-hedged option earns ½·Γ·S²·[(ΔS/S)² − σ²·Δt] per interval (<a class="xref" href="7a.html">Section 7A</a>). Weight this by 1/K² and sum over strikes, and the gammas across strikes combine to give a roughly constant "gamma" exposure per percent move regardless of where spot is — which is the property required for a variance swap. The mathematics is tight: <strong>VIX is, fundamentally, the cost of replicating variance through delta-hedged options.</strong></p>
+
+<h2 id="a-toy-worked-example">2 · A toy worked example</h2>
+
+<p>The formula above is opaque until you compute one. Walk through a stylized six-strike strip end-to-end and you have the chain in hand. The arithmetic is grade-school; the pedagogical value is in seeing every term land somewhere.</p>
+
+<p><strong>Setup.</strong> SPX = 4,500. 30-day forward F = 4,503. T = 30 / 365 ≈ 0.0822. r = 0.05. K_0 (the strike immediately below F) = 4,500. Six OTM contributions:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">Strike</th><th>Type</th><th style="text-align:right">Mid quote Q(K)</th><th style="text-align:right">ΔK</th><th class="c-other" style="text-align:right">(ΔK / K²) × Q</th></tr></thead><tbody><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,400</td><td data-label="Type">put</td><td data-label="Mid quote Q(K)" style="text-align:right">$18</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">4.65 × 10⁻⁵</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,450</td><td data-label="Type">put</td><td data-label="Mid quote Q(K)" style="text-align:right">$32</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">8.08 × 10⁻⁵</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,500</td><td data-label="Type">K_0</td><td data-label="Mid quote Q(K)" style="text-align:right">$52</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.28 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,550</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$48</td><td data-label="ΔK" style="text-align:right">50</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.16 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,600</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$30</td><td data-label="ΔK" style="text-align:right">75</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">1.06 × 10⁻⁴</td></tr><tr><td class="c-trial" data-label="Strike" style="text-align:right">4,700</td><td data-label="Type">call</td><td data-label="Mid quote Q(K)" style="text-align:right">$14</td><td data-label="ΔK" style="text-align:right">100</td><td class="c-other" data-label="(ΔK / K²) × Q" style="text-align:right">6.34 × 10⁻⁵</td></tr></tbody></table></div></div>
+
+<p>ΔK at internal strikes is half the distance between neighbors; at the boundary strikes (4,400 and 4,700) it's the one-sided distance.</p>
+
+<p><strong>Step 1 — sum the strike contributions.</strong> Σ (ΔK_i / K_i²) × Q(K_i) ≈ 5.41 × 10⁻⁴.</p>
+
+<p><strong>Step 2 — scale by 2/T and e^(rT).</strong> 2/T = 24.33. e^(rT) = e^(0.05 × 0.0822) ≈ 1.0041. Product: 24.33 × 1.0041 × 5.41 × 10⁻⁴ ≈ 0.01322.</p>
+
+<p><strong>Step 3 — subtract the forward correction.</strong> (1/T) × (F/K_0 − 1)² = 12.17 × (4,503/4,500 − 1)² = 12.17 × (6.67 × 10⁻⁴)² ≈ 5.4 × 10⁻⁶. Effectively negligible at this strike spacing, which is why F sitting on top of K_0 is the desirable methodology choice in CBOE's specification.</p>
+
+<p><strong>Step 4 — combine.</strong> σ²_30d ≈ 0.01322 − 5.4 × 10⁻⁶ ≈ 0.01321.</p>
+
+<p><strong>Step 5 — square root and rescale.</strong> VIX = 100 × √0.01321 ≈ <strong>11.5</strong>.</p>
+
+<p>The toy strip lands at VIX ≈ 11.5 because the mid-quotes above correspond to an implied vol around 12% — a calm-regime strip. The exact same chain at higher-vol mids (every Q roughly doubled) produces a VIX near 16-17; at typical post-2020 mids (every Q roughly tripled) it lands in the low 20s. <strong>The strip's premium level scales VIX roughly linearly; the geometry of the formula is invariant.</strong> That's the pedagogical payoff of doing this by hand once.</p>
+
+<p>Two caveats. First, real VIX is computed from ~150 strikes weighted continuously per the CBOE methodology, not 6 strikes — what changes is precision, not the qualitative chain. Second, the published VIX uses a near-and-next interpolation across two expirations (this toy uses one). The <a href="#fig-vix-strip-builder">VIX strip builder</a> widget below lets you vary the strip parameters and watch the index respond.</p>
+
+<figure class="fig" id="fig-vix-strip-builder">
+  <canvas id="vix-strip-builder-iv" data-h="130" width="631" height="130" style="height: 130px;"></canvas>
+  <canvas id="vix-strip-builder-q" data-h="170" width="631" height="170" style="height: 170px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="vix-strip-builder-atm">ATM IV</label>
+      <input type="range" id="vix-strip-builder-atm" min="0.08" max="0.45" step="0.005" value="0.18">
+      <output id="vix-strip-builder-atm-o" for="vix-strip-builder-atm">18.0%</output>
+    </div>
+    <div class="ctrl">
+      <label for="vix-strip-builder-ps">put skew steepness</label>
+      <input type="range" id="vix-strip-builder-ps" min="0" max="0.4" step="0.01" value="0.18">
+      <output id="vix-strip-builder-ps-o" for="vix-strip-builder-ps">0.18</output>
+    </div>
+    <div class="ctrl">
+      <label for="vix-strip-builder-cs">call skew steepness</label>
+      <input type="range" id="vix-strip-builder-cs" min="0" max="0.2" step="0.005" value="0.04">
+      <output id="vix-strip-builder-cs-o" for="vix-strip-builder-cs">0.040</output>
+    </div>
+    <div class="ctrl" role="group" aria-label="SPX shock" id="vix-strip-builder-shock">
+      <label>SPX shock</label>
+      <button type="button" data-v="-0.01" aria-pressed="false">−1%</button>
+      <button type="button" data-v="0" class="on" aria-pressed="true">0%</button>
+      <button type="button" data-v="0.01" aria-pressed="false">+1%</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="vix-strip-builder-vix">computed VIX = 18.51</output></div>
+    <div class="ctrl"><output id="vix-strip-builder-f">forward = 100.0</output></div>
+    <div class="ctrl"><output id="vix-strip-builder-pw">put wing share = 41%</output></div>
+    <div class="ctrl"><output id="vix-strip-builder-cw">call wing share = 59%</output></div>
+  </div>
+  <figcaption><b>The VIX, computed from one strip of options.</b> Top, a toy 30-day implied
+  vol smile σ(K) over strikes 70 to 130, one apart, around a forward of 100, set by the ATM IV
+  and the steepness of each wing. Below, each strike's term (ΔK/K²)·e<sup>rT</sup>·Q(K), with
+  Q the out-of-the-money put below the forward or the call at or above it; the computed VIX is
+  100 × √[(2/T) × their sum], with T = 30/365 and r = 4%. The index follows the ATM IV almost
+  point for point and the skews move it far less; the SPX shock carries the whole smile along
+  with the forward, so it barely moves the index at all.</figcaption>
+</figure>
+
+<h2 id="why-vix-rises-asymmetrically-when-spx-falls">3 · Why VIX rises asymmetrically when SPX falls</h2>
+
+<p>The 1/K² weighting puts disproportionate weight on low-strike options. Combined with the equity skew — OTM puts trade at higher implied vol than OTM calls — a 1% downside move in SPX re-prices the put wing far more than a 1% upside move re-prices the call wing.</p>
+
+<p><strong>This is why VIX is structurally inverse to SPX</strong>: it isn't "fear" per se, it's the mechanical asymmetry of how variance replication weights the strikes the market is hedged in. The correlation between daily SPX returns and daily VIX changes is approximately −0.80 across decades of data; this is not because fear and stock prices are correlated, but because the math of variance replication requires put-side reweighting that responds asymmetrically to direction.</p>
+
+<h2 id="vix-futures-and-the-roll">4 · VIX futures and the roll</h2>
+
+<p>VIX is computed from a strip of SPX options — it is NOT directly tradable. What <em>is</em> tradable:</p>
+
+<p><strong>1. VIX futures</strong>: monthly contracts expiring Wednesday 30 days before SPX OPEX. Settle at the SOQ of VIX computed Friday morning.</p>
+
+<p><strong>2. VIX ETPs</strong>:</p>
+
+<ul>
+<li><strong>VXX</strong> (Barclays): long position in 1st and 2nd VIX futures</li>
+<li><strong>UVXY</strong> (ProShares): 2× leveraged long VIX futures</li>
+<li><strong>SVXY</strong> (ProShares): -0.5× inverse VIX futures</li>
+<li><strong>VIXY</strong> (ProShares): unleveraged long VIX futures</li>
+</ul>
+
+<p><strong>3. VIX options</strong>: cash-settled options on the VIX index level, with notional based on the index level.</p>
+
+<h3 id="contango-and-the-roll-cost">Contango and the roll cost</h3>
+
+<p>Under normal conditions, the VIX futures curve is in <strong>contango</strong>. Front-month sits below spot VIX; second-month sits above front. The economic reason is the variance risk premium — buyers pay extra for protection over each forward window.</p>
+
+<p>For long-vol ETPs, contango is a <strong>cost</strong>: every month they sell the front (lower price) and buy the second (higher price), locking in a loss. Accumulated drag is approximately <strong>−10% annualized</strong> for VXX. UVXY suffers roughly 2× this drag.</p>
+
+<p>For inverse-vol ETPs, contango is a <strong>benefit</strong>: SVXY profits from the roll. This was the dominant return source for XIV/SVXY pre-2018 — until the eight-month low-vol regime made positioning catastrophically large, triggering Volmageddon.</p>
+
+<h3 id="backwardation">Backwardation</h3>
+
+<p>In stress, the curve inverts: front-month trades above second-month. This reverses the roll dynamics:</p>
+
+<ul>
+<li>Long-vol ETPs profit</li>
+<li>Inverse-vol ETPs lose</li>
+</ul>
+
+<p>Backwardation is a reliable stress indicator. VIX/VIX3M ratio crossing 1.0 preceded major SPX drawdowns in nearly every multi-year cycle.</p>
+
+<h3 id="connection-to-dealer-hedging">Connection to dealer hedging</h3>
+
+<p>VIX ETP issuers (Barclays VXX, ProShares UVXY/SVXY) are themselves significant participants in VIX futures. Their daily rebalancing is mechanical and well-understood — the 16:08 EST volume spike on Feb 5, 2018, was the cumulative effect of XIV's forced rebalancing in the closing auction interacting with dealer vol-of-vol hedging.</p>
+
+<p><strong>Operational implication</strong>: VIX futures and VIX ETPs are NOT the same instrument as the VIX index. The roll structure introduces a multi-percent annualized drag (contango) or boost (backwardation), and futures basis can diverge from spot VIX in stress. Use VIX as a regime indicator; trade VIX futures and options as separate instruments with their own dynamics.</p>
+
+<h2 id="the-vanna-feedback-during-vix-spikes">5 · The vanna feedback during VIX spikes</h2>
+
+<p>Recall vanna from <a class="xref" href="5d.html">Section 5D</a> and 7B: ∂Δ/∂σ. When VIX rises, OTM put deltas become more negative in magnitude. A dealer who is short OTM puts — the dealer of record for most institutional hedging demand — sees their effective long exposure increase. To stay delta-neutral they must sell stock.</p>
+
+<p>Selling stock pushes SPX further down. Further SPX down increases VIX. Further VIX increase deepens put deltas. And around the loop we go. <strong>Vanna is the technical name for the variable that makes VIX-driven sell-offs so violent.</strong></p>
+
+<figure class="fig" id="fig-vanna-feedback-loop">
+  <canvas id="vanna-feedback-loop-c" data-h="310" width="631" height="310" style="height: 310px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="vanna-feedback-loop-step">step</label>
+      <input type="range" id="vanna-feedback-loop-step" min="0" max="5" step="1" value="0">
+      <output id="vanna-feedback-loop-step-o" for="vanna-feedback-loop-step">0 · setup</output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Play the loop">
+      <button type="button" id="vanna-feedback-loop-play">play</button>
+      <button type="button" id="vanna-feedback-loop-pause">pause</button>
+      <button type="button" id="vanna-feedback-loop-reset">reset</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="vanna-feedback-loop-spx">SPX = 4,500.0</output></div>
+    <div class="ctrl"><output id="vanna-feedback-loop-vix">VIX = 20.00</output></div>
+    <div class="ctrl"><output id="vanna-feedback-loop-dd">dealer Δ shift = 0</output></div>
+    <div class="ctrl"><output id="vanna-feedback-loop-flow">hedge flow = —</output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="vanna-feedback-loop-vk">Step 0 · setup.</b> <span id="vanna-feedback-loop-vt">Dealer is short 1,000 SPX OTM puts (K = 4400) against an institutional hedger. The short puts are long delta, so the initial delta hedge is a short stock position. Spot 4500, VIX 20, IV at this strike 23%.</span></p>
+  <figcaption><b>The vanna loop, one step at a time.</b> A stylized pass through the loop: a
+  dealer short 1,000 out-of-the-money SPX puts at the 4400 strike, with spot at 4500 and VIX at
+  20. Move the step slider or press play: spot falls, implied vol rises, vanna pushes the put
+  delta more negative, the dealer finds itself longer than hedged and sells stock, and the
+  selling feeds the next pass. The readouts give spot, VIX, the dealer's delta shift and the
+  stock sold, in shares for the 1,000 contracts of 100; every number is an illustrative input,
+  not the output of a model.</figcaption>
+</figure>
+
+<p>The animator demonstrates: at step 0 the dealer is short 1,000 SPX OTM puts (K=4400) against an institutional hedger. Initial delta-hedge: long approximately 410 shares. Spot 4500, VIX 20, IV at this strike 23%. Then spot ticks down 1%; VIX bids up 8%; put delta becomes more negative; dealer must sell more shares; SPX ticks down further; VIX bids up further; loop continues.</p>
+
+<div class="callout brick">
+<p><em>"Transaction data show a spike in trading volume to 115,862 VIX futures contracts, or roughly one quarter of the entire market, and at highly inflated prices, within one minute at 16:08 [on February 5, 2018]."</em> — BIS Quarterly Review, March 2018</p>
+</div>
+
+<p>That moment — 16:08 EST on Volmageddon — is the cleanest empirical example of the feedback the animator walks through.</p>
+
+<h2 id="vix-is-one-tool-in-a-family">6 · VIX is one tool in a family</h2>
+
+<p>Cboe launched <strong>VIX1D</strong> in April 2023 to measure one-day expected volatility, explicitly because the 30-day VIX no longer captures the short-horizon vol regime driven by 0DTE. VIX1D uses the same model-free variance replication formula but applied to the very-near-dated SPX option strip.</p>
+
+<p>The Cboe VIX family now includes:</p>
+
+<ul>
+<li><strong>VIX1D</strong> — 1-day implied volatility (launched April 2023)</li>
+<li><strong>VIX9D</strong> — 9-day implied volatility</li>
+<li><strong>VIX</strong> — 30-day (the original, launched 1993; reformulated 2003)</li>
+<li><strong>VIX3M</strong> — 3-month implied volatility</li>
+<li><strong>VIX6M</strong> — 6-month implied volatility</li>
+<li><strong>VIX1Y</strong> — 1-year implied volatility</li>
+</ul>
+
+<p>The relationships between these form the <strong>VIX term structure</strong>. In normal markets, the term structure is in <strong>contango</strong> (short &lt; long), reflecting the variance risk premium — implied vol is bid up further out because more can happen over longer horizons. In stress, it inverts (<strong>backwardation</strong> — short &gt; long): panic concentrates demand into near-dated puts.</p>
+
+<p>The combination of GEX sign and VIX term structure shape is the most common composite signal serious traders use to characterize regime. The standard combinations:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Net dealer GEX</th><th class="c-other">VIX term structure</th><th class="c-endpoint">Regime</th></tr></thead><tbody><tr><td class="c-trial" data-label="Net dealer GEX">Strongly positive</td><td class="c-other" data-label="VIX term structure">Steep contango</td><td class="c-endpoint" data-label="Regime"><strong>Stable</strong> — premium selling favored</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Mildly positive</td><td class="c-other" data-label="VIX term structure">Mild contango</td><td class="c-endpoint" data-label="Regime"><strong>Normal</strong> — neutral character</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Near zero</td><td class="c-other" data-label="VIX term structure">Flat or barely inverted</td><td class="c-endpoint" data-label="Regime"><strong>Transition</strong> — reduce size</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Negative</td><td class="c-other" data-label="VIX term structure">Backwardation</td><td class="c-endpoint" data-label="Regime"><strong>Stress</strong> — long vol favored, mean-reversion dangerous</td></tr><tr><td class="c-trial" data-label="Net dealer GEX">Deeply negative</td><td class="c-other" data-label="VIX term structure">Deep backwardation</td><td class="c-endpoint" data-label="Regime"><strong>Crisis</strong> — defensive only, mechanical strategies suspended</td></tr></tbody></table></div></div>
+
+<p>This 5×regime classification underlies the composite scorecard in <a class="xref" href="10f.html">Section 10F</a> and the conviction-scoring framework in <a class="xref" href="12b.html">Section 12B</a>.</p>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="8d.html" rel="prev" data-part="Part VIII · Aggregation"><span>Previous</span>8D · Gamma squeeze identification</a>
+<a class="next" href="9b.html" rel="next"><span>Next</span>9B · 0DTE: the singularity at the strike</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- vix-strip-builder ---------- */
+(function () {
+  var U = 'vix-strip-builder';
+  var ATM = DL.$(U + '-atm'), PS = DL.$(U + '-ps'), CS = DL.$(U + '-cs');
+  var shock = DL.seg(U + '-shock', update);
+  var T = 30 / 365, R = 0.04, X0 = 69, X1 = 131, PAD_L = 40, PAD_R = 14;
+  var XS = [80, 90, 100, 110, 120], st;
+
+  /* the app's strip: strikes 70 to 130 one apart; a two-slope smile in
+     log-moneyness around the forward F, floored at 5%; the OTM put below F,
+     the call at and above it, priced by bsPrice(F, K, T, σ, type, r, 0);
+     each strike adds (ΔK/K²)·e^rT·Q and the VIX is 100·√((2/T)·Σ) */
+  function compute() {
+    var atm = parseFloat(ATM.value), ps = parseFloat(PS.value), cs = parseFloat(CS.value);
+    var F = 100 * (1 + parseFloat(shock()));
+    var ks = [], ivs = [], cons = [], puts = [], sum = 0, put = 0, call = 0;
+    for (var K = 70; K <= 130; K += 1) {
+      var m = Math.log(K / F);
+      var iv = Math.max(0.05, m < 0 ? atm - ps * m : atm - cs * m);
+      var isPut = K < F;
+      var Q = DL.bsPrice(F, K, T, iv, isPut ? 'put' : 'call', R, 0);
+      var dK = 1, c = (dK / (K * K)) * Math.exp(R * T) * Q;
+      ks.push(K); ivs.push(iv); cons.push(c); puts.push(isPut);
+      sum += c;
+      if (isPut) put += c; else call += c;
+    }
+    st = { F: F, ks: ks, ivs: ivs, cons: cons, puts: puts, atm: atm, ps: ps, cs: cs,
+           vix: 100 * Math.sqrt((2 / T) * sum), putShare: put / (put + call) };
+  }
+  compute();
+
+  function label(p, x, y, s, o) {
+    o.font = '11px ' + DL.color('sans');
+    p.text(x, y, s, o);
+  }
+  /* a panel's title, in the row above the plot, from the canvas's left edge */
+  function title(p, s, color) {
+    label(p, X0, p.o.ymax, s, { dx: 4 - PAD_L, dy: -6, color: color });
+  }
+
+  var drawIv = DL.figure(U + '-iv', function (c) {
+    var lo = Math.min.apply(null, st.ivs) * 0.95, hi = Math.max.apply(null, st.ivs) * 1.05;
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: lo, ymax: hi,
+                              pad: { l: PAD_L, r: PAD_R, t: 22, b: 8 } });
+    DL.axes(p, { xs: XS, ys: DL.ticks(lo, hi, 4).vals, x: false,
+                 y: function (v, s) {
+                   return DL.num(v * 100, Math.max(0, -Math.floor(Math.log10(s * 100) + 1e-9))) + '%';
+                 } });
+    DL.vline(p, st.F, { color: DL.color('familiar'), dash: [3, 3], width: 1.2 });
+    DL.line(p, st.ks, st.ivs, { color: DL.color('accent'), width: 1.8 });
+    title(p, 'implied vol smile σ(K)', DL.color('accent'));
+  });
+
+  var drawQ = DL.figure(U + '-q', function (c) {
+    var hi = Math.max.apply(null, st.cons) * 1.1;
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: 0, ymax: hi,
+                              pad: { l: PAD_L, r: PAD_R, t: 22, b: 26 } });
+    var ty = DL.ticks(0, hi * 1e4, 3);
+    DL.axes(p, { xs: XS, ys: ty.vals.map(function (v) { return v / 1e4; }), x: false,
+                 y: function (v) { return DL.num(v * 1e4, ty.step < 1 ? 1 : 0); } });
+    var cPut = DL.fade(DL.color('plain'), 0.6), cCall = DL.fade(DL.color('insight'), 0.6);
+    DL.bars(p, st.ks, st.cons, { w: 0.6, color: function (v, i) { return st.puts[i] ? cPut : cCall; } });
+    DL.vline(p, st.F, { color: DL.color('familiar'), dash: [3, 3], width: 1.2 });
+    /* the forward is named on the strike axis; a strike label it would touch is left out */
+    var g = p.g, fText = 'F = ' + st.F.toFixed(1);
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    var fw = g.measureText(fText).width;
+    var shown = XS.filter(function (v) {
+      return Math.abs(p.X(v) - p.X(st.F)) > (g.measureText(String(v)).width + fw) / 2 + 12;
+    });
+    g.restore();
+    DL.xticks(p, shown);
+    label(p, st.F, 0, fText, { dy: 6, align: 'center', baseline: 'top', color: DL.color('familiar') });
+    title(p, 'variance contribution (ΔK/K²)·e^(rT)·Q(K), ×10⁻⁴', DL.color('ink-soft'));
+    label(p, 71, hi * 0.55, 'puts', { color: DL.color('plain') });
+    label(p, 129, hi * 0.55, 'calls', { align: 'right', color: DL.color('insight') });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-atm-o', (st.atm * 100).toFixed(1) + '%');
+    DL.out(U + '-ps-o', st.ps.toFixed(2));
+    DL.out(U + '-cs-o', st.cs.toFixed(3));
+    DL.out(U + '-vix', 'computed VIX = ' + st.vix.toFixed(2));
+    DL.out(U + '-f', 'forward = ' + st.F.toFixed(1));
+    DL.out(U + '-pw', 'put wing share = ' + (st.putShare * 100).toFixed(0) + '%');
+    DL.out(U + '-cw', 'call wing share = ' + ((1 - st.putShare) * 100).toFixed(0) + '%');
+    drawIv();
+    drawQ();
+  }
+  update();
+  DL.bind([U + '-atm', U + '-ps', U + '-cs'], update);
+})();
+
+/* ---------- vanna-feedback-loop ---------- */
+(function () {
+  var U = 'vanna-feedback-loop';
+  var SL = DL.$(U + '-step'), LAST = 5, PACE = 1700, anim = null;
+
+  /* the app's six stylized steps. dDelta is the change in the put's delta per
+     contract; the dealer is short the puts, so the dealer's own delta moves the
+     other way, longer, which is what the hedge sells. Two corrections to the
+     app's text: the short puts are long delta, so the opening hedge is short
+     stock (the app said long ~410 shares), and the hedge in step 4 is the
+     readout's 11,000 shares (the app's text said 110) */
+  var STEPS = [
+    { label: 'setup', short: 'setup', dSpot: 0, dVix: 0, dDelta: 0, sold: 0,
+      desc: 'Dealer is short 1,000 SPX OTM puts (K = 4400) against an institutional hedger. ' +
+            'The short puts are long delta, so the initial delta hedge is a short stock ' +
+            'position. Spot 4500, VIX 20, IV at this strike 23%.' },
+    { label: 'spot −1%', short: 'spot ↓', dSpot: -0.01, dVix: 0, dDelta: -0.04, sold: 0,
+      desc: 'SPX drops 1% from 4500 to 4455. Mechanical sellers and dealer hedges are starting ' +
+            'to cascade. The spot move alone shifts the put delta toward more negative through Γ.' },
+    { label: 'VIX +8%', short: 'VIX ↑', dSpot: -0.01, dVix: 0.08, dDelta: -0.04, sold: 0,
+      desc: 'Stress lifts implied vol across the curve. VIX moves 20 → 21.6 (+8%). At the put ' +
+            'strike, IV rises from 23% to roughly 24.8%.' },
+    { label: 'vanna fires', short: 'vanna', dSpot: -0.01, dVix: 0.08, dDelta: -0.11, sold: 0,
+      desc: '∂Δ/∂σ is large and negative for OTM puts. The vol move alone deepens put delta by ' +
+            'another ~0.07. Dealer is now effectively longer the underlying than they should be.' },
+    { label: 'hedge', short: 'sell', dSpot: -0.01, dVix: 0.08, dDelta: -0.11, sold: 110,
+      desc: 'To re-flatten delta, dealer sells 11,000 SPX-equivalent shares (0.11 of delta on ' +
+            '1,000 contracts of 100). Across the street, that scales to significant flow into ' +
+            'a thin book.' },
+    { label: 'loop', short: 'loop', dSpot: -0.025, dVix: 0.18, dDelta: -0.2, sold: 195,
+      desc: 'Hedge selling pushes SPX lower → VIX rises further → vanna fires again → more ' +
+            'selling. Each pass is smaller in normal markets; in stress, the system can become ' +
+            'locally unstable.' }
+  ];
+  /* the loop's five stations, on a ring of radius 1; station k lights at step k + 1 */
+  var NODES = [
+    { x: 0, y: 1, label: 'SPX ↓', desc: 'spot falls' },
+    { x: 0.95, y: 0.31, label: 'VIX ↑', desc: 'vol bid' },
+    { x: 0.59, y: -0.81, label: 'put Δ', desc: 'more negative' },
+    { x: -0.59, y: -0.81, label: 'dealer sells', desc: 're-hedge' },
+    { x: -0.95, y: 0.31, label: 'feedback', desc: 'loop' }
+  ];
+  var R = 0.42;
+
+  function step() { return parseInt(SL.value, 10); }
+  function font(w) { return (w ? '600 ' : '') + '11px ' + DL.color('sans'); }
+
+  /* an arrow from station a to station b, stopping short of both circles */
+  function arrow(p, a, b, color, width) {
+    var dx = b.x - a.x, dy = b.y - a.y, L = Math.sqrt(dx * dx + dy * dy), ux = dx / L, uy = dy / L;
+    var gap = R + 5 / (p.X(1) - p.X(0)), head = 9 / (p.X(1) - p.X(0)), wing = 4 / (p.X(1) - p.X(0));
+    var sx = a.x + ux * gap, sy = a.y + uy * gap, ex = b.x - ux * gap, ey = b.y - uy * gap;
+    p.seg(sx, sy, ex - ux * head * 0.6, ey - uy * head * 0.6, { color: color, width: width });
+    p.path([[ex, ey], [ex - ux * head - uy * wing, ey - uy * head + ux * wing],
+            [ex - ux * head + uy * wing, ey - uy * head - ux * wing]],
+           { close: true, fill: color, color: null });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var k = step(), act = k - 1;
+    var p = new NMT.Plot(c, { xmin: -1.4, xmax: 1.4, ymin: -1.26, ymax: 1.45, equal: true,
+                              grid: false, pad: { l: 6, r: 6, t: 6, b: 6 } });
+    var g = p.g, rp = R * (p.X(1) - p.X(0));
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, p.w, p.h);
+    var hot = DL.color('plain'), cold = DL.color('rule'), dim = DL.color('ink-faint');
+    NODES.forEach(function (n, i) {
+      /* the arrow into a station lights once the loop has reached it; the one
+         back to the start lights on the last step, when the loop closes */
+      var lit = i < 4 ? k >= i + 2 : k >= LAST;
+      arrow(p, n, NODES[(i + 1) % NODES.length], lit ? hot : dim, lit ? 1.6 : 1);
+    });
+    NODES.forEach(function (n, i) {
+      var on = i === act, past = i < act;
+      g.save();
+      g.beginPath();
+      g.arc(p.X(n.x), p.Y(n.y), rp, 0, 2 * Math.PI);
+      g.fillStyle = on ? DL.fade(hot, 0.14) : DL.color('paper');
+      g.fill();
+      g.strokeStyle = on ? hot : past ? DL.fade(hot, 0.45) : cold;
+      g.lineWidth = on ? 2 : 1;
+      g.stroke();
+      g.restore();
+      p.text(n.x, n.y, n.label, { dy: -7, align: 'center', baseline: 'middle', font: font(on),
+                                  color: on ? DL.color('ink') : past ? hot : DL.color('ink-soft') });
+      p.text(n.x, n.y, n.desc, { dy: 9, align: 'center', baseline: 'middle', font: font(false),
+                                 color: on ? DL.color('ink-soft') : DL.color('ink-faint') });
+    });
+  });
+
+  function render() {
+    var k = step(), s = STEPS[k];
+    var shift = -s.dDelta * 1000 * 100, sold = s.sold * 100;
+    DL.out(U + '-step-o', k + ' · ' + s.label);
+    DL.out(U + '-spx', 'SPX = ' + DL.num(4500 * (1 + s.dSpot), 1));
+    DL.out(U + '-vix', 'VIX = ' + DL.num(20 * (1 + s.dVix), 2));
+    DL.out(U + '-dd', 'dealer Δ shift = ' + (shift === 0 ? '0' : DL.signed(shift, 0) + ' sh'));
+    DL.out(U + '-flow', 'hedge flow = ' + (sold === 0 ? '—' : DL.num(sold, 0) + ' sh sold'));
+    DL.out(U + '-vk', 'Step ' + k + ' · ' + s.short + '.');
+    DL.out(U + '-vt', s.desc);
+    draw();
+  }
+
+  function stop() {
+    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
+  }
+  function goTo(k) {
+    if (String(SL.value) !== String(k)) SL.value = k;
+    render();
+  }
+  /* play: a step every 1.7 s from where the reader is (from the start if at the
+     end), stopping at the last; under reduced motion, straight to the last */
+  function play() {
+    stop();
+    var from = step() >= LAST ? 0 : step();
+    if (DL.still()) { goTo(LAST); return; }
+    goTo(from);
+    anim = { t0: null, id: 0 };
+    function frame(ts) {
+      if (!anim) return;
+      if (anim.t0 == null) anim.t0 = ts;
+      var k = Math.min(LAST, from + Math.floor((ts - anim.t0) / PACE));
+      if (k !== step()) goTo(k);
+      if (k >= LAST) { anim = null; return; }
+      anim.id = requestAnimationFrame(frame);
+    }
+    anim.id = requestAnimationFrame(frame);
+  }
+  function reset() { stop(); goTo(0); }
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(function () { stop(); goTo(SL.defaultValue); });
+
+  render();
+  DL.$(U + '-play').addEventListener('click', play);
+  DL.$(U + '-pause').addEventListener('click', stop);
+  DL.$(U + '-reset').addEventListener('click', reset);
+  DL.bind([U + '-step'], function () { stop(); render(); });
+})();
+
+</script>
+</body>
+</html>

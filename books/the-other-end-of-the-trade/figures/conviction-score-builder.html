@@ -1,0 +1,80 @@
+<!--
+name: conviction score builder
+source: src/interactives/ConvictionScoreBuilder.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Factor and scoring guide</th><th>Score</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial"><label for="{{uid}}-E">E · Evidence</label>
+        <span class="ev-meta">Tier 1 peer-reviewed (0.8-1.0); Tier 2 (0.5-0.8); Tier 3 thin (0.0-0.4)</span>
+        <div id="{{uid}}-b0" hidden>Binding constraint: this is what is killing conviction.</div></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-E" min="0" max="1" step="0.05" value="0.85">
+        <output id="{{uid}}-E-o" for="{{uid}}-E"></output></div></td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial"><label for="{{uid}}-M">M · Mechanism</label>
+        <span class="ev-meta">Clear + academic (0.7-1.0); partial (0.4-0.7); 'don't know why' (0.0-0.3)</span>
+        <div id="{{uid}}-b1" hidden>Binding constraint: this is what is killing conviction.</div></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-M" min="0" max="1" step="0.05" value="0.9">
+        <output id="{{uid}}-M-o" for="{{uid}}-M"></output></div></td></tr>
+      <tr id="{{uid}}-r2"><td class="c-trial"><label for="{{uid}}-R">R · Regime (time-dependent)</label>
+        <span class="ev-meta">Composite ≥ +40 (0.8-1.0); +10-40 (0.5-0.7); &lt; 0 for longs (0.0-0.3)</span>
+        <div id="{{uid}}-b2" hidden>Binding constraint: this is what is killing conviction.</div></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-R" min="0" max="1" step="0.05" value="0.85">
+        <output id="{{uid}}-R-o" for="{{uid}}-R"></output></div></td></tr>
+      <tr id="{{uid}}-r3"><td class="c-trial"><label for="{{uid}}-X">X · eXecution</label>
+        <span class="ev-meta">SPX/SPY/QQQ (0.85-1.0); multi-leg index (0.6-0.8); thin single name (0.2-0.4)</span>
+        <div id="{{uid}}-b3" hidden>Binding constraint: this is what is killing conviction.</div></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-X" min="0" max="1" step="0.05" value="0.9">
+        <output id="{{uid}}-X-o" for="{{uid}}-X"></output></div></td></tr>
+      <tr id="{{uid}}-r4"><td class="c-trial"><label for="{{uid}}-S">S · Sizing &amp; survivability</label>
+        <span class="ev-meta">Kill rules pre-committed (0.85-1.0); 'comfortable' (0.5-0.7); aggressive (0.1-0.3)</span>
+        <div id="{{uid}}-b4" hidden>Binding constraint: this is what is killing conviction.</div></td>
+        <td><div class="ctrl"><input type="range" id="{{uid}}-S" min="0" max="1" step="0.05" value="0.9">
+        <output id="{{uid}}-S-o" for="{{uid}}-S"></output></div></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-c"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One weak factor caps the whole score.</b> Score a swing setup on the five
+  factors of the conviction score, C = E × M × R × X × S, each from 0 to 1 by the guide under
+  its name. C of 0.5 or more is high conviction, 0.3 or more is enough for some size, and below
+  0.3 the answer is to pass; when C falls below 0.5, the highlighted row is the binding
+  constraint, the lowest factor. The starting scores are the calm-regime Trend Pullback of the
+  worked example below (C = 0.527): set R to 0.20, X to 0.65 and S to 0.40 for its stress
+  regime.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var KEYS = ['E', 'M', 'R', 'X', 'S'];
+
+  function update() {
+    var vals = KEYS.map(function (k) { return DL.val(U + '-' + k); });
+    var score = vals.reduce(function (p, v) { return p * v; }, 1);
+    /* the app's binding constraint: the first factor with the lowest score,
+       marked only while conviction is below high */
+    var bind = 0, low = 1;
+    vals.forEach(function (v, i) { if (v < low) { low = v; bind = i; } });
+    var marked = score < 0.5;
+
+    var verdict;
+    if (score >= 0.5) verdict = ['HIGH CONVICTION.', 'Take at full intended size.'];
+    else if (score >= 0.3) verdict = ['MEDIUM CONVICTION.', 'Take at 60-80% of intended size.'];
+    else verdict = ['INSUFFICIENT CONVICTION.', 'Pass or reduce existing positions.'];
+
+    KEYS.forEach(function (k, i) {
+      DL.out(U + '-' + k + '-o', vals[i].toFixed(2));
+      var on = marked && i === bind, row = DL.$(U + '-r' + i), note = DL.$(U + '-b' + i);
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+      if (note.hidden === on) note.hidden = !on;
+    });
+    DL.out(U + '-c', 'conviction C = ' + score.toFixed(3));
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind(KEYS.map(function (k) { return U + '-' + k; }), update);
+  DL.figure('fig-' + U, update);
+})();
+</script>

@@ -1,0 +1,152 @@
+<!--
+name: hedging friction simulator
+source: src/interactives/HedgingFrictionSimulator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-sig">IV σ</label>
+      <input type="range" id="{{uid}}-sig" min="0.05" max="0.8" step="0.01" value="0.2">
+      <output id="{{uid}}-sig-o" for="{{uid}}-sig"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-dte">DTE</label>
+      <input type="range" id="{{uid}}-dte" min="5" max="90" step="1" value="30">
+      <output id="{{uid}}-dte-o" for="{{uid}}-dte"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-n">contracts</label>
+      <input type="range" id="{{uid}}-n" min="1" max="500" step="1" value="100">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-bps">transaction cost (bps)</label>
+      <input type="range" id="{{uid}}-bps" min="0" max="20" step="0.5" value="2">
+      <output id="{{uid}}-bps-o" for="{{uid}}-bps"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="500" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Hedge frequency</th><th class="c-other">Final P&amp;L</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Continuous (theoretical)</td><td class="c-other" id="{{uid}}-f0"></td></tr>
+      <tr><td class="c-trial">Intraday (5 hedges/day)</td><td class="c-other" id="{{uid}}-f1"></td></tr>
+      <tr><td class="c-trial">Daily close</td><td class="c-other" id="{{uid}}-f2"></td></tr>
+      <tr><td class="c-trial">Every 3 days</td><td class="c-other" id="{{uid}}-f3"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>One path, four hedging schedules.</b> Long at-the-money calls on a $600
+  underlying, delta-hedged along one simulated path of five-minute bars whose volatility equals
+  the implied vol, so hedging continuously earns nothing on average before costs. The curves
+  differ only in how often the hedge is reset, and every reset pays the transaction cost on the
+  shares traded. Across seeds, the less often the hedge is reset the wider the spread of final
+  P&amp;L, while the cost slider hits the most frequent hedger hardest.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SIG = DL.$(U + '-sig'), DTE = DL.$(U + '-dte'), NC = DL.$(U + '-n'),
+      BPS = DL.$(U + '-bps'), SEED = DL.$(U + '-seed');
+  var FREQS = [
+    { label: 'continuous', perDay: 78, role: 'familiar' },
+    { label: '5 per day', perDay: 5, role: 'accent' },
+    { label: 'daily', perDay: 1, role: 'plain' },
+    { label: 'every 3 days', perDay: 1 / 3, role: 'insight' }
+  ];
+  var sim;
+
+  /* The app's model: an arithmetic path of 78 five-minute bars a day at the
+     implied vol, and on each bar the gamma-theta P&L ½Γ·S²·[(dS/S)² − σ²·dt]
+     of the long calls. The app also kept each schedule's hedge, rebalanced
+     every floor(78 / hedges per day) bars at a cost of |Δshares|·S·bps, but
+     never added it to the P&L, so its four curves coincided. Here the part of
+     the calls' delta the stale hedge leaves open, (Δ·N − hedge)·dS, and the
+     cost of each rebalance are added; hedging every bar reproduces the app. */
+  function simulate(sigma, dte, contracts, seed, bps) {
+    var T = dte / 365, nBars = dte * 78, dt = T / nBars, S0 = 600, K = 600;
+    var M = contracts * 100, fee = bps / 10000;
+    var rng = DL.rng(seed), path = [S0];
+    for (var i = 0; i < nBars; i++) {
+      var z = DL.gauss(rng);
+      path.push(path[i] + sigma * Math.sqrt(dt) * S0 * z);
+    }
+    var start = DL.bsDelta(S0, K, T, sigma) * M;
+    return FREQS.map(function (f) {
+      var stride = Math.max(1, Math.floor(78 / f.perDay));
+      var shares = start, prev = start;
+      var pnl = [-Math.abs(start) * S0 * fee];
+      for (var j = 1; j < path.length; j++) {
+        var tau = T - (j / nBars) * T;
+        if (tau <= 0) break;
+        var target = DL.bsDelta(path[j], K, tau, sigma) * M;
+        var open = (prev - shares) * (path[j] - path[j - 1]);
+        var cost = 0;
+        if (j % stride === 0 || j === path.length - 1) {
+          cost = Math.abs(target - shares) * path[j] * fee;
+          shares = target;
+        }
+        var G = DL.bsGamma(path[j], K, tau, sigma);
+        var dollarGamma = G * path[j] * path[j] * 0.5;
+        var ret = (path[j] - path[j - 1]) / path[j - 1];
+        var gammaTerm = dollarGamma * ret * ret * M;
+        var thetaTerm = -dollarGamma * sigma * sigma * dt * M;
+        pnl.push(pnl[pnl.length - 1] + gammaTerm + thetaTerm + open - cost);
+        prev = target;
+      }
+      /* the app's downsampling for the chart, kept at each point's own day */
+      var xs = [], ys = [], step = Math.max(1, Math.floor(pnl.length / 100));
+      for (var k = 0; k < pnl.length; k += step) { xs.push(k / 78); ys.push(pnl[k]); }
+      xs.push((pnl.length - 1) / 78); ys.push(pnl[pnl.length - 1]);
+      return { xs: xs, ys: ys, final: pnl[pnl.length - 1] };
+    });
+  }
+
+  function money(v, st) {
+    if (v === 0) return '$0';
+    var a = Math.abs(st), unit = a >= 1e6 ? 1e6 : a >= 1e3 ? 1e3 : 1;
+    var d = Math.max(0, -Math.floor(Math.log10(a / unit) + 1e-9));
+    return DL.usd(v / unit, d) + (unit === 1e6 ? 'M' : unit === 1e3 ? 'K' : '');
+  }
+
+  function compute() {
+    var sigma = parseFloat(SIG.value), dte = parseInt(DTE.value, 10),
+        n = parseInt(NC.value, 10), bps = parseFloat(BPS.value), seed = parseInt(SEED.value, 10);
+    sim = { dte: dte, runs: simulate(sigma, dte, n, seed, bps) };
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-dte-o', dte + 'd');
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-bps-o', bps.toFixed(1));
+    DL.out(U + '-seed-o', String(seed));
+    sim.runs.forEach(function (r, i) {
+      DL.out(U + '-f' + i, (r.final > 0 ? '+' : '') + DL.usd(r.final, 0));
+    });
+  }
+  compute();
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var lo = Infinity, hi = -Infinity;
+    sim.runs.forEach(function (r) {
+      r.ys.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; });
+    });
+    var span = Math.max(hi - lo, 1e-6);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: sim.dte, ymin: lo - span * 0.06, ymax: hi + span * 0.34,
+                              pad: { l: 50, r: 16, t: 10, b: 28 } });
+    DL.axes(p, { nx: 6, ny: 5, y: money, x: function (v) { return v + 'd'; } });
+    DL.hline(p, 0, { color: DL.color('ink-faint'), dash: [2, 3] });
+    sim.runs.forEach(function (r, i) {
+      DL.line(p, r.xs, r.ys, { color: DL.fade(DL.color(FREQS[i].role), 0.85), width: 1.4 });
+    });
+    var items = FREQS.map(function (f) { return { label: f.label, color: DL.color(f.role) }; });
+    DL.legend(p, items.slice(0, 2));
+    DL.legend(p, items.slice(2), { dy: 16 });
+  });
+
+  function update() { compute(); draw(); }
+  DL.bind([U + '-sig', U + '-dte', U + '-n', U + '-bps', U + '-seed'], update);
+})();
+</script>

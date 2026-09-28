@@ -1,0 +1,65 @@
+<!--
+name: regime path simulator
+source: src/interactives/RegimePathSim.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer gamma regime" id="{{uid}}-reg">
+      <label>regime</label>
+      <button type="button" data-v="pos" class="on" aria-pressed="true">positive GEX</button>
+      <button type="button" data-v="neg" aria-pressed="false">negative GEX</button>
+    </div>
+  </div>
+  <figcaption><b>The same shocks, opposite character.</b> Six simulated price paths from 100
+  over 60 steps, each driven by its own seeded run of random returns (0.08% standard deviation
+  a step), the same six runs in both regimes. Each step also carries a feedback term, 0.45
+  times the previous step's return: subtracted when dealers are long gamma (positive GEX),
+  added when they are short it (negative GEX). Switch the regime: under positive GEX the paths
+  cluster around 100, under negative GEX the same shocks fan out.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var regime = DL.seg(U + '-reg', function () { draw(); });
+
+  /* the app's paths: from 100, each step's return is 0.08%·z plus the feedback
+     −sign·0.45·(previous return), sign +1 for positive GEX and −1 for negative;
+     six paths from the seeds 0, 7, ..., 35, the same six for both regimes */
+  function generate(gexSign, seed) {
+    var rng = DL.rng(seed), out = [100], S = 100, k = 0.45;
+    for (var i = 1; i <= 60; i++) {
+      var baseRet = 0.0008 * DL.gauss(rng);
+      var prev = out[out.length - 1] / (out.length > 1 ? out[out.length - 2] : 100) - 1;
+      var feedback = -gexSign * k * prev;
+      S *= 1 + baseRet + feedback;
+      out.push(S);
+    }
+    return out;
+  }
+  var PATHS = { pos: [], neg: [] };
+  for (var i = 0; i < 6; i++) {
+    PATHS.pos.push(generate(1, i * 7));
+    PATHS.neg.push(generate(-1, i * 7));
+  }
+  /* one frame for both regimes, fitted to all twelve paths, so that switching
+     compares like with like (the app's frame is never narrower than 92 to 108) */
+  var all = [].concat.apply([], PATHS.pos.concat(PATHS.neg));
+  var LO = Math.min.apply(null, all), HI = Math.max.apply(null, all), PY = (HI - LO) * 0.08;
+  var steps = [];
+  for (var t = 0; t <= 60; t++) steps.push(t);
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sc = regime(), col = DL.color(sc === 'pos' ? 'insight' : 'plain');
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: LO - PY, ymax: HI + PY, xlabel: 'step',
+                              pad: { l: 40, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ny: 5, y: function (v) { return DL.num(v, 0); } });
+    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+    PATHS[sc].forEach(function (path, j) {
+      DL.line(p, steps, path, { color: DL.fade(col, 0.45 + j * 0.1), width: 1.3 });
+    });
+    p.text(0, HI + PY, sc === 'pos' ? 'positive GEX · paths cluster' : 'negative GEX · paths fan out',
+           { dy: -6, font: '11px ' + DL.color('sans'), color: col });
+  });
+})();
+</script>

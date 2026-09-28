@@ -1,0 +1,169 @@
+<!--
+name: forward GEX map
+source: src/interactives/FutureGEXMap.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-spot">current spot</label>
+      <input type="range" id="{{uid}}-spot" min="3000" max="8000" step="1" value="6000">
+      <output id="{{uid}}-spot-o" for="{{uid}}-spot"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-gex">current GEX</label>
+      <input type="range" id="{{uid}}-gex" min="-10" max="10" step="0.1" value="2">
+      <output id="{{uid}}-gex-o" for="{{uid}}-gex"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-flip">gamma flip level</label>
+      <input type="range" id="{{uid}}-flip" min="5500" max="6500" step="1" value="5950">
+      <output id="{{uid}}-flip-o" for="{{uid}}-flip"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cw">call wall strike</label>
+      <input type="range" id="{{uid}}-cw" min="6000" max="6500" step="1" value="6100">
+      <output id="{{uid}}-cw-o" for="{{uid}}-cw"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pw">put wall strike</label>
+      <input type="range" id="{{uid}}-pw" min="5500" max="6000" step="1" value="5900">
+      <output id="{{uid}}-pw-o" for="{{uid}}-pw"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-shock">spot shock</label>
+      <input type="range" id="{{uid}}-shock" min="-5" max="5" step="0.1" value="0">
+      <output id="{{uid}}-shock-o" for="{{uid}}-shock"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-ps"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pg"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dc"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dp"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>What the next 5% move does to dealer gamma.</b> Net dealer gamma (GEX, in
+  billions of dollars) drawn as a straight line through two points: zero at the gamma flip
+  and the current GEX at the current spot, over 5% either side of spot. The spot shock moves
+  spot along that line; the dot is the projected GEX, and the readouts give the distance left
+  to each wall. When a shock carries spot through the flip, the dealer hedge changes sign and
+  the regime with it. All levels are inputs to set, not market data.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var S = DL.$(U + '-spot'), G = DL.$(U + '-gex'), F = DL.$(U + '-flip'),
+      CW = DL.$(U + '-cw'), PW = DL.$(U + '-pw'), SH = DL.$(U + '-shock');
+
+  /* the app's slider ranges follow the current spot; a strike left outside
+     its new range is pulled to the nearest end of it */
+  function ranges() {
+    var s = parseFloat(S.value), lo = Math.max(3000, s - 500), hi = Math.min(8000, s + 500);
+    if (String(F.min) !== String(lo)) F.min = lo;
+    if (String(F.max) !== String(hi)) F.max = hi;
+    if (String(CW.min) !== String(s)) CW.min = s;
+    if (String(CW.max) !== String(s + 500)) CW.max = s + 500;
+    if (String(PW.min) !== String(lo)) PW.min = lo;
+    if (String(PW.max) !== String(s)) PW.max = s;
+  }
+  function sgn(x, d) { return (x >= 0 ? '+' : DL.MINUS) + Math.abs(x).toFixed(d); }
+
+  /* names for the vertical lines, kept on rows along the top of the plot so
+     that two levels close together never print over each other; a level off
+     the plotted window is named at the edge it lies beyond */
+  function tags(p, items) {
+    var g = p.g, o = p.o, left = o.pad.l + 2, right = p.w - o.pad.r - 2, rows = [];
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    items.sort(function (a, b) { return a.px - b.px; });
+    items.forEach(function (it) {
+      var w = g.measureText(it.text).width;
+      var x = Math.max(left, Math.min(right - w, it.px - w / 2)), r = 0;
+      while (rows[r] != null && rows[r] > x - 8) r++;
+      rows[r] = x + w;
+      var y = o.pad.t + 3 + r * 15;
+      g.fillStyle = DL.fade(DL.color('paper'), 0.88);
+      g.fillRect(x - 3, y - 3, w + 6, 16);
+      g.fillStyle = it.color;
+      g.fillText(it.text, x, y);
+    });
+    g.restore();
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    ranges();
+    var spot = parseFloat(S.value), gex = parseFloat(G.value), flip = parseFloat(F.value),
+        cw = parseFloat(CW.value), pw = parseFloat(PW.value), shock = parseFloat(SH.value);
+
+    /* the app's model: GEX is zero at the flip and equals the current GEX at
+       the current spot, so its local slope is GEX / (spot - flip) */
+    var denom = spot - flip, slope = Math.abs(denom) < 1e-6 ? 0 : gex / denom;
+    var range = spot * 0.05, step = range / 25, xs = [], ys = [];
+    for (var s = spot - range; s <= spot + range + 0.01; s += step) {
+      xs.push(Math.round(s));
+      ys.push(parseFloat((gex + slope * (s - spot)).toFixed(3)));
+    }
+    var ps = spot * (1 + shock / 100), pg = gex + slope * (ps - spot);
+    var crossed = (gex > 0 && pg < 0) || (gex < 0 && pg > 0);
+
+    var x0 = spot - range, x1 = spot + range;
+    var lo = Math.min(0, Math.min.apply(null, ys)), hi = Math.max(0, Math.max.apply(null, ys));
+    var padY = (hi - lo) * 0.1 || 1;
+    var p = new NMT.Plot(c, { xmin: x0, xmax: x1, ymin: lo - padY, ymax: hi + padY,
+                              pad: { l: 48, r: 14, t: 12, b: 30 } });
+    var plotW = p.w - 62;
+    DL.axes(p, { nx: Math.max(3, Math.min(7, Math.floor(plotW / 60))), ny: 5,
+                 x: function (v) { return String(Math.round(v)); },
+                 y: function (v) { return DL.num(v, 1) + 'B'; } });
+
+    var cSpot = DL.color('familiar'), cFlip = DL.color('plain'), cCall = DL.color('insight'),
+        cPut = DL.color('warn');
+    var levels = [
+      { v: flip, name: 'flip', color: cFlip },
+      { v: cw, name: 'call wall', color: cCall },
+      { v: pw, name: 'put wall', color: cPut }
+    ];
+    var items = [{ px: p.X(spot), text: 'spot', color: cSpot }];
+    levels.forEach(function (L) {
+      if (L.v >= x0 && L.v <= x1) {
+        DL.vline(p, L.v, { color: L.color, dash: [4, 3], width: 1.3 });
+        items.push({ px: p.X(L.v), text: L.name, color: L.color });
+      } else if (L.v < x0) {
+        items.push({ px: p.X(x0), text: '← ' + L.name, color: L.color });
+      } else {
+        items.push({ px: p.X(x1), text: L.name + ' →', color: L.color });
+      }
+    });
+    /* the shocked spot first, so that at zero shock the spot line stays on top */
+    DL.vline(p, Math.round(ps), { color: DL.color('warn'), width: 1.4 });
+    DL.vline(p, spot, { color: cSpot, width: 1.6 });
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 1.8 });
+    p.dot(ps, pg, { r: 4.5, color: DL.color('accent'), ring: true });
+    tags(p, items);
+
+    DL.out(U + '-spot-o', String(spot));
+    DL.out(U + '-gex-o', sgn(gex, 1) + 'B');
+    DL.out(U + '-flip-o', String(flip));
+    DL.out(U + '-cw-o', String(cw));
+    DL.out(U + '-pw-o', String(pw));
+    DL.out(U + '-shock-o', sgn(shock, 1) + '%');
+    DL.out(U + '-ps', 'projected spot = ' + ps.toFixed(0));
+    DL.out(U + '-pg', 'projected GEX = ' + sgn(pg, 2) + 'B');
+    DL.out(U + '-dc', 'distance to call wall = ' + sgn(cw - ps, 0));
+    DL.out(U + '-dp', 'distance to put wall = ' + sgn(ps - pw, 0));
+
+    var hint = pg > 0
+      ? 'Positive GEX: dealers sell into rallies and buy into dips. The mean-reversion regime ' +
+        'supports pullback longs and short premium.'
+      : 'Negative GEX: dealers buy into rallies (amplifying). The momentum regime suppresses ' +
+        'mean reversion; defined risk only.';
+    DL.out(U + '-vk', crossed ? 'Regime change: GEX crosses the flip.' : 'Regime read.');
+    DL.out(U + '-vt', (crossed ? 'This shock takes spot through the gamma flip level. The ' +
+      'dealer hedge sign reverses; positions sized for the current regime should be ' +
+      're-evaluated. ' : '') + hint);
+  });
+  DL.bind([U + '-spot', U + '-gex', U + '-flip', U + '-cw', U + '-pw', U + '-shock'], draw);
+})();
+</script>

@@ -105,6 +105,8 @@ BAR_PAGES = {
     'the-ages-of-thought': ['index.html'],
     'breast-cancer':       ['index.html', 'contents.html', 'BC-500.html',
                             'stories.html', 'trials.html'],
+    # 9A carries the most figures, one of them placed twice
+    'the-other-end-of-the-trade': ['index.html', 'contents.html', '9a.html'],
 }
 
 # The masked-overflow sweep: the hub, the four front doors, both contents pages,
@@ -133,6 +135,12 @@ SWEEP_PAGES = [
     ('newton-to-mtheory/ch4-7.html', 'newton-to-mtheory/ch4-7.html', None),
     ('newton-to-mtheory/ledger.html', 'newton-to-mtheory/ledger.html', None),
     ('newton-to-mtheory/throughline.html', 'newton-to-mtheory/throughline.html', None),
+    # the trading book: its front door, its contents, the chapter with the widest
+    # table (eight columns), and the one with the most figures
+    ('the-other-end-of-the-trade/index.html', 'the-other-end-of-the-trade/index.html', None),
+    ('the-other-end-of-the-trade/contents.html', 'the-other-end-of-the-trade/contents.html', None),
+    ('the-other-end-of-the-trade/3a.html', 'the-other-end-of-the-trade/3a.html', None),
+    ('the-other-end-of-the-trade/9a.html', 'the-other-end-of-the-trade/9a.html', None),
     ('the atlas, a dossier open', 'the-ages-of-thought/index.html#who=spinoza', None),
     ('the timeline, a study open', 'the-long-argument/index.html', OPEN_STUDY),
 ]
@@ -912,7 +920,7 @@ async def apparatus(br, base):
     pages = []
     for pat in ('breast-cancer/BC-*.html', 'breast-cancer/trials.html', 'breast-cancer/stories.html',
                 'newton-to-mtheory/ch*.html', 'newton-to-mtheory/ledger.html',
-                'newton-to-mtheory/throughline.html'):
+                'newton-to-mtheory/throughline.html', 'the-other-end-of-the-trade/*.html'):
         pages += sorted(_glob.glob(os.path.join(DOCS, pat)))
     dup = []
     for f in pages:
@@ -1325,8 +1333,11 @@ async def main():
         print('\nthe menu')
         for bk in library.books():
             dests = [i['label'] for i in bk.nav_items() if i['key'] != 'library']
+            # the front door, then the sample pages that are chapters: named by
+            # whatever scheme the book uses (ch2-1, BC-500, 9a), so asked of it
+            chapters = {f[1] + '.html' for f in bk.written()}
             for pagename in BAR_PAGES[bk.slug][:1] + [p for p in BAR_PAGES[bk.slug][1:]
-                                                     if p.startswith(('ch', 'BC-'))]:
+                                                     if p in chapters]:
                 where_ = '%s/%s' % (bk.slug, pagename)
                 async with section('the menu on %s' % where_):
                     ctx = await br.new_context(viewport={'width': 390, 'height': 844},

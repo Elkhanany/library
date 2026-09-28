@@ -1,0 +1,73 @@
+<!--
+name: log-return symmetry
+source: src/interactives/LogReturnSymmetry.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="200"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-up">up move</label>
+      <input type="range" id="{{uid}}-up" min="1" max="50" step="0.5" value="20">
+      <output id="{{uid}}-up-o" for="{{uid}}-up"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-path"></output></div>
+    <div class="ctrl"><output id="{{uid}}-simple"></output></div>
+    <div class="ctrl"><output id="{{uid}}-log"></output></div>
+  </div>
+  <figcaption><b>The same round trip, measured two ways.</b> A price rises from $100 by the
+  up move on the slider and falls back to $100. The bars are the size of each leg: as simple
+  returns the fall is smaller than the rise, as log returns the two are equal and opposite.
+  The larger the move, the wider the gap between the simple legs.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+
+  /* the app's arithmetic: $100 up by the slider's percentage, then back to $100 */
+  function legs(pUp) {
+    var start = 100, mid = start * (1 + pUp / 100), end = start;
+    return { mid: mid,
+             upSimple: (mid - start) / start * 100, downSimple: (end - mid) / mid * 100,
+             upLog: Math.log(mid / start) * 100, downLog: Math.log(end / mid) * 100 };
+  }
+  function pc(x) { return (x > 0 ? '+' : '') + DL.num(x, 2) + '%'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var pUp = DL.val(U + '-up'), r = legs(pUp);
+    var span = r.upSimple * 1.42;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: span, ymin: 0, ymax: 5.2,
+                              pad: { l: 44, r: 14, t: 6, b: 30 }, grid: false });
+    DL.axes(p, { nx: 5, y: false, yAxis: true,
+                 x: function (v) { return DL.num(v, 0) + '%'; } });
+    var simple = DL.color('accent'), log = DL.color('insight');
+    /* each leg's size; the down legs drawn fainter */
+    DL.hbars(p, [4.1, 3.3], [r.upSimple, -r.downSimple],
+             { h: 0.62, color: function (v, i) { return DL.fade(simple, i ? 0.45 : 0.8); } });
+    DL.hbars(p, [1.6, 0.8], [r.upLog, -r.downLog],
+             { h: 0.62, color: function (v, i) { return DL.fade(log, i ? 0.45 : 0.8); } });
+    var soft = DL.color('ink-soft'), f11 = '11px ' + DL.color('sans');
+    [[4.1, 'up'], [3.3, 'down'], [1.6, 'up'], [0.8, 'down']].forEach(function (row) {
+      p.text(0, row[0], row[1], { dx: -6, dy: 1, align: 'right', baseline: 'middle',
+                                  font: f11, color: soft });
+    });
+    [[4.1, r.upSimple], [3.3, r.downSimple], [1.6, r.upLog], [0.8, r.downLog]].forEach(function (row) {
+      p.text(Math.abs(row[1]), row[0], pc(row[1]), { dx: 6, dy: 1, baseline: 'middle',
+                                                   font: f11, color: DL.color('ink') });
+    });
+    p.text(0, 4.95, 'simple returns', { dx: 2, baseline: 'middle', color: simple });
+    p.text(span, 4.95, '|up| ≠ |down|', { dx: -2, align: 'right', baseline: 'middle',
+                                         font: f11, color: DL.color('plain') });
+    p.text(0, 2.45, 'log returns', { dx: 2, baseline: 'middle', color: log });
+    p.text(span, 2.45, '|up| = |down|', { dx: -2, align: 'right', baseline: 'middle',
+                                         font: f11, color: log });
+
+    DL.out(U + '-up-o', DL.num(pUp, 1) + '%');
+    DL.out(U + '-path', 'path = $100 → ' + DL.usd(r.mid, 2) + ' → $100');
+    DL.out(U + '-simple', 'simple returns = ' + pc(r.upSimple) + ' · ' + pc(r.downSimple));
+    DL.out(U + '-log', 'log returns = ' + pc(r.upLog) + ' · ' + pc(r.downLog));
+  });
+  DL.bind([U + '-up'], draw);
+})();
+</script>

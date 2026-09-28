@@ -1,0 +1,70 @@
+<!--
+name: Sharpe curves
+source: src/interactives/SharpeCurves.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="50" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-t0"></output></div>
+    <div class="ctrl"><output id="{{uid}}-t1"></output></div>
+    <div class="ctrl"><output id="{{uid}}-t2"></output></div>
+    <div class="ctrl"><output id="{{uid}}-t3"></output></div>
+  </div>
+  <figcaption><b>The same expected return at four Sharpe ratios.</b> One simulated year of
+  daily returns, all four curves with an 8% expected annual return and the same random shocks,
+  scaled so that their Sharpe ratios are 0.5, 1.5, 3 and 6. The low-Sharpe curve swings widely
+  around the drift that the high-Sharpe curve follows almost in a straight line.
+  The seed re-rolls the shocks; the readouts are each curve's return over the year.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SHARPES = [0.5, 1.5, 3, 6], ROLES = ['plain', 'accent', 'familiar', 'insight'];
+
+  /* the app's curves: one set of 252 shocks, each Sharpe given the daily
+     volatility that makes an 8% annual drift have that ratio */
+  function curves(seed) {
+    var N = 252, muDaily = 0.08 / 252, r = DL.rng(seed), noise = [];
+    for (var i = 0; i < N; i++) noise.push(DL.gauss(r));
+    return SHARPES.map(function (s) {
+      var sigDaily = muDaily / (s / Math.sqrt(252)), path = [100];
+      for (var j = 0; j < N; j++) path.push(path[j] * (1 + muDaily + sigDaily * noise[j]));
+      return path;
+    });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var seed = DL.val(U + '-seed'), cs = curves(seed);
+    var lo = Infinity, hi = -Infinity;
+    cs.forEach(function (a) { a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; }); });
+    var xs = cs[0].map(function (_, i) { return i; });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 252, ymin: lo - (hi - lo) * 0.03,
+                              ymax: hi + (hi - lo) * 0.24,
+                              pad: { l: 40, r: 14, t: 10, b: 34 }, xlabel: 'trading days' });
+    DL.axes(p, { nx: 6, ny: 5 });
+    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+    cs.forEach(function (a, k) {
+      DL.line(p, xs, a, { color: DL.fade(DL.color(ROLES[k]), 0.9), width: 1.6 });
+    });
+    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
+    DL.legend(p, [0, 1].map(function (k) {
+      return { label: 'SR = ' + SHARPES[k], color: DL.color(ROLES[k]) }; }));
+    DL.legend(p, [2, 3].map(function (k) {
+      return { label: 'SR = ' + SHARPES[k], color: DL.color(ROLES[k]) }; }), { dy: 15 });
+
+    DL.out(U + '-seed-o', '#' + seed);
+    cs.forEach(function (a, k) {
+      DL.out(U + '-t' + k, 'SR ' + SHARPES[k] + ', terminal = ' +
+             DL.num((a[a.length - 1] / 100 - 1) * 100, 1) + '%');
+    });
+  });
+  DL.bind([U + '-seed'], draw);
+})();
+</script>

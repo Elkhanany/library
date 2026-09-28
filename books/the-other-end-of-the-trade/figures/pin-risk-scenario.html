@@ -1,0 +1,138 @@
+<!--
+name: pin risk scenario
+source: src/interactives/PinRiskScenario.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="210"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-k">short strike K</label>
+      <input type="range" id="{{uid}}-k" min="400" max="700" step="1" value="580">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-s">current spot</label>
+      <input type="range" id="{{uid}}-s" min="560" max="600" step="0.1" value="580">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h">hours to expiry</label>
+      <input type="range" id="{{uid}}-h" min="0.5" max="48" step="0.5" value="24">
+      <output id="{{uid}}-h-o" for="{{uid}}-h"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV σ</label>
+      <input type="range" id="{{uid}}-iv" min="0.05" max="0.8" step="0.01" value="0.2">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-delta"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pin"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dist"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Weekend gap</th><th>Spot</th><th>Call</th><th>Put</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">+1% gap</td><td data-label="Spot" id="{{uid}}-x0"></td><td data-label="Call" id="{{uid}}-c0"></td><td data-label="Put" id="{{uid}}-p0"></td></tr>
+      <tr><td class="c-trial">−1% gap</td><td data-label="Spot" id="{{uid}}-x1"></td><td data-label="Call" id="{{uid}}-c1"></td><td data-label="Put" id="{{uid}}-p1"></td></tr>
+      <tr><td class="c-trial">+2% gap</td><td data-label="Spot" id="{{uid}}-x2"></td><td data-label="Call" id="{{uid}}-c2"></td><td data-label="Put" id="{{uid}}-p2"></td></tr>
+      <tr><td class="c-trial">−2% gap</td><td data-label="Spot" id="{{uid}}-x3"></td><td data-label="Call" id="{{uid}}-c3"></td><td data-label="Put" id="{{uid}}-p3"></td></tr>
+      <tr><td class="c-trial">+3% gap</td><td data-label="Spot" id="{{uid}}-x4"></td><td data-label="Call" id="{{uid}}-c4"></td><td data-label="Put" id="{{uid}}-p4"></td></tr>
+      <tr><td class="c-trial">−3% gap</td><td data-label="Spot" id="{{uid}}-x5"></td><td data-label="Call" id="{{uid}}-c5"></td><td data-label="Put" id="{{uid}}-p5"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>Gamma at the strike as expiry closes in.</b> A short call or put at strike K
+  with spot within $20 of it. The curve is the option's gamma across spot from 3% below the
+  strike to 3% above, scaled to its own peak: run the hours to expiry down and it narrows to a
+  spike at the strike, where a small move flips the option between in and out of the money. The
+  table moves spot by each weekend gap and says which short option then expires in the money and
+  is assigned. The pin probability is a rough gauge, 1 − 2 × |Δ − 0.5|: 100% at a call delta of
+  0.5, zero as the delta reaches 0 or 1.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var KS = DL.$(U + '-k'), SP = DL.$(U + '-s');
+  var GAPS = [0.01, -0.01, 0.02, -0.02, 0.03, -0.03];
+
+  /* The spot slider spans K − 20 to K + 20, as in the app, and follows the
+     strike; spot is kept inside that span. */
+  function follow() {
+    var K = parseFloat(KS.value), lo = K - 20, hi = K + 20;
+    var S = Math.min(Math.max(parseFloat(SP.value), lo), hi);
+    if (lo > parseFloat(SP.max)) { SP.max = hi; SP.min = lo; }
+    else { SP.min = lo; SP.max = hi; }
+    SP.value = S;
+  }
+
+  /* a label centered on x, kept inside the canvas */
+  function tag(p, x, dy, s, color) {
+    var g = p.g;
+    g.font = '11px ' + DL.color('sans');
+    var w = g.measureText(s).width, px = p.X(x);
+    var at = Math.min(Math.max(px, w / 2 + 3), p.w - w / 2 - 3);
+    p.text(x, p.o.ymax, s, { align: 'center', dx: at - px, dy: dy, color: color,
+                             font: '11px ' + DL.color('sans') });
+  }
+
+  follow();
+  var draw = DL.figure(U + '-c', function (c) {
+    var K = DL.val(U + '-k'), S = DL.val(U + '-s'), hours = DL.val(U + '-h'),
+        iv = DL.val(U + '-iv');
+
+    /* the widget's model: r = 4%, q = 0, time in hours of a 365-day year */
+    var T = Math.max(hours, 0.05) / (24 * 365);
+    var callDelta = DL.bsm(S, K, T, iv, 0.04, 0).callDelta;
+    var pinProb = 1 - 2 * Math.abs(callDelta - 0.5);
+
+    /* gamma across spot, K − 3% to K + 3%, peak at 0.9 of the height */
+    var sMin = K * 0.97, sMax = K * 1.03, xs = [], gs = [];
+    for (var s = sMin; s <= sMax + 0.001; s += (sMax - sMin) / 100) {
+      xs.push(s);
+      gs.push(DL.bsm(s, K, T, iv, 0.04, 0).gamma);
+    }
+    var maxG = Math.max(Math.max.apply(null, gs), 1e-9);
+    var p = new NMT.Plot(c, { xmin: sMin, xmax: sMax, ymin: 0, ymax: maxG / 0.9,
+                              pad: { l: 14, r: 14, t: 34, b: 28 }, grid: false });
+    DL.axes(p, { xs: [K * 0.98, K * 0.99, K, K * 1.01, K * 1.02], y: false, yAxis: false,
+                 grid: false, x: function (v) { return v.toFixed(0); } });
+    DL.band(p, xs, gs, 0, DL.fade(DL.color('accent'), 0.15));
+    DL.line(p, xs, gs, { color: DL.color('accent'), width: 1.6 });
+    p.text(sMin, p.o.ymax, 'Γ, scaled to peak',
+           { dy: -19, color: DL.color('accent'), font: '11px ' + DL.color('sans') });
+
+    p.seg(K, 0, K, p.o.ymax, { color: DL.color('plain'), width: 1.2, dash: [3, 3] });
+    tag(p, K, -19, 'strike', DL.color('plain'));
+    var spot = 'spot ' + S.toFixed(1);
+    if (S >= sMin && S <= sMax) {
+      p.seg(S, 0, S, p.o.ymax, { color: DL.color('familiar'), width: 1.4 });
+      tag(p, S, -4, spot, DL.color('familiar'));
+    } else {
+      /* spot is off the chart's ±3%: say so at the edge it lies beyond */
+      tag(p, S < sMin ? sMin : sMax, -4, S < sMin ? '← ' + spot : spot + ' →',
+          DL.color('familiar'));
+    }
+
+    DL.out(U + '-k-o', '$' + K);
+    DL.out(U + '-s-o', '$' + S.toFixed(1));
+    DL.out(U + '-h-o', hours + 'h');
+    DL.out(U + '-iv-o', (iv * 100).toFixed(0) + '%');
+    DL.out(U + '-delta', 'call delta at S = ' + callDelta.toFixed(3));
+    DL.out(U + '-pin', 'pin probability = ' + (pinProb * 100).toFixed(1) + '%');
+    DL.out(U + '-dist', 'distance from K = ' + DL.num((S - K) / K * 100, 2) + '%');
+
+    /* weekend gaps: spot moves by the gap, then the option settles */
+    GAPS.forEach(function (mag, i) {
+      var exp = S * (1 + mag);
+      DL.out(U + '-x' + i, DL.num(exp, 2));
+      DL.out(U + '-c' + i, exp > K ? 'ITM · assigned' : 'OTM');
+      DL.out(U + '-p' + i, exp < K ? 'ITM · assigned' : 'OTM');
+    });
+  });
+
+  KS.addEventListener('input', function () { follow(); draw(); });
+  KS.addEventListener('change', function () { follow(); draw(); });
+  DL.bind([U + '-s', U + '-h', U + '-iv'], draw);
+})();
+</script>

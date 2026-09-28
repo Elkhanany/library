@@ -35,7 +35,7 @@ DOCS = os.path.join(ROOT, "docs")
 # Reading order of the library itself. A book absent from here still builds; it
 # simply sorts after the named ones, so adding a book cannot silently drop it.
 ORDER = ["newton-to-mtheory", "the-long-argument", "the-ages-of-thought",
-         "breast-cancer"]
+         "breast-cancer", "the-other-end-of-the-trade"]
 
 # GitHub Pages serves this repo as a PROJECT page, so every published URL carries
 # this prefix. It is the only absolute path anywhere in the library. A manifest's

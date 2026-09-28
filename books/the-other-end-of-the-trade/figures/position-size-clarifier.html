@@ -1,0 +1,138 @@
+<!--
+name: position size clarifier
+source: src/interactives/PositionSizeClarifier.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-port">portfolio</label>
+      <input type="range" id="{{uid}}-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="{{uid}}-port-o" for="{{uid}}-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-risk">risk per trade</label>
+      <input type="range" id="{{uid}}-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="{{uid}}-risk-o" for="{{uid}}-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-entry">entry</label>
+      <input type="range" id="{{uid}}-entry" min="10" max="6500" step="1" value="600">
+      <output id="{{uid}}-entry-o" for="{{uid}}-entry"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-stop">stop</label>
+      <input type="range" id="{{uid}}-stop" min="1" max="599" step="0.5" value="594">
+      <output id="{{uid}}-stop-o" for="{{uid}}-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mult">multiplier</label>
+      <input type="range" id="{{uid}}-mult" min="1" max="500" step="1" value="100">
+      <output id="{{uid}}-mult-o" for="{{uid}}-mult"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-margin">margin available</label>
+      <input type="range" id="{{uid}}-margin" min="10000" max="5000000" step="1000" value="500000">
+      <output id="{{uid}}-margin-o" for="{{uid}}-margin"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-drisk"></output></div>
+    <div class="ctrl"><output id="{{uid}}-dist"></output></div>
+    <div class="ctrl"><output id="{{uid}}-lpc"></output></div>
+    <div class="ctrl"><output id="{{uid}}-size"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-notional"></output></div>
+    <div class="ctrl"><output id="{{uid}}-npct"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ratio"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through stress test</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="{{uid}}-g2l"></td><td data-label="% of portfolio" id="{{uid}}-g2p"></td></tr>
+      <tr id="{{uid}}-g3"><td class="c-trial">3× gap</td><td data-label="Loss" id="{{uid}}-g3l"></td><td data-label="% of portfolio" id="{{uid}}-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One percent of risk is not one percent of capital.</b> Set the portfolio, the
+  share of it risked per trade, the entry, the stop and the contract multiplier. The position
+  size is the dollar risk over the loss per contract at the stop, rounded down, and it controls
+  size × entry × multiplier of notional: the defaults risk 1% of $250k and deploy 96% of it.
+  Risk-% controls what you lose if the stop holds; notional-% controls what happens if it does
+  not. The stress test prices a gap through the stop of two and three times the stop distance,
+  marking a loss above 3% or 5% of the portfolio, and the verdict sets the notional against the
+  margin available.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var stopBox = DL.$(U + '-stop');
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        entry = DL.val(U + '-entry'), multiplier = DL.val(U + '-mult'),
+        margin = DL.val(U + '-margin');
+    /* the stop slider ends a dollar under the entry, as the app's does; lowering
+       its end pulls the stop down with it, so the stop used is the stop shown */
+    var top = String(Math.max(entry - 1, 1));
+    if (stopBox.max !== top) stopBox.max = top;
+    var stop = parseFloat(stopBox.value);
+
+    var dollarRisk = portfolio * riskPct;
+    var stopDist = Math.max(entry - stop, 0.01);
+    var perContractLoss = stopDist * multiplier;
+    var positionSize = Math.max(Math.floor(dollarRisk / perContractLoss), 0);
+    var notional = positionSize * entry * multiplier;
+    var notionalPct = (notional / portfolio) * 100;
+    var gap2x = positionSize * stopDist * 2 * multiplier;
+    var gap3x = positionSize * stopDist * 3 * multiplier;
+    var gap2xPct = (gap2x / portfolio) * 100;
+    var gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (notional <= margin * 0.7) verdict = ['Margin: GREEN.', 'Within 70% of available margin.'];
+    else if (notional <= margin) verdict = ['Margin: YELLOW.', 'Uses 70–100% of margin.'];
+    else verdict = ['Margin: RED.', 'Exceeds available margin.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-entry-o', '$' + loc(entry));
+    DL.out(U + '-stop-o', '$' + loc(stop));
+    DL.out(U + '-mult-o', String(multiplier));
+    DL.out(U + '-margin-o', '$' + DL.num(margin / 1000, 0) + 'k');
+
+    DL.out(U + '-drisk', 'dollar risk = $' + loc(dollarRisk));
+    DL.out(U + '-dist', 'stop distance = $' + stopDist.toFixed(2));
+    DL.out(U + '-lpc', 'loss / contract = $' + loc(perContractLoss));
+    DL.out(U + '-size', 'position size = ' + DL.num(positionSize, 0));
+    DL.out(U + '-notional', 'notional deployed = $' + loc(notional));
+    DL.out(U + '-npct', 'notional % of portfolio = ' + notionalPct.toFixed(1) + '%');
+    /* with no position there is no notional to set the risk against */
+    DL.out(U + '-ratio', 'planned risk / size ratio = ' +
+           (notional > 0 ? (dollarRisk / notional * 100).toFixed(2) + '%' : '—'));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '\u2060$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '\u2060$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-entry', U + '-stop', U + '-mult', U + '-margin'], update);
+  DL.figure('fig-' + U, update);
+})();
+</script>

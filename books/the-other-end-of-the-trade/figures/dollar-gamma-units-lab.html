@@ -1,0 +1,127 @@
+<!--
+name: dollar gamma units lab
+source: src/interactives/DollarGammaUnitsLab.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot S</label>
+      <input type="range" id="{{uid}}-s" min="3000" max="8000" step="5" value="6000">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">strike K</label>
+      <input type="range" id="{{uid}}-k" min="3000" max="8000" step="5" value="6000">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-t">DTE</label>
+      <input type="range" id="{{uid}}-t" min="1" max="365" step="1" value="30">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV σ</label>
+      <input type="range" id="{{uid}}-iv" min="0.05" max="1" step="0.01" value="0.18">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-oi">open interest</label>
+      <input type="range" id="{{uid}}-oi" min="100" max="500000" step="100" value="10000">
+      <output id="{{uid}}-oi-o" for="{{uid}}-oi"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-m">multiplier</label>
+      <input type="range" id="{{uid}}-m" min="1" max="1000" step="1" value="100">
+      <output id="{{uid}}-m-o" for="{{uid}}-m"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer sign convention" id="{{uid}}-conv">
+      <label>convention</label>
+      <button type="button" data-v="0dte" class="on" aria-pressed="true">0DTE-era (call short)</button>
+      <button type="button" data-v="jpm" aria-pressed="false">JPM-era (call long)</button>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Unit</th><th>Formula</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Γ per share</td><td data-label="Formula">Black-Scholes gamma</td><td data-label="Value" id="{{uid}}-v0"></td></tr>
+      <tr><td class="c-trial">Γ per contract</td><td data-label="Formula">Γ × multiplier</td><td data-label="Value" id="{{uid}}-v1"></td></tr>
+      <tr><td class="c-trial">$Γ per $1 (1 contract)</td><td data-label="Formula">Γ × S × multiplier</td><td data-label="Value" id="{{uid}}-v2"></td></tr>
+      <tr><td class="c-trial">$Γ per 1% (1 contract)</td><td data-label="Formula">Γ × S² × 0.01 × multiplier</td><td data-label="Value" id="{{uid}}-v3"></td></tr>
+      <tr><td class="c-trial">Unsigned $Γ per 1%</td><td data-label="Formula">× open interest</td><td data-label="Value" id="{{uid}}-v4"></td></tr>
+      <tr><td class="c-trial">Signed (dealer perspective)</td><td data-label="Formula" id="{{uid}}-sg"></td><td data-label="Value" id="{{uid}}-v5"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>From gamma per share to dollars per 1% move.</b> One option's Black-Scholes
+  gamma (r = 4%) carried through the units of this section: per share, per contract, in dollars
+  per $1 of spot and per 1% move, then across the open interest and signed for the dealer. At the
+  defaults, an at-the-money SPX option at 6,000 with 30 days to run and 18% IV, one contract
+  carries about $46.2k of dollar gamma per 1% move, the $46,000 of the text. The two conventions
+  put the dealer short the calls (0DTE era) or long them (JPM era), as in Section 8A.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['s', 'k', 't', 'iv', 'oi', 'm'].map(function (k) { return U + '-' + k; });
+  var conv = DL.seg(U + '-conv', update);
+
+  /* the app's fmt: $, then k, M or B past a thousand, two decimals */
+  function fmt(v) {
+    /* a word joiner keeps the minus on the line of its number */
+    var a = Math.abs(v), s = v < 0 ? DL.MINUS + '⁠' : '';
+    if (a >= 1e9) return s + '$' + DL.num(a / 1e9, 2) + 'B';
+    if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return s + '$' + (a / 1e3).toFixed(2) + 'k';
+    return s + '$' + a.toFixed(2);
+  }
+  /* toExponential(2), as the app shows gamma, written 1.28 × 10⁻³ */
+  var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+              '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  function sci(x) {
+    if (!isFinite(x)) return '—';
+    if (x === 0) return '0.00';
+    var p = x.toExponential(2).split('e'), e = String(parseInt(p[1], 10));
+    /* no-break spaces: a phone's narrow cell must not split the number */
+    return p[0] + ' × 10' + e.replace(/[-0-9]/g, function (ch) { return SUP[ch]; });
+  }
+
+  function update() {
+    var spot = DL.val(U + '-s'), strike = DL.val(U + '-k'), dte = DL.val(U + '-t'),
+        iv = DL.val(U + '-iv'), oi = DL.val(U + '-oi'), multiplier = DL.val(U + '-m');
+
+    /* the widget's chain, r = 4%, q = 0 */
+    var T = dte / 365;
+    var gPerShare = DL.bsGamma(spot, strike, T, iv);
+    var gPerContract = gPerShare * multiplier;
+    var dollarPerOnePerContract = gPerShare * spot * multiplier;
+    var dollarPerPctPerContract = gPerContract * spot * spot * 0.01;
+    var aggregate = dollarPerPctPerContract * oi;
+    var sign = conv() === '0dte' ? -1 : 1;
+    var signedAggregate = aggregate * sign;
+    /* gamma is never negative, so the dealer's side of the calls sets the sign */
+    var longGamma = sign > 0;
+
+    DL.out(U + '-s-o', DL.num(spot, 0));
+    DL.out(U + '-k-o', DL.num(strike, 0));
+    DL.out(U + '-t-o', dte + 'd');
+    DL.out(U + '-iv-o', (iv * 100).toFixed(0) + '%');
+    DL.out(U + '-oi-o', DL.num(oi, 0));
+    DL.out(U + '-m-o', String(multiplier));
+
+    DL.out(U + '-v0', sci(gPerShare));
+    DL.out(U + '-v1', sci(gPerContract));
+    DL.out(U + '-v2', fmt(dollarPerOnePerContract));
+    DL.out(U + '-v3', fmt(dollarPerPctPerContract));
+    DL.out(U + '-v4', fmt(aggregate));
+    DL.out(U + '-sg', '× dealer sign (' + (sign < 0 ? DL.MINUS : '+') + '1)');
+    DL.out(U + '-v5', fmt(signedAggregate));
+    DL.out(U + '-vk', longGamma ? 'Long γ, stabilizing.' : 'Short γ, destabilizing.');
+    DL.out(U + '-vt', 'Signed from the dealer\'s side, the open interest carries ' +
+           fmt(signedAggregate) + ' of dollar gamma per 1% move.');
+  }
+  DL.bind(IDS, update);
+  DL.figure('fig-' + U, update);
+})();
+</script>

@@ -1,0 +1,133 @@
+<!--
+name: slippage cost calculator
+source: src/interactives/SlippageCostCalculator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="150"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">trades per year</label>
+      <input type="range" id="{{uid}}-n" min="1" max="1000" step="1" value="120">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-notional">notional per trade</label>
+      <input type="range" id="{{uid}}-notional" min="1000" max="1000000" step="1000" value="50000">
+      <output id="{{uid}}-notional-o" for="{{uid}}-notional"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-spread">bid-ask spread</label>
+      <input type="range" id="{{uid}}-spread" min="0.5" max="50" step="0.5" value="4">
+      <output id="{{uid}}-spread-o" for="{{uid}}-spread"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-impact">market impact</label>
+      <input type="range" id="{{uid}}-impact" min="0" max="50" step="0.5" value="2">
+      <output id="{{uid}}-impact-o" for="{{uid}}-impact"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-comm">commission per trade</label>
+      <input type="range" id="{{uid}}-comm" min="0" max="20" step="0.1" value="1">
+      <output id="{{uid}}-comm-o" for="{{uid}}-comm"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sharpe">paper Sharpe</label>
+      <input type="range" id="{{uid}}-sharpe" min="0.2" max="3" step="0.05" value="1">
+      <output id="{{uid}}-sharpe-o" for="{{uid}}-sharpe"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-ret">paper annual return</label>
+      <input type="range" id="{{uid}}-ret" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="{{uid}}-ret-o" for="{{uid}}-ret"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-rtbps"></output></div>
+    <div class="ctrl"><output id="{{uid}}-rtusd"></output></div>
+    <div class="ctrl"><output id="{{uid}}-annual"></output></div>
+    <div class="ctrl"><output id="{{uid}}-allin"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-paper"></output></div>
+    <div class="ctrl"><output id="{{uid}}-drag"></output></div>
+    <div class="ctrl"><output id="{{uid}}-net"></output></div>
+    <div class="ctrl"><output id="{{uid}}-nsharpe"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>What execution takes from a paper return.</b> Every trade is a round trip
+  (RT): half the bid-ask spread and the market impact on each leg, plus a commission each way.
+  A year of round trips is charged against the capital, taken as one trade's notional: that is
+  the friction drag, and the net Sharpe is the paper Sharpe scaled by net over paper return. The
+  verdict turns yellow when the drag passes 20% of the paper return and red past 50%.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['n', 'notional', 'spread', 'impact', 'comm', 'sharpe', 'ret'];
+
+  function verdict(ratio) {
+    if (ratio < 0.20) return ['Green.', 'Friction drag is under 20% of the paper return: ' +
+                              'the strategy survives its execution costs.'];
+    if (ratio < 0.50) return ['Yellow.', 'Friction is 20 to 50% of the paper return: the ' +
+                              'strategy is degraded but viable. Consider lower turnover.'];
+    return ['Red.', 'Friction exceeds 50% of the paper return: the strategy is mostly paying ' +
+            'execution costs to the wholesaler. Re-evaluate.'];
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var tradesPerYear = DL.val(U + '-n'), notionalPerTrade = DL.val(U + '-notional'),
+        spreadBps = DL.val(U + '-spread'), impactBps = DL.val(U + '-impact'),
+        commPerTrade = DL.val(U + '-comm'), paperSharpe = DL.val(U + '-sharpe'),
+        paperReturn = DL.val(U + '-ret');
+
+    /* the app's arithmetic, line for line */
+    var halfSpread = spreadBps / 2;
+    var roundTripBps = (halfSpread * 2) + (impactBps * 2);
+    var slipDollarPerTrade = (roundTripBps / 10000) * notionalPerTrade;
+    var annualSlipDollar = (slipDollarPerTrade + commPerTrade * 2) * tradesPerYear;
+    var annualTurnover = notionalPerTrade * tradesPerYear;
+    var annualSlipBps = annualTurnover > 0 ? (annualSlipDollar / annualTurnover) * 10000 : 0;
+    var slipDragOnReturn = annualSlipDollar / Math.max(notionalPerTrade, 1);
+    var netReturn = paperReturn - slipDragOnReturn;
+    var sharpeShrinkage = paperReturn > 0 ? netReturn / paperReturn : 0;
+    var netSharpe = paperSharpe * sharpeShrinkage;
+    var ratio = slipDragOnReturn / Math.max(paperReturn, 1e-6);
+
+    /* the paper return, what friction takes, and what is left */
+    var span = Math.max(paperReturn, slipDragOnReturn, Math.abs(netReturn)) * 1.15;
+    var plot = new NMT.Plot(c, { xmin: -span, xmax: span, ymin: 0, ymax: 3.2,
+                                 pad: { l: 14, r: 14, t: 8, b: 30 }, grid: false });
+    DL.axes(plot, { nx: 6, y: false, yAxis: false,
+                    x: function (v, st) { return DL.pct(v, st * 100 >= 1 ? 0 : 1); } });
+    DL.hbars(plot, [2.45], [paperReturn], { h: 0.55, color: DL.fade(DL.color('familiar'), 0.7) });
+    DL.hbars(plot, [1.6], [-slipDragOnReturn], { h: 0.55, color: DL.fade(DL.color('plain'), 0.7) });
+    DL.hbars(plot, [0.75], [netReturn], { h: 0.55, color: DL.color(netReturn >= 0 ? 'accent' : 'plain') });
+    DL.vline(plot, 0, { color: DL.color('ink-faint') });
+    plot.text(0, 2.45, 'paper return', { dx: -6, dy: 4, baseline: 'middle', align: 'right',
+                                         color: DL.color('ink-soft') });
+    plot.text(0, 1.6, 'friction drag', { dx: 6, dy: 4, baseline: 'middle', color: DL.color('ink-soft') });
+    plot.text(0, 0.75, 'net return', { dx: netReturn >= 0 ? -6 : 6, dy: 4, baseline: 'middle',
+                                       align: netReturn >= 0 ? 'right' : 'left', color: DL.color('ink') });
+
+    var v = verdict(ratio);
+    DL.out(U + '-n-o', String(tradesPerYear));
+    DL.out(U + '-notional-o', '$' + (notionalPerTrade / 1000).toFixed(0) + 'k');
+    DL.out(U + '-spread-o', spreadBps.toFixed(1) + ' bps');
+    DL.out(U + '-impact-o', impactBps.toFixed(1) + ' bps');
+    DL.out(U + '-comm-o', DL.usd(commPerTrade, 2));
+    DL.out(U + '-sharpe-o', paperSharpe.toFixed(2));
+    DL.out(U + '-ret-o', (paperReturn * 100).toFixed(0) + '%');
+    DL.out(U + '-rtbps', 'RT cost = ' + roundTripBps.toFixed(1) + ' bps');
+    DL.out(U + '-rtusd', 'RT cost = ' + DL.usd(slipDollarPerTrade, 2));
+    DL.out(U + '-annual', 'annual friction = ' + DL.usd(annualSlipDollar, 0));
+    DL.out(U + '-allin', 'all-in RT cost = ' + DL.num(annualSlipBps, 0) + ' bps');
+    DL.out(U + '-paper', 'paper return = ' + DL.num(paperReturn * 100, 1) + '%');
+    DL.out(U + '-drag', 'friction drag = ' + DL.num(slipDragOnReturn * 100, 2) + '%');
+    DL.out(U + '-net', 'net return = ' + DL.num(netReturn * 100, 2) + '%');
+    DL.out(U + '-nsharpe', 'net Sharpe = ' + DL.num(netSharpe, 2));
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+  });
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
+})();
+</script>
