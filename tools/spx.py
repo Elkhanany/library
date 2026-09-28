@@ -802,7 +802,7 @@ def ideas_file(m, ideas):
     return "\n".join(head + out).rstrip() + "\n"
 
 
-def generate(m, draft=False, only=None):
+def generate(m, draft=False, only=None, preview=None):
     figs = Figures()
     gloss, errs = glossary()
     out, placed, maths, ideas, chapters = {}, {}, {}, {}, {}
@@ -810,6 +810,8 @@ def generate(m, draft=False, only=None):
         if only and c["slug"] not in only:
             continue
         text = library.read(m.path(c)) if m.written(c) else None
+        if preview is not None and c["slug"] not in preview:
+            text = None
         if text is None and c["slug"] != "r1" and not draft:
             if not only:
                 errs.append("%s: chapters/%s.md is not written" % (c["num"], c["slug"]))
@@ -923,11 +925,17 @@ def facts_of(text):
     return nums, names
 
 
+def overlaps(a, b):
+    """Whether two source references share text: equal, or one a section of
+    the other ('spx:2' and 'spx:2.3', 'spx:0' and 'spx:0/Where this fits')."""
+    return a == b or b.startswith(a + ".") or b.startswith(a + "/") \
+        or a.startswith(b + ".") or a.startswith(b + "/")
+
+
 def facts(m, slug, src):
     c = m.by_slug.get(slug)
     if c is None:
         sys.exit("no chapter %r" % slug)
-    notes = library.read(os.path.join(NOTES, slug + ".md")) if os.path.exists(os.path.join(NOTES, slug + ".md")) else ""
     missing = 0
     for ref in c["sources"]:
         text = src.get(ref)
@@ -935,9 +943,13 @@ def facts(m, slug, src):
             print("  error  %s: no source %s" % (c["num"], ref))
             missing += 1
             continue
-        # a source shared by several chapters is covered by any of them
-        sharing = [d for d in m.chapters if ref in d["sources"] and m.written(d)]
+        # A source shared by several chapters is covered by any of them, and by
+        # any of their notes; 'spx:2' is shared with a chapter taking 'spx:2.3'.
+        sharing = [d for d in m.chapters if m.written(d)
+                   and any(overlaps(ref, r) for r in d["sources"])]
         have = " ".join(library.read(m.path(d)) for d in sharing)
+        notes = " ".join(library.read(os.path.join(NOTES, d["slug"] + ".md")) for d in sharing
+                         if os.path.exists(os.path.join(NOTES, d["slug"] + ".md")))
         have_nums = canon_numbers(have)
         nums, names = facts_of(text)
         note_nums = canon_numbers(notes)
@@ -1048,6 +1060,8 @@ def main():
     ap.add_argument("--check", action="store_true", help="exit 1 if anything generated is out of date")
     ap.add_argument("--verify", action="store_true", help="prove every word of the markdown reaches the page")
     ap.add_argument("--draft", action="store_true", help="a chapter not yet written becomes a stub")
+    ap.add_argument("--preview", nargs="+", metavar="SLUG",
+                    help="build these chapters and stub every other one (a local preview; not for commit)")
     ap.add_argument("--lint", nargs="+", metavar="SLUG", help="check these chapters")
     ap.add_argument("--facts", nargs="+", metavar="SLUG", help="source numbers and names a chapter lacks")
     ap.add_argument("--sources", metavar="SLUG", help="print what a chapter is rewritten from")
@@ -1073,8 +1087,9 @@ def main():
     if args.lint:
         sys.exit(1 if lint(m, args.lint) else 0)
 
-    out, errs, placed, chapters = generate(m, draft=args.draft)
-    if not args.draft:
+    preview = set(args.preview) if args.preview else None
+    out, errs, placed, chapters = generate(m, draft=args.draft or bool(preview), preview=preview)
+    if not (args.draft or preview):
         for fid in sorted({c2 for p in m.parts for c in p["chapters"] for c2 in c["figures"]}):
             if fid not in placed:
                 errs.append("figures/%s.html is placed by no chapter" % fid)

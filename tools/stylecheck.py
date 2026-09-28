@@ -246,7 +246,9 @@ RULES = [
          msg="Headings take sentence case.",
          link='https://developers.google.com/style/capitalization'),
     dict(id='first-person-plural', level='warning',
-         find=rx(r"(?<![\w-])(?:we|we're|we've|us|our|ours|let's)(?![\w-])"),
+         # "US", the country, is not "us": the pronoun is matched in any case
+         # except all capitals.
+         find=rx(r"(?<![\w-])(?:we|we're|we've|(?!US\b)us|our|ours|let's)(?![\w-])"),
          msg="Avoid the first person plural. Say who did the thing, or recast "
              "so that nobody has to be named.",
          link='https://developers.google.com/style/pronouns'),
