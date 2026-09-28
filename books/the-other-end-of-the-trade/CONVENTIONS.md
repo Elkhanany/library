@@ -109,6 +109,10 @@ A block quote (`>`) is for a quotation from a source, with its attribution on th
 \[ \mathbb{E}[X] = \sum_i p_i\, x_i \]
 ```
 
+A display must fit a phone: keep each line of it to about 30 characters of maths. Break a
+longer one over lines with `\begin{aligned} ... \\ ... \end{aligned}`, aligned at `&=`, or
+split it into two displays with a sentence between them.
+
 A display may carry a label on the line after it, `{#eq:ev}`, and prose can then cite it as
 `[eq:ev]`, which becomes its number, "(1C.2)". Labels work within a chapter only. Never use `$`
 for maths: the dollar sign is money in this book. Inside maths, write money as `\$`.
