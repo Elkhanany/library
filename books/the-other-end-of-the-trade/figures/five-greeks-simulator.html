@@ -1,0 +1,151 @@
+<!--
+name: five Greeks simulator
+source: src/interactives/FiveGreeksSimulator.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot S</label>
+      <input type="range" id="{{uid}}-s" min="70" max="130" step="0.5" value="100">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">strike K</label>
+      <input type="range" id="{{uid}}-k" min="70" max="130" step="1" value="100">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-t">days to expiry</label>
+      <input type="range" id="{{uid}}-t" min="1" max="180" step="1" value="30">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sig">implied vol σ</label>
+      <input type="range" id="{{uid}}-sig" min="0.05" max="0.8" step="0.01" value="0.25">
+      <output id="{{uid}}-sig-o" for="{{uid}}-sig"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Option type" id="{{uid}}-type">
+      <label>option</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+    <div class="ctrl"><output id="{{uid}}-prem"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Greek</th><th>Value</th><th>Measures</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Δ delta</td><td data-label="Value" id="{{uid}}-g0"></td><td data-label="Measures">∂V/∂S, share-equivalent exposure (× 100 per contract)</td></tr>
+      <tr><td class="c-trial">Γ gamma</td><td data-label="Value" id="{{uid}}-g1"></td><td data-label="Measures">∂Δ/∂S, how fast delta changes</td></tr>
+      <tr><td class="c-trial">Θ theta</td><td data-label="Value" id="{{uid}}-g2"></td><td data-label="Measures">∂V/∂t, daily P&amp;L from time passing</td></tr>
+      <tr><td class="c-trial">ν vega</td><td data-label="Value" id="{{uid}}-g3"></td><td data-label="Measures">∂V/∂σ, P&amp;L per 1 vol point</td></tr>
+      <tr><td class="c-trial">ρ rho</td><td data-label="Value" id="{{uid}}-g4"></td><td data-label="Measures">∂V/∂r, P&amp;L per 1% rate change</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-sh">what-if spot shift</label>
+      <input type="range" id="{{uid}}-sh" min="-10" max="10" step="0.1" value="0">
+      <output id="{{uid}}-sh-o" for="{{uid}}-sh"></output>
+    </div>
+  </div>
+  <canvas id="{{uid}}-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-fo"></output></div>
+    <div class="ctrl"><output id="{{uid}}-so"></output></div>
+    <div class="ctrl"><output id="{{uid}}-full"></output></div>
+    <div class="ctrl"><output id="{{uid}}-err"></output></div>
+  </div>
+  <figcaption><b>Five Greeks, and how far delta and gamma reach.</b> The Black-Scholes Greeks of
+  one option (r = 4%, no dividend) in trading-screen units: theta per calendar day, vega per vol
+  point, rho per 1% of rate. The chart moves spot by up to $10 either way and sets the full
+  reprice against delta alone and against delta plus the ½Γ·ΔS² correction. For a small move
+  delta captures most of the change; what the gamma term leaves over, with vol and time held
+  fixed, comes from speed and higher spot derivatives, and it grows with the move and with lower
+  vol or fewer days.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['s', 'k', 't', 'sig', 'sh'];
+  var type = DL.seg(U + '-type', function () { draw(); });
+
+  /* a signed dollar amount, as the app writes its what-if readouts */
+  function dollars(x, d) {
+    var a = Math.abs(x);
+    return (x < 0 && Number(a.toFixed(d)) !== 0 ? DL.MINUS : '+') + '$' + DL.num(a, d);
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var S = DL.val(U + '-s'), K = DL.val(U + '-k'), T = DL.val(U + '-t'),
+        sigma = DL.val(U + '-sig'), shift = DL.val(U + '-sh'), opt = type();
+
+    /* the app's Greeks: r = 4%, q = 0; vega per vol point, theta per
+       calendar day, rho per 1% of rate */
+    var Tyr = T / 365, r = 0.04;
+    var D1 = DL.d1(S, K, Tyr, sigma, r, 0);
+    var D2 = D1 - sigma * Math.sqrt(Tyr);
+    var delta = DL.bsDelta(S, K, Tyr, sigma, opt, r, 0);
+    var gamma = DL.bsGamma(S, K, Tyr, sigma, r, 0);
+    var vega = (S * DL.phi(D1) * Math.sqrt(Tyr)) / 100;
+    var theta = (function () {
+      if (Tyr <= 0) return 0;
+      var term1 = -(S * DL.phi(D1) * sigma) / (2 * Math.sqrt(Tyr));
+      if (opt === 'call') return (term1 - r * K * Math.exp(-r * Tyr) * DL.N(D2)) / 365;
+      return (term1 + r * K * Math.exp(-r * Tyr) * DL.N(-D2)) / 365;
+    })();
+    var rho = opt === 'call' ? (K * Tyr * Math.exp(-r * Tyr) * DL.N(D2)) / 100
+                             : (-K * Tyr * Math.exp(-r * Tyr) * DL.N(-D2)) / 100;
+    var price = DL.bsPrice(S, K, Tyr, sigma, opt, r, 0);
+
+    /* first order, second order and the full reprice, for any shift */
+    function full(x) { return DL.bsPrice(S + x, K, Tyr, sigma, opt, r, 0) - price; }
+    function first(x) { return delta * x; }
+    function second(x) { return delta * x + 0.5 * gamma * x * x; }
+
+    var xs = [], f = [], a = [], b = [];
+    for (var i = 0; i <= 200; i++) {
+      var x = -10 + 20 * i / 200;
+      xs.push(x); f.push(full(x)); a.push(first(x)); b.push(second(x));
+    }
+    var all = f.concat(a, b), lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+    var room = Math.max(hi - lo, 0.5) * 0.08;
+    var p = new NMT.Plot(c, { xmin: -10, xmax: 10, ymin: lo - room, ymax: hi + room,
+                              pad: { l: 48, r: 14, t: 26, b: 30 }, grid: true });
+    DL.axes(p, { xs: [-10, -5, 0, 5, 10], ny: 5,
+                 x: function (v) { return v === 0 ? '$0' : dollars(v, 0); },
+                 y: function (v, st) { return DL.usd(v, st < 1 ? (st < 0.1 ? 2 : 1) : 0); } });
+    var cF = DL.color('insight'), cA = DL.color('familiar'), cB = DL.color('accent');
+    p.seg(shift, p.o.ymin, shift, p.o.ymax, { color: DL.color('ink-faint'), width: 1, dash: [3, 3] });
+    DL.line(p, xs, a, { color: cA, width: 1.6, dash: [5, 4] });
+    DL.line(p, xs, b, { color: cB, width: 1.6 });
+    DL.line(p, xs, f, { color: cF, width: 2.2 });
+    p.dot(shift, first(shift), { r: 3.5, color: cA, ring: true });
+    p.dot(shift, second(shift), { r: 3.5, color: cB, ring: true });
+    p.dot(shift, full(shift), { r: 3.5, color: cF, ring: true });
+    p.g.textAlign = 'left';   /* DL.legend keeps whatever alignment was set last */
+    DL.legend(p, [{ label: 'full reprice', color: cF },
+                  { label: 'Δ·ΔS', color: cA, dash: [5, 4] },
+                  { label: '+ ½Γ·ΔS²', color: cB }], { dx: -44, dy: -26 });
+
+    var fullDeltaP = full(shift), firstOrderDeltaP = first(shift),
+        secondOrderDeltaP = second(shift), higherOrderError = fullDeltaP - secondOrderDeltaP;
+
+    DL.out(U + '-s-o', DL.usd(S, 1));
+    DL.out(U + '-k-o', DL.usd(K, 0));
+    DL.out(U + '-t-o', T + 'd');
+    DL.out(U + '-sig-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-prem', 'premium = ' + DL.usd(price, 2) + ' per share');
+    DL.out(U + '-g0', DL.num(delta, 3));
+    DL.out(U + '-g1', DL.num(gamma, 4));
+    DL.out(U + '-g2', DL.num(theta, 3));
+    DL.out(U + '-g3', DL.num(vega, 3));
+    DL.out(U + '-g4', DL.num(rho, 3));
+    DL.out(U + '-sh-o', dollars(shift, 1));
+    DL.out(U + '-fo', 'Δ·ΔS = ' + dollars(firstOrderDeltaP, 3));
+    DL.out(U + '-so', 'Δ·ΔS + ½Γ·ΔS² = ' + dollars(secondOrderDeltaP, 3));
+    DL.out(U + '-full', 'full reprice = ' + dollars(fullDeltaP, 3));
+    DL.out(U + '-err', 'higher-order error = ' + dollars(higherOrderError, 4));
+  });
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
+})();
+</script>

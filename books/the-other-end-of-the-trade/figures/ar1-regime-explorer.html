@@ -1,0 +1,166 @@
+<!--
+name: AR(1) regime explorer
+source: src/interactives/AR1RegimeExplorer.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="290"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-phi">weight φ</label>
+      <input type="range" id="{{uid}}-phi" min="-0.9" max="0.95" step="0.01" value="0">
+      <output id="{{uid}}-phi-o" for="{{uid}}-phi"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sigma">innovation vol σ</label>
+      <input type="range" id="{{uid}}-sigma" min="0.005" max="0.05" step="0.001" value="0.01">
+      <output id="{{uid}}-sigma-o" for="{{uid}}-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-steps">steps per path</label>
+      <input type="range" id="{{uid}}-steps" min="100" max="500" step="10" value="250">
+      <output id="{{uid}}-steps-o" for="{{uid}}-steps"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Paths" id="{{uid}}-paths">
+      <label>paths</label>
+      <button type="button" data-v="10" aria-pressed="false">10</button>
+      <button type="button" data-v="50" class="on" aria-pressed="true">50</button>
+      <button type="button" data-v="200" aria-pressed="false">200</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">seed</label>
+      <input type="number" id="{{uid}}-seed" value="42" step="1">
+      <button type="button" id="{{uid}}-regen">regenerate</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-rho"></output></div>
+    <div class="ctrl"><output id="{{uid}}-hurst"></output></div>
+    <div class="ctrl"><output id="{{uid}}-abs"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One weight, three regimes.</b> Simulated price paths whose log returns follow
+  an AR(1) process, r<sub>t</sub> = φ × r<sub>t−1</sub> + ε<sub>t</sub>, with innovations of
+  volatility σ, all starting at 100. Push φ toward 1 and the paths fan out; push it negative
+  and they stay closer to their start than a random walk does. The readouts estimate the lag-1
+  autocorrelation and the Hurst exponent from the first path.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var seedBox = DL.$(U + '-seed');
+  var paths = DL.seg(U + '-paths', function () { draw(); });
+
+  /* the app's paths: each its own Mulberry32 stream, returns r = phi r_prev + eps */
+  var memo = { key: null };
+  function simulate(phi, sigma, numPaths, numSteps, seed) {
+    var key = [phi, sigma, numPaths, numSteps, seed].join();
+    if (memo.key === key) return memo.out;
+    var out = [];
+    for (var p = 0; p < numPaths; p++) {
+      var r = DL.rng((seed + p * 7919) >>> 0), rPrev = 0, price = 100, path = [100];
+      for (var i = 1; i <= numSteps; i++) {
+        var ret = phi * rPrev + sigma * DL.gauss(r);
+        rPrev = ret;
+        price *= Math.exp(ret);
+        path.push(price);
+      }
+      out.push(path);
+    }
+    memo = { key: key, out: out };
+    return out;
+  }
+  function logRets(path) {
+    var rets = [];
+    for (var i = 1; i < path.length; i++) rets.push(Math.log(path[i] / path[i - 1]));
+    return rets;
+  }
+  /* empirical lag-1 autocorrelation of the first path's returns */
+  function rho(rets) {
+    if (rets.length < 2) return 0;
+    var mean = rets.reduce(function (a, b) { return a + b; }, 0) / rets.length, num = 0, den = 0, i;
+    for (i = 1; i < rets.length; i++) num += (rets[i] - mean) * (rets[i - 1] - mean);
+    for (i = 0; i < rets.length; i++) den += (rets[i] - mean) * (rets[i] - mean);
+    return den > 0 ? num / den : 0;
+  }
+  /* Hurst exponent from the variance ratio at lag k: VR(k) = k^(2H - 1) */
+  function hurst(rets) {
+    var k = Math.min(8, Math.floor(rets.length / 4));
+    if (k < 2) return 0.5;
+    var v1 = rets.reduce(function (a, x) { return a + x * x; }, 0) / rets.length, agg = [];
+    for (var i = 0; i + k <= rets.length; i++) {
+      var s = 0;
+      for (var j = 0; j < k; j++) s += rets[i + j];
+      agg.push(s);
+    }
+    var vk = agg.reduce(function (a, x) { return a + x * x; }, 0) / agg.length;
+    var ratio = vk / (k * v1);
+    if (ratio <= 0) return 0.5;
+    return (Math.log(ratio) + Math.log(k)) / (2 * Math.log(k));
+  }
+  /* The app's four regimes. It calls every |phi| >= 0.85 near-non-stationary,
+     but its own paths narrow as phi goes toward -0.9 (the Hurst estimate
+     falls below zero); only phi >= 0.85 fans out faster than a random walk,
+     so the negative end reads as the mean reversion it is. */
+  function regime(phi) {
+    if (phi >= 0.85) return ['plain', 'Near-non-stationary.',
+      'φ approaches 1. Variance scales faster than linearly with time; forecasts diverge. ' +
+      'AR(1) loses predictive validity; handling it needs GARCH or regime-switching.'];
+    if (phi > 0.3) return ['plain', 'Momentum, trending.',
+      'Positive autocorrelation. Up-moves predict more up-moves; down-moves predict more ' +
+      'down-moves. Runs persist longer than a random walk would imply. Empirically rare at ' +
+      'daily SPX scale; common at 1-12 month cross-asset.'];
+    if (phi < -0.3) return ['insight', 'Mean reversion.',
+      'Negative autocorrelation. Up-moves predict pullbacks; down-moves predict bounces. ' +
+      'Characteristic of positive-GEX intraday SPX and of multi-week individual equity overshoots.'];
+    return ['familiar', 'Random walk regime.',
+      'Near-zero autocorrelation. The next move is statistically independent of the last. ' +
+      'No exploitable signal at this horizon. Frictions (spread, slippage) will eat any ' +
+      'attempted strategy operating here.'];
+  }
+  function seedNow() { return Number(seedBox.value) || 0; }
+  function tick(v) {
+    return Math.abs(v) >= 1e6 ? v.toExponential(1).replace('e+', 'e') : DL.num(v, 1);
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var phi = DL.val(U + '-phi'), sigma = DL.val(U + '-sigma'), steps = DL.val(U + '-steps'),
+        n = parseInt(paths(), 10), seed = seedNow();
+    var ps = simulate(phi, sigma, n, steps, seed);
+
+    var lo = Infinity, hi = -Infinity;
+    ps.forEach(function (a) { a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; }); });
+    var pad = (hi - lo) * 0.05 || 1;
+    lo -= pad; hi += pad;
+    var ys = [0, 1, 2, 3, 4, 5].map(function (i) { return lo + i / 5 * (hi - lo); });
+    var xs = [0, 0.25, 0.5, 0.75, 1].map(function (f) { return f * steps; });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: steps, ymin: lo, ymax: hi,
+                              pad: { l: 48, r: 14, t: 12, b: 34 }, xlabel: 'step' });
+    DL.axes(p, { xs: xs, ys: ys, x: function (v) { return String(Math.round(v)); }, y: tick });
+    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+
+    var role = phi > 0.3 ? 'plain' : phi < -0.3 ? 'insight' : 'familiar';
+    var col = DL.fade(DL.color(role), Math.max(0.1, 0.7 / Math.sqrt(n)));
+    var t = ps[0].map(function (_, i) { return i; });
+    ps.forEach(function (a) { DL.line(p, t, a, { color: col, width: n > 50 ? 0.8 : 1.1 }); });
+    p.text(0, hi, 'φ = ' + DL.num(phi, 2) + ' · ' + n + ' paths',
+           { dx: 6, dy: 16, color: DL.color(role) });
+
+    var rets = logRets(ps[0]), g = regime(phi);
+    DL.out(U + '-phi-o', DL.num(phi, 2));
+    DL.out(U + '-sigma-o', DL.num(sigma * 100, 1) + '%');
+    DL.out(U + '-steps-o', String(steps));
+    DL.out(U + '-rho', 'empirical ρ (lag 1) = ' + DL.num(rho(rets), 3));
+    DL.out(U + '-hurst', 'Hurst H (path 0) = ' + DL.num(hurst(rets), 2));
+    DL.out(U + '-abs', '|φ| = ' + DL.num(Math.abs(phi), 2));
+    DL.out(U + '-vk', g[1]);
+    DL.out(U + '-vt', g[2]);
+  });
+  DL.$(U + '-regen').addEventListener('click', function () {
+    seedBox.value = String((seedNow() + 1) | 0);
+    draw();
+  });
+  DL.bind([U + '-phi', U + '-sigma', U + '-steps', U + '-seed'], draw);
+})();
+</script>

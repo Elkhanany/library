@@ -1,0 +1,132 @@
+<!--
+name: stage classifier
+source: src/interactives/StageClassifier.jsx
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">long MA period</label>
+      <input type="range" id="{{uid}}-n" min="15" max="60" step="1" value="30">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-seed">tape seed</label>
+      <input type="range" id="{{uid}}-seed" min="1" max="30" step="1" value="7">
+      <output id="{{uid}}-seed-o" for="{{uid}}-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-last"></output></div>
+    <div class="ctrl"><output id="{{uid}}-act"></output></div>
+  </div>
+  <figcaption><b>The classifier, bar by bar.</b> A synthetic 350-bar tape, generated from a seed
+  with a base, a markup, a pullback, a continuation, a distribution, a markdown and a new base.
+  The price is drawn with its long moving average, and each bar's background is the stage the
+  classifier's rules assign to it. Change the long-MA period or the seed to test how robust the
+  classification is, and watch for flicker between adjacent stages at the
+  transitions.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LONG = DL.$(U + '-n'), SEED = DL.$(U + '-seed');
+  var STAGES = {
+    1: { name: 'Basing', role: 'ink-faint', action: 'PATIENCE' },
+    2: { name: 'Markup', role: 'insight', action: 'BUY PULLBACKS' },
+    3: { name: 'Distribution', role: 'warn', action: 'TIGHTEN STOPS' },
+    4: { name: 'Markdown', role: 'plain', action: "DON'T BUY DIPS" }
+  };
+
+  /* the app's classifyStage, rule for rule */
+  function classify(d, i, longN, sma, ema10, atr14, adxArr) {
+    if (i < longN + 10) return null;
+    var longVal = sma[i], longPrev = sma[i - 5];
+    if (longVal == null || longPrev == null) return null;
+    var slope = (longVal - longPrev) / 5;
+    var slopeNorm = slope / (atr14[i] || 1);
+    var above = d[i].close > longVal;
+    var adxVal = adxArr[i] != null ? adxArr[i] : 15;
+    var e10Slope = (ema10[i] - ema10[i - 5]) / 5;
+    if (slopeNorm > 0.05 && above && adxVal > 18) return 2;
+    if (slopeNorm < -0.05 && !above && adxVal > 18) return 4;
+    if (Math.abs(slopeNorm) < 0.05 && above && e10Slope < 0) return 3;
+    if (Math.abs(slopeNorm) < 0.05) return 1;
+    if (slopeNorm > 0) return above ? 2 : 1;
+    return above ? 3 : 4;
+  }
+
+  /* the tape and its fixed-period indicators, made once per seed */
+  var tape = { seed: null };
+  function load() {
+    var s = parseInt(SEED.value, 10);
+    if (tape.seed !== s) {
+      var d = DL.ohlc(350, s);
+      tape = { seed: s, d: d, ema10: DL.ema(d, 10), atr14: DL.atr(d, 14), adx: DL.adx(d, 14).adx };
+    }
+    return tape;
+  }
+
+  /* the key, wrapped onto as many rows as the width needs, above the plot */
+  function keyLayout(g, left, right) {
+    var at = [], x = left, row = 0;
+    [1, 2, 3, 4].forEach(function (k) {
+      var text = 'Stage ' + k + ' · ' + STAGES[k].name, w = 14 + g.measureText(text).width;
+      if (x > left && x + w > right) { row++; x = left; }
+      at.push({ k: k, text: text, x: x, row: row });
+      x += w + 16;
+    });
+    return at;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var t = load(), d = t.d, longN = parseInt(LONG.value, 10);
+    var sma = DL.sma(d, longN);
+    var stages = d.map(function (_, i) { return classify(d, i, longN, sma, t.ema10, t.atr14, t.adx); });
+    var close = d.map(function (b) { return b.close; }), xs = d.map(function (_, i) { return i; });
+
+    var font = '11px ' + DL.color('sans');
+    var g0 = c.getContext('2d');
+    g0.font = font;
+    var key = keyLayout(g0, 40, (c.clientWidth || 640) - 12);
+    var rows = key[key.length - 1].row + 1;
+
+    var lo = Math.min.apply(null, close) * 0.98, hi = Math.max.apply(null, close) * 1.02;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: d.length, ymin: lo, ymax: hi,
+                              pad: { l: 40, r: 12, t: 8 + rows * 16, b: 24 } });
+    DL.axes(p, { nx: 7, ny: 5 });
+
+    /* background: one band per classified bar */
+    var g = p.g, top = p.Y(hi), h = p.Y(lo) - top, bw = p.X(1) - p.X(0), fills = {};
+    [1, 2, 3, 4].forEach(function (k) { fills[k] = DL.fade(DL.color(STAGES[k].role), 0.16); });
+    DL.clip(p);
+    stages.forEach(function (s, i) {
+      if (!s) return;
+      g.fillStyle = fills[s];
+      g.fillRect(p.X(i), top, bw + 0.5, h);
+    });
+    g.restore();
+
+    DL.line(p, xs, sma, { color: DL.fade(DL.color('accent'), 0.75), width: 1.4 });
+    DL.line(p, xs, close, { color: DL.color('familiar'), width: 1.5 });
+
+    g.save();
+    g.font = font; g.textAlign = 'left'; g.textBaseline = 'middle';
+    key.forEach(function (it) {
+      var y = 12 + it.row * 16, col = DL.color(STAGES[it.k].role);
+      g.fillStyle = DL.fade(col, 0.5);
+      g.fillRect(it.x, y - 5, 10, 10);
+      g.fillStyle = col;
+      g.fillText(it.text, it.x + 14, y);
+    });
+    g.restore();
+
+    var last = stages[stages.length - 1];
+    DL.out(U + '-n-o', String(longN));
+    DL.out(U + '-seed-o', '#' + SEED.value);
+    DL.out(U + '-last', last ? 'last bar = Stage ' + last + ' · ' + STAGES[last].name : 'last bar = —');
+    DL.out(U + '-act', last ? 'action = ' + STAGES[last].action : 'action = —');
+  });
+  DL.bind([U + '-n', U + '-seed'], draw);
+})();
+</script>
