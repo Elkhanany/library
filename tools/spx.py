@@ -1027,6 +1027,12 @@ def facts(m, slug, src):
         sharing = [d for d in m.chapters if m.written(d)
                    and any(overlaps(ref, r) for r in d["sources"])]
         have = " ".join(library.read(m.path(d)) for d in sharing)
+        if c["slug"] == "r1":
+            # the glossary page indexes the whole book: a term's facts count wherever
+            # the book states them, and in its glossary entry
+            gl, _e = glossary()
+            have += " ".join([library.read(m.path(d)) for d in m.chapters if m.written(d)]
+                             + ["%s %s" % (e["term"], e["def"]) for e in gl.values()])
         notes = " ".join(library.read(os.path.join(NOTES, d["slug"] + ".md")) for d in sharing
                          if os.path.exists(os.path.join(NOTES, d["slug"] + ".md")))
         have_nums = canon_numbers(have)
