@@ -320,8 +320,9 @@ In the prose (each is also listed in `README.md`):
 - 9A: "Initial delta-hedge: long approximately 410 shares." A dealer who is short puts is long
   delta and hedges by selling stock, and 1,000 contracts of 100 shares make the hedge tens of
   thousands of shares.
-- Old 12D (new 13D): Example 2's conviction product is 0.341, not 0.343. Example 4 takes a trade at
-  C = 0.282, below the 0.3 threshold of 13B: either say why that is allowed or say it is a pass.
+- Old 12D (new 13D): Example 2's conviction product is 0.341, not 0.343. Example 5 (AAPL) takes a
+  trade at C = 0.282, below the 0.3 threshold of 13B: either say why that is allowed or say it is a
+  pass.
 - Old 12F (new 13H): the vega monitor has no delta input and does not use days to expiry, and its
   three targets are the target vega (flat, half, full), not three sizes of hedge.
 
