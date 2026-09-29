@@ -1015,8 +1015,9 @@ Most Many Some All Both Either Neither Here Now Also Yes Consider Suppose Take L
 
 
 def canon_numbers(text):
-    """Every number in a text, as digits without grouping commas or signs."""
-    t = re.sub(r"\\[a-zA-Z]+|[{}\\]", " ", text)
+    """Every number in a text, as digits without grouping commas or signs. In
+    maths a grouping comma is written {,} (22{,}500), which is still a comma."""
+    t = re.sub(r"\\[a-zA-Z]+|[{}\\]", " ", text.replace("{,}", ","))
     out = set()
     for mo in re.finditer(r"(?<![\w.])\d[\d,]*(?:\.\d+)?|(?<![\w\d])\.\d+", t):
         n = mo.group(0).replace(",", "")
