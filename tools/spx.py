@@ -14,6 +14,7 @@ understands, the way tools/bc.py does for the clinical book:
       + figures/*.html                 ->  src/<slug>.html   prose, maths, callouts, figures
     chapters/*.md                      ->  FIGURE-IDEAS.md   where a new figure would help
     notes/*.md                         ->  QUESTIONS.md      what the rewrite asks the author
+                                       ->  CORRECTIONS.md    what it found wrong in the sources
 
 What the markdown becomes:
 
@@ -35,8 +36,8 @@ What the markdown becomes:
     ``` block ```                 a preformatted block (pre.aligned when its meaning is in
                                   its columns)
 
-    python3 tools/spx.py                 regenerate curriculum.json, src/, FIGURE-IDEAS.md
-                                         and QUESTIONS.md
+    python3 tools/spx.py                 regenerate curriculum.json, src/, FIGURE-IDEAS.md,
+                                         QUESTIONS.md and CORRECTIONS.md
     python3 tools/spx.py --draft         the same, with a stub for a chapter not yet written
     python3 tools/spx.py --check         fail if anything generated is stale, for CI
     python3 tools/spx.py --verify        prove every word of the markdown reaches the page
@@ -69,6 +70,7 @@ SRC = os.path.join(DIR, "src")
 SOURCE = os.path.join(DIR, "source")
 IDEAS = os.path.join(DIR, "FIGURE-IDEAS.md")
 QUESTIONS = os.path.join(DIR, "QUESTIONS.md")
+CORRECTIONS = os.path.join(DIR, "CORRECTIONS.md")
 KATEX = os.path.join(library.VENDOR, "katex", "katex.min.js")
 
 FENCE = re.compile(r"^```(\S*)\s*$")
@@ -816,6 +818,48 @@ def ideas_file(m, ideas):
     return "\n".join(head + out).rstrip() + "\n"
 
 
+def notes_section(slug, heading):
+    """The body of one "## heading" section of notes/<slug>.md, or ''."""
+    path = os.path.join(NOTES, slug + ".md")
+    if not os.path.exists(path):
+        return ""
+    mo = re.search(r"^## %s[ \t]*\n(.*?)(?=^## |\Z)" % re.escape(heading), library.read(path),
+                   re.M | re.S)
+    return mo.group(1).strip() if mo else ""
+
+
+def list_items(body):
+    """The items of a markdown list, each with the lines that continue it."""
+    items = []
+    for line in body.split("\n"):
+        if line.startswith("- "):
+            items.append(line)
+        elif items and line.strip() and not line.startswith("#"):
+            items[-1] += "\n" + line
+    return items
+
+
+def corrections_file(m):
+    """Every correction the notes record under "Changed": the items that open
+    with "Fixed" (the writers') or "Checked:" (the second check's)."""
+    out = []
+    total = 0
+    for c in m.chapters:
+        these = [it for it in list_items(notes_section(c["slug"], "Changed"))
+                 if re.match(r"- (\*\*)?(Fixed|Checked)\b", it)]
+        if not these:
+            continue
+        total += len(these)
+        out += ["## %s · %s" % (c["num"], c["title"]), ""] + these + [""]
+    head = ["# What the rewrite corrected", "",
+            "%d correction%s to the two sources, collected by `tools/spx.py` from the \"Changed\" "
+            "section of `notes/*.md`: the items that open with \"Fixed\" (found while rewriting) or "
+            "\"Checked:\" (found by the second check of the maths). Each names the source it "
+            "corrects (dl: the Dealer Mechanics Lab, spx: the Edge Book). Edit them in the notes, "
+            "not here." % (total, "s" * (total != 1)), ""]
+    return "\n".join(head + out).rstrip() + "\n"
+
+
 def questions_file(m):
     """Each notes file's "Questions for the author", in the book's order."""
     out = []
@@ -914,6 +958,7 @@ def generate(m, draft=False, only=None, preview=None):
         out[os.path.join(DIR, "curriculum.json")] = curriculum(m, maths)
         out[IDEAS] = ideas_file(m, ideas)
         out[QUESTIONS] = questions_file(m)
+        out[CORRECTIONS] = corrections_file(m)
     return out, errs, placed, chapters
 
 
@@ -1203,7 +1248,7 @@ def main():
             print("  stale  " + os.path.relpath(p, library.ROOT))
         if stale or orphans:
             sys.exit("out of date. Run: python3 tools/spx.py")
-        print("spx: curriculum.json, FIGURE-IDEAS.md, QUESTIONS.md and %d chapters are current, "
+        print("spx: curriculum.json, FIGURE-IDEAS.md, QUESTIONS.md, CORRECTIONS.md and %d chapters are current, "
               "with %d figures placed"
               % (len(chapters), sum(len(v) for v in placed.values())))
         return
