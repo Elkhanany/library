@@ -57,7 +57,8 @@ rewrite that draws on both texts:
   every number from both.
 
 `outline.json` names each chapter's sources, and `python3 tools/spx.py --sources <slug>` prints
-them.
+them. `source/` keeps one slip of the app's text as imported: `10-tactical.md` repeats the
+second half of section 10A.5, which Chapter 11B uses once.
 
 ## The rewrite
 
@@ -183,6 +184,11 @@ Where a widget contradicted its own maths or the prose, the figure follows the m
 - 9B, gamma by DTE: the note put the 4-hour peak at "roughly 8.5×" the 30-day one; the
   maths gives 13.5× (the chapter's table, 13.4×). The slider labeled log scale was linear,
   and is now logarithmic.
+- 11C and 11F, RSI (in `_lib.js`): with no losses in the window the app set RS to 100, so a
+  run of pure gains read 99.0. The RSI follows Wilder's definition: 100 with no losses, and
+  50 with neither gains nor losses.
+- 11E, stage classifier: kept as the app computes it. Its fallback rules classify every bar
+  whatever the ADX, so the ADX gate changes no stage, which the chapter says.
 - 11F, multiple timeframes: the higher timeframe's trend was read from the SMA five bars
   back, but 350 bars make 14 higher-timeframe bars, which leave a 10-bar SMA five values,
   so the read was "—" on every seed. The figure reads four bars back.
