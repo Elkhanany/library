@@ -303,7 +303,11 @@ python3 tools/stylecheck.py the-other-end-of-the-trade          # Google rules
 
 ## Known errors to fix
 
-In the prose (each is also listed in `README.md`):
+All of these are fixed in the rewrite, and each chapter's notes say how; the list stays as the
+record of what the brief asked for. Every correction the rewrite made is gathered in
+`CORRECTIONS.md`.
+
+In the prose:
 
 - Old 2B (new 3B): the AR(1) paths fan out as the weight goes toward +1 and draw in toward −1; the
   source says they fan out toward ±1.
@@ -327,4 +331,4 @@ In the prose (each is also listed in `README.md`):
   three targets are the target vega (flat, half, full), not three sizes of hedge.
 
 In the figures, corrected where the widget contradicted its own maths (the prose must agree with
-the figure): see "Where the import departs from the app" in `README.md`.
+the figure): see "Where the figures depart from the app" in `README.md`.
