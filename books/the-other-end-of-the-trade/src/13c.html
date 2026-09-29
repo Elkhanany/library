@@ -1,0 +1,1425 @@
+<p class="eyebrow">Part XIII · Discipline · Chapter 13C</p>
+
+<h1>From signal to trade</h1>
+
+<p class="subtitle">The five-step pipeline and the kill rules</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="13b.html">Chapter 13B</a> built the test that decides whether a trade deserves capital. This chapter turns a passed test into a position and a plan for leaving it. A five-step pipeline runs from observation to invalidation. Within it, a loss budget sets the size, while kill rules at three levels override your judgment when it is least reliable.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The conviction score (<a class="xref" href="13b.html">Chapter 13B</a>), and the mechanical and discretionary sleeves (<a class="xref" href="13a.html">Chapter 13A</a>).</li>
+<li>The Kelly criterion, and the retail-scale example that sets it against the loss budget (<a class="xref" href="3d.html">Chapter 3D</a>).</li>
+<li>Drawdown, the gain needed to recover from it, and margin (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>Expected shortfall and the stress scenarios S1 to S3 (Chapters 1B and 1D).</li>
+<li>The VIX term structure and regime filters (Chapters 9A and 10H), and the four swing setups (<a class="xref" href="11h.html">Chapter 11H</a>).</li>
+<li>Delta, which sets what an option loses when the underlying moves (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+</ul>
+</div>
+
+<h2 id="one-grammar-for-every-action">1 · One grammar for every action</h2>
+
+<p>Every action in your portfolio should pass through the same five steps: <strong>observation, interpretation, trade implication, sizing and invalidation</strong>. This grammar makes high-conviction trading operational rather than aspirational. Most retail trading fails by skipping steps, observing and then trading without an explicit interpretation, size or kill condition.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Step</th><th class="c-other">Question it answers</th><th class="c-endpoint">Output</th></tr></thead><tbody><tr><td class="c-trial" data-label="Step">Observation</td><td class="c-other" data-label="Question it answers">What did I see?</td><td class="c-endpoint" data-label="Output">A specific, measurable signal</td></tr><tr><td class="c-trial" data-label="Step">Interpretation</td><td class="c-other" data-label="Question it answers">What does it mean?</td><td class="c-endpoint" data-label="Output">The signal mapped to a regime or a risk update</td></tr><tr><td class="c-trial" data-label="Step">Trade implication</td><td class="c-other" data-label="Question it answers">What action does it imply?</td><td class="c-endpoint" data-label="Output">A specific position, or a decision to take none</td></tr><tr><td class="c-trial" data-label="Step">Sizing</td><td class="c-other" data-label="Question it answers">How much?</td><td class="c-endpoint" data-label="Output">A position size derived from a loss budget</td></tr><tr><td class="c-trial" data-label="Step">Invalidation</td><td class="c-other" data-label="Question it answers">What would prove me wrong?</td><td class="c-endpoint" data-label="Output">A specific kill condition</td></tr></tbody></table></div></div>
+
+<p>Each step is distinct and required: skipping any one of them produces undisciplined trading. The conviction score of <a class="xref" href="13b.html">Chapter 13B</a> gates the third step. Observations and interpretations arrive whatever you do, while the score decides whether they become positions. If conviction is insufficient, you log the observation and watch it, but you do not trade it. That is what "selective" means in practice. Most observations never become trades, while the trades that exist have had all five domains checked, scored and survived.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A trade is a sentence with five parts: what you saw, what it means, what you do about it, how much, and what would make you stop. Leave out a part and you have left a decision for later, when you are under stress, which is the worst time to make it.</p>
+</div>
+
+<h2 id="step-1-observation">2 · Step 1: observation</h2>
+
+<p>An observation answers "what did I see?" with a specific, <em>measurable</em> market state. One example is "SPX's RSI(2) closed at 5 today, with Stage 2 confirmed by a 30-day <span class="gloss" title="The plain average of the last n closing prices, recomputed at each bar. A 50-day simple moving average, abbreviated SMA, averages the last 50 daily closes.">SMA</span> slope above 0.05 and an ADX of 22" (Chapters 11C and 11E). "The market feels oversold" is not an observation. The Edge Book gives four more that qualify:</p>
+
+<ul>
+<li>The ratio of the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> to the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next three months, the longer-dated companion of the VIX.">VIX3M</span> crossed 1.05 today.</li>
+<li>The 21-day <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">realized volatility</span> of SPX is 32%, against an implied volatility of 26%.</li>
+<li>The <span class="gloss" title="The gap between the rate at which banks lend to one another for three months and the three-month Treasury bill rate: originally LIBOR minus the bill rate, now read with SOFR. It widens when banks grow reluctant to lend.">TED spread</span> widened from 25 bps to 95 bps over 5 days.</li>
+<li>MTUM has underperformed SPX by 8% over the trailing 6 months.</li>
+</ul>
+
+<p>Four others fail, each for its own reason:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Statement</th><th class="c-other">Why it is not an observation</th></tr></thead><tbody><tr><td class="c-trial">"The market feels overextended"</td><td class="c-other">Not measurable</td></tr><tr><td class="c-trial">"There is a lot of bearish news"</td><td class="c-other">Vague</td></tr><tr><td class="c-trial">"Twitter is bullish on AI again"</td><td class="c-other">Sentiment and narrative, not data</td></tr><tr><td class="c-trial">"A correction is due"</td><td class="c-other">A prediction</td></tr></tbody></table></div></div>
+
+<p>The pipeline starts with measurable inputs only, so if you cannot define the threshold, the observation step has failed.</p>
+
+<p>Keep a written list of <strong>observation triggers</strong>, the specific measurable conditions that earn an interpretation. For most traders, about 5 to 10 triggers cover 95% of legitimate trade situations, leaving the rest to be researched as they arise. The Edge Book's list has eight, each with its role:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Trigger</th><th class="c-other">Role</th></tr></thead><tbody><tr><td class="c-trial">VIX/VIX3M ratio thresholds</td><td class="c-other">Filter</td></tr><tr><td class="c-trial">21-day realized volatility against implied</td><td class="c-other">Filter</td></tr><tr><td class="c-trial">Thresholds on the TED spread, the <span class="gloss" title="The ICE BofA Treasury MOVE Index: an index of the implied volatility of options on US Treasury bonds, the bond market's counterpart of the VIX.">MOVE index</span> and the high-yield <span class="gloss" title="The extra yield a bond pays over Treasuries of similar maturity, after allowing for options built into it, such as the issuer's right to repay early. For a bond index it is the market's price of credit risk. Abbreviated OAS.">option-adjusted spread</span> (HY OAS)</td><td class="c-other">Filter</td></tr><tr><td class="c-trial">Quarterly divergence between SPX and bonds</td><td class="c-other">Overlay</td></tr><tr><td class="c-trial">Position in the schedule of the <span class="gloss" title="The committee of the Federal Reserve that sets US short-term interest rates. It meets about eight times a year, roughly every six weeks. Abbreviated FOMC.">Federal Open Market Committee</span> (FOMC)</td><td class="c-other">Overlay</td></tr><tr><td class="c-trial">24-month rolling Sharpe ratio of each factor</td><td class="c-other">Review of a factor tilt</td></tr><tr><td class="c-trial">Sleeve drawdown thresholds</td><td class="c-other">Kill rule</td></tr><tr><td class="c-trial">Portfolio drawdown threshold</td><td class="c-other">Behavioral kill rule</td></tr></tbody></table></div></div>
+
+<p>That is the whole list: about 8 observation triggers cover the systematic decision space.</p>
+
+<h2 id="step-2-interpretation">3 · Step 2: interpretation</h2>
+
+<p>Interpretation answers "what does it mean?" by mapping the observation to a regime or a risk update, the bridge between data and action. For the swing observation above, the Dealer Mechanics Lab's interpretation reads as follows. RSI(2) below 10 in Stage 2 with positive <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">gamma exposure</span> (GEX) means that dealer hedging fades the pullback, providing mechanical buying support at the EMA. A good interpretation does three things:</p>
+
+<ol>
+<li>It translates the observation into a characterization of the regime.</li>
+<li>It refers to the body of evidence behind that reading.</li>
+<li>It is specific about which risks are now higher and which lower.</li>
+</ol>
+
+<div class="worked">
+<span class="ct">Worked example: An interpretation of backwardation</span>
+<p><strong>Step 1: the observation.</strong> The VIX/VIX3M ratio has closed at 1.10 for 3 consecutive days.</p>
+
+<p><strong>Step 2: the interpretation.</strong> The term structure is backwardated, which indicates elevated demand for near-term hedging (<a class="xref" href="9a.html">Chapter 9A</a>). Historically this regime is associated with higher realized volatility, wider option spreads and possible margin expansion under <span class="gloss" title="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress.">portfolio margin</span> (PM). Short-volatility strategies face a structural headwind while it lasts.</p>
+</div>
+
+<p>Interpretation fails in three common ways:</p>
+
+<ul>
+<li><strong>Over-interpretation.</strong> "The VIX is backwardated, so the market is about to crash" is prediction dressed as interpretation. Backwardation indicates elevated near-term volatility, not its <em>direction</em>, which is unpredictable.</li>
+<li><strong>Under-interpretation.</strong> "The VIX is backwardated, and I do not know what to do." If you cannot translate a signal into a characterization of the regime, the signal is not useful.</li>
+<li><strong>Narrative interpretation.</strong> "The VIX is backwardated because the AI bubble is popping." The story may or may not be true. The interpretation should rest on the regime, not on a story.</li>
+</ul>
+
+<p>Write an interpretation for each trigger in advance, so that when a trigger fires you read its interpretation rather than composing a new one. The discipline lies in committing to what each signal means before it fires.</p>
+
+<h2 id="step-3-trade-implication">4 · Step 3: trade implication</h2>
+
+<p>The trade implication answers "what action does it imply?" with a specific entry, direction, instrument and timing, or with a decision to do nothing. This is where the conviction analysis of <a class="xref" href="13b.html">Chapter 13B</a> happens.</p>
+
+<div class="worked">
+<span class="ct">Worked example: From backwardation to action</span>
+<p><strong>Step 1: the chain so far.</strong> The VIX/VIX3M ratio has been 1.10 for 3 days, which reads as backwardation and a stress regime.</p>
+
+<p><strong>Step 2: the implication.</strong> Halt new short-volatility entries, as the kill rule on Card 02 of <a class="xref" href="13f.html">Chapter 13F</a>, the VRP harvest, requires, and cut the existing XSP put-writing by 50%. Keep the equity allocation, since no rule cuts direct equity at this filter level. Keep the trend allocation too, because the filter does not apply to it. Consider a modest cut in equity beta if other filters also fire.</p>
+</div>
+
+<p>Sometimes the right implication is to do nothing new:</p>
+
+<ul>
+<li>A filter fires while you hold no position it would change.</li>
+<li>The observation falls within the range of a normal regime.</li>
+<li>The conviction score is below 0.3.</li>
+<li>The action is already in place, so nothing more is needed.</li>
+</ul>
+
+<p><strong>"Do nothing" is a valid output of the pipeline.</strong> Most observations should produce no new trade. When the conviction score is below 0.3, the implication is "no new position": record the observation in your journal and do not act on it. Selectivity is operational: on most days, most observations produce nothing.</p>
+
+<h2 id="step-4-sizing">5 · Step 4: sizing</h2>
+
+<p>Sizing answers "how much?" from an explicit loss budget, never from intuition.</p>
+
+<h3 id="risk-is-not-the-size-of-the-position">Risk is not the size of the position</h3>
+
+<p>"Risk 1% of the portfolio per trade" means that <strong>if the stop is hit, the realized loss equals 1% of the portfolio's value</strong>, not that you deploy 1% of your capital. If the stop sits a distance \(d\) below the entry, the position is the dollar risk budget divided by that distance.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One percent of risk, all of the capital</span>
+<p><strong>Step 1: the budget.</strong> A $500,000 portfolio risks 1% per trade, so a stopped-out trade may lose $5,000.</p>
+
+<p><strong>Step 2: the size.</strong> With the stock at $600 and its stop $6 below, the position is \(\$5{,}000/\$6 = 833\) shares.</p>
+
+<p><strong>Step 3: the notional.</strong> Those shares are worth \(833 \times \$600 = \$499{,}800\), essentially the whole $500,000, which is correct sizing: 1% <em>risk</em> and 100% <em>notional</em>.</p>
+</div>
+
+<p>Whether that notional is acceptable depends on four things:</p>
+
+<ul>
+<li><strong>Liquidity:</strong> can you exit cleanly under stress?</li>
+<li><strong>Margin:</strong> do you have the <span class="gloss" title="The value of new positions that a margin account can open, given its equity and the broker's margin requirements.">buying power</span>?</li>
+<li><strong>Correlation:</strong> what is the aggregate risk with your existing positions?</li>
+<li><strong>Gap risk:</strong> can the price jump through the stop (<a class="xref" href="5f.html">Chapter 5F</a>)?</li>
+</ul>
+
+<p>For options the relation is structurally different, because the <span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional</span> is bounded by the premium for a long option and by the collateral for a short one.</p>
+
+<p>The two readings of "1%" differ by a factor you can compute. Sized by risk, the position holds \(B/d\) shares, where \(B\) is the dollar budget. Sized as 1% of capital, it holds \(B/P\) shares at a price \(P\). Their ratio is \(P/d\), the price divided by the stop distance. A stop 1% below the price makes it 100, and a stop 2% below makes it 50.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading 1% risk as 1% of capital</span>
+<p>Of the two opposite errors that come from one misreading, <strong>Mistake A</strong> reads "1% sizing" as 1% of notional deployed. By the ratio above, that under-sizes a trade by 50 to 100 times, so the framework's edge never shows up in the account. <strong>Mistake B</strong> sizes to the notional and forgets the stop: it buys $500,000 of the underlying without placing and honoring a stop. Then a 5% adverse move costs $25,000, not the planned $5,000.</p>
+</div>
+
+<p>The first figure separates the two numbers: set the portfolio, the share risked per trade, the entry, the stop, the <span class="gloss" title="The number that converts an option's quoted price into dollars per contract: 100 for US stock and ETF options, and 100 dollars per index point for SPX options.">contract multiplier</span> and the margin available. The readouts give the dollar risk, the stop distance, the loss per contract, the position size and the notional it controls, with the notional as a share of the portfolio. The defaults risk 1% of $250,000 on a $600 entry with a $594 stop and a multiplier of 100: 4 contracts, a notional of $240,000, or 96% of the portfolio. A table prices a gap through the stop of two and three times the stop distance, while the verdict sets the notional against the margin available.</p>
+
+<figure class="fig" id="fig-position-size-clarifier">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="position-size-clarifier-port">portfolio</label>
+      <input type="range" id="position-size-clarifier-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="position-size-clarifier-port-o" for="position-size-clarifier-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-risk">risk per trade</label>
+      <input type="range" id="position-size-clarifier-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="position-size-clarifier-risk-o" for="position-size-clarifier-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-entry">entry</label>
+      <input type="range" id="position-size-clarifier-entry" min="10" max="6500" step="1" value="600">
+      <output id="position-size-clarifier-entry-o" for="position-size-clarifier-entry"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-stop">stop</label>
+      <input type="range" id="position-size-clarifier-stop" min="1" max="599" step="0.5" value="594">
+      <output id="position-size-clarifier-stop-o" for="position-size-clarifier-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-mult">multiplier</label>
+      <input type="range" id="position-size-clarifier-mult" min="1" max="500" step="1" value="100">
+      <output id="position-size-clarifier-mult-o" for="position-size-clarifier-mult"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-clarifier-margin">margin available</label>
+      <input type="range" id="position-size-clarifier-margin" min="10000" max="5000000" step="1000" value="500000">
+      <output id="position-size-clarifier-margin-o" for="position-size-clarifier-margin"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-clarifier-drisk"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-dist"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-lpc"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-size"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-clarifier-notional"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-npct"></output></div>
+    <div class="ctrl"><output id="position-size-clarifier-ratio"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through stress test</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="position-size-clarifier-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="position-size-clarifier-g2l"></td><td data-label="% of portfolio" id="position-size-clarifier-g2p"></td></tr>
+      <tr id="position-size-clarifier-g3"><td class="c-trial">3× gap</td><td data-label="Loss" id="position-size-clarifier-g3l"></td><td data-label="% of portfolio" id="position-size-clarifier-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="position-size-clarifier-vk"></b> <span id="position-size-clarifier-vt"></span></p>
+  <figcaption><b>One percent of risk is not one percent of capital.</b> Set the portfolio, the
+  share of it risked per trade, the entry, the stop and the contract multiplier. The position
+  size is the dollar risk over the loss per contract at the stop, rounded down, and it controls
+  size × entry × multiplier of notional: the defaults risk 1% of $250k and deploy 96% of it.
+  Risk-% controls what you lose if the stop holds; notional-% controls what happens if it does
+  not. The stress test prices a gap through the stop of two and three times the stop distance,
+  marking a loss above 3% or 5% of the portfolio, and the verdict sets the notional against the
+  margin available.</figcaption>
+</figure>
+
+<p>Set the portfolio to $500,000 and the multiplier to 1 to reproduce the example: 833 shares and $499,800 of notional, which turns the margin verdict yellow. Moving the stop to $598 then grows the position to 2,500 shares and $1.5 million of notional, and turns the verdict red. The risk percentage controls what you lose if the stop holds. The notional percentage controls what happens if it does not.</p>
+
+<p>The figure's gap test scales with the stop, so a tighter stop makes the gap look smaller. A real gap is a move in the price and does not care where your stop sits. At $1.5 million of notional, a 3% gap costs $45,000, 9% of the portfolio, or nine times the budget.</p>
+
+<h3 id="the-loss-budget-rule">The loss-budget rule</h3>
+
+<p>The <strong><span class="gloss" title="The dollar loss decided in advance that a trade or a sleeve may cost if its stop is hit or its stress scenario arrives, usually a set share of the portfolio. The position size is the budget divided by the loss per unit, rounded down.">loss budget</span></strong> \(B_{\exp}\) is the dollar loss you have decided in advance to absorb on a trade or a sleeve. If \(L_{\max}\) is the loss on one unit (a share or a contract) at your stop, the number of units \(n\) must satisfy</p>
+
+<div class="eq" id="e-budget">
+\[ n \le \left\lfloor \frac{B_{\exp}}{L_{\max}} \right\rfloor \]
+</div>
+
+<p>The brackets are the <strong><span class="gloss" title="The rule that rounds a number down to the nearest whole number: the floor of 2.5 is 2. Rounding a position size down keeps its loss within its budget.">floor function</span></strong>, which rounds down to a whole number: \(\lfloor 2.5 \rfloor = 2\). Rounding down keeps the rule conservative, since rounding up would breach the budget.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two XSP contracts</span>
+<p><strong>Step 1: the budget.</strong> A $500,000 portfolio risks at most 1% per trade, \(B_{\exp} = \$5{,}000\), on a Trend Pullback in XSP with a clear technical stop $20 below the entry.</p>
+
+<p><strong>Step 2: the loss per contract.</strong> With the multiplier of 100, \(L_{\max} = \$20 \times 100 = \$2{,}000\) per contract.</p>
+
+<p><strong>Step 3: the count.</strong> By <a class="eqref" href="#e-budget"></a>, \(n \le \lfloor 5{,}000/2{,}000 \rfloor = \lfloor 2.5 \rfloor = 2\) contracts, which risk $4,000, or 0.8% of the portfolio.</p>
+</div>
+
+<p>The example treats each contract as moving point for point with 100 units of XSP, as a deep in-the-money call nearly does. For an option with a lower delta, estimate its loss at the stop from its delta and its price (<a class="xref" href="5c.html">Chapter 5C</a>).</p>
+
+<p>The second figure computes <a class="eqref" href="#e-budget"></a>, with sliders for the portfolio, the risk per trade, the stop distance and the multiplier. It returns \(B_{\exp}\), \(L_{\max}\), \(n\) and the planned risk, and prices gaps through the stop of two and three times its distance. Its verdict reads the 2× gap: under 3% of the portfolio is green, under 5% yellow, and beyond that red. The defaults, $250,000 at 1% with a $2 stop on a multiplier of 100, give 12 contracts and a planned risk of $2,400. Set the portfolio to $500,000 and the stop to $20 to reproduce the example.</p>
+
+<figure class="fig" id="fig-position-size-calculator">
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="position-size-calculator-port">portfolio size</label>
+      <input type="range" id="position-size-calculator-port" min="10000" max="5000000" step="1000" value="250000">
+      <output id="position-size-calculator-port-o" for="position-size-calculator-port"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-risk">risk per trade</label>
+      <input type="range" id="position-size-calculator-risk" min="0.001" max="0.05" step="0.001" value="0.01">
+      <output id="position-size-calculator-risk-o" for="position-size-calculator-risk"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-stop">stop distance ($)</label>
+      <input type="range" id="position-size-calculator-stop" min="0.5" max="50" step="0.5" value="2">
+      <output id="position-size-calculator-stop-o" for="position-size-calculator-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="position-size-calculator-mult">contract multiplier</label>
+      <input type="range" id="position-size-calculator-mult" min="1" max="500" step="1" value="100">
+      <output id="position-size-calculator-mult-o" for="position-size-calculator-mult"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-calculator-b"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-l"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-n"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="position-size-calculator-risk-d"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-risk-p"></output></div>
+    <div class="ctrl"><output id="position-size-calculator-notional"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Gap-through scenario</th><th>Loss</th><th>% of portfolio</th></tr></thead>
+    <tbody>
+      <tr id="position-size-calculator-g2"><td class="c-trial">2× gap</td><td data-label="Loss" id="position-size-calculator-g2l"></td><td data-label="% of portfolio" id="position-size-calculator-g2p"></td></tr>
+      <tr id="position-size-calculator-g3"><td class="c-trial">3× gap (severe)</td><td data-label="Loss" id="position-size-calculator-g3l"></td><td data-label="% of portfolio" id="position-size-calculator-g3p"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="position-size-calculator-vk"></b> <span id="position-size-calculator-vt"></span></p>
+  <figcaption><b>Sizing from an explicit loss budget.</b> The loss budget B_exp is the portfolio
+  times the risk per trade, the loss per contract L_max is the stop distance times the contract
+  multiplier, and the position is n = ⌊B_exp / L_max⌋ contracts; set the portfolio to $500k and
+  the stop to $20 for the worked example above. The stress test prices a gap through the stop
+  of two and three times its distance, marking a loss above 3% or 5% of the portfolio, and the
+  verdict reads the 2× gap: under 3% is green, under 5% yellow, and beyond that red. The
+  notional readout assumes, as the app does, that the stop is 2% of the price.</figcaption>
+</figure>
+
+<p>The example gives 2 contracts and a planned risk of $4,000, 0.80% of the portfolio. Its 2× gap costs $8,000 (1.60%) and its 3× gap $12,000 (2.40%), both green. The notional readout assumes, as the original widget did, that the stop sits 2% below the price. That places the price at 50 times the stop distance, $1,000 for a $20 stop, so read it as an illustration rather than as this trade's notional.</p>
+
+<h3 id="a-budget-for-a-whole-sleeve">A budget for a whole sleeve</h3>
+
+<p>The same rule sizes a sleeve that has no stop at all. There, \(L_{\max}\) is the loss on one unit in a stress scenario rather than at a stop, and \(B_{\exp}\) is the loss budget for the whole sleeve.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Sizing XSP put-writing by its stress loss</span>
+<p><strong>Step 1: the budget.</strong> A $1 million portfolio gives its XSP ATM monthly put-write, a sleeve selling at-the-money (ATM) puts each month, a loss budget of 5%, which is $50,000.</p>
+
+<p><strong>Step 2: the count.</strong> Each contract loses about $10,000 in the S2 scenario (<a class="xref" href="13e.html">Chapter 13E</a>, Example 10). By <a class="eqref" href="#e-budget"></a>, \(n \le \lfloor 50{,}000/10{,}000 \rfloor = 5\), which you round down further for a buffer, to 4 contracts. <a class="xref" href="13e.html">Chapter 13E</a>'s closer estimate of the S2 loss, about $10,800, gives 4.6, which the floor takes to 4 directly.</p>
+
+<p><strong>Step 3: the stress test.</strong> Run the worse scenario, S3, at about $20,000 a contract, in which four contracts lose $80,000, 8% of the portfolio. If the account survives that operationally, with no margin breach and no behavioral capitulation, the size is acceptable. If not, cut to 3 contracts and recompute: $60,000, or 6%.</p>
+</div>
+
+<p>Compute \(n\) from the formula, write down the \(L_{\max}\) you assumed for the sleeve, and stress-test it against S3. If your intuition disagrees with the formula's \(n\), in either direction, check which is wrong: it is usually the intuition.</p>
+
+<h3 id="the-portfolios-budget">The portfolio's budget</h3>
+
+<p>Beyond each sleeve, the whole portfolio has a budget. The expected shortfalls of the sleeves must not add up to more than the portfolio's loss budget:</p>
+
+<div class="eq" id="e-portfolio">
+\[ \sum_i \text{ES}_{95,i} \le B_{\text{portfolio}} \]
+</div>
+
+<p>Expected shortfall has a useful property: the expected shortfall of a combination is never more than the sum of its parts' expected shortfalls. The sum reaches the actual figure only when the sleeves lose together in the tail. So <a class="eqref" href="#e-portfolio"></a> is conservative in calm markets and accurate in a crash, when the <span class="gloss" title="Correlation measured only over extreme periods, such as the worst months for stocks. It can differ sharply from correlation measured over all periods.">tail correlation</span> of premium-selling sleeves approaches 1.0. That is why it binds more often than sizing each sleeve on its own suggests.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A fourth sleeve that does not fit</span>
+<p><strong>Step 1: three sleeves.</strong> Against a portfolio loss budget of $50,000, three sleeves have an \(\text{ES}_{95}\) of a hypothetical $20,000, $15,000 and $10,000, which sum to $45,000 and pass.</p>
+
+<p><strong>Step 2: a fourth.</strong> A new sleeve with an \(\text{ES}_{95}\) of $10,000 takes the sum to $55,000, over the budget. Its low correlation with the others in calm months does not rescue it, because in the tail that correlation is gone.</p>
+</div>
+
+<h3 id="kelly-and-the-loss-budget-one-question-two-units">Kelly and the loss budget: one question, two units</h3>
+
+<p><a class="xref" href="3d.html">Chapter 3D</a> derived the <span class="gloss" title="The rule for sizing a bet or position that maximizes the long-run compound growth rate of wealth, which is the same as maximizing the expected logarithm of wealth.">Kelly criterion</span>, the fraction of capital that maximizes the expected logarithm of long-run wealth. This section's rule, <a class="eqref" href="#e-budget"></a>, sizes from a dollar cap per trade instead. A reader of <a class="xref" href="3d.html">Chapter 3D</a> may think Kelly is the answer, while a reader of this chapter may think the loss budget is. They are not in conflict. They answer different questions, and converge for honest retail-scale edges.</p>
+
+<ul>
+<li><strong>Kelly maximizes expected log growth.</strong> Its output is a <em>fraction of capital</em>, under an assumed geometry of binary outcomes, a win \(G\) or a loss \(L\) per dollar staked. It assumes that you have estimated the edge correctly, and that you commit the full bet to a single opportunity.</li>
+<li><strong>The loss budget bounds the dollar loss per trade.</strong> Its output is a <em>position size</em>, under the geometry of a stop. It makes no claim about long-run growth. It caps the drawdown that any one trade can contribute.</li>
+</ul>
+
+<p><strong>Where they converge.</strong> <a class="xref" href="3d.html">Chapter 3D</a> showed that with symmetric payoffs the Kelly fraction of capital at risk is \(2p - 1\) for a win rate \(p\). For a typical retail edge, a 52% to 55% win rate with near-symmetric payoffs, that is 4% to 10% of capital. Half-Kelly halves it and quarter-Kelly quarters it, so at 52% quarter-Kelly risks 1%, exactly the loss budget, and at 53% it risks 1.5%. The two land in roughly the same dollar position because both rest on one anchor: size in proportion to your honest edge, not to your confidence.</p>
+
+<p><strong>Where they diverge.</strong> For a strong edge, Kelly is far <em>more</em> aggressive. <a class="xref" href="3d.html">Chapter 3D</a>'s worked example takes a 60% win rate with a $4 average win and a $3 average loss on a $50 share. Full Kelly holds five times the account, while even quarter-Kelly holds 6,250 shares, five times the 1,250 shares that the 1% budget allows. For that edge the loss budget binds by a wide margin and sizes each trade well inside the Kelly ceiling. It stops being enough only if the true edge is much weaker than the estimate: below a 52% win rate at even payoffs, 1% at risk exceeds quarter-Kelly.</p>
+
+<p><strong>Divergence one: diversification.</strong> Kelly is set per strategy, so five uncorrelated strategies, each at quarter-Kelly for a 55% edge, put \(5 \times 2.5\% = 12.5\%\) of capital at risk at the same time. The loss budget is set per trade: 10 concurrent trades at 1% each put 10% at risk. The two agree on the ceiling once you do the arithmetic, which is exactly where retail traders fail to do it. The addition holds only for uncorrelated bets, since correlated trades behave like one larger bet. The single-bet Kelly fraction then applies to their sum (<a class="xref" href="13d.html">Chapter 13D</a>, Example 10).</p>
+
+<p><strong>Divergence two: an uncertain edge.</strong> Kelly assumes the edge is known, so over-estimating it produces over-betting, whose cost <a class="xref" href="3d.html">Chapter 3D</a> worked out. Betting 1.3 times the true Kelly fraction keeps 91% of the maximum growth, the same as betting 0.7 times it, but raises the chance of ever halving the account from 28% to 69%. An edge estimated from a backtest typically carries a standard error of about 30%, so betting the point estimate is meaningfully too aggressive. The loss budget is robust to this, because it caps each trade's loss whether or not the edge is real. Most traders, this book's intended reader included, cannot trust their edge estimates. For them <strong>the loss budget is the safer first-line tool, with Kelly as the check on the aggregate</strong>.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Size each trade by the loss budget, 1% risk per trade scaled by the stop distance, and then use Kelly to check the aggregate. If the loss-budgeted positions across your open book put 30% or more of capital at simultaneous risk, you are past half-Kelly even if no single trade exceeds 1%. Reduce the number of concurrent positions, tighten the budget per trade, or recheck the edge estimates that justified taking that many trades at once.</p>
+</div>
+
+<p>The 30% line follows from the same arithmetic: five uncorrelated strategies with a 55% edge reach half-Kelly at \(5 \times 5\% = 25\%\) at risk, so 30% is past it. If the open trades are correlated, they are a single bet, whose full Kelly at that edge is 10%. Then 30% is three times Kelly, where by <a class="xref" href="3d.html">Chapter 3D</a> the growth rate is negative. <a class="xref" href="3d.html">Chapter 3D</a>'s worked example shows one trade's chain from end to end, while this rule keeps the aggregate honest.</p>
+
+<h2 id="step-5-invalidation">6 · Step 5: invalidation</h2>
+
+<p>Invalidation answers "what would prove me wrong?" with the explicit conditions under which you close the position or reassess its thesis. It comes in two kinds, each with three triggers: <strong>trade-level invalidation</strong> says when <em>this</em> trade closes, while <strong>strategy-level invalidation</strong> says when the <em>strategy</em> is suspended or reassessed.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Level</th><th>Trigger</th><th class="c-result">Example</th></tr></thead><tbody><tr><td class="c-trial" data-label="Level">Trade</td><td data-label="Trigger">Time</td><td class="c-result" data-label="Example">Close and roll at 21 days to expiry (DTE)</td></tr><tr><td class="c-trial" data-label="Level">Trade</td><td data-label="Trigger">Loss</td><td class="c-result" data-label="Example">Close when the mark-to-market (MTM) loss reaches three times the premium collected</td></tr><tr><td class="c-trial" data-label="Level">Trade</td><td data-label="Trigger">Profit</td><td class="c-result" data-label="Example">Take profit when the MTM gain reaches 50% of the premium</td></tr><tr><td class="c-trial" data-label="Level">Strategy</td><td data-label="Trigger">Filter</td><td class="c-result" data-label="Example">Halt new entries when VIX/VIX3M exceeds 1.05 for 3 days</td></tr><tr><td class="c-trial" data-label="Level">Strategy</td><td data-label="Trigger">Performance</td><td class="c-result" data-label="Example">Close and reassess when the sleeve's drawdown exceeds 20% from peak to trough (PTP)</td></tr><tr><td class="c-trial" data-label="Level">Strategy</td><td data-label="Trigger">Evidence</td><td class="c-result" data-label="Example">The academic consensus shifts, which is rare but possible</td></tr></tbody></table></div></div>
+
+<div class="worked">
+<span class="ct">Worked example: Invalidation for an XSP put</span>
+<p><strong>Step 1: the trade.</strong> Close the put at 21 days to expiry or at 50% of its maximum profit, whichever comes first, and otherwise hold it to expiry.</p>
+
+<p><strong>Step 2: the strategy.</strong> Halt new XSP put entries if VIX/VIX3M exceeds 1.05 for 3 closes, and reduce the existing ones by 50%.</p>
+
+<p><strong>Step 3: behavior.</strong> If the sleeve's drawdown exceeds 20% peak to trough, make a full stop and take a 30-day cooling-off period.</p>
+</div>
+
+<p>All three are written before the position is opened, since the discipline lies in committing to them in advance. The reason is behavioral: work in behavioral economics, by Thaler and by Sunstein, shows that decisions made beforehand in a calm state are more rational than decisions made afterward under stress. Stress activates loss avoidance and confirmation bias, which override consistent decision-making. Writing the invalidation down before the trade uses your calm self to constrain your stressed self, which is the operational meaning of discipline.</p>
+
+<p>Every position therefore carries documented invalidation criteria. If you cannot say what would prove you wrong, the trade is not ready. Many bad trades fail this test because the entry rested on an unfalsifiable narrative, such as "the market should rally", rather than on a hypothesis that could be tested.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Written invalidation is the trade's statistical analysis plan, locked before unblinding. A trial that chooses its primary endpoint after seeing the data can report almost anything. A trader who decides after entry what would count as failure can always explain a loss away. Pre-specifying the endpoint, the analysis and the stopping rules is what makes the result interpretable. Pre-committing the kill conditions does the same for a position.</p>
+</div>
+
+<h2 id="kill-rules-at-three-levels">7 · Kill rules at three levels</h2>
+
+<p>Invalidation is written per trade, while the Dealer Mechanics Lab adds <span class="gloss" title="A rule, set in advance, for when to stop trading a strategy, such as a drawdown or a shortfall against its expected return beyond a stated limit.">kill criteria</span> at three levels: the setup, the sleeve and the whole portfolio.</p>
+
+<h3 id="the-25-drawdown-and-the-30-day-cool-off">The 25% drawdown and the 30-day cool-off</h3>
+
+<p><strong>When the portfolio's drawdown crosses 25% from peak to trough, all discretionary tactical activity halts for 30 days.</strong> New entries are suspended, while any mechanical sleeves keep running (<a class="xref" href="13a.html">Chapter 13A</a>). There are four reasons: drawdowns produce poor decisions, a forced halt prevents revenge trading, mechanical systems keep working through it, and knowing that the cool-off exists makes the drawdown less catastrophic psychologically.</p>
+
+<p>The rule binds however good the next setup looks. <strong>It exists precisely to override your judgment during the period when your judgment is most compromised.</strong> By <a class="xref" href="1e.html">Chapter 1E</a>, a 25% drawdown already needs a gain of \(0.25/0.75 = 33\%\) to repair. <a class="xref" href="3d.html">Chapter 3D</a>'s illustration of drawdown discipline used a close-and-reset rule at 30%, while this book's portfolio rule halts at 25%.</p>
+
+<h3 id="strategy-sleeve-and-portfolio">Strategy, sleeve and portfolio</h3>
+
+<p>At the <strong>strategy level</strong>, each swing setup has its own kill rule:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Setup</th><th class="c-result">Kill rule in this chapter</th><th class="c-result">Chapter 11H's version</th></tr></thead><tbody><tr><td class="c-trial" data-label="Setup">Trend Pullback</td><td class="c-result" data-label="Kill rule in this chapter">A close below the entry day's low, or a <span class="gloss" title="A rule that closes a trade after a set number of trading days, whatever its profit or loss, because a setup that has not paid within its usual horizon has a low expected value from there on.">time stop</span> at 5 days</td><td class="c-result" data-label="Chapter 11H's version">The same, plus an exit if the 30-bar SMA's slope turns negative</td></tr><tr><td class="c-trial" data-label="Setup">Compression Breakout</td><td class="c-result" data-label="Kill rule in this chapter">A close back inside the consolidation range, or a time stop at 7 days</td><td class="c-result" data-label="Chapter 11H's version">A close back inside the range within 2 sessions or below its midpoint, and a time stop at 8 trading days</td></tr><tr><td class="c-trial" data-label="Setup">Undercut and Reclaim</td><td class="c-result" data-label="Kill rule in this chapter">A close below the undercut low, or a time stop at 3 days</td><td class="c-result" data-label="Chapter 11H's version">The same</td></tr><tr><td class="c-trial" data-label="Setup">IBS + RSI Mean Reversion</td><td class="c-result" data-label="Kill rule in this chapter">The 21-day EMA reclaimed, or a time stop at 3 days</td><td class="c-result" data-label="Chapter 11H's version">A close below the entry day's low, a target at the first close above the entry day's high or 1R, and a time stop at 2 days</td></tr></tbody></table></div></div>
+
+<p>The kill rules in the middle column come from the Dealer Mechanics Lab's chapter on the pipeline. The last column comes from its chapter on the setups, which <a class="xref" href="11h.html">Chapter 11H</a> follows and the cards of <a class="xref" href="13f.html">Chapter 13F</a> repeat. The two disagree on the Compression Breakout's time stop, 7 days against 8, and on the exit and time stop of the IBS + RSI setup, 3 days against 2. Whichever version you adopt, write it on the card and keep to it.</p>
+
+<p>At the <strong>sleeve level</strong>, for each bucket of strategies:</p>
+
+<ul>
+<li>If 3 of the last 5 swing trades lost, pause new entries for 1 week and review the framework.</li>
+<li>If the sleeve's drawdown exceeds 15% from peak to trough, cut its sizing by 50% for the next month.</li>
+<li>If the sleeve's drawdown exceeds 25%, pause it for 30 days.</li>
+</ul>
+
+<p>At the <strong>portfolio level</strong>, three rules apply:</p>
+
+<ul>
+<li>If the portfolio's drawdown exceeds 25% from peak to trough, halt all discretionary tactical trading for 30 days.</li>
+<li>If your personal behavioral state is degraded, halt new entries for at least 1 week.</li>
+<li>If the account's <strong><span class="gloss" title="The equity in a margin account above the broker's requirement, as a share of the equity. A cushion that shrinks toward zero means a margin call is near.">margin cushion</span></strong> falls below 30%, force a deleveraging by closing the smallest tactical positions first.</li>
+</ul>
+
+<p>The margin cushion is the equity above the broker's requirement, as a share of the equity. In <a class="xref" href="1e.html">Chapter 1E</a>'s example, $100,000 of equity against a $40,000 requirement is a cushion of 60%. With the requirement at $75,000 the cushion is 25%, below the line, so the rule closes positions before a margin call can choose them for you.</p>
+
+<p>"Personal behavioral state degraded" needs a measure, and the third figure supplies one. It scores seven factors, each from 0.1 to 1.0 by the guide under its name. They are last night's sleep, days since your last loss, any recent winning streak, whether the plan was written in advance, the fear of missing out (FOMO), today's screen time and external stress. Its readiness score is their product, which the figure labels S, a different S from the sizing factor of <a class="xref" href="13b.html">Chapter 13B</a>. At 0.5 or more the verdict is green: trade your plan. From 0.20 it is yellow: reduce size by 30% to 50%, or skip new entries and manage existing ones only. Below 0.20 it is red: no new positions, and reduce existing exposure if possible. As with the conviction score, one bad factor sets the whole score, and the figure highlights it.</p>
+
+<div class="eq" id="e-readiness">
+\[ \text{readiness} = \prod_{k=1}^{7} s_k \]
+</div>
+
+<figure class="fig" id="fig-behavioral-state-checklist">
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Factor and scoring guide</th><th>Score sᵢ</th></tr></thead>
+    <tbody>
+      <tr id="behavioral-state-checklist-r0"><td class="c-trial"><label for="behavioral-state-checklist-sleep">Sleep last night</label>
+        <span class="ev-meta">≥7 hrs = 1.0; 6h = 0.7; &lt;5h = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-sleep" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-sleep-o" for="behavioral-state-checklist-sleep"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r1"><td class="c-trial"><label for="behavioral-state-checklist-lossWindow">Days since last loss</label>
+        <span class="ev-meta">&gt;3 = 1.0; 1-3 = 0.6; same day = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-lossWindow" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-lossWindow-o" for="behavioral-state-checklist-lossWindow"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r2"><td class="c-trial"><label for="behavioral-state-checklist-winStreak">Recent winning streak</label>
+        <span class="ev-meta">none = 1.0; 3-5 wins = 0.7; &gt;5 = 0.5</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-winStreak" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-winStreak-o" for="behavioral-state-checklist-winStreak"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r3"><td class="c-trial"><label for="behavioral-state-checklist-preCommit">Plan written in advance?</label>
+        <span class="ev-meta">yes-clean = 1.0; rough notes = 0.6; in head = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-preCommit" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-preCommit-o" for="behavioral-state-checklist-preCommit"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r4"><td class="c-trial"><label for="behavioral-state-checklist-fomo">FOMO signal</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.2</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-fomo" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-fomo-o" for="behavioral-state-checklist-fomo"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r5"><td class="c-trial"><label for="behavioral-state-checklist-screen">Screen time today</label>
+        <span class="ev-meta">under 2h = 1.0; 2-4h = 0.7; over 4h = 0.4</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-screen" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-screen-o" for="behavioral-state-checklist-screen"></output></div></td></tr>
+      <tr id="behavioral-state-checklist-r6"><td class="c-trial"><label for="behavioral-state-checklist-external">External stress</label>
+        <span class="ev-meta">low = 1.0; moderate = 0.6; high = 0.3</span></td>
+        <td><div class="ctrl"><input type="range" id="behavioral-state-checklist-external" min="0.1" max="1" step="0.05" value="1">
+        <output id="behavioral-state-checklist-external-o" for="behavioral-state-checklist-external"></output></div></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="behavioral-state-checklist-prod"></output></div>
+    <div class="ctrl"><output id="behavioral-state-checklist-avg"></output></div>
+    <div class="ctrl"><output id="behavioral-state-checklist-bind"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="behavioral-state-checklist-vk"></b> <span id="behavioral-state-checklist-vt"></span></p>
+  <figcaption><b>One bad factor sets the whole score.</b> Score each of seven behavioral
+  factors from 0.1 to 1.0 by the guide under its name; the readiness score is their product,
+  S = ∏ sᵢ, and trades taken with a low S are systematically worse. S of 0.5 or more is green,
+  0.20 or more yellow, and anything lower red. Because the form is multiplicative, one factor
+  at 0.2 (a same-day loss, say) holds S at 0.2 or less whatever the other six say: the
+  highlighted row is that binding factor, as in the conviction score of Chapter 13B.</figcaption>
+</figure>
+
+<p>Set "days since last loss" to 0.2, a loss earlier the same day: the score can then be no more than 0.2, however well you slept. With a short night added, 6 hours at 0.7, the product falls to \(0.2 \times 0.7 = 0.14\): red, no new positions. The figure's premise is that trades taken in a low state are systematically worse. Its rule sets the cost of missing a day against the cost of trading through it. In this state it typically judges the first to be smaller.</p>
+
+<h2 id="the-pipeline-in-action">8 · The pipeline in action</h2>
+
+<p>The Edge Book walks the whole grammar through three situations: a tense morning, a slow allocation and the portfolio itself.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A morning when the VIX jumps</span>
+<p><strong>The scene.</strong> You wake up and check the market: the VIX is at 22, up from 14 last week, and VIX/VIX3M is 1.04. SPX is down 3% on a weak <span class="gloss" title="The monthly change in the number of US jobs outside farming, the headline figure of the government's Employment Situation report, usually released on the first Friday of the month. Abbreviated NFP.">jobs report</span>.</p>
+
+<p><strong>Step 1: observation.</strong> The VIX has risen 8 points in 5 days. VIX/VIX3M is 1.04, up from 0.85, on its <em>first</em> close above 1.00, where the rule waits for 3 closes. The 21-day realized volatility of SPX is 18%, still below the implied 22%. The TED spread is 35 bps and the MOVE index 95, both normal.</p>
+
+<p><strong>Step 2: interpretation.</strong> The term structure is tightening but not yet in stress. Realized volatility is still below implied, so the variance risk premium is still positive, and liquidity is normal. The regime is elevated but not stressed: a yellow zone, not a red one.</p>
+
+<p><strong>Step 3: trade implication.</strong> The filter has not fired, since it needs 3 consecutive closes. Make no new short-volatility entries today, as a precaution after one close. Do not reduce existing positions, and take no equity action. Record the day and re-check tomorrow.</p>
+
+<p><strong>Step 4: sizing.</strong> With no new positions, there is nothing to size today. The existing XSP positions are unchanged, because the filter has not triggered.</p>
+
+<p><strong>Step 5: invalidation.</strong> If VIX/VIX3M closes back below 1.00 tomorrow, return to the normal regime. If it stays above 1.00 for 2 more closes, escalate to the filter's trigger and reduce by 50%. If realized volatility crosses above implied, halt new entries even before the VIX trigger.</p>
+</div>
+
+<p>The result is no action today, plus conditions committed in advance for tomorrow. That is what the pipeline produces in an elevated regime that is not yet stressed. Most of the discipline shows up in the <em>non-actions</em>: not entering new positions because the filter is yellow.</p>
+
+<p>The morning's rules use two thresholds, 1.00 for the first steps and 1.05 in the invalidation example above. The VRP harvest's card in <a class="xref" href="13f.html">Chapter 13F</a> layers them: halt new entries above 1.00 for 3 closes, and cut the sleeve by 50% above 1.05. Whatever levels you choose, write them on the card before the morning they matter.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A quarterly review of a trend allocation</span>
+<p><strong>Step 1: observation.</strong> DBMF is down 2.1% year to date (YTD), against 0.8% for the BTOP50. Its <span class="gloss" title="The standard deviation of the difference between a strategy's returns and its benchmark's returns.">tracking error</span> to the BTOP50 is 1.3% annualized, within the 4% threshold. Over the trailing 12 months DBMF is down 3.2% and the BTOP50 1.5%.</p>
+
+<p><strong>Step 2: interpretation.</strong> Trend is in the middle of a drought, and DBMF's tracking is acceptable. Underperforming for 12 months is consistent with documented trend droughts, such as 2011 to 2018. This regime should reverse in the next stress or trending event.</p>
+
+<p><strong>Step 3: trade implication.</strong> Hold the existing position and do not reduce it, since a drought is not a kill criterion. You might add at the next rebalance if other allocations have drifted, but not because of trend's performance.</p>
+
+<p><strong>Step 4: sizing.</strong> The size stays where it is.</p>
+
+<p><strong>Step 5: invalidation.</strong> Switch vehicles if DBMF's tracking error exceeds 4% annualized for 4 consecutive quarters. Reassess, without exiting automatically, if its drawdown exceeds 25% peak to trough. Reassess after 5 or more years of sustained negative absolute returns, which would be unprecedented.</p>
+</div>
+
+<p>Running the pipeline even on calm, slow allocations is what prevents impulsive exits during their drawdowns. <a class="xref" href="10d.html">Chapter 10D</a>'s kill rules for the same sleeve reassess sooner, after three consecutive negative years rather than five, but both review rather than sell.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The pipeline for the whole portfolio</span>
+<p><strong>Step 1: observation.</strong> The portfolio's drawdown reaches 18% from peak to trough.</p>
+
+<p><strong>Step 2: interpretation.</strong> It is approaching the behavioral kill threshold of 25% (<a class="xref" href="13g.html">Chapter 13G</a>). Losses in both equity and short volatility at once indicate a correlated stress regime. A further fall of only \(1 - 0.75/0.82 = 8.5\%\) from here would reach the threshold.</p>
+
+<p><strong>Step 3: trade implication.</strong> Reduce all leveraged exposure by 25%, halt new tactical positions, and keep the core foundation allocations.</p>
+
+<p><strong>Step 4: sizing.</strong> Hold existing positions except where filter rules say otherwise, and open no new ones.</p>
+
+<p><strong>Step 5: invalidation.</strong> A 25% drawdown means a full stop on the tactical sleeves and a 30-day cooling-off. A drawdown of more than 35% in the foundation sleeves requires revalidating the whole thesis.</p>
+</div>
+
+<h2 id="selectivity">9 · Selectivity</h2>
+
+<p>Retail traders lean toward action, because action feels productive and doing nothing feels lazy. <strong>The data systematically rewards the opposite: on most days, doing nothing is the move with the highest expected value (EV).</strong> A competent swing trader running this framework should expect:</p>
+
+<ul>
+<li><strong>Most days, no new positions.</strong> On 60% to 70% of days no setup qualifies, a share that <a class="xref" href="11n.html">Chapter 11N</a> puts at 70% to 80%.</li>
+<li><strong>Most weeks, 1 to 3 new positions</strong> across the whole watchlist.</li>
+<li><strong>Most months, 6 to 12 positions</strong>, each with an explicit conviction score of 0.5 or more.</li>
+</ul>
+
+<p>The weekly and monthly counts agree: 1 to 3 a week over about 4.3 weeks is 4 to 13 a month. The pipeline imposes this selectivity by its structure: most observations do not pass interpretation, most interpretations do not pass conviction, and the trades that remain have cleared every gate before sizing. <strong>This is the system working, not failing.</strong></p>
+
+<h2 id="how-the-pipeline-fails">10 · How the pipeline fails</h2>
+
+<p>Five failures recur:</p>
+
+<ol>
+<li><strong>Skipping interpretation.</strong> "The VIX is up, sell calls" never says what a rising VIX means for the regime. Without an interpretation, the action is arbitrary.</li>
+<li><strong>Skipping sizing.</strong> "This is a great trade, I am going big." How big, and why? Without an explicit size from a loss budget, you have abandoned the discipline of survival.</li>
+<li><strong>Skipping invalidation.</strong> Saying "if it works, great, and if not, I can decide then" leaves every decision to your stressed self. Commit to the invalidation before you enter.</li>
+<li><strong>Re-running the pipeline mid-trade with new biases.</strong> You enter under one set of conditions, then under stress re-run the pipeline with a biased interpretation that justifies holding. The original interpretation should govern unless objective conditions change. Rationalizing as you go is the subtlest failure of all.</li>
+<li><strong>Running the pipeline without writing it down.</strong> Memory degrades, while a written record preserves the discipline. Even a brief journal entry for each run is enough.</li>
+</ol>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "the pipeline is bureaucratic, and experienced traders do not need it"</span>
+<p>Experienced traders run the pipeline implicitly, through pattern recognition. The framework only makes the implicit explicit. Beginners use it explicitly because their pattern recognition has not yet formed. Experienced traders who skip it produce experienced traders' failures: well-argued rationalizations of decisions made under stress. The pipeline does not go away with experience but moves from a written document to an internalized habit.</p>
+</div>
+
+<h2 id="in-practice">11 · In practice</h2>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li>Keep three written documents: the trigger list with its interpretations, a card for each strategy with its kill rules, and a journal with an entry for every run of the pipeline. The journal includes the runs that end in "do nothing".</li>
+<li>Size every trade from the budget first, then read its notional and ask the four questions: liquidity, margin, correlation and gaps.</li>
+<li>Add up the risk across open trades each week, and count correlated trades as one.</li>
+<li>Put the portfolio's drawdown and margin cushion on the same page as the positions, so that the kill rules fire from numbers, not from mood.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<ul>
+<li><strong>A stop caps the planned loss, not the realized one.</strong> A gap through the stop, or a tight stop on a large notional, can cost several budgets at once.</li>
+<li><strong>Triggers go stale.</strong> A threshold calibrated on one period can misfire in the next. A filter whose stress calls mostly fail needs recalibrating (<a class="xref" href="10a.html">Chapter 10A</a>).</li>
+<li><strong>Rules that are not written down become negotiable.</strong> Everything in this chapter depends on the invalidation existing before the entry.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Run all five steps in writing</strong> for every action, including the decision to do nothing.</li>
+<li><strong>Size by the loss budget:</strong> \(n \le \lfloor B_{\exp}/L_{\max} \rfloor\) at 1% risk per trade, then check the notional against liquidity, margin, correlation and gap risk.</li>
+<li><strong>Keep the whole book's risk below 30% of capital,</strong> and count correlated trades as a single bet.</li>
+<li><strong>Obey the kill rules without argument:</strong> 30 days without discretionary trading after a 25% portfolio drawdown, and the setup and sleeve rules above.</li>
+<li><strong>Write the invalidation before the entry,</strong> and change it afterward only to close the trade sooner.</li>
+</ul>
+</div>
+
+<h2 id="where-this-fits">12 · Where this fits</h2>
+
+<p><a class="xref" href="13d.html">Chapter 13D</a> walks ten swing trades through this grammar, and <a class="xref" href="13e.html">Chapter 13E</a> ten portfolio decisions. <a class="xref" href="13f.html">Chapter 13F</a> compresses each strategy onto an operational card, and <a class="xref" href="13g.html">Chapter 13G</a> takes the longest view: the portfolio's allocation, its kill criteria and the cadence of its review.</p>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Every action passes through five steps: observation, interpretation, trade implication, sizing and invalidation. The conviction score gates the third, and "do nothing" is a valid output.</li>
+<li>Risk 1% means a stopped-out loss of 1% of the portfolio, not 1% deployed. The position is \(n \le \lfloor B_{\exp}/L_{\max} \rfloor\), whose notional can approach the whole portfolio.</li>
+<li>The loss budget sizes each trade, and Kelly checks the aggregate. Past 30% of capital at risk, you are past half-Kelly, and correlated trades are one bet.</li>
+<li>Of the kill rules at three levels, the portfolio's is the bluntest: a 25% drawdown halts discretionary trading for 30 days, whatever the next setup looks like.</li>
+<li>Write the invalidation before the entry, because the calm self has to bind the stressed one.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">13 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>State the five steps of the pipeline and the question each answers.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Observation asks what you saw, and needs a measurable signal. Interpretation asks what it means, as a regime or risk update. Trade implication asks what action follows, including none. Sizing asks how much, from a loss budget. Invalidation asks what would prove you wrong, as a kill condition set in advance.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A $500,000 portfolio risks 1% on a $250 stock with a $5 stop. How many shares, and what notional?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The budget is $5,000, so the position is \(5{,}000/5 = 1{,}000\) shares, worth $250,000, half the portfolio. The ratio of the two readings of 1% is \(P/d = 250/5 = 50\): deploying 1% of capital would have bought only 20 shares.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>What is the difference between trade-level and strategy-level invalidation?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Trade-level invalidation closes this position, on time, loss or profit: at 21 days to expiry, at a loss of three times the premium, or at 50% of the maximum profit. Strategy-level invalidation suspends or reassesses the whole strategy. Its triggers are a filter, a performance limit or a change in the evidence, such as VIX/VIX3M above 1.05 for 3 days or a sleeve drawdown beyond 20%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Why is "no action" a valid output of the pipeline?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Most observations do not survive interpretation and conviction. A filter can also fire when there is nothing to change. Recording the observation and not trading is the pipeline working. On 60% to 70% of days no setup qualifies at all.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Why is the sizing equation rounded down? Size an XSP put-writing sleeve with a $50,000 budget and a stress loss of $10,800 a contract.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Rounding up would put the stress loss above the budget, so the floor keeps the rule conservative. Here \(50{,}000/10{,}800 = 4.6\), and \(\lfloor 4.6 \rfloor = 4\) contracts.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>You hold 12 open swing trades, each risking 1.5%, all long large US stocks. Is that within the Kelly check?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>They put \(12 \times 1.5\% = 18\%\) at risk. Independent trades would pass, since 18% is under the 30% line. But trades that all move with the index act as one bet, whose full Kelly at a 55% edge is 10%, so 18% is 1.8 times Kelly. By <a class="xref xeq" href="3d.html#e-halve">(3D.6)</a>, the chance of ever halving is then \(0.5^{2/1.8 - 1} = 93\%\). Cut the number of positions or the risk on each.</p>
+</div></details>
+</div>
+</div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- position-size-clarifier ---------- */
+(function () {
+  var U = 'position-size-clarifier';
+  var stopBox = DL.$(U + '-stop');
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        entry = DL.val(U + '-entry'), multiplier = DL.val(U + '-mult'),
+        margin = DL.val(U + '-margin');
+    /* the stop slider ends a dollar under the entry, as the app's does; lowering
+       its end pulls the stop down with it, so the stop used is the stop shown */
+    var top = String(Math.max(entry - 1, 1));
+    if (stopBox.max !== top) stopBox.max = top;
+    var stop = parseFloat(stopBox.value);
+
+    var dollarRisk = portfolio * riskPct;
+    var stopDist = Math.max(entry - stop, 0.01);
+    var perContractLoss = stopDist * multiplier;
+    var positionSize = Math.max(Math.floor(dollarRisk / perContractLoss), 0);
+    var notional = positionSize * entry * multiplier;
+    var notionalPct = (notional / portfolio) * 100;
+    var gap2x = positionSize * stopDist * 2 * multiplier;
+    var gap3x = positionSize * stopDist * 3 * multiplier;
+    var gap2xPct = (gap2x / portfolio) * 100;
+    var gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (notional <= margin * 0.7) verdict = ['Margin: GREEN.', 'Within 70% of available margin.'];
+    else if (notional <= margin) verdict = ['Margin: YELLOW.', 'Uses 70–100% of margin.'];
+    else verdict = ['Margin: RED.', 'Exceeds available margin.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-entry-o', '$' + loc(entry));
+    DL.out(U + '-stop-o', '$' + loc(stop));
+    DL.out(U + '-mult-o', String(multiplier));
+    DL.out(U + '-margin-o', '$' + DL.num(margin / 1000, 0) + 'k');
+
+    DL.out(U + '-drisk', 'dollar risk = $' + loc(dollarRisk));
+    DL.out(U + '-dist', 'stop distance = $' + stopDist.toFixed(2));
+    DL.out(U + '-lpc', 'loss / contract = $' + loc(perContractLoss));
+    DL.out(U + '-size', 'position size = ' + DL.num(positionSize, 0));
+    DL.out(U + '-notional', 'notional deployed = $' + loc(notional));
+    DL.out(U + '-npct', 'notional % of portfolio = ' + notionalPct.toFixed(1) + '%');
+    /* with no position there is no notional to set the risk against */
+    DL.out(U + '-ratio', 'planned risk / size ratio = ' +
+           (notional > 0 ? (dollarRisk / notional * 100).toFixed(2) + '%' : '—'));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '\u2060$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '\u2060$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-entry', U + '-stop', U + '-mult', U + '-margin'], update);
+  DL.figure('fig-' + U, update);
+})();
+
+/* ---------- position-size-calculator ---------- */
+(function () {
+  var U = 'position-size-calculator';
+
+  /* the app writes dollars with toLocaleString(): commas, up to three decimals */
+  function loc(x) {
+    var s = DL.num(x, 3);
+    return s.indexOf('.') < 0 ? s : s.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  function mark(id, on) {
+    var row = DL.$(id);
+    if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+  }
+
+  function update() {
+    var portfolio = DL.val(U + '-port'), riskPct = DL.val(U + '-risk'),
+        stopDistance = DL.val(U + '-stop'), multiplier = DL.val(U + '-mult');
+    var B_exp = portfolio * riskPct;
+    var L_max = stopDistance * multiplier;
+    var n = Math.floor(B_exp / L_max);
+    var actualRisk = n * L_max;
+    var actualRiskPct = (actualRisk / portfolio) * 100;
+    /* the app's "notional at stop": n × stop × multiplier × 50, the notional
+       of n contracts priced at fifty stop distances, a stop 2% below entry */
+    var notional = n * stopDistance * multiplier * 50;
+    var gap2x = n * L_max * 2, gap3x = n * L_max * 3;
+    var gap2xPct = (gap2x / portfolio) * 100, gap3xPct = (gap3x / portfolio) * 100;
+
+    var verdict;
+    if (gap2xPct < 3) verdict = ['GREEN.', '2× gap-through still under 3% portfolio loss.'];
+    else if (gap2xPct < 5) verdict = ['YELLOW.', '2× gap-through approaches 5%; consider reducing.'];
+    else verdict = ['RED.', '2× gap-through exceeds 5%; reduce size.'];
+
+    DL.out(U + '-port-o', '$' + DL.num(portfolio / 1000, 0) + 'k');
+    DL.out(U + '-risk-o', (riskPct * 100).toFixed(2) + '%');
+    DL.out(U + '-stop-o', '$' + stopDistance.toFixed(2));
+    DL.out(U + '-mult-o', String(multiplier));
+
+    DL.out(U + '-b', 'loss budget B_exp = $' + loc(B_exp));
+    DL.out(U + '-l', 'loss per unit L_max = $' + loc(L_max));
+    DL.out(U + '-n', 'n = ⌊B_exp / L_max⌋ = ' + DL.num(n, 0) + ' contracts');
+    DL.out(U + '-risk-d', 'planned risk = $' + loc(actualRisk));
+    DL.out(U + '-risk-p', 'planned risk % = ' + actualRiskPct.toFixed(2) + '%');
+    DL.out(U + '-notional', 'notional at a 2% stop = $' + loc(notional));
+
+    /* a word joiner keeps the minus on the same line as the dollar sign */
+    DL.out(U + '-g2l', DL.MINUS + '⁠$' + loc(gap2x));
+    DL.out(U + '-g2p', gap2xPct.toFixed(2) + '%');
+    DL.out(U + '-g3l', DL.MINUS + '⁠$' + loc(gap3x));
+    DL.out(U + '-g3p', gap3xPct.toFixed(2) + '%');
+    mark(U + '-g2', gap2xPct > 3);
+    mark(U + '-g3', gap3xPct > 5);
+
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind([U + '-port', U + '-risk', U + '-stop', U + '-mult'], update);
+  DL.figure('fig-' + U, update);
+})();
+
+/* ---------- behavioral-state-checklist ---------- */
+(function () {
+  var U = 'behavioral-state-checklist';
+  /* the app's seven factors, in its order, with the name its readout prints */
+  var ITEMS = [
+    { key: 'sleep', label: 'sleep last night' },
+    { key: 'lossWindow', label: 'days since last loss' },
+    { key: 'winStreak', label: 'recent winning streak' },
+    { key: 'preCommit', label: 'plan written in advance?' },
+    { key: 'fomo', label: 'FOMO signal' },
+    { key: 'screen', label: 'screen time today' },
+    { key: 'external', label: 'external stress' }
+  ];
+
+  function update() {
+    var vals = ITEMS.map(function (it) { return DL.val(U + '-' + it.key); });
+    var product = vals.reduce(function (a, b) { return a * b; }, 1);
+    var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    /* the binding factor: the first strictly below 1 with the lowest score */
+    var bind = -1, low = 1;
+    vals.forEach(function (v, i) { if (v < low) { low = v; bind = i; } });
+
+    var verdict;
+    if (product >= 0.5) {
+      verdict = ['GREEN.', 'Behavioral state supports normal sizing. Trade your plan.'];
+    } else if (product >= 0.20) {
+      verdict = ['YELLOW.', 'Behavioral state is degraded. Reduce size by 30-50% or skip new ' +
+                 'entries; manage existing only.'];
+    } else {
+      verdict = ['RED.', 'State is compromised. No new positions. Reduce existing exposure if ' +
+                 'possible. The cost of trading in this state typically exceeds the cost of ' +
+                 'missing today.'];
+    }
+
+    ITEMS.forEach(function (it, i) {
+      DL.out(U + '-' + it.key + '-o', vals[i].toFixed(2));
+      var row = DL.$(U + '-r' + i), on = i === bind;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+    DL.out(U + '-prod', 'product score S = ' + product.toFixed(3));
+    DL.out(U + '-avg', 'average factor = ' + avg.toFixed(3));
+    DL.out(U + '-bind', 'binding = ' + (bind < 0 ? '—' : ITEMS[bind].label));
+    DL.out(U + '-vk', verdict[0]);
+    DL.out(U + '-vt', verdict[1]);
+  }
+  DL.bind(ITEMS.map(function (it) { return U + '-' + it.key; }), update);
+  DL.figure('fig-' + U, update);
+})();
+<!--/SCRIPT-->

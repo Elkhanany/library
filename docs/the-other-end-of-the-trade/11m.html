@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>11M Choosing an expiry — The Other End of the Trade</title>
+<meta name="description" content="Chapter 11M of The Other End of the Trade: Choosing an expiry.">
+<link rel="stylesheet" href="assets/katex.min.css">
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-10">← Part XI · Swing trading</a>
+  <div class="sb-folio"><a class="sb-prev" href="11l.html" aria-label="Previous chapter: 11L · Single stocks and the index" title="Previous chapter: 11L · Single stocks and the index (←)">‹ 11L</a><p class="sb-title"><span class="sb-at">Chapter 11M ·</span> <span class="sb-at">62 of 83</span></p><a class="sb-next" href="11n.html" aria-label="Next chapter: 11N · How swing trades fail" title="Next chapter: 11N · How swing trades fail (→)">11N ›</a></div>
+  <div id="sb-toc"><a href="#how-time-to-expiry-sets-the-greeks">1 · How time to expiry sets the Greeks</a><a href="#the-dte-decision-table">2 · The DTE decision table</a><a href="#the-fit-between-strategy-and-expiry">3 · The fit between strategy and expiry</a><a href="#the-matching-principle">4 · The matching principle</a><a href="#the-expires-before-exit-trap">5 · The expires-before-exit trap</a><a href="#why-retail-picks-expiries-that-are-too-short">6 · Why retail picks expiries that are too short</a><a href="#check-yourself">7 · Check yourself</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part XI · Swing trading · Chapter 11M</p>
+
+<h1>Choosing an expiry</h1>
+
+<p class="subtitle">Days to expiry for swing trades</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="11l.html">Chapter 11L</a> chose between the index and a stock. When the trade uses options, one more choice sets its Greek profile: the expiry. The wrong expiry for a thesis is a structural mismatch that no execution skill can recover, so this chapter gives the matching rule and the arithmetic behind it.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Days to expiry (<a class="xref" href="5b.html">Chapter 5B</a>), and the at-the-money price shortcut <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mo>≈</mo><mn>0.4</mn> <mi>S</mi><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">C \approx 0.4\,S\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0715em;">C</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span> (<a class="xref" href="5e.html">Chapter 5E</a>).</li>
+<li>Gamma and theta, which grow as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, and vega, which grows as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span> (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>Charm and 0DTE options (Chapters 5D and 9B), and LEAPS (<a class="xref" href="5g.html">Chapter 5G</a>).</li>
+<li>The four setups with their holds and time stops (<a class="xref" href="11h.html">Chapter 11H</a>), pre-earnings momentum (<a class="xref" href="11i.html">Chapter 11I</a>) and the vanna unwind (<a class="xref" href="11k.html">Chapter 11K</a>).</li>
+</ul>
+</div>
+
+<h2 id="how-time-to-expiry-sets-the-greeks">1 · How time to expiry sets the Greeks</h2>
+
+<p>The expiration date you choose for an options position determines the trade's Greek profile. At the money, and with no rates or dividends, the formulas of <a class="xref" href="5c.html">Chapter 5C</a> reduce to simple powers of the time to expiry <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span>, in years:</p>
+
+<ul>
+<li>price: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mo>≈</mo><mn>0.4</mn> <mi>S</mi><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">C \approx 0.4\,S\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0715em;">C</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span></li>
+<li>gamma: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Γ</mi><mo>≈</mo><mn>0.4</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mi>S</mi><mi>σ</mi><msqrt><mi>T</mi></msqrt><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\Gamma \approx 0.4/(S\sigma\sqrt{T})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">Γ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">0.4/</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></li>
+<li>vega, per unit of volatility: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>≈</mo><mn>0.4</mn> <mi>S</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\nu \approx 0.4\,S\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4831em;"></span><span class="mord mathnormal" style="margin-right: 0.0637em;">ν</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span></li>
+<li>theta, per year: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Θ</mi><mo>≈</mo><mo>−</mo><mn>0.2</mn> <mi>S</mi><mi>σ</mi><mi mathvariant="normal">/</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\Theta \approx -0.2\,S\sigma/\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">Θ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord">0.2</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord">/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span></li>
+</ul>
+
+<p>Here <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span></span></span></span></span> is the price of the underlying and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> the implied volatility, and 0.4 is the height of the normal curve at its center. Dividing theta by the price gives the share of the premium that decays each year, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">1/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span>. Divide by 365 for a calendar day, and write <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mn>365</mn> <mi>T</mi></mrow><annotation encoding="application/x-tex">D = 365\,T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">365</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> for the <span class="gloss" data-facts="The number of calendar days until an option expires, abbreviated DTE. An option with zero days to expiry expires today." tabindex="0" role="button">days to expiry</span> (DTE):</p>
+
+<div class="eq" id="e-thetashare">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi mathvariant="normal">∣</mi><mi mathvariant="normal">Θ</mi><mi mathvariant="normal">∣</mi><mi mathvariant="normal">/</mi><mn>365</mn></mrow><mi>C</mi></mfrac><mo>≈</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>D</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex"> \frac{|\Theta|/365}{C} \approx \frac{1}{2D} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 2.113em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.427em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0715em;">C</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">∣Θ∣/365</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.0074em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3214em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(11M.1)</span></div>
+
+<p>An at-the-money option loses about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">1/(2D)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mclose">)</span></span></span></span></span> of its value each day: 1.7% a day at 30 DTE and 7.1% at 7 DTE, and the rate keeps climbing until the last day takes all that is left. Since the price scales with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, an option held <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> calendar days with nothing else changing keeps <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><mo stretchy="false">(</mo><mi>D</mi><mo>−</mo><mi>h</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>D</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{(D-h)/D}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal">h</span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span></span></span></span></span> of its value. The share lost to time over the hold is</p>
+
+<div class="eq" id="e-holdloss">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>D</mi><mo separator="true">,</mo><mi>h</mi><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn><mo>−</mo><msqrt><mfrac><mrow><mi>D</mi><mo>−</mo><mi>h</mi></mrow><mi>D</mi></mfrac></msqrt></mrow><annotation encoding="application/x-tex"> L(D,h) = 1 - \sqrt{\frac{D-h}{D}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">L</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal">h</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 2.44em; vertical-align: -0.7634em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.6766em;"><span class="svg-align" style="top: -4.4em;"><span class="pstrut" style="height: 4.4em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3714em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span class="" style="top: -3.6366em;"><span class="pstrut" style="height: 4.4em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 2.48em;"><svg width="400em" height="2.48em" viewBox="0 0 400000 2592" preserveAspectRatio="xMinYMin slice"><path d="M424,2478
+c-1.3,-0.7,-38.5,-172,-111.5,-514c-73,-342,-109.8,-513.3,-110.5,-514
+c0,-2,-10.7,14.3,-32,49c-4.7,7.3,-9.8,15.7,-15.5,25c-5.7,9.3,-9.8,16,-12.5,20
+s-5,7,-5,7c-4,-3.3,-8.3,-7.7,-13,-13s-13,-13,-13,-13s76,-122,76,-122s77,-121,77,-121
+s209,968,209,968c0,-2,84.7,-361.7,254,-1079c169.3,-717.3,254.7,-1077.7,256,-1081
+l0 -0c4,-6.7,10,-10,18,-10 H400000
+v40H1014.6
+s-87.3,378.7,-272.6,1166c-185.3,787.3,-279.3,1182.3,-282,1185
+c-2,6,-10,9,-24,9
+c-8,0,-12,-0.7,-12,-2z M1001 80
+h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.7634em;"><span class=""></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(11M.2)</span></div>
+
+<p>It reaches 100% when <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mi>D</mi></mrow><annotation encoding="application/x-tex">h = D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span></span></span>: an option that expires at your exit has lost all of its time value by then. Theta runs on calendar days, weekends included, so count the hold in calendar days (<a class="xref" href="5c.html">Chapter 5C</a>).</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two expiries, one SPY call</span>
+<p><strong>Step 1: the shortcut.</strong> Take SPY at 600 with an implied volatility of 16%. At 30 DTE, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt><mo>=</mo><msqrt><mrow><mn>30</mn><mi mathvariant="normal">/</mi><mn>365</mn></mrow></msqrt><mo>=</mo><mn>0.2867</mn></mrow><annotation encoding="application/x-tex">\sqrt{T} = \sqrt{30/365} = 0.2867</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">30/365</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.2867</span></span></span></span></span>, so an at-the-money call costs about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.4</mn><mo>×</mo><mn>600</mn><mo>×</mo><mn>0.16</mn><mo>×</mo><mn>0.2867</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>11.01</mn></mrow><annotation encoding="application/x-tex">0.4 \times 600 \times 0.16 \times 0.2867 = \$11.01</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">600</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.16</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.2867</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$11.01</span></span></span></span></span>. At 7 DTE, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt><mo>=</mo><mn>0.1385</mn></mrow><annotation encoding="application/x-tex">\sqrt{T} = 0.1385</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.1385</span></span></span></span></span> and the call costs about $5.32.</p>
+
+<p><strong>Step 2: the full Greeks.</strong> Black-Scholes values, with no rates or dividends, are close to the shortcut:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">At the money, SPY 600, IV 16%</th><th>30 DTE</th><th>7 DTE</th></tr></thead><tbody><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Premium</td><td data-label="30 DTE">$10.98</td><td data-label="7 DTE">$5.30</td></tr><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Delta</td><td data-label="30 DTE">0.51</td><td data-label="7 DTE">0.50</td></tr><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Gamma</td><td data-label="30 DTE">0.0145</td><td data-label="7 DTE">0.0300</td></tr><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Theta per day</td><td data-label="30 DTE">−$0.18</td><td data-label="7 DTE">−$0.38</td></tr><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Theta as a share of premium</td><td data-label="30 DTE">1.7%</td><td data-label="7 DTE">7.1%</td></tr><tr><td class="c-trial" data-label="At the money, SPY 600, IV 16%">Vega per volatility point</td><td data-label="30 DTE">$0.69</td><td data-label="7 DTE">$0.33</td></tr></tbody></table></div></div>
+
+<p><strong>Step 3: per dollar of premium.</strong> A $1 rise in SPY adds about $0.51 to either call: 4.6% of the 30-day premium and 9.5% of the 7-day one. Gamma and theta per dollar of premium are both <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>30</mn><mi mathvariant="normal">/</mi><mn>7</mn><mo>=</mo><mn>4.3</mn></mrow><annotation encoding="application/x-tex">30/7 = 4.3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">30/7</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">4.3</span></span></span></span></span> times as high on the 7-day call.</p>
+</div>
+
+<h2 id="the-dte-decision-table">2 · The DTE decision table</h2>
+
+<p>The source sorts expiries into seven bands by their Greek profile:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">DTE range</th><th class="c-result">Greek profile</th><th class="c-result">Use case</th></tr></thead><tbody><tr><td class="c-trial" data-label="DTE range">0DTE</td><td class="c-result" data-label="Greek profile">Gamma-dominant, tiny vega, charm-dominant</td><td class="c-result" data-label="Use case">Intraday convexity plays only. Not appropriate for any swing thesis of 2 days or more</td></tr><tr><td class="c-trial" data-label="DTE range">1 to 7 DTE</td><td class="c-result" data-label="Greek profile">High gamma, rapid theta decay, low vega</td><td class="c-result" data-label="Use case">Tactical event trades such as the FOMC vanna unwind, and short-duration mean reversion. High execution risk; requires very high conviction</td></tr><tr><td class="c-trial" data-label="DTE range">8 to 21 DTE</td><td class="c-result" data-label="Greek profile">Balanced gamma and theta, growing vega</td><td class="c-result" data-label="Use case">The classic swing-options zone for tactical setups: Trend Pullback option expressions, post-earnings premium selling, the aftermath of a vanna unwind</td></tr><tr><td class="c-trial" data-label="DTE range">21 to 45 DTE</td><td class="c-result" data-label="Greek profile">Lower gamma, a lower daily rate of theta decay, meaningful vega</td><td class="c-result" data-label="Use case">The default swing-options zone: pre-earnings momentum option overlays, multi-day setups, catalyst-driven positions</td></tr><tr><td class="c-trial" data-label="DTE range">45 to 90 DTE</td><td class="c-result" data-label="Greek profile">Low gamma, slow theta decay, high vega</td><td class="c-result" data-label="Use case">A directional thesis with vega exposure: PMCC long legs, diagonal back-month legs</td></tr><tr><td class="c-trial" data-label="DTE range">90 to 365 DTE</td><td class="c-result" data-label="Greek profile">Very low gamma, minimal theta, very high vega and rho</td><td class="c-result" data-label="Use case">Strategic positions, hedges, replacement-stock structures; horizons of a quarter or more</td></tr><tr><td class="c-trial" data-label="DTE range">Over 365 DTE (LEAPS)</td><td class="c-result" data-label="Greek profile">Near-stock delta, minimal theta, extreme vega</td><td class="c-result" data-label="Use case">Equity replacement strategies</td></tr></tbody></table></div></div>
+
+<p>"Charm-dominant" means that on its last day an option's delta is moved most by the clock (<a class="xref" href="5d.html">Chapter 5D</a>). Rho, the sensitivity to interest rates, grows with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> (<a class="xref" href="5c.html">Chapter 5C</a>). <span class="gloss" data-facts="A diagonal call spread that buys a deep in-the-money call with a distant expiry, often a LEAPS call, in place of shares, and sells shorter-dated out-of-the-money calls against it. Abbreviated PMCC." tabindex="0" role="button">PMCC</span> is a poor man's covered call: a long-dated call bought in place of shares, with shorter calls sold against it. A <span class="gloss" data-facts="A position that sells an option at one expiry and buys an option of the same type at a later expiry and a different strike. It is a calendar spread with the strikes moved apart." tabindex="0" role="button">diagonal spread</span> pairs a front-month short with a back-month long. The source adds a warning: <span class="gloss" data-facts="Listed options with expiries more than a year away. The name stands for Long-term Equity AnticiPation Securities." tabindex="0" role="button">LEAPS</span> are not "cheap lottery tickets". Their high vega means a change of implied-volatility regime can move the position 30% to 50% independent of the underlying.</p>
+
+<div class="worked">
+<span class="ct">Worked example: What a volatility regime does to a LEAPS call</span>
+<p><strong>Step 1: at the money.</strong> A one-year at-the-money SPY call at 20% implied volatility is worth $47.79 (Black-Scholes, no rates or dividends). With SPY unchanged, it is worth $33.48 at an implied volatility of 14%, 30% less, and $23.93 at 10%, 50% less.</p>
+
+<p><strong>Step 2: deep in the money.</strong> A one-year call struck at 450, with a delta of 0.94, is worth $153.49 at 20% and $150.53 at 14%, only 1.9% less. Most of its value is intrinsic, which volatility cannot touch.</p>
+</div>
+
+<p>So the table's LEAPS row describes two strikes at once. The near-stock delta belongs to a deep in-the-money LEAPS call, and the 30% to 50% swings to one near the money.</p>
+
+<h2 id="the-fit-between-strategy-and-expiry">3 · The fit between strategy and expiry</h2>
+
+<p>The figure scores eight strategies against six DTE buckets. Each cell is a judgment score from 0 (avoid) to 5 (ideal), not a measurement. Green cells, 4 and 5, are good fits, yellow cells score 2 or 3, and red cells, 0 or 1, mark buckets whose Greek profile fights what the strategy is trying to do. Two rows of buttons choose a strategy and a bucket, with readouts of their fit, the strategy's whole row and the bucket's profile. The buckets are cut at different days from the table above: 0DTE, weekly (1 to 9 days), short-dated (10 to 30), mid-dated (31 to 60), long-dated (61 to 180) and LEAPS from 180 days, where the table starts LEAPS beyond 365. It opens on the credit spread in the short-dated bucket. Step the long call across the buckets, then compare the gamma scalp's row with the PMCC's.</p>
+
+<figure class="fig" id="fig-dte-selection-matrix">
+  <canvas id="dte-selection-matrix-c" data-h="262" width="631" height="262" style="height: 262px;"></canvas>
+  <div class="ctrls ctrl" role="group" aria-label="Strategy" id="dte-selection-matrix-strat">
+    <label>strategy</label>
+    <button type="button" data-v="creditSpread" class="on" aria-pressed="true">credit spread</button>
+    <button type="button" data-v="ironCondor" aria-pressed="false">iron condor</button>
+    <button type="button" data-v="longCall" aria-pressed="false">long call</button>
+    <button type="button" data-v="calendar" aria-pressed="false">calendar / diagonal</button>
+    <button type="button" data-v="straddle" aria-pressed="false">long straddle</button>
+    <button type="button" data-v="pmcc" aria-pressed="false">PMCC</button>
+    <button type="button" data-v="gammaScalp" aria-pressed="false">gamma scalp</button>
+    <button type="button" data-v="preEarn" aria-pressed="false">pre-earnings</button>
+  </div>
+  <div class="ctrls ctrl" role="group" aria-label="DTE bucket" id="dte-selection-matrix-dte">
+    <label>DTE bucket</label>
+    <button type="button" data-v="0dte" aria-pressed="false">0DTE</button>
+    <button type="button" data-v="weekly" aria-pressed="false">weekly</button>
+    <button type="button" data-v="shortDated" class="on" aria-pressed="true">short-dated</button>
+    <button type="button" data-v="midDated" aria-pressed="false">mid-dated</button>
+    <button type="button" data-v="longDated" aria-pressed="false">long-dated</button>
+    <button type="button" data-v="leaps" aria-pressed="false">LEAPS</button>
+  </div>
+  <p class="readout" aria-live="polite"><b id="dte-selection-matrix-vk">Fit 5 of 5 (ideal).</b> <span id="dte-selection-matrix-vt">Credit spread (premium-sell), short-dated (10-30 days). Its row, 0DTE to LEAPS: 2, 4, 5, 4, 2, 0.</span></p>
+  <p class="readout"><b id="dte-selection-matrix-pk">Short-dated (10-30 days):</b> <span id="dte-selection-matrix-pt">balanced gamma/vega/theta, the standard zone.</span></p>
+  <figcaption><b>Match the expiry to the strategy.</b> Eight strategies against six DTE
+  buckets, each cell a judgment score from 0 (avoid) to 5 (ideal), not a measurement. Green
+  cells are good fits; red cells mark buckets whose Greek profile fights what the strategy is
+  trying to do. Choose a strategy and a bucket to read their fit and the bucket's profile. The
+  buckets are cut at different days from the table above: here LEAPS starts at 180
+  days.</figcaption>
+</figure>
+
+<p>The credit spread opens at 5 of 5, ideal, in the short-dated bucket, with a row reading 2, 4, 5, 4, 2, 0 from 0DTE to LEAPS. The long call's row, 3, 3, 4, 4, 4, 5, rises toward LEAPS. The gamma scalp's row, 5, 5, 4, 2, 1, 0, and the PMCC's, 0, 1, 2, 3, 4, 5, are near mirror images: one lives on short-dated gamma, the other on a long-dated leg's delta. The pre-earnings call spread scores 5 in the short-dated bucket, 10 to 30 days, while this chapter's setup table below asks for 30 to 45. Both keep the rule that the option must expire after the report.</p>
+
+<p>Three rows need the Edge Book's view beside them. For the iron condor row, it rejects systematic condors, which <a class="xref" href="12c.html">Chapter 12C</a> teaches (<a class="xref" href="10i.html">Chapter 10I</a>). For the credit spread row, its one volatility-selling strategy is the <span class="gloss" data-facts="In this book, one specific strategy: selling at-the-money, one-month, cash-secured XSP puts every month to collect the variance risk premium. Other ways of selling options are different strategies." tabindex="0" role="button">VRP harvest</span>: cash-secured at-the-money XSP puts sold 30 to 45 days out and closed at 21 (Chapters 10C and 13F). It treats weekly and 0DTE premium selling as a different strategy, with much higher operational risk. The gamma scalp row is the delta-hedged long option of <span class="gloss" data-facts="Earning the curvature of a long option position by re-hedging its delta: selling the underlying after rises and buying after falls. It pays when the underlying moves more than the implied volatility paid for the option." tabindex="0" role="button">gamma scalping</span> (<a class="xref" href="6d.html">Chapter 6D</a>), not the scalping of gamma-exposure levels that the Edge Book rejects.</p>
+
+<h2 id="the-matching-principle">4 · The matching principle</h2>
+
+<p>The cardinal rule: <strong>the DTE should match the thesis horizon, with a buffer for an adverse path.</strong> The source gives three theses:</p>
+
+<ul>
+<li><strong>"SPY bounces from the 21-EMA in 2 to 5 days."</strong> 0DTE options are a structural mismatch, since their gamma exposure and theta decay do not match a 5-day horizon. The right vehicle is 14 to 30 DTE options, which give the thesis time to play out without bleeding to zero through theta.</li>
+<li><strong>"NVDA drifts up over 2 weeks into earnings."</strong> 7 DTE options are wrong: they expire before earnings, and the theta burn over 14 days at 7 DTE is destructive. The right vehicle is 30 to 45 DTE options, which cover the thesis with a buffer.</li>
+<li><strong>"Tech leads for the next quarter."</strong> 30 DTE options are wrong, with too much short-dated gamma noise and too little vega capture for a multi-month horizon. The right vehicle is 90 to 120 DTE options or LEAPS-based structures.</li>
+</ul>
+
+<div class="worked">
+<span class="ct">Worked example: Theta over the holding period</span>
+<p><strong>Step 1: the bounce.</strong> A hold of 5 trading days spans 7 calendar days. By <a class="eqref" href="#e-holdloss">(11M.2)</a>, an at-the-money option at 14 DTE loses <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>7</mn><mi mathvariant="normal">/</mi><mn>14</mn></mrow></msqrt><mo>=</mo><mn>29</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{7/14} = 29\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">7/14</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">29%</span></span></span></span></span> of its value to time over the hold, at 21 DTE <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>14</mn><mi mathvariant="normal">/</mi><mn>21</mn></mrow></msqrt><mo>=</mo><mn>18</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{14/21} = 18\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">14/21</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">18%</span></span></span></span></span> and at 30 DTE 12%, while a 7 DTE option loses all of it.</p>
+
+<p><strong>Step 2: the dollars.</strong> At SPY 600 and 16%, those three options cost $7.50, $9.19 and $10.98, so the 7 days take $2.20, $1.69 and $1.37 from them. The longer expiry costs more to buy and less to hold.</p>
+
+<p><strong>Step 3: the drift into earnings.</strong> Over 14 days, a 30 DTE option loses <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>16</mn><mi mathvariant="normal">/</mi><mn>30</mn></mrow></msqrt><mo>=</mo><mn>27</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{16/30} = 27\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">16/30</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">27%</span></span></span></span></span> of its value to time and a 45 DTE option <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>31</mn><mi mathvariant="normal">/</mi><mn>45</mn></mrow></msqrt><mo>=</mo><mn>17</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{31/45} = 17\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">31/45</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">17%</span></span></span></span></span>.</p>
+</div>
+
+<p>The source gives each setup its own expiry:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Setup</th><th class="c-endpoint">DTE</th><th class="c-result">Why</th></tr></thead><tbody><tr><td class="c-trial" data-label="Setup">Trend Pullback</td><td class="c-endpoint" data-label="DTE">14 to 30 DTE with options; with shares, an immediate exit, since no expiry constrains it</td><td class="c-result" data-label="Why">Holds typically 2 to 5 days; needs a buffer for an adverse path</td></tr><tr><td class="c-trial" data-label="Setup">Compression Breakout</td><td class="c-endpoint" data-label="DTE">21 to 45 DTE</td><td class="c-result" data-label="Why">Holds up to 8 days; wants meaningful gamma without rapid theta burn</td></tr><tr><td class="c-trial" data-label="Setup">Undercut and Reclaim</td><td class="c-endpoint" data-label="DTE">14 to 21 DTE</td><td class="c-result" data-label="Why">Holds 2 to 3 days; a tighter DTE is acceptable because the hold is short</td></tr><tr><td class="c-trial" data-label="Setup">IBS + RSI Mean Reversion</td><td class="c-endpoint" data-label="DTE">Shares preferred; 7 to 14 DTE with options</td><td class="c-result" data-label="Why">Holds 1 to 2 days; very short duration</td></tr><tr><td class="c-trial" data-label="Setup">Pre-earnings momentum</td><td class="c-endpoint" data-label="DTE">Shares preferred; 30 to 45 DTE with options, expiring <em>after</em> earnings</td><td class="c-result" data-label="Why">The trade closes before earnings, but the vehicle's expiry must outlast them</td></tr><tr><td class="c-trial" data-label="Setup">FOMC vanna unwind</td><td class="c-endpoint" data-label="DTE">0 to 1 DTE</td><td class="c-result" data-label="Why">An intraday operation only (<a class="xref" href="11k.html">Chapter 11K</a>)</td></tr><tr><td class="c-trial" data-label="Setup">Macro catalyst hedge</td><td class="c-endpoint" data-label="DTE">30 to 60 DTE</td><td class="c-result" data-label="Why">Wants vega exposure for a possible expansion of implied volatility</td></tr></tbody></table></div></div>
+
+<h2 id="the-expires-before-exit-trap">5 · The expires-before-exit trap</h2>
+
+<p>A common retail mistake is to buy short-dated options for a swing thesis without checking that the option expires after the planned exit. The source's example: on a Monday you enter a Trend Pullback with a 5-day <span class="gloss" data-facts="A rule that closes a trade after a set number of trading days, whatever its profit or loss, because a setup that has not paid within its usual horizon has a low expected value from there on." tabindex="0" role="button">time stop</span>, buying options that expire this Friday, at 4 DTE. By Wednesday the thesis is playing out, but the position needs to hold through Friday's time stop. <strong>Friday is also expiration day.</strong> You are now forced into one of three choices:</p>
+
+<ul>
+<li>Exit Thursday, one day early, sacrificing potential continuation.</li>
+<li><span class="gloss" data-facts="To close an option position and open a similar one at a later expiry, or at another strike, in one trade. It keeps a position running at the cost of paying the bid-ask spread on both legs and buying new time value." tabindex="0" role="button">Roll</span> to next week's expiration, paying premium twice.</li>
+<li>Hold to expiration, taking the maximum theta hit on Friday.</li>
+</ul>
+
+<p>By <a class="eqref" href="#e-holdloss">(11M.2)</a>, an at-the-money option with 2 DTE on Wednesday has lost <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msqrt><mo>=</mo><mn>29</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{1/2} = 29\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">1/2</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">29%</span></span></span></span></span> of its value by Thursday, and all of its time value by Friday's close.</p>
+
+<p>The structural fix is to choose a DTE such that your option expires <strong>at least 2 to 3 trading days after your latest planned exit</strong>. For a 5-day Trend Pullback time stop, that means at least 8 to 10 DTE. In practice, 14 to 21 DTE gives a clean buffer.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Counting the minimum expiry</span>
+<p><strong>Step 1: the exit.</strong> Count the entry day as day 1, as the source's example does. A Monday entry with a 5-day time stop exits at Friday's close, 4 calendar days later.</p>
+
+<p><strong>Step 2: the buffer.</strong> Two or three trading days after Friday is the next Tuesday or Wednesday, 8 or 9 calendar days after entry: the source's minimum of 8 to 10 DTE.</p>
+
+<p><strong>Step 3: a longer setup.</strong> A Compression Breakout entered on a Tuesday with an 8-day time stop exits at the next Thursday's close, 9 calendar days later. The buffer carries the expiry to the Monday or Tuesday after, 13 or 14 DTE, comfortably inside the setup's 21 to 45.</p>
+</div>
+
+<h2 id="why-retail-picks-expiries-that-are-too-short">6 · Why retail picks expiries that are too short</h2>
+
+<p>In the source's account, retail traders consistently choose shorter DTEs than is optimal for their stated thesis, for two reasons:</p>
+
+<ol>
+<li><strong>Cost.</strong> Shorter-DTE options cost less in absolute dollars: the source puts a 7 DTE call at 30% to 50% less than a 30 DTE call at the same strike, which makes it <em>feel</em> more affordable.</li>
+<li><strong>Leverage perception.</strong> Shorter-DTE options have higher gamma per dollar of premium, so small moves produce larger percent returns, which is psychologically attractive.</li>
+</ol>
+
+<p>The discount depends on the strike: at the money, the square-root rule puts the 7-day price at <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><mn>7</mn><mi mathvariant="normal">/</mi><mn>30</mn></mrow></msqrt><mo>=</mo><mn>0.48</mn></mrow><annotation encoding="application/x-tex">\sqrt{7/30} = 0.48</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">7/30</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.48</span></span></span></span></span> of the 30-day one. A call in the money, whose intrinsic value does not decay, is discounted less:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">SPY call, SPY 600, IV 16%</th><th>7 DTE</th><th>21 DTE</th><th>30 DTE</th><th>7 DTE below 30 DTE</th><th>21 DTE above 7 DTE</th></tr></thead><tbody><tr><td class="c-trial" data-label="SPY call, SPY 600, IV 16%">Strike 590, $10 in the money</td><td data-label="7 DTE">$11.70</td><td data-label="21 DTE">$14.97</td><td data-label="30 DTE">$16.61</td><td data-label="7 DTE below 30 DTE">30%</td><td data-label="21 DTE above 7 DTE">28%</td></tr><tr><td class="c-trial" data-label="SPY call, SPY 600, IV 16%">Strike 600, at the money</td><td data-label="7 DTE">$5.30</td><td data-label="21 DTE">$9.19</td><td data-label="30 DTE">$10.98</td><td data-label="7 DTE below 30 DTE">52%</td><td data-label="21 DTE above 7 DTE">73%</td></tr><tr><td class="c-trial" data-label="SPY call, SPY 600, IV 16%">Strike 610, $10 out of the money</td><td data-label="7 DTE">$1.77</td><td data-label="21 DTE">$5.11</td><td data-label="30 DTE">$6.78</td><td data-label="7 DTE below 30 DTE">74%</td><td data-label="21 DTE above 7 DTE">189%</td></tr></tbody></table></div></div>
+
+<p>The source's 30% to 50% spans calls from $10 in the money, at 30%, to about the money, at 52%. The two-expiry worked example measured the leverage: a $1 move is 9.5% of the 7-day call's premium and 4.6% of the 30-day call's.</p>
+
+<p>Both reasons confuse leverage with edge, the trap of <a class="xref" href="1e.html">Chapter 1E</a>. <strong>Cheaper options are not better options.</strong> They are cheaper because they have less time for your thesis to develop and more daily theta cost as a percentage of premium.</p>
+
+<p>The professional bias is toward a longer DTE than feels comfortable, accepting the higher absolute cost in exchange for structural buffer. The source states the asymmetry: paying 30% more for three times the time to develop is a fundamentally better risk-adjusted trade than paying less for an option that expires while your thesis is still developing. The table shows where that 30% holds: for the call $10 in the money, 21 days cost 28% more than 7. At the money, three times the time costs <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mn>3</mn></msqrt><mo>=</mo><mn>1.73</mn></mrow><annotation encoding="application/x-tex">\sqrt{3} = 1.73</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1328em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">3</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1.73</span></span></span></span></span> times as much, 73% more.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Choosing an expiry is choosing a trial's follow-up. A trial of adjuvant therapy with six months of follow-up cannot show a benefit in recurrence that emerges at two years. The study ends before its endpoint can accrue, so a real effect goes unseen. Follow-up far longer than the endpoint needs costs money without adding information. An option that expires before your thesis resolves is the first design, while a LEAPS call for a three-day trade is the second.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Write the latest exit date on the order ticket.</strong> Take it from the time stop, then set the expiry at least 2 to 3 trading days later.</li>
+<li><strong>Count calendar days.</strong> DTE and theta run on calendar days, so a Friday-to-Monday weekend costs three days of decay (Chapters 5C and 7B).</li>
+<li><strong>Rolling costs twice.</strong> A roll closes one option and opens another, paying the spread on both and buying new time value (<a class="xref" href="2d.html">Chapter 2D</a>).</li>
+<li><strong>Beyond 90 DTE, check vega.</strong> Before buying a LEAPS call, price it at an implied volatility several points lower. A fall like the worked example's can take 30% to 50% with no move in the underlying.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<ul>
+<li><strong>Longer is not free.</strong> A long expiry costs more premium, while its larger vega exposes it to a fall in implied volatility. <a class="xref" href="11n.html">Chapter 11N</a> counts a 90 DTE option for a 3-day trade as a horizon mismatch too. At SPY 600 and 16%, a 90 DTE at-the-money call costs $36.86 per unit of delta against $14.82 for a 14 DTE one, with 2.5 times the vega.</li>
+<li><strong>The buffer does not cover the thesis.</strong> An expiry after the exit protects the vehicle, not the idea. If the setup fails, the time stop and the invalidation close the trade whatever the expiry.</li>
+<li><strong>The matrix is judgment.</strong> The figure's scores are the source's opinion of fit, on buckets that differ from the table's.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Before buying an option for a swing trade:</p>
+
+<ul>
+<li><strong>Write the thesis horizon and the latest exit</strong> from the setup's time stop.</li>
+<li><strong>Set the expiry at least 2 to 3 trading days after the latest exit,</strong> and inside the setup's band from the table.</li>
+<li><strong>The bands:</strong> 14 to 30 DTE for the Trend Pullback, 21 to 45 for the Compression Breakout, 14 to 21 for the Undercut and Reclaim, and 7 to 14 for IBS + RSI.</li>
+<li><strong>If an event falls inside the horizon, the option must expire after it,</strong> as for pre-earnings momentum at 30 to 45 DTE.</li>
+<li><strong>Check the decay</strong> with <a class="eqref" href="#e-holdloss">(11M.2)</a>, and <strong>beyond 90 DTE check the vega</strong> against a regime change in implied volatility.</li>
+<li><strong>Prefer shares</strong> where the source does: for the IBS + RSI and pre-earnings setups.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: buying the cheapest weekly</span>
+<p>The weekly call is half the price of the monthly and doubles your return on a small move, so it feels like the better trade. It is the same bet with less time, decaying four times as fast per dollar. If the move comes a day late, the weekly has already paid for it.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The expiry sets the Greeks: at the money, gamma and theta grow as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, while the premium and vega grow as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>.</li>
+<li>An at-the-money option loses about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">1/(2D)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mclose">)</span></span></span></span></span> of its value a day, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mo stretchy="false">(</mo><mi>D</mi><mo>−</mo><mi>h</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>D</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">1 - \sqrt{(D-h)/D}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal">h</span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span></span></span></span></span> over a hold of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> days.</li>
+<li>Match the DTE to the thesis horizon, with the option expiring at least 2 to 3 trading days after the latest planned exit.</li>
+<li>Short expiries are cheaper because they buy less time. Longer ones cost more to buy and less to hold.</li>
+<li>LEAPS carry high vega: a regime change in implied volatility can move them 30% to 50% with no move in the underlying.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">7 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>An at-the-money option has 10 days to expiry. What share of its value does it lose each day, and over a 7-day hold?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-thetashare">(11M.1)</a>, about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>20</mn><mo>=</mo><mn>5</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1/20 = 5\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/20</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5%</span></span></span></span></span> a day. By <a class="eqref" href="#e-holdloss">(11M.2)</a>, over 7 days it loses <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msqrt><mrow><mn>3</mn><mi mathvariant="normal">/</mi><mn>10</mn></mrow></msqrt><mo>=</mo><mn>45</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - \sqrt{3/10} = 45\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">3/10</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">45%</span></span></span></span></span> of its value to time, nearly half.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>You enter a Compression Breakout on a Tuesday, with its 8-day time stop. What is the shortest expiry the buffer rule allows, and what does the setup table suggest?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Counting Tuesday as day 1, the time stop is the next Thursday's close, 9 calendar days out. Two or three trading days later is the following Monday or Tuesday, 13 or 14 DTE, against the table's 21 to 45 DTE.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>A 30 DTE at-the-money SPY call costs $11. Roughly what does the 7 DTE call at the same strike cost, and why is that no bargain for a 5-day thesis?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It costs about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>11</mn><mo>×</mo><msqrt><mrow><mn>7</mn><mi mathvariant="normal">/</mi><mn>30</mn></mrow></msqrt><mo>=</mo><mi mathvariant="normal">$</mi><mn>5.31</mn></mrow><annotation encoding="application/x-tex">11 \times \sqrt{7/30} = \$5.31</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">11</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">7/30</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$5.31</span></span></span></span></span>. It expires on the day the thesis matures, so by <a class="eqref" href="#e-holdloss">(11M.2)</a> it loses all its time value over the hold, where a 30 DTE option loses 12%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A one-year at-the-money SPY call is priced at an implied volatility of 25%. Roughly how much does it lose if implied volatility falls to 20%, with SPY unchanged?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>At the money the price scales with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span>, so about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mn>20</mn><mi mathvariant="normal">/</mi><mn>25</mn><mo>=</mo><mn>20</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - 20/25 = 20\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">20/25</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">20%</span></span></span></span></span>. Black-Scholes gives $59.69 falling to $47.79, a loss of 19.9%, from the fall in implied volatility alone.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Why does the source's LEAPS row list both "near-stock delta" and "extreme vega", and which strikes carry each?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A deep in-the-money LEAPS call has a delta near 1, like the stock. Most of its value is intrinsic, so a fall in implied volatility barely moves it: 1.9% in the worked example. An at-the-money LEAPS call carries the large vega, losing 30% when implied volatility falls from 20% to 14%.</p>
+</div></details>
+</div>
+</div>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="11l.html" rel="prev"><span>Previous</span>11L · Single stocks and the index</a>
+<a class="next" href="11n.html" rel="next"><span>Next</span>11N · How swing trades fail</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- dte-selection-matrix ---------- */
+(function () {
+  var U = 'dte-selection-matrix';
+  var DTE = [
+    { key: '0dte', name: '0DTE', short: '0DTE', days: '0', profile: 'extreme gamma, no vega, zero theta-room' },
+    { key: 'weekly', name: 'weekly', short: 'weekly', days: '1-9', profile: 'high gamma, low vega, fast theta' },
+    { key: 'shortDated', name: 'short-dated', short: 'short', days: '10-30', profile: 'balanced gamma/vega/theta, the standard zone' },
+    { key: 'midDated', name: 'mid-dated', short: 'mid', days: '31-60', profile: 'growing vega, declining gamma, slow theta' },
+    { key: 'longDated', name: 'long-dated', short: 'long', days: '61-180', profile: 'vega-dominated, low gamma, slow theta' },
+    { key: 'leaps', name: 'LEAPS', short: 'LEAPS', days: '180+', profile: 'almost pure vega + delta, gamma negligible' }
+  ];
+  /* the app's fit scores, 0 = avoid to 5 = ideal, in the order of DTE */
+  var STRATS = [
+    { key: 'creditSpread', name: 'credit spread (premium-sell)', short: 'credit spread', fits: [2, 4, 5, 4, 2, 0] },
+    { key: 'ironCondor', name: 'iron condor', short: 'iron condor', fits: [2, 3, 5, 5, 3, 1] },
+    { key: 'longCall', name: 'long call (directional)', short: 'long call', fits: [3, 3, 4, 4, 4, 5] },
+    { key: 'calendar', name: 'calendar / diagonal', short: 'calendar', fits: [0, 2, 4, 5, 5, 3] },
+    { key: 'straddle', name: 'long straddle (event vol)', short: 'long straddle', fits: [2, 5, 4, 2, 1, 0] },
+    { key: 'pmcc', name: "poor man's covered call", short: 'PMCC', fits: [0, 1, 2, 3, 4, 5] },
+    { key: 'gammaScalp', name: 'gamma scalp (delta-hedged)', short: 'gamma scalp', fits: [5, 5, 4, 2, 1, 0] },
+    { key: 'preEarn', name: 'pre-earnings momentum (call spread)', short: 'pre-earnings', fits: [1, 3, 5, 3, 1, 0] }
+  ];
+  /* the app's cell tints: red for 0-1, yellow for 2-3, green for 4-5 */
+  var TINT = [['plain', 0.30], ['plain', 0.15], ['warn', 0.18], ['warn', 0.34],
+              ['insight', 0.28], ['insight', 0.46]];
+
+  function find(list, key) {
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return i;
+    return 0;
+  }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  var strat = DL.seg(U + '-strat', function () { draw(); });
+  var dte = DL.seg(U + '-dte', function () { draw(); });
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var si = find(STRATS, strat()), di = find(DTE, dte());
+    var narrow = (c.clientWidth || 640) < 520;
+    var sans = DL.color('sans'), ink = DL.color('ink'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), accent = DL.color('accent');
+    /* the row names set the left margin: measured, in the chosen row's weight */
+    var m = c.getContext('2d'), wide = 0;
+    m.font = '600 11px ' + sans;
+    STRATS.forEach(function (s) { wide = Math.max(wide, m.measureText(narrow ? s.short : s.name).width); });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 6, ymin: 0, ymax: 8, grid: false,
+      pad: { l: Math.ceil(wide) + 12, r: 3, t: 36, b: 4 } });
+    var g = p.g;
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper'); g.fillRect(0, 0, p.w, p.h);
+
+    /* cells sit 1.5px apart */
+    var ex = 1.5 / (p.X(1) - p.X(0)), ey = 1.5 / (p.Y(0) - p.Y(1));
+    function rect(x0, y0, x1, y1, o) {
+      p.path([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], Object.assign({ close: true }, o));
+    }
+
+    STRATS.forEach(function (s, i) {
+      var y = 7 - i;
+      s.fits.forEach(function (v, j) {
+        rect(j + ex, y + ey, j + 1 - ex, y + 1 - ey,
+             { fill: DL.fade(DL.color(TINT[v][0]), TINT[v][1]), color: null });
+        p.text(j + 0.5, y + 0.5, String(v), { align: 'center', baseline: 'middle',
+               color: ink, font: (i === si && j === di ? '700 ' : '') + '12px ' + sans });
+      });
+      p.text(0, y + 0.5, narrow ? s.short : s.name, { dx: -7, align: 'right', baseline: 'middle',
+             color: i === si ? ink : soft, font: (i === si ? '600 ' : '') + '11px ' + sans });
+    });
+    /* full bucket names over the columns when they fit, else the short ones */
+    m.font = '600 11px ' + sans;
+    var full = DTE.every(function (b) { return m.measureText(b.name).width + 10 < p.X(1) - p.X(0); });
+    DTE.forEach(function (b, j) {
+      p.text(j + 0.5, 8, full ? b.name : b.short, { dy: -17, align: 'center',
+             color: j === di ? ink : soft, font: (j === di ? '600 ' : '') + '11px ' + sans });
+      p.text(j + 0.5, 8, narrow ? b.days : b.days + 'd', { dy: -4, align: 'center', color: faint,
+             font: '10px ' + sans });
+    });
+
+    /* the chosen strategy's row and bucket's column, and the cell where they cross */
+    var y0 = 7 - si;
+    rect(ex / 2, y0 + ey / 2, 6 - ex / 2, y0 + 1 - ey / 2, { color: accent, width: 1.4 });
+    rect(di + ex / 2, ey / 2, di + 1 - ex / 2, 8 - ey / 2, { color: accent, width: 1.4 });
+    rect(di + ex, y0 + ey, di + 1 - ex, y0 + 1 - ey, { color: ink, width: 2 });
+
+    var s = STRATS[si], b = DTE[di], v = s.fits[di];
+    DL.out(U + '-vk', 'Fit ' + v + ' of 5' + (v === 5 ? ' (ideal)' : v === 0 ? ' (avoid)' : '') + '.');
+    DL.out(U + '-vt', cap(s.name) + ', ' + b.name + ' (' + b.days + ' days). Its row, 0DTE to LEAPS: ' +
+           s.fits.join(', ') + '.');
+    DL.out(U + '-pk', cap(b.name) + ' (' + b.days + ' days):');
+    DL.out(U + '-pt', b.profile + '.');
+  });
+})();
+
+</script>
+</body>
+</html>

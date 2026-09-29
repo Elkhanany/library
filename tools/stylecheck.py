@@ -66,12 +66,16 @@ DEVIATIONS = [
      "randomised, tumour, oestrogen, haematological, centre. 4,681 words across "
      "the four books. Kept because it is consistent, because the clinical book's "
      "own sources are split between American and British journals, and because "
-     "changing it would edit quoted trial names and endpoint wording."),
+     "changing it would edit quoted trial names and endpoint wording. The Other End "
+     "of the Trade is the exception and is American: its subject is US markets, its "
+     "sources are American, and it was written to the guide from the start."),
     ("Second person", "https://developers.google.com/style/person",
      "The guide asks the writer to address the reader as 'you'. These are "
      "expository references rather than tutorials. Nobody is being walked "
      "through a task, so there is no second party to address. First person "
-     "plural is still avoided, which is the half of that rule that does apply."),
+     "plural is still avoided, which is the half of that rule that does apply. "
+     "The Other End of the Trade teaches, walks its reader through tasks, and "
+     "addresses them as 'you'; the physics book does too."),
     ("Contractions", "https://developers.google.com/style/contractions",
      "The guide prefers 'don't' and 'can't'. The corpus carries 299 contractions "
      "in a million words, which is to say it does not use them. A clinical "
@@ -210,10 +214,10 @@ RULES = [
          # `early-phase`, `family-based` and Wittgenstein's `fly-bottle` end in
          # -ly without being adverbs, and they are the commonest hyphenated
          # words in this corpus, so the nouns and adjectives are excluded by
-         # name.
+         # name. A capitalised word is a name, not an adverb (`Kelly-sized`).
          find=lambda t: [(m.start(), m.group(0), m.group(0).replace('-', ' ', 1))
                          for m in re.finditer(
-                             r'\b(?!(?:ear|on|ho|ug|sil|fami|supp|rep|imp|app|'
+                             r'\b(?![A-Z])(?!(?:ear|on|ho|ug|sil|fami|supp|rep|imp|app|'
                              r'multip|ang|month|dai|year|hour|week|time|cost|'
                              r'qua|assemb|f|p|s|jol|wobb|cudd|love|live|like)ly-)'
                              r'\w+ly-\w+\b', t)],
@@ -242,7 +246,9 @@ RULES = [
          msg="Headings take sentence case.",
          link='https://developers.google.com/style/capitalization'),
     dict(id='first-person-plural', level='warning',
-         find=rx(r"(?<![\w-])(?:we|we're|we've|us|our|ours|let's)(?![\w-])"),
+         # "US", the country, is not "us": the pronoun is matched in any case
+         # except all capitals.
+         find=rx(r"(?<![\w-])(?:we|we're|we've|(?!US\b)us|our|ours|let's)(?![\w-])"),
          msg="Avoid the first person plural. Say who did the thing, or recast "
              "so that nobody has to be named.",
          link='https://developers.google.com/style/pronouns'),
@@ -334,14 +340,10 @@ def corpus(slug):
                                     os.path.basename(p)):
                 yield path, None, text
         return
-    # A book that tools/spx.py generates (it has an outline.json) is prose
-    # imported word for word from another project, so it too is reported on
-    # and never written to. A correction belongs in the source project, and one
-    # to a figure's caption in its figures/<id>.html; spx.py --check would
-    # reject an edit made to the generated src/*.html.
+    # A book whose src/*.html is generated (tools/spx.py builds The Other End
+    # of the Trade from chapters/*.md, which the first branch reads) is never
+    # written to here: an edit to a generated file is lost on the next build.
     if os.path.exists(os.path.join(d, 'outline.json')):
-        for p in sorted(glob.glob(d + '/src/*.html')):
-            yield os.path.basename(p), None, open(p, encoding='utf-8').read()
         return
     # This book hand-writes its chapters as src/*.html, so they are source and
     # can be corrected. Blanking preserves every offset, which is what makes
@@ -362,12 +364,14 @@ def _walk(obj, path=''):
             yield from _walk(v, '%s.%s' % (path, k) if path else k)
 
 
-def prose(text, label):
+def prose(text, label, dollars=True):
     """Blank out everything that is not prose, keeping every offset.
 
     Offsets have to survive so that --fix can write back into the original
     file. So each non-prose span is replaced by spaces of the same length
-    rather than removed."""
+    rather than removed. dollars=False is for a book whose maths is only ever
+    between \\( \\) and \\[ \\] (book.json "math_delimiters": "brackets"):
+    there a dollar sign is a price, and the words between two of them are prose."""
     def blank(m):
         return ' ' * (m.end() - m.start())
 
@@ -384,10 +388,19 @@ def prose(text, label):
         t = re.sub(r'<script.*?</script>|<style.*?</style>', blank, t, flags=re.S)
         t = re.sub(r'<[^>]+>', blank, t)
         t = re.sub(r'&[a-zA-Z]+;|&#\d+;', blank, t)
-    return _mask_tex(t)
+    return _mask_tex(t, dollars)
 
 
-def _mask_tex(t):
+def _dollar_tex(slug):
+    """False for a book that never writes maths between dollar signs."""
+    try:
+        cfg = json.loads(open(os.path.join(ROOT, 'books', slug, 'book.json'), encoding='utf-8').read())
+    except (OSError, ValueError):
+        return True
+    return cfg.get('features', {}).get('math_delimiters') != 'brackets'
+
+
+def _mask_tex(t, dollars=True):
     """Blank every TeX span, scanning once from the left.
 
     Two passes, one for `$$` and one for `$`, get the pairing wrong as soon as
@@ -399,10 +412,10 @@ def _mask_tex(t):
     `\\(...\\)` and `\\[...\\]` are handled too, for the books that use them."""
     out, i, n = [], 0, len(t)
     while i < n:
-        if t.startswith('$$', i):
+        if dollars and t.startswith('$$', i):
             j = t.find('$$', i + 2)
             j = n if j < 0 else j + 2
-        elif t[i] == '$':
+        elif dollars and t[i] == '$':
             j = t.find('$', i + 1)
             j = n if j < 0 or j - i > 400 else j + 1
         elif t.startswith('\\[', i):
@@ -470,7 +483,7 @@ def findings(slug, want_level=None):
     order = {l: i for i, l in enumerate(LEVELS)}
     cut = order.get(want_level, len(LEVELS))
     for label, path, raw in corpus(slug):
-        t = prose(raw, label)
+        t = prose(raw, label, _dollar_tex(slug))
         for rule in RULES:
             lv = level_for(slug, rule)
             if lv == 'off' or order[lv] > cut:

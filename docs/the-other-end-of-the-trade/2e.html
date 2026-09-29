@@ -16,9 +16,9 @@
 <script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="../assets/pwa.js" defer></script>
 <!--/PWA-->
-<title>2E Sizing and frequency scaling — The Other End of the Trade</title>
-<meta name="description" content="Chapter 2E of The Other End of the Trade: Sizing and frequency scaling.">
-
+<title>2E Accounts, margin and taxes — The Other End of the Trade</title>
+<meta name="description" content="Chapter 2E of The Other End of the Trade: Accounts, margin and taxes.">
+<link rel="stylesheet" href="assets/katex.min.css">
 <link rel="stylesheet" href="assets/book.css">
 <!--NAVCSS-->
 <link rel="stylesheet" href="../assets/nav.css">
@@ -39,116 +39,1066 @@
 <!--/NAV-->
 <div class="wrap">
 <nav class="sidebar" aria-label="Chapter sections">
-  <a class="sb-home" href="contents.html#sec-1">← Part II · Quant Trading</a>
-  <div class="sb-folio"><a class="sb-prev" href="2d.html" aria-label="Previous chapter: 2D · Making vs taking: the order book mechanics" title="Previous chapter: 2D · Making vs taking: the order book mechanics (←)">‹ 2D</a><p class="sb-title"><span class="sb-at">Chapter 2E ·</span> <span class="sb-at">9 of 67</span></p><a class="sb-next" href="3a.html" aria-label="Next chapter: 3A · What is the S&amp;P 500, actually?" title="Next chapter: 3A · What is the S&amp;P 500, actually? (→)">3A ›</a></div>
-  <div id="sb-toc"><a href="#the-kelly-criterion">1 · The Kelly criterion</a><a href="#why-kelly-is-a-ceiling-not-a-target">2 · Why Kelly is a ceiling, not a target</a><a href="#a-retail-scale-worked-example">3 · A retail-scale worked example</a><a href="#sizing-functions">4 · Sizing functions</a><a href="#frequency-scaling">5 · Frequency scaling</a><a href="#frequency-vs-cost">6 · Frequency vs cost</a><a href="#the-path-vs-terminal-distinction">7 · The path-vs-terminal distinction</a></div>
+  <a class="sb-home" href="contents.html#sec-1">← Part II · Markets</a>
+  <div class="sb-folio"><a class="sb-prev" href="2d.html" aria-label="Previous chapter: 2D · What execution costs" title="Previous chapter: 2D · What execution costs (←)">‹ 2D</a><p class="sb-title"><span class="sb-at">Chapter 2E ·</span> <span class="sb-at">12 of 83</span></p><a class="sb-next" href="3a.html" aria-label="Next chapter: 3A · What a trading model is" title="Next chapter: 3A · What a trading model is (→)">3A ›</a></div>
+  <div id="sb-toc"><a href="#the-four-account-tiers">1 · The four account tiers</a><a href="#cash-account" class="lvl3">Cash account</a><a href="#reg-t-margin-account" class="lvl3">Reg-T margin account</a><a href="#portfolio-margin-account" class="lvl3">Portfolio margin account</a><a href="#futures-account" class="lvl3">Futures account</a><a href="#section-1256-the-6040-rule">2 · Section 1256: the 60/40 rule</a><a href="#what-qualifies" class="lvl3">What qualifies</a><a href="#spy-against-xsp-the-one-decision-that-matters">3 · SPY against XSP: the one decision that matters</a><a href="#wash-sales">4 · Wash sales</a><a href="#what-the-tax-gap-compounds-to">5 · What the tax gap compounds to</a><a href="#margin-in-stress-the-real-cost-of-portfolio-margin">6 · Margin in stress: the real cost of portfolio margin</a><a href="#the-decision-tree-five-products-three-accounts">7 · The decision tree: five products, three accounts</a><a href="#check-yourself">8 · Check yourself</a></div>
 </nav>
 <main class="main" id="text">
 <div class="col">
 
-<p class="eyebrow">Part II · Quant Trading · Chapter 2E</p>
+<p class="eyebrow">Part II · Markets · Chapter 2E</p>
 
-<h1>Sizing and frequency scaling</h1>
+<h1>Accounts, margin and taxes</h1>
 
-<p>Even with a perfect model, oversizing a single trade can ruin the whole strategy. The intuition is brutal but simple: <strong>bet small, bet often</strong>. The best quant strategies often win 51-53% of trades; if you oversize at that win rate, the variance of any single trade dominates the expected value and ruin probability climbs fast.</p>
+<p class="subtitle">Account types and the Section 1256 advantage</p>
 
-<h2 id="the-kelly-criterion">1 · The Kelly criterion</h2>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>After <a class="xref" href="2d.html">Chapter 2D</a> priced execution, this chapter prices the account that holds the trade: which kind of account you open, what margin rules come with it, and how its gains are taxed. The product choice of <a class="xref" href="2a.html">Chapter 2A</a> turns out to be, above all, a tax decision, and the account choice a decision about how much stress you can survive.</p>
+</div>
 
-<p>Edward Thorp's gambling research, extended by Kelly (1956), provides the canonical answer to the sizing question. For a binary bet where you win amount G with probability p or lose amount L with probability 1−p, the fraction of wealth that maximizes expected log return is:</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Compounding, which turns a yearly tax gap into a gap in wealth (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Margin, margin calls and forced liquidation, and why the path matters (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>The six S&amp;P 500 products, and XSP against SPY (<a class="xref" href="2a.html">Chapter 2A</a>).</li>
+</ul>
+</div>
 
-<pre>f* = p/L − (1 − p)/G</pre>
+<p>Two strategies with identical pre-tax profit and loss (P&amp;L) can produce wildly different <em>after-tax</em> outcomes. The difference depends on the wrapper, on the account type and on whether the <span class="gloss" data-facts="The asset, index, rate or other price on which a derivative is written, and from which its payoff is computed." tabindex="0" role="button">underlying</span> instrument qualifies for <strong>Section 1256</strong> treatment under American tax law. This is one of the genuinely free lunches available to American retail traders. Most retail strategies fail to capture it, because they default to the most familiar instrument (<span class="gloss" data-facts="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it." tabindex="0" role="button">SPY</span>) instead of the tax-optimal one (<span class="gloss" data-facts="The Mini-SPX index option, one tenth the size of an SPX option." tabindex="0" role="button">XSP</span>, ES or <span class="gloss" data-facts="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it." tabindex="0" role="button">SPX</span>).</p>
 
-<p>For the special case where G = L = 1 (symmetric payoffs, scaled to 1):</p>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Your account decides two things: how much you can borrow against your positions, and how the broker's demands for collateral change when markets turn. Your instrument decides a third: how the gains are taxed. Index options and futures get a tax rate well below the one on short-term stock and ETF trades, whatever the holding period. A portfolio-margin account lends the most in calm markets and can reclaim it quickest in a crash.</p>
+</div>
 
-<pre>f* = 2p − 1</pre>
+<h2 id="the-four-account-tiers">1 · The four account tiers</h2>
 
-<p>So a strategy with 55% win rate at symmetric payoffs has Kelly fraction 0.10 — bet 10% of wealth per trial. A strategy with 60% win rate has Kelly fraction 0.20. A strategy with exactly 50% win rate at symmetric payoffs has Kelly fraction zero — don't bet.</p>
+<p>American brokerage accounts come in four primary capacity tiers. Each has different rules about what can be traded and how much <span class="gloss" data-facts="The ratio of a position's total exposure to the capital behind it. An account holding 1.4 million dollars of an index on 1 million dollars of its own money has 1.4 times leverage." tabindex="0" role="button">leverage</span> is available. Capacity escalates upward: you cannot trade naked short calls in a cash account, but you can do everything a cash account permits in a portfolio-margin account. <a class="xref" href="1e.html">Chapter 1E</a> teaches how <span class="gloss" data-facts="The capital a broker requires you to hold in the account to keep a position open. It acts as a deposit against losses." tabindex="0" role="button">margin</span>, margin calls and forced liquidation work in general. This section gives the rules of each tier, and <a class="xref" href="12g.html">Chapter 12G</a> the margin charged on each options structure.</p>
 
-<p>For continuous returns rather than binary outcomes, the Kelly fraction is:</p>
+<h3 id="cash-account">Cash account</h3>
 
-<pre>f* = μ / σ²</pre>
+<p>A <strong><span class="gloss" data-facts="A brokerage account that trades only with settled cash and lends nothing, so it can never receive a margin call. Options sold in it must be covered by shares or by cash." tabindex="0" role="button">cash account</span></strong> trades with settled funds only, with no borrowing and no naked short option. <span class="gloss" data-facts="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call." tabindex="0" role="button">Cash-secured puts</span>, <span class="gloss" data-facts="A sold call option backed by owning the shares it may require you to deliver." tabindex="0" role="button">covered calls</span>, long options and long stock are all permitted in this default retail tier.</p>
 
-<p>where μ is the expected excess return and σ² is the variance. Equivalently, Kelly fraction equals the strategy's Sharpe ratio divided by its volatility — making Kelly fraction the leverage that maximizes expected compound growth.</p>
+<p>A trade <strong><span class="gloss" data-facts="The actual exchange of cash and securities after a trade. American stocks and options settle one business day after the trade date, written T+1." tabindex="0" role="button">settles</span></strong> when the cash and the securities actually change hands. As of May 2024, when the SEC moved the standard from T+2 to T+1, equities settle T+1, one business day after the trade, and options settle T+1 as well.</p>
 
-<h2 id="why-kelly-is-a-ceiling-not-a-target">2 · Why Kelly is a ceiling, not a target</h2>
+<p>The cash account is structurally safe, because you cannot lose more than you have. There is no margin extension to draw down, so there is no <span class="gloss" data-facts="A broker's demand for more money, or a smaller position, when the account's equity falls below its margin requirement." tabindex="0" role="button">margin call</span> and no <span class="gloss" data-facts="The broker's closing of your positions at market prices when you do not meet a margin call in time." tabindex="0" role="button">forced liquidation</span>. The price is capital inefficiency: cash-secured strategies tie up capital dollar for dollar against potential <span class="gloss" data-facts="What happens to the seller of an option when its holder exercises it: the seller must buy or sell the underlying, or pay the cash difference, at the strike." tabindex="0" role="button">assignment</span>. A cash-secured XSP put struck at 600 holds <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>600</mn><mo>×</mo><mi mathvariant="normal">$</mi><mn>100</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>60</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">600 \times \$100 = \$60{,}000</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">600</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$100</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$60</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span></span></span></span></span> of cash for as long as it is open.</p>
 
-<p>The Kelly criterion maximizes <em>expected</em> compound growth, but it produces enormous <em>variance</em> in outcomes. A Kelly-sized strategy has roughly a 50% chance of seeing a 50%+ drawdown at some point. The math is unforgiving: optimal compound growth requires accepting wild swings in path.</p>
+<h3 id="reg-t-margin-account">Reg-T margin account</h3>
 
-<p>Most professional traders use <strong>fractional Kelly</strong> — typically half-Kelly (f = 0.5 × f*) or quarter-Kelly. Half-Kelly gives up about 25% of expected compound growth but reduces drawdown probability dramatically. Quarter-Kelly gives up about 44% of expected compound growth but reduces drawdown probability further. The optimal fraction depends on the trader's tolerance for path-dependent risk and on the reliability of the estimated edge.</p>
+<p>A <strong><span class="gloss" data-facts="A margin model, named for the Federal Reserve's Regulation T, that requires a fixed percentage of each position's value. It is simple and does not change with market stress." tabindex="0" role="button">Reg-T margin</span></strong> account follows fixed-percentage margin rules under Federal Reserve Regulation T. The <strong><span class="gloss" data-facts="The deposit required to open a leveraged position, such as a futures contract, held as collateral against losses." tabindex="0" role="button">initial margin</span></strong> on a stock purchase is 50%: you can borrow half the price. The <strong><span class="gloss" data-facts="The minimum equity, as a share of a position's value, that a margin account must keep after the purchase. Falling below it brings a margin call; under Regulation T it is 25% for stock." tabindex="0" role="button">maintenance margin</span></strong> is 25%: your equity must stay above a quarter of the position's value, or you get a margin call. Options <span class="gloss" data-facts="The value of new positions that a margin account can open, given its equity and the broker's margin requirements." tabindex="0" role="button">buying power</span> is generally limited.</p>
 
-<p>The reason half-Kelly is the dominant convention: estimates of edge are noisy. If your true Kelly fraction is f* but your estimate has a 30% standard error, betting at the point estimate means you're often betting at 1.3 × f* — which has <em>worse</em> expected compound growth than betting at f* (the Kelly utility function is concave; over-betting hurts more than under-betting). Half-Kelly accommodates the estimation error by buffering against over-betting.</p>
+<p>Those two percentages fix how far a position bought on margin can fall before the call. Suppose you buy stock worth <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">V_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.2222em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> with initial margin <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></span>, so you borrow <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>i</mi><mo stretchy="false">)</mo> <msub><mi>V</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">L = (1 - i)\,V_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">i</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.2222em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. When the stock is worth <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span></span></span></span></span>, your equity is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>−</mo><mi>L</mi></mrow><annotation encoding="application/x-tex">V - L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7667em; vertical-align: -0.0833em;"></span><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span></span>, and the maintenance rule requires <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>−</mo><mi>L</mi><mo>≥</mo><mi>m</mi> <mi>V</mi></mrow><annotation encoding="application/x-tex">V - L \ge m\,V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7667em; vertical-align: -0.0833em;"></span><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8193em; vertical-align: -0.136em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span></span></span></span></span>. The call comes when the value falls to</p>
 
-<h2 id="a-retail-scale-worked-example">3 · A retail-scale worked example</h2>
+<div class="eq" id="e-regtcall">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mi>V</mi><msub><mi>V</mi><mn>0</mn></msub></mfrac><mo>=</mo><mfrac><mrow><mn>1</mn><mo>−</mo><mi>i</mi></mrow><mrow><mn>1</mn><mo>−</mo><mi>m</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex"> \frac{V}{V_0} = \frac{1 - i}{1 - m} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 2.1963em; vertical-align: -0.836em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3603em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.2222em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.2222em;">V</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.836em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.1059em; vertical-align: -0.7693em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3365em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal">m</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.7693em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(2E.1)</span></div>
 
-<p>A formula and a buffering principle are useful but abstract. Walk one full chain at a retail account size and the operational shape comes into focus — including the seam between this framework and the loss-budget framework that <a class="xref" href="12c.html">Section 12C</a> builds on top of.</p>
+<p>With <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>=</mo><mn>50</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">i = 50\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6595em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">50%</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>=</mo><mn>25</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">m = 25\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">25%</span></span></span></span></span>, that is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.50</mn><mi mathvariant="normal">/</mi><mn>0.75</mn><mo>=</mo><mn>0.667</mn></mrow><annotation encoding="application/x-tex">0.50/0.75 = 0.667</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.50/0.75</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.667</span></span></span></span></span>: a fall of one third. Buy $20,000 of stock with $10,000 of your own money, and the call arrives when the holding is worth $13,333, where your $3,333 of equity is exactly 25% of it.</p>
 
-<p><strong>Setup.</strong> Account size $250,000. A swing strategy with an estimated 60% win rate, $4 average winner per share, $3 average loser per share, traded on an underlying at $50/share with a $2 stop distance.</p>
+<p><strong><span class="gloss" data-facts="The regulatory label for a margin account under 25,000 dollars that makes four or more day trades in five trading days. Such an account is flagged and restricted." tabindex="0" role="button">Pattern day trader</span></strong> rules cover active accounts under $25,000. A day trade opens and closes the same position on the same day. An account with less than $25,000 of equity that makes four or more of them in a rolling window of five trading days is flagged and restricted. Most retail accounts with $2,000 or more of equity qualify for Reg-T margin. The permission to sell naked short options requires specific approval and demonstrated experience.</p>
 
-<p><strong>Step 1 — apply the formula.</strong> f* = p/L − (1 − p)/G = 0.60/3 − 0.40/4 = 0.200 − 0.100 = <strong>0.100</strong>. Full-Kelly fraction is 10%. Half-Kelly is 5%; quarter-Kelly is 2.5%.</p>
+<h3 id="portfolio-margin-account">Portfolio margin account</h3>
 
-<p><strong>Step 2 — translate to dollars.</strong> Full-Kelly bet = 10% × $250k = $25,000. Half-Kelly = $12,500. Quarter-Kelly = $6,250.</p>
+<p>A <strong><span class="gloss" data-facts="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress." tabindex="0" role="button">portfolio margin</span></strong> (PM) account sets margin from stress-tested theoretical losses. It requires $125,000 or more of equity, the minimum set by FINRA, the regulator of American brokers, and the broker's approval. <a class="xref" href="12g.html">Chapter 12G</a> adds that brokers typically ask for $125,000 and sometimes $150,000 to $200,000.</p>
 
-<p><strong>Step 3 — translate to shares at $50.</strong> Full = 500, half = 250, quarter = <strong>125 shares</strong>. The shop-floor share count under quarter-Kelly is small.</p>
+<p>The requirement is computed against a scenario of SPX moving 15% either way, combined with shifts in <span class="gloss" data-facts="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage." tabindex="0" role="button">implied volatility</span>. For diversified, well-hedged books, the requirement is dramatically lower than under Reg-T. For an <span class="gloss" data-facts="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped." tabindex="0" role="button">iron condor</span> on SPX with both wings 5% out of the money, Reg-T might require collateral equal to the full wing width. Portfolio margin might require only the loss that would occur in the ±15% scenario, perhaps a third of the Reg-T number.</p>
 
-<p><strong>Step 4 — what would the 1% loss-budget rule (<a class="xref" href="12c.html">Section 12C</a>) produce?</strong> Risk 1% × $250k = $2,500. With a $2 stop, that's n = $2,500 / $2 = <strong>1,250 shares</strong> — a $62,500 notional, or 25% of the account.</p>
+<p><strong>The catch</strong> is that PM requirements expand non-linearly in stress, sometimes doubling or tripling overnight as the broker's house overlays kick in. This is a critical feature, not a bug, and the section on margin in stress returns to it.</p>
 
-<p><strong>The two frameworks disagree by an order of magnitude.</strong> Quarter-Kelly says 125 shares with a $250 worst-case loss (0.1% of capital); the 1% loss-budget says 1,250 shares with a $2,500 worst-case loss (1% of capital). For this specific edge, Kelly is <em>far</em> more conservative than the loss-budget rule.</p>
+<div class="worked">
+<span class="ct">Worked example: A scenario grid for a short strangle</span>
+<p><strong>Step 1: the position.</strong> With XSP at 600, you sell a 570 put and a 630 call, a short <span class="gloss" data-facts="A position of a put and a call on the same underlying and expiry, with the put's strike below the price and the call's above it. Selling one is a bet that the price stays between the strikes." tabindex="0" role="button">strangle</span>, for a combined 12 points of <span class="gloss" data-facts="The price of an option, paid by the buyer to the seller when the trade is made." tabindex="0" role="button">premium</span>, or $1,200. For simplicity, value each option at what it would pay at <span class="gloss" data-facts="The date on which an option stops trading and is settled or lapses." tabindex="0" role="button">expiry</span>.</p>
 
-<p>This disagreement is structural, not a bug in either rule. Kelly's "bet" is the <em>full notional at stake</em> under a binary-outcome geometry where the entire position rises or falls by G or L per unit; loss-budget's "size" is the <em>position scaled to a fixed-stop maximum loss</em> under a stop-distance geometry. The two converge in dollars only when the edge is mild enough that Kelly's recommended fraction sits near the loss-budget's risk fraction — empirically, around 52-53% win rate with near-symmetric payoffs.</p>
+<p><strong>Step 2: the grid.</strong> Portfolio margin asks what the position loses at each move in its scenario range and charges the worst. At −15%, XSP is at 510, the put pays <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>570</mn><mo>−</mo><mn>510</mn><mo>=</mo><mn>60</mn></mrow><annotation encoding="application/x-tex">570 - 510 = 60</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">570</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">510</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">60</span></span></span></span></span> points, and you lose <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>60</mn><mo>−</mo><mn>12</mn><mo>=</mo><mn>48</mn></mrow><annotation encoding="application/x-tex">60 - 12 = 48</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">60</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">12</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">48</span></span></span></span></span> points, or $4,800. The +15% case loses the same on the call, so the requirement is $4,800.</p>
 
-<p>For the strong edge above (60% with 4:3 payoffs), the divergence is the operational answer to "is the loss-budget rule sufficient on its own?" — and the answer is <strong>only if you don't actually have 10% Kelly worth of edge</strong>, which most retail strategies don't. <a class="xref" href="12c.html">Section 12C</a> reconciles the two frameworks explicitly: loss-budget for individual-trade sizing, Kelly as a sanity check on the aggregate.</p>
+<p><strong>Step 3: a wider grid.</strong> If the broker widens the scenario to ±20%, the worst case is XSP at 480, a loss of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>90</mn><mo>−</mo><mn>12</mn><mo>=</mo><mn>78</mn></mrow><annotation encoding="application/x-tex">90 - 12 = 78</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">90</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">12</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">78</span></span></span></span></span> points, or $7,800. At ±25% it is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>120</mn><mo>−</mo><mn>12</mn><mo>=</mo><mn>108</mn></mrow><annotation encoding="application/x-tex">120 - 12 = 108</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">120</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">12</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">108</span></span></span></span></span> points, or $10,800. Widening the range by 5 and 10 percentage points raised the requirement by 63% and 125%, with no change in the position and before any shock to implied volatility.</p>
+</div>
 
-<h2 id="sizing-functions">4 · Sizing functions</h2>
+<h3 id="futures-account">Futures account</h3>
 
-<p>How big should the trade be when the model produces prediction strength p?</p>
+<p>A futures account, or 1256 account, is separately permissioned for futures (ES, MES, ZN, CL and others) and for options on futures. ZN is a Treasury-note future and CL a crude-oil future. Futures use <strong><span class="gloss" data-facts="The risk-based margin system for futures and options on futures, developed by the CME, which sets the requirement from the worst loss across a set of price and volatility scenarios." tabindex="0" role="button">SPAN margin</span></strong>, developed by the CME and computed against a matrix of <span class="gloss" data-facts="A concrete hypothetical market move, such as the index falling 20% while the VIX rises 25 points, used to compute what a position would lose." tabindex="0" role="button">stress scenarios</span>. It is typically 5% to 8% of <span class="gloss" data-facts="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost." tabindex="0" role="button">notional</span> for the major equity futures. Both gains and losses receive 1256 60/40 tax treatment, regardless of holding period.</p>
 
-<p><strong>Constant.</strong> Same position size regardless of prediction strength. Just trade the sign of the prediction. This is the cleanest baseline for backtesting because the interpretation is unambiguous — every trade is the same size, so the P&amp;L is a pure function of directional accuracy.</p>
+<p>ES at SPX 6,000 has a notional of $300,000, and its initial margin is around $15,000 to $22,000 depending on conditions, with intraday margin sometimes lower. <a class="xref" href="12g.html">Chapter 12G</a> quotes roughly $13,000 to $15,000 of initial SPAN margin for one contract. At $15,000 the position is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>300</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mi mathvariant="normal">/</mi><mn>15</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>=</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">300{,}000/15{,}000 = 20</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">300</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000/15</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">20</span></span></span></span></span> times the margin, and at $22,000 about 14 times. This is genuinely powerful leverage with clean tax treatment. At 20 times, a 5% fall in the index takes the whole $15,000.</p>
 
-<p><strong>Piecewise-linear (hard tanh).</strong> Size scales linearly with prediction strength up to a cap. Stronger predictions get larger trades; the cap ensures a runaway prediction (a single extreme outlier in input data) can't blow up size.</p>
+<h2 id="section-1256-the-6040-rule">2 · Section 1256: the 60/40 rule</h2>
 
-<p><strong>Smooth nonlinear (tanh).</strong> Like hard tanh but smooth. Differentiable everywhere — useful if you're optimizing the sizing parameters with gradient-based methods alongside the model. The smooth transition between zero-prediction (zero size) and strong-prediction (capped size) avoids the "I just barely crossed the threshold, should I scale up?" decision discontinuity.</p>
+<p>Under Internal Revenue Code Section 1256, certain financial contracts receive a uniquely favorable tax treatment that applies <em>regardless of holding period</em>. A <strong><span class="gloss" data-facts="A contract, such as a broad-based index option or a regulated futures contract, taxed under Section 1256 of the Internal Revenue Code. Its gains count as 60% long-term and 40% short-term whatever the holding period, and open positions are marked to market at the end of the year." tabindex="0" role="button">Section 1256 contract</span></strong> has its gains split:</p>
 
-<p>In practice, most production quant strategies use either piecewise-linear or smooth-tanh sizing, calibrated so that the cap corresponds to half-Kelly at the strongest prediction signal the model produces.</p>
+<pre>1256 split: 60% long-term + 40% short-term</pre>
 
-<h2 id="frequency-scaling">5 · Frequency scaling</h2>
+<p>A <strong><span class="gloss" data-facts="A gain on a position held for more than a year, taxed at a lower rate than ordinary income." tabindex="0" role="button">long-term capital gain</span></strong> comes from a position held more than a year, and a <strong><span class="gloss" data-facts="A gain on a position held for a year or less, taxed at the ordinary income rate." tabindex="0" role="button">short-term capital gain</span></strong> from one held a year or less. Short-term gains are taxed at the ordinary income rate, long-term gains at a lower rate. For a 1256 contract the split ignores the holding period, so even a same-day trade is 60% long-term. The blended rate is therefore</p>
 
-<p>If your model has a tiny edge per prediction — say, 51% win rate or Sharpe 0.05 per trade — you don't want to bet once. You want to bet many times. The reason follows directly from the frequency-Sharpe relationship in 1D:</p>
+<div class="eq" id="e-blend">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>t</mi><mn>1256</mn></msub><mo>=</mo><mn>0.6</mn> <msub><mi>t</mi><mtext>LT</mtext></msub><mo>+</mo><mn>0.4</mn> <msub><mi>t</mi><mtext>ST</mtext></msub></mrow><annotation encoding="application/x-tex"> t_{1256} = 0.6\,t_{\text{LT}} + 0.4\,t_{\text{ST}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7651em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1256</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.7944em; vertical-align: -0.15em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">LT</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7944em; vertical-align: -0.15em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">ST</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(2E.2)</span></div>
 
-<pre>SR_total ≈ SR_per_bet × √N</pre>
+<p>where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mtext>LT</mtext></msub></mrow><annotation encoding="application/x-tex">t_{\text{LT}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7651em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">LT</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mtext>ST</mtext></msub></mrow><annotation encoding="application/x-tex">t_{\text{ST}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7651em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">ST</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> are your long-term and short-term rates. Subtracting it from the short-term rate gives the saving on each dollar of gain:</p>
 
-<p>A tiny per-bet Sharpe becomes a robust strategy Sharpe when N is large. A model that predicts the 12-hour-ahead return with Sharpe 0.05 can be split into many smaller bets at finer temporal resolution — bet on the 1-hour-ahead return 24 times a day, each time at a smaller size. If the 24 bets are roughly independent, the daily Sharpe of the high-frequency version is √24 ≈ 4.9× higher than the daily Sharpe of the once-per-12-hours version.</p>
+<div class="eq" id="e-saving">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>t</mi><mtext>ST</mtext></msub><mo>−</mo><msub><mi>t</mi><mn>1256</mn></msub><mo>=</mo><mn>0.6</mn> <mo stretchy="false">(</mo><msub><mi>t</mi><mtext>ST</mtext></msub><mo>−</mo><msub><mi>t</mi><mtext>LT</mtext></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> t_{\text{ST}} - t_{1256} = 0.6\,(t_{\text{ST}} - t_{\text{LT}}) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7651em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">ST</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7651em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1256</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">ST</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">LT</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></span>
+<span class="eqnum">(2E.3)</span></div>
 
-<p>This is the structural reason high-frequency strategies dominate the modern quant landscape. They aren't smarter about direction; they trade the same edge many more times. The compounding logic is identical to the Sharpe argument in 1D: more independent bets with positive EV → same terminal drift, lower variance → higher Sharpe → leverage becomes safer → returns scale.</p>
+<p>For an American individual taxpayer in the top federal bracket, the ordinary rate is 37%. The long-term rate is 23.8%, which includes the 3.8% <strong><span class="gloss" data-facts="A 3.8% federal surtax on the investment income, capital gains included, of higher-income American taxpayers. Abbreviated NIIT." tabindex="0" role="button">Net Investment Income Tax</span></strong> (NIIT). The blended rate on 1256 gains is often quoted as approximately <strong>27% to 28%</strong>, against approximately <strong>40% to 41%</strong> on ordinary short-term gains for instruments outside the 1256 regime. That would be roughly <strong>12 to 14 percentage points of after-tax savings</strong> on every dollar of P&amp;L generated by 1256 instruments.</p>
 
-<p>The retail implication is sobering. Most retail strategies have N on the order of 10-100 trades per year. Even with substantial per-trade edge, the resulting annual Sharpe is modest. To compete with institutional high-frequency strategies you would need either (a) a per-trade edge that's an order of magnitude larger than what HFT firms exploit — which means you're operating in a different market regime, probably lower-liquidity products — or (b) the operational infrastructure to trade at high frequency, which retail doesn't have.</p>
+<div class="worked">
+<span class="ct">Worked example: The top-bracket arithmetic, like for like</span>
+<p><strong>Step 1: without the surtax.</strong> By <a class="eqref" href="#e-blend">(2E.2)</a>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mn>20</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.4</mn><mo>×</mo><mn>37</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>12</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>14.8</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>26.8</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.6 \times 20\% + 0.4 \times 37\% = 12\% + 14.8\% = 26.8\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">20%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">37%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">12%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">14.8%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">26.8%</span></span></span></span></span>, against 37% for short-term gains.</p>
 
-<p>The honest path for retail is to accept that you can't compete on frequency, focus on capturing risk premia (variance, equity, trend) that don't require high frequency, and size conservatively because your effective Sharpe is going to be modest.</p>
+<p><strong>Step 2: with the surtax on both.</strong> Adding the 3.8% NIIT to both rates gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mn>23.8</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.4</mn><mo>×</mo><mn>40.8</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>30.6</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.6 \times 23.8\% + 0.4 \times 40.8\% = 30.6\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">23.8%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">40.8%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">30.6%</span></span></span></span></span>, against 40.8%.</p>
 
-<h2 id="frequency-vs-cost">6 · Frequency vs cost</h2>
+<p><strong>Step 3: the gap.</strong> Either way, the saving is 10.2 percentage points, as <a class="eqref" href="#e-saving">(2E.3)</a> gives directly: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mo stretchy="false">(</mo><mn>37</mn><mi mathvariant="normal">%</mi><mo>−</mo><mn>20</mn><mi mathvariant="normal">%</mi><mo stretchy="false">)</mo><mo>=</mo><mn>10.2</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.6 \times (37\% - 20\%) = 10.2\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">37%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">20%</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">10.2%</span></span></span></span></span>.</p>
 
-<p>There's a fundamental tradeoff between frequency and transaction costs. Each trade costs spread plus commission plus slippage. At very high frequency, costs eat the edge. The optimal frequency for any strategy is the one where the marginal Sharpe gain from one more trade per day equals the marginal cost in basis points.</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial"></th><th>Short-term rate</th><th>1256 blended rate</th><th class="c-other">Saving</th></tr></thead><tbody><tr><td class="c-trial" data-label="">Without the surtax</td><td data-label="Short-term rate">37%</td><td data-label="1256 blended rate">26.8%</td><td class="c-other" data-label="Saving">10.2 points</td></tr><tr><td class="c-trial" data-label="">With the surtax on both</td><td data-label="Short-term rate">40.8%</td><td data-label="1256 blended rate">30.6%</td><td class="c-other" data-label="Saving">10.2 points</td></tr><tr><td class="c-trial" data-label="">As often quoted</td><td data-label="Short-term rate">40% to 41%</td><td data-label="1256 blended rate">27% to 28%</td><td class="c-other" data-label="Saving">12 to 14 points</td></tr></tbody></table></div></div>
 
-<p>For HFT firms with co-located servers, near-zero latency, and rebate-earning maker strategies, the optimal frequency can be thousands of trades per second. For retail traders paying 1 cent per share commission plus 5 bps slippage per round-trip, the optimal frequency is dramatically lower — perhaps 10-50 trades per year, depending on the per-trade edge.</p>
+<p>The quoted figures set a blend <em>without</em> the surtax against a short-term rate <em>with</em> it. Compared like for like, the saving at the top bracket is about 10 points.</p>
+</div>
 
-<p>This is also why the "free trades" era (post-2019, when most US brokerages dropped commissions for retail equity orders) didn't actually transform retail performance. Commissions were already small. The dominant retail cost is slippage, which retail traders neither see directly nor can negotiate down, and the dominant retail edge-destroyer is behavioral — overtrading, sizing inconsistencies, and emotional exits. None of these were fixed by zero commissions.</p>
+<p>The saving on returns follows from the rates: an after-tax return is the pre-tax return times one minus the tax rate, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">W_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> compounds over <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></span> years to</p>
 
-<h2 id="the-path-vs-terminal-distinction">7 · The path-vs-terminal distinction</h2>
+<div class="eq" id="e-aftertax">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>W</mi><mi>n</mi></msub><mo>=</mo><msub><mi>W</mi><mn>0</mn></msub> <mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><mn>1</mn><mo>+</mo><mi>R</mi> <mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>t</mi><mo stretchy="false">)</mo><msup><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">)</mo><mi>n</mi></msup></mrow><annotation encoding="application/x-tex"> W_n = W_0\,\big(1 + R\,(1 - t)\big)^n </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.1514em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.2em; vertical-align: -0.35em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="delimsizing size1">(</span></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0077em;">R</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.2543em; vertical-align: -0.35em;"></span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mord"><span class="mord"><span class="delimsizing size1">)</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.9043em;"><span class="" style="top: -3.3029em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(2E.4)</span></div>
 
-<p>A final point worth emphasizing: Kelly maximizes <em>expected log terminal wealth</em> over a long horizon. It does not minimize drawdown probability, doesn't bound worst-case outcomes, and doesn't account for behavioral capitulation during drawdowns.</p>
+<p>For a systematic monthly put-write strategy earning 8% a year gross, the quoted 12 to 14 points make approximately 100 <span class="gloss" data-facts="One hundredth of a percentage point, so 20 basis points is 0.20%. Abbreviated bp, plural bps." tabindex="0" role="button">basis points</span> of after-tax return a year, turned on or off by instrument choice. The like-for-like 10.2 points make about 80: at the top bracket with the surtax, 8% becomes <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>8</mn><mi mathvariant="normal">%</mi><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>0.408</mn><mo stretchy="false">)</mo><mo>=</mo><mn>4.74</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">8\% \times (1 - 0.408) = 4.74\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">8%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.408</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">4.74%</span></span></span></span></span> on SPY and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>8</mn><mi mathvariant="normal">%</mi><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>0.306</mn><mo stretchy="false">)</mo><mo>=</mo><mn>5.55</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">8\% \times (1 - 0.306) = 5.55\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">8%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.306</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5.55%</span></span></span></span></span> on XSP.</p>
 
-<p>For a real-world investor with finite emotional bandwidth, <strong>drawdown discipline</strong> is more important than Kelly optimization. A strategy sized at quarter-Kelly with a 30% maximum drawdown discipline (close-and-reset rule) outperforms a strategy sized at full Kelly with no drawdown discipline, in any realistic behavioral model, because the full-Kelly strategy gets abandoned during its first 50% drawdown and the quarter-Kelly strategy doesn't.</p>
+<p>Over a decade of <span class="gloss" data-facts="The multiplying of growth factors over successive periods, so that each period's return is earned on the gains and losses of the periods before it." tabindex="0" role="button">compounding</span> the gap is substantial. As a rough rule, 100 basis points a year for 10 years is roughly 10% more terminal wealth, before the compounding of the saved taxes themselves, which adds another few percent. Computed with <a class="eqref" href="#e-aftertax">(2E.4)</a> at the like-for-like rates, $1 grows to $1.59 on SPY and $1.72 on XSP in 10 years. The XSP account ends 8% larger, a gap of 13% of the starting capital.</p>
 
-<p><a class="xref" href="12c.html">Section 12C</a> will return to this with explicit kill rules at three levels. For now, the principle is: <strong>size for survivability first, then for compound growth</strong>. Kelly is the ceiling, half-Kelly is the working compromise, and quarter-Kelly is what you actually use if you want to sleep through drawdowns.</p>
+<h3 id="what-qualifies">What qualifies</h3>
+
+<p><strong>1256-qualified instruments include:</strong></p>
+
+<ul>
+<li>Cash-settled broad-based index options: SPX, XSP, NDX, RUT, VIX and NDXP.</li>
+<li>Regulated <span class="gloss" data-facts="An agreement to buy or sell an asset at a set price on a future date. Only a deposit is paid up front, so a future gives exposure with leverage built in." tabindex="0" role="button">futures contracts</span>: ES, MES, ZN, ZB, CL, ZC and GC, and all CME, CBOT, NYMEX and COMEX equity, rate and commodity futures.</li>
+<li>Options on regulated futures contracts: ES options, MES options and so on.</li>
+<li>Broad-based index options on Cboe, whose operative legal definition is in IRC §1256(g)(3).</li>
+<li>Non-equity options that meet the "broad-based" test.</li>
+</ul>
+
+<p><strong>1256 does <em>not</em> cover:</strong></p>
+
+<ul>
+<li>ETF options, such as SPY, QQQ and IWM. These are <em>equity</em> options, not index options, even though they track indices.</li>
+<li>Single-name stock options.</li>
+<li>Narrow-based index options, such as some sector ETFs and individual industry indices.</li>
+<li>Stocks themselves, to which the standard short-term and long-term capital gains rules apply.</li>
+</ul>
+
+<p>The <strong><span class="gloss" data-facts="For the Section 1256 test, loosely, an index of 10 or more securities in which no single one exceeds 30% of the weight. Options on such an index can qualify for 60/40 tax treatment." tabindex="0" role="button">broad-based index</span></strong> test for index options requires, loosely, that the underlying index include 10 or more component securities and that no single component exceed 30% of the index weight. SPX clearly qualifies, while sector ETF options such as XLE or XLF do not.</p>
+
+<h2 id="spy-against-xsp-the-one-decision-that-matters">3 · SPY against XSP: the one decision that matters</h2>
+
+<p>This is the single highest-leverage operational choice in retail systematic options strategies, and it costs nothing to make. A retail trader running monthly cash-secured <span class="gloss" data-facts="Said of an option whose strike is at, or very close to, the underlying's current price." tabindex="0" role="button">at-the-money</span> puts on SPY or on XSP sees identical pre-tax P&amp;L, apart from a few basis points of spread. After tax, in the top bracket, XSP keeps roughly 10 more cents of every dollar of pre-tax profit, over a multi-year horizon. Its only operational price is its slightly wider <span class="gloss" data-facts="The gap between the highest price a buyer offers, the bid, and the lowest price a seller asks, the ask. Crossing it is the immediate cost of trading." tabindex="0" role="button">bid-ask spread</span>, which costs perhaps 5 to 10 basis points a year and is easily outweighed by the tax saving.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A year of puts, taxed two ways</span>
+<p><strong>Step 1: the strategy.</strong> Suppose you sell ten SPY at-the-money monthly puts at a strike where each contract collects $300 of premium, for $3,000 of gross premium a month. The contracts' notional equals that of ten XSP contracts. You hold the strategy for a year, collecting twelve months of premium, and win 9 months while losing 3.</p>
+
+<p><strong>Step 2: the pre-tax result.</strong> Gross premium collected is about $36,000 and losses in the losing months about $15,000, for a net pre-tax P&amp;L of about $21,000.</p>
+
+<p><strong>Step 3: SPY in a Reg-T account.</strong> All gains and losses are short-term, since nothing is held a year. At the quoted effective rate of about 40% to 41%, the after-tax P&amp;L is about $12,400.</p>
+
+<p><strong>Step 4: XSP under 1256.</strong> The 60/40 blend applies regardless of holding period. At the quoted effective rate of about 27% to 28%, the after-tax P&amp;L is about $15,200, which is approximately <strong>$2,800 more after tax</strong> on the same pre-tax P&amp;L.</p>
+
+<p><strong>Step 5: like for like.</strong> At 40.8% and 30.6%, the two results are $12,432 and $14,574, a gap of $2,142. At 37% and 26.8%, without the surtax, they are $13,230 and $15,372, the same gap. It is 10.2% of the $21,000, the 10.2 points of the top-bracket arithmetic.</p>
+</div>
+
+<p>Over a decade of compounding this gap is a small house. The only operational change required is opening the XSP order ticket instead of the SPY one.</p>
+
+<h2 id="wash-sales">4 · Wash sales</h2>
+
+<p>The IRS <strong><span class="gloss" data-facts="The tax rule that disallows a loss on a security if a substantially identical one is bought within 30 days before or after the sale. The loss is added to the new position's cost basis. It does not apply to Section 1256 contracts." tabindex="0" role="button">wash-sale rule</span></strong> disallows a loss on a security if a "substantially identical" security is bought within 30 days before or after the sale that realized the loss. For stocks and most ETFs this rule is easy to trigger accidentally. Selling SPY for a loss and buying it back two weeks later disallows the loss, deferring it into the <strong><span class="gloss" data-facts="The purchase price of a position for tax purposes, from which the taxable gain or loss on its sale is measured." tabindex="0" role="button">cost basis</span></strong>, the tax purchase price, of the new position.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A wash sale, and a 1256 roll</span>
+<p><strong>Step 1: the SPY loss.</strong> You buy 100 SPY at $600, sell them at $570 for a $3,000 loss, and buy 100 back two weeks later at $575. The loss is disallowed this year. It is added to the new shares' basis, which becomes <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>57</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>500</mn><mo>+</mo><mn>3</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>60</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>500</mn></mrow><annotation encoding="application/x-tex">57{,}500 + 3{,}000 = \$60{,}500</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">57</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">500</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">3</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$60</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">500</span></span></span></span></span>, so it reduces the gain, or adds to the loss, when you finally sell.</p>
+
+<p><strong>Step 2: the XSP loss.</strong> You close a losing XSP credit spread for a $3,000 loss and re-enter a similar spread the same day. The loss counts this year, in full, against your other gains.</p>
+</div>
+
+<p><strong>For 1256 instruments, wash-sale rules do not apply.</strong> Losses can be realized and immediately re-established without disallowance. This matters substantially for any strategy with frequent roll activity, or one that legitimately needs to harvest losses against gains for tax planning. A trader running monthly XSP credit spreads who has a losing month can close the position, realize the loss for tax purposes and immediately re-enter a similar position. The loss is fully usable against any other gains in the same year.</p>
+
+<p>The wash-sale exemption for 1256 contracts is buried in the Internal Revenue Code and rarely discussed in retail education. It interacts with the <span class="gloss" data-facts="Valuing a position at the current market price, with the gain or loss counted in the account each day whether or not the position is closed." tabindex="0" role="button">mark-to-market</span> provision of §1256, which requires you to mark all open 1256 positions to market at year-end and treat any gain or loss as recognized. The result is a clean tax accounting in which every gain and every loss flows through to the tax computation in the year it occurred, with no carryforward complexity from disallowed losses.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The year-end mark</span>
+<p><strong>Step 1: the mark.</strong> In November you open an XSP position for $2,000, and on December 31 it is worth $2,600. The $600 gain is taxed this year, 60% as long-term and 40% as short-term, although you have not closed the position.</p>
+
+<p><strong>Step 2: the close.</strong> The position's basis is now $2,600. You close it in January for $2,400, a $200 loss that belongs to the new year. Across the two years the gains and losses add up to the $400 the trade actually made.</p>
+</div>
+
+<h2 id="what-the-tax-gap-compounds-to">5 · What the tax gap compounds to</h2>
+
+<p>The figure compounds $100,000 for a chosen horizon at an annual P&amp;L, taxed two ways. SPY gains are taxed as short-term gains at the ordinary rate, federal plus state. XSP and SPX gains are taxed under 1256, 60% at a long-term rate and 40% at the ordinary rate. The sliders set the federal bracket (10% to 37%, starting at 32%), the state tax (0% to 13.3%, starting at 5%), the annual P&amp;L (5% to 100%, starting at 20%) and the horizon (1 to 30 years, starting at 10). A table gives each regime's effective rate, after-tax annual return and terminal wealth, and the bars draw the terminal wealth.</p>
+
+<p>The model is simple. It takes the long-term rate that goes with the federal bracket, rounded to the bracket boundaries (0% up to the 12% bracket, 15% from 22% to 35%, 20% at 37%). It charges state tax on the whole gain in both regimes, and it leaves out the 3.8% surtax. Read its output as the size of the gap, not as your tax bill. Start at the defaults, then set the annual P&amp;L to 8%, the put-write return used above.</p>
+
+<figure class="fig" id="fig-tax-drag-comparison">
+  <canvas id="tax-drag-comparison-c" data-h="170" width="631" height="170" style="height: 170px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="tax-drag-comparison-fed">federal bracket</label>
+      <input type="range" id="tax-drag-comparison-fed" min="0.10" max="0.37" step="0.01" value="0.32">
+      <output id="tax-drag-comparison-fed-o" for="tax-drag-comparison-fed">32%</output>
+    </div>
+    <div class="ctrl">
+      <label for="tax-drag-comparison-st">state tax</label>
+      <input type="range" id="tax-drag-comparison-st" min="0" max="0.133" step="0.005" value="0.05">
+      <output id="tax-drag-comparison-st-o" for="tax-drag-comparison-st">5.0%</output>
+    </div>
+    <div class="ctrl">
+      <label for="tax-drag-comparison-pl">annual P&amp;L</label>
+      <input type="range" id="tax-drag-comparison-pl" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="tax-drag-comparison-pl-o" for="tax-drag-comparison-pl">20%</output>
+    </div>
+    <div class="ctrl">
+      <label for="tax-drag-comparison-yr">horizon</label>
+      <input type="range" id="tax-drag-comparison-yr" min="1" max="30" step="1" value="10">
+      <output id="tax-drag-comparison-yr-o" for="tax-drag-comparison-yr">10y</output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">From $100k</th><th>SPY (1099)</th><th>XSP / SPX (1256)</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Effective rate</td><td data-label="SPY (1099)" id="tax-drag-comparison-r0">37.0%</td><td data-label="XSP / SPX (1256)" id="tax-drag-comparison-r1">26.8%</td></tr>
+      <tr><td class="c-trial">After-tax annual</td><td data-label="SPY (1099)" id="tax-drag-comparison-a0">12.60%</td><td data-label="XSP / SPX (1256)" id="tax-drag-comparison-a1">14.64%</td></tr>
+      <tr><td class="c-trial">Terminal wealth</td><td data-label="SPY (1099)" id="tax-drag-comparison-w0">$327,630</td><td data-label="XSP / SPX (1256)" id="tax-drag-comparison-w1">$392,068</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="tax-drag-comparison-gap">terminal gap = $64,438</output></div>
+    <div class="ctrl"><output id="tax-drag-comparison-gpct">gap = 19.7%</output></div>
+    <div class="ctrl"><output id="tax-drag-comparison-spread">tax-rate spread = 10.2pp</output></div>
+  </div>
+  <figcaption><b>The same pre-tax P&amp;L, two tax regimes.</b> $100,000 compounds for the
+  chosen horizon at the annual P&amp;L after tax, taxed as SPY short-term gains at the ordinary
+  rate (federal plus state) or as 1256 gains on XSP or SPX, 60% at the long-term rate that goes
+  with the federal bracket (0% up to the 12% bracket, 15% from 22% to 35%, 20% at 37%) and 40%
+  at the ordinary rate, with state tax on the whole gain. The bars are the terminal wealth. The
+  model leaves out the 3.8% surtax.</figcaption>
+</figure>
+
+<p>At the defaults, the ordinary rate is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>5</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>37.0</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">32\% + 5\% = 37.0\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">32%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">37.0%</span></span></span></span></span>. The long-term rate in the 32% bracket is 15%, so the 1256 rate is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mn>15</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.4</mn><mo>×</mo><mn>32</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>5</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>26.8</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.6 \times 15\% + 0.4 \times 32\% + 5\% = 26.8\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">15%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">32%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">26.8%</span></span></span></span></span>, a tax-rate spread of 10.2 points. The after-tax returns are 12.60% and 14.64% a year. After 10 years, $100,000 becomes $327,630 on SPY and $392,068 on XSP or SPX: a terminal gap of $64,438, or 19.7%. At an 8% annual P&amp;L, the two grow to $163,511 and $176,667, a gap of 8.0%, close to the like-for-like decade computed above.</p>
+
+<p>The figure shows the gap growing with the P&amp;L and with the horizon, because the saved tax compounds. By <a class="eqref" href="#e-saving">(2E.3)</a>, the spread between the two rates is 60% of the gap between the federal rate and the long-term rate, and state tax, which falls on both, drops out of it. So the spread moves with the bracket: 7.2 points at 12%, 4.2 at 22%, 10.2 at 32%, 12 at 35% and 10.2 at 37%.</p>
+
+<h2 id="margin-in-stress-the-real-cost-of-portfolio-margin">6 · Margin in stress: the real cost of portfolio margin</h2>
+
+<p>Reg-T margin requirements are fixed and formulaic (50% on stock, fixed formulas on options), so they do not change in stress. Your margin requirement is the same on Monday as it was on Friday, regardless of overnight news.</p>
+
+<p>Portfolio margin requirements, by contrast, are <strong>stress-tested</strong>. The broker computes what your portfolio would lose if SPX moved 15% either way along with implied-volatility shocks, and requires you to post collateral against that theoretical loss. In calm conditions, PM allows far more leverage than Reg-T: diversified, hedged portfolios can run at 5 to 10 times the leverage that Reg-T would permit. <strong>In stress, PM requirements expand violently.</strong></p>
+
+<p>The canonical worked example is March 2020, the first three weeks of the COVID <span class="gloss" data-facts="The fall in an account's value from its highest value so far to a later low, as a fraction of that peak." tabindex="0" role="button">drawdown</span>:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Date</th><th class="c-other">SPX</th><th>VIX</th></tr></thead><tbody><tr><td class="c-trial" data-label="Date">February 21, 2020</td><td class="c-other" data-label="SPX">3338</td><td data-label="VIX">17</td></tr><tr><td class="c-trial" data-label="Date">March 16, 2020</td><td class="c-other" data-label="SPX">2386 (intraday low about 2280)</td><td data-label="VIX">82.69</td></tr></tbody></table></div></div>
+
+<p>That is a fall of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2386</mn><mi mathvariant="normal">/</mi><mn>3338</mn><mo>−</mo><mn>1</mn><mo>=</mo><mo>−</mo><mn>28.5</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">2386/3338 - 1 = -28.5\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">2386/3338</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord">28.5%</span></span></span></span></span> at the close, and nearly 32% to the intraday low, while the <span class="gloss" data-facts="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days." tabindex="0" role="button">VIX</span> rose almost fivefold. In the same period, four things happened at once:</p>
+
+<ul>
+<li>Many PM accounts saw their margin requirements <strong>double or triple</strong> in 1 to 3 days, as brokers increased their house-overlay add-ons.</li>
+<li>Brokers adjusted the ±15% scenario itself upward, some to ±20% or ±25%, as the realized-volatility regime shifted.</li>
+<li>The implied-volatility shock components of the stress test grew larger as the VIX rose.</li>
+<li>Volatility-targeting funds began de-grossing, cutting their positions, which fed back into the PM margin calculations as the VIX rose further.</li>
+</ul>
+
+<p>The combination produced a wave of forced liquidations across PM accounts. Traders who had been running at "comfortable" pre-stress leverage, say 4 times, found themselves facing requirements of 8 or 10 times after the margin expansion, with no time to raise additional collateral. The broker's algorithm sells positions to bring the account back into compliance with the new margin level. That selling adds to the SPX downside, which raises the VIX further, which further expands margin requirements at <em>other</em> PM accounts. The feedback loop has exactly the same structure as the dealer-hedging loop of <a class="xref" href="8b.html">Chapter 8B</a>, operating through margin accounting instead of options <span class="gloss" data-facts="The measures of how an option's value changes with the underlying's price, with time, with volatility and with interest rates: delta, gamma, theta, vega and rho." tabindex="0" role="button">Greeks</span>.</p>
+
+<p>The strangle's scenario grid above shows the first link in that chain. Widening the scenario from ±15% to ±25% more than doubled its requirement, from $4,800 to $10,800, with no change in the position and before any volatility shock or house add-on.</p>
+
+<p>The structural lesson is that cash-secured strategies cannot be force-liquidated for margin reasons, because there is no margin extension to expand. This is the operational reason cash-secured XSP put-writes are the recommended retail vehicle for harvesting the <span class="gloss" data-facts="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average." tabindex="0" role="button">variance risk premium</span> (VRP), even though they are capital-inefficient next to PM-leveraged versions of the VRP harvest. The capital inefficiency is the <em>insurance premium</em> against the path-dependent risk of margin expansion in stress (<a class="xref" href="1e.html">Chapter 1E</a>). Portfolio margin is genuinely useful in calm conditions. It is genuinely dangerous in stress, and the danger comes at precisely the moments when you most want your account to survive intact.</p>
+
+<h2 id="the-decision-tree-five-products-three-accounts">7 · The decision tree: five products, three accounts</h2>
+
+<p><strong>Cash account:</strong> XSP cash-secured puts, capital-bound but operationally the safest. Avoid SPY for any systematic strategy: the tax penalty is large and unnecessary.</p>
+
+<p><strong>Reg-T account:</strong> SPY or XSP diagonal or <span class="gloss" data-facts="A position of two options of the same type on the same underlying and expiry, one bought and one sold at different strikes. A put spread is one kind." tabindex="0" role="button">vertical spreads</span> if you need defined-risk leverage, and ES futures through the 1256 route if you want clean leveraged equity exposure. The Reg-T tier is a good middle ground for traders who have outgrown cash accounts but are not ready for the margin-expansion risk of portfolio margin.</p>
+
+<p><strong>Portfolio margin account:</strong> sized XSP strangles or condors against a known stress budget, with <strong>explicit, pre-committed <span class="gloss" data-facts="A rule, set in advance, for when to stop trading a strategy, such as a drawdown or a shortfall against its expected return beyond a stated limit." tabindex="0" role="button">kill criteria</span> for margin-expansion scenarios</strong>. Do not touch PM until you have at least 12 months of cash-account or Reg-T experience with the strategy and documented adherence to your written kill rules. The first PM account every trader opens is operated incorrectly. The second is operated more carefully, because the first one taught lessons that no amount of reading could have.</p>
+
+<p>The two traditions this book draws on disagree about the condors in that line, and both positions stand. One lists XSP strangles and condors among the portfolio-margin strategies and teaches the iron condor as an intermediate structure (<a class="xref" href="12c.html">Chapter 12C</a>). The other rejects systematic iron condors in a retail account, on the evidence that <a class="xref" href="1d.html">Chapter 1D</a> summarizes and <a class="xref" href="10i.html">Chapter 10I</a> sets out in full. Read those chapters before running one.</p>
+
+<p>The choice between cash, Reg-T and PM is one of the most consequential a retail trader makes, and most retail traders make it badly. They jump to PM too early and fail to write down stress-scenario kill rules. They also do not understand that PM margin requirements are <em>path-dependent</em> in a way that Reg-T's are not.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The twelve-month rule works like surgical credentialing. A surgeon adopting a new procedure does a set number of proctored cases before operating alone, because the learning curve is steepest in the first cases and the patients bear its cost. Portfolio margin is a new procedure with the account as the patient: earn it on the same strategy in a safer tier, with a written record, before running it unsupervised.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>In a taxable account, put index exposure in 1256 instruments: XSP or SPX options, or ES and MES futures. Keep SPY for share-level execution, and remember that the tax advantage counts only in a taxable account. Size cash-secured positions from the strike's notional, since the cash is locked for as long as the position is open. If you move to margin, compute your call point with <a class="eqref" href="#e-regtcall">(2E.1)</a> for Reg-T. For portfolio margin, compute the requirement at ±20% and ±25% as well as ±15%, and hold enough cash to meet the widest of them.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The tax advantage is only as large as your rates. It shrinks as the gap between your short-term and long-term rates shrinks, and it counts only on gains in a taxable account. The cash-secured account's safety has a limit too: it removes the margin call, not the loss, and a cash-secured put still loses whatever the index falls below its strike, less the premium.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>In a taxable account</strong>, choose the 1256 product (XSP, SPX, ES or MES) over SPY for any systematic strategy on the index.</li>
+<li><strong>Start in a cash account</strong> with cash-secured XSP puts.</li>
+<li><strong>Move to Reg-T</strong> for defined-risk spreads or futures once the strategy has a record.</li>
+<li><strong>Move to portfolio margin</strong> only after 12 months with the strategy in a lower tier, with written kill rules for margin expansion, and sized so that the ±25% requirement still fits.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: running a systematic strategy in SPY</span>
+<p>SPY's options are the most familiar and the most liquid, so they are where most retail put-writing starts. In a taxable account, that choice gives away about 10 points of tax on every dollar of gain. In a top bracket that is some $2,000 on every $21,000 of pre-tax profit, in exchange for a spread a few cents narrower.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: sizing portfolio margin from the calm requirement</span>
+<p>A portfolio-margin requirement measured in calm markets is about as small as it gets. Sizing to it, at "comfortable" leverage, is what left traders facing requirements of 8 or 10 times in March 2020. Size to the requirement in the stress you are guarding against.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>There are four account tiers. A cash account borrows nothing, so it gets no margin calls. Reg-T sets fixed rules: 50% initial and 25% maintenance margin. Portfolio margin is stress-tested, cheapest in calm markets and expanding in stress, and futures accounts use SPAN.</li>
+<li>Section 1256 contracts are taxed 60% long-term and 40% short-term whatever the holding period. At the top bracket that saves about 10 points of tax per dollar of gain, like for like. The often-quoted 12 to 14 mixes rates.</li>
+<li>On the same pre-tax P&amp;L, XSP keeps about 10 more cents per dollar than SPY, and the gap compounds.</li>
+<li>1256 contracts escape the wash-sale rule and are marked to market at year-end.</li>
+<li>Portfolio margin can double or triple in days, as it did in March 2020. Cash-secured strategies cannot be force-liquidated for margin.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Your ordinary rate is 32% and your long-term rate 20%, with no surtax. What is your blended 1256 rate, and how much does it save on each dollar of gain?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-blend">(2E.2)</a>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mn>20</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.4</mn><mo>×</mo><mn>32</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>12</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>12.8</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>24.8</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.6 \times 20\% + 0.4 \times 32\% = 12\% + 12.8\% = 24.8\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">20%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">32%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">12%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">12.8%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">24.8%</span></span></span></span></span>. The saving is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mi mathvariant="normal">%</mi><mo>−</mo><mn>24.8</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>7.2</mn></mrow><annotation encoding="application/x-tex">32\% - 24.8\% = 7.2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">32%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">24.8%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">7.2</span></span></span></span></span> points, which is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.6</mn><mo>×</mo><mo stretchy="false">(</mo><mn>32</mn><mi mathvariant="normal">%</mi><mo>−</mo><mn>20</mn><mi mathvariant="normal">%</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">0.6 \times (32\% - 20\%)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">32%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">20%</span><span class="mclose">)</span></span></span></span></span>, as <a class="eqref" href="#e-saving">(2E.3)</a> says.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>You buy $30,000 of stock with $15,000 of your own money in a Reg-T account. At what value does the maintenance call come?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>You borrowed $15,000, so by <a class="eqref" href="#e-regtcall">(2E.1)</a> the call comes at <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.50</mn><mi mathvariant="normal">/</mi><mn>0.75</mn><mo>=</mo><mn>2</mn><mi mathvariant="normal">/</mi><mn>3</mn></mrow><annotation encoding="application/x-tex">0.50/0.75 = 2/3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.50/0.75</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">2/3</span></span></span></span></span> of the starting value, $20,000, where your $5,000 of equity is 25% of the holding.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>A strategy makes $10,000 before tax for a top-bracket taxpayer. What does it keep in SPY and in XSP, like for like with the surtax?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>In SPY it keeps <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>0.408</mn><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">$</mi><mn>5</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>920</mn></mrow><annotation encoding="application/x-tex">10{,}000 \times (1 - 0.408) = \$5{,}920</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">10</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.408</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$5</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">920</span></span></span></span></span>, and in XSP <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>0.306</mn><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">$</mi><mn>6</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>940</mn></mrow><annotation encoding="application/x-tex">10{,}000 \times (1 - 0.306) = \$6{,}940</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">10</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.306</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$6</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">940</span></span></span></span></span>. The difference is $1,020, 10.2% of the pre-tax profit.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>You sell SPY at a $3,000 loss in November and buy it back ten days later. What happens to the loss? What if the trade had been an XSP spread?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>In SPY it is a wash sale: the loss is disallowed and added to the basis of the new shares. In XSP, a 1256 contract, the wash-sale rule does not apply, and the loss counts in full this year.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Your short XSP strangle is margined against ±15% and needs $4,800. What happens to the requirement if the broker widens the scenario to ±20%?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The worst case moves to XSP at 480, where the 570 put pays 90 points. Less the 12 points of premium, the loss is 78 points, or $7,800, a 63% rise with no change in the position.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>One ES contract at SPX 6,000 carries $15,000 of initial margin. What leverage is that, and what index fall wipes out the margin?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The notional is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><mn>50</mn><mo>×</mo><mn>6</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>300</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">\$50 \times 6{,}000 = \$300{,}000</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">$50</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">6</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$300</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span></span></span></span></span>, 20 times the margin, so a fall of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>15</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mi mathvariant="normal">/</mi><mn>300</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>=</mo><mn>5</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">15{,}000/300{,}000 = 5\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">15</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000/300</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5%</span></span></span></span></span> loses the whole $15,000.</p>
+</div></details>
+</div>
+</div>
+
+
 
 <nav class="chapnav" aria-label="Previous and next chapter">
-<a class="prev" href="2d.html" rel="prev"><span>Previous</span>2D · Making vs taking: the order book mechanics</a>
-<a class="next" href="3a.html" rel="next" data-part="Part III · Markets"><span>Next</span>3A · What is the S&amp;P 500, actually?</a>
+<a class="prev" href="2d.html" rel="prev"><span>Previous</span>2D · What execution costs</a>
+<a class="next" href="3a.html" rel="next" data-part="Part III · Models"><span>Next</span>3A · What a trading model is</a>
 </nav>
 
 </div>
 </main>
 </div>
 <script src="assets/book.js"></script>
+<script>
 
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- tax-drag-comparison ---------- */
+(function () {
+  var U = 'tax-drag-comparison';
+  var START = 100000;
+  /* The long-term rate that goes with a federal bracket, simplified to the
+     bracket boundaries: 0% up to the 12% bracket, 20% in the top bracket, 15%
+     between. The app's widget held it at 20% in every bracket, so at a low
+     bracket it taxed a 1256 contract more heavily than ordinary income. */
+  function ltRate(fed) { return fed <= 0.12 + 1e-9 ? 0 : fed >= 0.37 - 1e-9 ? 0.20 : 0.15; }
+
+  /* ticks in dollars, K/M/B/T, with only the decimals a tick needs */
+  function money(v) {
+    var a = Math.abs(v), u = a >= 1e12 ? 1e12 : a >= 1e9 ? 1e9 : a >= 1e6 ? 1e6 : a >= 1e3 ? 1e3 : 1;
+    var q = a / u, d = 0;
+    while (d < 2 && Math.abs(Number(q.toFixed(d)) - q) > 1e-9 * Math.max(1, q)) d++;
+    return DL.compact(v, d, '$');
+  }
+  function whole(v) { return DL.usd(v, 0); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var fed = DL.val(U + '-fed'), state = DL.val(U + '-st'),
+        pl = DL.val(U + '-pl'), years = DL.val(U + '-yr');
+
+    /* the ordinary rate on SPY; on a 1256 contract, 60% at the long-term rate
+       and 40% at the federal rate. State tax falls on the whole gain in both
+       (the app's widget charged it only on the 40%). */
+    var ordRate = fed + state;
+    var sectionRate = 0.6 * ltRate(fed) + 0.4 * fed + state;
+    var spyAfter = pl * (1 - ordRate), sectionAfter = pl * (1 - sectionRate);
+    var spyTerminal = START * Math.pow(1 + spyAfter, years);
+    var sectionTerminal = START * Math.pow(1 + sectionAfter, years);
+    var gapDollar = sectionTerminal - spyTerminal;
+    var gapPct = (sectionTerminal / spyTerminal - 1) * 100;
+    var maxV = Math.max(spyTerminal, sectionTerminal);
+
+    var p = new NMT.Plot(c, { xmin: 0, xmax: maxV * 1.06, ymin: 0, ymax: 3,
+                              pad: { l: 14, r: 18, t: 8, b: 30 }, grid: false });
+    DL.axes(p, { nx: 4, y: false, yAxis: false, x: money });
+    DL.hbars(p, [2.05], [spyTerminal], { h: 0.5, color: DL.fade(DL.color('plain'), 0.55) });
+    DL.hbars(p, [0.7], [sectionTerminal], { h: 0.5, color: DL.fade(DL.color('insight'), 0.55) });
+    p.text(0, 2.3, 'SPY · short-term, ordinary rates', { dy: -4, font: '11px ' + DL.color('sans'),
+                                                      color: DL.color('ink-soft') });
+    p.text(0, 0.95, 'XSP / SPX · 1256 60/40', { dy: -4, font: '11px ' + DL.color('sans'),
+                                              color: DL.color('ink-soft') });
+
+    DL.out(U + '-fed-o', (fed * 100).toFixed(0) + '%');
+    DL.out(U + '-st-o', (state * 100).toFixed(1) + '%');
+    DL.out(U + '-pl-o', (pl * 100).toFixed(0) + '%');
+    DL.out(U + '-yr-o', years + 'y');
+    DL.out(U + '-r0', (ordRate * 100).toFixed(1) + '%');
+    DL.out(U + '-r1', (sectionRate * 100).toFixed(1) + '%');
+    DL.out(U + '-a0', (spyAfter * 100).toFixed(2) + '%');
+    DL.out(U + '-a1', (sectionAfter * 100).toFixed(2) + '%');
+    DL.out(U + '-w0', whole(spyTerminal));
+    DL.out(U + '-w1', whole(sectionTerminal));
+    DL.out(U + '-gap', 'terminal gap = ' + whole(gapDollar));
+    DL.out(U + '-gpct', 'gap = ' + DL.num(gapPct, 1) + '%');
+    DL.out(U + '-spread', 'tax-rate spread = ' + DL.num((ordRate - sectionRate) * 100, 1) + 'pp');
+  });
+  DL.bind([U + '-fed', U + '-st', U + '-pl', U + '-yr'], draw);
+})();
+
+</script>
 </body>
 </html>

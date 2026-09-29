@@ -1,36 +1,85 @@
-<p class="eyebrow">Part I · Foundation · Chapter 1D</p>
+<p class="eyebrow">Part I · Returns and risk · Chapter 1D</p>
 
-<h1>Sharpe ratio</h1>
+<h1>Risk-adjusted return</h1>
 
-<p class="subtitle">Return per unit of risk</p>
+<p class="subtitle">The Sharpe ratio, and what it cannot see</p>
 
-<p>Now that we have expected value as the foundation, the next question is: how <em>stable</em> is that expected value? A strategy that earns 10% per year with 5% annual volatility is different from a strategy that earns 10% per year with 30% volatility. The Sharpe ratio formalizes this question: it is the ratio of expected excess return to the standard deviation of returns, and it answers "how many units of risk does this strategy ask me to take for each unit of expected return?"</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="1c.html">Chapter 1C</a> defined edge as expected value. This chapter asks how stable that expected value is, and how to compare strategies whose risks differ. The standard answer is the Sharpe ratio, and the chapter shows what it does well, what it cannot see, and how to judge one that was picked from many tries.</p>
+</div>
 
-<h2 id="the-definition">1 · The definition</h2>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Log returns, the square-root-of-time rule and variance drag (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li><span class="gloss" title="The third standardized moment of a distribution, measuring its asymmetry. Negative skewness means a longer tail of losses than of gains; a normal distribution has zero.">Skewness</span>, <span class="gloss" title="The fourth standardized moment of a distribution, measuring how much weight sits in its extreme tails. A normal distribution has a kurtosis of 3.">kurtosis</span> and <span class="gloss" title="The average return in the part of the distribution beyond the value at risk, such as the worst 5% of months. Also called conditional value at risk.">expected shortfall</span> (<a class="xref" href="1b.html">Chapter 1B</a>).</li>
+<li>Expected value, and the expected log return as the growth rate (<a class="xref" href="1c.html">Chapter 1C</a>).</li>
+</ul>
+</div>
 
-<pre>SR = (E[R] − r_f) / σ_R</pre>
+<p>The single most consequential thing to take in before you evaluate any <span class="gloss" title="A position that profits when the underlying moves less than option prices imply, usually built by selling options, and loses when it moves more.">short volatility</span> strategy is this: <strong>the Sharpe ratio cannot see skew</strong>. A strategy can win 95% of the time and still lose money, as <a class="xref" href="1c.html">Chapter 1C</a> showed. A strategy can show a Sharpe ratio of 0.8 in a <span class="gloss" title="A test of a trading rule on historical data, showing what the rule would have earned had it been followed.">backtest</span> and a Sharpe ratio of 0.2 in a live retail account. The gap between those two numbers is, mostly, the shape of the return distribution: specifically the third and fourth moments, which the Sharpe ratio ignores by mathematical construction. If you remember only one thing from <a class="xref" href="1a.html">Part I</a>, remember that.</p>
 
-<p>The numerator is excess return — what you earned above the risk-free rate. The denominator is the standard deviation of those returns. By construction, Sharpe is dimensionless and scale-invariant: doubling your position size doubles both the numerator (return) and the denominator (volatility), leaving Sharpe unchanged. This is what makes Sharpe useful as a <em>comparison</em> metric across strategies of different sizes.</p>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>The Sharpe ratio divides a strategy's average excess return by the standard deviation of its returns. It is a signal-to-noise ratio: how much reward you collect for each unit of wobble. That makes it genuinely useful for three things: predicting how well a strategy compounds, how much <span class="gloss" title="The ratio of a position's total exposure to the capital behind it. An account holding 1.4 million dollars of an index on 1 million dollars of its own money has 1.4 times leverage.">leverage</span> it can carry, and how easy it is to stick with. But it is built from the mean and the standard deviation alone. Two strategies with the same Sharpe ratio can have completely different worst days, and a strategy that sells options usually looks better on this number than it is.</p>
+</div>
 
-<p>For short-horizon intraday strategies — the regime most quant trading chapters in Sections 2 and below will assume — the risk-free rate is negligible per-bar, so the practical form drops it:</p>
+<p>Chapters 1B, 1C and this one make a single argument in seven steps:</p>
 
-<pre>SR_intraday ≈ E[R] / σ_R</pre>
+<ol>
+<li>A strategy can win often and still lose money (<a class="xref" href="1c.html">Chapter 1C</a>).</li>
+<li>This happens when small gains are frequent but rare losses are large (<a class="xref" href="1b.html">Chapter 1B</a>).</li>
+<li>That means mean, variance, skewness and kurtosis all matter (<a class="xref" href="1b.html">Chapter 1B</a>).</li>
+<li>The Sharpe ratio sees only the mean and the variance.</li>
+<li>Short options are structurally short skew.</li>
+<li>Therefore short volatility strategies can look better than they are.</li>
+<li>Therefore every short volatility trade needs an analysis of its tail loss and of its margin path.</li>
+</ol>
 
-<p>The annualization follows the square-root-of-time rule from 1B. A strategy with Sharpe = X computed on daily returns has annualized Sharpe of approximately X × √252:</p>
+<p>This chapter develops steps 4 to 7.</p>
 
-<pre>SR_annual = SR_daily × √252 ≈ SR_daily × 15.87</pre>
+<h2 id="the-sharpe-ratio">1 · The Sharpe ratio</h2>
 
-<p>This is the famous "Sharpe scales with square root of frequency" relationship, and it's the structural reason high-frequency strategies report eye-popping Sharpes (we'll see this in 2E).</p>
+<p>A strategy that earns 10% a year with 5% annual volatility is different from a strategy that earns 10% a year with 30% volatility, and the <strong><span class="gloss" title="A strategy's mean return above the risk-free rate divided by the standard deviation of its returns: the excess return earned per unit of volatility.">Sharpe ratio</span></strong> formalizes the difference. It is the ratio of expected excess return to the standard deviation of returns. It answers the question of how many units of expected return a strategy pays you for each unit of risk it asks you to take:</p>
 
-<h2 id="what-sharpe-gives-you-that-ev-alone-doesnt">2 · What Sharpe gives you that EV alone doesn't</h2>
+<div class="eq" id="e-sr">
+\[ \text{SR} = \frac{\mathbb{E}[R] - r_f}{\sigma_R} \]
+</div>
 
-<p>Two strategies can have identical expected return but very different Sharpes if their volatilities differ. The lower-volatility strategy is preferable for three concrete reasons:</p>
+<p>The numerator is the <strong>excess return</strong>: what you earn above the <strong><span class="gloss" title="The return on money lent to a safe borrower, usually the US government, for the period in question. Excess returns are measured above it.">risk-free rate</span></strong> \(r_f\), the return on cash lent to the government. The denominator \(\sigma_R\) is the standard deviation of the returns. By construction the ratio is dimensionless and scale-invariant. Doubling your position size doubles both the excess return and the volatility, which leaves the Sharpe ratio unchanged. That is what makes it useful for <em>comparing</em> strategies of different sizes.</p>
 
-<p><strong>1. Compound growth is higher.</strong> From the Itô correction in 1B, expected log return is approximately μ − ½σ². For two strategies with identical arithmetic mean μ, the one with lower σ² compounds to higher terminal wealth. Variance drag is real money over multi-year horizons.</p>
+<p>With a hypothetical risk-free rate of 2%, the two strategies above have Sharpe ratios of \((0.10 - 0.02)/0.05 = 1.6\) and \((0.10 - 0.02)/0.30 = 0.27\). Their expected returns are the same, and their Sharpe ratios differ by a factor of six.</p>
 
-<p><strong>2. Leverage becomes safe.</strong> A strategy with Sharpe of 0.5 cannot safely be leveraged 4×, because the 4× leveraged version still has Sharpe of 0.5 but has 4× volatility, meaning routine drawdowns become catastrophic. A strategy with Sharpe of 4.0 (typical of intraday market-making) can be safely leveraged 4× because the volatility was small to start with and the drift was overwhelming. The maximum sustainable leverage is, roughly, a function of how confident you are that the next move is positive — which is what Sharpe measures.</p>
+<p>For short-horizon intraday strategies, the kind most of the modeling chapters of <a class="xref" href="3a.html">Part III</a> assume, the risk-free return over one bar is negligible, so the practical form drops it:</p>
 
-<p><strong>3. Behavioral survivability improves.</strong> A strategy that wins 51% of trades with tight bounds and high Sharpe feels safe to operate. A strategy that wins 51% of trades with wide bounds and low Sharpe feels terrifying — you have long losing streaks, you can't tell in real time whether the strategy is working or just lucky, and you'll likely abandon it during a drawdown. The path of a high-Sharpe strategy is psychologically easier to ride than the path of a low-Sharpe strategy with identical expected return.</p>
+<div class="eq">
+\[ \text{SR}_{\text{intraday}} \approx \frac{\mathbb{E}[R]}{\sigma_R} \]
+</div>
+
+<h3 id="annualizing-a-sharpe-ratio">Annualizing a Sharpe ratio</h3>
+
+<p><a class="xref" href="1a.html">Chapter 1A</a> showed that over \(n\) independent periods the mean return grows \(n\) times and the standard deviation grows \(\sqrt{n}\) times. Their ratio therefore grows \(n/\sqrt{n} = \sqrt{n}\) times, so a daily Sharpe ratio converts to an annual one with the square root of 252 trading days:</p>
+
+<div class="eq" id="e-srannual">
+\[ \begin{aligned}
+\text{SR}_{\text{annual}} &amp;= \text{SR}_{\text{daily}} \times \sqrt{252} \\
+&amp;\approx \text{SR}_{\text{daily}} \times 15.87
+\end{aligned} \]
+</div>
+
+<p>A strategy whose daily returns average 0.05% with a daily standard deviation of 1.26% has a daily Sharpe ratio of \(0.05/1.26 = 0.040\), and an annual one of \(0.040 \times 15.87 = 0.63\). This is the famous rule that the Sharpe ratio scales with the square root of frequency, and it is the structural reason that high-frequency strategies report eye-popping Sharpe ratios (<a class="xref" href="3d.html">Chapter 3D</a>).</p>
+
+<h2 id="what-the-sharpe-ratio-adds-to-expected-value">2 · What the Sharpe ratio adds to expected value</h2>
+
+<p>Two strategies can have identical expected returns but very different Sharpe ratios if their volatilities differ. The lower-volatility strategy is preferable for three concrete reasons.</p>
+
+<p><strong>It compounds faster.</strong> From the variance drag of <a class="xref" href="1a.html">Chapter 1A</a>, the compound growth rate is about \(\mu - \sigma^2/2\). With the same arithmetic mean, the strategy with the lower variance compounds to more terminal wealth: 10% with 5% volatility compounds at \(0.10 - 0.00125 = 9.9\%\), and 10% with 30% volatility at \(0.10 - 0.045 = 5.5\%\). Variance drag is real money over multi-year horizons.</p>
+
+<p><strong>It can carry leverage.</strong> A strategy with a Sharpe ratio of 0.5 cannot safely be leveraged four times. The leveraged version still has a Sharpe ratio of 0.5 but four times the volatility, so its routine <span class="gloss" title="The fall in an account's value from its highest value so far to a later low, as a fraction of that peak.">drawdowns</span> become catastrophic. A strategy with a Sharpe ratio of 4.0, typical of intraday market making, can be, because its volatility was small to start with and its drift was overwhelming. The maximum sustainable leverage is, roughly, a function of how confident you are that the next move is positive, which is what the Sharpe ratio measures. The section after next makes this exact.</p>
+
+<p><strong>It is easier to live with.</strong> Picture two strategies that each win 51% of their trades. One has tight bounds and a high Sharpe ratio, and it feels safe to operate. The other has wide bounds and a low Sharpe ratio, and it feels terrifying. It has long losing streaks, you cannot tell in real time whether it is working or just lucky, and you are likely to abandon it during a drawdown. The path of a high-Sharpe strategy is psychologically easier to ride than the path of a low-Sharpe strategy with the same expected return.</p>
+
+<p>The figure below simulates one year of daily returns for four strategies, all with an expected annual return of 8% and all driven by the same random shocks. Their daily volatilities are scaled so that their Sharpe ratios are 0.5, 1.5, 3 and 6, which means annual volatilities of 16%, 5.3%, 2.7% and 1.3%. The only control is a seed that re-draws the shocks, starting at 7. The readouts give each strategy's return over the year.</p>
 
 <figure class="fig" id="fig-sharpe-curves">
   <canvas id="sharpe-curves-c" data-h="250"></canvas>
@@ -54,73 +103,564 @@
   The seed re-rolls the shocks; the readouts are each curve's return over the year.</figcaption>
 </figure>
 
-<h2 id="the-frequency-sharpe-relationship">3 · The frequency-Sharpe relationship</h2>
+<p>At seed 7 the four strategies end the year at +3.6%, +7.0%, +7.7% and +8.0%. The Sharpe-6 curve follows its 8% drift almost in a straight line, while the Sharpe-0.5 curve swings widely around it. Now move the seed to 20, and the Sharpe-0.5 strategy ends the year down 17.0% and the Sharpe-1.5 strategy down 0.5%, although both still expected +8%. A year like that is exactly when a trader abandons a low-Sharpe strategy.</p>
 
-<p>Here is one of the most important and least-understood facts in quant trading: if you have a tiny edge per trade — say, a 51% win rate at fixed sizing — you don't want to trade it once. You want to trade it many times. The reason is that the Sharpe of a strategy scales as the square root of the number of independent bets:</p>
+<h2 id="trading-frequency-and-the-sharpe-ratio">3 · Trading frequency and the Sharpe ratio</h2>
 
-<pre>SR_N ≈ SR_1 × √N</pre>
+<p>Here is one of the most important and least understood facts in quantitative trading. If you have a tiny edge per trade, say a 51% win rate at a fixed size, you do not want to trade it once. You want to trade it many times, because the Sharpe ratio of a strategy grows as the square root of the number of independent bets:</p>
 
-<p>A strategy with per-trade Sharpe of 0.05 (a tiny edge) traded once a day produces daily Sharpe of 0.05. The same strategy executed 10 times a day with independent outcomes produces daily Sharpe of approximately 0.05 × √10 ≈ 0.16. Executed 100 times a day, daily Sharpe of 0.50. The annualization (×√252) then gives annual Sharpes of 0.8, 2.5, and 7.9 respectively. Trading frequency turns a tiny per-trade edge into a high Sharpe — which then permits leverage and compounding to do their work.</p>
+<div class="eq" id="e-srn">
+\[ \text{SR}_N \approx \text{SR}_1 \times \sqrt{N} \]
+</div>
 
-<p>This is the structural reason a Renaissance Technologies-style high-frequency strategy can produce double-digit annual Sharpes on a 51-52% win rate. It is not that each bet is highly profitable. It is that each bet is <em>slightly</em> profitable and there are tens of thousands of bets per day. The same edge, traded once a year, would be statistically indistinguishable from luck and certainly unsafe to leverage.</p>
+<p>where \(\text{SR}_1\) is the Sharpe ratio of one bet and \(\text{SR}_N\) that of \(N\) independent bets added together. The reason is the one behind <a class="eqref" href="#e-srannual"></a>: \(N\) bets add \(N\) times the mean but only \(\sqrt{N}\) times the standard deviation.</p>
 
-<p>The retail implication is sobering: most retail strategies operate at frequencies of one to ten trades per month. Even if each trade has a real edge (which most don't), the resulting Sharpe is going to be modest, leverage is going to be constrained, and the compound growth is going to be slow. There is a fundamental advantage to high frequency that retail traders cannot match — and trying to overcome it by adding leverage to a low-frequency strategy is exactly the path to ruin that Sections 12A and 12C will repeatedly warn against.</p>
+<div class="worked">
+<span class="ct">Worked example: A tiny edge, traded often</span>
+<p><strong>Step 1: one bet a day.</strong> A strategy with a per-trade Sharpe ratio of 0.05 (a tiny edge), traded once a day, has a daily Sharpe ratio of 0.05.</p>
 
-<h2 id="why-low-sharpe-caps-leverage">4 · Why low Sharpe caps leverage</h2>
+<p><strong>Step 2: more bets a day.</strong> Executed 10 times a day with independent outcomes, it has a daily Sharpe ratio of about \(0.05 \times \sqrt{10} = 0.16\). Executed 100 times a day, it has \(0.05 \times \sqrt{100} = 0.50\).</p>
 
-<p>Let me make the leverage point quantitative. Suppose your strategy has annualized Sharpe SR and you lever it by factor k. The levered strategy has:</p>
+<p><strong>Step 3: annualize.</strong> Multiplying by \(\sqrt{252} = 15.87\) gives annual Sharpe ratios of 0.8, 2.5 and 7.9 respectively.</p>
+</div>
+
+<p>Trading frequency turns a tiny edge per trade into a high Sharpe ratio, which then lets leverage and compounding do their work. This is the structural reason that a high-frequency strategy in the style of Renaissance Technologies can produce double-digit annual Sharpe ratios on a win rate of 51% to 52%. It is not that each bet is highly profitable. It is that each bet is <em>slightly</em> profitable and there are tens of thousands of bets a day. The same edge, traded once a year, would be statistically indistinguishable from luck, and certainly unsafe to leverage.</p>
+
+<p>The retail implication is sobering, because most retail strategies trade only one to ten times a month. Take a bet that wins $1 51% of the time and loses $1 otherwise: its mean is $0.02 and its standard deviation is almost exactly $1, so its per-trade Sharpe ratio is 0.02. Traded 10 times a month, 120 times a year, it has an annual Sharpe ratio of \(0.02 \times \sqrt{120} = 0.22\). Even if each trade has a real edge, which most do not, the resulting Sharpe ratio is modest, leverage is constrained and compounding is slow. There is a fundamental advantage to high frequency that retail traders cannot match. Trying to overcome it by adding leverage to a low-frequency strategy is exactly the path to ruin that Chapters 13A and 13C warn against.</p>
+
+<h2 id="why-a-low-sharpe-ratio-caps-leverage">4 · Why a low Sharpe ratio caps leverage</h2>
+
+<p>Suppose your strategy has an arithmetic mean return \(\mu\) and volatility \(\sigma\) a year, and you lever it by a factor \(k\), holding \(k\) dollars of it for each dollar of capital. Ignoring the cost of borrowing, the levered strategy has:</p>
 
 <ul>
-<li>Expected return: k × E[R]</li>
-<li>Volatility: k × σ</li>
-<li>Sharpe: still SR (leverage doesn't change Sharpe)</li>
+<li>an expected return of \(k\mu\);</li>
+<li>a volatility of \(k\sigma\);</li>
+<li>a Sharpe ratio still equal to the original: leverage does not change it.</li>
 </ul>
 
-<p>But the <em>probability of ruin</em> — the probability that the levered equity curve hits zero or some pre-defined floor before reaching its long-run drift — scales with both leverage and Sharpe. For a continuous Geometric Brownian Motion model, the probability that the equity curve ever falls to fraction f of its starting value before going to infinity is approximately:</p>
+<p>What leverage does change is the probability of ruin: the probability that the equity curve ever falls to some fraction \(f\) of its starting value. For a strategy whose wealth follows geometric Brownian motion (<a class="xref" href="1a.html">Chapter 1A</a>), that probability is</p>
 
-<pre>P(ruin to fraction f) ≈ f^(2μ/σ²)</pre>
+<div class="eq" id="e-ruin">
+\[ \Pr(\text{ever reach } f) = f^{\,2\mu/\sigma^2 - 1} \]
+</div>
 
-<p>where μ and σ are the drift and volatility <em>of the levered strategy</em>. Levering up multiplies both μ and σ by k, but σ² is multiplied by k², so the ratio 2μ/σ² gets <em>divided</em> by k. Higher leverage = lower exponent = ruin probability gets closer to 1.</p>
+<p>when the exponent is positive, and 1 otherwise. Here \(\mu\) and \(\sigma\) are the drift and volatility <em>of the levered strategy</em>. Levering up multiplies \(\mu\) by \(k\) but \(\sigma^2\) by \(k^2\), so the ratio \(2\mu/\sigma^2\) is <em>divided</em> by \(k\). Higher leverage means a lower exponent, and a lower exponent drives the probability of ruin toward 1.</p>
 
-<p>The practical consequence: a Sharpe-0.5 strategy levered 4× has effective μ/σ² that produces ruin probabilities approaching unity over long horizons. A Sharpe-4.0 strategy levered 4× still has comfortable survival probabilities because the underlying drift-to-variance ratio was so high. <strong>Sharpe sets the leverage ceiling.</strong> No amount of clever risk management overrides this.</p>
+<details class="grind"><summary>Where the ruin formula comes from</summary><div class="grind-body">
+<p><strong>Step 1: follow the logarithm of wealth.</strong> By <a class="xref" href="1a.html">Chapter 1A</a>, the log of wealth drifts upward at \(G = \mu - \sigma^2/2\) a year, with volatility \(\sigma\).</p>
 
-<h2 id="sortino-information-ratio-and-the-sharpe-family">5 · Sortino, Information Ratio, and the Sharpe family</h2>
+<p><strong>Step 2: use a standard result.</strong> A quantity that drifts upward at a rate \(G &gt; 0\) with volatility \(\sigma\), and moves continuously, ever falls a distance \(a\) below its starting point with probability \(e^{-2Ga/\sigma^2}\). This is a standard property of Brownian motion with drift, which <a class="xref" href="7a.html">Part VII</a> introduces. If \(G \le 0\) it reaches any level below eventually, with probability 1.</p>
 
-<p>The basic Sharpe ratio has several variants worth knowing:</p>
+<p><strong>Step 3: translate the distance.</strong> Wealth reaching a fraction \(f\) of its start means the log of wealth falling \(a = -\ln f\). Substituting that distance into the probability gives</p>
 
-<p><strong>Sortino ratio.</strong> Same formula but uses downside-only standard deviation:</p>
+<div class="eq">
+\[ \begin{aligned}
+e^{2G\ln f/\sigma^2} &amp;= f^{\,2G/\sigma^2} \\
+&amp;= f^{\,2\mu/\sigma^2 - 1}
+\end{aligned} \]
+</div>
 
-<pre>Sortino = (E[R] − r_f) / σ_downside</pre>
+<p><strong>Step 4: add leverage.</strong> With leverage \(k\), the exponent becomes \(2k\mu/(k^2\sigma^2) - 1 = (2\mu/\sigma^2)/k - 1\). It falls as \(k\) rises, and reaches zero when \(k\sigma = 2\mu/\sigma\).</p>
+</div></details>
 
-<p>where σ_downside is computed only from returns below some threshold (often zero or r_f). Sortino correctly recognizes that upside volatility is not "risk" — nobody complains about big gains. Sortino is higher than Sharpe for any strategy with positive skew and lower than Sharpe for negative-skew strategies. The CBOE PUT Index has Sortino approximately equal to Sharpe (because most PUT volatility is downside volatility — there's not much upside surprise in collecting fixed premium). SPX has Sortino noticeably higher than Sharpe (because some of SPX's volatility comes from upside surges).</p>
+<div class="worked">
+<span class="ct">Worked example: A Sharpe ratio of 0.5 against one of 4.0, both levered four times</span>
+<p><strong>Step 1: the low-Sharpe strategy, unlevered.</strong> Take \(\mu = 10\%\) and \(\sigma = 20\%\), a Sharpe ratio of 0.5 with a risk-free rate of zero. The exponent is \(2 \times 0.10/0.04 - 1 = 4\), so the chance of ever halving is \(0.5^4 = 6.25\%\) and of ever losing 90% is \(0.1^4 = 0.01\%\).</p>
 
-<p><strong>Information Ratio.</strong> Same idea but excess return is measured against a benchmark instead of the risk-free rate:</p>
+<p><strong>Step 2: the same strategy at four times.</strong> Now \(\mu = 40\%\) and \(\sigma = 80\%\), and the exponent is \(0.80/0.64 - 1 = 0.25\). The chance of ever halving is \(0.5^{0.25} = 84\%\), and of ever losing 90% is \(0.1^{0.25} = 56\%\).</p>
 
-<pre>IR = (E[R_strategy] − E[R_benchmark]) / σ(R_strategy − R_benchmark)</pre>
+<p><strong>Step 3: the high-Sharpe strategy at four times.</strong> Take \(\mu = 4\%\) and \(\sigma = 1\%\), a Sharpe ratio of 4.0. Levered four times it has \(\mu = 16\%\) and \(\sigma = 4\%\), and its exponent is \(0.32/0.0016 - 1 = 199\). The chance of ever halving is \(0.5^{199}\), about \(10^{-60}\).</p>
 
-<p>The denominator is the volatility of the <em>tracking error</em> — the variation of strategy returns relative to benchmark. IR is the right metric for active portfolio managers who are evaluated against a benchmark and care about how much active risk they take to produce active return.</p>
+<p>The same leverage leaves the high-Sharpe strategy with comfortable survival odds, because its drift-to-variance ratio was so high to begin with. It turns the low-Sharpe strategy into a probable ruin.</p>
+</div>
 
-<p><strong>Treynor ratio.</strong> Excess return divided by beta instead of standard deviation:</p>
+<p>The exponent in <a class="eqref" href="#e-ruin"></a> is positive only while the levered volatility stays below twice the Sharpe ratio. With a risk-free rate of zero, the condition \(k\sigma &lt; 2\mu/\sigma\) reads \(k\sigma &lt; 2\,\text{SR}\). A strategy with a Sharpe ratio of 0.5 stops growing at all at 100% levered volatility, and grows most quickly at 50%, the <span class="gloss" title="The rule for sizing a bet or position that maximizes the long-run compound growth rate of wealth, which is the same as maximizing the expected logarithm of wealth.">Kelly</span> level that <a class="xref" href="3d.html">Chapter 3D</a> derives. That ceiling assumes normal returns, and the fat tails of <a class="xref" href="1b.html">Chapter 1B</a> put the practical ceiling lower. <strong>The Sharpe ratio sets the leverage ceiling.</strong> No amount of clever risk management overrides this.</p>
 
-<pre>Treynor = (E[R] − r_f) / β</pre>
+<h2 id="the-sharpe-family">5 · The Sharpe family</h2>
 
-<p>Used when you assume idiosyncratic risk can be diversified away and only systematic (market) risk matters. Less common in modern practice because the CAPM-style assumptions it relies on don't hold well empirically.</p>
+<p>The basic Sharpe ratio has several variants worth knowing. Each changes what counts as risk.</p>
 
-<p><strong>Calmar ratio.</strong> Already covered in 1A — annual return divided by maximum drawdown. The most honest single-number metric for capital-preservation-focused strategies.</p>
+<h3 id="the-sortino-ratio">The Sortino ratio</h3>
 
-<h2 id="the-probabilistic-sharpe-ratio">6 · The probabilistic Sharpe ratio</h2>
+<p>The <strong><span class="gloss" title="Excess return divided by downside deviation, the standard deviation of returns below a threshold. It counts only shortfalls as risk.">Sortino ratio</span></strong> uses only downside volatility in the denominator:</p>
 
-<p>A subtle and important variant: how confident are you that the <em>true</em> Sharpe of your strategy exceeds some threshold, given the finite sample you've observed? The <strong>probabilistic Sharpe ratio (PSR)</strong>, also from Bailey and López de Prado, answers this:</p>
+<div class="eq" id="e-sortino">
+\[ \text{Sortino} = \frac{\mathbb{E}[R] - r_f}{\sigma_{\text{down}}} \]
+</div>
 
-<pre>PSR(SR*) = Φ( (SR_observed − SR*) × √(T − 1) / √(1 − γ_3·SR_observed + (γ_4 − 1)/4 × SR_observed²) )</pre>
+<p>Here \(\sigma_{\text{down}}\), the <strong>downside deviation</strong>, is computed only from returns below some threshold \(\tau\), often zero or the risk-free rate:</p>
 
-<p>where T is the number of observations, γ_3 is sample skewness, γ_4 is sample kurtosis, and Φ is the standard normal CDF. The PSR explicitly corrects the standard error of the observed Sharpe for skewness and kurtosis — which, as we established in 1A, are the moments Sharpe ignores. Strategies with negative skew (premium selling) have <em>wider</em> PSR confidence intervals than strategies with the same observed Sharpe but symmetric returns. The same observed Sharpe is less reliable when the underlying distribution is skewed against you.</p>
+<div class="eq">
+\[ \sigma_{\text{down}} = \sqrt{\mathbb{E}\left[\min(R - \tau,\, 0)^2\right]} \]
+</div>
 
-<p>This connects everything in <a class="xref" href="1a.html">Section 1</a> to a single statistical reality: not only does Sharpe under-report tail risk, but the <em>estimate</em> of Sharpe is less reliable when there is more tail risk. Both errors push in the same direction. Both flatter premium-selling strategies. Both inflate retail trader confidence. Be humble about Sharpe estimates from short backtests of skewed strategies.</p>
+<p>Every return above the threshold counts as zero, so only shortfalls add to the risk. The Sortino ratio correctly recognizes that upside volatility is not "risk": nobody complains about big gains.</p>
 
-<h2 id="what-this-enables-next">7 · What this enables next</h2>
+<p>Because it leaves out the upside, the Sortino ratio is usually larger than the Sharpe ratio. For a normal distribution with a 5% mean and 10% volatility, the downside deviation below zero is 4.6%, so the Sortino ratio is 1.09 against a Sharpe ratio of 0.5. The gap depends on where a strategy's volatility sits. The more of it is on the upside, the more the Sortino ratio exceeds the Sharpe ratio. The <span class="gloss" title="A Cboe benchmark that tracks a strategy of selling at-the-money SPX puts each month, fully backed by cash. It has been tracked since June 1986.">CBOE PUT Index</span> has a Sortino ratio approximately equal to its Sharpe ratio, because most of its volatility is downside volatility: there is not much upside surprise in collecting a fixed premium. <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span> has a Sortino ratio noticeably higher than its Sharpe ratio, because some of its volatility comes from upside surges.</p>
 
-<p><a class="xref" href="2a.html">Section 2</a> (Quant Trading) is where the foundations laid in <a class="xref" href="1a.html">Section 1</a> become operational. Building a model with a tiny positive edge per prediction is step one. The edge only becomes meaningful when executed many times so the Sharpe rises and leverage becomes usable. That's the unit of analysis from here on. <a class="xref" href="3a.html">Section 3</a> then establishes <em>what</em> you can trade — the specific products that exist in the SPX/SPY/options complex, and why product choice (especially the tax treatment of XSP vs SPY) is the most consequential operational decision a US retail trader makes.</p>
+<p>The Sortino ratio fixes one defect of the Sharpe ratio: it stops penalizing upside surprises as risk. It captures one part of the skew problem, but it still does not capture kurtosis, or the depth of the left tail, explicitly.</p>
+
+<h3 id="the-information-ratio">The information ratio</h3>
+
+<p>The <strong><span class="gloss" title="A strategy's average return above a benchmark divided by the standard deviation of that difference, its tracking error.">information ratio</span></strong> measures excess return against a benchmark instead of the risk-free rate:</p>
+
+<div class="eq" id="e-ir">
+\[ \text{IR} = \frac{\mathbb{E}[R_s - R_b]}{\sigma(R_s - R_b)} \]
+</div>
+
+<p>where \(R_s\) is the strategy's return and \(R_b\) the benchmark's. The denominator is the volatility of the <strong><span class="gloss" title="The standard deviation of the difference between a strategy's returns and its benchmark's returns.">tracking error</span></strong>, the variation of the strategy's returns around the benchmark's. The information ratio is the right measure for active portfolio managers who are judged against a benchmark and care about how much active risk they take to produce active return.</p>
+
+<h3 id="the-treynor-ratio">The Treynor ratio</h3>
+
+<p>The <strong>Treynor ratio</strong> divides excess return by <span class="gloss" title="A measure of how much an asset moves with the market. A stock with a beta of 1.5 moves, on average, 1.5% for each 1% move in the market.">beta</span> instead of by the standard deviation:</p>
+
+<div class="eq" id="e-treynor">
+\[ \text{Treynor} = \frac{\mathbb{E}[R] - r_f}{\beta} \]
+</div>
+
+<p>Beta is the sensitivity of the strategy's return to the market's, \(\beta = \operatorname{Cov}(R_s, R_m)/\operatorname{Var}(R_m)\), where \(R_m\) is the market's return. The Treynor ratio is used when you assume that the risk specific to one position can be diversified away and only market risk matters. It is less used than the others, because it borrows its assumptions from the capital asset pricing model (CAPM), the textbook model in which market risk is the only risk that is paid. Those assumptions do not hold well empirically.</p>
+
+<h3 id="the-calmar-ratio">The Calmar ratio</h3>
+
+<p>The <strong><span class="gloss" title="The mean annual return divided by the size of the maximum drawdown: return per unit of the worst peak-to-trough loss.">Calmar ratio</span></strong> divides the mean annual return by the <span class="gloss" title="The largest drawdown in a record: the worst peak-to-trough loss over the whole period.">maximum drawdown</span>, the largest peak-to-trough loss in the record, which <a class="xref" href="1e.html">Chapter 1E</a> defines formally:</p>
+
+<div class="eq" id="e-calmar">
+\[ \text{Calmar} = \frac{\mathbb{E}[R_{\text{annual}}]}{|\text{MaxDD}|} \]
+</div>
+
+<p>It penalizes path-dependent risk directly. It asks: per unit of pain you had to absorb to take part in this strategy, how much were you paid? Rankings by the Calmar ratio often differ sharply from rankings by the Sharpe ratio.</p>
+
+<div class="worked">
+<span class="ct">Worked example: SPX and the PUT Index, ranked two ways</span>
+<p><strong>Step 1: the Sharpe ratios.</strong> From 1990 to 2024, SPX has a Sharpe ratio of around 0.50 and the CBOE PUT Index one of around 0.65. By Sharpe ratio, the PUT Index looks \(0.65/0.50 = 1.3\) times as good, 30% better.</p>
+
+<p><strong>Step 2: the Calmar ratios.</strong> Over the same period, SPX has a Calmar ratio of around 0.18 and the PUT Index one of around 0.29. By Calmar ratio, the PUT Index looks \(0.29/0.18 = 1.6\) times as good, 60% better.</p>
+
+<p><strong>Step 3: read the difference.</strong> Both rankings are correct: they answer different questions, and the Calmar ratio is the more honest one for decisions about preserving capital.</p>
+</div>
+
+<p>The Calmar ratio also catches what the Sharpe ratio misses entirely. XIV, a short volatility exchange-traded product terminated in 2018, had a Sharpe ratio of about 1.5. Its Calmar ratio is hardly meaningful: a maximum drawdown of about 96% destroyed the strategy. For strategies focused on preserving capital, the Calmar ratio is the most honest single-number measure, and the ranking it gives tells a more honest story than the Sharpe ratio does.</p>
+
+<h3 id="drawdowns-and-the-cost-of-recovery">Drawdowns and the cost of recovery</h3>
+
+<p>Drawdown is one-sided and real, and it binds on whether a portfolio survives. <a class="xref" href="1e.html">Chapter 1E</a> derives the gain needed to recover from a drawdown \(D\), which is \(D/(1 - D)\). A 40% drawdown needs a 67% gain to break even, a 50% drawdown needs 100% and a 60% drawdown needs 150%. The cost keeps accelerating: a 70% drawdown needs 233%, an 80% drawdown 400% and a 90% drawdown 900%.</p>
+
+<p>Recovery cost is non-linear in the size of the loss, which is why discipline about maximum drawdown binds on survival. A strategy with a positive expected return but a 60% drawdown, one that <em>would have happened anyway in your backtest</em>, needs 150% from the trough to get back to even. At the strategy's normal compound rate, that recovery can take a decade or more. Meanwhile, the opportunity cost of capital sitting in a deep drawdown is the return you could have earned in a simpler, lower-drawdown strategy over those same years. <strong>Survive small losses and you can compound. Suffer a single large one and you may never compound back to your prior peak within a useful career.</strong></p>
+
+<p>This is also why the academic literature distinguishes drawdown-adjusted measures of performance from volatility-adjusted ones. One strategy produces its volatility through small, frequent moves around a rising mean, which gives a high Sharpe ratio. Another produces the same volatility through occasional catastrophic losses with smooth gains in between, the short volatility shape. The two are fundamentally different. The Sharpe ratio reads them the same. The Calmar ratio, the Sortino ratio, the expected shortfall and the maximum drawdown all read them very differently.</p>
+
+<h3 id="expected-shortfall-and-tail-beta">Expected shortfall and tail beta</h3>
+
+<p><a class="xref" href="1b.html">Chapter 1B</a> introduced the expected shortfall, \(\text{ES}_{95}\): the average loss in the worst 5% of periods. For sizing a short volatility position, it is the single most useful number you can compute.</p>
+
+<p><strong><span class="gloss" title="A strategy's beta to the market measured only over the market's worst periods, such as its worst 5% of months.">Tail beta</span></strong> is the strategy's beta to the market <em>given that</em> the market is in its worst 5% of months:</p>
+
+<div class="eq" id="e-tailbeta">
+\[ \beta_{\text{tail}} = \frac{\operatorname{Cov}(R_s, R_m \mid \text{tail})}{\operatorname{Var}(R_m \mid \text{tail})} \]
+</div>
+
+<p>Here "tail" means the months with \(R_m \le \text{VaR}_{95}\) for the market. For most premium-selling strategies, tail beta is approximately 1.0. Your "diversifier" or "income overlay" then moves one for one with everything else in your portfolio precisely when you needed diversification most. The CBOE PUT Index has a tail beta near 1.0 to SPX in the worst months, and so does most of the "alternatives" allocation of a typical endowment portfolio. This is the empirical content of the saying that all correlations go to one in a crisis, which <a class="xref" href="1f.html">Chapter 1F</a> examines.</p>
+
+<h3 id="the-put-index-in-numbers">The PUT Index in numbers</h3>
+
+<p>Professor Oleg Bondarenko of the University of Illinois Chicago analyzed the index in a Cboe-commissioned white paper. He covered the 32 years from June 30, 1986 to December 31, 2018, and <a href="https://cdn.cboe.com/resources/education/research_publications/PutWriteCBOE19_v14_by_Prof_Oleg_Bondarenko_as_of_June_14.pdf">Bondarenko, 2019</a> gives these headline numbers:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">measure</th><th class="c-other">CBOE PUT Index, June 1986 to December 2018</th></tr></thead><tbody><tr><td class="c-trial">annualized compound return</td><td class="c-other">9.54%</td></tr><tr><td class="c-trial">annualized volatility</td><td class="c-other">9.95%</td></tr><tr><td class="c-trial">Sharpe ratio</td><td class="c-other">0.65</td></tr><tr><td class="c-trial">maximum drawdown</td><td class="c-other">−32.7%, lasting 40 months</td></tr><tr><td class="c-trial">skewness of monthly returns</td><td class="c-other">approximately −2.09</td></tr></tbody></table></div></div>
+
+<p>The skewness is several multiples worse than that of SPX itself. The PUT Index also delivered a Sortino ratio higher than those of SPX, the MSCI World index, the Russell 2000 and 30-year <span class="gloss" title="A bond issued by the US government through the Treasury.">Treasury bonds</span> over the same window.</p>
+
+<p>Through 2024 the index continued to deliver, with a 2024 calendar-year return of 17.8% against 25.0% for the SPX Total Return index. Over the 10 years to September 2025, it delivered 8.0% a year at lower volatility than the index. The strategy works. But understanding <em>why</em> it works, that it is paid for accepting negative skew and not for any clever timing, is the prerequisite for sizing it correctly.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Never evaluate a strategy on its Sharpe ratio alone. Look at its Sharpe <strong>and</strong> Sortino <strong>and</strong> Calmar ratios, <strong>and</strong> at the actual path of its returns through 2008, 2018, 2020 and 2022. Different measures highlight different problems.</p>
+</div>
+
+<h2 id="same-sharpe-ratio-different-risk">6 · Same Sharpe ratio, different risk</h2>
+
+<p>The Sharpe ratio uses the first moment, \(\mu\), in its numerator and the square root of the second, \(\sigma\), in its denominator. The third and fourth moments appear nowhere, so two strategies with identical Sharpe ratios can have wildly different risk. <a class="xref" href="1b.html">Chapter 1B</a> built two such strategies from monthly returns and compared their tails. Here is the same point in annual terms, looking at the worst year and the road back from it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Long equity against short puts, each with a Sharpe ratio of 0.5</span>
+<p><strong>Step 1: strategy A, long equity.</strong> On $100 of capital it earns a mean of $5 a year with a standard deviation of $10, roughly normally distributed, so its Sharpe ratio is 0.5 (taking the risk-free rate as zero). Its worst year in a long record is about −$25, three standard deviations below the mean, and at its average of $5 a year it earns that back in about five years.</p>
+
+<p><strong>Step 2: strategy B, short far out-of-the-money puts.</strong> In 99 years out of 100 it earns about $6.00, and in the hundredth it loses about $94.50, most of it in a single bad month. Its mean is \(0.99 \times 6.00 - 0.01 \times 94.50 = \$5.00\), and its standard deviation is \(\sqrt{0.99 \times 0.01} \times (6.00 + 94.50) = \$10.00\). Its Sharpe ratio is also 0.5.</p>
+
+<p><strong>Step 3: compare the worst years.</strong> B's worst year is almost four times A's. By the two-outcome formula of <a class="xref" href="1b.html">Chapter 1B</a> its skewness is about −9.8, against A's zero.</p>
+
+<p><strong>Step 4: compare the recoveries.</strong> After its bad year B has $5.50 left of each $100, and it needs a gain of \(94.5/5.5 = 17.2\) times, over 1,700%, to get back to even. In practice recovery may be impossible: a <span class="gloss" title="A broker's demand for more money, or a smaller position, when the account's equity falls below its margin requirement.">margin call</span>, a forced unwind or the end of the fund comes first.</p>
+
+<p>The Sharpe ratio says the two are equivalent. In reality they are completely different.</p>
+</div>
+
+<h2 id="what-the-sharpe-ratio-cannot-see">7 · What the Sharpe ratio cannot see</h2>
+
+<p>Look again at <a class="eqref" href="#e-sr"></a>, which contains the mean (the first moment), the standard deviation (the square root of the second) and a risk-free rate. It does not contain skew, kurtosis, the shape of the left tail, autocorrelation, the depth of drawdowns, the time to recover or the dependence on market regime. The Sharpe ratio is a two-parameter summary of a distribution that needs four parameters to describe even roughly, and many more to describe honestly.</p>
+
+<p>This would not matter if real return distributions were approximately normal (Gaussian). They are not. The strategies that retail traders care about include short premium, trend following, factor tilts, volatility-targeted equity and momentum. For most of them, the higher moments are big enough that ignoring them amounts to financial malpractice.</p>
+
+<h3 id="short-options-are-structurally-short-skew">Short options are structurally short skew</h3>
+
+<p>As <a class="xref" href="1b.html">Chapter 1B</a> showed, a short option collects a premium, which caps the right tail, in exchange for a potentially larger loss in an open left tail. The payoff is structurally asymmetric, so the distribution is structurally negatively skewed. This is true for:</p>
+
+<ul>
+<li>naked short puts;</li>
+<li>short calls;</li>
+<li>short <span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">iron condors</span>, which are short volatility on both sides;</li>
+<li>short <span class="gloss" title="A position of a put and a call on the same underlying and expiry, with the put's strike below the price and the call's above it. Selling one is a bet that the price stays between the strikes.">strangles</span>;</li>
+<li>any premium-selling strategy.</li>
+</ul>
+
+<p>It is also true, to lesser degrees, for:</p>
+
+<ul>
+<li>defined-risk spreads, whose skew is bounded but still very negative;</li>
+<li>calendar spreads, in which the short front-month option is the dominant Greek;</li>
+<li>most "income" strategies.</li>
+</ul>
+
+<p>Short volatility means short skew. There is no way around this.</p>
+
+<h3 id="so-the-sharpe-ratio-over-rates-short-volatility">So the Sharpe ratio over-rates short volatility</h3>
+
+<p>Put the steps together: short volatility has a negatively skewed payoff, and the Sharpe ratio ignores skew. Therefore the Sharpe ratio systematically <em>over-rates</em> short volatility. The bias is consistent: short volatility strategies keep showing attractive Sharpe ratios even when they are a bad allocation.</p>
+
+<p>This is not an indictment of harvesting the <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> as a strategy, and that premium is real (<a class="xref" href="10c.html">Chapter 10C</a>). The point is that <em>the measure you use to evaluate a strategy has to match the shape of that strategy's distribution.</em> The Sharpe ratio does not match the shape of short volatility. The Calmar and Sortino ratios, and explicit analysis of paths and stress, match it better.</p>
+
+<p>If you allocate by Sharpe ratio alone, you over-allocate to short volatility relative to a properly risk-adjusted portfolio. The fix is not "do not trade short volatility". It is "use better measures".</p>
+
+<h3 id="most-hedge-fund-alpha-is-short-skew">Most hedge fund alpha is short skew</h3>
+
+<p>The key paper is by Jakub Jurek, of Princeton and the National Bureau of Economic Research (NBER), and Erik Stafford, of Harvard Business School. It should be required reading for anyone judging a managed-futures or hedge fund pitch. It appeared in the <em>Journal of Finance</em> as <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/jofi.12269">Jurek and Stafford, 2015, *Journal of Finance* 70(5), 2185–2226</a>. They examined broad hedge fund index returns from 1996 to 2012 and asked a deceptively simple question. How much of the apparent <strong><span class="gloss" title="Return beyond what a model's risk factors explain, often claimed as the reward for a manager's skill.">alpha</span></strong>, the return beyond what standard risk factors explain, is real? And how much is compensation for accepting negative skew that traditional factor models do not see?</p>
+
+<p>Their finding, restated in its cleanest form: the hedge fund return series is <strong>not reliably distinguishable</strong> from the returns of mechanical S&amp;P 500 put-writing strategies. Price the skewed payoffs correctly, using a <strong>stochastic discount factor</strong> that recognizes downside risk in a way traditional linear models cannot, and the apparent alpha largely disappears. A stochastic discount factor is a pricing rule that weights each outcome by how painful it is to lose money in that state. A loss in a crash then counts for more than the same loss in a calm year. The alpha in question is the 6% to 10% a year, before fees, that hedge fund indices appear to earn over 1996 to 2012.</p>
+
+<div class="callout brick">
+<p>"Traditional risk factor models indicate that hedge funds capture pre-fee alphas of 6% to 10% per annum over the period from 1996 to 2012. At the same time, the hedge fund return series is not reliably distinguishable from the returns of mechanical S&amp;P 500 put-writing strategies."</p>
+
+<p>Jurek and Stafford (2015), abstract</p>
+</div>
+
+<p>Read bluntly, the result says that once you account for the price of accepting negative skew, the hedge fund industry in aggregate is selling insurance, not generating alpha. The implication is uncomfortable. Institutional sophistication brings global research teams, prime brokerage relationships, custom risk systems, decades of pedigree and $20 billion under management. Suppose all of that cannot produce a skew-adjusted Sharpe ratio meaningfully above what mechanical at-the-money put writing on SPX delivers. Then a retail trader's prior belief that they can do better than put writing, through clever entry timing, smart strike selection or proprietary indicators, should be very, very low.</p>
+
+<p>Put honestly, a retail trader running cash-secured at-the-money <span class="gloss" title="The Mini-SPX index option, one tenth the size of an SPX option.">XSP</span> puts with mechanical monthly rolls earns roughly the same after-tax expected risk-adjusted return as a sophisticated multi-billion-dollar hedge fund. That holds if both are sized appropriately. Most of what separates the institutional return from the retail one is fees, not skill.</p>
+
+<p>Bakshi, Crosby and Gao (2024, <em>Mathematical Finance</em>) extended the Jurek-Stafford analysis into a formal decision framework for an investor who is averse to ambiguity and to downside risk. They show that the apparent attractiveness of naive short volatility strategies largely <em>disappears</em> once realistic aversion to crashes is priced in. Even if the variance risk premium is real, and it is, a sufficiently risk-averse investor would not raise their expected utility by harvesting it without significant tail hedging or sizing discipline.</p>
+
+<h3 id="the-size-of-the-skew-tax">The size of the skew tax</h3>
+
+<p>How much should you discount a short volatility Sharpe ratio? Several approaches give a range:</p>
+
+<ul>
+<li>Compare the PUT Index's skewness of −2.09 with SPX's of −0.81. The put-writer is roughly 2.5 times more negatively skewed, which calls for a meaningful discount.</li>
+<li>Apply a Sharpe penalty adjusted for risk aversion: roughly a 30% to 50% haircut.</li>
+<li>Compare Calmar ratios, which capture some of the path. The PUT Index's 0.29 against SPX's 0.18 is a 60% premium, not the 30% premium its Sharpe ratio shows.</li>
+</ul>
+
+<p>The operational rule of thumb follows: <strong>mentally apply a 30% to 50% haircut to the Sharpe ratio of any short volatility strategy before comparing it with long-only or trend-following strategies.</strong></p>
+
+<h2 id="how-sure-are-you-the-probabilistic-sharpe-ratio">8 · How sure are you? The probabilistic Sharpe ratio</h2>
+
+<p>A Sharpe ratio computed from a backtest is an estimate from a finite sample. A subtle and important variant asks how confident you can be that the <em>true</em> Sharpe ratio of your strategy exceeds some threshold \(\text{SR}^*\), given the sample you have seen. The <strong><span class="gloss" title="The probability that a strategy's true Sharpe ratio exceeds a chosen threshold, given the observed Sharpe ratio, the number of observations and the skewness and kurtosis of the returns.">probabilistic Sharpe ratio</span></strong> (PSR), from David Bailey and Marcos López de Prado, answers it.</p>
+
+<p>First, the standard error of an observed Sharpe ratio \(\widehat{\text{SR}}\), measured per period over \(n\) observations:</p>
+
+<div class="eq" id="e-srse">
+\[ s = \sqrt{\frac{1 - \gamma_3 \widehat{\text{SR}} + \frac{\gamma_4 - 1}{4}\widehat{\text{SR}}^2}{n - 1}} \]
+</div>
+
+<p>Here \(\gamma_3\) is the sample skewness and \(\gamma_4\) the sample kurtosis (not the excess kurtosis) of <a class="xref" href="1b.html">Chapter 1B</a>. Then the PSR is the probability, under a normal approximation, that the true Sharpe ratio exceeds \(\text{SR}^*\):</p>
+
+<div class="eq" id="e-psr">
+\[ \text{PSR}(\text{SR}^*) = N\!\left(\frac{\widehat{\text{SR}} - \text{SR}^*}{s}\right) \]
+</div>
+
+<p>where \(N(\cdot)\) is the standard normal distribution function, the probability that a standard normal variable falls below its argument. For normal returns, \(\gamma_3 = 0\) and \(\gamma_4 = 3\), and the numerator under the square root becomes \(1 + \widehat{\text{SR}}^2/2\). Note that \(\widehat{\text{SR}}\) here is per period, not annualized: use the monthly Sharpe ratio with monthly data.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Three years of monthly returns</span>
+<p><strong>Step 1: the data.</strong> A backtest has \(n = 36\) monthly returns and an observed monthly Sharpe ratio of 0.25, about \(0.25 \times \sqrt{12} = 0.87\) a year, and you test it against \(\text{SR}^* = 0\).</p>
+
+<p><strong>Step 2: normal returns.</strong> With \(\gamma_3 = 0\) and \(\gamma_4 = 3\), the standard error is \(\sqrt{(1 + 0.03125)/35} = 0.172\), so the PSR is \(N(0.25/0.172) = N(1.46) = 92.7\%\).</p>
+
+<p><strong>Step 3: short volatility returns.</strong> Suppose instead \(\gamma_3 = -2\) and \(\gamma_4 = 10\), a hypothetical shape of the kind premium selling produces. The numerator under the square root is \(1 + 2 \times 0.25 + 2.25 \times 0.0625 = 1.64\), so the standard error is \(\sqrt{1.64/35} = 0.217\) and the PSR is \(N(0.25/0.217) = N(1.15) = 87.6\%\).</p>
+
+<p>The same observed Sharpe ratio carries less confidence when the returns are skewed against you.</p>
+</div>
+
+<p>The PSR explicitly corrects the standard error of the observed Sharpe ratio for skewness and kurtosis, the moments that the Sharpe ratio itself ignores. Strategies with negative skew, such as premium selling, have <em>wider</em> confidence intervals than strategies with the same observed Sharpe ratio and symmetric returns.</p>
+
+<p>This connects everything in <a class="xref" href="1a.html">Part I</a> to a single statistical reality. Not only does the Sharpe ratio under-report tail risk, but the <em>estimate</em> of the Sharpe ratio is less reliable when there is more tail risk. Both errors push in the same direction, both flatter premium-selling strategies, and both inflate a retail trader's confidence. Be humble about Sharpe ratios estimated from short backtests of skewed strategies.</p>
+
+<h2 id="the-deflated-sharpe-ratio-when-you-tried-many-strategies">9 · The deflated Sharpe ratio: when you tried many strategies</h2>
+
+<p>Bailey and López de Prado also introduced the <strong><span class="gloss" title="The probabilistic Sharpe ratio tested against the best Sharpe ratio that luck alone would produce across all the strategies tried, which corrects a backtest for selection.">deflated Sharpe ratio</span></strong>, in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551">Bailey and López de Prado, 2014</a>, to address a separate defect. Backtested Sharpe ratios are biased upward, and the bias grows with the number of strategies tested. If you backtest 1,000 strategies, the best one has a phenomenal Sharpe ratio purely from selection. The deflated Sharpe ratio corrects for this. It computes the probability that the observed Sharpe ratio is statistically distinguishable from zero given three things: the number of trials run, the non-normality of the returns and the length of the backtest.</p>
+
+<p>The key idea is the best result that luck alone would produce. Suppose you test \(K\) strategies that all have a true Sharpe ratio of zero. Their observed Sharpe ratios scatter around zero, and the largest of \(K\) such draws grows with \(K\). The deflated Sharpe ratio uses that expected maximum as the threshold \(\text{SR}^*\) in the PSR, in place of zero. Your strategy has to beat not zero but the best that \(K\) useless strategies would have shown.</p>
+
+<details class="grind"><summary>The threshold the deflated Sharpe ratio uses</summary><div class="grind-body">
+<p><strong>Step 1: the spread of luck.</strong> Let \(V\) be the variance of the observed Sharpe ratios across the \(K\) trials. If every trial's true Sharpe ratio is zero, each observed one is roughly a normal draw with mean zero and standard deviation \(\sqrt{V}\).</p>
+
+<p><strong>Step 2: the expected best draw.</strong> Bailey and López de Prado approximate the expected maximum of \(K\) such draws with the inverse of the normal distribution function, \(N^{-1}\), and Euler's constant \(\gamma_E = 0.5772\):</p>
+
+<div class="eq" id="e-deflated">
+\[ \begin{aligned}
+\text{SR}_0 = \sqrt{V}\,\Big[ &amp;(1 - \gamma_E)\, N^{-1}\!\left(1 - \tfrac{1}{K}\right) \\
+&amp;+ \gamma_E\, N^{-1}\!\left(1 - \tfrac{1}{Ke}\right) \Big]
+\end{aligned} \]
+</div>
+
+<p>At \(K = 100\) the bracket is about 2.53: luck alone is expected to produce a best Sharpe ratio about 2.5 spreads above zero.</p>
+
+<p><strong>Step 3: deflate.</strong> The deflated Sharpe ratio is the PSR of <a class="eqref" href="#e-psr"></a> with \(\text{SR}^* = \text{SR}_0\), and with the standard error of <a class="eqref" href="#e-srse"></a>, which carries the skewness, the kurtosis and the length of the backtest.</p>
+</div></details>
+
+<p>The figure below computes it for a backtest of daily returns, with five sliders:</p>
+
+<ul>
+<li>The observed Sharpe ratio, annualized, from 0.5 to 5, starting at 1.8.</li>
+<li>The length of the backtest, from 50 to 5,000 daily returns, starting at 252, one year.</li>
+<li>The number of trials run, from 1 to 5,000, starting at 100.</li>
+<li>The skewness of the returns, from −2 to 2, starting at −0.5.</li>
+<li>The kurtosis of the returns, from 3 to 15, starting at 5.</li>
+</ul>
+
+<p>The curve is the probability that the strategy is real at each observed Sharpe ratio, with a dot at the chosen value. A vertical line marks the best Sharpe ratio expected by chance, and horizontal lines mark the 50% and 95% thresholds. Move the trials slider down to 1, then up through 5, 10 and 20.</p>
+
+<figure class="fig" id="fig-deflated-sharpe-calculator">
+  <canvas id="deflated-sharpe-calculator-c" data-h="230"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-sr">observed Sharpe</label>
+      <input type="range" id="deflated-sharpe-calculator-sr" min="0.5" max="5" step="0.05" value="1.8">
+      <output id="deflated-sharpe-calculator-sr-o" for="deflated-sharpe-calculator-sr"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-n">daily returns N</label>
+      <input type="range" id="deflated-sharpe-calculator-n" min="50" max="5000" step="2" value="252">
+      <output id="deflated-sharpe-calculator-n-o" for="deflated-sharpe-calculator-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-trials">trials run</label>
+      <input type="range" id="deflated-sharpe-calculator-trials" min="1" max="5000" step="1" value="100">
+      <output id="deflated-sharpe-calculator-trials-o" for="deflated-sharpe-calculator-trials"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-skew">return skew</label>
+      <input type="range" id="deflated-sharpe-calculator-skew" min="-2" max="2" step="0.1" value="-0.5">
+      <output id="deflated-sharpe-calculator-skew-o" for="deflated-sharpe-calculator-skew"></output>
+    </div>
+    <div class="ctrl">
+      <label for="deflated-sharpe-calculator-kurt">return kurtosis</label>
+      <input type="range" id="deflated-sharpe-calculator-kurt" min="3" max="15" step="0.1" value="5">
+      <output id="deflated-sharpe-calculator-kurt-o" for="deflated-sharpe-calculator-kurt"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="deflated-sharpe-calculator-emax"></output></div>
+    <div class="ctrl"><output id="deflated-sharpe-calculator-z"></output></div>
+    <div class="ctrl"><output id="deflated-sharpe-calculator-psr"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="deflated-sharpe-calculator-vk"></b> <span id="deflated-sharpe-calculator-vt"></span></p>
+  <p class="readout" id="deflated-sharpe-calculator-why"></p>
+  <figcaption><b>The more strategies tried, the higher the bar.</b> The deflated Sharpe ratio
+  sets an observed annual Sharpe, from a backtest of N daily returns, against the best one
+  expected from luck alone across the trials run; the length of the backtest, the skew and the
+  kurtosis set how far above that benchmark it has to sit. The curve
+  is the probability that the strategy is real at each observed Sharpe, with the dot at the
+  chosen one, the vertical line at the chance benchmark and the horizontal lines at the 50% and
+  95% thresholds. Add trials and the whole curve slides to the right.</figcaption>
+</figure>
+
+<p>At the starting settings, one year of daily returns and 100 trials put the best Sharpe ratio expected by chance at 2.54, well above the observed 1.8, and the probability that the strategy is real reads 23.9%. With 1 trial there is no selection to correct for, and the same 1.8 reads 95.9%, just over the 95% threshold. With 5 trials the chance benchmark is 1.19 and the probability 72.0%. With 10 trials the benchmark is 1.58 and the probability 58.5%, and by 20 trials it is 1.90 and 46.0%. Every added trial slides the whole curve to the right.</p>
+
+<p>Now lengthen the backtest. At 100 trials, five years of daily returns (1,260) lower the benchmark to 1.13 and lift the probability to 92.6%, and ten years (2,520) lift it to 99.9%. Luck's best result shrinks as the sample grows, because each estimate scatters less. One year of data cannot tell a Sharpe ratio of 1.8 from the best of 100 useless strategies; ten years can.</p>
+
+<p>The figure follows the method in the box above, for daily returns. It divides the annual Sharpe ratio by \(\sqrt{252}\), takes \(V = 1/(N-1)\), the scatter of a zero-Sharpe strategy's estimate over \(N\) days, and annualizes the benchmark again for display.</p>
+
+<p>Bailey and López de Prado's empirical finding is sobering: most published "anomaly" Sharpe ratios in the academic literature shrink to indistinguishable from zero after deflation. The retail equivalent is even worse. A trader who has spent six months testing parameter combinations on TradingView, and finally finds one with a Sharpe ratio of 1.2 over a three-year backtest, has run thousands of implicit trials. The deflated Sharpe ratio is almost certainly not significant. Most "discovered" trading systems are statistical artifacts.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The deflated Sharpe ratio is a correction for multiple comparisons. Test 20 independent endpoints at a significance level of 0.05 and, with no true effects at all, the chance of at least one "significant" result is \(1 - 0.95^{20} = 64\%\). You already correct for this, with Bonferroni's division of the significance level by the number of tests, or by pre-specifying one primary endpoint. The deflated Sharpe ratio does the same job for trading rules, by asking how good the best of \(K\) useless strategies would look. A backtest is an unregistered trial with unlimited subgroup analyses. Committing to one strategy and its parameters before you test it is the trading equivalent of registering the protocol.</p>
+</div>
+
+<h2 id="every-short-volatility-trade-needs-a-stress-test">10 · Every short volatility trade needs a stress test</h2>
+
+<p>The argument ends in an operational rule. Before sizing any short volatility position, compute its \(\text{ES}_{95}\) and its expected behavior in stress scenarios. Use falls in SPX of 10%, 20% and 35%, combined with rises in the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> of 10, 25 and 50 volatility points. This book calls the three combinations S1 (SPX down 10% with the VIX up 10 points), S2 (down 20% and up 25) and S3 (down 35% and up 50), and <a class="xref" href="13g.html">Chapter 13G</a> builds the portfolio's stress table on them. The Sharpe ratio is, at best, a third-tier input.</p>
+
+<p>The tools for evaluating a short volatility strategy are these:</p>
+
+<ol>
+<li><strong>Path simulation.</strong> Run the strategy through 2008, 2018, 2020 and 2022 explicitly. What was its maximum drawdown, and how long did it take to recover?</li>
+<li><strong>Stress profit and loss.</strong> What does it lose in S1, S2 and S3?</li>
+<li><strong>Margin expansion.</strong> Under <span class="gloss" title="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress.">portfolio margin</span>, what cushion do you need to survive S2?</li>
+<li><strong>Conditional drawdown.</strong> What is the average drawdown beyond the 95th percentile, the <span class="gloss" title="The average of the drawdowns beyond a chosen percentile, such as the worst 5% of them. It describes the tail of drawdowns rather than the single worst one.">conditional drawdown at risk</span> of <a class="xref" href="1e.html">Chapter 1E</a>?</li>
+<li><strong>Tail beta.</strong> What is the strategy's beta to equities in the worst 5% of equity months?</li>
+</ol>
+
+<p>Size any short volatility allocation on these, not on its Sharpe ratio.</p>
+
+<h3 id="the-five-question-stress-test">The five-question stress test</h3>
+
+<p>Before you allocate to any short volatility strategy, answer five questions:</p>
+
+<ol>
+<li><strong>What is my tail loss?</strong> Specifically, the \(\text{ES}_{95}\): the average loss in the worst 5% of months.</li>
+<li><strong>How does margin expand under stress?</strong> Run the position through S2 and see how the broker's margin requirement changes.</li>
+<li><strong>Can I hold to expiry?</strong> If the position marks to a loss of some percentage in 30 days, would I be forced to close it?</li>
+<li><strong>Is the premium adequate compensation for the skew?</strong> Apply the 30% to 50% Sharpe haircut and see whether the strategy is still attractive.</li>
+<li><strong>What is my kill criterion?</strong> It must be specific, measurable and committed to in advance.</li>
+</ol>
+
+<p>Three of these bind hardest. What is the average loss in the worst 5% of months? What maximum drawdown is likely under stress? Can the portfolio recover from that drawdown without behavioral capitulation, the point at which you give up and sell at the bottom? If you cannot answer these in dollar terms for your current portfolio, the position is too big or you do not understand it well enough. Probably both.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A put-writing sleeve on a $1 million portfolio</span>
+<p><strong>Step 1: the position.</strong> A trader writes cash-secured at-the-money XSP puts monthly with 25% of a $1 million portfolio, a $250,000 notional <strong>sleeve</strong>, the slice of the portfolio given to one strategy.</p>
+
+<p><strong>Step 2: tail loss.</strong> From Bondarenko's 2019 data, the \(\text{ES}_{95}\) of the PUT Index's monthly returns is roughly −8% in a single month. On $250,000 that is −$20,000. In the worst 1% of outcomes, the S3 scenario, losses can reach $100,000 to $150,000.</p>
+
+<p><strong>Step 3: margin expansion.</strong> The position is cash-secured, with no margin, so this risk is bounded by the cash collateral. <em>If</em> the trader scales up using margin, the requirement under portfolio margin can expand to two to three times its initial level in stress.</p>
+
+<p><strong>Step 4: holding to expiry.</strong> Cash-secured, the position can be held to expiry. On margin, the risk of a forced close depends on the cushion.</p>
+
+<p><strong>Step 5: premium against skew.</strong> The PUT Index has a skewness of −2.09 against SPX's −0.81, so apply the 30% to 50% haircut. Bondarenko's Sharpe ratio of 0.65 becomes \(0.65 \times 0.5 = 0.325\) to \(0.65 \times 0.7 = 0.455\). With the haircut and retail frictions (<a class="xref" href="13a.html">Chapter 13A</a>), a realistic retail Sharpe ratio is 0.20 to 0.40.</p>
+
+<p><strong>Step 6: kill criteria.</strong> Halt new sales when the ratio of the VIX to the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next three months, the longer-dated companion of the VIX.">VIX3M</span> exceeds 1.05 for 3 days. Cut the size by 50% when <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">realized volatility</span> exceeds 30%. Close the sleeve when its peak-to-trough drawdown exceeds 20%.</p>
+
+<p>An explicit walk-through like this is what separates "I think the variance risk premium has positive expected value", a claim for a memo, from "I can size this correctly", an operational position.</p>
+</div>
+
+<h2 id="defined-risk-does-not-fix-the-sharpe-trap">11 · Defined risk does not fix the Sharpe trap</h2>
+
+<p><a class="xref" href="1b.html">Chapter 1B</a> showed that a single spread caps its loss but keeps its negative skew. The iron condor, which sells a put spread and a call spread together, is the case that matters most in practice. It caps your loss per trade, but you take the same negatively skewed bet hundreds of times. The aggregate skew of a many-trade portfolio of condors is still very negative, because trades on the same index are not independent in a crash. Condors also have terrible tail behavior, because both sides of the structure can be threatened in a single move.</p>
+
+<p>The evidence is stark. Cboe's CNDR index, a benchmark for systematic iron condors, returned approximately 690% from 1986 to 2024, against approximately 5,500% for the SPX Total Return index. Over roughly four decades, that is a compound rate of about 5.5% a year against about 11%. It is empirical evidence that systematic condors underperform massively over time. The defined-risk feature does not fix the structural skew.</p>
+
+<p>The two traditions this book draws on disagree here, and both positions stand. <a class="xref" href="12c.html">Chapter 12C</a> presents the iron condor as an intermediate strategy, with its own uses and mechanics. The evidence in this chapter, and the case in <a class="xref" href="10i.html">Chapter 10I</a>, argue against running condors systematically in a retail account. Read the three chapters together before you trade one.</p>
+
+<h2 id="the-equity-risk-premium-the-benchmark-you-compete-with">12 · The equity risk premium: the benchmark you compete with</h2>
+
+<p>Everything in this chapter about Sharpe ratios, tail risk and the chain of retail haircuts sits inside one numerical reality. Over the longest data sets available, equities have paid a real <strong><span class="gloss" title="The extra return that stocks are expected to pay over safe assets, as payment for bearing the risk that they fall when times are already bad.">equity risk premium</span></strong> of roughly 4% to 6% a year over the risk-free rate, with extreme variation across countries and centuries. <a class="xref" href="10b.html">Chapter 10B</a> treats the premium in depth. The canonical studies are these:</p>
+
+<ul>
+<li><strong>Mehra and Prescott (1985), "The Equity Premium: A Puzzle", <em>Journal of Monetary Economics</em>.</strong> Using American data from 1889 to 1978, they documented an average real return on equities of about 7% against about 1% on short-term debt. That 6 percentage-point premium was more than traditional consumption-based asset pricing models could explain without implausibly high risk aversion. The "puzzle" framing is decades old, and the empirical magnitude has held up remarkably well in later data.</li>
+<li><strong>Dimson, Marsh and Staunton, <em>Triumph of the Optimists</em> (2002), and the continuing Credit Suisse and UBS Global Investment Returns Yearbook.</strong> They extended the data to 16 or more countries over 100 or more years. Their headline figure for the global equity risk premium outside the United States, relative to bills, is approximately 4.4% a year (a geometric mean, from 1900 onward), with substantial dispersion. Some markets ran higher, among them the United States, Australia and South Africa. Others were materially lower, among them Italy, Japan and Belgium. In some countries, 50-year equity returns were negative in real terms.</li>
+<li><strong>Fama and French (2002), "The Equity Premium", <em>Journal of Finance</em>.</strong> They argued that the <em>expected</em> equity premium, derived from dividend and earnings yields, is closer to 3% to 4%. That is meaningfully below the <em>realized</em> historical premium, because much of the realized premium came from unexpected rises in valuations, through expanding price multiples and falling discount rates, that cannot repeat indefinitely.</li>
+</ul>
+
+<p>Three operational points follow.</p>
+
+<ol>
+<li><strong>The premium is real but smaller than retail intuition assumes.</strong> "Stocks return 10% a year" is a rounded nominal pre-tax figure, not the real after-tax return, net of fees, that you actually compound. The honest expected real after-tax figure for a retail buy-and-hold in American equities is roughly 4% to 5%: meaningfully positive, not a windfall.</li>
+<li><strong>The choice of countries matters enormously.</strong> The most-cited equity risk premium figures, which use American data only, embed a <strong><span class="gloss" title="The distortion that comes from studying only the cases that survived, such as the markets or funds that still exist, and ignoring those that failed.">survivorship bias</span></strong>: the United States happened to be the <em>winning</em> market of the twentieth century. The global panel of Dimson, Marsh and Staunton includes markets that lost world wars, suffered hyperinflation, were closed by political revolution or stagnated for decades. It gives a more honest baseline for the premium an investor in 1900 could have expected in advance.</li>
+<li><strong>The competitor for your active strategy is not zero; it is the equity risk premium.</strong> Any active strategy you run has to beat buy-and-hold of a broad equity index <em>after taxes and fees</em>, not beat zero. The four-layer retail haircut of <a class="xref" href="13a.html">Chapter 13A</a> and the Jurek-Stafford finding point to the same operational conclusion. Once frictions are honestly counted, most retail active strategies fail to beat the structural reward already available from passive equity exposure.</li>
+</ol>
+
+<p>The equity risk premium is the baseline against which everything in this book competes. When a strategy claims edge, the right comparison is not with doing nothing. It is with the combination of the variance risk premium and the equity risk premium that you could harvest passively. That comparison frames the rest of the book.</p>
+
+<h2 id="where-part-i-goes-next">13 · Where Part I goes next</h2>
+
+<p>The lesson of this chapter carries straight into the models of <a class="xref" href="3a.html">Part III</a>. Building a model with a tiny positive edge per prediction is only the first step. The edge becomes meaningful when it is executed many times, so that the Sharpe ratio rises and leverage becomes usable, and that is the unit of analysis from <a class="xref" href="3a.html">Part III</a> onward. <a class="xref" href="2a.html">Part II</a> establishes <em>what</em> you can trade: the products of the SPX, <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> and options complex. It also shows why the choice of product, especially the tax treatment of XSP against SPY (<a class="xref" href="2e.html">Chapter 2E</a>), is the most consequential operational decision an American retail trader makes.</p>
+
+<p><a class="xref" href="1b.html">Chapter 1B</a> gave you distributions, and <a class="xref" href="1g.html">Chapter 1G</a> explains why edges exist at all. This chapter has shown why the Sharpe ratio misleads for short volatility. <a class="xref" href="13a.html">Chapter 13A</a> turns all of this into realistic retail expectations with its haircut framework, and <a class="xref" href="13b.html">Chapter 13B</a> builds the conviction framework that uses it. Without this chapter, the book's judgments of short volatility strategies would seem arbitrary. Why is a Sharpe ratio of 0.65 for the PUT Index not equivalent to a Sharpe ratio of 0.5 for SPX? Now you know.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Annualize before you compare.</strong> A daily Sharpe ratio of 0.06 is an annual 0.95; a monthly 0.3 is an annual 1.04. Comparing a daily figure with an annual one is a common way to be impressed by nothing.</li>
+<li><strong>Haircut short volatility.</strong> Before you compare a premium-selling strategy with a long-only or trend strategy, cut its Sharpe ratio by 30% to 50%, then look at its Calmar ratio and its path through 2008, 2018, 2020 and 2022.</li>
+<li><strong>Use the Sharpe ratio to cap leverage, not to justify it.</strong> Keep levered volatility well below twice the Sharpe ratio, and remember that fat tails lower the real ceiling.</li>
+<li><strong>Count your trials.</strong> Keep a log of every parameter set and rule you test. The number in that log belongs in the deflated Sharpe ratio, and a backtest reported without it cannot be judged.</li>
+<li><strong>Benchmark against the index, after tax.</strong> A strategy has to beat buy-and-hold of a broad equity index after taxes and fees, which <a class="xref" href="2a.html">Part II</a> prices in detail.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The Sharpe ratio is reasonable for roughly normal payoffs, and it fails exactly where options traders need it most: in strategies whose returns are skewed and fat-tailed. It also fails when the sample is short, because its estimate is noisy, and when the returns are serially correlated, because smoothed returns understate the standard deviation.</p>
+
+<p>The leverage formulas assume geometric Brownian motion and a Sharpe ratio known exactly. Real returns have fat tails, and a Sharpe ratio estimated from a backtest is uncertain and biased upward by selection, so the true leverage ceiling is lower than the formula's.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Never size or select on the Sharpe ratio alone.</strong> Treat it as a third-tier input behind the expected shortfall and the stress losses.</li>
+<li><strong>Before any short volatility trade, answer the five-question stress test in dollars.</strong> If you cannot, the position is too big or you do not understand it.</li>
+<li><strong>Apply a 30% to 50% haircut</strong> to the Sharpe ratio of any short volatility strategy before comparing it with long-only or trend-following strategies.</li>
+<li><strong>Deflate any backtested Sharpe ratio</strong> for the number of trials behind it. A Sharpe ratio of 1.2 found after thousands of implicit trials is not evidence of edge.</li>
+<li><strong>Keep levered volatility well below twice the Sharpe ratio.</strong> For a Sharpe ratio of 0.5, that means far below 100% volatility.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "Sharpe is the standard measure, so it must be reliable"</span>
+<p>The Sharpe ratio is a <em>standard</em> measure, which is different from a <em>reliable</em> measure for all strategies. It is reasonable for roughly normal payoffs and misleading for options strategies, especially short volatility ones. Standard does not mean correct.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "iron condors are defined-risk, so the skew problem does not apply"</span>
+<p>Iron condors cap the loss per trade, but you take the same shape of negatively skewed bet hundreds of times, and the aggregate skew of the portfolio stays very negative. Cboe's CNDR index returned approximately 690% from 1986 to 2024, against approximately 5,500% for the SPX Total Return index.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The Sharpe ratio, \((\mathbb{E}[R] - r_f)/\sigma_R\), is excess return per unit of volatility. It scales with the square root of frequency, and it predicts compounding, the leverage a strategy can carry and how easy it is to hold.</li>
+<li>It is built from the mean and the standard deviation alone, so it cannot see skew, kurtosis, drawdowns or recovery time, and it systematically over-rates short volatility. Haircut such strategies by 30% to 50%.</li>
+<li>The Sortino ratio, the Calmar ratio, the expected shortfall, the maximum drawdown and tail beta each see part of what the Sharpe ratio misses. Use them together, with the actual path through 2008, 2018, 2020 and 2022.</li>
+<li>A backtested Sharpe ratio is an estimate: skew widens its uncertainty (the probabilistic Sharpe ratio), and testing many strategies inflates the best one (the deflated Sharpe ratio).</li>
+<li>The benchmark for any strategy is not zero but the equity risk premium, earned passively after taxes and fees.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">14 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A strategy has a daily Sharpe ratio of 0.06. What is its annual Sharpe ratio, and why does the conversion use a square root?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Its annual Sharpe ratio is \(0.06 \times \sqrt{252} = 0.06 \times 15.87 = 0.95\). Over \(n\) independent days the mean grows \(n\) times and the standard deviation only \(\sqrt{n}\) times, so their ratio grows \(\sqrt{n}\) times.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A strategy has a 4% arithmetic mean return and 10% volatility, a Sharpe ratio of 0.4 with a zero risk-free rate. What is its chance of ever halving if you lever it twice, and at what levered volatility does it stop growing?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Levered twice, \(\mu = 8\%\) and \(\sigma = 20\%\), so the exponent in <a class="eqref" href="#e-ruin"></a> is \(2 \times 0.08/0.04 - 1 = 3\) and the chance of ever halving is \(0.5^3 = 12.5\%\). It stops growing when levered volatility reaches twice the Sharpe ratio, \(2 \times 0.4 = 80\%\), which is eight times leverage.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Why does the Sharpe ratio systematically over-rate short volatility strategies?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Short volatility strategies have capped gains and large rare losses, so their returns are negatively skewed and fat-tailed. The Sharpe ratio uses only the mean and the standard deviation, which can look the same for a strategy whose rare losses are catastrophic as for a normal one. So it rates the short volatility strategy as highly as a far safer one, and the error always runs in its favor.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>What did Jurek and Stafford find, and what does it mean for a retail trader who wants to harvest the variance risk premium?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Over 1996 to 2012, broad hedge fund index returns were not reliably distinguishable from mechanical S&amp;P 500 put-writing, and pricing their skewed payoffs correctly makes the 6% to 10% pre-fee alpha largely disappear. For a retail trader, it means that mechanical, well-sized put writing already captures, on a skew-adjusted basis, what the hedge fund indices delivered. Clever timing or strike selection is unlikely to beat it.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You tested 200 parameter sets on three years of data, and the best has an annual Sharpe ratio of 1.2. What do you conclude?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Almost nothing yet. With 200 trials, the best of 200 useless strategies is expected to show a Sharpe ratio well above zero, so 1.2 has to be judged against that benchmark, not against zero. That is the deflated Sharpe ratio. Unless the strategy clears the benchmark for 200 trials, with its skewness and kurtosis in the standard error, treat it as a likely statistical artifact.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>A $500,000 portfolio puts 20% into a cash-secured monthly XSP put-write. Scaling the chapter's worked example, what are its expected shortfall and its S3 loss in dollars? Does it pass a rule that no single month may cost more than 5% of the portfolio?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The sleeve is $100,000. At an \(\text{ES}_{95}\) of about −8% a month it loses about $8,000 in an average bad month, 1.6% of the portfolio. In the worked example the S3 loss was $100,000 to $150,000 on $250,000, or 40% to 60% of the sleeve, so here it is $40,000 to $60,000, which is 8% to 12% of the portfolio. The position passes on expected shortfall but fails the 5% rule in S3, so it is too big. At the upper S3 figure, a sleeve of about $42,000 keeps S3 near 5%, and even the lower figure caps the sleeve near $62,500.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -366,15 +906,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;
@@ -775,5 +1318,122 @@ var DL = (function () {
     });
   });
   DL.bind([U + '-seed'], draw);
+})();
+
+/* ---------- deflated-sharpe-calculator ---------- */
+(function () {
+  var U = 'deflated-sharpe-calculator';
+  var GAMMA = 0.5772156649;   /* Euler's constant, as the app */
+
+  /* The method of Bailey and López de Prado (2014), in consistent units. The
+     slider's Sharpe ratio is annual and the sample is N daily returns, so the
+     test runs on the daily ratio, sr / sqrt(252). Under the null every trial's
+     true Sharpe ratio is zero, and its estimate scatters with variance
+     1 / (N - 1); the best of K such trials is expected at
+     sqrt(V) [(1 - g) Ninv(1 - 1/K) + g Ninv(1 - 1/(K e))]. The standard error
+     of the observed ratio carries its skew and kurtosis. The app's widget took
+     sqrt(2 ln K) - g / sqrt(2 ln K) for the bracket, set V to 1, and put the
+     annual ratio into the per-day standard error. */
+  var DAYS = 252;
+  function ninv(p) {                      /* Acklam's inverse normal */
+    var a = [-39.69683028665376, 220.9460984245205, -275.9285104469687,
+             138.357751867269, -30.66479806614716, 2.506628277459239],
+        b = [-54.47609879822406, 161.5858368580409, -155.6989798598866,
+             66.80131188771972, -13.28068155288572],
+        c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838,
+             -2.549732539343734, 4.374664141464968, 2.938163982698783],
+        d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+    var q, r;
+    if (p < 0.02425) {
+      q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+             ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    if (p > 1 - 0.02425) {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+              ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    q = p - 0.5; r = q * q;
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+           (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  }
+  function calc(sr, n, trials, skew, kurt) {
+    var nt = Math.max(Math.round(trials), 1);
+    var bracket = nt < 2 ? 0 : (1 - GAMMA) * ninv(1 - 1 / nt) + GAMMA * ninv(1 - 1 / (nt * Math.E));
+    var sd0 = Math.sqrt(1 / (n - 1));                       /* per day, under the null */
+    var srd = sr / Math.sqrt(DAYS);
+    var se = Math.sqrt(Math.max(1 - skew * srd + ((kurt - 1) / 4) * srd * srd, 1e-9) / (n - 1));
+    var z = (srd - sd0 * bracket) / se;
+    return { nt: nt, emax: sd0 * bracket * Math.sqrt(DAYS), z: z,
+             psr: Math.max(0, Math.min(1, DL.N(z))) };
+  }
+  /* one trial sends the benchmark to minus infinity; say so rather than a dash */
+  function fmt(x, d) {
+    if (x === Infinity) return '∞';
+    if (x === -Infinity) return DL.MINUS + '∞';
+    return DL.num(x, d);
+  }
+  function verdict(psr) {
+    if (psr >= 0.95) return ['Above threshold.', 'Evidence of real edge.', 'insight'];
+    if (psr >= 0.5) return ['Mixed.', 'Plausibly real, plausibly luck.', 'accent'];
+    return ['Below threshold.', 'Indistinguishable from a selection-bias artifact.', 'plain'];
+  }
+
+  /* The app starts N at 252, a year of trading days, which the slider's steps of 10
+     cannot hold; keep it until the reader moves the slider, as the app does. */
+  var nSlider = DL.$(U + '-n'), nVal = 252;
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sr = DL.val(U + '-sr'), n = nVal, trials = DL.val(U + '-trials'),
+        skew = DL.val(U + '-skew'), kurt = DL.val(U + '-kurt');
+    var r = calc(sr, n, trials, skew, kurt), v = verdict(r.psr);
+
+    var p = new NMT.Plot(c, { xmin: 0.5, xmax: 5, ymin: 0, ymax: 1.1,
+                              pad: { l: 58, r: 14, t: 16, b: 34 },
+                              xlabel: 'observed Sharpe', ylabel: 'P(real)' });
+    DL.axes(p, { xs: [1, 2, 3, 4, 5], ys: [0, 0.5, 0.95],
+                 x: function (t) { return DL.num(t, 0); },
+                 y: function (t) { return Math.round(t * 100) + '%'; } });
+    /* the verdict lines: 95% is real, 50% is mixed */
+    DL.hline(p, 0.95, { color: DL.fade(DL.color('insight'), 0.8), dash: [3, 3] });
+    DL.hline(p, 0.5, { color: DL.fade(DL.color('accent'), 0.8), dash: [3, 3] });
+
+    var xs = [], ys = [];
+    for (var i = 0; i <= 360; i++) {
+      var x = 0.5 + 4.5 * i / 360;
+      xs.push(x);
+      ys.push(calc(x, n, trials, skew, kurt).psr);
+    }
+    DL.line(p, xs, ys, { color: DL.color('ink-soft'), width: 2 });
+
+    if (isFinite(r.emax) && r.emax >= 0.5 && r.emax <= 5) {
+      DL.vline(p, r.emax, { color: DL.color('familiar'), dash: [4, 4], width: 1.3 });
+      var right = p.X(r.emax) > p.w / 2;
+      p.text(r.emax, 1.1, 'max by chance ' + DL.num(r.emax, 2),
+             { dx: right ? -5 : 5, dy: 12, align: right ? 'right' : 'left',
+               font: '11px ' + DL.color('sans'), color: DL.color('familiar') });
+    }
+    p.dot(sr, r.psr, { r: 5, color: DL.color(v[2]), ring: true });
+
+    DL.out(U + '-sr-o', DL.num(sr, 2));
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-trials-o', String(trials));
+    DL.out(U + '-skew-o', DL.num(skew, 1));
+    DL.out(U + '-kurt-o', DL.num(kurt, 1));
+    DL.out(U + '-emax', 'max SR by chance = ' + fmt(r.emax, 3));
+    DL.out(U + '-z', 'z-score vs chance = ' + fmt(r.z, 3));
+    DL.out(U + '-psr', 'P(strategy is real) = ' + DL.num(r.psr * 100, 1) + '%');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    DL.out(U + '-why', 'With ' + r.nt + ' strategy variant' + (r.nt === 1 ? '' : 's') +
+           ' tried, the best Sharpe expected by chance alone is ' + fmt(r.emax, 2) +
+           '. An observed Sharpe of ' + DL.num(sr, 2) + ' counts as evidence of edge only if' +
+           ' it beats that benchmark by enough standard deviations to clear the 95% threshold.');
+  });
+  function readN() { nVal = parseFloat(nSlider.value); draw(); }
+  nSlider.addEventListener('input', readN);
+  nSlider.addEventListener('change', readN);
+  DL.bind([U + '-sr', U + '-trials', U + '-skew', U + '-kurt'], draw);
 })();
 <!--/SCRIPT-->

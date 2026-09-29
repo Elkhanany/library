@@ -2,84 +2,304 @@
 
 <h1>Higher-order Greeks</h1>
 
-<p>The five primary Greeks describe first-order sensitivities — how the option price changes when each of the five primary inputs moves by a small amount. But each of those sensitivities also changes, and the second derivatives matter — especially for dealer hedging at scale and across timescales. The higher-order Greeks describe how the first-order Greeks evolve with respect to spot, time, and volatility.</p>
+<p class="subtitle">Vanna, charm, volga, speed and color</p>
 
-<p>The full menagerie has dozens of names: Vanna, Charm, Volga (Vomma), Speed, Color, Veta, Vera, Zomma, Ultima. Five matter operationally for understanding dealer flow. The rest are bookkeeping details that risk managers track but that rarely move the broad tape.</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="5c.html">Chapter 5C</a> gave the five first-order Greeks: how an option's value moves when spot, time, volatility or rates move. Those Greeks move as well, and this chapter measures how. It picks out the five higher-order Greeks that drive most of the dealer flow in Parts VI to IX.</p>
+</div>
 
-<h2 id="vanna">1 · Vanna — ∂Δ/∂σ</h2>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Delta, gamma and vega, with the <span class="gloss" title="The rate at which a quantity that depends on several inputs changes as one input moves, with all the others held fixed. Each Greek is a partial derivative of an option's value.">partial derivative</span> \(\partial\) read as a rate of change with the other inputs held fixed (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>The Black-Scholes quantities \(d_1\) and \(d_2\), with the normal curve's height \(\varphi\) and area \(N\) (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>Implied volatility as the \(\sigma\) in the pricing formula (<a class="xref" href="5c.html">Chapter 5C</a>, and fully in <a class="xref" href="5e.html">Chapter 5E</a>).</li>
+</ul>
+</div>
 
-<p><strong>Vanna is the rate of change of delta with respect to implied volatility, equivalently the rate of change of vega with respect to spot.</strong> Its closed form:</p>
+<h2 id="why-the-greeks-themselves-move">1 · Why the Greeks themselves move</h2>
 
-<pre>Vanna = ∂Δ/∂σ = ∂ν/∂S = −e^(-qT) × φ(d1) × d2/σ</pre>
+<p>The five primary Greeks describe first-order sensitivities: how the option price changes when each of its five inputs moves by a small amount. Each of those sensitivities also changes as the inputs move. These second derivatives matter, especially for dealer hedging at scale and across timescales. The <strong><span class="gloss" title="Measures of how the first-order Greeks themselves change as the underlying's price, time or volatility moves. Vanna, charm, volga, speed and color are the five that matter most for dealer flow.">higher-order Greeks</span></strong> describe how the first-order Greeks evolve with spot, time and volatility.</p>
 
-<p>If IV rises by one volatility point, delta moves by Vanna × 0.01. The intuition for why vanna exists: implied volatility affects the option's pricing density. A higher IV means more probability mass in the tails of the distribution. For an OTM call, that means more chance of finishing in the money, which raises delta toward 1.</p>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p><span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">Delta</span> tells you how many shares' worth of exposure an option carries right now. It is a speedometer reading rather than a fixed setting, one that changes when the index moves or implied volatility moves, or even when nothing moves but the clock. A dealer who hedges delta must trade every time delta changes, so the rates at which delta changes are the rates at which dealers are forced to trade.</p>
+</div>
 
-<p>For <strong>OTM puts in the downside wing</strong> — the typical institutional hedge book — vanna is <strong>negative</strong>: Vanna_put = −e^(-qT)·φ(d₁)·d₂/σ. With K &lt; S, d₁ and d₂ are typically negative; φ(d₁) &gt; 0; σ &gt; 0. The product is negative. Sign interpretation: <strong>rising IV makes the put's delta more negative</strong> (the put becomes more sensitive to spot in the bearish direction). Falling IV (post-event vol crush) pulls put delta back toward zero.</p>
+<p><a class="xref" href="5c.html">Chapter 5C</a> wrote delta as \(\partial V/\partial S\), the rate at which the option's value \(V\) changes with spot \(S\) while time and volatility stay fixed. <span class="gloss" title="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry.">Gamma</span>, \(\partial \Delta/\partial S\), is the rate of change of that rate. Nothing stops you from asking how delta changes with volatility or with time instead. Each pairing of a first-order Greek with an input gives a new Greek:</p>
 
-<p>For a dealer <strong>short</strong> these puts, the effective exposure is the mirror: as IV rises and customer-put deltas become more negative, the dealer's effective long-stock exposure increases (they appear "more long"), forcing them to sell stock to stay delta-neutral. As IV crushes after the event, the put deltas decay toward zero, the dealer's apparent long exposure shrinks, and they buy back hedge stock. This is the mechanism behind the pre-event vol bid and the post-event ramp.</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">how this changes</th><th>with spot \(S\)</th><th>with time \(t\)</th><th>with volatility \(\sigma\)</th></tr></thead><tbody><tr><td class="c-trial" data-label="how this changes">delta \(\Delta\)</td><td data-label="with spot \(S\)">gamma</td><td data-label="with time \(t\)">charm</td><td data-label="with volatility \(\sigma\)">vanna</td></tr><tr><td class="c-trial" data-label="how this changes">gamma \(\Gamma\)</td><td data-label="with spot \(S\)">speed</td><td data-label="with time \(t\)">color</td><td data-label="with volatility \(\sigma\)">zomma</td></tr><tr><td class="c-trial" data-label="how this changes"><span class="gloss" title="The change in an option's value for a rise of one percentage point in implied volatility. It is positive for bought calls and puts, and largest for long-dated options at the money.">vega</span> \(\nu\)</td><td data-label="with spot \(S\)">vanna</td><td data-label="with time \(t\)">veta</td><td data-label="with volatility \(\sigma\)">volga</td></tr></tbody></table></div></div>
 
-<p><strong>Vanna is large and negative for OTM puts.</strong> When VIX spikes, OTM put deltas become more negative in magnitude. A dealer who is short these puts (because customers were buying protection) becomes effectively <em>longer</em> the underlying through the option leg. To remain delta-neutral, the dealer must sell more of the underlying. This is the <strong>vanna feedback</strong> that amplifies sell-offs: rising VIX forces dealer selling, which can amplify the SPX move that caused VIX to rise in the first place.</p>
+<p>Vanna appears twice because, for a smooth function, differentiating by spot and then by volatility gives the same result as the other order. The rate at which delta changes with volatility therefore equals the rate at which vega changes with spot.</p>
 
-<p>Conversely, the <strong>post-FOMC rally</strong> mechanism: after the Fed's decision lands, IV typically collapses (vol crush) regardless of the direction of the rate decision. Dealer-short-puts see their put deltas decay toward zero as IV falls. The dealer's effective long-stock exposure from the puts evaporates. They were holding extra long shares against the short puts; now they buy fewer shares. The mechanical flow goes against the prior fear trade, producing the familiar post-event ramp without any new bullish news. The rally is just dealers reversing fear-driven hedges.</p>
+<p>The full menagerie has dozens of names: vanna, charm, volga (also called vomma), speed, color, veta, vera, zomma and ultima. Five of them matter operationally for understanding dealer flow: vanna, charm, volga, speed and color. The rest are bookkeeping details that risk managers track but that rarely move the broad tape.</p>
 
-<p><a class="xref" href="7b.html">Section 7B</a> includes a fully worked vanna example with actual dollar amounts.</p>
+<h2 id="the-shared-toolkit">2 · The shared toolkit</h2>
 
-<h2 id="charm-t">2 · Charm — ∂Δ/∂t</h2>
+<p>Every Greek in this chapter is built from the same few pieces of the Black-Scholes formula of <a class="xref" href="5c.html">Chapter 5C</a>. Take an option with strike \(K\) and time to expiry \(T\) in years, on an underlying at spot \(S\), with volatility \(\sigma\), risk-free rate \(r\) and dividend yield \(q\):</p>
 
-<p><strong>Charm is the rate of change of delta with respect to time:</strong></p>
+<div class="eq" id="e-d1">
+\[ d_1 = \frac{\ln(S/K) + (r - q + \tfrac12\sigma^2)T}{\sigma\sqrt{T}} \]
+</div>
 
-<pre>Charm = ∂Δ/∂t</pre>
+<div class="eq" id="e-d2">
+\[ d_2 = d_1 - \sigma\sqrt{T} \]
+</div>
 
-<p>Even if spot and IV are frozen, delta still drifts because the option's effective probability of finishing ITM evolves as the expiration window shrinks. OTM options have their delta drift toward zero (less time, less chance of ITM). ITM options drift toward ±1 (less time for spot to escape away from the strike).</p>
+<p>Here \(\varphi(x)\) is the height of the standard normal curve at \(x\), while \(N(x)\) is the area under that curve to the left of \(x\). The derivations below also use one fact about the bell curve, that its slope at \(x\) is \(-x\,\varphi(x)\): the curve rises to the left of zero and falls to the right.</p>
 
-<p>The Black-Scholes formula for call charm:</p>
+<p>The chapter follows one option throughout, which it calls <strong>the example put</strong>: spot 100, strike 95, three months to expiry (\(T = 0.25\)) and implied volatility of 20%. Rates and dividends are set to zero, \(r = q = 0\), to keep the arithmetic short, although the figure later in the chapter uses a rate of 4%.</p>
 
-<pre>Charm_call = −e^(-qT) × φ(d1) × [2(r-q)T − d2 × σ√T] / (2T × σ√T)</pre>
+<div class="worked">
+<span class="ct">Worked example: The example put's building blocks</span>
+<p><strong>Step 1: find d1 and d2.</strong> The log of spot over strike is \(\ln(100/95) = 0.0513\), and \(\sigma\sqrt{T} = 0.20 \times 0.5 = 0.10\). So <a class="eqref" href="#e-d1"></a> gives \(d_1 = (0.0513 + 0.0050)/0.10 = 0.563\), where the 0.0050 is \(\tfrac12 \times 0.04 \times 0.25\), and <a class="eqref" href="#e-d2"></a> gives \(d_2 = 0.463\).</p>
 
-<p>Charm is small far from expiration and grows aggressively as 1/T as expiration approaches. <strong>It also operates on calendar time</strong> — including weekends, even though markets are closed. This is the technical reason for the empirical regularity of Monday gaps and the "charm bid" into OPEX Fridays.</p>
+<p><strong>Step 2: find the density, delta and gamma.</strong> The height of the bell curve at \(d_1\) is \(\varphi(0.563) = 0.3989 \times e^{-0.158} = 0.340\). The put's delta is \(N(d_1) - 1 = 0.713 - 1 = -0.287\), which makes this a 29-delta put, and its gamma is \(\varphi(d_1)/(S\sigma\sqrt{T}) = 0.340/10 = 0.0340\).</p>
+</div>
 
-<p>Concrete example: dealers carrying lots of OTM puts overnight see those put deltas decay through the weekend (charm running on calendar time). They come in Monday morning holding too many hedge shares because the puts they sold are now effectively closer to zero-delta than they were Friday afternoon. They buy back the excess hedge — Monday morning systematic buying that contributes to the well-documented "Monday gap-up" anomaly. <a class="xref" href="7b.html">Section 7B</a> includes the full charm weekend gap worked example.</p>
+<p>Both \(d_1\) and \(d_2\) are positive, as they are for any strike below spot, apart from \(d_2\) for a strike within a hair of spot. The term \(\ln(S/K)\) is positive whenever the strike is below spot, which makes \(d_1\) positive. It also outweighs the small \(\sigma^2 T/2\) that \(d_2\) subtracts, here 0.051 against 0.005.</p>
 
-<h2 id="volga-vomma">3 · Volga (Vomma) — ∂ν/∂σ</h2>
+<h2 id="vanna-deltas-sensitivity-to-volatility">3 · Vanna: delta's sensitivity to volatility</h2>
 
-<p><strong>Volga is the second derivative of value with respect to implied volatility, equivalently the rate of change of vega with respect to vol:</strong></p>
+<p><strong><span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">Vanna</span></strong> is the rate of change of delta with respect to implied volatility, equivalently the rate of change of vega with respect to spot:</p>
 
-<pre>Volga = ∂²V/∂σ² = ∂ν/∂σ</pre>
+<div class="eq">
+\[ \text{vanna} = \frac{\partial \Delta}{\partial \sigma} = \frac{\partial \nu}{\partial S} \]
+</div>
 
-<p>Volga measures the convexity of the option's vega — how vega itself changes when IV changes. Long options have positive volga (their vega rises as IV rises), meaning a long option position benefits non-linearly from rising vol. This matters most for OTM options (the volga peaks at moderately OTM strikes) and for vol-of-vol exposure.</p>
+<p>Its closed form, which a call and a put with the same strike share because their deltas differ by a constant (<a class="xref" href="5f.html">Chapter 5F</a>), is</p>
 
-<p>Operationally, volga is the reason that vol-targeting strategies and variance swaps have non-trivial dynamics during stress: as vol rises, the volga of long-vol positions amplifies their gain (or short-vol positions' loss). Volmageddon in February 2018 was, in part, a volga story — the dealers short the VIX call wing had massively negative volga, and as VIX rose, their losses accelerated faster than vega alone would predict.</p>
+<div class="eq" id="e-vanna">
+\[ \text{vanna} = -e^{-qT}\,\varphi(d_1)\,\frac{d_2}{\sigma} \]
+</div>
 
-<h2 id="speed-s-vs">4 · Speed — ∂Γ/∂S = ∂³V/∂S³</h2>
+<p>If implied volatility rises by one <span class="gloss" title="One percentage point of annualized volatility, as in a move from 20% to 21% implied volatility. Also called a vol point.">volatility point</span>, a percentage point such as 20% to 21%, delta moves by vanna \(\times\ 0.01\).</p>
 
-<p><strong>Speed is the rate of change of gamma with respect to spot, or equivalently the third derivative of option value with respect to spot:</strong></p>
+<p>The intuition for why vanna exists is that implied volatility sets how spread out the option's pricing distribution is. A higher IV means more probability mass in the tails of the distribution. For an <span class="gloss" title="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it.">out-of-the-money</span> (OTM) call, that means more chance of finishing <span class="gloss" title="Said of an option that would pay something if exercised now: a call whose strike is below the underlying's price, or a put whose strike is above it.">in the money</span>, which raises its delta toward 1.</p>
 
-<pre>Speed = ∂Γ/∂S = ∂³V/∂S³</pre>
+<details class="grind"><summary>Where the vanna formula comes from</summary><div class="grind-body">
+<p><strong>Step 1: differentiate delta.</strong> A call's delta is \(e^{-qT}N(d_1)\), where the slope of \(N\) is \(\varphi\). The chain rule multiplies the slope of the outer function by the slope of the inner one:</p>
 
-<p>Speed describes how quickly gamma itself shifts as the underlying moves. For 0DTE options, speed is enormous near the strike — a 1% move in spot can flip the position from heavily long-gamma to heavily short-gamma (or vice versa) within minutes. This is the source of the "gamma flipping" intraday character of 0DTE: dealer positioning that is stable across the morning can become unstable in the afternoon as spot moves through high-OI strikes and speed re-shapes the gamma profile.</p>
+<div class="eq">
+\[ \frac{\partial \Delta}{\partial \sigma} = e^{-qT}\varphi(d_1)\,\frac{\partial d_1}{\partial \sigma} \]
+</div>
+
+<p><strong>Step 2: split d1 into two terms.</strong> Write \(a = \ln(S/K) + (r - q)T\) for the part of the numerator that does not contain \(\sigma\), so that</p>
+
+<div class="eq">
+\[ d_1 = \frac{a}{\sigma\sqrt{T}} + \frac{\sigma\sqrt{T}}{2} \]
+</div>
+
+<p><strong>Step 3: differentiate each term by σ.</strong> The first term goes as \(1/\sigma\), whose slope is \(-1/\sigma^2\), while the second is a straight line in \(\sigma\):</p>
+
+<div class="eq">
+\[ \begin{aligned}
+\frac{\partial d_1}{\partial \sigma} &amp;= -\frac{a}{\sigma^2\sqrt{T}} + \frac{\sqrt{T}}{2} \\
+&amp;= -\frac{1}{\sigma}\Big(\frac{a}{\sigma\sqrt{T}} - \frac{\sigma\sqrt{T}}{2}\Big)
+\end{aligned} \]
+</div>
+
+<p><strong>Step 4: recognize d2.</strong> The bracket is \(d_1 - \sigma\sqrt{T}\), which is \(d_2\). Putting \(\partial d_1/\partial\sigma = -d_2/\sigma\) into Step 1 gives <a class="eqref" href="#e-vanna"></a>.</p>
+</div></details>
+
+<h3 id="out-of-the-money-puts-negative-vanna">Out-of-the-money puts: negative vanna</h3>
+
+<p>For OTM puts in the downside wing, the typical institutional hedge book, vanna is <strong>negative</strong>. With the strike below spot, \(d_1\) and \(d_2\) are both positive, as the toolkit showed. Since \(\varphi(d_1) &gt; 0\) and \(\sigma &gt; 0\), the minus sign in <a class="eqref" href="#e-vanna"></a> makes the product negative.</p>
+
+<p>Read the sign this way: <strong>rising IV makes the put's delta more negative</strong>, so the put becomes more sensitive to spot in the bearish direction. Falling IV, as in the post-event vol crush, pulls the put's delta back toward zero.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Vanna on the example put</span>
+<p><strong>Step 1: one volatility point.</strong> With \(q = 0\), <a class="eqref" href="#e-vanna"></a> gives a vanna of \(-0.340 \times 0.463/0.20 = -0.788\). A rise in IV from 20% to 21% should therefore move delta by about \(-0.0079\). Repricing at 21% gives a delta of −0.294, a change of −0.0075. The small gap is vanna itself changing along the way.</p>
+
+<p><strong>Step 2: the dealer.</strong> A dealer short 1,000 contracts of this put, each on 100 units of the underlying, is long \(1{,}000 \times 100 \times 0.287 = 28{,}700\) units of delta through the puts, against a short hedge of the same size. The one-point rise makes each put's delta 0.0075 more negative, so the dealer is long about 750 more units and must sell them to stay neutral.</p>
+
+<p><strong>Step 3: a spike.</strong> A five-point rise in IV, to 25%, takes the put's delta to −0.318 and the dealer's extra selling to about 3,100 units.</p>
+</div>
+
+<p>For a dealer who is <strong>short</strong> these puts, the effective exposure is the mirror image. As IV rises and customer-put deltas become more negative, the dealer's effective long-stock exposure increases. The dealer appears "more long", which forces it to sell stock to stay delta-neutral. As IV crushes after the event, the put deltas decay toward zero and the dealer's apparent long exposure shrinks, so it buys back hedge stock. This is the mechanism behind the pre-event vol bid and the post-event ramp.</p>
+
+<p><strong>Vanna is large and negative for OTM puts.</strong> When the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> spikes, OTM put deltas become more negative in magnitude. A dealer who is short these puts, because customers were buying protection, becomes effectively <em>longer</em> the underlying through the option leg and must sell more of the underlying to remain delta-neutral. This is the <strong>vanna feedback</strong> that amplifies sell-offs: rising VIX forces dealer selling, which can amplify the SPX move that caused VIX to rise in the first place.</p>
+
+<p>The same mechanism run backward drives the <strong>post-FOMC rally</strong>. The FOMC is the Federal Reserve committee that sets US interest rates. After the Fed's decision lands, IV typically collapses (vol crush) regardless of the direction of the rate decision. Dealers short puts see those put deltas decay toward zero, so their effective long-stock exposure from the puts evaporates. They were holding an extra short hedge against the puts, which they buy back now that they need less of it. That mechanical flow goes against the prior fear trade, producing the familiar post-event ramp without any new bullish news: the rally is just dealers reversing fear-driven hedges.</p>
+
+<p><a class="xref" href="7b.html">Chapter 7B</a> works a full vanna example with actual dollar amounts, and <a class="xref" href="9a.html">Chapter 9A</a> draws the feedback loop step by step.</p>
+
+<h2 id="charm-deltas-drift-with-time">4 · Charm: delta's drift with time</h2>
+
+<p><strong><span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">Charm</span></strong> is the rate of change of delta with respect to time:</p>
+
+<div class="eq">
+\[ \text{charm} = \frac{\partial \Delta}{\partial t} \]
+</div>
+
+<p>Here \(t\) is calendar time running forward, so the time left, \(T\), falls as \(t\) rises. Even if spot and IV are frozen, delta still drifts, because the option's effective probability of finishing in the money evolves as the expiration window shrinks. OTM options have their delta drift toward zero, since less time means less chance of finishing in the money. In-the-money (ITM) options drift toward ±1, since less time leaves spot less room to cross back over the strike.</p>
+
+<p>The Black-Scholes formula for the charm of a call, with no dividends, is</p>
+
+<div class="eq" id="e-charm">
+\[ \text{charm} = -\varphi(d_1)\,\frac{2rT - d_2\,\sigma\sqrt{T}}{2T\,\sigma\sqrt{T}} \]
+</div>
+
+<p>With no dividends, a put's delta is the call's delta minus 1, so the put has the same charm. When the rate is also zero, <a class="eqref" href="#e-charm"></a> shrinks to</p>
+
+<div class="eq" id="e-charm0">
+\[ \text{charm} = \frac{\varphi(d_1)\,d_2}{2T} \]
+</div>
+
+<p>Both are measured per year, so divide by 365 for the drift per calendar day. The sign follows \(d_2\): when the strike is well below spot, \(d_2 &gt; 0\) and charm is positive, so a call's delta climbs toward 1 and a put's delta rises toward zero.</p>
+
+<details class="grind"><summary>Where the charm formula comes from, with no rates or dividends</summary><div class="grind-body">
+<p><strong>Step 1: differentiate delta.</strong> As for vanna, \(\partial\Delta/\partial t = \varphi(d_1)\,\partial d_1/\partial t\). Since \(T\) falls one-for-one as \(t\) rises, \(\partial d_1/\partial t = -\partial d_1/\partial T\).</p>
+
+<p><strong>Step 2: write d1 in powers of T.</strong> With \(r = q = 0\) and \(b = \ln(S/K)/\sigma\), the definition becomes</p>
+
+<div class="eq">
+\[ d_1 = b\,T^{-1/2} + \tfrac{\sigma}{2}\,T^{1/2} \]
+</div>
+
+<p><strong>Step 3: differentiate by T.</strong> The slope of \(T^{p}\) is \(p\,T^{p-1}\), so</p>
+
+<div class="eq">
+\[ \begin{aligned}
+\frac{\partial d_1}{\partial T} &amp;= -\tfrac{b}{2}T^{-3/2} + \tfrac{\sigma}{4}T^{-1/2} \\
+&amp;= -\frac{1}{2T}\Big(\frac{b}{\sqrt{T}} - \frac{\sigma\sqrt{T}}{2}\Big)
+\end{aligned} \]
+</div>
+
+<p><strong>Step 4: recognize d2.</strong> The bracket is \(d_2\), so \(\partial d_1/\partial t = d_2/(2T)\), and Step 1 gives <a class="eqref" href="#e-charm0"></a>.</p>
+</div></details>
+
+<p>Charm is small far from expiration and grows aggressively as \(1/T\) as expiration approaches. <strong>It also operates on calendar time</strong>, including weekends, even though markets are closed. This is the technical reason for the empirical regularity of Monday gaps and the "charm bid" into OPEX Fridays, the Fridays on which listed options expire (<span class="gloss" title="The date on which a series of listed options expires, abbreviated OPEX. The monthly SPX expiration falls on the third Friday of the month.">options expiration</span>).</p>
+
+<p>A concrete case: dealers carrying lots of OTM puts overnight see those put deltas decay through the weekend, because charm runs on calendar time. They come in Monday morning holding too many hedge shares, since the puts they sold are now effectively closer to zero-delta than they were on Friday afternoon. Buying back that excess hedge is Monday-morning systematic buying, which contributes to the well-documented "Monday gap-up" anomaly. <a class="xref" href="7b.html">Chapter 7B</a> includes the full charm weekend gap worked example.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A weekend of charm on the example put</span>
+<p><strong>Step 1: charm per day.</strong> By <a class="eqref" href="#e-charm0"></a>, charm is \(0.340 \times 0.463/(2 \times 0.25) = 0.315\) per year, which is \(0.315/365 = 0.00086\) of delta per calendar day.</p>
+
+<p><strong>Step 2: the weekend.</strong> Friday's close to Monday's open spans about three calendar days, so the put's delta drifts by about 0.0026. Repricing with three fewer days confirms it, since the delta moves from −0.2867 to −0.2841.</p>
+
+<p><strong>Step 3: the dealer.</strong> The dealer short 1,000 contracts was long 28,674 units of delta through the puts on Friday, hedged with 28,674 units short. By Monday the puts carry only 28,408 units of delta, so the dealer is about 270 units over-hedged and buys them back at the open.</p>
+</div>
+
+<p>Charm does not peak at the strike, where \(d_2\) is close to zero and so is <a class="eqref" href="#e-charm0"></a>. It is largest a short way either side of the strike, where \(d_2\) is large enough to count but \(\varphi(d_1)\) has not yet faded.</p>
+
+<h2 id="volga-vegas-sensitivity-to-volatility">5 · Volga: vega's sensitivity to volatility</h2>
+
+<p><strong><span class="gloss" title="The rate at which an option's vega changes as implied volatility changes, also called vomma. It is positive for options away from the strike, so a long option gains faster than vega alone predicts when volatility rises.">Volga</span></strong>, also called vomma, is the second derivative of value with respect to implied volatility, equivalently the rate of change of vega with respect to vol:</p>
+
+<div class="eq">
+\[ \text{volga} = \frac{\partial^2 V}{\partial \sigma^2} = \frac{\partial \nu}{\partial \sigma} \]
+</div>
+
+<p>Its closed form multiplies vega, \(\nu = S e^{-qT}\varphi(d_1)\sqrt{T}\), by a simple factor:</p>
+
+<div class="eq" id="e-volga">
+\[ \text{volga} = \nu\,\frac{d_1 d_2}{\sigma} \]
+</div>
+
+<p>The factor comes from two slopes met already. Differentiating vega by \(\sigma\) replaces \(\varphi(d_1)\) with its slope, \(-d_1\varphi(d_1)\), times the slope of \(d_1\) in \(\sigma\), which the vanna derivation found to be \(-d_2/\sigma\). The two minus signs cancel.</p>
+
+<p>Volga measures the convexity of the option's vega: how vega itself changes when IV changes. A long option away from the strike has positive volga, because \(d_1\) and \(d_2\) then share a sign. Its vega rises as IV rises, so a long option position benefits non-linearly from rising vol. At the strike, \(d_1\) and \(d_2\) sit either side of zero, their product is slightly negative, and volga is close to zero. Volga matters most for OTM options, where it peaks at moderately OTM strikes, and for vol-of-vol exposure.</p>
+
+<p>The practical use of volga is a better estimate of what a volatility move does to a position. Vega alone gives a straight-line estimate. Adding half of volga times the square of the move bends the line to follow the curve:</p>
+
+<div class="eq" id="e-volgastep">
+\[ \delta V \approx \nu\,\delta\sigma + \tfrac12\,\text{volga}\,(\delta\sigma)^2 \]
+</div>
+
+<p>Here \(\delta\sigma\) is the change in implied volatility as a decimal, while \(\delta V\) is the change in the option's value. Gamma corrects delta for a move in spot with the same two-term shape: the slope, plus half the curvature times the square of the move.</p>
+
+<div class="worked">
+<span class="ct">Worked example: What volga adds to a volatility spike</span>
+<p><strong>Step 1: vega alone.</strong> The example put's vega is \(100 \times 0.340 \times 0.5 = 17.0\) per unit of \(\sigma\), or 0.170 per volatility point. For a rise from 20% to 25%, with \(\delta\sigma = 0.05\), vega alone predicts a gain of \(17.02 \times 0.05 = 0.851\).</p>
+
+<p><strong>Step 2: add volga.</strong> By <a class="eqref" href="#e-volga"></a>, volga is \(17.02 \times 0.563 \times 0.463/0.20 = 22.2\). The second term of <a class="eqref" href="#e-volgastep"></a> then adds \(0.5 \times 22.2 \times 0.05^2 = 0.028\), for a total of 0.879.</p>
+
+<p><strong>Step 3: reprice.</strong> The put is worth 1.888 at 20% and 2.762 at 25%, a gain of 0.874. Vega alone misses 0.023 of it, about 3%, while the estimate with volga is off by only 0.005.</p>
+
+<p><strong>Step 4: the seller's side.</strong> The seller of this put loses 0.874, more than vega predicted, by a gap that grows with the square of the spike.</p>
+</div>
+
+<p>Operationally, volga is the reason that vol-targeting strategies and <span class="gloss" title="A contract that pays the difference between the variance an asset's returns actually show over a period and a variance level agreed at the start.">variance swaps</span> have non-trivial dynamics during stress. A vol-targeting strategy scales its exposure to hold its volatility near a target. As vol rises, the volga of long-vol positions amplifies their gain, or the loss of short-vol positions. Volmageddon in February 2018 was, in part, a volga story. The dealers short the VIX call wing had massively negative volga, so as VIX rose, their losses accelerated faster than vega alone would predict.</p>
+
+<h2 id="speed-gammas-sensitivity-to-spot">6 · Speed: gamma's sensitivity to spot</h2>
+
+<p><strong><span class="gloss" title="The rate at which an option's gamma changes as the underlying's price moves: the third derivative of the option's value with respect to that price.">Speed</span></strong> is the rate of change of gamma with respect to spot, equivalently the third derivative of option value with respect to spot:</p>
+
+<div class="eq">
+\[ \text{speed} = \frac{\partial \Gamma}{\partial S} = \frac{\partial^3 V}{\partial S^3} \]
+</div>
+
+<p>Its closed form, found the same way as volga's, is</p>
+
+<div class="eq" id="e-speed">
+\[ \text{speed} = -\frac{\Gamma}{S}\Big(\frac{d_1}{\sigma\sqrt{T}} + 1\Big) \]
+</div>
+
+<p>Speed describes how quickly gamma itself shifts as the underlying moves. Gamma has a hump near the strike (<a class="xref" href="5c.html">Chapter 5C</a>), so speed is positive below the hump, where gamma rises as spot climbs, and negative above it. For the example put, speed is \(-(0.0340/100)(0.563/0.10 + 1) = -0.0023\), so a one-point rise in spot would take its gamma from 0.0340 to about 0.0317.</p>
+
+<p>For <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options, speed is enormous near the strike. A 1% move in spot can flip the position from heavily long-gamma to heavily short-gamma (or the reverse) within minutes. A single long option's gamma never turns negative, so the flip happens in a book that holds options at more than one strike. This is the source of the "gamma flipping" intraday character of 0DTE. Dealer positioning that is stable across the morning can become unstable in the afternoon, as spot moves through high-OI strikes, those with large <span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">open interest</span>, and speed re-shapes the gamma profile.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A 1% move four hours before expiry</span>
+<p><strong>Step 1: gamma at the strike.</strong> Four hours is \(T = 4/(24 \times 365) = 0.000457\) years, so with IV at 20%, \(\sigma\sqrt{T} = 0.20 \times 0.0214 = 0.00428\). For a 100-strike option with spot at 100, \(d_1\) is almost zero and \(\varphi(0) = 0.399\), which makes gamma \(0.399/(100 \times 0.00428) = 0.93\).</p>
+
+<p><strong>Step 2: gamma 1% away.</strong> At spot 101, \(d_1 = \ln(1.01)/0.00428 = 2.33\) and \(\varphi(2.33) = 0.026\), which makes gamma \(0.026/(101 \times 0.00428) = 0.06\). A 1% move has cut the option's gamma by 94%.</p>
+
+<p><strong>Step 3: a book of two strikes.</strong> Take a book long one 100-strike option and short one 101-strike option. At spot 100 its gamma is about \(0.93 - 0.06 = +0.87\), which is long gamma. At spot 101 the roles swap, leaving a gamma of about \(0.06 - 0.92 = -0.86\), which is short gamma. A 1% move has flipped the book.</p>
+</div>
 
 <p>Speed is also why explicit 0DTE risk management is much harder than risk management on longer-dated positions. The Greeks at any given moment understate the speed at which they themselves can change.</p>
 
-<h2 id="color-t">5 · Color — ∂Γ/∂t</h2>
+<h2 id="color-gammas-drift-with-time">7 · Color: gamma's drift with time</h2>
 
-<p><strong>Color is the rate of change of gamma with respect to time:</strong></p>
+<p><strong><span class="gloss" title="The rate at which an option's gamma changes as time passes. It is positive near the strike, where gamma grows toward expiry, and negative far from it, where gamma drains away.">Color</span></strong> is the rate of change of gamma with respect to time:</p>
 
-<pre>Color = ∂Γ/∂t</pre>
+<div class="eq">
+\[ \text{color} = \frac{\partial \Gamma}{\partial t} \]
+</div>
 
-<p>Color describes how gamma decays (or grows) as expiration approaches. For ATM options, color is positive — gamma grows as expiration approaches (the 1/√T growth in the gamma formula). For deep OTM or ITM options, color is negative — gamma decays as expiration approaches (the option becomes either definitely zero or definitely the underlying).</p>
+<p>As with charm, \(t\) runs forward, so color is the change in gamma as time passes. With no dividends, its closed form is</p>
 
-<p>Color is the technical reason gamma "compresses" into the ATM strike as expiration approaches: as T shrinks, the gamma peak at ATM grows taller while the wings of the gamma profile shrink. By the final hour of trading on OPEX Friday, virtually all the dealer gamma is concentrated within $5-10 of spot. This is the mathematical source of pin risk (<a class="xref" href="5f.html">Section 5F</a>).</p>
+<div class="eq" id="e-color">
+\[ \begin{aligned}
+\text{color} &amp;= \frac{\Gamma}{2T}\,(1 + d_1 k) \\
+k &amp;= \frac{2rT - d_2\,\sigma\sqrt{T}}{\sigma\sqrt{T}}
+\end{aligned} \]
+</div>
 
-<h2 id="other-higher-order-greeks-worth-knowing">6 · Other higher-order Greeks worth knowing</h2>
+<p>When the rate is zero, \(k\) is just \(-d_2\), and the formula becomes</p>
 
-<ul>
-<li><strong>Veta</strong> — ∂ν/∂t — rate of change of vega with respect to time. Mostly relevant for managing the time-decay of long-dated positions where vega is the dominant exposure.</li>
-<li><strong>Zomma</strong> — ∂Γ/∂σ — rate of change of gamma with respect to volatility. Shows up in risk management of large vega positions.</li>
-<li><strong>Vera</strong> — ∂ρ/∂σ — rate of change of rho with respect to volatility. Mostly bookkeeping.</li>
-<li><strong>Ultima</strong> — ∂Volga/∂σ — third derivative of value with respect to volatility. Used in vol-of-vol-of-vol management.</li>
-</ul>
+<div class="eq" id="e-color0">
+\[ \text{color} = \frac{\Gamma\,(1 - d_1 d_2)}{2T} \]
+</div>
 
-<p>The names start to feel made-up after a point. For our purposes, if you know vanna, charm, volga, speed, and color, you've covered roughly 95% of the higher-order dynamics that matter for understanding aggregate dealer flow. The rest can wait until you encounter a specific situation that requires them.</p>
+<p>The sign is now easy to read. Color is positive when \(d_1 d_2 &lt; 1\), which happens near the money. It is negative when \(d_1 d_2 &gt; 1\), which happens far from the strike, where \(d_1\) and \(d_2\) are both large and share a sign.</p>
+
+<p>Color describes how gamma decays, or grows, as expiration approaches. For <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at-the-money</span> (ATM) options, color is positive: gamma grows as expiration approaches, which is the \(1/\sqrt{T}\) growth in the gamma formula. For deep OTM or ITM options, color is negative: gamma decays as expiration approaches, because the option becomes either definitely zero or definitely the underlying.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The example put, three months out and one week out</span>
+<p><strong>Step 1: three months out.</strong> Here \(d_1 d_2 = 0.563 \times 0.463 = 0.261\), which is below 1. By <a class="eqref" href="#e-color0"></a>, color is \(0.0340 \times (1 - 0.261)/(2 \times 0.25) = 0.050\) per year, so gamma is rising, slowly.</p>
+
+<p><strong>Step 2: one week out.</strong> Take \(T = 0.02\), about seven days, so that \(\sigma\sqrt{T} = 0.0283\). Then \(d_1 = (0.0513 + 0.0004)/0.0283 = 1.83\) and \(d_2 = 1.80\), and their product, 3.29, is now above 1.</p>
+
+<p><strong>Step 3: gamma and color a week out.</strong> Gamma is \(\varphi(d_1)/(100 \times 0.0283) = 0.0751/2.83 = 0.0265\), and color is \(0.0265 \times (1 - 3.29)/(2 \times 0.02) = -1.52\) per year. Gamma is now falling, and fast.</p>
+
+<p><strong>Step 4: read the two together.</strong> The same put's gamma first grows and then collapses as expiry nears. Near the money time concentrates gamma, while away from it time drains gamma.</p>
+</div>
+
+<p>Color is the technical reason gamma "compresses" into the ATM strike as expiration approaches. As \(T\) shrinks, the gamma peak at the money grows taller while the wings of the gamma profile shrink. By the final hour of trading on OPEX Friday, virtually all the dealer gamma is concentrated within $5 to $10 of spot. This is the mathematical source of <span class="gloss" title="The risk, near expiry, that the underlying settles close to a strike, leaving it uncertain whether an option is exercised.">pin risk</span> (<a class="xref" href="5f.html">Chapter 5F</a>).</p>
+
+<p>Color and charm are tied, because the order of differentiation does not matter. Color, the change of \(\partial\Delta/\partial S\) with time, equals the change of charm with spot, so color is zero exactly where charm peaks.</p>
+
+<h2 id="the-five-drawn-together">8 · The five, drawn together</h2>
+
+<p>The figure draws each of the five against spot, for an option struck at \(K = 100\) with a rate of 4% and no dividends. Its buttons pick the Greek, grouped by what it differentiates: delta (vanna, charm), vega (volga) and gamma (speed, color). Two sliders set the days to expiry (5 to 120, starting at 30) and the implied vol (10% to 60%, starting at 25%). The heatmap view draws the chosen Greek over spot and over 1 to 90 days to expiry at once, amber where it is positive and red where it is negative. Its horizontal axis varies spot, with the strike held at 100.</p>
+
+<p>A table under the chart gives each Greek's definition, its meaning and where it peaks. The figure measures charm and color per year. Pick vanna and find where it changes sign, then pick charm and drag the days to expiry from 30 down to 5. After that, pick volga and look at the strike before switching color to the heatmap.</p>
 
 <figure class="fig" id="fig-higher-order-greeks">
   <canvas id="higher-order-greeks-c" data-h="260"></canvas>
@@ -133,11 +353,123 @@
   year.</figcaption>
 </figure>
 
-<h2 id="greek-interplay-through-time">7 · Greek interplay through time</h2>
+<p>Vanna crosses zero at the strike, positive where spot is below the strike (the OTM-call side) and negative above it (the OTM-put side). At the starting settings it reaches about +1.0 near spot 93 and −0.9 near spot 107. Charm is largest a short way either side of the strike rather than at it: about −1.7 per year near spot 93 and +1.2 near spot 107, against −0.2 at the strike. At 5 days to expiry the two charm peaks are five to seven times larger and sit within 3 points of the strike.</p>
 
-<p>A position's actual behavior comes from how the first-order and higher-order Greeks interact as spot moves and time passes. A long ATM call's gamma sharpens into a delta function as expiration approaches, while its charm and vanna magnitudes explode at the same moment. Static views of one Greek mislead. Positions live or die on the joint motion of all of them.</p>
+<p>Volga has two humps, at call deltas of about 8 to 12 and 92 to 95, and almost nothing at the strike. Those are the OTM calls of about 8 to 12 delta and the OTM puts of about 5 to 8 delta. Color peaks at the strike, at about 0.34 per year at 30 days and about 5.0 at 5 days. At 30 days it turns negative beyond spots of about 93 and 107, the same spots where charm peaks. On the heatmap, both crowd in toward the strike as the days run down. <a class="xref" href="5c.html">Chapter 5C</a>'s Greek surface draws vanna and charm as well, as wireframes over spot and 1 to 90 days to expiry, which gives a third view of the same shapes.</p>
 
-<p>The "convexity catastrophe" — a term used in dealer-mechanics circles — refers to the joint amplification of negative gamma, vanna, and charm against short-option positions in the final days before expiration. A short straddle two days before expiration isn't dangerous because of gamma alone — it's dangerous because gamma, vanna, and charm are all simultaneously at their peak magnitudes, and any combination of spot move + IV move + time passing activates all three against the position at once.</p>
+<h2 id="the-rest-of-the-family">9 · The rest of the family</h2>
+
+<ul>
+<li><strong>Veta</strong>, \(\partial\nu/\partial t\), the rate of change of vega with respect to time, is mostly relevant for managing the time decay of long-dated positions where vega is the dominant exposure.</li>
+<li><strong>Zomma</strong>, \(\partial\Gamma/\partial\sigma\), the rate of change of gamma with respect to volatility, shows up in the risk management of large vega positions.</li>
+<li><strong>Vera</strong>, \(\partial\rho/\partial\sigma\), the rate of change of rho with respect to volatility, is mostly bookkeeping. Here \(\rho\) stands for the Greek rho, not a correlation.</li>
+<li><strong>Ultima</strong>, \(\partial\,\text{volga}/\partial\sigma\), the third derivative of value with respect to volatility, is used in vol-of-vol-of-vol management.</li>
+</ul>
+
+<p>The names start to feel made up after a point. For this book's purposes, if you know vanna, charm, volga, speed and color, you have covered roughly 95% of the higher-order dynamics that matter for understanding aggregate dealer flow. The rest can wait until you meet a specific situation that requires them.</p>
+
+<h2 id="greeks-through-time">10 · Greeks through time</h2>
+
+<p>A position's actual behavior comes from how the first-order and higher-order Greeks interact as spot moves and time passes. As expiration approaches, a long ATM call's gamma sharpens into a spike at the strike, which mathematicians call a delta function. At the same moment, its charm and vanna magnitudes explode just either side of the strike. Static views of one Greek mislead, because positions live or die on the joint motion of all of them.</p>
+
+<p>The "convexity catastrophe", a term used in dealer-mechanics circles, is the joint amplification of negative gamma, vanna and charm against short-option positions in the final days before expiration. A short <span class="gloss" title="A position of a call and a put on the same underlying with the same strike and expiry. Buying one is a bet on a large move either way; selling one is a bet that the underlying stays near the strike.">straddle</span> two days before expiration is not dangerous because of gamma alone. It is dangerous because gamma, vanna and charm are all at their peak magnitudes at once. Any combination of a spot move, an IV move and time passing then activates all three against the position together.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A straddle 30 days and 2 days out</span>
+<p>A long straddle holds a call and a put at the same strike. Take strike 100, IV of 20% and a zero rate, with spot one point above the strike. The table gives the long straddle's Greeks. A short straddle carries each of them with the opposite sign.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Greek of the long straddle</th><th>30 days</th><th>2 days</th></tr></thead><tbody><tr><td class="c-trial" data-label="Greek of the long straddle">gamma</td><td data-label="30 days">0.135</td><td data-label="2 days">0.424</td></tr><tr><td class="c-trial" data-label="Greek of the long straddle">vanna, per volatility point</td><td data-label="30 days">−0.006</td><td data-label="2 days">−0.021</td></tr><tr><td class="c-trial" data-label="Greek of the long straddle">charm, per calendar day</td><td data-label="30 days">+0.002</td><td data-label="2 days">+0.105</td></tr></tbody></table></div></div>
+
+<p><strong>Step 1: compare the gamma.</strong> Two days out, gamma is about three times its 30-day value, which alone would be a reason for care.</p>
+
+<p><strong>Step 2: compare the other two.</strong> Vanna is more than three times larger, and charm is about 50 times larger. At 2 days, time alone moves the straddle's delta at a rate of 0.105 a day, where at 30 days the rate was 0.002. That rate keeps climbing through the day. Repricing a day later, with nothing else changed, gives a move of 0.158.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Vanna is an interaction term. In a Cox model with a treatment-by-biomarker interaction, the effect of treatment depends on the level of the biomarker, by an amount that the interaction coefficient measures. Vanna plays that part for an option, measuring how much the option's response to spot, its delta, changes per unit of volatility. As in any model with a product term, the same coefficient also governs how the slope in the other variable moves. Vanna is therefore also how much vega changes per unit of spot.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Almost everything in this chapter reaches a retail account in one of two ways. The first is through your own short options near expiry, where speed, color and charm change your exposure faster than a daily check can follow. The second is through dealer flow: the vanna ramp after a scheduled event and the charm buying on a Monday morning or into an OPEX Friday both move the index you trade.</p>
+
+<p>For a stress test of a short-option position, do not multiply vega by the volatility shock. Reprice the position at the stressed IV, or at least add volga's term from <a class="eqref" href="#e-volgastep"></a>. Vega alone understates a short option's loss in a spike by an amount that grows with the square of the spike.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Every number here is a Black-Scholes derivative, which assumes one volatility for each option and small, smooth moves, so for a large move you should reprice rather than add up Greeks. The dealer-flow stories also rest on an assumption about who holds what: that dealers are short the puts that customers buy. If positioning runs the other way, each sign flips. Finally, these flows are one force among many. The claims here are that vanna feedback <em>can</em> amplify a sell-off and that charm buying <em>contributes</em> to Monday gaps, nothing stronger.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Before holding short options into their final two days</strong>, check gamma, vanna and charm together rather than gamma alone. Hold only a size you could carry through a spot move, an IV move and a day's decay all going against you at once.</li>
+<li><strong>Around a scheduled volatility event</strong>, such as an FOMC decision, expect IV to fall afterward and dealer hedges to unwind with it. Do not read the post-event ramp as news.</li>
+<li><strong>For any volatility stress test</strong>, reprice at the stressed IV. Use vega alone only for moves of a point or two.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: treating the Greeks as constants</span>
+<p>A delta-neutral book is neutral only at this spot, this IV and this moment. Three things move it with nothing traded: charm over a weekend, vanna after an event, speed and color near expiry. Recompute the Greeks after every change in their inputs, including the passing of a weekend.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: mixing units</span>
+<p>The formulas give vanna per unit of \(\sigma\) and give charm and color per year, while a platform or a figure may quote them per volatility point and per day. Divide vanna by 100 for its effect per volatility point. Divide charm and color by 365 for their drift per calendar day. The example put's charm of 0.315 is a drift of 0.00086 a day, not of 0.315.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The higher-order Greeks measure how delta, gamma and vega change with spot, time and volatility. Five matter for dealer flow: vanna, charm, volga, speed and color.</li>
+<li>Vanna is \(-e^{-qT}\varphi(d_1)d_2/\sigma\). With the strike below spot, \(d_1\) and \(d_2\) are positive and an OTM put's vanna is negative. Rising IV then makes dealers who are short puts sell, while falling IV makes them buy.</li>
+<li>Charm, which moves delta with calendar time, weekends included, peaks a short way either side of the strike. Color moves gamma with time, positive near the money and negative far from it, which compresses gamma into the strike at expiry.</li>
+<li>Volga bends the vega estimate, so a vol spike costs a short option more than vega predicts. Speed makes gamma swing with spot, violently for 0DTE options.</li>
+<li>Near expiry, gamma, vanna and charm peak together against a short option position: the convexity catastrophe.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">11 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A put on an underlying at 100 has strike 90, three months to expiry, IV of 20%, and \(r = q = 0\). Find \(d_1\), \(d_2\) and the sign of the put's vanna.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Here \(\sigma\sqrt{T} = 0.10\) and \(\ln(100/90) = 0.105\), so \(d_1 = (0.105 + 0.005)/0.10 = 1.10\) and \(d_2 = 1.00\). Both are positive, as for any strike well below spot. Vanna is \(-\varphi(1.10) \times 1.00/0.20 = -0.218 \times 5.0 = -1.09\), which is negative, so a one-point rise in IV moves the put's delta by about −0.011.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>After a Fed decision, implied volatility falls sharply while dealers are short OTM puts that customers bought. Which way do the dealers trade, and why?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>They buy. The puts' vanna is negative, so the fall in IV pulls their deltas toward zero and shrinks the dealers' long exposure through the short puts. That leaves their short hedge too large. Buying back part of it is the post-event ramp.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>A position's charm is 0.8 per year. How far does its delta drift over a weekend of three calendar days, with spot and IV unchanged?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Charm runs on calendar time, so the drift is \(0.8 \times 3/365 = 0.0066\). On 1,000 contracts of 100 units each, that is about 660 units of hedge to adjust on Monday morning.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Why does an ATM option's gamma rise as expiry nears, while a far OTM option's gamma falls?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>With a zero rate, <a class="eqref" href="#e-color0"></a> makes color \(\Gamma(1 - d_1 d_2)/(2T)\). At the money \(d_1 d_2\) is close to zero, so color is positive and gamma grows. Far from the strike \(d_1\) and \(d_2\) are large and share a sign, so \(d_1 d_2 &gt; 1\) and gamma shrinks. The example put crosses over, with positive color three months out and negative color one week out.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You are short a straddle two days before expiry, with spot 1% above the strike. Why is its gamma a poor guide to its risk?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Gamma measures only the response to spot. Two days out, the straddle's charm moves its delta by about 0.1 a day and its vanna moves it by about 0.02 per volatility point, both many times their 30-day sizes. A spot move, an IV move and a day's decay can then all push the same way at once, which is the convexity catastrophe.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -383,15 +715,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

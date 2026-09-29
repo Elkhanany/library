@@ -1,834 +1,396 @@
-<p class="eyebrow">Part II · Quant Trading · Chapter 2A</p>
+<p class="eyebrow">Part II · Markets · Chapter 2A</p>
 
-<h1>The model: regression vs classification</h1>
+<h1>What the S&amp;P 500 is</h1>
+
+<p class="subtitle">One index, six products</p>
 
 <div class="callout where">
-<span class="ct">About this part</span>
-<p>Quantitative trading, distilled to one sentence: <strong>create a statistical edge and execute it to produce risk-adjusted returns</strong>. Both halves matter equally. A great model with poor execution makes no money. Great execution without a model is just clean losses. The quant trading industry is divided into firms that excel at the first half (the alpha researchers) and firms that excel at the second half (the execution engines like Jane Street, Citadel Securities, Tower Research) — and the most profitable firms in the world are those that have built unified pipelines from research to execution with minimal slippage between them.</p>
-
-<p>This section walks through the five components in order: the model (2A), the simplest interesting model class (2B), how the model is fit (2C), how the resulting predictions are executed (2D), and how the position is sized and traded at appropriate frequency (2E). The treatment is deliberately introductory — entire books exist on each of these topics. The goal here is to give you enough mechanics to read the dealer chapters that follow without confusion.</p>
+<span class="ct">Where we are</span>
+<p><a class="xref" href="1a.html">Part I</a> built a language for returns and risk. Part II turns to what you actually trade, and to how an order becomes a fill. This chapter starts with the object itself: the S&amp;P 500, the formula behind its level, and the six products that carry it.</p>
 </div>
 
-<hr>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The number e and continuous compounding, used here for the price of a future (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Basis points, leverage and margin (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>The bid-ask spread and the mid-quote (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+</ul>
+</div>
 
-<p>A <strong>model</strong> is a mathematical object that takes inputs and produces an output prediction. In trading, inputs are typically a vector of features observed at time t — past prices, volumes, technical indicators, macro variables, news sentiment scores — and the output is some quantity at time t+h, where h is the prediction horizon. Two basic flavors of model dominate the literature.</p>
+<p>Before Parts VI to IX describe the dealer's end of the trade, you need to be precise about what is being traded. People say "the S&amp;P 500" as if it were a single object. On a screen it is at least six distinct products: an index level, an exchange-traded fund, a futures family and three different options markets. Each has its own settlement rules, contract size, tax treatment, dealer ecosystem and trading hours. Confusion between them produces a surprising amount of bad retail decision-making, including some of the most expensive mistakes an American retail trader can make.</p>
 
-<h2 id="regression-models-predict-a-real-number">1 · Regression models predict a real number</h2>
+<p>Part II also covers the layer beneath the product: the <strong><span class="gloss" title="The mechanics by which orders become trades: the venues, the order book, the rules and the intermediaries that stand between an order and its fill.">market microstructure</span></strong> through which orders actually execute. Between your click in a brokerage app and a printed trade sits a routing decision. It determines who fills you, at what price, on what venue and at what cost. Understanding this layer separates retail traders who lose 50 <span class="gloss" title="One hundredth of a percentage point, so 20 basis points is 0.20%. Abbreviated bp, plural bps.">basis points</span> per <span class="gloss" title="Opening a position and later closing it, such as a buy followed by a sale. Trading costs are often quoted per round trip, since both legs pay them.">round trip</span> to invisible costs from those who lose 5. Together, what to trade and how to execute it set the operational baseline that every later strategy assumes.</p>
 
-<p>A regression model predicts a continuous quantity. Examples in trading:</p>
+<p>This chapter takes apart the S&amp;P 500 and its six tradeable instruments. <a class="xref" href="2b.html">Chapter 2B</a> follows an order from your broker to the venue that fills it: the <span class="gloss" title="The highest bid and the lowest offer displayed for a security across the registered exchanges at a given moment. Trades must execute at or inside it. Abbreviated NBBO.">National Best Bid and Offer</span>, <span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">wholesalers</span>, <span class="gloss" title="A trading venue that does not display its orders, run by a bank or broker. Its trades fill at or inside the public best bid and offer, often at the midpoint.">dark pools</span> and the rules on <span class="gloss" title="The payment a wholesaler makes to a broker for the right to fill that broker's customer orders. Abbreviated PFOF.">payment for order flow</span>. <a class="xref" href="2c.html">Chapter 2C</a> opens the <span class="gloss" title="The live list of resting buy orders (bids) and sell orders (asks) for a security, arranged by price, with the quantity waiting at each level.">order book</span>, where orders make or take liquidity, and covers the order types you control. <a class="xref" href="2d.html">Chapter 2D</a> prices execution: the spread, the <span class="gloss" title="The gap between the price you expected or used as a reference, such as the best quote or the mid, and the average price you actually got.">slippage</span> and the <span class="gloss" title="The move in price that your own order causes, paid as a worse fill that grows with the size of the order.">market impact</span> that stand between a paper result and a live one. <a class="xref" href="2e.html">Chapter 2E</a> explains the four account tiers open to a retail trader and the single most consequential operational choice in American options trading: Section 1256 tax treatment.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>The S&amp;P 500 is a number: the market value of about 500 large companies, divided by a scaling factor that S&amp;P adjusts whenever the list changes. You cannot buy that number directly, only one of the six contracts that pay according to it. They look alike on a chart and behave very differently in an account: how big one contract is, whether it ends in cash or in shares, when it can trade and how it is taxed.</p>
+</div>
+
+<h2 id="the-index-a-list-and-a-formula">1 · The index: a list and a formula</h2>
+
+<p>The S&amp;P 500 is a list of approximately 500 large American companies, often called large-cap stocks, chosen by the S&amp;P U.S. Index Committee. Its level, quoted under the ticker <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span>, summarizes what those companies' shares are worth. The committee admits a company on five criteria:</p>
 
 <ul>
-<li><strong>Predict the next bar's return.</strong> Output: log return over the next minute, hour, or day.</li>
-<li><strong>Predict the price h minutes from now.</strong> Output: a price level.</li>
-<li><strong>Predict realized volatility over the next 30 days.</strong> Output: a non-negative number, often log-transformed to make it more Gaussian-shaped.</li>
-<li><strong>Predict the cost to execute a 1,000-share buy in the next 30 seconds.</strong> Output: implementation shortfall in basis points.</li>
+<li><strong>Size:</strong> its <strong><span class="gloss" title="A company's share price times its number of shares: the value the market puts on the whole company.">market capitalization</span></strong>, the share price times the number of shares, must be at least $20.5 billion as of 2025. S&amp;P raises this minimum periodically.</li>
+<li><strong>Domicile:</strong> the company must be based in the United States.</li>
+<li><strong>Liquidity:</strong> its shares must have a high public float and high turnover, so that they trade often and in size.</li>
+<li><strong>Financial viability:</strong> its as-reported earnings must be positive in the most recent quarter and over the trailing year.</li>
+<li><strong>Public float:</strong> at least 50% of its shares must be available to the public, as of 2025.</li>
 </ul>
 
-<p>The output of a regression model is, in principle, unbounded — though in practice it's bounded by what's physically possible (a single-day return less than −100% is impossible because you can't lose more than you have).</p>
+<p>The committee meets quarterly to make additions and deletions, which take effect at rebalances on the third Friday of the rebalance month. Trading volume on those days has historically spiked as index-tracking funds adjust their holdings, because a fund that copies the index must buy every addition and sell every deletion.</p>
 
-<h2 id="classification-models-predict-a-category">2 · Classification models predict a category</h2>
+<h3 id="weighting-by-float">Weighting by float</h3>
 
-<p>A classification model predicts which of a finite set of categories the next observation will fall into, often with an associated probability:</p>
+<p>The SPX level is a <strong>float-adjusted, market-cap-weighted index</strong>. Each company counts in proportion to the market value of its publicly tradeable shares, its <strong><span class="gloss" title="The shares of a company that are available to trade, leaving out those held by insiders, governments and other restricted holders.">public float</span></strong>. The float leaves out insider holdings, government holdings and other restricted shares, because those do not trade. Adding up these values and dividing by a number called the <strong><span class="gloss" title="The number that the total float-adjusted market value of an index's companies is divided by to give the index level. The index provider adjusts it so that membership changes and similar events do not move the level.">divisor</span></strong> gives the level:</p>
+
+<div class="eq" id="e-spx">
+\[ \text{SPX}_t = \frac{\sum_i P_{i,t}\,F_{i,t}}{D_t} \]
+</div>
+
+<p>Here \(P_{i,t}\) is the price of company \(i\) at time \(t\), \(F_{i,t}\) its number of float shares, and \(D_t\) the divisor. The sum on top is the float-adjusted market capitalization of the whole index, in dollars. The divisor turns that dollar total into a level, and S&amp;P updates it continuously.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A three-stock index</span>
+<p><strong>Step 1: build the level.</strong> Take a hypothetical index of three stocks:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Stock</th><th>Price</th><th>Float shares</th><th>Float value</th><th>Weight</th></tr></thead><tbody><tr><td class="c-trial" data-label="Stock">A</td><td data-label="Price">$100</td><td data-label="Float shares">2,000</td><td data-label="Float value">$200,000</td><td data-label="Weight">40%</td></tr><tr><td class="c-trial" data-label="Stock">B</td><td data-label="Price">$50</td><td data-label="Float shares">4,000</td><td data-label="Float value">$200,000</td><td data-label="Weight">40%</td></tr><tr><td class="c-trial" data-label="Stock">C</td><td data-label="Price">$20</td><td data-label="Float shares">5,000</td><td data-label="Float value">$100,000</td><td data-label="Weight">20%</td></tr></tbody></table></div></div>
+
+<p>The float values add up to $500,000, so with a divisor of 500 the index stands at \(500{,}000/500 = 1{,}000\).</p>
+
+<p><strong>Step 2: move one stock.</strong> Stock A rises 10%, to $110. Its float value becomes $220,000 and the total $520,000, so the level is \(520{,}000/500 = 1{,}040\). The index rose 4%, which is A's 10% times A's 40% weight.</p>
+</div>
+
+<p>That last step is general: while the divisor and the float shares stay fixed, the index return is the weighted average of the stocks' returns:</p>
+
+<div class="eq" id="e-wavg">
+\[ R_{\text{index}} = \sum_i w_i\,R_i \]
+</div>
+
+<p>Here \(R_i\) is the <span class="gloss" title="The change in price over a period divided by the price at the start. A move from 100 to 120 dollars is a simple return of 20%.">simple return</span> of stock \(i\) over the period (<a class="xref" href="1a.html">Chapter 1A</a>), and its weight \(w_i\) is its share of the index's total float value at the start. The largest companies therefore move the index most.</p>
+
+<details class="grind"><summary>Why the index return is a weighted average</summary><div class="grind-body">
+<p>Write \(V_{i,t} = P_{i,t}F_i\) for stock \(i\)'s float value, with the float shares \(F_i\) and the divisor \(D\) fixed over the period. By <a class="eqref" href="#e-spx"></a>, the divisor cancels from the index's growth factor:</p>
+
+<div class="eq">
+\[ \frac{\text{SPX}_t}{\text{SPX}_{t-1}} = \frac{\sum_i V_{i,t}}{\sum_j V_{j,t-1}} \]
+</div>
+
+<p>Multiply and divide each term on top by \(V_{i,t-1}\):</p>
+
+<div class="eq">
+\[ \frac{\text{SPX}_t}{\text{SPX}_{t-1}} = \sum_i \frac{V_{i,t-1}}{\sum_j V_{j,t-1}}\cdot\frac{V_{i,t}}{V_{i,t-1}} \]
+</div>
+
+<p>The first fraction in the sum is the weight \(w_i\), and the second is stock \(i\)'s <span class="gloss" title="What one dollar at the start of a period became by its end: one plus the simple return. A 20% gain is a growth factor of 1.20.">growth factor</span> \(1 + R_i\). The weights add up to 1, so subtracting 1 from both sides leaves <a class="eqref" href="#e-wavg"></a>.</p>
+</div></details>
+
+<h2 id="the-divisor">2 · The divisor</h2>
+
+<p>The divisor has one purpose: to keep the index level continuous across structural events that would otherwise create artificial jumps. These are events that change the float-adjusted market capitalization without reflecting any real change in shareholder value:</p>
 
 <ul>
-<li><strong>Predict next bar direction.</strong> Output: probability of "up" vs "down."</li>
-<li><strong>Predict next event type.</strong> Output: probabilities over {breakout, mean-reversion, range-bound}.</li>
-<li><strong>Predict whether a position will be a winner.</strong> Output: probability of profit, given current setup and execution path.</li>
+<li>Index reconstitution, the committee's additions and deletions.</li>
+<li><strong><span class="gloss" title="The separation of a subsidiary into a new, independent company, whose shares go to the parent company's shareholders.">Spin-offs</span></strong>, in which a company hands its shareholders the shares of a subsidiary.</li>
+<li>Special dividends that effectively return capital outside the float.</li>
+<li>Other corporate actions of the same kind.</li>
 </ul>
 
-<p>Classification is useful when you only care about direction rather than magnitude. It's also useful when the underlying signal is structurally bounded (a tick can only go up or down — or stay flat, in a three-class formulation). And it's useful when you want to feed the output to a downstream sizing function — many sizing rules in 2E take a probability or signed signal in [−1, +1] as their input.</p>
+<p>The divisor is the load-bearing piece nobody talks about. Three details about how it behaves are commonly misstated.</p>
 
-<h2 id="features-and-targets">3 · Features and targets</h2>
+<h3 id="ordinary-dividends-do-not-change-it">Ordinary dividends do not change it</h3>
 
-<p>A model is fit on training data consisting of (feature, target) pairs:</p>
+<p>When a constituent pays an ordinary cash dividend, its stock price drops by roughly the dividend on the <strong><span class="gloss" title="The first day on which a buyer of a stock no longer receives its next dividend. The share price typically drops by about the dividend that morning.">ex-dividend date</span></strong>, the first day a buyer no longer receives it. The index level drops accordingly, and the divisor stays put. This is why SPX is a <strong><span class="gloss" title="An index that tracks only price changes, so that dividends paid out by its companies lower its level. SPX is a price-return index.">price-return index</span></strong>: the drift from dividend payments is built into the published level. Total-return tracking lives in a separate index, SPTR, which accrues the dividends in a dividend index of its own.</p>
+
+<p>In the three-stock index, suppose C pays a $1 dividend. Its price falls from $20 to $19 and its float value by $5,000, so the level falls from 1,000 to 990. The shareholders lost nothing: the $5,000 left the share price and arrived as cash. The price-return index records a 1% fall, while a <strong><span class="gloss" title="An index that adds back dividends as if they were reinvested, so that it tracks what a holder actually earned. SPTR is the total-return version of the S&amp;P 500.">total-return index</span></strong> would count the cash and record none.</p>
+
+<h3 id="ordinary-splits-do-not-change-it-either">Ordinary splits do not change it either</h3>
+
+<p>A 2-for-1 <strong><span class="gloss" title="A change in the number of a company's shares with no change in its value, such as a 2-for-1 split that doubles the shares and halves the price.">stock split</span></strong> gives each shareholder two shares for every one held and halves the share price. In a float-cap-weighted index the float share count doubles as the price halves, so price times float shares is unchanged and the divisor is unaffected. The price-weighted Dow Industrials are different: that index adds up prices rather than values, so its divisor <em>must</em> change for every split.</p>
+
+<p>In the toy index, a 2-for-1 split leaves A at $50 with 4,000 float shares, still $200,000 of value. A price-weighted index of the same three stocks adds up \(100 + 50 + 20 = 170\) dollars of price before the split and 120 after. To stay at the same level, its divisor must shrink by the same factor, \(120/170\).</p>
+
+<h3 id="what-does-change-it">What does change it</h3>
+
+<p>Three kinds of event actually move the divisor:</p>
 
 <ul>
-<li><strong>Features (x):</strong> the inputs available at time t, before the future is revealed. Typically a vector — past returns, indicator values, volume, etc.</li>
-<li><strong>Target (y):</strong> the quantity to be predicted at time t+h. For regression, a number. For classification, a label.</li>
+<li><strong>Committee additions and deletions:</strong> an addition increases the divisor, so that the index does not gap up. A deletion decreases it, so that the index does not gap down.</li>
+<li><strong>Spin-offs:</strong> the parent's float market capitalization drops on the spin date, so the divisor drops to compensate.</li>
+<li><strong>Special dividends</strong> large enough for S&amp;P's methodology to classify them as a return of capital.</li>
 </ul>
 
-<p>A core principle of model-building: <strong>the feature must be available at the time of prediction</strong>. If your feature set includes "tomorrow's open price" while trying to predict "tomorrow's close," you have lookahead bias and your backtest is meaningless. This sounds obvious; in practice, lookahead bias is the most common backtest error in retail strategy development. Every joined dataset must be checked for it. Every indicator that uses smoothing or filtering must be verified to use only past data. Every macro variable must be lagged to reflect publication timing.</p>
+<p>In each case, the new divisor is set so that the level is the same just after the event as just before it:</p>
 
-<h2 id="univariate-vs-multivariate-models">4 · Univariate vs multivariate models</h2>
+<div class="eq" id="e-divisor">
+\[ D_{\text{new}} = D_{\text{old}} \times \frac{V_{\text{after}}}{V_{\text{before}}} \]
+</div>
 
-<p>The simplest possible model is univariate — one feature, one target. The next-simplest is multivariate — many features, one target. The most complex is multi-target — many features, many targets simultaneously.</p>
+<p>where \(V\) is the index's total float value, at unchanged prices, just before and just after the event.</p>
 
-<p>Univariate models are easy to interpret, easy to debug, and surprisingly competitive. The AR(1) model in 2B is univariate. A linear regression of next-bar return on past-bar return has two parameters (slope and intercept) and is often hard to beat for short-horizon prediction.</p>
+<div class="worked">
+<span class="ct">Worked example: Three events in the toy index</span>
+<p><strong>Step 1: an addition.</strong> The committee adds stock E, with a float value of $150,000. The total rises from $500,000 to $650,000, and <a class="eqref" href="#e-divisor"></a> raises the divisor from 500 to \(500 \times 650{,}000/500{,}000 = 650\). The level stays at \(650{,}000/650 = 1{,}000\) instead of gapping up to 1,300.</p>
 
-<p>Multivariate models can capture interactions between features but pay a price in interpretability and overfitting risk. With more features than you have independent observations, even a linear regression can fit noise perfectly. The danger compounds when the features themselves are correlated.</p>
+<p><strong>Step 2: a deletion.</strong> Start again, and let the committee delete stock C instead. The total falls to $400,000 and the divisor to 400, so the level stays at 1,000 instead of gapping down to 800.</p>
 
-<h2 id="the-occam-tax">5 · The Occam tax</h2>
+<p><strong>Step 3: a spin-off.</strong> Start again, and let A spin off a subsidiary worth $20 a share, which does not join the index. A's price drops from $100 to $80 and its float value from $200,000 to $160,000. The divisor drops to \(500 \times 460{,}000/500{,}000 = 460\), and the level stays at 1,000.</p>
+</div>
 
-<p>There is a strong empirical prior in quant trading that <strong>simpler is better</strong>. This is not just folklore; it has explicit statistical foundations.</p>
+<p>S&amp;P discloses the divisor publicly, a number in the eight-billion range that drifts as the committee makes adjustments, but financial media rarely cite it. Without it, the SPX level would gap visibly every time the committee reconstituted the index or a constituent spun off a subsidiary, and there are dozens of those events a year. That the SPX level you saw yesterday is comparable in real economic terms with the level five years ago is entirely the divisor's job.</p>
 
-<p><strong>Bias-variance tradeoff.</strong> Every estimator has two sources of error: bias (consistently wrong in some direction) and variance (noisy estimate due to finite sample). Complex models reduce bias but increase variance. Simple models do the opposite. In finance, where signal-to-noise ratios are very low and sample sizes are effectively bounded by historical data length, the optimal point on the bias-variance tradeoff tends to favor simple models.</p>
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>The SPX index level is a real number, computed from prices. The SPX trade is a <span class="gloss" title="A contract whose value is derived from the price of another asset, its underlying. Futures, forwards, swaps and options are all derivatives.">derivative</span> contract on that number. The two are connected by a divisor that is, in some sense, the most important number in equity finance, and one that 99% of retail traders have never heard of.</p>
+</div>
 
-<p><strong>Overfitting.</strong> Given enough parameters, any model will fit any in-sample data perfectly — including the noise. The model "learns" patterns that don't exist in the underlying data-generating process. In financial time series, where the signal-to-noise ratio is roughly 1:100 to 1:1000 on short horizons, overfitting is the default outcome, not the exception. A neural network with 10,000 parameters trained on 5 years of daily data (1,260 observations) is <em>extremely</em> prone to overfit in the absence of regularization, dropout, early stopping, or other complexity-control mechanisms; with aggressive regularization and large auxiliary datasets it is possible to fit such a model usefully, but the burden of proof — that the fit reflects signal rather than noise — sits firmly on the modeler.</p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The divisor does for the index what a conversion factor does when a laboratory changes its assay. A patient's series of results stays comparable across the switch because the change of method is calibrated out, so that a change in the number reflects the patient. The divisor calibrates out changes in the index's membership, so that a change in the level reflects prices.</p>
+</div>
 
-<p><strong>The "no free lunch" theorem.</strong> Wolpert and Macready (1997) proved that, averaged over all possible problems, no single algorithm outperforms any other. In specific problem domains, some algorithms work better than others — but you need strong prior knowledge to choose. In finance, that prior knowledge is hard to come by, so robust simple methods tend to outperform exotic complex ones once you account for transaction costs and out-of-sample degradation.</p>
+<h2 id="one-number-six-products">3 · One number, six products</h2>
 
-<p><strong>López de Prado's principle (from "Advances in Financial Machine Learning," 2018).</strong> Most published trading strategies are statistical artifacts. The probability that a backtested Sharpe ratio survives to live deployment is roughly inverse in the number of trials conducted to find it. If you tested 100 strategies and the best one has Sharpe 1.5, the deflated Sharpe (correcting for multiple testing) is probably indistinguishable from zero.</p>
+<p>Four of the six products are options or futures, which <a class="xref" href="4a.html">Part IV</a> and <a class="xref" href="5a.html">Part V</a> teach properly. For now you need three definitions:</p>
 
-<p><strong>Linear models are competitive baselines.</strong> Univariate auto-regressive models — predicting the next value from the last one, with a single weight and bias — often outperform deep neural networks on noisy financial data, because the deep network finds patterns that don't generalize. This is the central empirical finding of three decades of academic finance: the linear baseline is hard to beat once you control for overfitting and transaction costs.</p>
+<ul>
+<li>A <strong><span class="gloss" title="A contract giving its holder the right, not the obligation, to buy the underlying at the strike price on or before expiry.">call option</span></strong> gives its buyer the right, not the obligation, to buy the <span class="gloss" title="The asset, index, rate or other price on which a derivative is written, and from which its payoff is computed.">underlying</span> at a fixed <strong><span class="gloss" title="The price at which an option's holder may buy the underlying, for a call, or sell it, for a put.">strike price</span></strong> on or before its <strong><span class="gloss" title="The date on which an option stops trading and is settled or lapses.">expiry</span></strong>. A <strong><span class="gloss" title="A contract giving its holder the right, not the obligation, to sell the underlying at the strike price on or before expiry.">put option</span></strong> gives the right to sell at the strike instead. The buyer pays the seller a <strong><span class="gloss" title="The price of an option, paid by the buyer to the seller when the trade is made.">premium</span></strong> for that right (<a class="xref" href="5a.html">Chapter 5A</a>).</li>
+<li>A <strong><span class="gloss" title="An agreement to buy or sell an asset at a set price on a future date. Only a deposit is paid up front, so a future gives exposure with leverage built in.">futures contract</span></strong> is an agreement to buy or sell at a set price on a future date, with only a deposit paid up front (<a class="xref" href="4b.html">Chapter 4B</a>).</li>
+<li>An <strong><span class="gloss" title="A fund whose shares trade on an exchange like a stock, usually built to track an index. Abbreviated ETF.">exchange-traded fund</span></strong> (ETF) is a fund whose shares trade on an exchange like a stock. <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> is an ETF that tracks the S&amp;P 500.</li>
+</ul>
+
+<p>The same underlying exposure, the level of the S&amp;P 500, is delivered through six different contracts. Each has its own price scaling, settlement convention, tax treatment, trading hours and dealer infrastructure. Confusion between these products is one of the most expensive sources of retail error. The first table gives each contract's terms.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Product</th><th class="c-other">Full name</th><th class="c-other">Multiplier</th><th class="c-other">Tick</th><th class="c-endpoint">Settlement</th></tr></thead><tbody><tr><td class="c-trial" data-label="Product">SPX</td><td class="c-other" data-label="Full name">S&amp;P 500 cash index options</td><td class="c-other" data-label="Multiplier">$100 × index level</td><td class="c-other" data-label="Tick">$0.05 or $0.10</td><td class="c-endpoint" data-label="Settlement">Cash; AM (monthly) or PM (weekly, 0DTE)</td></tr><tr><td class="c-trial" data-label="Product">XSP</td><td class="c-other" data-label="Full name">Mini-SPX options</td><td class="c-other" data-label="Multiplier">$100 × index level, one tenth of SPX</td><td class="c-other" data-label="Tick">$0.05 or $0.10</td><td class="c-endpoint" data-label="Settlement">Cash; PM</td></tr><tr><td class="c-trial" data-label="Product">SPY</td><td class="c-other" data-label="Full name">S&amp;P 500 ETF options</td><td class="c-other" data-label="Multiplier">100 shares</td><td class="c-other" data-label="Tick">$0.01 or $0.05</td><td class="c-endpoint" data-label="Settlement"><strong>Physical</strong>: shares delivered</td></tr><tr><td class="c-trial" data-label="Product">ES</td><td class="c-other" data-label="Full name">E-mini S&amp;P 500 futures</td><td class="c-other" data-label="Multiplier">$50 per point</td><td class="c-other" data-label="Tick">0.25 point = $12.50</td><td class="c-endpoint" data-label="Settlement">Cash; quarterly (Mar, Jun, Sep, Dec)</td></tr><tr><td class="c-trial" data-label="Product">MES</td><td class="c-other" data-label="Full name">Micro E-mini futures</td><td class="c-other" data-label="Multiplier">$5 per point</td><td class="c-other" data-label="Tick">0.25 point = $1.25</td><td class="c-endpoint" data-label="Settlement">Cash; quarterly</td></tr><tr><td class="c-trial" data-label="Product">VIX</td><td class="c-other" data-label="Full name">VIX options</td><td class="c-other" data-label="Multiplier">$100 × index level</td><td class="c-other" data-label="Tick">$0.05</td><td class="c-endpoint" data-label="Settlement">Cash; AM, Wednesday expiries</td></tr></tbody></table></div></div>
+
+<p>The second table gives how each is taxed, when it trades and why it matters.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Product</th><th class="c-other">Tax</th><th class="c-endpoint">Hours, Eastern Time</th><th class="c-result">Why it matters</th></tr></thead><tbody><tr><td class="c-trial" data-label="Product">SPX</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-endpoint" data-label="Hours, Eastern Time">9:30 to 4:15, plus extended</td><td class="c-result" data-label="Why it matters">Largest contract size; institutional default; AM settlement has expiry-day quirks</td></tr><tr><td class="c-trial" data-label="Product">XSP</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-endpoint" data-label="Hours, Eastern Time">9:30 to 4:15</td><td class="c-result" data-label="Why it matters">Retail-friendly; same tax treatment as SPX; cleaner for cash-secured strategies</td></tr><tr><td class="c-trial" data-label="Product">SPY</td><td class="c-other" data-label="Tax"><strong>Ordinary</strong>: short-term gains if held under 1 year</td><td class="c-endpoint" data-label="Hours, Eastern Time">9:30 to 4:00, plus extended</td><td class="c-result" data-label="Why it matters">Most liquid options on earth by volume; physical settlement means assignment risk</td></tr><tr><td class="c-trial" data-label="Product">ES</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-endpoint" data-label="Hours, Eastern Time">Near 24 hours, Sunday to Friday</td><td class="c-result" data-label="Why it matters">Cleanest leveraged equity exposure; financing built into the basis</td></tr><tr><td class="c-trial" data-label="Product">MES</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-endpoint" data-label="Hours, Eastern Time">Near 24 hours, Sunday to Friday</td><td class="c-result" data-label="Why it matters">Retail-sized ES, one tenth the size, with the same tax treatment</td></tr><tr><td class="c-trial" data-label="Product">VIX</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-endpoint" data-label="Hours, Eastern Time">Standard, plus extended</td><td class="c-result" data-label="Why it matters">European-style; settles to a special opening quotation on Wednesday morning, which differs from the VIX close</td></tr></tbody></table></div></div>
+
+<p>A few terms in the tables need unpacking. The <strong><span class="gloss" title="The number that converts an option's quoted price into dollars per contract: 100 for US stock and ETF options, and 100 dollars per index point for SPX options.">multiplier</span></strong> converts a quoted price into dollars per contract. The <strong><span class="gloss" title="The smallest step in which a contract's price can change, such as a quarter of an index point for ES futures.">tick</span></strong> is the smallest step in which the price can move. Settlement is how a contract is closed out at expiry, in cash or by delivering shares. "1256 60/40" refers to <strong><span class="gloss" title="A contract, such as a broad-based index option or a regulated futures contract, taxed under Section 1256 of the Internal Revenue Code. Its gains count as 60% long-term and 40% short-term whatever the holding period, and open positions are marked to market at the end of the year.">Section 1256</span></strong> of the Internal Revenue Code: gains are taxed as 60% <span class="gloss" title="A gain on a position held for more than a year, taxed at a lower rate than ordinary income.">long-term</span> and 40% <span class="gloss" title="A gain on a position held for a year or less, taxed at the ordinary income rate.">short-term capital gains</span>, whatever the holding period (<a class="xref" href="2e.html">Chapter 2E</a>).</p>
+
+<p>Strictly, VIX options track the index's expected <span class="gloss" title="The annualized standard deviation of log returns, quoted as a percentage. A volatility of 20% corresponds to a typical daily move of about 1.26%.">volatility</span> rather than its level. The <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> is Cboe's index of the <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> of S&amp;P 500 options over the next 30 days (<a class="xref" href="9a.html">Chapter 9A</a>). It belongs in the table because it is built from SPX options and trades beside them. Cboe is the exchange that lists SPX, XSP and VIX options.</p>
+
+<h3 id="what-one-contract-controls">What one contract controls</h3>
+
+<p>A contract's <strong><span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional value</span></strong> is the dollar exposure it controls:</p>
+
+<div class="eq" id="e-notional">
+\[ \text{notional} = m \times L \]
+</div>
+
+<p>Here \(m\) is the multiplier, in dollars per point, and \(L\) is the level of what the contract tracks. With SPX at 6,000, a single contract of each product represents:</p>
+
+<ul>
+<li><strong>One SPX option</strong> represents $600,000 of notional exposure to SPX.</li>
+<li><strong>One <span class="gloss" title="The Mini-SPX index option, one tenth the size of an SPX option.">XSP</span> option</strong> represents $60,000, exactly one tenth of that.</li>
+<li><strong>One SPY option</strong> represents 100 shares of SPY at roughly $600 each, which is $60,000. SPY is designed to track one tenth of the SPX index level, so 1 SPY option is about 1 XSP option in notional. Operationally, though, the two are very different products.</li>
+<li><strong>One ES futures contract</strong> represents $50 per point × 6,000, which is $300,000 of notional.</li>
+<li><strong>One MES futures contract</strong> represents $5 per point × 6,000, which is $30,000.</li>
+<li><strong>One VIX option</strong> represents $100 × the VIX level, around $1,500 if the VIX is at 15.</li>
+</ul>
+
+<p>The same arithmetic gives the dollar value of one tick. One tick of ES is 0.25 point, or \(0.25 \times \$50 = \$12.50\) a contract, and one tick of MES is $1.25. An SPX option quoted in steps of $0.05 moves \(0.05 \times \$100 = \$5\) a contract per tick.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Notional, not the number of contracts, sets a position's size against your account (<a class="xref" href="1e.html">Chapter 1E</a>). On a $100,000 account, one SPX option controls 6 times the account, while one XSP option controls 0.6 times. A <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">cash-secured put</span> must hold the strike's full notional in cash: $600,000 for an <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at-the-money</span> SPX put with the index at 6,000, and $60,000 for the XSP equivalent. Only the second fits the account at all.</p>
+</div>
+
+<h2 id="settlement-am-pm-and-the-special-opening-quotation">4 · Settlement: AM, PM and the special opening quotation</h2>
+
+<p>Two SPX options expiring on the same Friday can settle to <em>different</em> prices, because monthly SPX options expire AM while weekly and <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> SPX options expire PM. AM settlement uses the <strong><span class="gloss" title="The settlement value of AM-settled index options, built from the first reported trade of each component stock on the expiry morning. It can differ from every index level quoted that morning. Abbreviated SOQ.">special opening quotation</span></strong> (SOQ), a synthetic opening print built from the first reported trade of each constituent stock that morning. PM settlement uses the official 4:00 PM close. Times in this chapter are Eastern Time (ET), the time zone of the New York markets.</p>
+
+<p>The AM-PM gap is small on most days and large on event Fridays. Suppose half a dealer's book is hedged against AM-settled SPX and the other half against PM-settled SPX. The dealer then carries intraday risk that the AM and PM prices differ. That risk is non-trivial on the monthly <span class="gloss" title="The date on which a series of listed options expires, abbreviated OPEX. The monthly SPX expiration falls on the third Friday of the month.">options expiration</span> (OPEX) Friday, the third Friday of the month. It is one of the reasons OPEX Friday opens can show a sharp, uncorrelated move in the first ten minutes. Dealers are reconciling the SOQ they actually got with the SOQ their books were hedged against.</p>
+
+<p>This mechanic is invisible on retail charts, but it is the canonical reason that "the first thirty minutes of OPEX Friday are weird". If you trade through OPEX morning, knowing why it is weird is the difference between being hit by it and trading around it.</p>
+
+<h3 id="a-level-that-no-screen-showed">A level that no screen showed</h3>
+
+<p>A secondary effect comes from the way the SOQ is built. On a typical day, all 500 components open within a few seconds of 9:30. On a stressed day, with heavy overnight news, large global moves or a <strong><span class="gloss" title="A rule that halts trading, across the whole market or in a single stock, after a large and fast price move.">circuit breaker</span></strong> scenario, components can stagger their opens over many minutes. The resulting SOQ is a synthetic level that may differ measurably from any SPX value quoted at any given moment. Cash-settled options that reference the SOQ pay or receive cash on that synthetic value, not on the continuous SPX after the open.</p>
+
+<div class="worked">
+<span class="ct">Worked example: An SOQ built from staggered opens</span>
+<p><strong>Step 1: the opens.</strong> Return to the three-stock index, which closed on Thursday at 1,000 with a divisor of 500. On a stressed Friday, A's first trade comes at 9:30, at $101, and C's at 9:31, at $20. B does not open until 9:41, when its first trade is at $48. By then A trades at $99 and C at $19.80.</p>
+
+<p><strong>Step 2: the levels.</strong> In this toy, a stock that has not yet traded counts at its previous close. The table gives the running index at two moments and the SOQ.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial"></th><th>A</th><th>B</th><th>C</th><th>Level</th></tr></thead><tbody><tr><td class="c-trial" data-label="">Thursday's close</td><td data-label="A">$100</td><td data-label="B">$50</td><td data-label="C">$20</td><td data-label="Level">1,000</td></tr><tr><td class="c-trial" data-label="">Running index at 9:31</td><td data-label="A">$101</td><td data-label="B">$50, not yet open</td><td data-label="C">$20</td><td data-label="Level">1,004</td></tr><tr><td class="c-trial" data-label="">Running index at 9:41</td><td data-label="A">$99</td><td data-label="B">$48</td><td data-label="C">$19.80</td><td data-label="Level">978</td></tr><tr><td class="c-trial" data-label="">SOQ: each stock's first trade</td><td data-label="A">$101</td><td data-label="B">$48</td><td data-label="C">$20</td><td data-label="Level">988</td></tr></tbody></table></div></div>
+
+<p><strong>Step 3: the settlement.</strong> The SOQ row takes each first trade, whenever it happened: \(101 \times 2{,}000\) plus \(48 \times 4{,}000\) plus \(20 \times 5{,}000\) is $494,000 of float value, and dividing by 500 gives 988. No screen ever showed 988. A put struck at 990 settles 2 points in the money and pays \(2 \times \$100 = \$200\) a contract, where the 9:31 level would have paid nothing and the 9:41 level $1,200.</p>
+</div>
+
+<p>Traders running expiration-day strategies who do not understand this can be surprised by a 30-cent or larger discrepancy between the settlement they expected and the one they got.</p>
+
+<h2 id="cash-settlement-against-physical-settlement">5 · Cash settlement against physical settlement</h2>
+
+<p>SPX, XSP, ES, MES and VIX all settle in cash, while SPY settles in shares. The difference is enormous for any strategy held to expiry.</p>
+
+<p><strong><span class="gloss" title="Settling an option or future by paying the in-the-money amount in cash instead of delivering the underlying. SPX options are cash-settled.">Cash settlement</span></strong> means an <span class="gloss" title="Said of an option that would pay something if exercised now: a call whose strike is below the underlying's price, or a put whose strike is above it.">in-the-money</span> option simply credits or debits the cash difference between the strike and the settlement price. No shares are delivered, there is no <span class="gloss" title="To use the right an option gives: for a call, to buy the underlying at the strike price, and for a put, to sell it there. A cash-settled option is exercised by paying the in-the-money amount in cash.">exercise</span> decision to make, and nothing is left open to gap between expiry and the next morning. You wake up on Monday with cash exactly equal to the in-the-money amount, or no change if the option expired <span class="gloss" title="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it.">out-of-the-money</span>.</p>
+
+<p><strong><span class="gloss" title="Settling an option or future by delivering the underlying itself, such as 100 shares of SPY for each assigned contract, rather than cash.">Physical settlement</span></strong> means an in-the-money short option ends with shares changing hands at the strike. Being on the receiving end of an exercise is <strong><span class="gloss" title="What happens to the seller of an option when its holder exercises it: the seller must buy or sell the underlying, or pay the cash difference, at the strike.">assignment</span></strong>. What changes hands depends on which side you wrote:</p>
+
+<ul>
+<li><strong>Short call assigned:</strong> you must <em>deliver</em> 100 shares per contract at the strike. If the call was a <strong><span class="gloss" title="A sold call option backed by owning the shares it may require you to deliver.">covered call</span></strong>, because you own the shares, the shares are sold at the strike. If it was a <strong><span class="gloss" title="A sold option backed neither by the underlying nor by enough cash to meet the obligation, so that the seller's loss is limited only by how far the price can move.">naked</span></strong> call, you end up short the stock at the strike, exposed to overnight upside.</li>
+<li><strong>Short put assigned:</strong> you must <em>receive</em> 100 shares per contract at the strike, which means buying them. If the put was cash-secured, your cash converts into stock at the strike. If it was a naked put in a <span class="gloss" title="The capital a broker requires you to hold in the account to keep a position open. It acts as a deposit against losses.">margin</span> account, the long stock consumes <strong><span class="gloss" title="The value of new positions that a margin account can open, given its equity and the broker's margin requirements.">buying power</span></strong>.</li>
+</ul>
+
+<p>Either way, you wake up to a position you did not have when you went to sleep, marked at whatever price the market reopens at. The gap between Friday's 4:00 PM mark and Monday's open is yours to absorb. For SPY it is typically small, a fraction of a percent on a normal weekend. On event weekends or during stress, the Monday gap can be 3% to 5% or more. Anyone running SPY short puts with a strike near Friday's close carries a weekend <span class="gloss" title="The risk that the underlying opens at a price well away from its previous close, so that a position held overnight or over a weekend takes the whole jump with no chance to trade out.">gap risk</span> that was never priced into the trade.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The same put, settled two ways</span>
+<p><strong>Step 1: the position.</strong> You sold one SPY put struck at $600 for a hypothetical premium of $3, or $300 a contract. On expiry Friday, SPY closes at $599, $1 in the money.</p>
+
+<p><strong>Step 2: physical settlement.</strong> You are assigned and buy 100 shares for $60,000. Bad news breaks over the weekend, and SPY opens on Monday 3% lower, at $581.03. Your shares are worth $58,103: a loss of $1,897 against the strike, or $1,597 after the premium.</p>
+
+<p><strong>Step 3: cash settlement.</strong> Now suppose you had sold the XSP put struck at 600 instead, and XSP also closed at 599. It pays out \(1 \times \$100 = \$100\) in cash at Friday's close, you keep $200 of the premium, and Monday's gap never touches you. The difference between the two outcomes, $1,797, is exactly the gap: 100 shares times the $17.97 fall.</p>
+</div>
+
+<h3 id="soq-risk-on-a-cash-settled-expiry">SOQ risk on a cash-settled expiry</h3>
+
+<p>Cash settlement removes the Monday gap, but an AM-settled option still carries a morning one. AM-settled contracts, the monthly SPX options on Friday and VIX options on Wednesday, expire to the SOQ built from that morning's first trades. The SOQ can differ materially from the previous day's close, through overnight news and the staggered opening rotation. A short put that was safely out of the money at 4 PM on Thursday can be in the money at Friday's SOQ. <strong>Close AM-settled positions on the afternoon before expiry, rather than holding them into the SOQ.</strong></p>
+
+<h3 id="single-stocks">Single stocks</h3>
+
+<p>For individual stocks the gap risk is dramatically worse. Single-stock options are not the focus of this book, which touches them only in <a class="xref" href="11a.html">Part XI</a>. Earnings releases, merger and acquisition announcements and other surprise news can produce gaps of 10% to 20%. Anyone running short puts on individual names is structurally short jump risk. The <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> they collect, the premium option sellers earn for bearing that risk (<a class="xref" href="10c.html">Chapter 10C</a>), may or may not be enough to compensate.</p>
+
+<h2 id="why-xsp-suits-a-retail-account">6 · Why XSP suits a retail account</h2>
+
+<p>Put-writing means selling puts, month after month, to collect their premium. For any cash-secured systematic put-writing strategy, <strong>XSP is the retail-correct choice</strong>. It gives you four things at once:</p>
+
+<ul>
+<li><strong>Size:</strong> the same SPX exposure, scaled to one tenth of the notional, so that the position is sized appropriately in any retail account.</li>
+<li><strong>Tax:</strong> the same 1256 60/40 tax treatment as full SPX.</li>
+<li><strong>Settlement:</strong> cash settlement, so there is no Monday-gap risk.</li>
+<li><strong>Exercise:</strong> <strong><span class="gloss" title="An option that can be exercised only at expiry. US-listed index options such as SPX and XSP are European-style.">European-style</span></strong> exercise, which allows exercise only at expiry, so there is no early assignment.</li>
+</ul>
+
+<p>A SPY option is an <strong><span class="gloss" title="An option that can be exercised at any time up to expiry. US-listed options on single stocks and exchange-traded funds, such as SPY, are American-style.">American-style option</span></strong>: its holder can exercise it on any day up to expiry, so its seller can be assigned early (<a class="xref" href="12h.html">Chapter 12H</a>).</p>
+
+<p>Most retail traders use SPY puts because SPY is what they see. It is the most-quoted equity ETF, it is prominently displayed in brokerage apps, and many retail-targeted strategy videos use it as the example. SPY is operationally inferior on every dimension except spread width. There it is slightly tighter: typically $0.01 to $0.02 on at-the-money SPY options, against $0.05 to $0.10 on XSP.</p>
+
+<p>The tax difference alone is large, and <a class="xref" href="2e.html">Chapter 2E</a> works it through. It is often quoted as approximately 12 to 14 percentage points of tax on every dollar of gain, for a top-bracket American individual taxpayer. <a class="xref" href="2e.html">Chapter 2E</a> shows that a like-for-like comparison of the two tax rates gives about 10 points. On a strategy that captures 8% a year, the quoted gap is about 100 basis points of after-tax return a year, and the like-for-like gap about 80, turned on or off by instrument choice alone. Over a decade of <span class="gloss" title="The multiplying of growth factors over successive periods, so that each period's return is earned on the gains and losses of the periods before it.">compounding</span> on a substantial account, that gap is a small house.</p>
 
 <div class="callout brick">
-<p><em>"Neural networks are a Ferrari. Powerful, but easy to crash. On financial time series, they overfit unless very carefully managed. Start with linear regression. Earn the right to add complexity."</em></p>
+<span class="ct">Decision rule</span>
+<p>For a cash-secured, systematic put-writing strategy on the S&amp;P 500:</p>
+
+<ul>
+<li><strong>Trade XSP, not SPY:</strong> SPY wins only on spread width, and it loses on tax, settlement and early assignment.</li>
+<li><strong>Size from notional:</strong> one SPX option is ten XSP options, so choose the product whose single contract your account can secure.</li>
+<li><strong>Do not hold AM-settled positions into the SOQ:</strong> close them on the afternoon before expiry.</li>
+</ul>
 </div>
 
-<p>Earning the right to add complexity means: show that the simpler model leaves systematic residuals (deviations from prediction) that the more complex model can capture; verify that the improvement survives walk-forward cross-validation on data the more complex model never saw; account for the additional degrees of freedom in your performance evaluation; and stress-test that the more complex model is robust to feature noise. Most retail "ML for trading" content skips every one of these steps.</p>
+<h2 id="trading-hours-es-tells-you-where-spx-opens">7 · Trading hours: ES tells you where SPX opens</h2>
 
-<h2 id="where-the-model-fits-in-the-pipeline">6 · Where the model fits in the pipeline</h2>
+<p>Cash SPX trades only during <strong><span class="gloss" title="The main session of the American stock market, 9:30 AM to 4:00 PM Eastern Time. Abbreviated RTH.">regular trading hours</span></strong>, 9:30 AM to 4:00 PM ET. The futures, ES and MES, trade nearly 24 hours, from Sunday 6:00 PM ET through Friday 5:00 PM ET, with a brief daily maintenance window. SPX options have extended hours on Cboe, from 8:15 PM ET the previous evening through 9:15 AM ET. The cash SPX <em>index</em>, though, does not exist outside regular hours.</p>
 
-<p>The model is one half of the trading system. The other half is the <strong>strategy</strong> — the execution layer that turns predictions into orders. A perfect predictor with no execution policy is useless because you don't know how big to trade, when to enter, when to exit, or how to handle the case where your model contradicts your existing position.</p>
+<p>When financial media report "S&amp;P futures up 0.4% overnight", that is ES: the cash SPX index simply does not exist between 4:00 PM and 9:30 AM. The opening print of SPX at 9:30 AM is built from the actual opening trades of all 500 components. That is why it sometimes prints away from where futures were trading thirty seconds earlier. Traders watch ES overnight to anticipate the SPX open. The <strong><span class="gloss" title="The difference between a futures price and the price of its underlying. For an index future it reflects interest and dividends until expiry, and it shrinks to zero at expiry.">basis</span></strong> between ES and SPX during overnight hours encodes the market's evolving consensus.</p>
 
-<pre class="aligned">Model     →  produces edge (a prediction with positive E[outcome])
-Strategy  →  executes edge (turns predictions into sized orders with entry/exit rules)</pre>
+<h3 id="why-es-and-spx-stay-together">Why ES and SPX stay together</h3>
 
-<p>In card-counting blackjack, the counting system is the model — it produces an estimate of the deck's remaining favorable cards. The betting strategy is everything else — bet sizing as a function of count, table choice, session length, when to walk away. A perfect counter who bets the same amount on every hand loses. A perfect bettor with no counting system loses faster. You need both, and they have to be designed together.</p>
+<p>A future is tied to its index by the <span class="gloss" title="The cost of holding the underlying until a future date, financing less any dividends received, plus storage for a commodity. It sets the gap between the futures price and the spot price.">cost of carry</span>, the cost of carrying the index until the future expires. Holding the stocks costs you interest on the money tied up in them and pays you their dividends. The future skips both, so its fair price is the index grown at the interest rate less the dividend yield:</p>
 
-<p><a class="xref" href="2b.html">Section 2B</a> builds the simplest possible model class. <a class="xref" href="2d.html">Section 2D</a> builds the execution layer.</p>
+<div class="eq" id="e-fair">
+\[ F = S\,e^{(r-q)T} \]
+</div>
 
-<h2 id="cross-validation-in-time-series">7 · Cross-validation in time series</h2>
+<p>Here \(F\) is the fair futures price, \(S\) the index level, \(r\) the risk-free interest rate, \(q\) the index's dividend yield and \(T\) the time to the future's expiry, in years. The factor \(e^{(r-q)T}\) is <span class="gloss" title="Growth added in infinitely small, infinitely frequent amounts. At a rate r for t years, one dollar grows to e raised to the power r times t.">continuous compounding</span> at the net rate \(r - q\) (<a class="xref" href="1a.html">Chapter 1A</a>). The basis, \(F - S\), shrinks as expiry approaches, and at expiry, where \(T\) reaches zero, the future converges on the index. <a class="xref" href="4b.html">Chapter 4B</a> treats futures in full, including why their price carries the cost of financing.</p>
 
-<p>A subtle but critical point that retail strategy developers routinely get wrong: standard k-fold cross-validation does not work on time series data. The standard method splits the data randomly into k buckets, trains on k−1 buckets, and tests on the remaining bucket. This produces meaningless results in finance because it mixes future data into the training set.</p>
+<div class="worked">
+<span class="ct">Worked example: Fair value, and the arbitrage that enforces it</span>
+<p><strong>Step 1: the fair price.</strong> Take SPX at 6,000, a hypothetical interest rate of 4%, a dividend yield of 1.3% and three months to expiry, so \(T = 0.25\). Then \((r - q)T = 0.027 \times 0.25 = 0.00675\), and <a class="eqref" href="#e-fair"></a> gives \(F = 6{,}000 \times e^{0.00675} = 6{,}040.6\). The basis, the future's premium over the index, is about 40 points.</p>
 
-<p>The correct method is <strong>walk-forward analysis</strong> or, more rigorously, <strong>purged k-fold cross-validation</strong> (López de Prado, 2018):</p>
+<p><strong>Step 2: a rich future.</strong> Suppose ES trades at 6,060 while the index is at 6,000. The future is 19.4 points above its fair value. An arbitrageur sells ES and buys the basket of SPX stocks, locking in about \(19.4 \times \$50 = \$970\) a contract before costs. The selling pushes ES down and the buying pushes the stocks up until the gap closes.</p>
+
+<p><strong>Step 3: an overnight move.</strong> Now suppose ES settles at its fair 6,040.6 at the close and rises 0.4% overnight, to 6,064.8. Dividing by the same carry factor puts the implied SPX open at \(6{,}064.8/1.00677 = 6{,}024\), also 0.4% above the close.</p>
+</div>
+
+<p>This structural <span class="gloss" title="A profit made without bearing risk, by exploiting a difference between prices that should agree.">arbitrage</span> keeps the two locked together during regular hours. If ES trades meaningfully above SPX, adjusted for financing and dividends, arbitrageurs short ES and buy a basket of SPX components. If ES trades meaningfully below SPX, they do the reverse. The trade runs continuously during regular hours and keeps the ES-SPX basis tight. Overnight, nobody can arbitrage directly against a cash SPX that does not exist. The basis can then drift, and it becomes a forward-looking estimate of the open.</p>
+
+<h2 id="why-dealers-hedge-in-es">8 · Why dealers hedge in ES</h2>
+
+<p>Parts VI to IX describe dealer <span class="gloss" title="Taking a position whose gains offset losses on a risk you already hold, such as selling futures against a crop or buying puts against a stock holding.">hedging</span> in detail. A dealer who has sold an SPX option must hedge the resulting <span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span> exposure, the option's sensitivity to small moves in the index. The dealer typically does this in <strong>ES futures</strong> rather than in cash SPX stocks or SPY, for three reasons:</p>
 
 <ol>
-<li>Split the data into time-ordered chunks.</li>
-<li>For each chunk, train on data strictly before the chunk start (and possibly a "purge" gap to avoid contamination from data labeling near the boundary).</li>
-<li>Test on the chunk.</li>
-<li>Aggregate test-set performance across all chunks.</li>
+<li>ES has tighter spreads at institutional size than SPY.</li>
+<li>ES trades nearly 24 hours while cash SPX does not, so overnight risk can be hedged.</li>
+<li>ES margining under <strong><span class="gloss" title="The risk-based margin system for futures and options on futures, developed by the CME, which sets the requirement from the worst loss across a set of price and volatility scenarios.">SPAN</span></strong>, the futures exchanges' risk-based system, is more capital-efficient than margining SPY shares under <span class="gloss" title="A margin model, named for the Federal Reserve's Regulation T, that requires a fixed percentage of each position's value. It is simple and does not change with market stress.">Reg-T</span> (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
 </ol>
 
-<p>This is computationally more expensive than standard cross-validation but it's the only honest way to estimate out-of-sample performance on time series data. Any backtest that doesn't use it is overestimating performance.</p>
+<p>When <a class="xref" href="6a.html">Part VI</a> describes the dealer buying shares to hedge a short call, the literal-share reading is wrong. The dealer is buying ES futures contracts in size, with cash-share hedging used only at the margin to flatten the remaining basis. The flow shows up in the SPX cash market only indirectly, through the arbitrage that links the two. This matters operationally: the highest-frequency <span class="gloss" title="The tendency for the return over the last 30 minutes of the trading day to go the same way as the return over the rest of the day. Baltussen, Da, Lammers and Martens (2021) document it across more than 60 futures markets and attribute it to hedging that trades with the move.">intraday momentum</span> effects of dealer hedging (<a class="xref" href="6c.html">Chapter 6C</a>) show up most clearly in ES prints, not SPY prints. The two are correlated enough that SPY shows them too, slightly delayed.</p>
 
-<figure class="fig" id="fig-walk-forward-cv-visualizer">
-  <canvas id="walk-forward-cv-visualizer-c" data-h="240"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="walk-forward-cv-visualizer-k">windows</label>
-      <input type="range" id="walk-forward-cv-visualizer-k" min="3" max="10" step="1" value="5">
-      <output id="walk-forward-cv-visualizer-k-o" for="walk-forward-cv-visualizer-k"></output>
-    </div>
-    <div class="ctrl">
-      <label for="walk-forward-cv-visualizer-mu">true annualized μ</label>
-      <input type="range" id="walk-forward-cv-visualizer-mu" min="-0.05" max="0.3" step="0.005" value="0.06">
-      <output id="walk-forward-cv-visualizer-mu-o" for="walk-forward-cv-visualizer-mu"></output>
-    </div>
-    <div class="ctrl">
-      <label for="walk-forward-cv-visualizer-sigma">noise σ</label>
-      <input type="range" id="walk-forward-cv-visualizer-sigma" min="0.05" max="0.5" step="0.005" value="0.15">
-      <output id="walk-forward-cv-visualizer-sigma-o" for="walk-forward-cv-visualizer-sigma"></output>
-    </div>
-    <div class="ctrl">
-      <label for="walk-forward-cv-visualizer-seed">seed</label>
-      <input type="range" id="walk-forward-cv-visualizer-seed" min="1" max="500" step="1" value="1">
-      <output id="walk-forward-cv-visualizer-seed-o" for="walk-forward-cv-visualizer-seed"></output>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="walk-forward-cv-visualizer-train"></output></div>
-    <div class="ctrl"><output id="walk-forward-cv-visualizer-test"></output></div>
-    <div class="ctrl"><output id="walk-forward-cv-visualizer-deg"></output></div>
-  </div>
-  <figcaption><b>Walk-forward testing, fold by fold.</b> Ten years of simulated daily returns
-  with a fixed true mean and noise, cut into equal windows: each fold trains on every window
-  before a test window and is then scored on that window alone, so five windows make four
-  folds. The bars are each fold's annualized Sharpe ratio in sample (train) and out of sample
-  (test), and the readouts average them. The true mean never changes, so the scatter from fold
-  to fold is sampling noise; the seed redraws the returns.</figcaption>
-</figure>
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>For leveraged exposure to the index without options, ES and MES carry 1256 tax treatment, with the financing built into the basis rather than charged as interest. MES, at one tenth of ES, is the size a retail account can hold. An overnight headline about "S&amp;P futures" is about ES, and it is the best available guide to where SPX opens.</p>
+</div>
 
-<!--SCRIPT-->
-/* ============================================================
-   The Other End of the Trade: what every figure shares.
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Cash settlement removes the weekend gap, not every gap. An AM-settled option still settles to an SOQ that can sit far from the previous close, and on a stressed morning to a level no screen showed. XSP's spread is also wider than SPY's, so a strategy that trades in and out often, rather than holding to expiry, pays that extra spread each time. <a class="xref" href="2d.html">Chapter 2D</a> prices that trade-off between spread and settlement.</p>
+</div>
 
-   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
-   the figures on that page, so a figure may call DL.* freely. The numbers are
-   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
-   ported line for line, so a figure computes what the app's widget computed.
-   Everything drawn goes through NMT.Plot and takes its colours from the
-   theme's roles (DL.color), so a figure follows the light and dark themes
-   and redraws when the reader switches.
+<div class="callout warn">
+<span class="ct">Common mistake: treating SPY and XSP as the same trade</span>
+<p>They track the same index at about the same notional, so it is tempting to treat them as interchangeable. They differ in settlement, exercise style and tax treatment. A short SPY put can be assigned early, can leave you holding shares through a Monday gap, and is taxed under the ordinary rules. The XSP put does none of these.</p>
+</div>
 
-   Two rules every figure keeps, because the build runs the page and saves
-   its column (DESIGN.md section 8):
-   - the markup is static. A script writes text into outputs and draws on
-     canvases; it never adds or removes elements inside the figure;
-   - the first state is fixed. Seeds are constants and nothing animates
-     until the reader asks, so two builds of the same source are identical.
-   ============================================================ */
-var DL = (function () {
-  'use strict';
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>SPX is the float-adjusted market value of about 500 companies divided by a divisor. S&amp;P adjusts the divisor so that additions, deletions, spin-offs and special dividends do not move the level. Ordinary dividends and splits leave it alone.</li>
+<li>Six products trade on the index: SPX, XSP and SPY options, ES and MES futures, and VIX options. They differ in multiplier, settlement, exercise style, tax and trading hours.</li>
+<li>Notional, the multiplier times the level, sets a position's size: $600,000 for one SPX option at 6,000, and $60,000 for XSP or SPY.</li>
+<li>Physical settlement leaves you holding the Monday gap. AM cash settlement leaves you holding the SOQ.</li>
+<li>ES trades around the clock and is tied to SPX by financing and dividends. Dealers hedge SPX options in ES.</li>
+</ul>
+</div>
 
-  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
-  function N(x) {
-    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
-        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    var sign = x < 0 ? -1 : 1;
-    var ax = Math.abs(x) / Math.sqrt(2);
-    var t = 1 / (1 + p * ax);
-    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
-    return 0.5 * (1 + sign * y);
-  }
-  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
-
-  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
-  function d1(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
-  }
-  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
-  function bsPrice(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
-    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsDelta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) {
-      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
-      return S < K ? -1 : S > K ? 0 : -0.5;
-    }
-    var D1 = d1(S, K, T, sigma, r, q);
-    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
-  }
-  function bsGamma(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 1e-6) return S === K ? 1000 : 0;
-    var D1 = d1(S, K, T, sigma, r, q);
-    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
-  }
-  function bsVega(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
-  }
-  function bsTheta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
-    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
-    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsRho(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D2 = d2(S, K, T, sigma, r, q);
-    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
-  }
-  function bsVanna(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
-  }
-  function bsCharm(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
-    return Math.exp(-q * T) * term;
-  }
-  /* every price and Greek at once, as the app's bsm() */
-  function bsm(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
-    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
-    return {
-      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
-      callPrice: S * eqT * Nd1 - K * erT * Nd2,
-      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
-      callDelta: eqT * Nd1,
-      putDelta: eqT * (Nd1 - 1),
-      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
-      vega: S * eqT * pd1 * sT,
-      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
-      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
-      callRho: K * T * erT * Nd2,
-      putRho: -K * T * erT * (1 - Nd2),
-      vanna: -eqT * pd1 * (D2 / sigma),
-      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
-    };
-  }
-
-  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
-  function rng(seed) {
-    var a = seed >>> 0;
-    return function () {
-      var t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function gauss(r) {
-    var u = 1 - r(), v = r();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
-
-  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
-  var REGIMES = [
-    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
-    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
-    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
-    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
-    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
-    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
-    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
-  ];
-  function ohlc(n, seed, regimes, start) {
-    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
-    var r = rng(seed), out = [], price = start;
-    for (var i = 0; i < n; i++) {
-      var g = null;
-      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
-      if (!g) g = regimes[regimes.length - 1];
-      var ret = g.drift + g.vol * gauss(r);
-      var open = price, close = Math.max(0.5, price * (1 + ret));
-      var wick = price * g.vol * (0.4 + r() * 0.9);
-      var high = Math.max(open, close) + wick * r();
-      var low = Math.min(open, close) - wick * r();
-      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
-      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
-                 regime: g.label, stage: g.stage });
-      price = close;
-    }
-    return out;
-  }
-  function aggregate(data, k) {
-    var out = [];
-    for (var i = 0; i < data.length; i += k) {
-      var ch = data.slice(i, Math.min(i + k, data.length));
-      if (!ch.length) break;
-      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
-                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
-                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
-                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
-    }
-    return out;
-  }
-
-  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
-  function key(k) { return k || 'close'; }
-  function sma(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = 0;
-      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
-      return s / n;
-    });
-  }
-  function ema(data, n, k) {
-    k = key(k);
-    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
-    data.forEach(function (d, i) {
-      if (i === 0) r.push(prev);
-      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
-    });
-    return r;
-  }
-  function stdDev(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
-      s.forEach(function (x) { m += x[k]; }); m /= n;
-      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
-      return Math.sqrt(v / n);
-    });
-  }
-  function bollinger(data, n, mult) {
-    n = n || 20; mult = mult || 2;
-    var m = sma(data, n), s = stdDev(data, n);
-    return { mid: m,
-             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
-             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
-  }
-  function trueRange(data) {
-    return data.map(function (d, i) {
-      if (i === 0) return d.high - d.low;
-      var pc = data[i - 1].close;
-      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
-    });
-  }
-  function atr(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), r = [], prev = null;
-    tr.forEach(function (v, i) {
-      if (i < n - 1) { r.push(null); return; }
-      if (i === n - 1) {
-        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
-        r.push(init); prev = init; return;
-      }
-      prev = (prev * (n - 1) + v) / n;
-      r.push(prev);
-    });
-    return r;
-  }
-  function donchian(data, n) {
-    n = n || 20;
-    return data.map(function (_, i) {
-      if (i < n - 1) return { upper: null, lower: null, mid: null };
-      var s = data.slice(i - n + 1, i + 1);
-      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
-      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
-      return { upper: u, lower: l, mid: (u + l) / 2 };
-    });
-  }
-  function rsi(data, n) {
-    n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
-    for (var i = 1; i < data.length; i++) {
-      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
-      if (i <= n) {
-        g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
-      } else {
-        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
-      }
-    }
-    return r;
-  }
-  function macd(data, fast, slow, signal) {
-    fast = fast || 12; slow = slow || 26; signal = signal || 9;
-    var ef = ema(data, fast), es = ema(data, slow);
-    var line = ef.map(function (v, i) { return v - es[i]; });
-    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
-    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
-  }
-  function adx(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), plusDM = [], minusDM = [];
-    for (var i = 0; i < data.length; i++) {
-      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
-      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
-      plusDM.push(up > dn && up > 0 ? up : 0);
-      minusDM.push(dn > up && dn > 0 ? dn : 0);
-    }
-    function wilder(arr) {
-      var r = new Array(arr.length).fill(null), prev = null;
-      arr.forEach(function (v, i) {
-        if (i < n - 1) return;
-        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
-        prev = prev - prev / n + v; r[i] = prev;
-      });
-      return r;
-    }
-    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
-    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
-    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
-    var dx = plusDI.map(function (v, i) {
-      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
-    });
-    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
-    for (var j = 0; j < dx.length; j++) {
-      if (dx[j] == null) continue;
-      count++;
-      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
-      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
-    }
-    return { adx: out, plusDI: plusDI, minusDI: minusDI };
-  }
-
-  /* ---------- writing numbers ----------
-     A true minus sign (U+2212) rather than a hyphen, as the prose writes
-     them, and thousands grouped with commas. */
-  var MINUS = '−';
-  function num(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    d = d == null ? 2 : d;
-    var s = Math.abs(x).toFixed(d);
-    var parts = s.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    s = parts.join('.');
-    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
-  }
-  function signed(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(x, d);
-    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
-  }
-  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
-  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
-  function usd(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(Math.abs(x), d == null ? 2 : d);
-    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
-  }
-  function compact(x, d, prefix) {
-    if (x == null || !isFinite(x)) return '—';
-    prefix = prefix || ''; d = d == null ? 1 : d;
-    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
-    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
-    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
-    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
-    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
-    return sign + prefix + a.toFixed(d);
-  }
-
-  /* ---------- the page: outputs and controls ---------- */
-  function $(id) { return document.getElementById(id); }
-  /* Text into an element, only when it changes, so the build captures one
-     settled state and a redraw does not churn the DOM. */
-  function out(id, text) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el && el.textContent !== String(text)) el.textContent = String(text);
-  }
-  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
-  function checked(id) { var el = $(id); return !!(el && el.checked); }
-  /* Call fn whenever any of these controls moves. */
-  function bind(ids, fn) {
-    ids.forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener('input', fn);
-      el.addEventListener('change', fn);
-    });
-  }
-  /* A row of buttons acting as one choice: each button carries data-v, the one
-     chosen has .on and aria-pressed="true". Returns a function giving the
-     current value. The first state is whichever button the markup marked
-     .on, so the saved page and the live page agree. */
-  function seg(id, fn) {
-    var box = $(id);
-    if (!box) return function () { return null; };
-    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
-    function current() {
-      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
-      return bs.length ? bs[0].getAttribute('data-v') : null;
-    }
-    bs.forEach(function (b) {
-      b.addEventListener('click', function () {
-        bs.forEach(function (o) {
-          var on = o === b;
-          o.classList.toggle('on', on);
-          o.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-        if (fn) fn(b.getAttribute('data-v'));
-      });
-    });
-    return current;
-  }
-  function still() {
-    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-  /* Register a canvas figure. draw(canvas) is called now, on resize and on
-     a change of theme (NMT.figure). Returns the redraw. */
-  function figure(canvasId, draw) {
-    if (!window.NMT) return function () {};
-    return NMT.figure(canvasId, draw) || function () {};
-  }
-  function redraw() { if (window.NMT) NMT.redrawAll(); }
-
-  /* ---------- colour ----------
-     A role from the stylesheet, resolved for the current theme: accent,
-     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
-     paper, bg. The app's amber is the accent here; its cyan and violet are
-     familiar, its green insight, its rose plain. */
-  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
-  function fade(c, a) {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
-    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
-    var r = /rgba?\(([^)]+)\)/.exec(c || '');
-    if (r) {
-      var p = r[1].split(',');
-      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
-    }
-    return c;
-  }
-
-  /* ---------- drawing on an NMT.Plot ---------- */
-
-  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
-       o.x, o.y      a function (value, step) -> label, or false for none
-       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
-       o.xs, o.ys    the tick values themselves, overriding nx and ny
-       o.grid        false for no grid (default: the plot's own setting)
-     Paints the ground first, as Plot.axes does, so call it before drawing. */
-  function ticks(lo, hi, target) {
-    var span = hi - lo, raw = span / (target || 6);
-    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
-    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
-    var out = [];
-    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
-      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
-    return { vals: out, step: step };
-  }
-  function axes(p, o) {
-    o = o || {};
-    var g = p.g, P = p.o;
-    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
-                  : ticks(P.xmin, P.xmax, o.nx || 6);
-    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
-                  : ticks(P.ymin, P.ymax, o.ny || 5);
-    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
-    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
-    g.clearRect(0, 0, p.w, p.h);
-    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
-    if (o.grid == null ? P.grid : o.grid) {
-      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
-      tx.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
-      ty.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
-    }
-    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
-    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
-    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
-    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
-    if (o.yAxis !== false) {
-      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
-    }
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    if (fx) {
-      g.textAlign = 'center'; g.textBaseline = 'top';
-      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
-    }
-    if (fy) {
-      g.textAlign = 'right'; g.textBaseline = 'middle';
-      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
-    }
-    if (P.xlabel) {
-      g.textAlign = 'right'; g.textBaseline = 'bottom';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
-    }
-    if (P.ylabel) {
-      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
-      g.textAlign = 'right'; g.textBaseline = 'top';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.ylabel, 0, 0); g.restore();
-    }
-    return p;
-  }
-
-  function clip(p) {
-    var g = p.g, o = p.o;
-    g.save();
-    g.beginPath();
-    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
-    g.clip();
-  }
-  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
-     o.color is a colour or a function (value, index) -> colour. */
-  function bars(p, xs, ys, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
-    clip(p);
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) continue;
-      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
-      var y0 = p.Y(base), y1 = p.Y(ys[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
-    }
-    g.restore();
-  }
-  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
-  function hbars(p, ys, xs, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
-    clip(p);
-    for (var i = 0; i < ys.length; i++) {
-      if (xs[i] == null || !isFinite(xs[i])) continue;
-      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
-      var x0 = p.X(base), x1 = p.X(xs[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
-    }
-    g.restore();
-  }
-  /* A filled band between two curves (lo may be a number: the baseline). */
-  function band(p, xs, hi, lo, fill) {
-    var g = p.g;
-    clip(p);
-    g.beginPath();
-    var started = false;
-    for (var i = 0; i < xs.length; i++) {
-      if (hi[i] == null) continue;
-      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
-      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
-    }
-    for (var j = xs.length - 1; j >= 0; j--) {
-      var l = typeof lo === 'number' ? lo : lo[j];
-      if (l == null || hi[j] == null) continue;
-      g.lineTo(p.X(xs[j]), p.Y(l));
-    }
-    g.closePath();
-    g.fillStyle = fill;
-    g.fill();
-    g.restore();
-  }
-  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
-  function line(p, xs, ys, o) {
-    var pts = [], runs = [];
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
-      pts.push([xs[i], ys[i]]);
-    }
-    if (pts.length) runs.push(pts);
-    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
-  }
-  function hline(p, y, o) {
-    o = o || {};
-    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  function vline(p, x, o) {
-    o = o || {};
-    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  /* Candles for OHLC data at x = index. */
-  function candles(p, data, o) {
-    o = o || {};
-    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
-    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
-    clip(p);
-    data.forEach(function (d, i) {
-      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
-      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
-      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
-      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
-    });
-    g.restore();
-  }
-  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
-  function legend(p, items, o) {
-    o = o || {};
-    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
-    g.save();
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    items.forEach(function (it) {
-      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
-      if (it.box) g.fillRect(x, y - 4, 12, 8);
-      else {
-        g.setLineDash(it.dash || []);
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
-        g.setLineDash([]);
-      }
-      g.fillStyle = color('ink-soft');
-      g.fillText(it.label, x + 19, y);
-      x += 19 + g.measureText(it.label).width + 14;
-    });
-    g.restore();
-  }
-  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
-     p.axes({nx: 0}) or grid off first. */
-  function xticks(p, xs, fmt) {
-    var g = p.g;
-    g.save();
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'center'; g.textBaseline = 'top';
-    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
-    g.restore();
-  }
-
-  return {
-    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
-    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
-    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
-    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
-    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
-    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
-    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
-    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
-    figure: figure, redraw: redraw,
-    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
-    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
-    candles: candles, legend: legend, xticks: xticks
-  };
-})();
-
-/* ---------- walk-forward-cv-visualizer ---------- */
-(function () {
-  var U = 'walk-forward-cv-visualizer';
-
-  function sharpe(rets) {
-    if (!rets.length) return 0;
-    var mean = 0, v = 0, i;
-    for (i = 0; i < rets.length; i++) mean += rets[i];
-    mean /= rets.length;
-    for (i = 0; i < rets.length; i++) v += (rets[i] - mean) * (rets[i] - mean);
-    var sd = Math.sqrt(v / Math.max(rets.length - 1, 1));
-    return sd > 0 ? (mean / sd) * Math.sqrt(252) : 0;
-  }
-  /* The app's walk-forward: 2,520 daily returns, k equal windows, fold f trains
-     on windows 0..f and tests on window f + 1. The app also multiplies each
-     training set by an "overfit" factor at its default pressure of 0.6; a
-     Sharpe ratio ignores a constant scale, so the factor changes nothing and
-     is kept here only so every number matches the app's. */
-  var PRESSURE = 0.6;
-  function folds(k, mu, sigma, seed) {
-    var nTotal = 2520, r = DL.rng(seed), rets = [];
-    for (var i = 0; i < nTotal; i++) rets.push(mu / 252 + (sigma / Math.sqrt(252)) * DL.gauss(r));
-    var len = Math.floor(nTotal / k), tr = [], te = [];
-    for (var f = 0; f < k; f++) {
-      var trainEnd = (f + 1) * len, testEnd = Math.min(trainEnd + len, nTotal);
-      if (testEnd <= trainEnd) break;
-      var inflation = 1 + PRESSURE * Math.abs(DL.gauss(DL.rng(seed * 7 + f))) * 0.4;
-      tr.push(sharpe(rets.slice(0, trainEnd).map(function (x) { return x * inflation; })));
-      te.push(sharpe(rets.slice(trainEnd, testEnd)));
-    }
-    return { train: tr, test: te };
-  }
-  function avg(a) { return a.reduce(function (s, x) { return s + x; }, 0) / Math.max(a.length, 1); }
-
-  var draw = DL.figure(U + '-c', function (c) {
-    var k = DL.val(U + '-k'), mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
-        seed = DL.val(U + '-seed');
-    var F = folds(k, mu, sigma, seed), nf = F.train.length;
-    var all = F.train.concat(F.test, [0]);
-    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), span = Math.max(hi - lo, 0.01);
-    var p = new NMT.Plot(c, { xmin: 0, xmax: nf, ymin: lo - span * (lo < 0 ? 0.14 : 0),
-                              ymax: hi + span * 0.3, pad: { l: 38, r: 10, t: 10, b: 26 } });
-    DL.axes(p, { xs: [], ny: 5, x: false, grid: false, yAxis: true,
-                 y: function (v, st) { return DL.num(v, st < 1 ? 1 : 0); } });
-    DL.hline(p, 0, { color: DL.color('ink-faint'), dash: [2, 3] });
-
-    var fam = DL.color('familiar'), pla = DL.color('plain');
-    var trX = F.train.map(function (_, i) { return i + 0.33; }),
-        teX = F.test.map(function (_, i) { return i + 0.67; });
-    DL.bars(p, trX, F.train, { w: 0.3, color: DL.fade(fam, 0.6) });
-    DL.bars(p, teX, F.test, { w: 0.3, color: DL.fade(pla, 0.6) });
-
-    var band = p.X(1) - p.X(0), f11 = '11px ' + DL.color('sans');
-    if (band >= 52) {   /* the values themselves, where two of them fit side by side */
-      [[trX, F.train, fam], [teX, F.test, pla]].forEach(function (s) {
-        s[1].forEach(function (v, i) {
-          p.text(s[0][i], v, DL.num(v, 1), { align: 'center', font: f11, color: s[2],
-                                            baseline: v >= 0 ? 'bottom' : 'top', dy: v >= 0 ? -3 : 3 });
-        });
-      });
-    }
-    DL.xticks(p, F.train.map(function (_, i) { return i + 0.5; }),
-              function (x, i) { return band >= 46 ? 'fold ' + (i + 1) : String(i + 1); });
-    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
-    var key = [{ label: 'train (in-sample)', color: DL.fade(fam, 0.6), box: true },
-               { label: 'test (out-of-sample)', color: DL.fade(pla, 0.6), box: true }];
-    if (p.w >= 420) DL.legend(p, key);
-    else { DL.legend(p, [key[0]]); DL.legend(p, [key[1]], { dy: 15 }); }
-
-    var aTr = avg(F.train), aTe = avg(F.test);
-    var deg = aTr > 0 ? (1 - aTe / aTr) * 100 : 0;
-    DL.out(U + '-k-o', String(k));
-    DL.out(U + '-mu-o', DL.num(mu * 100, 1) + '%');
-    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
-    DL.out(U + '-seed-o', String(seed));
-    DL.out(U + '-train', 'avg train Sharpe = ' + DL.num(aTr, 2));
-    DL.out(U + '-test', 'avg test Sharpe = ' + DL.num(aTe, 2));
-    DL.out(U + '-deg', 'OOS degradation = ' + DL.num(deg, 0) + '%');
-  });
-  DL.bind([U + '-k', U + '-mu', U + '-sigma', U + '-seed'], draw);
-})();
-<!--/SCRIPT-->
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A stock in the index pays a $2 ordinary dividend and later splits 3-for-1. Which event changes the divisor?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Neither event changes it. The dividend lowers the price and the level while the divisor stays put, which is why SPX is a price-return index. The split triples the float shares and cuts the price to a third, so price times float shares is unchanged, and so is the divisor.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>The committee deletes a company whose float value is $1 of every $50 in the index. By what factor does the divisor change, and why?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-divisor"></a>, it is multiplied by \(49/50 = 0.98\), a 2% cut. The index's total float value falls by 2%, so the divisor must fall by 2% for the level not to gap down.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>With SPX at 5,000, what notional does one SPX option, one XSP option and one ES contract control?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>One SPX option controls \(\$100 \times 5{,}000 = \$500{,}000\), one XSP option a tenth of that, $50,000, and one ES contract \(\$50 \times 5{,}000 = \$250{,}000\).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>You are short a monthly SPX put, 1% out of the money at Thursday's close, which expires on Friday. Why might you close it on Thursday afternoon?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It is AM-settled, so it settles to Friday's SOQ, built from each component's first trade that morning. Overnight news and a staggered open can put the SOQ below the strike, even at a level no screen showed. Closing on Thursday removes that risk, at the price of the premium left in the option.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Why is a short SPY put near the money on a Friday afternoon riskier than a short XSP put at the same strike?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>If it ends in the money, SPY settles physically. You are assigned 100 shares a contract and hold them over the weekend, absorbing whatever gap the market opens with on Monday. The XSP put settles in cash at Friday's close and leaves nothing open.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>With SPX at 6,000, an interest rate of 5% and a dividend yield of 1%, what is the fair price of a future six months from expiry?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Here \((r - q)T = 0.04 \times 0.5 = 0.02\), so <a class="eqref" href="#e-fair"></a> gives \(F = 6{,}000 \times e^{0.02} = 6{,}000 \times 1.0202 = 6{,}121\). The basis is about 121 points.</p>
+</div></details>
+</div>
+</div>

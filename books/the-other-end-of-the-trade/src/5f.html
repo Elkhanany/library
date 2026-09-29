@@ -1,77 +1,141 @@
 <p class="eyebrow">Part V · Options · Chapter 5F</p>
 
-<h1>Put-call parity, synthetics, and the other risks</h1>
+<h1>Put-call parity and the risks at expiry</h1>
 
-<p>We close the options primer with two related ideas. First, <strong>put-call parity</strong> — a no-arbitrage identity that ties every call to every put with the same strike and expiration, and explains why many "different" strategies are economically identical. Second, a survey of the risks that don't show up in the Greeks but absolutely show up in your P&amp;L.</p>
+<p class="subtitle">Synthetics, pin risk and assignment</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 5A to 5E built an option's price from its payoff, its Greeks and its volatility, to which this chapter adds two related ideas. The first is <strong>put-call parity</strong>, a no-arbitrage identity that ties every call to every put with the same strike and expiration. It explains why many "different" strategies are economically identical. The second is a survey of the risks that do not show up in the Greeks but absolutely show up in your P&amp;L.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The four basic positions, European and American exercise, and the contract multiplier (<a class="xref" href="5a.html">Chapter 5A</a>).</li>
+<li>Intrinsic value and <span class="gloss" title="The part of an option's premium above its intrinsic value, also called time value. It is the price of the time left and the chance of a favorable move before expiry, and it is largest at the money.">time value</span> (<a class="xref" href="5b.html">Chapter 5B</a>).</li>
+<li>Gamma's spike at the strike as expiry nears (Chapters 5C and 5D).</li>
+<li>Present value with continuous compounding, \(e^{-rT}\) (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Margin, margin calls and forced liquidation (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+</ul>
+</div>
 
 <h2 id="put-call-parity">1 · Put-call parity</h2>
 
-<p>For European options on the same underlying with the same strike K and expiration T, the call price C and the put price P are linked by:</p>
+<p><strong><span class="gloss" title="The identity that ties the price of a European call to the price of the European put with the same strike and expiry: the call minus the put equals the underlying's price minus the present value of the strike. If it fails, a riskless profit is available.">Put-call parity</span></strong> links the prices of a European call, \(C\), and a European put, \(P\), on the same underlying with the same strike \(K\) and time to expiry \(T\). With spot \(S\) and the risk-free rate \(r\), it says</p>
 
-<pre>C − P = S − K × e^(-rT)</pre>
+<div class="eq" id="e-pcp">
+\[ C - P = S - K e^{-rT} \]
+</div>
 
-<p>(Adding dividend yield q gives the more general form: C − P = S × e^(-qT) − K × e^(-rT).)</p>
+<p>Adding a dividend yield \(q\) gives the more general form:</p>
 
-<p>The intuition: a portfolio of (long call + short put + cash equal to the present value of K) replicates exactly the payoff of holding the underlying at expiration. By no-arbitrage, the cost of the portfolio must equal the cost of the underlying.</p>
+<div class="eq" id="e-pcpq">
+\[ C - P = S e^{-qT} - K e^{-rT} \]
+</div>
 
-<p><strong>Rearrangements give the synthetic equivalents.</strong> Every combination of options and stock has a synthetic counterpart constructed differently:</p>
+<p>The term \(K e^{-rT}\) is the present value of the strike: the cash that, invested at the rate \(r\), grows to exactly \(K\) by expiry (<a class="xref" href="1a.html">Chapter 1A</a>).</p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Synthetic position</th><th class="c-endpoint">Construction</th><th class="c-other">Equivalent to</th></tr></thead><tbody><tr><td class="c-trial" data-label="Synthetic position">Synthetic long stock</td><td class="c-endpoint" data-label="Construction">Long call + Short put (same K) + cash</td><td class="c-other" data-label="Equivalent to">Long underlying</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic long call</td><td class="c-endpoint" data-label="Construction">Long stock + Long put</td><td class="c-other" data-label="Equivalent to">"Protective put"</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic long put</td><td class="c-endpoint" data-label="Construction">Short stock + Long call</td><td class="c-other" data-label="Equivalent to">Synthetic protective short</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short put</td><td class="c-endpoint" data-label="Construction">Long stock + Short call</td><td class="c-other" data-label="Equivalent to">"Covered call"</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short call</td><td class="c-endpoint" data-label="Construction">Short stock + Short put</td><td class="c-other" data-label="Equivalent to">Risky</td></tr><tr><td class="c-trial" data-label="Synthetic position">Synthetic short stock</td><td class="c-endpoint" data-label="Construction">Short call + Long put</td><td class="c-other" data-label="Equivalent to">Used when borrow is hard</td></tr></tbody></table></div></div>
+<p>The intuition is that a portfolio of a long call, a short put and cash equal to the present value of \(K\) replicates exactly the payoff of holding the underlying at expiration. By no-<span class="gloss" title="A profit made without bearing risk, by exploiting a difference between prices that should agree.">arbitrage</span>, two positions with the same payoff must cost the same, so the cost of the portfolio must equal the cost of the underlying. The table checks the payoff at expiry, where \(S_T\) is the underlying's price then.</p>
 
-<p>The most operationally important equivalence: <strong>a covered call is identical in payoff to a short cash-secured put at the same strike</strong>. Both positions:</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">position</th><th>payoff if \(S_T &lt; K\)</th><th>payoff if \(S_T \ge K\)</th></tr></thead><tbody><tr><td class="c-trial" data-label="position">long call</td><td data-label="payoff if \(S_T &lt; K\)">0</td><td data-label="payoff if \(S_T \ge K\)">\(S_T - K\)</td></tr><tr><td class="c-trial" data-label="position">short put</td><td data-label="payoff if \(S_T &lt; K\)">\(-(K - S_T)\)</td><td data-label="payoff if \(S_T \ge K\)">0</td></tr><tr><td class="c-trial" data-label="position">cash grown to \(K\)</td><td data-label="payoff if \(S_T &lt; K\)">\(K\)</td><td data-label="payoff if \(S_T \ge K\)">\(K\)</td></tr><tr><td class="c-trial" data-label="position"><strong>total</strong></td><td data-label="payoff if \(S_T &lt; K\)">\(S_T\)</td><td data-label="payoff if \(S_T \ge K\)">\(S_T\)</td></tr></tbody></table></div></div>
+
+<p>In both columns the three legs add up to one unit of the underlying. Their costs today, \(C - P + Ke^{-rT}\), must therefore equal \(S\), which rearranges to <a class="eqref" href="#e-pcp"></a>.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Parity on a three-month option</span>
+<p><strong>Step 1: the present value of the strike.</strong> Take \(S = 100\), \(K = 100\), \(r = 4\%\) and \(T = 0.25\). The strike's present value is \(100 \times e^{-0.01} = 99.00\), so parity requires \(C - P = 100 - 99.00 = 1.00\).</p>
+
+<p><strong>Step 2: price the put from the call.</strong> If the call trades at $4.50, the put must trade at \(4.50 - 1.00 = \$3.50\), to the nearest cent.</p>
+
+<p><strong>Step 3: an arbitrage, if parity breaks.</strong> Suppose the put traded at $3.00 instead. Selling the call for $4.50, buying the put for $3.00, buying the underlying for $100 and borrowing $99.00 leaves $0.50 in hand today. At expiry the put and the short call together deliver the underlying at exactly $100 whatever happens, which repays the loan. The $0.50 is a riskless profit from a trade called a conversion (<a class="xref" href="12e.html">Chapter 12E</a>), which traders compete away by pushing the prices back into line.</p>
+</div>
+
+<h3 id="synthetic-positions">Synthetic positions</h3>
+
+<p>Rearranging parity gives the synthetic equivalents: every combination of options and stock has a <strong><span class="gloss" title="A combination of options, the underlying and cash that has the same payoff as a different position, such as a long call and a short put at one strike, which together act like owning the underlying.">synthetic position</span></strong>, a counterpart constructed differently with the same payoff. In each row, the parity form says which legs to hold. A plus sign means long and a minus sign short, with \(Ke^{-rT}\) standing for cash lent (plus) or borrowed (minus).</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">synthetic position</th><th class="c-endpoint">construction</th><th class="c-endpoint">parity form</th><th class="c-other">equivalent to</th></tr></thead><tbody><tr><td class="c-trial" data-label="synthetic position">long stock</td><td class="c-endpoint" data-label="construction">long call, short put (same \(K\)), cash</td><td class="c-endpoint" data-label="parity form">\(S = C - P + Ke^{-rT}\)</td><td class="c-other" data-label="equivalent to">the underlying</td></tr><tr><td class="c-trial" data-label="synthetic position">long call</td><td class="c-endpoint" data-label="construction">long stock, long put</td><td class="c-endpoint" data-label="parity form">\(C = S + P - Ke^{-rT}\)</td><td class="c-other" data-label="equivalent to">the "protective put"</td></tr><tr><td class="c-trial" data-label="synthetic position">long put</td><td class="c-endpoint" data-label="construction">short stock, long call</td><td class="c-endpoint" data-label="parity form">\(P = C - S + Ke^{-rT}\)</td><td class="c-other" data-label="equivalent to">a synthetic protective short</td></tr><tr><td class="c-trial" data-label="synthetic position">short put</td><td class="c-endpoint" data-label="construction">long stock, short call</td><td class="c-endpoint" data-label="parity form">\(-P = S - C - Ke^{-rT}\)</td><td class="c-other" data-label="equivalent to">the "covered call"</td></tr><tr><td class="c-trial" data-label="synthetic position">short call</td><td class="c-endpoint" data-label="construction">short stock, short put</td><td class="c-endpoint" data-label="parity form">\(-C = Ke^{-rT} - S - P\)</td><td class="c-other" data-label="equivalent to">risky</td></tr><tr><td class="c-trial" data-label="synthetic position">short stock</td><td class="c-endpoint" data-label="construction">short call, long put</td><td class="c-endpoint" data-label="parity form">\(-S = P - C - Ke^{-rT}\)</td><td class="c-other" data-label="equivalent to">used when borrow is hard</td></tr></tbody></table></div></div>
+
+<p>The most operationally important equivalence is that <strong>a <span class="gloss" title="A sold call option backed by owning the shares it may require you to deliver.">covered call</span> is identical in payoff to a short <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">cash-secured put</span> at the same strike</strong>. Both positions:</p>
 
 <ul>
-<li>Receive a credit upfront</li>
-<li>Have capped upside (the strike for covered call; the premium for short put)</li>
-<li>Have unbounded downside as the underlying falls</li>
-<li>Have identical net Greeks</li>
+<li>Receive a credit up front.</li>
+<li>Have capped upside: at the strike for the covered call, at the premium for the short put.</li>
+<li>Have large downside as the underlying falls, all the way to a price of zero.</li>
+<li>Have identical net Greeks.</li>
 </ul>
 
-<p>If you think covered calls are "conservative" but selling puts is "reckless," you're being fooled by labels. They are the same payoff. Naming things differently does not change what you own. The choice between them is operational (covered call requires you to own the stock; cash-secured put requires you to have cash collateral), not economic.</p>
+<p>If you think covered calls are "conservative" but selling puts is "reckless", you are being fooled by labels. They are the same payoff, since naming things differently does not change what you own. The choice between them is operational, not economic: a covered call requires you to own the stock, while a cash-secured put requires you to have cash collateral.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A covered call and a cash-secured put</span>
+<p>Take a stock at $100 and options struck at 100, with no interest rate, so that parity makes the call and the put cost the same, say $4.00 each.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">stock at expiry</th><th class="c-other">covered call</th><th class="c-other">cash-secured put</th></tr></thead><tbody><tr><td class="c-trial" data-label="stock at expiry">$80</td><td class="c-other" data-label="covered call">\(80 - 96 = -16\)</td><td class="c-other" data-label="cash-secured put">\(4 - 20 = -16\)</td></tr><tr><td class="c-trial" data-label="stock at expiry">$100</td><td class="c-other" data-label="covered call">\(100 - 96 = +4\)</td><td class="c-other" data-label="cash-secured put">\(4 - 0 = +4\)</td></tr><tr><td class="c-trial" data-label="stock at expiry">$120</td><td class="c-other" data-label="covered call">\(100 - 96 = +4\)</td><td class="c-other" data-label="cash-secured put">\(4 - 0 = +4\)</td></tr></tbody></table></div></div>
+
+<p><strong>Step 1: the covered call.</strong> You pay $100 for the stock and collect $4 for the call, a net outlay of $96. At expiry you hold stock worth \(S_T\), less anything above $100 that the short call takes away.</p>
+
+<p><strong>Step 2: the cash-secured put.</strong> Having collected $4 and set aside $100 of cash, at expiry you keep the $4 less whatever the put pays its holder, \(\max(100 - S_T, 0)\).</p>
+
+<p><strong>Step 3: compare.</strong> The two columns match at every price, as do the deltas: the covered call's is \(1 - \Delta_{\text{call}}\) and the short put's is \(-\Delta_{\text{put}}\), which parity makes the same number.</p>
+</div>
 
 <h2 id="put-call-parity-in-practice">2 · Put-call parity in practice</h2>
 
-<p>Put-call parity provides one of the cleanest sanity checks in options trading. If parity doesn't hold, there's an arbitrage available. In liquid markets, parity holds tight enough that no retail trader can exploit deviations. But monitoring parity is useful: if the bid-ask of a synthetic position is much wider than the bid-ask of its direct equivalent, you've identified a cheap execution route.</p>
+<p>Put-call parity provides one of the cleanest sanity checks in options trading. If parity does not hold, an arbitrage is available. In liquid markets, parity holds tightly enough that no retail trader can exploit deviations. Monitoring it is still useful: comparing the bid-ask of a synthetic position with the bid-ask of its direct equivalent shows which is the cheaper execution route to the same exposure.</p>
 
-<p>For example: if you want long stock exposure but the share borrow is expensive (a short squeeze in progress), the synthetic long via long call + short put can be cheaper. If you want to hedge with a protective put but the put spread is wide, sometimes the equivalent long-put-via-short-stock structure has tighter execution. These are edge cases but they exist.</p>
+<p>Suppose you want long stock exposure but the share borrow is expensive, as in a short squeeze in progress. The synthetic long, a long call and a short put, can then be cheaper. Parity shows why: a fee \(b\) a year for borrowing shares enters <a class="eqref" href="#e-pcpq"></a> the way a dividend yield does, lowering \(C - P\), so puts cost more relative to calls. Selling that expensive put is how the synthetic long captures the difference. At a hypothetical borrow fee of 20% a year, a three-month synthetic long on a $100 stock costs \(100 \times (1 - e^{-0.05}) = \$4.88\) less than the shares.</p>
+
+<p>Similarly, if you want to hedge with a protective put but the put's spread is wide, the equivalent structure of short stock and a long call sometimes has tighter execution. These are edge cases, but they exist.</p>
 
 <h2 id="early-exercise-of-american-options">3 · Early exercise of American options</h2>
 
-<p>European options exercise only at expiration. American options can exercise any time before expiration. This optionality has economic value, but holders exercise only when rational — specific conditions.</p>
+<p><span class="gloss" title="An option that can be exercised only at expiry. US-listed index options such as SPX and XSP are European-style.">European-style options</span> exercise only at expiration, while <span class="gloss" title="An option that can be exercised at any time up to expiry. US-listed options on single stocks and exchange-traded funds, such as SPY, are American-style.">American-style options</span> can <span class="gloss" title="To use the right an option gives: for a call, to buy the underlying at the strike price, and for a put, to sell it there. A cash-settled option is exercised by paying the in-the-money amount in cash.">exercise</span> at any time before it. Although this optionality has economic value, holders exercise early only when it is rational, which takes specific conditions.</p>
 
 <p><strong>Early exercise of American puts</strong> is rational when:</p>
 
 <ul>
-<li>Put is deep ITM (low time value remaining)</li>
-<li>Interest rates are non-trivial (receiving strike cash earlier worth more than holding the option)</li>
-<li>Dividend yield is low (low opportunity cost vs short-stock equivalent)</li>
+<li>The put is deep in the money, so little time value remains.</li>
+<li>Interest rates are non-trivial, so receiving the strike's cash earlier is worth more than holding the option.</li>
+<li>The dividend yield is low, so the opportunity cost against the short-stock equivalent is low.</li>
 </ul>
 
-<p>Rule of thumb: deep ITM put with very low time value (&lt;$0.50) and a strike that would generate &gt;2% annual interest on the released cash sees rational early exercise. A 0.30-delta put with $3 of time value never gets exercised early.</p>
+<p>A rule of thumb says that early exercise is rational for a deep ITM put with very low time value (under $0.50) whose strike would earn more than 2% a year in interest on the released cash. A 0.30-delta put with $3 of time value never gets exercised early. <a class="xref" href="12h.html">Chapter 12H</a> states the test as a comparison: exercise when the strike times the interest rate times the time to expiry exceeds the remaining time value.</p>
 
-<p><strong>Early exercise of American calls</strong> is rational only <strong>before large dividends</strong>. For non-dividend-paying stocks, early exercise of an American call is strictly suboptimal — you give up time value and get nothing in return.</p>
+<p><strong>Early exercise of American calls</strong> is rational only <strong>before large dividends</strong>. For non-dividend-paying stocks, early exercise of an American call is strictly suboptimal, because you give up time value and get nothing in return. The exception is the dividend: a call holder who exercises before the <span class="gloss" title="The first day on which a buyer of a stock no longer receives its next dividend. The share price typically drops by about the dividend that morning.">ex-dividend date</span> receives the dividend, so early exercise can be rational when</p>
 
-<p>Dividend exception: a call holder who exercises before ex-dividend receives the dividend. If</p>
+<div class="eq" id="e-divex">
+\[ \text{dividend} &gt; \text{time value of the call} \]
+</div>
 
-<pre>Dividend amount &gt; Time value of the call</pre>
+<p>For deep ITM American calls with low time value and a large upcoming dividend, this condition fires.</p>
 
-<p>then early exercise can be rational. For deep-ITM American calls with low time value and a large upcoming dividend, this fires.</p>
+<div class="worked">
+<span class="ct">Worked example: Two early exercises</span>
+<p><strong>Step 1: a deep ITM put.</strong> A put struck at $100 on a stock at $60 has three months left and $0.20 of time value, with rates at 4%. Exercising now releases $100 of cash, which earns about \(100 \times 0.04 \times 0.25 = \$1.00\) of interest by expiry. That is more than the $0.20 of time value given up, so exercise is rational.</p>
 
-<p><strong>Implications for short-option positions</strong>:</p>
+<p><strong>Step 2: a deep ITM call before a dividend.</strong> A call struck at $100 on a stock at $150 trades at $50.30, which is $0.30 of time value, on the day before a $1.00 dividend goes ex. Exercising today captures the $1.00 at the cost of the $0.30, so by <a class="eqref" href="#e-divex"></a> the holder gains $0.70 by exercising.</p>
+</div>
 
-<p>A trader short a deep-ITM American put can wake up to find it exercised early — converting the short put into long stock at strike. Generally fine (cash → stock at a known price) but it ends the option's continued role.</p>
+<p>For short-option positions, these conditions mean that a trader short a deep ITM American put can wake up to find it exercised early, which converts the short put into long stock at the strike. That is generally fine, since cash becomes stock at a known price, although it ends the option's continued role. A trader short a deep ITM American call on a dividend stock may face early <span class="gloss" title="What happens to the seller of an option when its holder exercises it: the seller must buy or sell the underlying, or pay the cash difference, at the strike.">assignment</span> before the ex-dividend date. That leaves the trader short stock and owing the dividend: rare, but operationally important.</p>
 
-<p>A trader short a deep-ITM American call on a dividend stock may face early assignment before ex-div — leaving them short stock with the dividend obligation. Rare but operationally important.</p>
+<p><strong>The SPX, XSP and RUT exemption:</strong> European-style index options (SPX, XSP, RUT, NDX) have no early exercise. This eliminates an entire class of operational risk relative to SPY, which is American-style, and relative to individual-stock options.</p>
 
-<p><strong>SPX/XSP/RUT exemption</strong>: European-style index options (SPX, XSP, RUT, NDX) have no early exercise. This eliminates an entire class of operational risk relative to SPY (American) and individual-stock options.</p>
+<h2 id="the-other-risks-the-ones-the-greeks-miss">4 · The other risks: the ones the Greeks miss</h2>
 
-<h2 id="the-other-risks-the-ones-the-greeks-miss">4 · The other risks (the ones the Greeks miss)</h2>
+<p>The Greeks describe sensitivities to smooth changes in price, time and volatility. They do not describe discontinuous events, structural-market risks or path-dependent dynamics. Each of the risks below has destroyed more retail accounts than missed delta calls.</p>
 
-<p>The Greeks describe sensitivities to smooth changes in price, time, and volatility. They do not describe discontinuous events, structural-market risks, or path-dependent dynamics. Each of these risks has destroyed more retail accounts than missed delta calls.</p>
+<h3 id="pin-risk">Pin risk</h3>
 
-<p><strong>Pin risk.</strong> The chaos that descends on option sellers when the underlying closes near a strike at expiration. In a perfectly rational world, the option holder exercises if ITM by even one cent and lets the option expire if OTM by any amount. In practice, the final-minute price fluctuates, settlement prints may differ from the close, and you go home Friday not knowing if you'll be assigned. Come Monday morning, you might wake up with 100 shares per contract — long or short — that you didn't plan for, fully exposed to the weekend gap.</p>
+<p><strong><span class="gloss" title="The risk, near expiry, that the underlying settles close to a strike, leaving it uncertain whether an option is exercised.">Pin risk</span></strong> is the chaos that descends on option sellers when the underlying closes near a strike at expiration. In a perfectly rational world, the holder exercises an option that is in the money by even one cent and lets expire one that is out of the money by any amount. In practice, the final-minute price fluctuates and settlement prints may differ from the close. You go home on Friday not knowing whether you are to be assigned. Come Monday morning, you might wake up with 100 shares per contract, long or short, that you did not plan for and that are fully exposed to the weekend gap.</p>
 
-<p>The defense against pin risk: <strong>close any short option trading near its strike in the final hour before expiration</strong>. The small premium you give up by closing early is dwarfed by the cost of an unplanned weekend position. Or, structurally, trade cash-settled index options (SPX/XSP) which have no physical delivery and therefore no pin risk in the traditional sense — though they have the related risk that the SOQ settlement can produce a print different from the previous close.</p>
+<p><a class="xref" href="5d.html">Chapter 5D</a> showed why the strike is so treacherous at the end: color compresses gamma into a spike there, so the smallest move flips the option between in and out of the money.</p>
+
+<p>The defense against pin risk is to <strong>close any short option trading near its strike in the final hour before expiration</strong>. The small premium you give up by closing early is dwarfed by the cost of an unplanned weekend position. Structurally, you can instead trade <span class="gloss" title="Settling an option or future by paying the in-the-money amount in cash instead of delivering the underlying. SPX options are cash-settled.">cash-settled</span> index options (SPX, XSP), which have no physical delivery and therefore no pin risk in the traditional sense. They have a related risk: the settlement print can differ from the previous close. For the standard monthly SPX options that print is the <span class="gloss" title="The settlement value of AM-settled index options, built from the first reported trade of each component stock on the expiry morning. It can differ from every index level quoted that morning. Abbreviated SOQ.">SOQ</span>, set on the morning of expiry, and <a class="xref" href="12h.html">Chapter 12H</a> gives the expiration timeline.</p>
+
+<p>The figure sets up a short call or put at one strike and lets you watch expiry arrive, pricing with a rate of 4% and no dividends. The sliders set the short strike (400 to 700, starting at 580), the current spot, the hours to expiry (0.5 to 48, starting at 24) and the IV (5% to 80%, starting at 20%). Spot starts at 580 and stays within $20 of the strike. The curve is the option's gamma across spot from 3% below the strike to 3% above, scaled to its own peak. The readouts give the call's delta at the current spot, a "pin probability" and the distance from the strike. The table below moves spot by weekend gaps of 1% to 3% either way and says which short option then expires in the money and is assigned.</p>
+
+<p>The "pin probability" is a rough gauge, \(1 - 2\,|\Delta - 0.5|\), where \(\Delta\) is the call's delta. It reads 100% at a delta of 0.5 and zero as the delta reaches 0 or 1, which makes it a gauge of closeness rather than a probability of anything. Run the hours down from 24 to 0.5 with spot at the strike, then set spot $2 above the strike and run them down again.</p>
 
 <figure class="fig" id="fig-pin-risk-scenario">
   <canvas id="pin-risk-scenario-c" data-h="210"></canvas>
@@ -122,25 +186,141 @@
   0.5, zero as the delta reaches 0 or 1.</figcaption>
 </figure>
 
-<p><strong>Early exercise.</strong> American-style options can be exercised at any time, not just at expiration. The holder of an ITM call has economic incentive to exercise early just before a dividend (to capture the dividend at the cost of the time value forgone). The holder of a deep ITM put has incentive to exercise early to receive the strike cash and reinvest it at the risk-free rate. Short positions can be assigned without warning when this happens.</p>
+<p>At the starting settings, with spot on the strike and 24 hours left, the call's delta is 0.506 and the gauge reads 98.7%. As the hours run down, the gamma curve narrows to a spike at the strike. With spot $2 above the strike, the gauge reads 73% at 24 hours. At half an hour the delta has reached 0.99 and the gauge only 2.3%: the outcome is all but settled unless spot moves. With spot on the strike, every row of the gap table puts one of the two in the money and assigned: the call after an up-gap, the put after a down-gap.</p>
 
-<p>For European-style cash-settled index options (SPX, XSP, NDX, VIX, RUT), early exercise is impossible — the contract structure precludes it. This is one of several structural advantages of trading SPX/XSP for systematic income strategies.</p>
+<div class="worked">
+<span class="ct">Worked example: What a pin costs over a weekend</span>
+<p><strong>Step 1: the assignment.</strong> You are short one SPY put struck at 580, and SPY closes Friday just below 580. The put is assigned, leaving you 100 shares bought at $580, or $58,000 of stock you did not plan to hold.</p>
 
-<p><strong>Gap risk.</strong> The risk that the underlying opens at a price meaningfully different from the previous close, leaving a gap on the chart. Short positions held overnight or over weekends are exposed to the full gap; long positions are insulated by their bounded loss. Gap risk is large for single stocks (earnings releases produce 10-20% gaps regularly), modest for SPY (typical Monday gap of 0.2-0.5%, occasionally 2-5% on stress weekends), and zero for cash-settled SPX options (where the settlement reference at expiry is the SOQ, not a continuous price). For physically-settled SPY positions held into expiry, gap risk includes the weekend between Friday's settlement and Monday's open — you receive shares Friday and absorb the Monday gap in full.</p>
+<p><strong>Step 2: the gap.</strong> SPY opens Monday about 2% below the strike, at \(580 \times 0.98 = 568.40\). The shares have lost \((580 - 568.40) \times 100 = \$1{,}160\) before you can trade.</p>
 
-<p><strong>Liquidity risk.</strong> The risk that bid-ask spreads widen dramatically or that depth disappears at exactly the moment you need to exit. Liquidity risk is small for SPY ATM options on a typical day and large for deep OTM single-name options in stress. The 2020 March drawdown saw bid-ask spreads on liquid index options expand to 10× their typical width during the most volatile sessions. Traders attempting to roll positions during these sessions faced execution costs that wiped out months of accumulated premium.</p>
+<p><strong>Step 3: a stress weekend.</strong> A 5% gap, at the top of the occasional 2% to 5% range for SPY, costs \(580 \times 0.05 \times 100 = \$2{,}900\) per contract, on a put that was worth a few cents in Friday's final minutes.</p>
+</div>
 
-<p>The defense: avoid trading positions you cannot afford to hold to expiration. Avoid OTM strikes with low OI. Plan to close positions during normal liquidity conditions (mid-day, low VIX), not during stress.</p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Pin risk is the equivocal result at a diagnostic cut-off. A biomarker measured far from its threshold classifies a patient reliably. A value sitting on the cut-off can fall either side on a repeat assay, because small measurement noise decides the call. An option at its strike in the last minutes is in that position. The price is the assay and the strike the cut-off, while the noise of the final prints decides whether you are assigned.</p>
+</div>
 
-<p><strong>Borrow cost.</strong> For strategies involving short stock (which retail rarely does directly, but which underlies certain synthetic positions), the cost to borrow shares can be substantial — particularly for stocks under short squeeze pressure. GameStop in early 2021 had borrow rates exceeding 100% annualized at peak. The borrow cost is paid by the short side and is invisible in standard option pricing models but very real in execution.</p>
+<h3 id="early-exercise">Early exercise</h3>
 
-<p><strong>Margin expansion risk.</strong> The <a class="xref" href="3c.html">Section 3C</a> discussion of portfolio margin in stress. Position sizing that's comfortable in calm conditions can become forced-liquidation territory in stress as margin requirements expand. The retail discipline: never run margin-leveraged positions whose stress-scenario losses would force liquidation. Use cash-secured strategies or pre-committed kill rules to avoid this.</p>
+<p>American-style options can be exercised at any time, not just at expiration. The holder of an ITM call has an economic incentive to exercise early just before a dividend, to capture the dividend at the cost of the time value forgone. The holder of a deep ITM put has an incentive to exercise early to receive the strike's cash and reinvest it at the risk-free rate. Short positions can be assigned without warning when this happens.</p>
 
-<p><strong>Counterparty risk.</strong> For exchange-listed options cleared through the OCC, this is effectively zero — the OCC has never failed to deliver in its history. For OTC options, this risk is real and is the primary reason most retail traders should never trade OTC products.</p>
+<p>For European-style, cash-settled index options (SPX, XSP, NDX, VIX, RUT), early exercise is impossible: the contract structure precludes it. This is one of several structural advantages of trading SPX and XSP for systematic income strategies.</p>
 
-<h2 id="course-complete">5 · Course complete</h2>
+<h3 id="gap-risk">Gap risk</h3>
 
-<p>You now have the options foundation: contract mechanics, premium anatomy, the chain, all five primary Greeks, the higher-order Greeks, volatility math from log returns to estimators to the surface, put-call parity, and the structural risks the Greeks miss. Everything from here on out — dealer mechanics, GEX aggregation, regime analysis, tactical swing trading, the strategy atlas — builds on these primitives. If a later chapter assumes something you haven't seen yet, the answer is almost always in <a class="xref" href="5a.html">Section 5</a> above or in Sections 1-4.</p>
+<p><strong><span class="gloss" title="The risk that the underlying opens at a price well away from its previous close, so that a position held overnight or over a weekend takes the whole jump with no chance to trade out.">Gap risk</span></strong> is the risk that the underlying opens at a price meaningfully different from the previous close, leaving a gap on the chart. Short positions held overnight or over weekends are exposed to the full gap, while long positions are insulated by their bounded loss. Gap risk is large for single stocks, where earnings releases produce gaps of 10% to 20% regularly. It is modest for SPY, whose typical Monday gap is 0.2% to 0.5%, occasionally 2% to 5% on stress weekends. It is zero for cash-settled SPX options at expiry, where the settlement reference is a single print (the SOQ, for the monthly options) rather than a continuous price. No shares are delivered to carry through a weekend.</p>
+
+<p>For <span class="gloss" title="Settling an option or future by delivering the underlying itself, such as 100 shares of SPY for each assigned contract, rather than cash.">physically settled</span> SPY positions held into expiry, gap risk includes the weekend between Friday's settlement and Monday's open. You receive shares on Friday and absorb Monday's gap in full, as in the worked example above.</p>
+
+<h3 id="liquidity-risk">Liquidity risk</h3>
+
+<p><strong>Liquidity risk</strong> is the risk that <span class="gloss" title="The gap between the highest price a buyer offers, the bid, and the lowest price a seller asks, the ask. Crossing it is the immediate cost of trading.">bid-ask spreads</span> widen dramatically, or that depth disappears, at exactly the moment you need to exit. It is small for SPY ATM options on a typical day and large for deep OTM single-name options in stress. In the March 2020 drawdown, bid-ask spreads on liquid index options expanded to 10 times their typical width during the most volatile sessions. Traders attempting to roll positions during those sessions faced execution costs that wiped out months of accumulated premium.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A roll at ten times the spread</span>
+<p><strong>Step 1: normal conditions.</strong> Suppose an option's spread is normally $0.20 wide, so each trade at the far side of the quote costs $0.10 against the midpoint, or $10 per contract on a multiplier of 100.</p>
+
+<p><strong>Step 2: stress.</strong> At 10 times the width the spread is $2.00, so each trade costs $1.00 against the midpoint, or $100 per contract.</p>
+
+<p><strong>Step 3: the roll.</strong> A roll closes one option and opens another, so it crosses the spread twice. On 10 contracts it costs \(2 \times 100 \times 10 = \$2{,}000\) in stress, against $200 normally.</p>
+</div>
+
+<p>The defense is to avoid trading positions you cannot afford to hold to expiration. Avoid OTM strikes with low <span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">open interest</span> (OI). Plan to close positions during normal liquidity conditions, such as mid-day with the VIX low, not during stress.</p>
+
+<h3 id="borrow-cost">Borrow cost</h3>
+
+<p>For strategies involving short stock, the cost to borrow shares can be substantial, particularly for stocks under short-squeeze pressure. Retail traders rarely short stock directly, although short stock underlies certain synthetic positions. GameStop in early 2021 had borrow rates exceeding 100% annualized at peak. The <strong><span class="gloss" title="The fee a short seller pays to borrow the shares sold, quoted as an annual rate. It can be very high for stocks in a short squeeze, and it makes puts dearer relative to calls.">borrow cost</span></strong>, paid by the short side, is invisible in standard option pricing models but very real in execution. Parity shows where it goes: it lowers \(C - P\), as the synthetic-long example above showed.</p>
+
+<h3 id="margin-expansion-risk">Margin expansion risk</h3>
+
+<p>The discussion of portfolio margin in stress, in Chapters 1E and 2E, applies with full force to options. Position sizing that is comfortable in calm conditions can become forced-liquidation territory in stress, as margin requirements expand. The retail discipline is never to run margin-leveraged positions whose stress-scenario losses would force liquidation. Use cash-secured strategies, or pre-committed kill rules, to avoid it.</p>
+
+<h3 id="counterparty-risk">Counterparty risk</h3>
+
+<p><strong><span class="gloss" title="The risk that the other side of a contract fails to pay what it owes. For exchange-listed options it is carried by the clearinghouse; for over-the-counter contracts it stays with each side.">Counterparty risk</span></strong> is the risk that the other side of a contract fails to pay. For exchange-listed options cleared through the <span class="gloss" title="The central clearinghouse for all US-listed options. Once a trade clears, it is the counterparty to both sides. Abbreviated OCC.">OCC</span>, this is effectively zero: the OCC has never failed to deliver in its history. For <span class="gloss" title="Said of a contract negotiated directly between two parties rather than traded on an exchange, with terms they set and credit risk each bears to the other. Abbreviated OTC.">OTC</span> options the risk is real, which is the primary reason most retail traders should never trade OTC products (<a class="xref" href="4a.html">Chapter 4A</a>).</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Before expiry week, sort each short option you hold by how it settles. A European, cash-settled index option such as SPX or XSP cannot be exercised early and delivers no shares. Its remaining expiry risk is the settlement print, which for the monthly SPX options is the SOQ. An American, physically settled option on SPY or a single stock carries all of the risks above: early assignment, pin risk at the close and the weekend gap on any shares delivered.</p>
+
+<p>For the second kind, decide in advance what to do in the final hour. Close shorts near the strike rather than wait for the settlement print. Multiply every assignment by 100 shares a contract before you trade (<a class="xref" href="5a.html">Chapter 5A</a>), so that you know how much stock could arrive on Monday.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Parity is exact for European options with no frictions. For American options, early exercise loosens it from an equation to a range. Dividends and borrow fees shift it, as <a class="eqref" href="#e-pcpq"></a> shows, while the bid-ask spread on each leg blurs it further. Closing a short option in the final hour assumes a market to close into. In stress, liquidity risk and pin risk can arrive together, so the exit costs more than the calm-day spread.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Close short options near the strike in the final hour</strong> before expiry, unless they are cash-settled and you accept the settlement print.</li>
+<li><strong>For systematic income strategies, prefer European, cash-settled index options</strong> (SPX, XSP), which remove early exercise and delivery.</li>
+<li><strong>Before an ex-dividend date</strong>, expect a short deep ITM American call to be assigned whenever the dividend exceeds its time value. Close or roll it first if you do not want to be short the stock.</li>
+<li><strong>Size every short-option position for the stressed margin requirement</strong>, not the calm one, or hold it cash-secured.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "covered calls are conservative, selling puts is reckless"</span>
+<p>A covered call and a cash-secured put at the same strike have the same payoff, the same downside and the same Greeks. If one is too risky for your account, so is the other. Choose between them on operational grounds, such as whether you already own the stock or would rather post cash (<a class="xref" href="2e.html">Chapter 2E</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "cash-settled means no expiry risk"</span>
+<p>Cash settlement removes delivery and the weekend gap on delivered shares without removing the settlement print. For the monthly SPX options the print is the SOQ, which can differ from the previous close. A short option that was out of the money on Thursday's close can settle in the money on Friday morning.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Put-call parity, \(C - P = S - Ke^{-rT}\), ties every European call to the put with the same strike and expiry. Every position has a synthetic twin with the same payoff.</li>
+<li>A covered call and a cash-secured put at the same strike are the same position under two names.</li>
+<li>American options can be exercised early: puts when deep in the money and rates are material, calls just before a dividend larger than their time value. SPX, XSP, NDX, VIX and RUT options are European and cannot be.</li>
+<li>The Greeks miss pin risk, early exercise, gap risk, liquidity risk, borrow cost, margin expansion and counterparty risk. Cash-settled European index options remove several of them, though not the settlement print.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">5 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A stock is at $50, and European options struck at 50 have six months left, with a rate of 4% and no dividends. If the call costs $3.50, what must the put cost?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The strike's present value is \(50 \times e^{-0.02} = 49.01\), so parity requires \(C - P = 50 - 49.01 = 0.99\). The put must cost \(3.50 - 0.99 = \$2.51\).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A friend who sells covered calls on a stock calls it conservative. The same friend refuses to sell cash-secured puts on that stock at the same strike, because that is "too risky". What is wrong with this reasoning?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By put-call parity the two positions have the same payoff: a credit up front, the same capped gain and the same loss if the stock falls. Their Greeks are the same too, leaving only operational differences, such as needing to own the shares for the covered call.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>You are short an American put struck at $100 with six months left. The stock is at $70, the put has $0.15 of time value and rates are 5%. Should you expect early assignment?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Yes, you should: exercising releases $100 of cash, which earns about \(100 \times 0.05 \times 0.5 = \$2.50\) of interest by expiry, far more than the $0.15 of time value the holder gives up. It is also under the rule of thumb's $0.50 of time value.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A deep ITM American call has $1.20 of time value, and a $0.80 dividend goes ex tomorrow. Should its holder exercise?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No: by <a class="eqref" href="#e-divex"></a> exercise pays only when the dividend exceeds the time value, whereas here the holder would give up $1.20 to collect $0.80.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You are short five SPY puts struck at 580 when SPY closes Friday at 579 and then opens 3% lower on Monday. What has the weekend cost you?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The puts are in the money at the close, so you are assigned 500 shares at $580. Monday's open is \(579 \times 0.97 = 561.63\), so the shares are worth \((580 - 561.63) \times 500 = \$9{,}185\) less than you paid, before any premium you collected. With cash-settled XSP options at the same strike, the loss would have been fixed by the settlement print, with no shares to carry through the weekend.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -386,15 +566,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

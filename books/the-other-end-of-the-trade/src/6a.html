@@ -1,40 +1,251 @@
-<p class="eyebrow">Part VI · Dealer Mechanics · Chapter 6A</p>
+<p class="eyebrow">Part VI · Dealers · Chapter 6A</p>
 
-<h1>What you'll learn and why</h1>
+<h1>Who is on the other side</h1>
+
+<p class="subtitle">The dealer's business</p>
 
 <div class="callout where">
-<span class="ct">About this part</span>
-<p>Every option you've ever traded had someone on the other side. Not a mysterious "the market" — a specific business, with specific obligations and specific behaviors. The mechanical decisions that business is forced to make, second by second, collectively constitute one of the largest non-fundamental forces acting on the S&amp;P 500 on any given day with no news.</p>
-
-<p>This section builds that picture from absolute zero. It assumes you know what an option is and what "buy low, sell high" means — Sections 1 through 5 provide that — and nothing more. By the end, you will understand, formally, why VIX rising forces SPX selling, why 0DTE has changed the intraday character of the market, what GEX actually measures, and where the conventional GEX framework breaks. Math appears when it earns its place, and every formula is followed by what it means in plain English.</p>
-
-<p>The arc:</p>
-
-<ul>
-<li><strong>6A</strong> — Preface and roadmap</li>
-<li><strong>6B</strong> — The trade: who is actually on the other side of your option order</li>
-<li><strong>6C</strong> — Greek inheritance: what exposures the dealer has just acquired</li>
-<li><strong>6D</strong> — Delta hedging: how the dealer mechanically neutralizes the directional risk</li>
-<li><strong>6E</strong> — The gamma engine: why the hedge doesn't stay neutralized, and why this drives the entire mechanism</li>
-</ul>
-
-<p>Chapters 7-9 then derive the formal mathematics (7), aggregate the per-position dynamics across the market (8), and apply the framework to VIX, 0DTE, and reading the tape (9).</p>
+<span class="ct">Where we are</span>
+<p><a class="xref" href="5a.html">Part V</a> taught the option contract and the Greeks that measure its risk. This part turns to the firm that sells you the option: who it is, why it takes your trade, and what it is then forced to do. This chapter meets that firm and follows one order from your click to its expiry.</p>
 </div>
 
-<hr>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The bid-ask spread (<a class="xref" href="1f.html">Chapter 1F</a>) and adverse selection (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+<li>Wholesalers, the NBBO and where an order is routed (<a class="xref" href="2b.html">Chapter 2B</a>).</li>
+<li>The clearinghouse between the two sides of a listed trade (<a class="xref" href="4a.html">Chapter 4A</a>).</li>
+<li>Calls, puts and the contract multiplier of 100 (<a class="xref" href="5a.html">Chapter 5A</a>).</li>
+<li>Delta as a hedge ratio, in share-equivalents (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+</ul>
+</div>
 
-<p>Much of what circulates on social media and retail trading platforms about "dealer flows" and "gamma squeezes" is qualitatively right but quantitatively overstated. The academic literature gives effect sizes in tens of basis points, not full percentage points. Where I cite numbers in this section and what follows, they come from peer-reviewed work or directly from Cboe's own data. Where industry sources disagree with academia, I flag it. The goal is calibration — knowing not just <em>that</em> dealer hedging matters but <em>how much</em> it matters and <em>when</em>.</p>
+<p>Every option you have ever traded had someone on the other side: not a mysterious "market", but a specific business with specific obligations and specific behaviors. The mechanical decisions that business is forced to make, second by second, add up to one of the largest non-fundamental forces acting on the S&amp;P 500 on any given day with no news.</p>
 
-<p>A few epistemic notes that apply throughout:</p>
+<p>This part builds that picture from zero, assuming only what Parts I to V provide: what an option is, and what its Greeks measure. Mathematics appears when it earns its place, and every formula is followed by what it means in plain terms.</p>
+
+<h2 id="what-this-part-covers">1 · What this part covers</h2>
+
+<p>The five chapters of this part follow one dealer through one trade:</p>
+
+<ol>
+<li><strong>Chapter 6A</strong>, this chapter: who is on the other side of your option order, and why.</li>
+<li><strong><a class="xref" href="6b.html">Chapter 6B</a></strong>: the exposures, Greek by Greek, that the dealer acquires when it sells you the option.</li>
+<li><strong><a class="xref" href="6c.html">Chapter 6C</a></strong>: delta hedging, how the dealer mechanically neutralizes the directional risk.</li>
+<li><strong><a class="xref" href="6d.html">Chapter 6D</a></strong>: gamma, why the hedge does not stay neutral, and why this drives the whole mechanism.</li>
+<li><strong><a class="xref" href="6e.html">Chapter 6E</a></strong>: how often to re-hedge, when every rebalance costs a spread.</li>
+</ol>
+
+<p>The parts after this one build on it. <a class="xref" href="7a.html">Part VII</a> derives the formal mathematics, showing why delta hedging is the only strategy consistent with the option's price. <a class="xref" href="8a.html">Part VIII</a> adds up the per-position dynamics across the whole market, and <a class="xref" href="9a.html">Part IX</a> applies the framework to the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span>, same-day options and reading the tape. By the end of <a class="xref" href="9a.html">Part IX</a> you should understand, formally, why a rising VIX forces SPX selling and why <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options have changed the intraday character of the market. You should also know what gamma exposure measures, and where the conventional framework for it breaks.</p>
+
+<h2 id="how-much-dealer-hedging-matters">2 · How much dealer hedging matters</h2>
+
+<p>Much of what circulates on social media and retail trading platforms about "dealer flows" and "<span class="gloss" title="A rally driven by dealers buying the underlying to hedge calls they have sold, whose deltas rise as the price rises, so that each purchase lifts the price and forces the next.">gamma squeezes</span>" is qualitatively right but quantitatively overstated. The academic literature gives effect sizes in tens of basis points, not full percentage points. Where this part cites numbers, they come from peer-reviewed work or directly from Cboe's own data, and where industry sources disagree with academia, the text says so. The goal is calibration: knowing not just <em>that</em> dealer hedging matters but <em>how much</em> it matters, and <em>when</em>.</p>
+
+<div class="callout insight">
+<span class="ct">Four notes that apply throughout this part</span>
+<ul>
+<li><strong>Dealer hedging is a real and quantifiable force.</strong> It moves markets in measurable, statistically significant ways, but it is not magic.</li>
+<li><strong>The effect sizes are modest on typical days.</strong> Most days, dealer hedging accounts for tens of basis points of intraday move at most, while the dominant force is news and information flow.</li>
+<li><strong>The effect sizes can be large on stress days.</strong> <a class="xref" href="8c.html">Chapter 8C</a> describes three conditions: negative-gamma dealer positioning, mechanical rule-based hedging demand and degraded market depth. When they coexist, the linear framework can break, with effects measured in full percentage points or more.</li>
+<li><strong>Gamma exposure is positioning, not outcome.</strong> <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX), the dealers' total gamma of <a class="xref" href="8a.html">Chapter 8A</a>, tells you what dealers would do given a move. It does not tell you whether a move is coming, so do not conflate the two.</li>
+</ul>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Clinical research has taught you to separate statistical significance from effect size. A large trial can show a hazard ratio of 0.95 with a tiny p-value while the absolute benefit is too small to change practice. Dealer hedging is in that position on most days: the effect is real and significant, and it is measured in tens of basis points. Stress days are the subgroup in which the effect becomes large.</p>
+</div>
+
+<p>The two traditions this book draws on weigh this force differently. The dealer-mechanics tradition of this part treats dealer hedging as a measurable force, modest most days and large in stress. The edge-by-edge case of <a class="xref" href="10a.html">Part X</a> is more skeptical. It cites a 2025 Cboe study estimating 0DTE market-maker gamma hedging at about 0.2% of SPX daily liquidity, and it uses the sign of dealer gamma only as low-confidence context (<a class="xref" href="10h.html">Chapter 10H</a>). It also rejects trading around gamma-exposure levels in a retail account (<a class="xref" href="10i.html">Chapter 10I</a>). Read the chapters that follow with both positions in mind.</p>
+
+<p>With those caveats in place, the chapters of this part are some of the most important framework material in the book.</p>
+
+<h2 id="the-market-maker-is-not-betting-against-you">3 · The market maker is not betting against you</h2>
+
+<p>Begin with a single small trade: you buy one <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> call option, strike $600, expiring in 30 days. You click "buy" in your broker's app, and a millisecond later you own the contract. Somewhere, a market maker now holds the opposite of what you hold: it is short a call. Who is it, and why did it take the other side?</p>
+
+<p><strong>This is the most important point in this part.</strong> A <strong><span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market maker</span></strong>, called the <strong>dealer</strong> in options, is not a speculator on the other side of your trade. It has no view on whether SPY goes up or down. Its entire business is to quote two prices at once, a bid at which it buys and an offer at which it sells, and to capture the spread between them.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The spread on one contract</span>
+<p><strong>Step 1: the quote.</strong> Suppose the call has a fair value of $5.00, around which the market maker quotes a bid of $4.95 and an offer of $5.05.</p>
+
+<p><strong>Step 2: the round trip.</strong> You buy at the offer, $5.05, while the market maker stands ready to buy the same contract back from someone else at the bid, $4.95. If it completes that round trip, it keeps $0.10 a share.</p>
+
+<p><strong>Step 3: the contract.</strong> One contract covers 100 shares, so the round trip earns $0.10 × 100 = $10.</p>
+</div>
+
+<p>A $10 round trip is small until you multiply it by 100 contracts a second, across every option in every name. Then a franchise emerges, built on scale rather than on being right about direction.</p>
 
 <div class="callout brick">
-<p><strong>Dealer hedging is a real and quantifiable force.</strong> It moves markets in measurable, statistically significant ways. It is not magic.</p>
-
-<p><strong>The effect sizes are modest on typical days.</strong> Most days, dealer hedging accounts for tens of basis points of intraday move at most. The dominant force is news and information flow.</p>
-
-<p><strong>The effect sizes can be large on stress days.</strong> When the conditions described in <a class="xref" href="8c.html">Section 8C</a> coexist — negative-gamma dealer positioning, mechanical rule-based hedging demand, degraded market depth — the linear framework can break and effects can be measured in full percentage points or more.</p>
-
-<p><strong>GEX is positioning, not outcome.</strong> It tells you what dealers would do given a move; it does not tell you whether a move will happen. Don't conflate the two.</p>
+<p>"By taking the market risk to trade in this fashion, market makers can earn a 'spread' between the bid and the ask. In today's highly competitive and efficient markets, the bid-ask spread is often much less than one percent of the price of a security." Citadel Securities</p>
 </div>
 
-<p>With those caveats in place, the chapters that follow are some of the most important framework material in this book.</p>
+<p>In US-listed options, a small number of firms dominate this business. The table below summarizes the shares that <a class="xref" href="2b.html">Chapter 2B</a> gives from 2025 and 2026 data, where the denominators behind them are spelled out.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Firm</th><th class="c-result">Role</th></tr></thead><tbody><tr><td class="c-trial">Citadel Securities</td><td class="c-result">About 35% of all US-listed retail equities and options volume</td></tr><tr><td class="c-trial">Susquehanna International Group (SIG)</td><td class="c-result">Historically dominant in options market making</td></tr><tr><td class="c-trial">Wolverine Trading</td><td class="c-result">Institutional and options franchise</td></tr><tr><td class="c-trial">Virtu Financial</td><td class="c-result">Historically the second-largest retail wholesaler</td></tr><tr><td class="c-trial">Jane Street</td><td class="c-result">Dominant ETF market maker; $39.6 billion of net trading revenue in 2025</td></tr><tr><td class="c-trial">Hudson River Trading</td><td class="c-result">About 20% of US cash equities; entered retail in 2022</td></tr><tr><td class="c-trial">Optiver, IMC, DRW</td><td class="c-result">Further institutional liquidity providers</td></tr></tbody></table></div></div>
+
+<p>The Big Three options <span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">wholesalers</span>, Citadel, SIG and Wolverine, together execute roughly 85% of retail options order flow. Beside them sit the dominant institutional liquidity providers: Jane Street, Optiver, IMC and DRW. Jane Street's net trading revenue alone, $20.5 billion in 2024 followed by $39.6 billion in 2025, shows how thick the layer of intermediation is between you and any counterparty with an actual directional view.</p>
+
+<h2 id="the-problem-the-dealer-just-created">4 · The problem the dealer just created</h2>
+
+<p>Back to the trade: you bought a call and the dealer sold it, so the dealer is now <strong>short a call</strong>. It loses money if SPY rallies and makes money if SPY falls. It holds a directional exposure that it did not want and is not paid to hold.</p>
+
+<p>Carrying that exposure overnight is unthinkable, because the dealer captured a spread of about 10 cents a share while a modest move against the position costs many times that.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One move against one contract</span>
+<p><strong>Step 1: the loss.</strong> With SPY at $600, a 1% rally is $6, which at a delta of 0.50 (<a class="xref" href="5c.html">Chapter 5C</a>) costs the short call about 0.50 × $6 = $3 a share, or $300 a contract.</p>
+
+<p><strong>Step 2: the comparison.</strong> That is 30 times the $10 round-trip spread, so across a whole book the dealer would lose months of franchise profit on a single bad afternoon.</p>
+</div>
+
+<p>So the dealer neutralizes the directional exposure at once and mechanically, by <strong><span class="gloss" title="Holding the underlying in the amount that offsets a position's delta, so that small moves in the underlying's price leave the combined position's value unchanged. The hedge must be reset as delta changes.">delta hedging</span></strong>. Delta hedging, the subject of <a class="xref" href="6c.html">Chapter 6C</a>, is the engine that drives nearly everything in this part and the three after it.</p>
+
+<h2 id="one-trade-end-to-end">5 · One trade, end to end</h2>
+
+<p>Walk through what happens when you click "buy" on a single SPY $600 call. The chain is mechanical, fast and almost entirely invisible to you, with times measured from your click in milliseconds (ms).</p>
+
+<ol>
+<li><strong>At 0 ms</strong>, you click "buy" at the <span class="gloss" title="The highest bid and the lowest offer displayed for a security across the registered exchanges at a given moment. Trades must execute at or inside it. Abbreviated NBBO.">NBBO</span> offer of $3.05, sending a <span class="gloss" title="A limit order priced at or through the current best quote on the other side, so that it fills at once in normal conditions but never beyond its limit.">marketable limit order</span> at $3.05 for one contract.</li>
+<li><strong>At 1 to 3 ms</strong>, your broker's routing engine decides which venue gets the order. For SPY, an equity option, that is almost always a wholesaler: Citadel Securities, Susquehanna or Wolverine. <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span> and <span class="gloss" title="The Mini-SPX index option, one tenth the size of an SPX option.">XSP</span> index options route directly to Cboe instead (<a class="xref" href="2b.html">Chapter 2B</a>).</li>
+<li><strong>At 3 to 5 ms</strong>, the wholesaler's internal matching engine checks its principal book, the inventory it trades for its own account, where its own mark on the call is $3.03. It fills you at the NBBO, $3.05, which gives you no <span class="gloss" title="A fill at a better price than the National Best Bid and Offer on your side: below the best offer for a buy, or above the best bid for a sell.">price improvement</span> against the public offer and gives it $0.02 a share over its internal mark. That $0.02 is its actual edge.</li>
+<li><strong>At 5 to 10 ms</strong>, the wholesaler is short one SPY $600 call, and its risk system computes the delta at the current spot as 0.58. That makes it short 58 share-equivalents, so the system fires a hedge order in SPY shares, typically batched with hundreds of other flows arriving at the same moment.</li>
+<li><strong>At 10 to 50 ms</strong>, the wholesaler buys 58 SPY shares, or proportionally fewer if opposite flow already offsets part of the exposure. The hedge typically executes at or inside the NBBO, through <span class="gloss" title="Filling a customer's order against the firm's own book instead of sending it to an exchange. A wholesaler that internalizes nets buyers against sellers and hedges only the difference.">internalization</span>, a <span class="gloss" title="A registered exchange that displays its order book publicly, so that its best bids and offers feed the National Best Bid and Offer.">lit exchange</span> or an <span class="gloss" title="The regulatory name for a trading venue that is not a registered exchange, such as a dark pool. Abbreviated ATS.">alternative trading system</span> (ATS). The principal book is now delta-flat with respect to your trade.</li>
+<li><strong>One day later</strong>, the trade settles. You hold one long call, with no shares delivered until exercise or expiry, while the wholesaler's offsetting short is registered at the <span class="gloss" title="The central clearinghouse for all US-listed options. Once a trade clears, it is the counterparty to both sides. Abbreviated OCC.">Options Clearing Corporation</span> (OCC). From then on your counterparty risk is on the OCC, not on the wholesaler.</li>
+<li><strong>Throughout the option's life</strong>, the wholesaler delta-hedges continuously as spot moves, with gamma, vanna and charm all feeding in (<a class="xref" href="5d.html">Chapter 5D</a>). Its profit and loss (P&amp;L) over the trade's life depends on whether realized volatility along the hedge path exceeds the implied volatility (IV) built into your $3.05 fill. That comparison is the gamma-theta arithmetic of <a class="xref" href="5c.html">Chapter 5C</a>.</li>
+<li><strong>At expiry</strong>, if the call expires worthless, you lose the premium and the wholesaler keeps it, less its hedge P&amp;L. If it expires in the money (ITM), SPX and XSP settle in cash, while SPY settles physically, with shares changing hands.</li>
+</ol>
+
+<h2 id="the-franchise-at-scale">6 · The franchise at scale</h2>
+
+<p>One trade looks negligible: $0.02 of edge on a one-contract order is $2, so it is volume that makes the business. Citadel Securities discloses executing roughly 35% of all US retail equity and options volume. On a typical day that is billions of share-equivalents and tens of millions of options contracts running through its book.</p>
+
+<p>The whole US options market traded approximately 13.8 billion contracts in 2025. If Citadel handled 35% of the retail share, and a smaller but still substantial fraction of institutional flow, its annual options volume runs to billions of contracts. The franchise's revenue, in simplified form, is the edge on each contract times the contracts traded, less what the dealer spends:</p>
+
+<div class="eq" id="e-franchise">
+\[ \begin{aligned}
+\text{Revenue} = {} &amp; \textstyle\sum_i e_i\, n_i \\
+&amp; - \text{hedge slippage} \\
+&amp; - \text{technology and pay}
+\end{aligned} \]
+</div>
+
+<p>Here \(e_i\) is the edge per contract on product \(i\) and \(n_i\) the number of contracts traded in it. Hedge <span class="gloss" title="The gap between the price you expected or used as a reference, such as the best quote or the mid, and the average price you actually got.">slippage</span> is what the dealer loses between the price it expects for its hedges and the price it gets.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A toy franchise</span>
+<p>Suppose a wholesaler earns $1.00 of edge a contract on 1 billion contracts a year. The first term of <a class="eqref" href="#e-franchise"></a> is then $1 billion, before slippage, technology and pay, and at $2.00 a contract on 2 billion contracts it is $4 billion.</p>
+</div>
+
+<p>Per-contract edges run from about $0.50 to $2.00 across the retail options book. With hundreds of millions of contracts a year, the franchise produces multi-billion-dollar revenues consistently. The arithmetic is dispiriting if you imagine taking the other side, and gratifying if you are the wholesaler. Jane Street's $20.5 billion in 2024 and $39.6 billion in 2025 are not aberrations: they are the profile a high-volume franchise with a small edge per trade tends toward at scale.</p>
+
+<h2 id="risk-capital-and-alpha-capital">7 · Risk capital and alpha capital</h2>
+
+<p>Two kinds of capital are at work in any market-making operation. Telling them apart shows what dealers care about and what they do not.</p>
+
+<p><strong><span class="gloss" title="The collateral a dealer must hold against its open positions, sized to cover the worst loss it could take before it can unwind them. Regulators set it through stress tests.">Risk capital</span></strong> is the collateral the dealer must post against its open positions, sized to cover the worst loss it could take before it can unwind them. Regulation after 2008 (Basel III, Dodd-Frank and EMIR) made this constraint binding through stress tests. A modern dealer's biggest operational constraint is not how much it can make per trade. It is how much capital each book consumes per unit of expected revenue.</p>
+
+<p><strong><span class="gloss" title="Capital a trading firm commits to its own directional or relative-value views. Market makers run little of it compared with their risk capital.">Alpha capital</span></strong> is what a firm uses for active directional or relative-value bets: outright views the desk holds. Market makers run negligible alpha capital relative to their risk capital, since they are nominally flat in direction. In practice every dealer book carries small residual exposures that it chooses not to hedge perfectly: to skew, to the term structure, to basis and to correlation. These residuals are where the real edge of a well-run dealer book lives, and where the franchise can lose money in stress.</p>
+
+<p>If you read that "Citadel Securities lost $3 billion in March 2020", the loss almost certainly refers to the residual book, not the spread franchise. The spread franchise compounds quietly through every regime, while the residual book produces the headline losses (and the headline gains in benign years).</p>
+
+<h2 id="why-the-dealer-takes-your-trade">8 · Why the dealer takes your trade</h2>
+
+<p>Retail traders rarely ask why the dealer is willing to take the other side of <em>their</em> trade in particular, and whether it worries that they might know something.</p>
+
+<p>The honest answer is that, in aggregate, retail flow is informationally uninformed. A wholesaler internalizing $50 billion of retail flow a month does not worry that the median order knows tomorrow's news. It worries about the tails: the rare retail order that is informed, through insider activity or leaked earnings data. Those orders are flagged and routed to lit exchanges rather than internalized. Routing them out transfers the <span class="gloss" title="The loss from trading with someone who knows more than you do, so that the trades you get are the ones that are bad for you.">adverse selection</span> risk to whichever venue takes them.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Why the tails matter</span>
+<p><strong>Step 1: the mix.</strong> Suppose 999 of every 1,000 retail orders are uninformed, each leaving the wholesaler $2 of edge a contract, while the one informed order costs it $100.</p>
+
+<p><strong>Step 2: the expected edge.</strong> Per order, the wholesaler expects to earn \(0.999 \times 2 - 0.001 \times 100 = 1.998 - 0.100 = \$1.90\), a little under the $2 it makes on an uninformed order.</p>
+
+<p><strong>Step 3: the breaking point.</strong> With \(p\) for the informed fraction, the edge vanishes when \((1 - p) \times 2 = 100\,p\), which gives \(p = 2/102 = 0.0196\). At about 2 informed orders in 100 this franchise earns nothing, which is why flagging the informed few is worth so much.</p>
+</div>
+
+<p>For institutional flow the calculation is different, because a hedge fund placing a $200 million SPX options trade is presumed informed. The dealer quotes wider, or refuses, and the order goes through the order book directly. This is why "institutional spreads" on large index options trades are often 10 to 30 bps wider than the SIP NBBO that retail sees. The <span class="gloss" title="The regulated system that gathers quotes and trades from every American equity venue, computes the National Best Bid and Offer and publishes the consolidated tape. Abbreviated SIP.">Securities Information Processor</span> (SIP) is the public feed that computes that NBBO.</p>
+
+<p>The structural lesson: <strong>retail order flow is profitable to wholesalers because it is uninformed in aggregate.</strong> The wholesaler is not paid for taking risk against a smart counterparty, because it hedges at once. It is paid for providing immediacy, and for capturing the spread against the noise that retail order flow represents in aggregate.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Your SPY option order goes to a wholesaler, while your SPX order goes to Cboe.</strong> <a class="xref" href="2b.html">Chapter 2B</a> describes both paths and what each costs you.</li>
+<li><strong>The spread is the dealer's income and your cost.</strong> On the toy quote above, a round trip costs you $10 a contract before any move in the price.</li>
+<li><strong>After settlement, your counterparty is the OCC</strong>, so your claim on a listed option does not depend on the dealer that sold it.</li>
+<li><strong>Treat dealer-flow claims as effect sizes</strong>: on a typical day, expect hedging to move the index by tens of basis points at most.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The picture of a flat, hedged franchise holds on ordinary days and fails in stress in two ways. The residual book, which dealers choose not to hedge, can lose heavily. And when the conditions of <a class="xref" href="8c.html">Chapter 8C</a> coexist, hedging flows can move the index by full percentage points or more instead of tens of basis points.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "the dealer is betting against me"</span>
+<p>The belief is that the firm on the other side profits when your trade loses, and so wants you to lose. In fact it hedges the direction away within milliseconds and earns the spread whichever way the price moves. Your P&amp;L and the dealer's are not mirror images: the dealer's comes from spread and from realized against implied volatility, not from your forecast being wrong.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Before you act on a claim about dealer flows, check three things:</p>
+
+<ul>
+<li><strong>Ask for the effect size.</strong> Tens of basis points is the typical-day scale, while a claim of several percent needs the stress conditions of <a class="xref" href="8c.html">Chapter 8C</a>.</li>
+<li><strong>Separate positioning from outcome.</strong> Gamma exposure says what dealers would do if the index moved, not whether it moves, so do not trade it as a forecast.</li>
+<li><strong>Read the other tradition before you trade on it.</strong> <a class="xref" href="10a.html">Part X</a> uses the sign of dealer gamma only as low-confidence context for sizing and rejects trading around its levels (Chapters 10H and 10I), so weigh its reasons beside this part's.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The dealer on the other side of your option is a market maker, which earns the bid-ask spread at scale and is not betting on direction.</li>
+<li>Selling you an option leaves it with directional exposure it is not paid to hold, so it delta-hedges at once.</li>
+<li>Its revenue comes from edge per contract times enormous volume, and its large losses from the residual book it chooses not to hedge.</li>
+<li>Retail flow is profitable to dealers because it is uninformed in aggregate, which makes the rare informed orders the risk.</li>
+<li>Dealer hedging is a real force of tens of basis points on typical days, and larger only in stress.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>You buy 10 calls at a market maker's $5.05 offer, and it later buys them back from someone else at its $4.95 bid. What does it earn on the round trip?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It earns the $0.10 spread on each share: \(0.10 \times 100 \times 10 = \$100\) on the round trip.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>What hedge does a wholesaler put on after selling you 20 SPY calls with a delta of 0.40?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It is short \(20 \times 100 \times 0.40 = 800\) share-equivalents, so it buys 800 SPY shares, less any part that opposite flow already offsets.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>In the toy franchise of "Why the tails matter", informed orders rise from 1 in 1,000 to 3 in 100. What is the expected edge per order now?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It is \(0.97 \times 2 - 0.03 \times 100 = 1.94 - 3.00 = -\$1.06\), a loss, since 3% is above the breakeven of about 2%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Who owes you your option's payoff if the wholesaler that sold you the call runs into trouble a week after the trade settles?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The Options Clearing Corporation, because after settlement it is the counterparty to both sides. Your counterparty risk is on the OCC, not on the wholesaler.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>If a large market maker loses billions in a crash, has spread-based market making stopped working?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Not necessarily, because the spread franchise is hedged and compounds through every regime. Large losses almost always come from the residual book: the skew, term, basis and correlation exposures the firm chose to carry.</p>
+</div></details>
+</div>
+</div>

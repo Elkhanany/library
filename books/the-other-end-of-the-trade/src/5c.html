@@ -1,50 +1,163 @@
 <p class="eyebrow">Part V · Options · Chapter 5C</p>
 
-<h1>The five primary Greeks</h1>
+<h1>The Greeks</h1>
 
-<p>Greeks are the language of risk in options trading. Each Greek measures how an option's price changes when one specific input moves, holding the others constant. They are not predictive — they are <strong>sensitivities</strong>. A skilled trader uses Greeks like the dashboard gauges of a car: not to predict the road, but to understand the vehicle's response to inputs.</p>
+<p class="subtitle">Delta, gamma, theta, vega and rho</p>
 
-<div class="callout brick">
-<p><em>Greeks do not give you edge. Edge is having a better forecast of volatility than the market has priced in. Greeks describe the vehicle you have chosen to express that forecast.</em></p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="5b.html">Chapter 5B</a> split an option's price into intrinsic and extrinsic value at one moment. This chapter asks how that price moves when its inputs move: the underlying, time, volatility and interest rates. The answers are the five Greeks, the language in which dealers (<a class="xref" href="6a.html">Part VI</a>) and the rest of this book measure option risk.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Calls, puts, moneyness and the contract multiplier (<a class="xref" href="5a.html">Chapter 5A</a>), and intrinsic and extrinsic value (<a class="xref" href="5b.html">Chapter 5B</a>).</li>
+<li>The normal curve and areas under it (<a class="xref" href="1b.html">Chapter 1B</a>), and the standard normal distribution function (<a class="xref" href="1d.html">Chapter 1D</a>).</li>
+<li>Natural logarithms, and the Taylor series that approximates a curve near a point (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Volatility as the annualized standard deviation of log returns (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+</ul>
+</div>
+
+<p>The <strong><span class="gloss" title="The measures of how an option's value changes with the underlying's price, with time, with volatility and with interest rates: delta, gamma, theta, vega and rho.">Greeks</span></strong> are the language of risk in options trading. Each Greek measures how an option's price changes when one specific input moves, holding the others constant, so the Greeks are <em>sensitivities</em> rather than predictions. A skilled trader uses them like the gauges on a car's dashboard, not to predict the road but to understand how the vehicle responds to its inputs.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>Greeks do not give you edge. Edge is having a better forecast of volatility than the market has priced in. Greeks describe the vehicle you have chosen to express that forecast.</p>
 </div>
 
 <p>The five primary Greeks at a glance:</p>
 
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Greek</th><th class="c-other">Symbol</th><th class="c-other">Rate of change of the option's value with</th><th class="c-endpoint">What it measures</th></tr></thead><tbody><tr><td class="c-trial" data-label="Greek">Delta</td><td class="c-other" data-label="Symbol">\(\Delta\)</td><td class="c-other" data-label="Rate of change of the option's value with">spot</td><td class="c-endpoint" data-label="What it measures">directional exposure</td></tr><tr><td class="c-trial" data-label="Greek">Gamma</td><td class="c-other" data-label="Symbol">\(\Gamma\)</td><td class="c-other" data-label="Rate of change of the option's value with">spot, of delta itself</td><td class="c-endpoint" data-label="What it measures">curvature (convexity): how delta changes</td></tr><tr><td class="c-trial" data-label="Greek">Theta</td><td class="c-other" data-label="Symbol">\(\Theta\)</td><td class="c-other" data-label="Rate of change of the option's value with">time</td><td class="c-endpoint" data-label="What it measures">time decay</td></tr><tr><td class="c-trial" data-label="Greek">Vega</td><td class="c-other" data-label="Symbol">\(\nu\)</td><td class="c-other" data-label="Rate of change of the option's value with">implied volatility</td><td class="c-endpoint" data-label="What it measures">volatility sensitivity</td></tr><tr><td class="c-trial" data-label="Greek">Rho</td><td class="c-other" data-label="Symbol">written as a word</td><td class="c-other" data-label="Rate of change of the option's value with">the interest rate</td><td class="c-endpoint" data-label="What it measures">interest rate sensitivity</td></tr></tbody></table></div></div>
+
+<h2 id="a-greek-is-a-rate-of-change">1 · A Greek is a rate of change</h2>
+
+<p>Each Greek is a rate: how many dollars the option's value \(V\) moves per unit of one input. For a straight line that rate is the slope, the rise over the run, and it is the same everywhere. An option's value curves, so its slope differs from point to point. The slope at a single point comes from steps that shrink toward zero:</p>
+
+<div class="eq" id="e-limit">
+\[ \frac{\partial V}{\partial S} = \lim_{h \to 0} \frac{V(S + h) - V(S)}{h} \]
+</div>
+
+<p>Read \(\lim_{h \to 0}\) as "the value the ratio settles on as the step \(h\) shrinks toward zero". The result is the <strong>derivative</strong> of \(V\) with respect to \(S\). The curly \(\partial\) marks a <strong><span class="gloss" title="The rate at which a quantity that depends on several inputs changes as one input moves, with all the others held fixed. Each Greek is a partial derivative of an option's value.">partial derivative</span></strong>. The value also depends on time, volatility and the interest rate. A partial derivative moves \(S\) alone while it holds all of those fixed.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Delta from shrinking steps</span>
+<p><strong>Step 1: the reference option.</strong> Most numbers in this chapter come from one call, the starting setting of the simulator below: spot \(S = 100\), strike \(K = 100\), 30 days to expiry, 25% <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span>, a 4% interest rate and no dividend. The <span class="gloss" title="The option pricing model, also called Black-Scholes-Merton, that values an option by assuming the underlying follows geometric Brownian motion and can be traded continuously to hedge it.">Black-Scholes model</span> values it at $3.021 a share.</p>
+
+<p><strong>Step 2: take shrinking steps.</strong> Reprice the call with spot a little higher and divide the change in value by the step, as in <a class="eqref" href="#e-limit"></a>:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Step \(h\)</th><th>Value at \(100 + h\)</th><th>Change ÷ step</th></tr></thead><tbody><tr><td class="c-trial" data-label="Step \(h\)">$1.00</td><td data-label="Value at \(100 + h\)">$3.5812</td><td data-label="Change ÷ step">0.5601</td></tr><tr><td class="c-trial" data-label="Step \(h\)">$0.10</td><td data-label="Value at \(100 + h\)">$3.0747</td><td data-label="Change ÷ step">0.5353</td></tr><tr><td class="c-trial" data-label="Step \(h\)">$0.01</td><td data-label="Value at \(100 + h\)">$3.0265</td><td data-label="Change ÷ step">0.5328</td></tr></tbody></table></div></div>
+
+<p><strong>Step 3: read off the limit.</strong> The ratios settle on 0.5326, which is the call's delta. Near spot 100, its value rises about 53 cents for each dollar that the underlying rises.</p>
+</div>
+
+<p>The $1 step overstates the slope because the value curve bends upward, so its slope grows as spot rises. The rate at which a slope itself changes is a <strong>second derivative</strong>, written \(\partial^2 V/\partial S^2\). For the option's value, the second derivative with respect to spot is gamma.</p>
+
+<p>Together, the first two derivatives approximate the change in value for any modest move \(\Delta S\) in spot. This is the Taylor-series idea that <a class="xref" href="1a.html">Chapter 1A</a> used to approximate \(\ln(1 + x)\) by \(x - x^2/2\):</p>
+
+<div class="eq" id="e-taylor">
+\[ \Delta V \approx \Delta \cdot \Delta S + \tfrac12\,\Gamma\,(\Delta S)^2 \]
+</div>
+
+<p>The symbol \(\Delta\) does two jobs here, as it does in the figures. On its own it is the Greek delta, and in front of a letter it means "the change in".</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A partial derivative is the adjusted effect you know from a multivariable model. In a Cox model, the coefficient on one covariate is the change in the log hazard per unit of that covariate, with every other covariate held fixed. Each Greek is the same kind of number: the change in an option's value per unit of one input, with the others held fixed. The difference is that a Cox coefficient is one number for every patient, while an option's sensitivities change with where the inputs stand. That is why delta has a gamma.</p>
+</div>
+
+<h2 id="the-black-scholes-formula">2 · The Black-Scholes formula</h2>
+
+<p>The Greeks are derivatives of the Black-Scholes price, which <a class="xref" href="7a.html">Chapter 7A</a> derives and <a class="xref" href="6b.html">Chapter 6B</a> unpacks. For now, treat the formula as a black box whose inputs you know:</p>
+
 <ul>
-<li><strong>Δ Delta</strong> — directional exposure</li>
-<li><strong>Γ Gamma</strong> — curvature / convexity (how delta changes)</li>
-<li><strong>Θ Theta</strong> — time decay</li>
-<li><strong>ν Vega</strong> — volatility sensitivity</li>
-<li><strong>ρ Rho</strong> — interest rate sensitivity</li>
+<li><strong>Spot and strike:</strong> \(S\) is the price of the underlying and \(K\) the strike.</li>
+<li><strong>Time:</strong> \(T\) is the time to expiry in years, so that 30 days is \(30/365 = 0.0822\).</li>
+<li><strong>Volatility:</strong> \(\sigma\) is the implied volatility as a decimal, 0.25 for 25% (<a class="xref" href="5e.html">Chapter 5E</a>).</li>
+<li><strong>Rates:</strong> \(r\) is the risk-free interest rate and \(q\) the dividend yield, both as decimals.</li>
 </ul>
 
-<h2 id="delta-directional-exposure">1 · Delta — directional exposure</h2>
+<p>Two numbers carry most of the work:</p>
 
-<p><strong>Delta is the partial derivative of the option's value with respect to spot:</strong></p>
-
-<pre>Δ = ∂V/∂S</pre>
-
-<p>In plain language: if the underlying moves up by one dollar, the option moves up by approximately delta dollars. For a call, delta lives between 0 and 1. For a put, between −1 and 0. Deep ITM options have delta close to ±1 (they behave almost identically to the underlying). Deep OTM options have delta close to 0 (they barely react). ATM options have delta near ±0.5.</p>
-
-<p>The Black-Scholes closed form for call delta is:</p>
-
-<pre>Δ_call = e^(-qT) × N(d1)
-
-where d1 = [ln(S/K) + (r − q + ½σ²)T] / (σ√T)</pre>
-
-<p>N(·) is the cumulative distribution function of the standard normal. q is the continuous dividend yield, r is the risk-free rate, T is time to expiration, σ is implied volatility. We'll unpack this formula in detail in <a class="xref" href="6c.html">Section 6C</a>; for now, treat it as a black box.</p>
-
-<p><strong>Delta is the hedge ratio</strong> — the number of shares per contract required to neutralize first-order spot exposure. For a European call, delta equals e^(-qT) × N(d₁). N(d₁) has a geometric interpretation as a risk-neutral probability under the <em>share-numeraire</em> measure, but it is <strong>not</strong> the standard risk-neutral probability of finishing in-the-money — that is N(d₂) = N(d₁ − σ√T), which is smaller by approximately σ√T.</p>
-
-<p>The retail convention conflates them: traders say "30-delta puts have a 30% chance of being assigned." That's informally close to right for short-dated near-the-money options, but it is technically incorrect — the actual ITM probability is N(d₂), and the gap can be a full vol point or two for higher-vol or longer-dated options. The reliable interpretation of delta is mechanical (hedge ratio), not probabilistic.</p>
-
-<div class="callout brick">
-<p><strong>Probability Map — N(d₁), N(d₂), and Delta</strong></p>
-
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Quantity</th><th class="c-other">Formula</th><th class="c-endpoint">Meaning</th></tr></thead><tbody><tr><td class="c-trial" data-label="Quantity">N(d₂)</td><td class="c-other" data-label="Formula">N(d₁ − σ√T)</td><td class="c-endpoint" data-label="Meaning">Standard risk-neutral ITM probability</td></tr><tr><td class="c-trial" data-label="Quantity">N(d₁)</td><td class="c-other" data-label="Formula">from BSM</td><td class="c-endpoint" data-label="Meaning">Share-numeraire probability</td></tr><tr><td class="c-trial" data-label="Quantity">Call delta</td><td class="c-other" data-label="Formula">e^(-qT)·N(d₁)</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (shares per contract / 100)</td></tr><tr><td class="c-trial" data-label="Quantity">Put delta</td><td class="c-other" data-label="Formula">-e^(-qT)·(1−N(d₁))</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (negative)</td></tr></tbody></table></div></div>
-
-<p>When traders say "30-delta," they mean a hedge ratio of 0.30. Often informally called "30% chance of ITM," but the true risk-neutral ITM probability is N(d₂), lower by approximately σ√T.</p>
+<div class="eq" id="e-d1">
+\[ d_1 = \frac{\ln(S/K) + (r - q + \tfrac12 \sigma^2)\,T}{\sigma \sqrt{T}} \]
 </div>
+
+<div class="eq" id="e-d2">
+\[ d_2 = d_1 - \sigma\sqrt{T} \]
+</div>
+
+<p>Two functions of the standard normal curve turn them into prices. The first, \(N(x)\), is the <strong><span class="gloss" title="The normal distribution with a mean of 0 and a standard deviation of 1. Its distribution function gives the probability of a value below a point: the area under the bell curve to the left of it.">standard normal distribution</span></strong> function, also called the cumulative distribution function (CDF): the area under the curve to the left of \(x\). The second, \(\varphi(x)\), is the curve's height at \(x\), equal to \(e^{-x^2/2}/\sqrt{2\pi}\). At zero they take the values \(N(0) = 0.5\) and \(\varphi(0) = 0.399\). With them, the Black-Scholes values of a call and a put are</p>
+
+<div class="eq" id="e-bscall">
+\[ \begin{aligned}
+V_{\text{call}} &amp;= S e^{-qT} N(d_1) \\
+&amp;\quad - K e^{-rT} N(d_2)
+\end{aligned} \]
+</div>
+
+<div class="eq" id="e-bsput">
+\[ \begin{aligned}
+V_{\text{put}} &amp;= K e^{-rT} N(-d_2) \\
+&amp;\quad - S e^{-qT} N(-d_1)
+\end{aligned} \]
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Pricing the reference call</span>
+<p><strong>Step 1: the time terms.</strong> Thirty days is \(T = 0.08219\) of a year, so \(\sqrt{T} = 0.28669\) and \(\sigma\sqrt{T} = 0.25 \times 0.28669 = 0.07167\).</p>
+
+<p><strong>Step 2: the two d's.</strong> Since spot equals the strike, \(\ln(S/K) = 0\), and <a class="eqref" href="#e-d1"></a> leaves \(d_1 = (0.04 + 0.03125) \times 0.08219 / 0.07167 = 0.0817\). Then <a class="eqref" href="#e-d2"></a> gives \(d_2 = 0.0817 - 0.0717 = 0.0100\).</p>
+
+<p><strong>Step 3: the normal curve.</strong> From a table or a spreadsheet, \(N(0.0817) = 0.53256\), \(N(0.0100) = 0.50399\) and \(\varphi(0.0817) = 0.3976\).</p>
+
+<p><strong>Step 4: the price.</strong> With the discount factor \(e^{-rT} = 0.99672\), <a class="eqref" href="#e-bscall"></a> gives \(100 \times 0.53256 - 100 \times 0.99672 \times 0.50399 = 3.02\). The call costs $3.02 a share, or $302 a contract.</p>
+</div>
+
+<h2 id="delta-direction">3 · Delta: direction</h2>
+
+<p><strong><span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">Delta</span></strong> is the change in an option's value for a $1 rise in the underlying, with everything else held fixed. Written as a derivative, it is the slope of the value curve against spot:</p>
+
+<div class="eq" id="e-delta">
+\[ \Delta = \frac{\partial V}{\partial S} \]
+</div>
+
+<p>If the underlying moves up by a dollar, the option moves by approximately delta dollars. A call's delta lies between 0 and 1, and a put's between −1 and 0. Deep in-the-money options have delta close to ±1 and behave almost like the underlying itself. Deep out-of-the-money (OTM) options have delta close to 0 and barely react. At-the-money (ATM) options have delta near ±0.5. For a European option, Black-Scholes gives the two deltas as</p>
+
+<div class="eq" id="e-deltas">
+\[ \begin{aligned}
+\Delta_{\text{call}} &amp;= e^{-qT}\, N(d_1) \\
+\Delta_{\text{put}} &amp;= -e^{-qT}\,\bigl(1 - N(d_1)\bigr)
+\end{aligned} \]
+</div>
+
+<p>For the reference option, the call's delta is \(N(0.0817) = 0.533\) and the put's is \(-(1 - 0.533) = -0.467\). A $1 rise in spot adds about $0.53 a share to the call, which is $53 a contract, and takes about $0.47 a share from the put.</p>
+
+<h3 id="delta-as-a-hedge-ratio">Delta as a hedge ratio</h3>
+
+<p><strong>Delta is the <span class="gloss" title="The amount of the underlying that offsets a position's exposure to small moves in the underlying's price. For an option it is the delta, so a 0.50-delta call contract is hedged with 50 shares.">hedge ratio</span>:</strong> the number of shares per contract, divided by 100, that neutralizes the option's first-order exposure to spot. The operative reading is share-equivalent exposure, so a 0.50-delta call contract behaves like 50 shares of the underlying, delta times the multiplier of 100. A dealer who has sold that call hedges by buying 50 share-equivalents of the underlying, as <a class="xref" href="6c.html">Chapter 6C</a> shows. This share-equivalent reading is what makes delta hedging mechanically possible.</p>
+
+<h3 id="delta-is-not-a-probability">Delta is not a probability</h3>
+
+<p>\(N(d_1)\) has a geometric reading as a probability, but an unusual one. It is the chance of finishing in the money under a <em>share-numeraire</em> measure, a way of weighting the outcomes that counts each by the price of the underlying in it. It is <strong>not</strong> the standard <strong><span class="gloss" title="A probability implied by option prices, computed as if every asset grew at the risk-free rate. It is what prices an option, not a forecast of how likely an outcome actually is.">risk-neutral probability</span></strong> of finishing in the money: the probability that option prices imply when every asset is assumed to grow at the risk-free rate. For a call, that probability is \(N(d_2) = N(d_1 - \sigma\sqrt{T})\).</p>
+
+<p>Because \(d_2\) sits exactly \(\sigma\sqrt{T}\) below \(d_1\), a call's \(N(d_2)\) is smaller than \(N(d_1)\) by approximately \(\varphi(d_1)\,\sigma\sqrt{T}\), which is about \(0.4\,\sigma\sqrt{T}\) near the money. For the reference call the gap is \(0.5326 - 0.5040 = 0.0286\), close to \(0.3976 \times 0.0717 = 0.0285\). For a put the order reverses: its chance of finishing in the money, \(1 - N(d_2)\), is <em>larger</em> than its delta suggests.</p>
+
+<p>The retail convention conflates the two, and traders say that "30-delta puts have a 30% chance of being assigned". That is informally close to right for short-dated, near-the-money options, but it is technically incorrect. The gap is a percentage point or two there, and it grows with volatility and time:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">30-delta SPX option, 20% IV</th><th>Chance of finishing in the money</th></tr></thead><tbody><tr><td class="c-trial">Put, 30 days to expiry</td><td>32%</td></tr><tr><td class="c-trial">Call, 30 days to expiry</td><td>28%</td></tr><tr><td class="c-trial">Put, 365 days to expiry</td><td>38%</td></tr><tr><td class="c-trial">Call, 365 days to expiry</td><td>24%</td></tr></tbody></table></div></div>
+
+<p>The table assumes spot at 6,000, a 4% rate and a 1.5% dividend yield. Even these chances are risk-neutral ones, a pricing device rather than a forecast of what the index does (<a class="xref" href="7a.html">Chapter 7A</a>). The reliable interpretation of delta is mechanical, as a hedge ratio, not probabilistic.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Quantity</th><th class="c-other">Formula</th><th class="c-endpoint">Meaning</th></tr></thead><tbody><tr><td class="c-trial" data-label="Quantity">\(N(d_2)\)</td><td class="c-other" data-label="Formula">\(N(d_1 - \sigma\sqrt{T})\)</td><td class="c-endpoint" data-label="Meaning">Standard risk-neutral probability of a call finishing ITM</td></tr><tr><td class="c-trial" data-label="Quantity">\(N(d_1)\)</td><td class="c-other" data-label="Formula">from Black-Scholes</td><td class="c-endpoint" data-label="Meaning">Share-numeraire probability</td></tr><tr><td class="c-trial" data-label="Quantity">Call delta</td><td class="c-other" data-label="Formula">\(e^{-qT} N(d_1)\)</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (shares per contract ÷ 100)</td></tr><tr><td class="c-trial" data-label="Quantity">Put delta</td><td class="c-other" data-label="Formula">\(-e^{-qT}(1 - N(d_1))\)</td><td class="c-endpoint" data-label="Meaning">Hedge ratio (negative)</td></tr></tbody></table></div></div>
+
+<p>When traders say "30-delta", they mean a hedge ratio of 0.30, whatever it is informally called.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>\(N(d_1)\) and \(N(d_2)\) are two probabilities of one event, finishing in the money, under two weightings. You know the pattern from screening, where tumors found at a screen over-represent slow-growing ones: a tumor's chance of being caught grows with how long it stays detectable. The function \(N(d_1)\) has its own length bias. It weights each final price by the size of that price, so it over-represents the high outcomes, where a call finishes in the money. That is why \(N(d_1)\) exceeds \(N(d_2)\), and why a call's delta overstates its risk-neutral chance of finishing in the money.</p>
+</div>
+
+<p>The probability map draws the standard normal curve with \(d_1\) and \(d_2\) marked, \(\sigma\sqrt{T}\) apart. Its shaded area is the risk-neutral probability of finishing in the money: the area left of \(d_2\) for a call, which is \(N(d_2)\), and right of it for a put. It opens on an at-the-money SPX call with spot and strike at 6,000, 30 days to expiry, 20% IV, a 4% rate and a 1.5% dividend yield. The table reads \(N(d_1) = 0.5257\), a delta of 0.5251 and \(N(d_2) = 0.5029\), so delta exceeds the probability by 0.022. Drag the days to expiry toward 365, or raise the IV, and then switch to the put.</p>
 
 <figure class="fig" id="fig-delta-probability-map">
   <canvas id="delta-probability-map-c" data-h="220"></canvas>
@@ -105,76 +218,120 @@ where d1 = [ln(S/K) + (r − q + ½σ²)T] / (σ√T)</pre>
   between |Δ| and P(ITM) opens.</figcaption>
 </figure>
 
-<p><strong>Delta as share-equivalent exposure.</strong> The operative interpretation: a 0.50-delta call contract behaves like 50 shares of the underlying (delta × multiplier of 100). The dealer who has sold this call needs to hedge by buying 50 share-equivalents of the underlying — <a class="xref" href="6d.html">Section 6D</a> returns to this. The share-equivalent interpretation is what makes delta hedging mechanically possible.</p>
+<p>As \(\sigma\sqrt{T}\) grows, \(d_1\) and \(d_2\) spread apart and the gap opens. At 365 days the call's delta is 0.580 against a 0.510 chance of finishing in the money. For the put, the readout reports that \(|\Delta|\) falls short of the probability instead of exceeding it. Throughout, the call's delta sits slightly below \(N(d_1)\) because of the dividend factor \(e^{-qT}\).</p>
 
-<h2 id="gamma-curvature">2 · Gamma — curvature</h2>
+<h2 id="gamma-curvature">4 · Gamma: curvature</h2>
 
-<p><strong>Gamma is the second derivative of the option value with respect to spot, or equivalently the first derivative of delta with respect to spot:</strong></p>
+<p><strong><span class="gloss" title="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry.">Gamma</span></strong> is the change in delta for a $1 rise in the underlying. It is the second derivative of the option's value with respect to spot, or equivalently the first derivative of delta:</p>
 
-<pre>Γ = ∂²V/∂S² = ∂Δ/∂S</pre>
-
-<p>Gamma measures how delta itself changes as the underlying moves. <strong>Positive gamma</strong> is favorable for long option holders: directional exposure accelerates in the right direction as the underlying moves. If you're long a call and the underlying rises, your delta increases, so you participate in additional upside even faster. <strong>Negative gamma</strong> is unfavorable: short option holders see their delta move against them as the underlying moves.</p>
-
-<p>The Black-Scholes formula for gamma:</p>
-
-<pre>Γ = e^(-qT) × φ(d1) / (S × σ × √T)</pre>
-
-<p>where φ(·) is the standard normal density function (the bell-curve height, not the CDF area).</p>
-
-<p>Three crucial features of this formula. First, <strong>gamma is the same for a call and the corresponding put with the same strike</strong> — put-call parity (<a class="xref" href="5f.html">Section 5F</a>) guarantees it. Second, <strong>gamma is maximized at-the-money</strong>: the bell-curve density φ(d1) peaks when its argument is zero, which happens approximately when spot equals strike. Third, and this is the explosive observation, <strong>gamma is proportional to 1/√T</strong>. As time to expiration shrinks toward zero, ATM gamma diverges to infinity.</p>
-
-<p>The 1/√T divergence is not a mathematical curiosity. It is the dominant feature of modern intraday microstructure, because 0DTE options live exactly in this regime. We return to this in <a class="xref" href="6e.html">Section 6E</a> and <a class="xref" href="9b.html">Section 9B</a>.</p>
-
-<h2 id="theta-time-decay">3 · Theta — time decay</h2>
-
-<p><strong>Theta is the partial derivative of the option value with respect to time, typically expressed as the negative change per day:</strong></p>
-
-<pre>Θ = ∂V/∂t (per unit time; usually displayed as ∂V/∂t per calendar day)</pre>
-
-<p>Theta measures the daily P&amp;L from one calendar day passing, holding all other inputs constant. <strong>Long options have negative theta</strong> — every day, all else equal, the option loses value as the remaining time shrinks. <strong>Short options have positive theta</strong> — every day, the writer accrues a positive bookkeeping gain as the time value decays.</p>
-
-<p>The Black-Scholes formula for theta is messy (it has different forms for calls vs puts depending on whether dividends are present), but the structure is the same: theta is negative for long positions, positive for short, largest in magnitude for ATM options, and growing as 1/√T near expiration — the mirror image of gamma's blow-up.</p>
-
-<p><strong>Theta is not edge.</strong> The most common retail misconception about options: "I sell options to collect theta." Theta is the bookkeeping number that shows up in your daily P&amp;L. It is not the source of profit. The source of profit is the variance risk premium — the structural overprice of implied volatility relative to realized volatility, which option <em>buyers</em> are willing to pay. Theta is just the path through which the VRP shows up over time. A short premium strategy is profitable only if realized volatility comes in below what was implied at entry; if realized exceeds implied, the strategy loses money despite "collecting theta" all the way through.</p>
-
-<p><a class="xref" href="7a.html">Section 7A</a> will derive the formal relationship between theta and gamma, showing that they are mathematically linked: in a Black-Scholes framework, the long-option holder pays theta in exchange for gamma; the short-option holder receives theta in exchange for accepting negative gamma. The trade-off is exact, not approximate, and it's the central mathematical engine behind every dealer-hedging story in <a class="xref" href="6a.html">Section 6</a> and beyond.</p>
-
-<h2 id="vega-volatility-sensitivity">4 · Vega — volatility sensitivity</h2>
-
-<p><strong>Vega is the partial derivative of the option value with respect to implied volatility:</strong></p>
-
-<pre>ν = ∂V/∂σ</pre>
-
-<div class="callout brick">
-<p><strong>Display convention note.</strong> The formula above gives ∂V per <strong>unit of σ</strong>, where σ = 1.0 represents 100% annualized vol. Most trading platforms display vega as <strong>∂V per 1 vol point</strong> (i.e., per 1 percentage point of IV change). To convert: <strong>divide the formula value by 100</strong>. A platform showing "Vega = $4.50" means the position will gain $4.50 if IV rises from, say, 18.0% to 19.0% — not if σ doubles from 1.0 to 2.0. This is a high-frequency source of beginner arithmetic error when computing vega by hand.</p>
+<div class="eq" id="e-gamma">
+\[ \Gamma = \frac{\partial^2 V}{\partial S^2} = \frac{\partial \Delta}{\partial S} \]
 </div>
 
-<p>Vega measures the option's exposure to changes in the market's expected volatility, holding everything else constant. <strong>Long options have positive vega</strong> — they gain value when IV rises. <strong>Short options have negative vega</strong> — they lose value when IV rises. This is the direct mechanical link between options trading and the broader volatility market.</p>
+<p><strong>Positive gamma</strong> is favorable for long option holders, because directional exposure accelerates in the right direction as the underlying moves. If you are long a call and the underlying rises, your delta increases, so you take part in further upside faster. <strong>Negative gamma</strong> is unfavorable: short option holders see their delta move against them as the underlying moves. Black-Scholes gives gamma as a ratio with the bell curve's height on top:</p>
 
-<p>The Black-Scholes formula:</p>
+<div class="eq" id="e-bsgamma">
+\[ \Gamma = \frac{e^{-qT}\, \varphi(d_1)}{S\, \sigma \sqrt{T}} \]
+</div>
 
-<pre>ν = S × e^(-qT) × φ(d1) × √T</pre>
+<p>Here \(\varphi\) is the height of the bell curve, not the area under it. For the reference option, \(\Gamma = 0.3976/(100 \times 0.25 \times 0.28669) = 0.0555\), so a $1 rise in spot lifts the call's delta from 0.533 to about 0.588.</p>
 
-<p>Vega is positive for both long calls and long puts. It's largest for long-dated ATM options (the √T factor grows with T, unlike gamma's 1/√T). It's smaller for short-dated options because there's less time for volatility to affect the option's price.</p>
+<p>Three features of this formula matter:</p>
 
-<p><strong>Operational consequence.</strong> A long ATM 30-day SPX call has substantial positive vega — perhaps $10 of P&amp;L per 1 vol-point rise in IV at SPX 6000. A long ATM 0DTE SPX call has nearly zero vega — IV moves at expiration don't matter to the option's payoff. This is why vol-targeting and volatility surface strategies are concentrated in longer-dated options: those are where the vega lives.</p>
+<ol>
+<li><strong>Gamma is the same for a call and a put with the same strike</strong>, which put-call parity (<a class="xref" href="5f.html">Chapter 5F</a>) ensures. By <a class="eqref" href="#e-deltas"></a>, the call's delta minus the put's is \(e^{-qT}\), which does not depend on spot, so the two deltas change with spot at the same rate.</li>
+<li><strong>Gamma is maximized at the money</strong>, because the density \(\varphi(d_1)\) peaks when \(d_1 = 0\), which happens approximately when spot equals the strike.</li>
+<li><strong>Gamma is proportional to \(1/\sqrt{T}\) at the money</strong>, where \(\varphi(d_1)\) stays near 0.4. As time to expiry shrinks toward zero, at-the-money gamma diverges to infinity. Cutting the time to a quarter doubles gamma, while going from 30 days to 1 day multiplies it by \(\sqrt{30} \approx 5.5\).</li>
+</ol>
 
-<h2 id="rho-interest-rate-sensitivity">5 · Rho — interest rate sensitivity</h2>
+<p>The \(1/\sqrt{T}\) divergence is not a mathematical curiosity. It is the dominant feature of modern intraday microstructure, because <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options live exactly in this regime (Chapters 6D and 9B).</p>
 
-<p><strong>Rho is the partial derivative of the option value with respect to the risk-free rate:</strong></p>
+<h2 id="theta-time">5 · Theta: time</h2>
 
-<pre>ρ = ∂V/∂r</pre>
+<p><strong><span class="gloss" title="The change in an option's value as one day passes with nothing else changing: its time decay. It is negative for bought options and positive for sold ones.">Theta</span></strong> is the change in an option's value as time passes, with everything else held fixed. Write \(t\) for calendar time, which moves forward as the time to expiry \(T\) shrinks by the same amount, so that</p>
 
-<p>For most short-term equity options, rho is negligible — the option's value barely changes when rates move by typical daily amounts. Rho becomes relevant for long-dated options (LEAPS, 1-2 year expirations) and during rate-regime shifts (the 2022-2023 Fed hiking cycle moved option valuations measurably through the rho channel for the first time in over a decade).</p>
+<div class="eq" id="e-theta">
+\[ \Theta = \frac{\partial V}{\partial t} = -\frac{\partial V}{\partial T} \]
+</div>
 
-<p>The Black-Scholes formula:</p>
+<p>The formula gives theta per year, and trading screens show it per calendar day, divided by 365. Theta then measures the daily P&amp;L from one calendar day passing, all else constant. <strong>Long options have negative theta:</strong> every day, all else equal, the option loses value as its remaining time shrinks. <strong>Short options have positive theta:</strong> every day, the writer accrues a positive bookkeeping gain as the time value decays.</p>
 
-<pre>ρ_call = K × T × e^(-rT) × N(d2)
-ρ_put  = -K × T × e^(-rT) × N(-d2)
+<p>The Black-Scholes formula for theta is messier than the others, with different forms for calls and puts and an extra term when there are dividends. With no dividend, the two are</p>
 
-where d2 = d1 − σ√T</pre>
+<div class="eq" id="e-bstheta">
+\[ \begin{aligned}
+\Theta_{\text{call}} &amp;= -\frac{S\,\varphi(d_1)\,\sigma}{2\sqrt{T}} \\
+&amp;\quad - rKe^{-rT}N(d_2) \\
+\Theta_{\text{put}} &amp;= -\frac{S\,\varphi(d_1)\,\sigma}{2\sqrt{T}} \\
+&amp;\quad + rKe^{-rT}N(-d_2)
+\end{aligned} \]
+</div>
 
-<p>Calls have positive rho (higher rates favor calls because higher rates increase the forward price of the underlying). Puts have negative rho (the reverse). For our purposes — focused on near-term SPX options where rho is a third-order concern — rho is mostly relevant when discussing how the entire vol surface reprices during rate-regime changes.</p>
+<p>For the reference call, the first term is \(-(100 \times 0.3976 \times 0.25)/(2 \times 0.28669) = -17.34\) a year, and the interest term is \(-0.04 \times 100 \times 0.99672 \times 0.5040 = -2.01\) a year. Their sum, \(-19.35\) a year, comes to \(-0.053\) a day once divided by 365. The call loses about 5.3 cents a share, $5.30 a contract, for each day that passes with nothing else changing. Repricing it with 29 days left instead of 30 gives a fall of 5.34 cents, which agrees.</p>
+
+<p>The structure is the same for calls and puts. Theta is negative for long positions, positive for short ones and largest in size at the money. It grows like \(1/\sqrt{T}\) near expiry, the mirror image of gamma's blow-up. The mirror is exact: substitute <a class="eqref" href="#e-bsgamma"></a> into \(\tfrac12\sigma^2 S^2\,\Gamma\), and one \(S\) and one \(\sigma\) cancel to leave \(S\varphi(d_1)\sigma/(2\sqrt{T})\), the first term of theta. An exception to these signs is a deep in-the-money European put, whose interest term can outweigh the first, which is why such a put can trade below its intrinsic value (<a class="xref" href="5b.html">Chapter 5B</a>). So for a call with no dividend,</p>
+
+<div class="eq" id="e-thetagamma">
+\[ \Theta = -\tfrac12\,\sigma^2 S^2\,\Gamma - rKe^{-rT}N(d_2) \]
+</div>
+
+<p>For the reference call, \(\tfrac12 \times 0.0625 \times 10{,}000 \times 0.0555\) comes to 17.34, the first term exactly. Most of theta is the rent on gamma, with interest making up the rest. <a class="xref" href="7a.html">Chapter 7A</a> derives the relation in general.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: selling options "to collect theta"</span>
+<p><strong>Theta is not edge.</strong> The most common retail misconception about options is "I sell options to collect theta". Theta is the bookkeeping number that shows up in your daily P&amp;L, not the source of profit. The source of profit is the <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> (VRP): the structural overpricing of implied volatility relative to <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">realized volatility</span>, which option <em>buyers</em> are willing to pay. Theta is just the path through which the VRP shows up over time. A short premium strategy is profitable only if realized volatility comes in below what was implied at entry. If realized exceeds implied, the strategy loses money despite "collecting theta" all the way through.</p>
+</div>
+
+<p><a class="xref" href="7a.html">Chapter 7A</a> derives the formal relationship between theta and gamma, which <a class="eqref" href="#e-thetagamma"></a> previews. In the Black-Scholes-Merton (BSM) framework, the long-option holder pays theta in exchange for gamma. The short-option holder receives theta in exchange for accepting negative gamma. This exact trade-off, not an approximate one, is the central mathematical engine behind every dealer-hedging story from <a class="xref" href="6a.html">Part VI</a> on.</p>
+
+<h2 id="vega-volatility">6 · Vega: volatility</h2>
+
+<p><strong><span class="gloss" title="The change in an option's value for a rise of one percentage point in implied volatility. It is positive for bought calls and puts, and largest for long-dated options at the money.">Vega</span></strong> is the change in an option's value for a rise in implied volatility, with everything else held fixed:</p>
+
+<div class="eq" id="e-vega">
+\[ \nu = \frac{\partial V}{\partial \sigma} \]
+</div>
+
+<p>This formula gives the change per <strong>unit</strong> of \(\sigma\), where \(\sigma = 1.0\) means 100% annualized volatility. Most trading platforms instead display vega per <span class="gloss" title="One percentage point of annualized volatility, as in a move from 20% to 21% implied volatility. Also called a vol point.">vol point</span>, a rise of one percentage point in implied volatility, which is the formula's value divided by 100. A platform showing "Vega = $4.50" means the position gains $4.50 if IV rises from 18.0% to 19.0%, not if \(\sigma\) doubles from 1.0 to 2.0. This is a frequent source of beginner error when computing vega by hand.</p>
+
+<p>Vega measures an option's exposure to changes in the market's expected volatility. <strong>Long options have positive vega</strong>, gaining value when IV rises. <strong>Short options have negative vega</strong>, losing value when IV rises. This is the direct mechanical link between options trading and the broader volatility market. The Black-Scholes formula, the same for a call and a put, is</p>
+
+<div class="eq" id="e-bsvega">
+\[ \nu = S\, e^{-qT}\, \varphi(d_1) \sqrt{T} \]
+</div>
+
+<p>For the reference option, \(\nu = 100 \times 0.3976 \times 0.28669 = 11.40\) per unit of \(\sigma\), or 0.114 per vol point. A rise in IV from 25% to 26% adds about 11.4 cents a share, or $11.40 a contract.</p>
+
+<p>Vega is positive for both long calls and long puts. It is largest for long-dated at-the-money options, because the \(\sqrt{T}\) factor grows with time, unlike gamma's \(1/\sqrt{T}\). It is smaller for short-dated options, which leave less time for volatility to affect the price.</p>
+
+<p><strong>Operational consequence:</strong> a long at-the-money 30-day SPX call has substantial positive vega. At SPX 6,000 and 20% IV, <a class="eqref" href="#e-bsvega"></a> gives about 6.8 index points per vol point, which is about $680 a contract. A long at-the-money 0DTE SPX call has nearly zero vega, because moves in IV at expiry do not change the option's payoff. This is why vol-targeting and <span class="gloss" title="Implied volatility as a function of both strike and expiry. Its shape across strikes is the skew, and its shape across expiries is the term structure.">volatility surface</span> strategies concentrate in longer-dated options: that is where the vega lives.</p>
+
+<h2 id="rho-interest-rates">7 · Rho: interest rates</h2>
+
+<p><strong><span class="gloss" title="The change in an option's value for a rise of one percentage point in the risk-free interest rate. It is positive for calls and negative for puts, and small except for long-dated options.">Rho</span></strong> is the change in an option's value for a rise in the risk-free rate:</p>
+
+<div class="eq" id="e-rho">
+\[ \text{rho} = \frac{\partial V}{\partial r} \]
+</div>
+
+<p>For most short-term equity options rho is negligible, because the value barely changes when rates move by typical daily amounts. Rho becomes relevant for long-dated options (LEAPS, with expiries of 1 to 2 years) and during rate-regime shifts. The 2022-2023 Fed hiking cycle moved option valuations measurably through the rho channel for the first time in over a decade. Black-Scholes gives rho for a call and a put as</p>
+
+<div class="eq" id="e-bsrho">
+\[ \begin{aligned}
+\text{rho}_{\text{call}} &amp;= K\,T\,e^{-rT} N(d_2) \\
+\text{rho}_{\text{put}} &amp;= -K\,T\,e^{-rT} N(-d_2)
+\end{aligned} \]
+</div>
+
+<p>For the reference call, rho is \(100 \times 0.08219 \times 0.99672 \times 0.5040 = 4.13\) per unit of rate, or 0.041 for a one-point rise. A full percentage point on rates adds about 4 cents a share, less than a single day of theta.</p>
+
+<p>Calls have positive rho because higher rates increase the <em>forward</em> price of the underlying, \(S e^{(r - q)T}\), the cost of buying it today and carrying it to expiry (<a class="xref" href="4b.html">Chapter 4B</a>). Puts have negative rho for the same reason. For near-term SPX options rho is a third-order concern, relevant mostly to how the entire volatility surface reprices during rate-regime changes.</p>
+
+<h2 id="the-five-greeks-together">8 · The five Greeks together</h2>
+
+<p>The simulator below computes all five Greeks of one option in trading-screen units: theta per calendar day, vega per vol point and rho per 1% of rate. It fixes the rate at 4% with no dividend. Its controls set spot and strike (each from 70 to 130), days to expiry (1 to 180), implied volatility (5% to 80%) and call or put. It opens on the reference call, so its table reads delta 0.533, gamma 0.0555, theta −0.053, vega 0.114 and rho 0.041.</p>
+
+<p>The chart below the table tests <a class="eqref" href="#e-taylor"></a>. For a what-if shift of +$5, delta alone predicts \(0.5326 \times 5 = +2.663\), and the gamma term adds \(\tfrac12 \times 0.0555 \times 25 = 0.693\), for a total of \(+3.356\). The full reprice at spot 105 is \(+3.308\), so the delta-gamma estimate misses by \(-0.048\), about 1.5% of the change. Drag the shift from −$10 to +$10 and watch the three curves part.</p>
 
 <figure class="fig" id="fig-five-greeks-simulator">
   <div class="ctrls">
@@ -238,6 +395,10 @@ where d2 = d1 − σ√T</pre>
   vol or fewer days.</figcaption>
 </figure>
 
+<p>For small moves delta captures most of the change, and the gamma term captures most of the rest. What remains, with volatility and time held fixed, comes from speed and the higher spot derivatives of <a class="xref" href="5d.html">Chapter 5D</a>. At +$10 it reaches \(-0.50\). It grows with the size of the move, and also as you lower the volatility or the days to expiry, where the value curve bends more sharply. Set 3 days to expiry at the money and watch gamma and theta jump while vega shrinks.</p>
+
+<p>The Greek surface shows how one Greek varies across both spot and time. It draws the Greek of an option struck at \(K = 100\), with the rate at 4%, as a wireframe over spot from 70 to 130 and 1 to 90 days to expiry. Theta is per calendar day and vega per vol point. It opens on gamma at 22% IV, where the readout gives 0.0630 at the money with 30 days to go. Turn it with the view angle slider and tilt it with the tilt slider, then switch between the Greeks and between a call and a put. The vanna and charm buttons belong to <a class="xref" href="5d.html">Chapter 5D</a>.</p>
+
 <figure class="fig" id="fig-greek-surface-3d">
   <canvas id="greek-surface-3d-c" data-h="340"></canvas>
   <div class="ctrls ctrl" role="group" aria-label="Greek" id="greek-surface-3d-greek">
@@ -287,27 +448,117 @@ where d2 = d1 − σ√T</pre>
   peak at the money as expiry nears, the 1/√T divergence of the text.</figcaption>
 </figure>
 
-<h2 id="the-gamma-theta-tradeoff-the-most-important-relationship">6 · The gamma-theta tradeoff (the most important relationship)</h2>
+<p>On the gamma surface, the hump over the strike stays low and broad at 90 days and collapses into a sharp peak at the money as expiry nears: the \(1/\sqrt{T}\) divergence. Theta is its mirror, a trough that deepens at the money near expiry. Vega does the opposite of both, rising toward the long-dated end, while delta turns from a gentle S-curve into a near-step at the strike.</p>
 
-<p>Within the Black-Scholes-Merton framework, gamma and theta are inseparably linked. You cannot have one without the other. If you're long an option you have positive gamma (favorable) and must pay for it through negative theta. If you're short you have negative gamma (unfavorable) and are compensated for it through positive theta.</p>
+<h2 id="the-gamma-theta-trade-off">9 · The gamma-theta trade-off</h2>
 
-<p>The formal statement, which we'll derive properly in <a class="xref" href="7a.html">Section 7A</a>:</p>
+<p>Within the Black-Scholes-Merton framework, gamma and theta are inseparably linked, and you cannot have one without the other. If you are long an option, you have positive gamma, which is favorable, and you pay for it through negative theta. If you are short, you have negative gamma, which is unfavorable, and you are compensated for it through positive theta.</p>
 
-<pre>Long option P&amp;L over interval dt:
-dΠ ≈ ½ × Γ × S² × [(dS/S)² − σ_impl² × dt]</pre>
+<p>A <strong>delta-hedged</strong> option is one held against a position in the underlying of the opposite delta, so that small moves in spot cancel to first order (<a class="xref" href="6c.html">Chapter 6C</a>). Over a short interval \(dt\), with \(\sigma_I\) the implied volatility at entry, the P&amp;L of a delta-hedged long option is</p>
 
-<p>Read this as: <strong>over each interval, a delta-hedged long option earns gamma times the difference between realized squared return and implied variance.</strong> This is the single most important equation in the entire framework.</p>
+<div class="eq" id="e-hedgedpnl">
+\[ d\Pi \approx \tfrac12\,\Gamma\,S^2 \left[ \left(\frac{dS}{S}\right)^2 - \sigma_I^2\,dt \right] \]
+</div>
 
-<p>Some consequences:</p>
+<p>Read this as: <strong>over each interval, a delta-hedged long option earns \(\tfrac12\Gamma S^2\) times the difference between the realized squared return and the implied variance.</strong> This is the single most important equation in the whole framework, and <a class="xref" href="7a.html">Chapter 7A</a> derives it properly.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One day of a hedged option</span>
+<p><strong>Step 1: the stakes.</strong> For the reference option, the factor in front of the bracket is \(\tfrac12\Gamma S^2 = \tfrac12 \times 0.0555 \times 10{,}000 = 277.4\). Over one calendar day \(dt = 1/365\), so the implied variance for the day is \(0.0625/365 = 0.000171\).</p>
+
+<p><strong>Step 2: the breakeven move.</strong> The bracket in <a class="eqref" href="#e-hedgedpnl"></a> is zero when \((dS/S)^2 = 0.000171\), a move of \(0.25/\sqrt{365} = 1.31\%\). Larger moves pay the hedged long option, and smaller ones cost it.</p>
+
+<p><strong>Step 3: three days.</strong> A 2% move in a day gives \(277.4 \times (0.0004 - 0.000171) = +0.064\) a share, while a 0.5% move gives \(277.4 \times (0.000025 - 0.000171) = -0.041\). No move at all gives \(-0.047\), which is the gamma term of the call's daily theta in <a class="eqref" href="#e-thetagamma"></a>.</p>
+</div>
+
+<p>Four consequences follow from <a class="eqref" href="#e-hedgedpnl"></a>:</p>
 
 <ul>
-<li><p><strong>Long gamma earns when realized volatility exceeds implied.</strong> If the underlying makes bigger moves than the IV at entry predicted, the delta-hedged long-option position scalps gamma — buy low, sell high in the underlying hedge — and the cumulative scalping gain exceeds the theta paid.</p></li>
-<li><p><strong>Short gamma earns when realized falls below implied.</strong> If the underlying makes smaller moves than IV predicted, the short-option position keeps the theta and avoids losing money on the gamma hedges.</p></li>
-<li><p><strong>Theta is the "rent" paid for owning gamma.</strong> It's the price you pay for having a position that benefits from movement. Selling gamma collects that rent.</p></li>
-<li><p><strong>Variance risk premium is the operative bet.</strong> Every delta-hedged option position is fundamentally a bet on realized vs implied volatility. Nothing more, nothing less. The directional exposure is hedged away; what remains is the spread between realized and implied.</p></li>
+<li><strong>Long gamma earns when realized volatility exceeds implied.</strong> If the underlying makes bigger moves than the IV at entry predicted, the delta-hedged long option scalps gamma. It buys low and sells high in the underlying hedge, and the cumulative scalping gain exceeds the theta paid.</li>
+<li><strong>Short gamma earns when realized volatility falls below implied.</strong> If the underlying makes smaller moves than the IV predicted, the short-option position keeps the theta and avoids losing money on the gamma hedges.</li>
+<li><strong>Theta is the "rent" paid for owning gamma.</strong> It is the price you pay for having a position that benefits from movement, and selling gamma collects that rent.</li>
+<li><strong>The variance risk premium is the operative bet.</strong> Every delta-hedged option position is fundamentally a bet on realized against implied volatility, nothing more and nothing less. The directional exposure is hedged away, and what remains is the spread between realized and implied.</li>
 </ul>
 
-<p>This decomposition is what justifies the entire framework of <a class="xref" href="6a.html">Section 6</a> onward. The dealer who has sold an option to a customer and delta-hedged it is making this exact bet: that realized vol will come in below the IV at which they sold. If realized exceeds implied, they lose money to the customer's gamma. If realized is below implied, they keep the spread. The variance risk premium is, in aggregate, the empirical observation that this trade has paid for the dealer historically — implied has averaged higher than realized.</p>
+<p>This decomposition is what justifies the whole framework of <a class="xref" href="6a.html">Part VI</a> onward. The dealer who has sold an option to a customer and delta-hedged it is making exactly this bet: that realized volatility comes in below the IV at which they sold. If realized exceeds implied, they lose money to the customer's gamma, and if it is below implied, they keep the spread. The variance risk premium is, in aggregate, the empirical observation that this trade has paid dealers historically: implied volatility has averaged higher than realized (<a class="xref" href="10c.html">Chapter 10C</a>).</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Know the units:</strong> platforms show Greeks per share, with theta per calendar day, vega per vol point and rho per 1% of rate. Multiply by the multiplier and the number of contracts to get dollars.</li>
+<li><strong>Position Greeks add:</strong> a position's delta is the sum of its legs' deltas, and the same holds for every Greek. Ten long reference calls carry \(0.533 \times 100 \times 10 = 533\) share-equivalents of delta, lose about $53 a day to theta and gain about $114 per vol point.</li>
+<li><strong>Match the expiry to the exposure you want:</strong> short-dated options carry gamma and theta, while long-dated options carry vega and rho.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The Greeks are derivatives at one point of one model, each with every other input held fixed. They fail when a move is large: at +$10 the reference call's delta-gamma estimate missed by 50 cents. They fail on jumps, which the model does not allow for. They fail when inputs move together, as when implied volatility rises while the index falls (<a class="xref" href="5g.html">Chapter 5G</a>), so that a put's P&amp;L is delta and vega at once. And the Greeks themselves drift with spot, time and volatility, which is the subject of <a class="xref" href="5d.html">Chapter 5D</a>.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Read delta as share-equivalents</strong>, never as the probability of profit. For the chance of finishing in the money, use \(N(d_2)\) for a call and \(1 - N(d_2)\) for a put, treating even that as a risk-neutral number.</li>
+<li><strong>Sell premium only when you forecast realized volatility below the implied volatility you are selling.</strong> Positive theta on its own is no reason to trade.</li>
+<li><strong>Before holding a position, write down its delta, gamma, theta and vega in dollars.</strong> Size it so that the loss that <a class="eqref" href="#e-taylor"></a> gives for a large move, with the move in IV that would come with it, fits inside your cushion (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading delta as the chance of profit</span>
+<p>A 30-delta put is not a 30% chance of loss for its seller. Its risk-neutral chance of finishing in the money is higher than 30%: 32% at 30 days and 20% IV, and more at longer expiries. Even the right chance of finishing in the money is not the chance of losing money, which depends on the premium received and on the path.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Each Greek is a partial derivative: the change in an option's value per unit of one input, with the others held fixed.</li>
+<li>Delta, \(e^{-qT}N(d_1)\) for a call, is a hedge ratio in share-equivalents, not a probability. The risk-neutral chance of a call finishing in the money is \(N(d_2)\).</li>
+<li>Gamma peaks at the money and grows as \(1/\sqrt{T}\). Theta mirrors it, and its main term is exactly \(-\tfrac12\sigma^2S^2\Gamma\).</li>
+<li>Vega grows with \(\sqrt{T}\) and is quoted per vol point, the formula's value divided by 100, while rho matters mainly for long-dated options and rate shocks.</li>
+<li>A delta-hedged option is a bet on realized against implied volatility. Theta is the rent paid for gamma, not an edge.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">10 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>The reference call, worth $3.021 with delta 0.5326 and gamma 0.0555, sees spot rise by $2. Estimate its new value with <a class="eqref" href="#e-taylor"></a>, and compare the estimate with the full reprice of $4.195.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The change is about \(0.5326 \times 2 + \tfrac12 \times 0.0555 \times 4 = 1.065 + 0.111 = 1.176\), so the estimate is \(3.021 + 1.176 = \$4.197\). It is about a fifth of a cent above the full reprice.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A platform shows vega of $4.50 on your long option position. What happens to the position if IV rises from 18% to 19%, and if it falls from 18% to 16%?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Vega on a platform is per vol point. A rise of one point gains about $4.50, and a fall of two points loses about \(2 \times 4.50 = \$9.00\).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Why does a 30-delta put have more than a 30% risk-neutral chance of finishing in the money, while a 30-delta call has less?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Delta reads the normal curve at \(d_1\), and the chance of finishing in the money reads it at \(d_2\), which lies \(\sigma\sqrt{T}\) lower. For a call that chance is the area left of \(d_2\), which is \(N(d_2)\) and smaller than \(N(d_1)\). For a put it is the area right of \(d_2\), which is \(1 - N(d_2)\) and larger than \(1 - N(d_1)\).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>At-the-money gamma is 0.063 with 30 days to expiry at 22% IV, as the surface's readout shows. Roughly what is it with 7.5 days left?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Gamma at the money scales as \(1/\sqrt{T}\), so a quarter of the time doubles it, to about 0.126. The Black-Scholes value with 7.5 days left is 0.1264.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You hold the reference call delta-hedged through a day in which the underlying moves 1%. Do you make or lose money, before costs?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-hedgedpnl"></a>, the day's P&amp;L is \(277.4 \times (0.0001 - 0.000171) = -0.020\), a loss of about 2 cents a share. The move was below the 1.31% breakeven, so the day's gamma gain did not cover its theta.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -553,15 +804,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

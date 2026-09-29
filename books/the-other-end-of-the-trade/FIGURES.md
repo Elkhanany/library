@@ -26,7 +26,7 @@ app's sources are in a checkout of `Elkhanany/dealer-lab` beside it (`../dealer-
    `figure.fig`): the only figure styling there is. Do not add CSS anywhere.
 5. For each widget: the app source `../dealer-lab/src/interactives/<Name>.jsx`
    (and anything it imports from `../lib` or `../refdata`), and the chapter prose around
-   its marker: `grep -n "INTERACTIVE: <id>" books/the-other-end-of-the-trade/source/*.md`
+   its marker: `grep -n "INTERACTIVE: <id>" books/the-other-end-of-the-trade/source/dealer-lab/*.md`
    and read about 40 lines either side, so the caption agrees with the text.
 
 ## The file format

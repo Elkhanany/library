@@ -1,74 +1,131 @@
 <p class="eyebrow">Part IV · Derivatives · Chapter 4B</p>
 
-<h1>Futures, swaps, options: three payoff families</h1>
+<h1>Futures, swaps and options</h1>
 
-<p>Almost every derivative you'll meet in practice belongs to one of three payoff families. The <em>geometry</em> of the payoff tells you the position's behavior under different market scenarios — before you ever look at Greeks or sophisticated valuation models. Pictures of payoffs are foundational because they're what every multi-leg strategy in <a class="xref" href="11-0.html">Section 11</a> builds from.</p>
+<p class="subtitle">Three payoff families</p>
 
-<h2 id="linear-payoffs-futures-and-forwards">1 · Linear payoffs (futures and forwards)</h2>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="4a.html">Chapter 4A</a> defined a derivative by its six parts and sorted payoffs by shape. This chapter draws the three shapes to which almost every derivative belongs: the straight line of futures and forwards, the same line paid in installments by swaps, and the bent line of options. That bend is the reason <a class="xref" href="5a.html">Part V</a> exists.</p>
+</div>
 
-<p><strong>Futures</strong> are exchange-traded contracts to buy or sell an underlying asset at a future date for a price agreed today. The payoff is <strong>linear</strong> in the underlying:</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The payoff function, the notation \(S_T\) and \(K\), and convexity (<a class="xref" href="4a.html">Chapter 4A</a>).</li>
+<li>Continuous compounding and the growth factor \(e^{rT}\) (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Expected value (<a class="xref" href="1c.html">Chapter 1C</a>) and the daily mark-to-market (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+</ul>
+</div>
 
-<pre>Long futures payoff at expiration = S_T − K</pre>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>The geometry of a payoff tells you how a position behaves before you look at any Greek or valuation model. A straight line gains and loses equally for the same move either way. A bend gains more one way than it loses the other, so someone must be paid for it. Every multi-leg strategy in <a class="xref" href="12a.html">Part XII</a> is built from these pictures.</p>
+</div>
 
-<p>where S_T is the spot price at expiration and K is the contract price. Symmetric: each $1 the underlying moves above K is $1 of profit; each $1 below K is $1 of loss. No upfront premium. Initial margin posted as collateral against potential losses, marked to market daily, with variation margin added or refunded each evening as P&amp;L is realized.</p>
+<h2 id="linear-payoffs-futures-and-forwards">1 · Linear payoffs: futures and forwards</h2>
 
-<p><strong>Forwards</strong> are the OTC analog — same payoff structure, but bilateral and not standardized. Most institutional FX hedging uses forwards rather than futures because forwards can be sized and dated precisely.</p>
+<p>A <strong><span class="gloss" title="An agreement to buy or sell an asset at a set price on a future date. Only a deposit is paid up front, so a future gives exposure with leverage built in.">futures contract</span></strong> is an exchange-traded contract to buy or sell an underlying at a future date for a price agreed today. Write \(S_T\) for the spot price at expiration and \(K\) for the contract price. The payoff at expiry is linear in the price of the underlying:</p>
 
-<p>The economic intuition: a futures contract is equivalent to borrowing money to buy the underlying today at the spot price, holding it to the contract date, and then comparing the borrowed amount (plus financing) against the actual spot at expiry. The futures price K is set such that this "cash-and-carry" trade has zero expected P&amp;L — it builds in the cost of financing and the expected dividend yield (or storage costs, for physical commodities).</p>
+<div class="eq" id="e-future">
+\[ \text{long future at expiry} = S_T - K \]
+</div>
 
-<p>For E-mini S&amp;P 500 futures (ES):</p>
+<p>The short side holds the mirror image, \(K - S_T\). The payoff is symmetric: each $1 the underlying ends above \(K\) is $1 of profit to the long, and each $1 below is $1 of loss. Instead of paying an upfront premium, you post <strong><span class="gloss" title="The deposit required to open a leveraged position, such as a futures contract, held as collateral against losses.">initial margin</span></strong> as collateral against potential losses. The position is marked to market daily, with <strong><span class="gloss" title="The gain or loss on a futures position paid into or out of the account each day as the contract is marked to market.">variation margin</span></strong> added or refunded each evening as the profit and loss (P&amp;L) is realized.</p>
+
+<p>The E-mini S&amp;P 500 future (ES) has these terms:</p>
 
 <ul>
-<li>Multiplier: $50 per index point</li>
-<li>1 ES contract at SPX 6000 = $300,000 notional</li>
-<li>Initial margin: ~$15,000-$22,000 depending on volatility regime</li>
-<li>Tick: 0.25 index points = $12.50</li>
+<li>A multiplier of $50 per index point, so that one ES contract at an SPX level of 6000 is $300,000 of notional.</li>
+<li>An initial margin of about $15,000 to $22,000 a contract, depending on the volatility regime.</li>
+<li>A <span class="gloss" title="The smallest step in which a contract's price can change, such as a quarter of an index point for ES futures.">tick</span>, the smallest step in which the price moves, of 0.25 index points, worth \(0.25 \times \$50 = \$12.50\) a contract.</li>
 </ul>
 
-<p>The ES contract is the cleanest leveraged equity exposure available to US traders. Combined with the 1256 60/40 tax treatment, it's the operationally correct vehicle for any retail trader who wants leveraged SPX exposure without the complications of options. The funding cost is baked into the basis between ES and SPX — when interest rates are positive, ES trades at a premium to SPX that decays to zero at expiration, and that decay is the implicit financing cost.</p>
+<div class="worked">
+<span class="ct">Worked example: Daily settlement on one ES contract</span>
+<p>You buy one ES contract at 6000 and post initial margin, but no premium changes hands. When the contract settles at 6030 on day 1, the exchange credits \(30 \times \$50 = \$1{,}500\) to your account. When it settles at 5985 on day 2, it debits \(45 \times \$50 = \$2{,}250\). The two flows net to \(-\$750\), which is \((5985 - 6000) \times \$50\), the payoff of <a class="eqref" href="#e-future"></a> at 5985. Daily settlement pays the straight line as you go rather than all at the end.</p>
+</div>
 
-<h2 id="linearperiodic-payoffs-swaps">2 · Linear/periodic payoffs (swaps)</h2>
+<p><strong><span class="gloss" title="A private agreement between two parties to buy or sell an asset at a set price on a future date. It has the same payoff as a futures contract but is not standardized or exchange-traded.">Forwards</span></strong> are the OTC analog: the same payoff structure, but bilateral and not standardized. Most institutional foreign exchange (FX) hedging uses forwards rather than futures, because forwards can be sized and dated precisely.</p>
 
-<p><strong>Swaps</strong> are derivatives that involve recurring payments based on the difference between two reference rates or prices. The most common form is the <strong>interest rate swap</strong>, where one party pays a fixed rate and receives a floating rate over a series of periodic payments.</p>
+<h3 id="what-sets-the-futures-price">What sets the futures price</h3>
 
-<p>A standard 5-year USD interest rate swap:</p>
+<p>A futures contract is equivalent to borrowing money to buy the underlying today at the spot price and holding it to the contract date. At expiry you compare the borrowed amount, plus financing, against the spot price. The futures price is set so that this cash-and-carry trade makes nothing. It therefore builds in the <strong><span class="gloss" title="The cost of holding the underlying until a future date, financing less any dividends received, plus storage for a commodity. It sets the gap between the futures price and the spot price.">cost of carry</span></strong>: the cost of financing, less the expected dividend yield, or plus the storage costs for a physical commodity.</p>
+
+<p>Write \(S_0\) for the spot price today, \(r\) for the risk-free interest rate, \(q\) for the underlying's dividend yield and \(T\) for the time to expiry in years. In these symbols, the price at which the future trades today is</p>
+
+<div class="eq" id="e-carry">
+\[ F_0 = S_0\, e^{(r - q)T} \]
+</div>
+
+<details class="grind"><summary>Why the futures price is spot plus carry</summary><div class="grind-body">
+<p><strong>Step 1: buy and borrow.</strong> Reinvested dividends at the yield \(q\) turn each unit of the underlying into \(e^{qT}\) units by expiry. So buy \(e^{-qT}\) units, ending with exactly one, and borrow their cost \(S_0 e^{-qT}\) at the rate \(r\). Sell one future at \(F_0\), which costs nothing to enter.</p>
+
+<p><strong>Step 2: settle.</strong> At expiry your unit is worth \(S_T\) and the short future pays \(F_0 - S_T\), so together they are worth \(F_0\) whatever \(S_T\) is. The loan has grown to \(S_0 e^{-qT} e^{rT} = S_0 e^{(r-q)T}\).</p>
+
+<p><strong>Step 3: rule out free money.</strong> Your profit, \(F_0 - S_0 e^{(r-q)T}\), is fixed on the day you enter. If it were positive, anyone could lock it in without risk. If it were negative, anyone could run the trade in reverse to the same effect. Only <a class="eqref" href="#e-carry"></a> leaves no such <span class="gloss" title="A profit made without bearing risk, by exploiting a difference between prices that should agree.">arbitrage</span>.</p>
+</div></details>
+
+<div class="worked">
+<span class="ct">Worked example: The basis on one ES contract</span>
+<p>Take hypothetical values of 6000 for SPX, 4% for the rate, 1.5% for the dividend yield and three months to expiry. For these, <a class="eqref" href="#e-carry"></a> gives \(6000 \times e^{0.025 \times 0.25} = 6000 \times 1.00627 = 6037.6\). The future trades 37.6 points above spot, which on one contract is \(37.6 \times \$50 = \$1{,}880\). That is close to three months' financing of $300,000 at the 2.5-point gap between the rate and the yield.</p>
+</div>
+
+<p>The gap between the futures price and spot is the <strong><span class="gloss" title="The difference between a futures price and the price of its underlying. For an index future it reflects interest and dividends until expiry, and it shrinks to zero at expiry.">basis</span></strong>. At expiry \(T = 0\), so \(e^{0} = 1\) and the future equals spot. When interest rates are positive and above the dividend yield, ES trades at a premium to SPX that decays to zero at expiration. That decay is the implicit financing cost: the funding cost of ES is baked into the basis between ES and SPX.</p>
+
+<p>The ES contract is the cleanest leveraged equity exposure available to US traders. Combined with the <span class="gloss" title="A contract, such as a broad-based index option or a regulated futures contract, taxed under Section 1256 of the Internal Revenue Code. Its gains count as 60% long-term and 40% short-term whatever the holding period, and open positions are marked to market at the end of the year.">Section 1256</span> 60/40 tax treatment of <a class="xref" href="2e.html">Chapter 2E</a>, it is the operationally correct vehicle for any retail trader who wants leveraged SPX exposure without the complications of options.</p>
+
+<h2 id="swaps-linear-payoffs-in-installments">2 · Swaps: linear payoffs in installments</h2>
+
+<p>A <strong><span class="gloss" title="A derivative in which two parties exchange a series of periodic payments computed from two different rates or prices on a notional amount.">swap</span></strong> is a derivative that makes recurring payments based on the difference between two reference rates or prices. The most common form is the <strong><span class="gloss" title="A swap in which one party pays a fixed interest rate and the other a floating rate on the same notional, usually netted at each payment date.">interest rate swap</span></strong>, in which one party pays a fixed rate and receives a floating rate over a series of periodic payments. A standard five-year USD interest rate swap might have these terms:</p>
 
 <ul>
-<li>Notional: say, $10 million (notional is not exchanged; it's only used to compute the floating payments)</li>
-<li>Fixed rate: say, 4.5% paid by Party A</li>
-<li>Floating rate: 3-month SOFR (Secured Overnight Financing Rate) paid by Party B</li>
-<li>Payment frequency: quarterly</li>
-<li>Term: 5 years</li>
+<li>A notional of, say, $10 million, which is never exchanged but only used to compute the payments.</li>
+<li>A fixed rate of, say, 4.5% a year, paid by Party A.</li>
+<li>A floating rate, 3-month <span class="gloss" title="The Secured Overnight Financing Rate, a benchmark US interest rate for borrowing cash overnight.">SOFR</span> (the Secured Overnight Financing Rate), paid by Party B.</li>
+<li>Payments every quarter over a term of five years.</li>
 </ul>
 
-<p>Each quarter, Party A pays Party B 4.5% × $10M × (90/360) = $112,500. Party B pays Party A 3-month SOFR × $10M × (90/360), which varies as SOFR varies. The net payment goes from A to B (if SOFR is below 4.5%) or from B to A (if SOFR is above 4.5%). Over the 5-year life, the swap has 20 quarterly settlements.</p>
+<p>Write \(M\) for the notional, \(c\) for the fixed rate and \(L\) for the floating rate set for the quarter. Each leg pays its rate on the notional for a quarter, counted as 90 days of a 360-day year. The net payment to Party A, which pays fixed, is</p>
 
-<p>The economic content: Party A has converted their fixed-rate funding into floating-rate exposure; Party B has done the reverse. Swaps are how institutional balance sheets manage interest rate risk at scale. The interest rate swap market is the largest derivative market in the world by notional — hundreds of trillions of dollars outstanding.</p>
+<div class="eq" id="e-swap">
+\[ \text{net}_A = (L - c)\, M\, \tfrac{90}{360} \]
+</div>
 
-<p>Other swap families:</p>
+<div class="worked">
+<span class="ct">Worked example: One quarter of the swap</span>
+<p>Each quarter, Party A owes \(0.045 \times \$10{,}000{,}000 \times 90/360 = \$112{,}500\) whatever SOFR does. Party B owes $100,000 if SOFR sets at 4.0% and $125,000 if it sets at 5.0%, but only the difference between the legs changes hands. At 4.0%, <a class="eqref" href="#e-swap"></a> gives \(-\$12{,}500\), which A pays to B. At 5.0% it gives \(+\$12{,}500\), which B pays to A. The net flows from A to B whenever SOFR is below 4.5%, and from B to A whenever it is above, at each of the swap's 20 quarterly settlements.</p>
+</div>
+
+<p>Each settlement is linear in the floating rate, so a swap is a string of forward contracts on the rate, one for each quarter.</p>
+
+<p>Suppose Party A has borrowed at a floating rate. The SOFR it receives from the swap covers its floating interest, which leaves it paying a fixed 4.5%: it has converted floating-rate funding into fixed. Party B, with fixed-rate funding, does the reverse. Swaps are how institutional balance sheets manage interest rate risk at scale. The interest rate swap market is the largest derivative market in the world by notional, with hundreds of trillions of dollars outstanding.</p>
+
+<p>Other swap families work the same way, exchanging one stream of payments for another:</p>
 
 <ul>
-<li><strong>Currency swaps</strong> (exchange streams of cash flows in different currencies)</li>
-<li><strong>Commodity swaps</strong> (fixed price vs floating commodity price)</li>
-<li><strong>Total return swaps</strong> (one party pays a fixed/floating rate, the other pays the total return on an underlying asset — used by hedge funds for synthetic exposure)</li>
-<li><strong>Variance swaps</strong> (one party pays a fixed strike, the other pays the realized variance over the swap period — these are mathematically equivalent to a delta-hedged option strip, as we'll show in <a class="xref" href="7a.html">Section 7A</a>)</li>
-<li><strong>Credit default swaps</strong> (one party pays a fixed premium, the other pays par value if a reference entity defaults)</li>
+<li><strong>Currency swaps</strong> exchange streams of cash flows in different currencies.</li>
+<li><strong>Commodity swaps</strong> exchange a fixed price for a floating commodity price.</li>
+<li><strong>Total return swaps</strong> have one party pay a fixed or floating rate and the other pay the total return on an underlying asset. Hedge funds use them for synthetic exposure.</li>
+<li><strong><span class="gloss" title="A contract that pays the difference between the variance an asset's returns actually show over a period and a variance level agreed at the start.">Variance swaps</span></strong> have one party pay a fixed strike and the other pay the realized variance over the swap period. They are mathematically equivalent to a delta-hedged strip of options (<a class="xref" href="7a.html">Chapter 7A</a>).</li>
+<li><strong>Credit default swaps</strong> have one party pay a fixed premium and the other pay par value if a reference entity defaults.</li>
 </ul>
 
-<p>Swaps are almost entirely institutional. Retail traders rarely encounter them directly.</p>
+<p>Swaps are almost entirely institutional: retail traders rarely encounter them directly.</p>
 
-<h2 id="convex-payoffs-options">3 · Convex payoffs (options)</h2>
+<h2 id="convex-payoffs-options">3 · Convex payoffs: options</h2>
 
-<p><strong>Options</strong> are derivatives whose payoff is <strong>non-linear</strong> in the underlying. The holder pays a premium upfront and receives a payoff at expiration that depends asymmetrically on the underlying:</p>
+<p><strong>Options</strong> are derivatives whose payoff is non-linear in the underlying. The holder pays a <span class="gloss" title="The price of an option, paid by the buyer to the seller when the trade is made.">premium</span> upfront and receives a payoff at expiration that depends asymmetrically on the underlying. For a <span class="gloss" title="A contract giving its holder the right, not the obligation, to buy the underlying at the strike price on or before expiry.">call option</span> and a <span class="gloss" title="A contract giving its holder the right, not the obligation, to sell the underlying at the strike price on or before expiry.">put</span> struck at \(K\):</p>
 
-<pre>Long call payoff at expiration = max(S_T − K, 0)
-Long put payoff at expiration  = max(K − S_T, 0)</pre>
+<div class="eq" id="e-options">
+\[ \begin{aligned}
+\text{long call} &amp;= \max(S_T - K,\, 0) \\
+\text{long put} &amp;= \max(K - S_T,\, 0)
+\end{aligned} \]
+</div>
 
-<p>The asymmetry is what creates everything interesting about options. The call holder has unlimited upside (any positive move above K becomes profit) but limited downside (loss is bounded at the premium paid). The put holder has large bounded upside (up to K if the underlying goes to zero) but limited downside (also bounded at the premium paid).</p>
+<p>The asymmetry creates everything interesting about options. The call holder has unlimited upside, because any move above \(K\) becomes payoff, but a loss bounded at the premium paid. The put holder has a large but bounded upside, up to \(K\) if the underlying goes to zero, and a loss also bounded at the premium. Net of a call premium \(C\), the call holder profits at expiry once \(S_T\) passes the <span class="gloss" title="The price of the underlying at expiry at which a position's profit or loss is zero. For a call, bought or sold, it is the strike plus the premium; for a put, the strike minus the premium.">breakeven</span> \(K + C\). Net of a put premium \(P\), the put holder profits once \(S_T\) falls below \(K - P\).</p>
 
-<p>The <strong>bend</strong> in the payoff at the strike — where the slope changes from zero to one — is the mathematical source of all option dynamics. Linear instruments need no Greeks beyond delta. Convex instruments need gamma to describe how delta changes, theta to describe the cost of carrying the bend, vega to describe how the bend's value depends on expected volatility. <a class="xref" href="5a.html">Section 5</a> unpacks each in full.</p>
-
-<h2 id="visual-the-three-families-on-one-chart">4 · Visual: the three families on one chart</h2>
+<p>The figure draws the three families at once, each long and struck at \(K = 100\), with the two options bought for a premium of 3. Choose futures first, then the call, then the put. For each, find where the green profit region begins, at the dashed breakeven line, and where the line bends.</p>
 
 <figure class="fig" id="fig-three-payoff-overlay">
   <canvas id="three-payoff-overlay-c" data-h="260"></canvas>
@@ -91,25 +148,125 @@ Long put payoff at expiration  = max(K − S_T, 0)</pre>
   line; each option bends at the strike.</figcaption>
 </figure>
 
-<h2 id="the-convexity-premium">5 · The convexity premium</h2>
+<p>The future was one straight line through its breakeven at 100, with no premium to recover. The call was flat at \(-3\) below the strike and rose one for one above it, crossing zero at 103. The put mirrored the call and crossed zero at 97. Only the two options bend at the strike.</p>
 
-<p>The bend in an option's payoff is the source of all option mathematics. Every formula in <a class="xref" href="5a.html">Section 5</a>, every Greek, every dealer-hedging mechanic in <a class="xref" href="6a.html">Section 6</a> — all of them exist because the option payoff is convex and the linear hedge instruments cannot replicate convexity in a single transaction. <strong>Linear instruments need no continuous hedging; convex instruments do.</strong> This is the mathematical engine that drives the entire dealer mechanics framework.</p>
+<p>The <strong>bend</strong> at the strike, where the slope changes from zero to one, is the mathematical source of all option dynamics. The slope of a payoff is its <span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span>, its change in value for a $1 move in the underlying. Linear instruments need no <span class="gloss" title="The measures of how an option's value changes with the underlying's price, with time, with volatility and with interest rates: delta, gamma, theta, vega and rho.">Greeks</span> beyond delta, because their slope never changes. Convex instruments need <span class="gloss" title="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry.">gamma</span> to describe how delta changes, <span class="gloss" title="The change in an option's value as one day passes with nothing else changing: its time decay. It is negative for bought options and positive for sold ones.">theta</span> to describe the cost of carrying the bend, and <span class="gloss" title="The change in an option's value for a rise of one percentage point in implied volatility. It is positive for bought calls and puts, and largest for long-dated options at the money.">vega</span> to describe how the bend's value depends on expected volatility. <a class="xref" href="5c.html">Chapter 5C</a> unpacks each of them in full.</p>
 
-<p>The economic price of convexity is the <strong>option premium</strong>. The holder pays the premium upfront in exchange for the convex payoff. The writer collects the premium in exchange for assuming the concave (mirror-image) liability. The fair value of the premium under any complete-market model — Black-Scholes is one such model — is exactly the amount that makes the dynamic replication of the option (<a class="xref" href="7a.html">Section 7A</a>) cost zero in expectation. Any deviation from this fair value is, in principle, arbitrageable; in practice, the deviation captures the variance risk premium and the various other premia we'll discuss throughout the book.</p>
+<h2 id="the-convexity-premium">4 · The convexity premium</h2>
 
-<h2 id="composite-derivatives">6 · Composite derivatives</h2>
+<p>Suppose the underlying ends at one of two prices, \(a\) or \(b\), with equal probability. The expected payoff is then \(\tfrac{1}{2}f(a) + \tfrac{1}{2}f(b)\), the midpoint of the chord between the two payoffs. For a convex payoff (<a class="xref" href="4a.html">Chapter 4A</a>) that chord lies on or above the curve, so the expected payoff is at least the payoff at the expected price. The same holds for any distribution of \(S_T\), a result called Jensen's inequality:</p>
 
-<p>Almost every derivative you'll encounter at retail or institutional scale is a combination of these three primitive families plus the underlying:</p>
+<div class="eq" id="e-jensen">
+\[ \mathbb{E}[f(S_T)] \ge f\big(\mathbb{E}[S_T]\big) \]
+</div>
+
+<p>Here \(\mathbb{E}[\,\cdot\,]\) is the expected value and \(f\) any convex payoff. For a linear payoff, such as a future's, the two sides are always equal.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two spreads of outcomes at a strike of 100</span>
+<p><strong>Step 1: a narrow spread.</strong> Let \(S_T\) be 90 or 110 with equal probability, so its expected value is 100. The call pays 0 or 10, an expected payoff of 5, while its payoff at the expected price is 0. The future pays \(-10\) or \(+10\), an expected 0, the same as its payoff at 100.</p>
+
+<p><strong>Step 2: a wider spread.</strong> Let \(S_T\) be 80 or 120 instead, with the same expected value of 100. The call's expected payoff doubles to 10, while the future's stays at 0.</p>
+</div>
+
+<p>Widening the spread without moving the average raised the call's expected payoff and left the future's alone. Volatility has value to the holder of the bend and costs its writer, which is what vega measures.</p>
+
+<p>The bend also explains why options need hedging and futures do not. A future's slope is 1 at every price, so a hedge of one unit of the underlying stays right however the price moves. An option's slope changes with the price, so a hedge set today is wrong tomorrow. <strong>Linear instruments need no continuous hedging; convex instruments do.</strong> The linear hedge instruments cannot replicate convexity in a single transaction. That is the engine that drives every formula in <a class="xref" href="5a.html">Part V</a>, every Greek and every dealer-hedging mechanic in <a class="xref" href="6a.html">Part VI</a>.</p>
+
+<p>The economic price of convexity is the option premium. The holder pays it upfront in exchange for the convex payoff, and the writer collects it in exchange for assuming the concave, mirror-image liability. Under any complete-market model, of which the <span class="gloss" title="The option pricing model, also called Black-Scholes-Merton, that values an option by assuming the underlying follows geometric Brownian motion and can be traded continuously to hedge it.">Black-Scholes model</span> is one, the fair premium is exactly the amount that makes the dynamic replication of the option cost zero in expectation (<a class="xref" href="7a.html">Chapter 7A</a>). Any deviation from this fair value is, in principle, arbitrageable. In practice, the deviation captures the <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> (<a class="xref" href="10c.html">Chapter 10C</a>) and the other premia discussed throughout the book. So the toy's expected payoff of 5 is not yet a price: which probabilities to use is a question for <a class="xref" href="7a.html">Chapter 7A</a>.</p>
+
+<h2 id="building-everything-from-the-three">5 · Building everything from the three</h2>
+
+<p>Almost every derivative you meet at retail or institutional scale combines these three primitive families with the underlying:</p>
 
 <ul>
-<li>A <strong>collar</strong> is long stock + long put + short call → equivalent to a long call spread + a put exposure</li>
-<li>A <strong>straddle</strong> is a long call + long put at the same strike → equivalent to a position long convexity in both directions</li>
-<li>A <strong>callable bond</strong> is a regular bond + a short call option on its own price → the issuer keeps the right to retire the bond early</li>
-<li>A <strong>convertible bond</strong> is a regular bond + a long call option on the issuer's stock</li>
-<li>An <strong>autocallable note</strong> is a complex combination of swaps and options that pays a coupon contingent on the underlying not crossing certain barriers</li>
+<li>A <strong>collar</strong> is long stock, a long put and a short call. It is equivalent to a long call spread plus cash equal to the put's strike, as the worked example below shows.</li>
+<li>A <strong><span class="gloss" title="A position of a call and a put on the same underlying with the same strike and expiry. Buying one is a bet on a large move either way; selling one is a bet that the underlying stays near the strike.">straddle</span></strong> is a long call and a long put at the same strike, which together pay \(|S_T - K|\): long convexity in both directions.</li>
+<li>A <strong>callable bond</strong> is a regular bond with a short call option on its own price, so the issuer keeps the right to retire the bond early.</li>
+<li>A <strong>convertible bond</strong> is a regular bond with a long call option on the issuer's stock.</li>
+<li>An <strong>autocallable note</strong> is a complex combination of swaps and options that pays a coupon contingent on the underlying not crossing certain barriers.</li>
 </ul>
 
-<p>The taxonomy gets baroque quickly. The principle stays simple: <strong>every derivative is composed of futures, swaps, and options on some underlying</strong>. If you can decompose a complex structured product into its constituent linear and convex pieces, you can hedge it. If you can't decompose it, you can't price it, and you can't safely sell it. This is the foundation of structured products desks at investment banks.</p>
+<p>Any payoff made of straight segments can be taken apart by its slopes. Its value at \(S_T = 0\) is cash, and its slope there is units of the underlying. At each kink, the change in slope is the number of calls struck there, bought where the slope rises and sold where it falls.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Taking a collar apart</span>
+<p><strong>Step 1: read the slopes.</strong> Hold one share with a put struck at 95 and a short call struck at 110. At expiry the position is worth 95 below 95, the share price between 95 and 110, and 110 above. Its value at zero is 95, with a slope of 0. The slope rises by 1 at 95 and falls by 1 at 110, so the collar is 95 of cash, one bought 95 call and one sold 110 call.</p>
+
+<p><strong>Step 2: check three prices.</strong></p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">\(S_T\)</th><th>Collar</th><th>Cash</th><th>95 call</th><th>short 110 call</th><th>Sum</th></tr></thead><tbody><tr><td class="c-trial" data-label="\(S_T\)">80</td><td data-label="Collar">95</td><td data-label="Cash">95</td><td data-label="95 call">0</td><td data-label="short 110 call">0</td><td data-label="Sum">95</td></tr><tr><td class="c-trial" data-label="\(S_T\)">100</td><td data-label="Collar">100</td><td data-label="Cash">95</td><td data-label="95 call">5</td><td data-label="short 110 call">0</td><td data-label="Sum">100</td></tr><tr><td class="c-trial" data-label="\(S_T\)">130</td><td data-label="Collar">110</td><td data-label="Cash">95</td><td data-label="95 call">35</td><td data-label="short 110 call">\(-20\)</td><td data-label="Sum">110</td></tr></tbody></table></div></div>
+
+<p><a class="xref" href="5f.html">Chapter 5F</a> derives the same equivalence from put-call parity.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The slope rule is a linear spline. A regression with knots fits an intercept, a slope and one hinge term, \(\max(x - \text{knot},\, 0)\), per knot, whose coefficient is the change in slope there. A payoff made of straight segments is exactly such a spline in \(S_T\): the knots are the strikes, the hinge terms are calls, and the coefficients count the calls you hold.</p>
+</div>
+
+<p>The taxonomy gets baroque quickly. The principle stays simple: <strong>every derivative is composed of futures, swaps and options on some underlying</strong>. If you can decompose a complex structured product into its linear and convex pieces, you can hedge it. If you cannot decompose it, you cannot price it, and you cannot safely sell it. This is the foundation of the structured products desks at investment banks.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>For leveraged SPX exposure, use ES and size it by notional, not by margin. One contract at 6000 moves $3,000 for a 1% move in the index, whatever margin you posted (Chapters 1E and 3D). Buy an option only when you want its bend, such as a capped loss, because the premium is the price of that bend.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>A future's payoff is a straight line at expiry, but it is settled every evening. At 6000, a 5% fall is 300 points, or \(300 \times \$50 = \$15{,}000\) per contract: the whole of an initial margin at the low end of its range. A margin call can close the position long before expiry, which is the path dependency of <a class="xref" href="1e.html">Chapter 1E</a>.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Match the instrument to the shape you need.</p>
+
+<ul>
+<li><strong>For a linear view</strong>, use a linear instrument, such as ES.</li>
+<li><strong>For a capped loss or protection</strong>, use an option, and count the premium as the price of the bend.</li>
+<li><strong>If you cannot decompose a product</strong> into futures, swaps and options, do not trade it.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "a future costs nothing"</span>
+<p>No premium is not no cost. The financing is in the basis: in the example above, the future sat about $1,880 per contract above spot. You pay that away as the basis decays to zero, whether or not the index moves.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A future pays \(S_T - K\) with no premium, settled daily, at a price of spot plus carry, \(S_0 e^{(r-q)T}\).</li>
+<li>A swap is a string of forwards on a rate, of which only the net changes hands.</li>
+<li>An option bends at its strike, so by Jensen's inequality its value rises with volatility. That is why it carries a premium and needs continuous hedging.</li>
+<li>Every derivative decomposes into futures, swaps and options, and the change in slope at each kink counts the calls.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">6 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>You buy one ES contract at 6000, which settles at 6045 on day 1 and at 5970 on day 2. What variation margin moves each evening, and what is the total?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The exchange credits \(45 \times \$50 = \$2{,}250\) on day 1 and debits \(75 \times \$50 = \$3{,}750\) on day 2. The total, \(-\$1{,}500\), equals the payoff at 5970, \((5970 - 6000) \times \$50\).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>In the chapter's swap, SOFR sets at 3.8% for a quarter: who pays whom, and how much?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Party B owes \(0.038 \times \$10{,}000{,}000 \times 90/360 = \$95{,}000\) on the floating leg, against the $112,500 that A owes on the fixed leg. By <a class="eqref" href="#e-swap"></a> the net is \(-\$17{,}500\), so A pays B $17,500.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>A payoff is 0 below 100, rises one for one from 100 to 110, and stays at 10 above 110. Which options build it, and is it convex?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Its value and slope at zero are both 0, so it holds no cash and no underlying. The slope rises by 1 at 100 and falls by 1 at 110: buy one 100 call and sell one 110 call, a call spread. It is not convex, because the sold call bends it downward at 110.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -355,15 +512,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

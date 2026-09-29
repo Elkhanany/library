@@ -1,0 +1,237 @@
+<p class="eyebrow">Part XI · Swing trading · Chapter 11D</p>
+
+<h1>Chart patterns</h1>
+
+<p class="subtitle">Volatility contraction, cup and handle, bull flag</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>After the indicators of <a class="xref" href="11c.html">Chapter 11C</a>, this chapter treats chart patterns the same way: as shapes with explicit thresholds that a detector can check, and as priors on the order flow beneath them. It covers three: the volatility contraction pattern, the cup and handle, and the bull flag.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Average true range, and multicollinearity among signals (<a class="xref" href="11c.html">Chapter 11C</a>).</li>
+<li>Relative strength against a benchmark (<a class="xref" href="11b.html">Chapter 11B</a>) and Weinstein's Stage 2 (<a class="xref" href="11e.html">Chapter 11E</a>).</li>
+<li>Dealer delta hedging, and why short gamma trades with the move (Chapters 6C, 6D and 8A).</li>
+<li>Sensitivity, specificity and positive predictive value, which you know from screening.</li>
+</ul>
+</div>
+
+<h2 id="patterns-as-priors-on-order-flow">1 · Patterns as priors on order flow</h2>
+
+<p>A <strong><span class="gloss" title="A shape in a price series, such as a cup and handle or a flag, defined by geometric rules and read as a sign of how large holders are buying or selling beneath the surface.">chart pattern</span></strong> is a pre-trade structural prior. It describes what the tape looks like when a particular kind of <span class="gloss" title="In trading, the gradual buying of a large position by institutions over weeks or months, which shows on a chart as a base in which the swings narrow.">accumulation</span> or <span class="gloss" title="In trading, the gradual selling of a large position by institutions into strength, which shows on a chart as a top where an advance stalls.">distribution</span> is happening underneath, as large holders slowly build or unload positions. Most retail pattern trading is reductive: "it looks like a cup", without checking whether the geometry satisfies the pattern's definition. A pattern detector operationalizes the geometry, with explicit thresholds for what counts and what does not.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A pattern is a shape with rules. The rules turn "it looks like a cup" into measurements a computer could check: how deep, how long and on how much volume. Passing the rules makes a candidate, not a trade, for the layers of <a class="xref" href="11b.html">Chapter 11B</a> to accept or reject.</p>
+</div>
+
+<p><a class="xref" href="11b.html">Chapter 11B</a> graded this material as Tier C: practitioner pattern language, real but heuristic, whose rigorous formalization is your job. This chapter does part of that job with three recurring measurements:</p>
+
+<ul>
+<li>The <strong>depth</strong> of a pullback is its fall as a fraction of the high it fell from: \((P_{\text{high}} - P_{\text{low}})/P_{\text{high}}\).</li>
+<li>The <strong>range</strong> of a consolidation is its high minus its low, as a fraction of the price.</li>
+<li>A <strong>retracement</strong> is the part of a prior move that a pullback gives back, as a fraction of that move.</li>
+</ul>
+
+<p>Volume enters as a comparison: the average daily volume of one stretch against another, or against a longer average.</p>
+
+<h2 id="the-volatility-contraction-pattern">2 · The volatility contraction pattern</h2>
+
+<p><strong>Definition.</strong> The <strong><span class="gloss" title="Minervini's base of three or more pullbacks, each shallower than the one before, ending in a tight pivot on shrinking volume. Abbreviated VCP.">volatility contraction pattern</span></strong> (VCP), described by Minervini, is a series of three or more progressively shallower pullbacks that ends in a tight <span class="gloss" title="The tight final consolidation at the right side of a base. Its high is the breakout level at which a pattern trader buys.">pivot</span>. Each pullback should be smaller than the one before it. The final pivot should have a range of less than 5% of the price, and volume should compress into it.</p>
+
+<p><strong>Required anchors.</strong> Four anchors must hold before the pattern counts. The stock must be in a Stage 2 regime, with a rising 30-bar moving average (<a class="xref" href="11e.html">Chapter 11E</a>), and show positive Mansfield relative strength against a benchmark. Volume must compress into the pivot, whose final range must stay under 5% of the price.</p>
+
+<p><strong><span class="gloss" title="Relative strength measured against its own average: the ratio of a stock's price to a benchmark's, divided by the moving average of that ratio, minus one. Above zero, the stock is outperforming by more than it usually does.">Mansfield relative strength</span></strong> compares relative strength (<a class="xref" href="11b.html">Chapter 11B</a>) with its own history. Write \(R_t = S_t/B_t\) for the ratio of the stock's price to the benchmark's, and \(\bar{R}_t\) for the \(n\)-bar simple moving average of that ratio. Mansfield relative strength is their ratio, less one:</p>
+
+<div class="eq" id="e-mrs">
+\[ \text{MRS}_t = \frac{R_t}{\bar{R}_t} - 1 \]
+</div>
+
+<p>It is positive when the stock is outperforming the benchmark by more than it usually does, over an averaging period \(n\) that the source does not fix.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Checking a VCP</span>
+<p><strong>Step 1: the pullbacks.</strong> In a rising stock, three pullbacks run from 120 to 98.4, from 118 to 106.2 and from 117 to 110. Their depths are \(21.6/120 = 18\%\), \(11.8/118 = 10\%\) and \(7/117 = 6\%\): each shallower than the last.</p>
+
+<p><strong>Step 2: the pivot.</strong> The final consolidation trades between 112.8 and 116.5, a range of \(3.7/116.5 = 3.2\%\), under the 5% limit. Average daily volume falls from 2.0 million shares in the first pullback to 1.4 million, 0.9 million and 0.7 million in the pivot: compressing.</p>
+
+<p><strong>Step 3: the anchors.</strong> With the 30-bar average rising, the stock-to-SPX ratio is 0.0195 against a moving average of 0.0187, so <a class="eqref" href="#e-mrs"></a> gives \(0.0195/0.0187 - 1 = +4.3\%\): positive. With the geometry and the anchors passing, a move above 116.5 is the <span class="gloss" title="A move of the price beyond a level that has held it, such as the top of a trading range or of a chart pattern, taken as the start of a new advance.">breakout</span>.</p>
+</div>
+
+<p><strong>What the dealer sees.</strong> In the Dealer Mechanics Lab's reading, a VCP is <em>accumulation visible on the tape</em>. Volume dries up as the range narrows, because the marginal seller has been absorbed. Dealers who are short calls into the consolidation see their <span class="gloss" title="Holding the underlying in the amount that offsets a position's delta, so that small moves in the underlying's price leave the combined position's value unchanged. The hedge must be reset as delta changes.">delta hedges</span> shrink. The breakout is the moment dealers have to chase the move, because they are short the call wing into a rising market.</p>
+
+<p>The chain behind that last sentence runs through <a class="xref" href="6a.html">Part VI</a>, where a dealer short a call holds shares as its hedge. While the stock consolidates below the strike and time passes, the call's delta falls, so the dealer sells some of those shares. When the price breaks upward, the call's delta rises with it, so the dealer must buy shares as the price rises: short gamma trades with the move (<a class="xref" href="6d.html">Chapter 6D</a>). Taken to its extreme, that feedback is the <span class="gloss" title="A rally driven by dealers buying the underlying to hedge calls they have sold, whose deltas rise as the price rises, so that each purchase lifts the price and forces the next.">gamma squeeze</span> of <a class="xref" href="8c.html">Chapter 8C</a>.</p>
+
+<p>Two cautions apply: whether dealers are short those calls is an assumption about who holds what, as <a class="xref" href="8a.html">Chapter 8A</a> shows, and the Edge Book judges the dealer-gamma narrative overstated. A Cboe study of 2025 put 0DTE market-maker hedging at only about 0.2% of SPX daily liquidity (Chapters 1G and 10I).</p>
+
+<p><strong>Why it works, when it does.</strong> Accumulation by institutional investors takes time, because they cannot all bid the same price at the same time without moving the market. So they place increasingly tighter <span class="gloss" title="An order to buy at or below a stated price, or to sell at or above it. It promises the price but not a fill.">limit orders</span> as supply dries up. The breakout is the moment the last marginal seller has exited.</p>
+
+<p><strong>How it fails.</strong> A VCP that breaks down was probably not accumulating but distributing under thin cover. Verify the structural condition, meaning Stage 2, positive relative strength and a supportive macro read, before taking the trade.</p>
+
+<h2 id="the-cup-and-handle">3 · The cup and handle</h2>
+
+<p><strong>Definition.</strong> The <strong><span class="gloss" title="O'Neil's base: a rounded decline and recovery lasting weeks to months, the cup, followed by a shorter and shallower pullback, the handle, whose high is the buy point.">cup and handle</span></strong>, described by O'Neil, is a rounding-bottom "cup" lasting weeks to months, followed by a shorter pullback, the "handle", of typically 3 to 12 weeks. The handle should not retrace more than 50% of the cup's depth. The breakout buy point is the high of the handle.</p>
+
+<p><strong>Required anchors.</strong> The cup's depth is typically 15% to 35%, and deeper cups are riskier. The handle forms on declining volume, in a stock that is in Stage 2 or moving from Stage 1 to Stage 2.</p>
+
+<p>With the left lip of the cup at \(P_L\), its bottom at \(P_B\), the handle's high at \(P_R\) and the handle's low at \(P_H\), the two tests are</p>
+
+<div class="eq">
+\[ \text{depth} = \frac{P_L - P_B}{P_L} \]
+</div>
+
+<div class="eq" id="e-handle">
+\[ \frac{P_R - P_H}{P_L - P_B} \le 0.5 \]
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Measuring a cup</span>
+<p><strong>Step 1: the cup.</strong> The left lip is at 120 and the bottom at 90, a depth of \(30/120 = 25\%\), inside the typical 15% to 35%.</p>
+
+<p><strong>Step 2: the handle.</strong> The price recovers to 118 and pulls back to 110 on falling volume. By <a class="eqref" href="#e-handle"></a>, the handle gives back \((118 - 110)/(120 - 90) = 8/30 = 27\%\) of the cup's depth, within the 50% limit.</p>
+
+<p><strong>Step 3: the buy point.</strong> The buy point is the handle's high, 118. A handle that fell to 102 would have given back \(16/30 = 53\%\), and the pattern would fail.</p>
+</div>
+
+<p><strong>What the dealer sees.</strong> The Dealer Mechanics Lab reads the cup as one complete cycle of institutional position turnover: accumulation, run-up, distribution and re-accumulation. The handle is the final shakeout before the next leg up.</p>
+
+<h2 id="the-bull-flag">4 · The bull flag</h2>
+
+<p><strong>Definition.</strong> A <strong><span class="gloss" title="A sharp advance on heavy volume, the flagpole, followed by a brief and shallow drift lower on light volume, the flag. A move above the flag's high is the breakout.">bull flag</span></strong> is a sharp, high-volume impulse move, the "flagpole", followed by a brief consolidation that drifts against the impulse on lower volume, the "flag". On a daily chart the flag should last 1 to 3 weeks, with its high as the breakout level.</p>
+
+<p><strong>Required anchors.</strong> The flagpole is at least 2 to 3 times the recent daily range. The flag retraces no more than 38% of the flagpole. Volume during the flag is decisively lower than during the flagpole.</p>
+
+<p>The recent daily range is naturally measured by the average true range of <a class="xref" href="11c.html">Chapter 11C</a>. The first anchor then asks for a pole of at least 2 to 3 ATRs.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Measuring a flag</span>
+<p><strong>Step 1: the pole.</strong> With an ATR of $2.00, a stock runs from 100 to 108 in three sessions on heavy volume. The pole is 8 points, 4 ATRs, which clears the 2 to 3 the rule asks for.</p>
+
+<p><strong>Step 2: the flag.</strong> Over the next eight sessions the price drifts down to 105.50, on average volume 55% of the pole's, retracing \(2.5/8 = 31\%\) of the pole, under the 38% limit.</p>
+
+<p><strong>Step 3: the trigger.</strong> The flag's high, 108, is the breakout level. A drift down to 104.50 would have retraced \(3.5/8 = 44\%\), too deep for a flag.</p>
+</div>
+
+<p><strong>What the dealer sees.</strong> In the Dealer Mechanics Lab's reading, the flagpole is often dealer hedging flow itself: a short-gamma dealer forced to buy as a fundamental catalyst arrives. The flag is the brief period during which the gamma profile re-equilibrates. The breakout is the next wave of demand.</p>
+
+<h2 id="the-detectors-thresholds">5 · The detector's thresholds</h2>
+
+<p>The table sets the three detectors side by side:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Pattern</th><th class="c-result">Shape</th><th class="c-result">Thresholds</th><th class="c-result">Context required</th><th class="c-other">Buy point</th></tr></thead><tbody><tr><td class="c-trial" data-label="Pattern">Volatility contraction pattern</td><td class="c-result" data-label="Shape">Three or more pullbacks, each shallower than the last, ending in a tight pivot</td><td class="c-result" data-label="Thresholds">Pivot range under 5% of price; volume compressing into the pivot</td><td class="c-result" data-label="Context required">Stage 2, a rising 30-bar MA; positive Mansfield relative strength</td><td class="c-other" data-label="Buy point">Above the pivot</td></tr><tr><td class="c-trial" data-label="Pattern">Cup and handle</td><td class="c-result" data-label="Shape">A rounded cup over weeks to months, then a shorter handle, typically 3 to 12 weeks</td><td class="c-result" data-label="Thresholds">Cup depth typically 15% to 35%; handle retraces at most 50% of the cup's depth, on declining volume</td><td class="c-result" data-label="Context required">Stage 2, or moving from Stage 1 to Stage 2</td><td class="c-other" data-label="Buy point">The handle's high</td></tr><tr><td class="c-trial" data-label="Pattern">Bull flag</td><td class="c-result" data-label="Shape">A sharp pole on high volume, then a brief drift against it on lower volume</td><td class="c-result" data-label="Thresholds">Pole at least 2 to 3 times the recent daily range; flag retraces at most 38% of the pole and lasts 1 to 3 weeks on a daily chart</td><td class="c-result" data-label="Context required">Volume in the flag decisively below the pole's</td><td class="c-other" data-label="Buy point">The flag's high</td></tr></tbody></table></div></div>
+
+<h2 id="why-patterns-work-when-they-do">6 · Why patterns work, when they do</h2>
+
+<p>Patterns are not magic but shorthand for institutional order flow that takes time to complete. When patterns fail, and they do often, it is almost always because the structural condition the pattern was supposed to encode was not actually there. The detector's job is to enforce the geometry. Your job is to verify the structural condition, meaning Stage 2, positive relative strength and a supportive macro read, before taking the trade.</p>
+
+<p>The Edge Book does not evaluate chart patterns directly. Its general test for any candidate edge applies to them: a vivid narrative without academic backing is a red flag, and a real edge survives critical evaluation (<a class="xref" href="10i.html">Chapter 10I</a>).</p>
+
+<h2 id="structure-against-noise">7 · Structure against noise</h2>
+
+<p>Run any pattern detector across hundreds of random tapes, for example by sweeping the seed of a random price generator. Even random tapes occasionally produce something the detector flags. <strong>False positives are the price of operating with a detector at all.</strong> The fix is not a stricter detector but the framework: patterns are necessary but not sufficient, and they earn capital only when the higher-layer conditions of regime, stage and relative strength confirm.</p>
+
+<p>Screening arithmetic shows why, once you write \(\pi\) for the share of scanned stretches that sit on genuine accumulation, the prevalence. Give the detector a sensitivity \(s\) and a false-positive rate \(f\). By Bayes' theorem, the share of flags that are real is the positive predictive value:</p>
+
+<div class="eq" id="e-ppv">
+\[ \text{PPV} = \frac{s\,\pi}{s\,\pi + f\,(1 - \pi)} \]
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Why the framework beats a stricter detector</span>
+<p><strong>Step 1: a raw scan.</strong> Suppose, hypothetically, that the detector catches 90% of genuine bases and flags 10% of random stretches, and that 5% of the stretches you scan sit on genuine accumulation. By <a class="eqref" href="#e-ppv"></a>, \(\text{PPV} = 0.045/(0.045 + 0.095) = 32\%\), so two flags in three are noise.</p>
+
+<p><strong>Step 2: a stricter detector.</strong> Tighten the thresholds until the detector flags only 3% of random stretches, at the cost of catching only 60% of real bases. Then \(\text{PPV} = 0.030/(0.030 + 0.0285) = 51\%\), and 40% of the real bases are missed.</p>
+
+<p><strong>Step 3: the framework instead.</strong> Keep the original detector but scan only stocks that pass the higher layers: Stage 2, positive relative strength and a supportive regime. If that raises the prevalence to a hypothetical 30%, \(\text{PPV} = 0.27/(0.27 + 0.07) = 79\%\), while the detector still catches 90% of real bases.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>This is the lesson of screening a low-risk population. A mammogram with good sensitivity and specificity still yields mostly false positives when the prevalence of cancer is low. The same test performs far better in women already at high risk. Nobody fixes that by demanding a stricter radiologist. They fix it by choosing whom to screen, as the framework chooses which charts to run the detector on.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Measure, do not eyeball</strong>: write down each pullback's depth, the pivot's range and the volume ratios before you call a pattern.</li>
+<li><strong>Anchor first, pattern second</strong>: run the detector only on names that already pass Stage 2, positive relative strength and the dashboard of <a class="xref" href="11a.html">Chapter 11A</a>.</li>
+<li><strong>Expect slippage at the breakout</strong>: everyone watching the same level buys the same tick, so spreads can widen and fills worsen just as you enter (<a class="xref" href="2d.html">Chapter 2D</a>).</li>
+<li><strong>Size by the distance to invalidation</strong>: decide before entry which breakdown means the pattern failed, and size so that the loss there fits your budget (Chapters 11C and 13C).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>A pattern fails when the accumulation it was supposed to encode was never there, most visibly as a VCP that breaks down instead of out. It fails at the scan level when the detector runs on noise, where even random tapes produce flags. And it fails in the account when a gap carries the price through the level you meant to exit at.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Pass the geometry</strong>: every threshold in the table above, measured, not judged by eye.</li>
+<li><strong>Pass the anchors</strong>: Stage 2, positive relative strength and a supportive regime read. If any fails, the pattern is a false positive until proven otherwise.</li>
+<li><strong>Enter only at the buy point</strong>: the pivot, the handle's high or the flag's high.</li>
+<li><strong>Pre-commit the invalidation</strong>, sizing so that a failed pattern costs no more than your per-trade budget.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "it looks like a cup"</span>
+<p>A shape that resembles a pattern is not the pattern. A cup 45% deep, a handle that gives back two thirds of it or a flag that retraces half its pole each fails a rule, however familiar the picture looks.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: tightening the detector to cure false positives</span>
+<p>Stricter thresholds trade false positives for missed real patterns. The positive predictive value still depends on how common real accumulation is among the charts you scan. Raise that prevalence with the higher layers instead.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A chart pattern is a prior on order flow, the tape's picture of accumulation or distribution, whose geometry a detector turns into thresholds.</li>
+<li>The VCP needs three or more shallower pullbacks and a pivot under 5% of price, in Stage 2 with positive Mansfield relative strength. The cup and handle needs a 15% to 35% cup and a handle that retraces at most half of it. The bull flag needs a pole of at least 2 to 3 daily ranges and a flag that retraces at most 38%.</li>
+<li>Patterns fail mostly when the structural condition was absent. Verify Stage 2, relative strength and the regime before trading one.</li>
+<li>False positives are the price of any detector. The framework, which raises the prevalence of real patterns among the charts you scan, fixes them better than a stricter detector does.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A stock pulls back 15%, then 9%, then 11%, then forms a pivot with a 4% range. Is it a VCP?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No. Each pullback must be shallower than the one before, yet the third, at 11%, is deeper than the second, at 9%. The pivot's range would pass, but the sequence fails.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A cup's left lip is at 80 and its bottom at 56. The price recovers to 79, then pulls back to 70. Check the cup's depth and the handle, and give the buy point.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The depth is \(24/80 = 30\%\), inside 15% to 35%. The handle gives back \((79 - 70)/24 = 37.5\%\) of the cup's depth, within the 50% limit. The buy point is the handle's high, 79.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>With an ATR of $1.50, a stock rises 4 points in two days on heavy volume, then drifts down 1.8 points on light volume. Is it a bull flag?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The pole is \(4/1.5 = 2.7\) ATRs, which passes if you read the rule as at least 2 ATRs but not as at least 3. The flag retraces \(1.8/4 = 45\%\), over the 38% limit, so the pattern fails on retracement.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A detector catches 80% of real bases and flags 5% of random stretches. What is its positive predictive value when 10% of scanned stretches are real, and when 2% are?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-ppv"></a>, at 10% prevalence \(\text{PPV} = 0.08/(0.08 + 0.045) = 64\%\). At 2% prevalence, the same detector gives \(\text{PPV} = 0.016/(0.016 + 0.049) = 25\%\). The same detector is worth far less on an unfiltered scan.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>With a stock at 210, SPX at 6,000 and the moving average of their ratio at 0.0360, what is the Mansfield relative strength? Does the VCP anchor pass?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The ratio is \(210/6{,}000 = 0.0350\), so <a class="eqref" href="#e-mrs"></a> gives \(0.0350/0.0360 - 1 = -2.8\%\). It is negative, so the anchor fails and the pattern does not count.</p>
+</div></details>
+</div>
+</div>

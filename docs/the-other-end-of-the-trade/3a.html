@@ -16,9 +16,9 @@
 <script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="../assets/pwa.js" defer></script>
 <!--/PWA-->
-<title>3A What is the S&P 500, actually? — The Other End of the Trade</title>
-<meta name="description" content="Chapter 3A of The Other End of the Trade: What is the S&amp;P 500, actually?.">
-
+<title>3A What a trading model is — The Other End of the Trade</title>
+<meta name="description" content="Chapter 3A of The Other End of the Trade: What a trading model is.">
+<link rel="stylesheet" href="assets/katex.min.css">
 <link rel="stylesheet" href="assets/book.css">
 <!--NAVCSS-->
 <link rel="stylesheet" href="../assets/nav.css">
@@ -39,123 +39,1060 @@
 <!--/NAV-->
 <div class="wrap">
 <nav class="sidebar" aria-label="Chapter sections">
-  <a class="sb-home" href="contents.html#sec-2">← Part III · Markets</a>
-  <div class="sb-folio"><a class="sb-prev" href="2e.html" aria-label="Previous chapter: 2E · Sizing and frequency scaling" title="Previous chapter: 2E · Sizing and frequency scaling (←)">‹ 2E</a><p class="sb-title"><span class="sb-at">Chapter 3A ·</span> <span class="sb-at">10 of 67</span></p><a class="sb-next" href="3b.html" aria-label="Next chapter: 3B · Where your order goes: exchanges, wholesalers, and the NBBO" title="Next chapter: 3B · Where your order goes: exchanges, wholesalers, and the NBBO (→)">3B ›</a></div>
-  <div id="sb-toc"><a href="#the-six-products-that-all-track-spx">1 · The six products that all track SPX</a><a href="#why-three-different-settlement-rules-matter">2 · Why three different settlement rules matter</a><a href="#cash-settlement-is-a-feature-not-a-bug">3 · Cash settlement is a feature, not a bug</a><a href="#the-retail-xsp-advantage-revisited-in-3c">4 · The retail XSP advantage (revisited in 3C)</a><a href="#trading-hours-and-the-es-tells-you-spx-mechanism">5 · Trading hours and the "ES tells you SPX" mechanism</a><a href="#why-this-matters-for-everything-that-follows">6 · Why this matters for everything that follows</a></div>
+  <a class="sb-home" href="contents.html#sec-2">← Part III · Models</a>
+  <div class="sb-folio"><a class="sb-prev" href="2e.html" aria-label="Previous chapter: 2E · Accounts, margin and taxes" title="Previous chapter: 2E · Accounts, margin and taxes (←)">‹ 2E</a><p class="sb-title"><span class="sb-at">Chapter 3A ·</span> <span class="sb-at">13 of 83</span></p><a class="sb-next" href="3b.html" aria-label="Next chapter: 3B · Mean reversion and momentum" title="Next chapter: 3B · Mean reversion and momentum (→)">3B ›</a></div>
+  <div id="sb-toc"><a href="#what-a-model-is">1 · What a model is</a><a href="#regression-models-predict-a-number" class="lvl3">Regression models predict a number</a><a href="#classification-models-predict-a-category" class="lvl3">Classification models predict a category</a><a href="#features-targets-and-lookahead-bias">2 · Features, targets and lookahead bias</a><a href="#start-simple">3 · Start simple</a><a href="#univariate-and-multivariate-models" class="lvl3">Univariate and multivariate models</a><a href="#the-occam-tax" class="lvl3">The Occam tax</a><a href="#the-model-and-the-strategy">4 · The model and the strategy</a><a href="#testing-on-the-future">5 · Testing on the future</a><a href="#check-yourself">6 · Check yourself</a></div>
 </nav>
 <main class="main" id="text">
 <div class="col">
 
-<p class="eyebrow">Part III · Markets · Chapter 3A</p>
+<p class="eyebrow">Part III · Models · Chapter 3A</p>
 
-<h1>What is the S&amp;P 500, actually?</h1>
+<h1>What a trading model is</h1>
+
+<p class="subtitle">Regression, classification and honest testing</p>
 
 <div class="callout where">
-<span class="ct">About this part</span>
-<p>Before we describe the dealers' end of the trade in Sections 6-9, we have to be precise about what is <em>being</em> traded. "The S&amp;P 500" is casually used in financial conversation as if it were a single object, but on a screen it is at least <strong>six distinct products</strong> — an index level, an ETF, a futures family, and three different options markets — each with its own settlement rules, contract size, tax treatment, dealer ecosystem, and trading hours. Confusion between them produces a surprising amount of bad retail decision-making, including some of the most expensive mistakes a US retail trader can make.</p>
-
-<p>This section also covers the layer beneath the product: the <strong>market microstructure</strong> through which orders actually execute. The path from your click in a brokerage app to a printed trade involves a routing decision that determines who fills you, at what price, on what venue, and at what cost. Understanding this layer separates retail traders who lose 50 basis points per round trip to invisible costs from those who lose 5 basis points. The two layers together — what to trade and how to execute — define the operational baseline that every later strategy assumes.</p>
-
-<p>The four sub-chapters: <strong>3A</strong> anatomizes SPX and its six tradeable instruments. <strong>3B</strong> walks through US equity microstructure, the National Best Bid and Offer, wholesalers and dark pools, and the current state of payment for order flow regulation. <strong>3C</strong> explains the four account tiers retail traders can access and the single most consequential operational choice in US options trading — Section 1256 tax treatment. <strong>3D</strong> closes with order types and execution discipline.</p>
+<span class="ct">Where we are</span>
+<p><a class="xref" href="1a.html">Part I</a> defined edge as expected value after costs and weighed it against risk with the Sharpe ratio. <a class="xref" href="2a.html">Part II</a> followed an order to the exchange and priced its execution. This chapter opens Part III, which builds what decides the trades: a model that turns data into predictions, tested to show whether its predictions are real.</p>
 </div>
 
-<hr>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Edge as expected value net of costs (<a class="xref" href="1c.html">Chapter 1C</a>).</li>
+<li>The Sharpe ratio, its standard error and the deflated Sharpe ratio (<a class="xref" href="1d.html">Chapter 1D</a>).</li>
+<li>Log returns and the square-root-of-time rule (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+</ul>
+</div>
 
-<p>The S&amp;P 500 is a list of approximately 500 US large-cap stocks chosen by the <strong>S&amp;P U.S. Index Committee</strong>. Inclusion criteria include market capitalization (currently a $20.5 billion minimum as of 2025, periodically raised by S&amp;P), domicile (US), liquidity (high public float and turnover), financial viability (positive as-reported earnings in the most recent quarter and trailing year), and a minimum public float share (now 50% as of 2025). The committee meets quarterly to make additions and deletions; rebalances happen on the third Friday of the rebalance month, and the trading volume on those days has historically spiked as index-tracking funds adjust their holdings.</p>
+<p>Quantitative trading can be distilled to one sentence: <strong>create a statistical edge and execute it to produce risk-adjusted returns</strong>. Both halves matter equally. A great model with poor execution makes no money, while great execution without a model is just clean losses.</p>
 
-<p>The level you see quoted as "SPX" is a <strong>float-adjusted, market-cap-weighted index</strong>. Each component contributes to the index in proportion to the market value of its publicly tradeable shares — that is, excluding insider holdings, government holdings, and other restricted shares — divided by a continuously-updated number called the <strong>divisor</strong>:</p>
+<p>The industry divides along the same line, into the <span class="gloss" data-facts="Return beyond what a model's risk factors explain, often claimed as the reward for a manager's skill." tabindex="0" role="button">alpha</span> researchers who excel at the first half and the execution engines who excel at the second. The execution engines include firms such as Jane Street, Citadel Securities and Tower Research. The most profitable firms in the world are those that have built unified pipelines from research to execution, with minimal <span class="gloss" data-facts="The gap between the price you expected or used as a reference, such as the best quote or the mid, and the average price you actually got." tabindex="0" role="button">slippage</span> between them.</p>
 
-<pre>SPX_t = (Σ_i Price_{i,t} × FloatShares_{i,t}) / Divisor_t</pre>
+<p>Part III walks through the five components in order:</p>
 
-<p>The divisor is the load-bearing piece nobody talks about. Its sole purpose is to keep the index level continuous across <strong>structural events that would otherwise create artificial discontinuities</strong> — index reconstitution (adds/deletes), spin-offs, special dividends that effectively return capital outside the float, and other corporate actions that change the float-adjusted market cap without reflecting a real change in shareholder value.</p>
+<ol>
+<li><strong>The model</strong>: what it predicts and how to test it honestly (this chapter).</li>
+<li><strong>The most basic model class worth studying</strong>, the AR(1) model (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+<li><strong>Fitting</strong>: how a model's parameters are found from data (<a class="xref" href="3c.html">Chapter 3C</a>).</li>
+<li><strong>Execution</strong>: how predictions become orders, which <a class="xref" href="2c.html">Chapter 2C</a> covers in <a class="xref" href="2a.html">Part II</a>.</li>
+<li><strong>Sizing and frequency</strong>: how big each position is and how often you trade (<a class="xref" href="3d.html">Chapter 3D</a>).</li>
+</ol>
 
-<p>A few details that are commonly misstated:</p>
+<p>The treatment is deliberately introductory, since entire books exist on each of these topics. The goal is to give you enough mechanics to read the dealer chapters that follow, from <a class="xref" href="6a.html">Part VI</a> on, without confusion.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A trading model is a rule that takes what you can see now and produces a guess about what happens next. It predicts either a number, such as tomorrow's return, or a category, such as "up" or "down". Building one is easy. The hard part is showing that its guesses beat chance on data it was not built from, because financial data are so noisy that almost any model can be made to fit the past.</p>
+</div>
+
+<h2 id="what-a-model-is">1 · What a model is</h2>
+
+<p>A <strong><span class="gloss" data-facts="A mathematical rule that takes inputs observed now, such as past prices or volumes, and produces a prediction of some quantity at a later time." tabindex="0" role="button">trading model</span></strong> is a mathematical object that takes inputs and produces a prediction. The inputs are <strong><span class="gloss" data-facts="One of the inputs to a model: a number known at the time the prediction is made, such as yesterday's return or today's volume." tabindex="0" role="button">features</span></strong>: numbers observed at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span>, such as past prices, volumes, technical indicators, macro variables or news sentiment scores. The output is a prediction of some quantity at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">t + h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6984em; vertical-align: -0.0833em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span>, where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> is the <strong><span class="gloss" data-facts="How far ahead a model predicts: the time between the moment its features are observed and the moment its target is measured." tabindex="0" role="button">prediction horizon</span></strong>. If you write the features as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">x_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and the quantity to be predicted as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mi>t</mi><mo>+</mo><mi>h</mi></mrow></msub></mrow><annotation encoding="application/x-tex">y_{t+h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6389em; vertical-align: -0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2083em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, a model is a function <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord mathnormal" style="margin-right: 0.1076em;">f</span></span></span></span></span> of the features:</p>
+
+<div class="eq" id="e-model">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mover accent="true"><mi>y</mi><mo>^</mo></mover><mrow><mi>t</mi><mo>+</mo><mi>h</mi></mrow></msub><mo>=</mo><mi>f</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \hat{y}_{t+h} = f(x_t) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9028em; vertical-align: -0.2083em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.6944em;"><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span></span><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="accent-body" style="left: -0.1944em;"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1944em;"><span class=""></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2083em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.1076em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></span>
+<span class="eqnum">(3A.1)</span></div>
+
+<p>The hat marks a prediction, as distinct from the value that later occurs. Two basic flavors of model dominate the literature: one predicts a number and the other a category.</p>
+
+<h3 id="regression-models-predict-a-number">Regression models predict a number</h3>
+
+<p>A <strong><span class="gloss" data-facts="A model that predicts a continuous quantity, such as a return, a price or a volatility." tabindex="0" role="button">regression model</span></strong> predicts a continuous quantity. Four examples from trading show the range:</p>
 
 <ul>
-<li><strong>Ordinary cash dividends do NOT change the divisor.</strong> When a constituent goes ex-dividend, its stock price drops by roughly the dividend amount, the index level drops accordingly, and the divisor stays put. This is why SPX is a <em>price-return</em> index — the natural drift from dividend payments is built into the published level. (Total-return tracking lives in SPTR, which separately accrues a dividend index.)</li>
-<li><strong>Ordinary stock splits do NOT require divisor changes either</strong> in a float-cap-weighted index. A 2-for-1 split halves the share price and doubles the float share count, so Price × FloatShares is unchanged. The divisor is unaffected. (This is unlike the price-weighted Dow Industrials, whose divisor <em>must</em> change for every split.)</li>
-<li><strong>What actually moves the divisor:</strong> S&amp;P committee adds and deletes (an addition increases the divisor so the index doesn't gap up; a deletion decreases it so it doesn't gap down), spin-offs (the parent's float market cap drops on the spin date, so the divisor drops to compensate), and special dividends large enough to be classified by S&amp;P methodology as a return of capital.</li>
+<li><strong>The next bar's return</strong>, as a log return over the next minute, hour or day.</li>
+<li><strong>The price <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> minutes from now</strong>, as a price level.</li>
+<li><strong><span class="gloss" data-facts="The volatility an asset actually showed over a past period, computed from its returns and annualized." tabindex="0" role="button">Realized volatility</span> over the next 30 days</strong>, a non-negative number often log-transformed to make it more Gaussian-shaped, that is, closer to the normal curve.</li>
+<li><strong>The cost to execute a 1,000-share buy in the next 30 seconds</strong>, as the implementation shortfall in <span class="gloss" data-facts="One hundredth of a percentage point, so 20 basis points is 0.20%. Abbreviated bp, plural bps." tabindex="0" role="button">basis points</span>: the gap between the price when you decided and the price you paid.</li>
 </ul>
 
-<p>The divisor is publicly disclosed by S&amp;P (it's currently in the eight-billion range and drifts as the committee makes adjustments) but is rarely cited in financial media. Without it, the SPX level would gap visibly every time the committee reconstituted the index or a constituent spun off a subsidiary — and there are dozens of those events per year. The fact that the SPX level you saw yesterday is comparable in real economic terms to the level five years ago is entirely the divisor's job.</p>
+<p>In principle the output of a regression model is unbounded. In practice it is bounded by what is physically possible: a single-day simple return below −100% is impossible, because you cannot lose more than you have.</p>
+
+<h3 id="classification-models-predict-a-category">Classification models predict a category</h3>
+
+<p>A <strong><span class="gloss" data-facts="A model that predicts which of a finite set of categories an outcome falls into, such as up or down, usually with a probability for each." tabindex="0" role="button">classification model</span></strong> predicts which of a finite set of categories the next observation falls into, usually with a probability for each. Three examples from trading:</p>
+
+<ul>
+<li><strong>Next bar direction</strong>, as the probability of "up" against "down".</li>
+<li><strong>Next event type</strong>, as probabilities over {breakout, mean reversion, range-bound}.</li>
+<li><strong>Whether a position ends as a winner</strong>, as the probability of profit given the current setup and execution path.</li>
+</ul>
+
+<p>Classification is useful when you care about direction rather than magnitude. It is also useful when the underlying signal is structurally bounded, as a tick can only go up or down (or stay flat, in a three-class version). And it is useful when the output feeds a downstream sizing function, since many of the sizing rules in <a class="xref" href="3d.html">Chapter 3D</a> take a probability, or a signed signal between −1 and +1, as their input.</p>
+
+<p>Judge a classifier against its base rate, as you would a diagnostic test against the prevalence of the disease. If the market rose on 53% of the days in a test period, a "model" that always says "up" scores 53% while knowing nothing. A classifier with 55% accuracy has then shown 2 points of skill, not 55.</p>
+
+<h2 id="features-targets-and-lookahead-bias">2 · Features, targets and lookahead bias</h2>
+
+<p>A model is fitted on training data made of (feature, target) pairs:</p>
+
+<ul>
+<li><strong>Features</strong> <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></span> are the inputs available at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span>, before the future is revealed. They are typically a vector, a list of numbers such as past returns, indicator values and volume.</li>
+<li><strong>The <span class="gloss" data-facts="The quantity a model is trained to predict, observed after the prediction is made, such as the next day's return or its direction." tabindex="0" role="button">target</span></strong> <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">y</span></span></span></span></span> is the quantity to be predicted at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">t + h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6984em; vertical-align: -0.0833em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span>: a number for regression, or a label for classification.</li>
+</ul>
+
+<p>A core principle of model building is that <strong>the feature must be available at the time of prediction</strong>. If your features include tomorrow's open while you try to predict tomorrow's close, you have <strong><span class="gloss" data-facts="The error of letting a backtest use information that was not available at the moment of the decision, such as a figure before its publication date. It makes a backtest look better than any real trader could have done." tabindex="0" role="button">lookahead bias</span></strong>, and your backtest is meaningless. This sounds obvious, yet in practice lookahead bias is the most common <span class="gloss" data-facts="A test of a trading rule on historical data, showing what the rule would have earned had it been followed." tabindex="0" role="button">backtest</span> error in retail strategy development. Three checks catch most of it:</p>
+
+<ul>
+<li><strong>Check every joined dataset</strong>, so that when two tables are merged by date, each row holds only what was known on that date.</li>
+<li><strong>Check every indicator that uses smoothing or filtering</strong>, to verify that it uses only past data.</li>
+<li><strong>Lag every macro variable</strong> to reflect when it was published, not the period it describes.</li>
+</ul>
+
+<p>Suppose a monthly economic figure for March is published on April 15, while a dataset stamps it March 31, the end of the period it measures. A backtest that joins on that date lets a trade on March 31 use a number that nobody could see for another two weeks. Stamp it with its publication date so that the model can use it only from then on.</p>
+
+<p>A centered moving average makes the same mistake more quietly. The average of the 10 days before a date and the 10 days after it looks like a smooth indicator, even though half of it is the future.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Lookahead bias is immortal time bias. A cohort study that counts patients as treated if they ever received a drug credits the treated group with the time before they started it. They had to survive that time to be counted as treated, so the time is immortal by construction. The classification uses information that did not exist at time zero, which is exactly what a backtest does when it uses a figure before its publication date.</p>
+</div>
+
+<h2 id="start-simple">3 · Start simple</h2>
+
+<h3 id="univariate-and-multivariate-models">Univariate and multivariate models</h3>
+
+<p>The most basic model is <strong>univariate</strong>, with one feature and one target. Next come <strong>multivariate</strong> models, with many features and one target. The most complex are <strong>multi-target</strong> models, with many features and many targets at once.</p>
+
+<p>Univariate models are easy to interpret, easy to debug and surprisingly competitive. The AR(1) model of <a class="xref" href="3b.html">Chapter 3B</a> is univariate. A linear regression of the next bar's return on the past bar's return has just two parameters, a slope and an intercept, yet it is often hard to beat for short-horizon prediction.</p>
+
+<p>Multivariate models can capture interactions between features at a price in interpretability and in the risk of <span class="gloss" data-facts="Fitting a model so closely to its training data that it captures the noise as well as the signal. An overfitted model looks excellent in sample and predicts poorly on new data." tabindex="0" role="button">overfitting</span>. With more features than you have independent observations, even a linear regression can fit noise perfectly. The reason is counting: a model with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></span> free parameters can pass exactly through <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></span> data points, whatever those points are. Two points always lie on a straight line, just as 100 points always lie on some curve with 100 parameters. The danger compounds when the features are correlated with each other, because the fit can then give them large, offsetting weights that chase noise.</p>
+
+<h3 id="the-occam-tax">The Occam tax</h3>
+
+<p>There is a strong empirical prior in quant trading that <strong>simpler is better</strong>. This is not just folklore, because it has explicit statistical foundations.</p>
+
+<p><strong>The <span class="gloss" data-facts="The balance between two sources of error in an estimate: bias, being consistently wrong in one direction, and variance, the noise that comes from a finite sample. Complex models cut bias and add variance." tabindex="0" role="button">bias-variance tradeoff</span></strong> comes first. Every estimator has two sources of error. <strong>Bias</strong> is being consistently wrong in some direction, while <strong>variance</strong> is the noise in an estimate that comes from a finite sample. Measured by the mean squared error (MSE), the average squared distance between an estimate and the truth, the two add:</p>
+
+<div class="eq" id="e-bv">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>MSE</mtext><mo>=</mo><msup><mtext>bias</mtext><mn>2</mn></msup><mo>+</mo><mtext>variance</mtext></mrow><annotation encoding="application/x-tex"> \text{MSE} = \text{bias}^2 + \text{variance} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord text"><span class="mord">MSE</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9818em; vertical-align: -0.0833em;"></span><span class="mord"><span class="mord text"><span class="mord">bias</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8984em;"><span class="" style="top: -3.1473em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6679em;"></span><span class="mord text"><span class="mord">variance</span></span></span></span></span></span></span>
+<span class="eqnum">(3A.2)</span></div>
+
+<p>Complex models reduce bias but increase variance, while simple models do the opposite. Finance combines very low signal-to-noise ratios with sample sizes effectively bounded by the length of the historical record. So the optimal point on the tradeoff tends to favor simple models.</p>
+
+<div class="worked">
+<span class="ct">Worked example: When predicting zero beats the data</span>
+<p><strong>Step 1: the setup.</strong> Suppose a strategy's true mean daily return is 0.01% and its daily standard deviation is 1%, a signal-to-noise ratio of 1 to 100. You estimate the mean from one year of 250 trading days.</p>
+
+<p><strong>Step 2: the sample mean.</strong> It is unbiased with a variance of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>1</mn><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>250</mn><mo>=</mo><mn>0.004</mn></mrow><annotation encoding="application/x-tex">1^2/250 = 0.004</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.0641em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord">1</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">/250</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.004</span></span></span></span></span> in squared percent, so by <a class="eqref" href="#e-bv">(3A.2)</a> its MSE is 0.004.</p>
+
+<p><strong>Step 3: a forecast of zero.</strong> If you ignore the data and predict a mean of zero, the bias is 0.01 and the variance is zero, so the MSE is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.0</mn><msup><mn>1</mn><mn>2</mn></msup><mo>=</mo><mn>0.0001</mn></mrow><annotation encoding="application/x-tex">0.01^2 = 0.0001</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.0</span><span class="mord"><span class="mord">1</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.0001</span></span></span></span></span>.</p>
+
+<p><strong>Step 4: the comparison.</strong> The crude, biased forecast has one fortieth of the error of the honest estimate, because the noise in the estimate is far larger than the signal it is trying to measure.</p>
+</div>
+
+<p>Shrinking an estimate toward zero trades a little bias for a large cut in variance, and <a class="xref" href="3c.html">Chapter 3C</a> builds that trade into the fitting itself.</p>
+
+<p><strong>Overfitting</strong> is the next foundation. Given enough parameters, any model fits any in-sample data perfectly, including the noise, so the model "learns" patterns that do not exist in the process that generated the data. In financial time series the <strong><span class="gloss" data-facts="The size of the predictable part of a quantity relative to its unpredictable part. For short-horizon returns it is very small, so the signal is hard to tell from chance." tabindex="0" role="button">signal-to-noise ratio</span></strong> is roughly 1:100 to 1:1000 on short horizons. Overfitting is therefore the default outcome, not the exception.</p>
+
+<p>Consider a <span class="gloss" data-facts="A flexible model built from many layers of weighted sums passed through simple nonlinear functions. It can have thousands or millions of parameters, which makes it prone to overfitting noisy data." tabindex="0" role="button">neural network</span> with 10,000 parameters trained on 5 years of daily data, which is 1,260 observations. It is <em>extremely</em> prone to overfit without regularization (<a class="xref" href="3c.html">Chapter 3C</a>), dropout, early stopping or other ways of controlling complexity. Dropout switches off random parts of the network during training, while early stopping halts the fit before it has finished. With aggressive regularization and large auxiliary datasets it is possible to fit such a model usefully. But the burden of proof, that the fit reflects signal rather than noise, sits firmly on the modeler.</p>
+
+<p><strong>The "no free lunch" theorem</strong> of Wolpert and Macready (1997) proved that, averaged over all possible problems, no single algorithm outperforms any other. In specific problem domains some algorithms work better than others, although choosing them takes strong prior knowledge. In finance that prior knowledge is hard to come by, so robust simple methods tend to outperform exotic complex ones once you account for transaction costs and out-of-sample degradation.</p>
+
+<p><strong>López de Prado's principle</strong>, from <em>Advances in Financial Machine Learning</em> (2018), is that most published trading strategies are statistical artifacts. The probability that a backtested Sharpe ratio survives to live deployment is roughly inverse in the number of trials conducted to find it. If you tested 100 strategies and the best one has a Sharpe ratio of 1.5, its <span class="gloss" data-facts="The probabilistic Sharpe ratio tested against the best Sharpe ratio that luck alone would produce across all the strategies tried, which corrects a backtest for selection." tabindex="0" role="button">deflated Sharpe ratio</span>, corrected for multiple testing, is probably indistinguishable from zero. <a class="xref" href="1d.html">Chapter 1D</a> derives the correction and shows how fast the bar rises with the number of trials.</p>
+
+<p><strong>Linear models are competitive baselines.</strong> A univariate autoregressive model predicts the next value from the last one, with a single weight and bias. Models like it often outperform deep neural networks on noisy financial data, because the deep network finds patterns that do not generalize. This is the central empirical finding of three decades of academic finance: the linear baseline is hard to beat once you control for overfitting and transaction costs.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>"Neural networks are a Ferrari. Powerful, but easy to crash. On financial time series, they overfit unless very carefully managed. Start with linear regression. Earn the right to add complexity."</p>
+</div>
+
+<p>Earning the right to add complexity means four things:</p>
+
+<ol>
+<li>Show that the simpler model leaves systematic <strong><span class="gloss" data-facts="The gap between what a model predicted and what actually happened, for one observation." tabindex="0" role="button">residuals</span></strong>, deviations from its predictions, that the more complex model can capture.</li>
+<li>Verify that the improvement survives walk-forward testing (below) on data the more complex model never saw.</li>
+<li>Account for the additional degrees of freedom, the extra fitted parameters, in your performance evaluation.</li>
+<li>Stress-test that the more complex model is robust to noise in its features.</li>
+</ol>
+
+<p>Most retail content on machine learning (ML) for trading skips every one of these steps.</p>
+
+<h2 id="the-model-and-the-strategy">4 · The model and the strategy</h2>
+
+<p>The model is one half of the trading system. The other half is the <strong><span class="gloss" data-facts="A rule that translates signals into trades: what to buy or sell, when, and when to get out." tabindex="0" role="button">strategy</span></strong>, the execution layer that turns predictions into orders. A perfect predictor with no execution policy is useless. Without one you would not know how big to trade, when to enter, when to exit, or what to do when the model contradicts a position you already hold.</p>
+
+<pre class="aligned">Model     →  produces edge (a prediction with positive E[outcome])
+Strategy  →  executes edge (turns predictions into sized orders
+             with entry/exit rules)</pre>
+
+<p>Card counting in blackjack makes the split concrete. The counting system is the model, which estimates how many favorable cards remain in the deck. The betting strategy is everything else: bet size as a function of the count, table choice, session length and when to walk away. A perfect counter who bets the same amount on every hand loses, while a perfect bettor with no counting system loses faster. You need both, designed together.</p>
+
+<p><a class="xref" href="3b.html">Chapter 3B</a> builds the most basic model class, <a class="xref" href="2c.html">Chapter 2C</a> builds the execution layer, and <a class="xref" href="3d.html">Chapter 3D</a> builds the sizing.</p>
+
+<h2 id="testing-on-the-future">5 · Testing on the future</h2>
+
+<p>Retail strategy developers routinely get one subtle but critical point wrong: standard <strong>k-fold <span class="gloss" data-facts="Testing a model by fitting it on part of the data and scoring it on a part it was not fitted to, rotating through the data. The standard k-fold version splits the data at random, which leaks the future into training when the data are a time series." tabindex="0" role="button">cross-validation</span></strong> does not work on time series. The standard method splits the data randomly into <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span></span></span></span></span> buckets, trains on <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">k - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7778em; vertical-align: -0.0833em;"></span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span> of them and tests on the remaining one, rotating through all <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal" style="margin-right: 0.0315em;">k</span></span></span></span></span>. In finance this produces meaningless results, because it mixes future data into the training set. A model fitted to 2019 and tested on 2018 was fitted with knowledge of what followed its test period.</p>
+
+<p>The correct method is <strong><span class="gloss" data-facts="Testing a model on time series by training it only on data before each test period and scoring it on that period, then moving forward and repeating." tabindex="0" role="button">walk-forward analysis</span></strong> or, more rigorously, <strong><span class="gloss" data-facts="A version of cross-validation for financial time series, described by López de Prado (2018), that removes from training any observations whose targets overlap the test period." tabindex="0" role="button">purged k-fold cross-validation</span></strong> (López de Prado, 2018). Both keep the test data out of the training data. Walk-forward analysis runs in four steps:</p>
+
+<ol>
+<li>Split the data into time-ordered chunks.</li>
+<li>For each chunk, train on data strictly before the chunk starts, possibly leaving a <strong>purge</strong> gap to avoid contamination from the labeling of data near the boundary.</li>
+<li>Test the model on that chunk.</li>
+<li>Aggregate the test-set performance across all the chunks.</li>
+</ol>
+
+<p>Performance measured on the data a model was fitted to is <strong><span class="gloss" data-facts="Measured on the same data a model was fitted to. In-sample performance is optimistic, because the fit has partly adapted to that data's noise." tabindex="0" role="button">in-sample</span></strong>, while performance on data it was not fitted to is <strong><span class="gloss" data-facts="Measured on data a model was not fitted to, such as a later period. It is the honest estimate of how the model would have performed in real time." tabindex="0" role="button">out-of-sample</span></strong>. Walk-forward analysis costs more computation than standard cross-validation. Yet it is the only honest way to estimate out-of-sample performance on time series data. Any backtest that does not use it is overestimating performance.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Why the purge exists</span>
+<p><strong>Step 1: the target.</strong> Suppose your target is the 5-day forward return and a test chunk starts on day 505.</p>
+
+<p><strong>Step 2: the overlap.</strong> A training row dated day 502 has a target covering days 503 to 507, three of which fall inside the test chunk. The training set already contains part of the test chunk's outcomes.</p>
+
+<p><strong>Step 3: the purge.</strong> Drop the training rows dated days 500 to 504, whose targets reach past day 504. The last training target then ends on day 504, before the test chunk begins.</p>
+</div>
+
+<p>The figure below runs walk-forward testing on ten years of simulated daily returns, 2,520 days, with a fixed true mean and fixed noise. It cuts them into equal windows. Each fold trains on every window before a test window and is then scored on that window alone, so five windows make four folds. You set four controls:</p>
+
+<ul>
+<li><strong>Windows</strong>, from 3 to 10, starting at 5, which makes each window two years long.</li>
+<li><strong>True annualized μ</strong>, the mean return, from −5% to 30%, starting at 6%.</li>
+<li><strong>Noise σ</strong>, the annualized volatility, from 5% to 50%, starting at 15%.</li>
+<li><strong>Seed</strong>, which redraws the returns.</li>
+</ul>
+
+<p>The bars give each fold's annualized Sharpe ratio in sample (train) and out of sample (test). The readouts average them and report the out-of-sample degradation, one minus the ratio of the test average to the train average. Notice what the figure leaves out: there is no model in it. The true Sharpe ratio is fixed at <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.06</mn><mi mathvariant="normal">/</mi><mn>0.15</mn><mo>=</mo><mn>0.40</mn></mrow><annotation encoding="application/x-tex">0.06/0.15 = 0.40</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.06/0.15</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.40</span></span></span></span></span>, so every difference between the bars is sampling noise. Step the seed from 1 to 3, then try 10 windows.</p>
+
+<figure class="fig" id="fig-walk-forward-cv-visualizer">
+  <canvas id="walk-forward-cv-visualizer-c" data-h="240" width="631" height="240" style="height: 240px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="walk-forward-cv-visualizer-k">windows</label>
+      <input type="range" id="walk-forward-cv-visualizer-k" min="3" max="10" step="1" value="5">
+      <output id="walk-forward-cv-visualizer-k-o" for="walk-forward-cv-visualizer-k">5</output>
+    </div>
+    <div class="ctrl">
+      <label for="walk-forward-cv-visualizer-mu">true annualized μ</label>
+      <input type="range" id="walk-forward-cv-visualizer-mu" min="-0.05" max="0.3" step="0.005" value="0.06">
+      <output id="walk-forward-cv-visualizer-mu-o" for="walk-forward-cv-visualizer-mu">6.0%</output>
+    </div>
+    <div class="ctrl">
+      <label for="walk-forward-cv-visualizer-sigma">noise σ</label>
+      <input type="range" id="walk-forward-cv-visualizer-sigma" min="0.05" max="0.5" step="0.005" value="0.15">
+      <output id="walk-forward-cv-visualizer-sigma-o" for="walk-forward-cv-visualizer-sigma">15%</output>
+    </div>
+    <div class="ctrl">
+      <label for="walk-forward-cv-visualizer-seed">seed</label>
+      <input type="range" id="walk-forward-cv-visualizer-seed" min="1" max="500" step="1" value="1">
+      <output id="walk-forward-cv-visualizer-seed-o" for="walk-forward-cv-visualizer-seed">1</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="walk-forward-cv-visualizer-train">avg train Sharpe = 0.81</output></div>
+    <div class="ctrl"><output id="walk-forward-cv-visualizer-test">avg test Sharpe = 0.16</output></div>
+    <div class="ctrl"><output id="walk-forward-cv-visualizer-deg">OOS degradation = 80%</output></div>
+  </div>
+  <figcaption><b>Walk-forward testing, fold by fold.</b> Ten years of simulated daily returns
+  with a fixed true mean and noise, cut into equal windows: each fold trains on every window
+  before a test window and is then scored on that window alone, so five windows make four
+  folds. The bars are each fold's annualized Sharpe ratio in sample (train) and out of sample
+  (test), and the readouts average them. The true mean never changes, so the scatter from fold
+  to fold is sampling noise; the seed redraws the returns.</figcaption>
+</figure>
+
+<p>At the starting settings the train bars read 1.43, 1.02, 0.51 and 0.30, while the test bars read 0.61, −0.48, −0.31 and 0.84. The readouts give an average train Sharpe ratio of 0.81, an average test Sharpe ratio of 0.16 and a degradation of 80%. At seed 3 the degradation is −18%, with the test folds beating the training folds. Averaged over many seeds, both averages come out near the true 0.40.</p>
+
+<p>The lesson is about noise before it is about overfitting. By the formula in <a class="xref" href="1d.html">Chapter 1D</a>, a two-year test window measures an annualized Sharpe ratio with a standard error of about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mn>2</mn></msqrt><mo>=</mo><mn>0.71</mn></mrow><annotation encoding="application/x-tex">1/\sqrt{2} = 0.71</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1572em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">2</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.71</span></span></span></span></span>. That is larger than the true 0.40 itself, so one fold proves almost nothing. Real overfitting adds a systematic gap on top of this scatter, which walk-forward testing can reveal only when enough folds over enough years average the noise away.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Walk-forward analysis is temporal validation of a prognostic model. A score always looks better in the cohort it was developed in than in new patients, because its coefficients have partly fitted that cohort's noise. You trust it only after it holds up in patients treated later. A backtest's in-sample Sharpe ratio is the development cohort's apparent performance, while each walk-forward fold is a later cohort. Testing many strategies on the same history and reporting the best is the multiple comparisons problem, which <a class="xref" href="1d.html">Chapter 1D</a> corrects with the deflated Sharpe ratio.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Keep a data log</strong> that records, for every feature, when it became known and not only the period it describes.</li>
+<li><strong>Lag by default</strong>, using today's close to trade tomorrow's open unless you can show the trade was executable at the price the feature was measured at.</li>
+<li><strong>Build a baseline first</strong> by fitting the two-parameter regression of <a class="xref" href="3b.html">Chapter 3B</a> before anything with more parameters. It and a forecast of zero are the benchmarks every later model must beat out of sample.</li>
+<li><strong>Count your trials</strong>, since every feature set, parameter and model you try is a trial for the deflated Sharpe ratio of <a class="xref" href="1d.html">Chapter 1D</a>.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Walk-forward testing guards against lookahead and in-sample optimism, not against a market that changes. A model tested honestly on one decade can still fail in a regime that decade never contained, which is the regime problem of <a class="xref" href="3b.html">Chapter 3B</a>. Nor does the test survive reuse. If you rerun the walk-forward test after every change until the result looks good, the test data have quietly become training data.</p>
+</div>
 
 <div class="callout brick">
-<p><em>The SPX index level is a real number. The SPX trade is a derivative contract on that number. The two are connected by a divisor that is, in some sense, the most important number in equity finance — and one that 99% of retail traders have never heard of.</em></p>
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Trade a model only if</strong> it beats a zero forecast and a one-feature regression out of sample, across walk-forward folds, after costs.</li>
+<li><strong>Add a feature only if</strong> it removes a systematic pattern from the simpler model's residuals and the gain survives walk-forward testing.</li>
+<li><strong>Treat as untested</strong> any backtest without walk-forward folds, or with an unknown number of trials behind it.</li>
+</ul>
 </div>
 
-<h2 id="the-six-products-that-all-track-spx">1 · The six products that all track SPX</h2>
+<div class="callout warn">
+<span class="ct">Common mistake: shuffled cross-validation on market data</span>
+<p>Random k-fold cross-validation is the standard method in general machine learning. On time series it trains on the future and tests on the past, so it overstates performance. Split the data by time, train only on the past and purge the boundary.</p>
+</div>
 
-<p>Below is the operational reference table. The same underlying exposure — the level of the S&amp;P 500 — is delivered through six different contracts, each with its own price scaling, settlement convention, tax treatment, trading hours, and dealer infrastructure. Confusion between these products is one of the most expensive sources of retail error.</p>
-
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Product</th><th class="c-other">Full name</th><th class="c-other">Multiplier</th><th class="c-other">Tick</th><th class="c-endpoint">Settle</th><th class="c-other">Tax</th><th class="c-other">Hours</th><th class="c-result">Why it matters</th></tr></thead><tbody><tr><td class="c-trial" data-label="Product"><strong>SPX</strong></td><td class="c-other" data-label="Full name">S&amp;P 500 cash index options</td><td class="c-other" data-label="Multiplier">$100 × index level</td><td class="c-other" data-label="Tick">$0.05 / $0.10</td><td class="c-endpoint" data-label="Settle">Cash; AM (monthly) / PM (weekly, 0DTE)</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-other" data-label="Hours">9:30–4:15 ET + extended</td><td class="c-result" data-label="Why it matters">Largest contract size; institutional default; AM-settle has expiry-day quirks</td></tr><tr><td class="c-trial" data-label="Product"><strong>XSP</strong></td><td class="c-other" data-label="Full name">Mini-SPX options</td><td class="c-other" data-label="Multiplier">$100 (1/10th SPX)</td><td class="c-other" data-label="Tick">$0.05 / $0.10</td><td class="c-endpoint" data-label="Settle">Cash; PM</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-other" data-label="Hours">9:30–4:15 ET</td><td class="c-result" data-label="Why it matters">Retail-friendly; same tax treatment as SPX; cleaner for cash-secured strategies</td></tr><tr><td class="c-trial" data-label="Product"><strong>SPY</strong></td><td class="c-other" data-label="Full name">S&amp;P 500 ETF options</td><td class="c-other" data-label="Multiplier">$100 shares</td><td class="c-other" data-label="Tick">$0.01 / $0.05</td><td class="c-endpoint" data-label="Settle"><strong>Physical</strong> (shares delivered)</td><td class="c-other" data-label="Tax"><strong>Ordinary</strong>; short-term gains if &lt;1 yr</td><td class="c-other" data-label="Hours">9:30–4:00 ET + extended</td><td class="c-result" data-label="Why it matters">Most liquid options on earth by volume; physical settle = assignment risk</td></tr><tr><td class="c-trial" data-label="Product"><strong>ES</strong></td><td class="c-other" data-label="Full name">E-mini S&amp;P 500 futures</td><td class="c-other" data-label="Multiplier">$50 per point</td><td class="c-other" data-label="Tick">0.25 = $12.50</td><td class="c-endpoint" data-label="Settle">Cash; quarterly (Mar/Jun/Sep/Dec)</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-other" data-label="Hours">Near-24h Sun–Fri</td><td class="c-result" data-label="Why it matters">Cleanest leveraged equity exposure; financing baked into basis</td></tr><tr><td class="c-trial" data-label="Product"><strong>MES</strong></td><td class="c-other" data-label="Full name">Micro E-mini</td><td class="c-other" data-label="Multiplier">$5 per point</td><td class="c-other" data-label="Tick">0.25 = $1.25</td><td class="c-endpoint" data-label="Settle">Cash; quarterly</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-other" data-label="Hours">Near-24h Sun–Fri</td><td class="c-result" data-label="Why it matters">Retail-sized ES; 1/10th the size; same tax treatment</td></tr><tr><td class="c-trial" data-label="Product"><strong>VIX</strong></td><td class="c-other" data-label="Full name">VIX options</td><td class="c-other" data-label="Multiplier">$100 × index level</td><td class="c-other" data-label="Tick">$0.05</td><td class="c-endpoint" data-label="Settle">Cash; AM, Wednesday expiries</td><td class="c-other" data-label="Tax">1256 60/40</td><td class="c-other" data-label="Hours">Standard + extended</td><td class="c-result" data-label="Why it matters">European-style; settles to SOQ Wed AM, which differs from VIX close</td></tr></tbody></table></div></div>
-
-<p>A single contract of each, with SPX at 6,000:</p>
-
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
 <ul>
-<li>1 SPX option contract represents $600,000 of notional exposure to SPX.</li>
-<li>1 XSP option contract represents $60,000 — exactly 1/10th.</li>
-<li>1 SPY option contract represents 100 shares of SPY at roughly $600 each = $60,000 (SPY is designed to track 1/10th the SPX index level, so 1 SPY ≈ 1 XSP in notional, but they're very different products operationally).</li>
-<li>1 ES futures contract is $50 per point × 6,000 = $300,000 of notional.</li>
-<li>1 MES futures contract is $5 per point × 6,000 = $30,000.</li>
-<li>1 VIX option contract is $100 × VIX level (around $1,500 if VIX is at 15).</li>
+<li>A model maps features known at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span> to a prediction at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">t + h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6984em; vertical-align: -0.0833em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span>. Regression predicts a number, while classification predicts a category with a probability.</li>
+<li>Every feature must be available when the prediction is made. Lookahead bias, the breach of that rule, is the most common backtest error in retail work.</li>
+<li>Financial signal-to-noise ratios are so low that simple models, even a forecast of zero, often beat complex ones out of sample. Add complexity only when the residuals demand it and the gain survives testing.</li>
+<li>A model produces edge and a strategy executes it, so neither works alone.</li>
+<li>Test on the future with purged walk-forward folds, as many as the data allow, because one fold's Sharpe ratio is mostly noise.</li>
 </ul>
+</div>
 
-<h2 id="why-three-different-settlement-rules-matter">2 · Why three different settlement rules matter</h2>
+<h2 id="check-yourself">6 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>What is wrong with a backtest that shows a Sharpe ratio of 2.5 from a signal built on a 21-day moving average centered on each day?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A centered average uses the 10 days after each date, so the signal contains the future: that is lookahead bias. Recompute the average from the 21 days ending on each date, lag it one day and rerun the test, expecting most of the 2.5 to vanish.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A classifier calls the direction of 54% of days correctly, in a test period in which the market rose on 54% of days. What has it shown?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Nothing yet, because saying "up" every day would also score 54%. Its skill is its accuracy above the base rate, which here is zero.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>You have ten years of data and use five equal windows for walk-forward testing. How many folds are there? What does the third fold train and test on?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>There are four folds, because the first window can only be trained on. The third fold trains on years 1 to 6 and tests on years 7 and 8.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A strategy's true mean daily return is 0.02% and its daily standard deviation is 1%. With 500 days of data, which has the smaller mean squared error as an estimate of the mean: the sample mean or zero?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The sample mean has no bias and a variance of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>500</mn><mo>=</mo><mn>0.002</mn></mrow><annotation encoding="application/x-tex">1/500 = 0.002</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/500</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.002</span></span></span></span></span>, so its MSE is 0.002. Zero has a bias of 0.02 and no variance, so its MSE is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.0</mn><msup><mn>2</mn><mn>2</mn></msup><mo>=</mo><mn>0.0004</mn></mrow><annotation encoding="application/x-tex">0.02^2 = 0.0004</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.0</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.0004</span></span></span></span></span>, five times smaller. The signal is too small for 500 days to measure.</p>
+</div></details>
+</div>
+</div>
 
-<p>Two SPX options expiring on the same Friday can settle to <em>different</em> prices, because monthly SPX expires AM while weekly and 0DTE SPX expire PM. AM settlement uses the <strong>Special Opening Quotation (SOQ)</strong> — a synthetic open-print constructed from the first reported trade of each constituent stock that morning. PM settlement uses the <strong>official 4:00 PM close</strong>.</p>
 
-<p>The AM-PM gap is small on most days and large on event Fridays. If half the dealer book is hedged against AM-settle SPX and the other half against PM-settle SPX, the dealer carries intraday risk that AM ≠ PM. That risk is non-trivial on OPEX (third) Fridays, and it is one of the reasons OPEX Friday opens can show a sharp, uncorrelated move in the first ten minutes as dealers reconcile the SOQ they actually got versus the SOQ their books were hedged against. This mechanic is invisible to retail charts but is the canonical reason "the first thirty minutes of OPEX Friday are weird." If you're going to trade through OPEX morning, knowing why it's weird is the difference between being hit by it and trading around it.</p>
-
-<p>There's a secondary effect. The SOQ is constructed from the first reported trade in each component. On a typical day, all 500 components open within a few seconds of 9:30. On a stressed day — heavy overnight news, large global moves, or a circuit-breaker scenario — components can stagger their opens over many minutes. The SOQ that results is a synthetic level that may differ measurably from any quoted SPX value at any given moment. Cash-settled options that reference the SOQ pay or receive cash based on that synthetic value, not on the post-open continuous SPX. Traders running expiration-day strategies who don't understand this can be surprised by a 30-cent or larger discrepancy between their expected and realized settlement.</p>
-
-<h2 id="cash-settlement-is-a-feature-not-a-bug">3 · Cash settlement is a feature, not a bug</h2>
-
-<p>SPX, XSP, ES, MES, and VIX all settle in <strong>cash</strong>. SPY settles in <strong>shares (physical)</strong>. The difference is enormous for any strategy held to expiration.</p>
-
-<p><strong>Cash settlement</strong> means an in-the-money option simply credits or debits the cash difference between strike and settlement price. There is no exercise, no assignment, no shares delivered, no overnight gap risk between expiry and the next morning. You wake up Monday morning with cash exactly equal to the in-the-money amount (or no change if out of the money).</p>
-
-<p><strong>Physical settlement</strong> means an in-the-money short option results in shares changing hands at the strike. The direction depends on which side you wrote:</p>
-
-<ul>
-<li><strong>Short call assigned</strong> — you must <strong>deliver 100 shares per contract at strike</strong>. Covered (you own the shares): the shares are sold at strike. Naked: you end up short the stock at strike basis, exposed to overnight upside.</li>
-<li><strong>Short put assigned</strong> — you must <strong>receive 100 shares per contract at strike</strong> (i.e., buy at strike). Cash-secured (you have the collateral): your cash converts into stock at strike basis. Naked margin: long stock position consumes buying power.</li>
-</ul>
-
-<p>Either way, you wake up to a position you didn't have when you went to sleep, marked at whatever price the market reopens at. The price gap between Friday's 4:00 PM mark and Monday's open is yours to absorb. For SPY this is typically small — a fraction of a percent on a normal weekend — but on event weekends or during stress, the Monday gap can be 3–5% or more. Anyone running SPY short puts who happens to have a strike near Friday's close is essentially long a weekend gap-risk option they didn't price into the trade.</p>
-
-<p><strong>SOQ risk on cash-settled OPEX.</strong> Cash-settled SPX/XSP/VIX options expire to the Special Opening Quotation (SOQ), a synthetic level built from the first reported trade of each constituent stock Friday morning. The SOQ can differ materially from Thursday's close due to overnight news and the staggered opening rotation. A short put expiring "safely OTM" Thursday at 4 PM can be ITM at Friday SOQ. <strong>Cash-settled OPEX positions should be closed Thursday afternoon, not held into the SOQ.</strong></p>
-
-<p>For individual stocks (which we'll touch on only briefly here — single-stock options are not the focus of this book), the gap risk is dramatically worse. Earnings releases, M&amp;A announcements, or surprise news can produce 10–20% gaps. Anyone running short puts on individual names is structurally short jump risk, and the variance risk premium they collect may or may not be enough to compensate.</p>
-
-<h2 id="the-retail-xsp-advantage-revisited-in-3c">4 · The retail XSP advantage (revisited in 3C)</h2>
-
-<p>For any cash-secured systematic put-writing strategy, <strong>XSP is the retail-correct choice</strong>. You get the same SPX exposure, scaled to 1/10th the notional (so the position is sized appropriately in any retail account), with the same 1256 60/40 tax treatment as full SPX, with cash settlement (no Monday-gap risk), and with European-style exercise (no early assignment). Most retail traders use SPY puts because SPY is what they see — it's the most-quoted equity ETF, it's prominently displayed in brokerage apps, and many retail-targeted strategy videos use it as the example. This is operationally inferior on every dimension except spread width, where SPY is slightly tighter (typically $0.01-$0.02 on ATM SPY options vs $0.05-$0.10 on XSP).</p>
-
-<p>The tax difference alone — covered in detail in 3C — is approximately 12-14 percentage points of after-tax return for a top-bracket US individual taxpayer. On a strategy that captures 8% annual returns, that's 100 basis points of after-tax return turned on or off by instrument choice. Over a decade of compounding on a substantial account, that gap is a small house.</p>
-
-<h2 id="trading-hours-and-the-es-tells-you-spx-mechanism">5 · Trading hours and the "ES tells you SPX" mechanism</h2>
-
-<p>Cash SPX trades only during US regular-session hours (9:30 AM to 4:00 PM ET). The futures (ES, MES) trade nearly 24 hours, from Sunday 6:00 PM ET through Friday 5:00 PM ET, with a brief daily maintenance window. SPX options have extended hours on Cboe from 8:15 PM ET the previous evening through 9:15 AM ET — but the cash SPX <em>index</em> doesn't exist outside of US RTH.</p>
-
-<p>When you see "S&amp;P futures up 0.4% overnight" in financial media, that is ES — the cash SPX index simply doesn't exist between 4:00 PM and 9:30 AM. The opening print of SPX at 9:30 AM is constructed from the actual stock opens of all 500 components, which is why it sometimes prints away from where futures were trading thirty seconds earlier. Smart traders watch ES overnight to anticipate where SPX will open; the basis between ES and SPX during overnight hours encodes the market's evolving consensus.</p>
-
-<p>There's a structural arbitrage that keeps the two locked together during US hours: if ES trades meaningfully above SPX (adjusted for financing and dividends), arbitrageurs short ES and buy a basket of SPX components. If ES trades meaningfully below SPX, they do the reverse. This arbitrage runs continuously during US hours and keeps the ES-SPX basis tight. During overnight hours, the basis can drift because no one can directly arbitrage against the cash SPX (which doesn't exist), and so the basis becomes a forward-looking estimate.</p>
-
-<h2 id="why-this-matters-for-everything-that-follows">6 · Why this matters for everything that follows</h2>
-
-<p><a class="xref" href="6a.html">Section 6</a> onward will describe dealer hedging in detail. The dealer who has sold an SPX option needs to hedge their resulting delta exposure. They typically do this in <strong>ES futures</strong> rather than in cash SPX or SPY, for three reasons: (1) ES has tighter spreads at institutional size than SPY; (2) ES trades nearly 24 hours, while cash SPX doesn't, so overnight risk can be hedged; (3) ES margining is more capital-efficient under SPAN than SPY shares under Reg-T.</p>
-
-<p>When you read in <a class="xref" href="6a.html">Section 6</a> that "the dealer buys shares to hedge their short call," the literal-share interpretation is wrong. The dealer is buying ES futures contracts in size, with cash-share hedging used only at the margin to flatten remaining basis. The flow shows up in the SPX cash market only indirectly, through the arbitrage that links the two. This matters operationally because the highest-frequency intraday momentum effects from dealer hedging (<a class="xref" href="6d.html">Section 6D</a>) show up most clearly in <em>ES</em> prints, not in SPY prints — though the two are correlated enough that SPY shows them too, slightly delayed.</p>
 
 <nav class="chapnav" aria-label="Previous and next chapter">
-<a class="prev" href="2e.html" rel="prev" data-part="Part II · Quant Trading"><span>Previous</span>2E · Sizing and frequency scaling</a>
-<a class="next" href="3b.html" rel="next"><span>Next</span>3B · Where your order goes: exchanges, wholesalers, and the NBBO</a>
+<a class="prev" href="2e.html" rel="prev" data-part="Part II · Markets"><span>Previous</span>2E · Accounts, margin and taxes</a>
+<a class="next" href="3b.html" rel="next"><span>Next</span>3B · Mean reversion and momentum</a>
 </nav>
 
 </div>
 </main>
 </div>
 <script src="assets/book.js"></script>
+<script>
 
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- walk-forward-cv-visualizer ---------- */
+(function () {
+  var U = 'walk-forward-cv-visualizer';
+
+  function sharpe(rets) {
+    if (!rets.length) return 0;
+    var mean = 0, v = 0, i;
+    for (i = 0; i < rets.length; i++) mean += rets[i];
+    mean /= rets.length;
+    for (i = 0; i < rets.length; i++) v += (rets[i] - mean) * (rets[i] - mean);
+    var sd = Math.sqrt(v / Math.max(rets.length - 1, 1));
+    return sd > 0 ? (mean / sd) * Math.sqrt(252) : 0;
+  }
+  /* The app's walk-forward: 2,520 daily returns, k equal windows, fold f trains
+     on windows 0..f and tests on window f + 1. The app also multiplies each
+     training set by an "overfit" factor at its default pressure of 0.6; a
+     Sharpe ratio ignores a constant scale, so the factor changes nothing and
+     is kept here only so every number matches the app's. */
+  var PRESSURE = 0.6;
+  function folds(k, mu, sigma, seed) {
+    var nTotal = 2520, r = DL.rng(seed), rets = [];
+    for (var i = 0; i < nTotal; i++) rets.push(mu / 252 + (sigma / Math.sqrt(252)) * DL.gauss(r));
+    var len = Math.floor(nTotal / k), tr = [], te = [];
+    for (var f = 0; f < k; f++) {
+      var trainEnd = (f + 1) * len, testEnd = Math.min(trainEnd + len, nTotal);
+      if (testEnd <= trainEnd) break;
+      var inflation = 1 + PRESSURE * Math.abs(DL.gauss(DL.rng(seed * 7 + f))) * 0.4;
+      tr.push(sharpe(rets.slice(0, trainEnd).map(function (x) { return x * inflation; })));
+      te.push(sharpe(rets.slice(trainEnd, testEnd)));
+    }
+    return { train: tr, test: te };
+  }
+  function avg(a) { return a.reduce(function (s, x) { return s + x; }, 0) / Math.max(a.length, 1); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var k = DL.val(U + '-k'), mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
+        seed = DL.val(U + '-seed');
+    var F = folds(k, mu, sigma, seed), nf = F.train.length;
+    var all = F.train.concat(F.test, [0]);
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), span = Math.max(hi - lo, 0.01);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: nf, ymin: lo - span * (lo < 0 ? 0.14 : 0),
+                              ymax: hi + span * 0.3, pad: { l: 38, r: 10, t: 10, b: 26 } });
+    DL.axes(p, { xs: [], ny: 5, x: false, grid: false, yAxis: true,
+                 y: function (v, st) { return DL.num(v, st < 1 ? 1 : 0); } });
+    DL.hline(p, 0, { color: DL.color('ink-faint'), dash: [2, 3] });
+
+    var fam = DL.color('familiar'), pla = DL.color('plain');
+    var trX = F.train.map(function (_, i) { return i + 0.33; }),
+        teX = F.test.map(function (_, i) { return i + 0.67; });
+    DL.bars(p, trX, F.train, { w: 0.3, color: DL.fade(fam, 0.6) });
+    DL.bars(p, teX, F.test, { w: 0.3, color: DL.fade(pla, 0.6) });
+
+    var band = p.X(1) - p.X(0), f11 = '11px ' + DL.color('sans');
+    if (band >= 52) {   /* the values themselves, where two of them fit side by side */
+      [[trX, F.train, fam], [teX, F.test, pla]].forEach(function (s) {
+        s[1].forEach(function (v, i) {
+          p.text(s[0][i], v, DL.num(v, 1), { align: 'center', font: f11, color: s[2],
+                                            baseline: v >= 0 ? 'bottom' : 'top', dy: v >= 0 ? -3 : 3 });
+        });
+      });
+    }
+    DL.xticks(p, F.train.map(function (_, i) { return i + 0.5; }),
+              function (x, i) { return band >= 46 ? 'fold ' + (i + 1) : String(i + 1); });
+    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
+    var key = [{ label: 'train (in-sample)', color: DL.fade(fam, 0.6), box: true },
+               { label: 'test (out-of-sample)', color: DL.fade(pla, 0.6), box: true }];
+    if (p.w >= 420) DL.legend(p, key);
+    else { DL.legend(p, [key[0]]); DL.legend(p, [key[1]], { dy: 15 }); }
+
+    var aTr = avg(F.train), aTe = avg(F.test);
+    var deg = aTr > 0 ? (1 - aTe / aTr) * 100 : 0;
+    DL.out(U + '-k-o', String(k));
+    DL.out(U + '-mu-o', DL.num(mu * 100, 1) + '%');
+    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
+    DL.out(U + '-seed-o', String(seed));
+    DL.out(U + '-train', 'avg train Sharpe = ' + DL.num(aTr, 2));
+    DL.out(U + '-test', 'avg test Sharpe = ' + DL.num(aTe, 2));
+    DL.out(U + '-deg', 'OOS degradation = ' + DL.num(deg, 0) + '%');
+  });
+  DL.bind([U + '-k', U + '-mu', U + '-sigma', U + '-seed'], draw);
+})();
+
+</script>
 </body>
 </html>

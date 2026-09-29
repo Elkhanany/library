@@ -1,827 +1,521 @@
-<p class="eyebrow">Part X · Tactical Swing · Chapter 10F</p>
+<p class="eyebrow">Part X · Edges, one by one · Chapter 10F</p>
 
-<h1>The composite signal: an eight-dimensional regime scorecard</h1>
+<h1>Equity factors</h1>
 
-<p>Any single regime indicator is noisy. The composite-signal framework aggregates <strong>eight orthogonal dimensions</strong> of market state into a single bias number on a −100 (strong bear) to +100 (strong bull) scale. Each dimension averages multiple signals within it; the composite is a weighted average across dimensions.</p>
+<p class="subtitle">Quality, momentum, value, low volatility and size</p>
 
-<p>This is a <em>tilt indicator</em>, not an entry trigger. It sets the macro-regime layer of the hierarchy (<a class="xref" href="10a-5.html">Section 10A.5</a>, layer 1). It does not replace structure-level invalidation rules. Its purpose is to <strong>suppress trade attempts in adverse regimes and permit them in supportive ones</strong>.</p>
-
-<h2 id="the-eight-dimensions">1 · The eight dimensions</h2>
-
-<div class="callout brick">
-<p><strong>Important: weights are heuristic, not empirically optimized.</strong></p>
-
-<p>The weights below (Volatility 18%, Credit 15%, etc.) reflect practitioner judgment and sensitivity analysis. They are NOT from empirical optimization against a holdout set. Users should:</p>
-
-<ol>
-<li>Treat the composite as a starting framework</li>
-<li>Recompute with their own weights based on walk-forward backtesting</li>
-<li>Recalibrate periodically as regimes shift</li>
-</ol>
-
-<p>The score is most informative as a <strong>directional indicator</strong> ("regime strongly supportive vs weakly supportive vs hostile") rather than as a precise value. Anchor decisions on the regime bucket; treat the numerical score as a confidence indicator.</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 10B to 10E examined the foundation premia, the risk premia that anchor a portfolio. This chapter takes the second of the five categories of <a class="xref" href="10a.html">Chapter 10A</a>: equity <span class="gloss" title="A lean within the equity sleeve toward stocks with a chosen trait, such as quality or momentum, and away from pure market-capitalization weights.">factor tilts</span>, which lean the stock part of a portfolio toward companies with a chosen trait. Five traits have the strongest records. Each pays for its own reason, decays at its own rate and loses money in its own way.</p>
 </div>
 
-<p>Each dimension is an independent statement about market state, scored from −1 (most bearish) to +1 (most bullish). The composite recomputes from the weighted average.</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The four sources of edge, and how an edge decays after it is published (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+<li>The Sharpe ratio, the information ratio and tracking error (<a class="xref" href="1d.html">Chapter 1D</a>).</li>
+<li>Drawdown (<a class="xref" href="1e.html">Chapter 1E</a>) and the gain from combining strategies (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+<li>Beta, a stock's sensitivity to the market (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+<li>Exchange-traded funds (<a class="xref" href="2a.html">Chapter 2A</a>) and the taxing of gains (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+</ul>
+</div>
 
-<p><strong>1. Volatility / Fear (weight: 18%).</strong> Inputs: VIX percentile rank against 1-year history, MOVE bond-vol index, SKEW index (third-moment risk). High VIX percentile + high MOVE = stress; both are bearish components. Low VIX percentile with low MOVE = complacency, mildly bullish for mean reversion.</p>
+<p>A factor tilt modulates the equity <span class="gloss" title="The part of a portfolio given to one strategy, with its own capital or risk budget.">sleeve</span> to capture a documented, systematic excess return. The five factors here are quality, momentum, value, low volatility and size, each with its own mechanism, decay risk and drawdown profile. Most had their best decade in academic papers, while live retail experience is humbler. They are worth moderate allocations as tilts rather than concentrations, although harvesting them takes patience measured in decades.</p>
 
-<p><strong>2. Credit (weight: 15%).</strong> Inputs: High-yield OAS, investment-grade OAS, 1-month delta in spreads. Widening credit = funding stress. Tightening = risk appetite. Credit leads equity by days to weeks at major turns.</p>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Sort every stock in the market by one trait, such as how profitable the company is or how much its price rose last year. If the stocks at one end of the sort have earned more than those at the other end over many decades, the trait is a factor. A tilt holds a little more of the favored end than the index does. It pays off, if at all, over decades rather than quarters.</p>
+</div>
 
-<p><strong>3. Rates (weight: 12%).</strong> Inputs: 10Y-2Y curve (inversion is bearish on a multi-quarter horizon), 5Y breakeven, absolute 10Y level. Curve shape is the dominant input.</p>
+<h2 id="what-a-factor-is">1 · What a factor is</h2>
 
-<p><strong>4. Dollar / FX (weight: 10%).</strong> Inputs: DXY 5-day trend, USD/JPY. Rising dollar = risk-off. Falling dollar = risk-on.</p>
+<p>An <strong><span class="gloss" title="A trait by which stocks can be ranked, such as profitability or past return, where the ranking has predicted returns. Its return is measured as that of the top-ranked stocks minus that of the bottom-ranked ones.">equity factor</span></strong> is a trait by which stocks can be ranked, where the ranking has predicted returns. Researchers measure it with a <strong><span class="gloss" title="A portfolio that buys one group of assets and sells short an equal dollar amount of another. Its return is the difference between the two groups' returns, which depends little on the market's direction.">long-short portfolio</span></strong>, which buys the stocks at the favored end of the ranking and sells short an equal dollar amount of those at the other end. The difference in return between the two sides is the factor's return in month \(t\):</p>
 
-<p><strong>5. Commodities (weight: 8%).</strong> Inputs: WTI level and trend, gold, gold/oil ratio. Gold/oil rising = stress (deflationary). WTI rising = inflation.</p>
+<div class="eq" id="e-factor">
+\[ F_t = R^{\text{top}}_t - R^{\text{bottom}}_t \]
+</div>
 
-<p><strong>6. Global / Overnight (weight: 10%).</strong> Inputs: EEM (EM equities), EFA (developed ex-US), 5-day return basket. Persistent global weakness leading SPX = bearish; global strength while SPX flat = bullish setup.</p>
+<p>Here \(R^{\text{top}}_t\) and \(R^{\text{bottom}}_t\) are the average returns of the two groups. Suppose you hold $10,000 of the top group and short $10,000 of the bottom group, which return 1.4% and 0.2% in a month. You make $140 on one side and lose $20 on the other, so \(F_t = 1.2\%\). Because one side offsets the other, the factor's return usually depends little on whether the market rose or fell, a rule that momentum breaks below. Each factor in this chapter is a version of <a class="eqref" href="#e-factor"></a> with its own ranking.</p>
 
-<p><strong>7. Trend (weight: 17%).</strong> Inputs: SPX 200-SMA slope, ADX. The trend filter most retail strategies under-use. Trend up + ADX &gt; 20 = the regime where mean-reversion is most exploitable.</p>
+<p>A tilt is the version you can hold. Instead of a long-short portfolio, you own a fund that holds more of the favored stocks than their share of the index, and nothing short. Its return is roughly the market's plus a fraction of the factor's.</p>
 
-<p><strong>8. Sentiment (weight: 10%).</strong> Inputs: Advance/decline ratio, put/call ratio, RSI(14) on SPX. Sentiment is contrarian on short horizons (extreme bullish = pullback risk) and aligned on longer horizons (sustained breadth = sustained move).</p>
+<h3 id="how-to-read-the-evidence">How to read the evidence</h3>
 
-<h2 id="how-to-use-the-composite">2 · How to use the composite</h2>
+<p>Factor papers report monthly returns, <span class="gloss" title="A strategy's mean return above the risk-free rate divided by the standard deviation of its returns: the excess return earned per unit of volatility.">Sharpe ratios</span> and the t-statistic you know from trials, an estimated effect divided by its standard error. For a factor, the t-statistic has a simple link to the Sharpe ratio.</p>
 
-<p>The composite is the macro-layer input to the hierarchy. Specifically:</p>
+<details class="grind"><summary>From a Sharpe ratio to a t-statistic</summary><div class="grind-body">
+<p><strong>Step 1: the t-statistic of a mean.</strong> With \(n\) monthly returns of mean \(m\) and standard deviation \(s\), the standard error of the mean is \(s/\sqrt{n}\), so \(t = m\sqrt{n}/s\). A long-short factor is already an excess return, so \(m/s\) is its monthly Sharpe ratio and \(t = \text{SR}_{\text{month}}\sqrt{n}\).</p>
+
+<p><strong>Step 2: annualize.</strong> The annual Sharpe ratio is \(\text{SR}_{\text{month}}\sqrt{12}\) (<a class="xref" href="1d.html">Chapter 1D</a>), and \(Y\) years hold \(n = 12Y\) months. Substituting both, the factors of \(\sqrt{12}\) cancel and leave the result below.</p>
+</div></details>
+
+<div class="eq" id="e-tstat">
+\[ t = \text{SR} \times \sqrt{Y} \]
+</div>
+
+<p>Here SR is the annual Sharpe ratio and \(Y\) is the number of years of data. A factor with a Sharpe ratio of 0.4 reaches \(t = 2\) after 25 years, since \(0.4 \times \sqrt{25} = 2\), but shows only \(0.4 \times 3 = 1.2\) after 9 years. Published t-statistics come from particular samples and constructions, so use <a class="eqref" href="#e-tstat"></a> for orders of magnitude rather than to recompute them.</p>
+
+<h3 id="from-paper-to-account">From paper to account</h3>
+
+<p>The academic Sharpe ratio is the start of a chain rather than what you earn. <a class="xref" href="13a.html">Chapter 13A</a> sets out the <strong>retail haircut</strong>, the part of the Sharpe ratio lost at each step from a paper portfolio to a live fund and then to your own account. The Edge Book gives the chain for three of the factors, all as Sharpe ratios:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Factor</th><th>Academic</th><th class="c-other">Live ETF</th><th class="c-other">Your account</th></tr></thead><tbody><tr><td class="c-trial" data-label="Factor">Quality</td><td data-label="Academic">0.4 to 0.6</td><td class="c-other" data-label="Live ETF">0.35 to 0.50</td><td class="c-other" data-label="Your account">0.30 to 0.45</td></tr><tr><td class="c-trial" data-label="Factor">Momentum</td><td data-label="Academic">0.5</td><td class="c-other" data-label="Live ETF">0.25 to 0.40</td><td class="c-other" data-label="Your account">0.20 to 0.35</td></tr><tr><td class="c-trial" data-label="Factor">Value</td><td data-label="Academic">0.4</td><td class="c-other" data-label="Live ETF">0.15 to 0.30</td><td class="c-other" data-label="Your account">0.10 to 0.30</td></tr></tbody></table></div></div>
+
+<p>Value starts almost level with quality on paper, yet it can end in an account with as little as a third of quality's figure, for reasons the sections below give.</p>
+
+<h2 id="quality">2 · Quality</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Profitable, stable, growing companies with conservative investment have outperformed unprofitable, volatile, declining ones. Part of the reason is behavioral, because investors over-extrapolate growth in junky names. Part of it is a risk premium, because quality companies carry less risk of financial distress.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Two companies</span>
+<p><strong>Step 1: the two stocks.</strong> Stock A has a 25% <span class="gloss" title="A company's profit for a year divided by the shareholders' stake in it, its book equity. Abbreviated ROE.">return on equity</span>, stable margins and a conservative balance sheet. Stock B has volatile earnings, a growth-story narrative and a leveraged balance sheet. B trades at 10 times its earnings, a <span class="gloss" title="A share's price divided by the company's earnings per share: how many years of current earnings the price pays for. Abbreviated P/E.">price-to-earnings ratio</span> (P/E) of 10, while A trades at 18 times, so B looks the cheaper of the two.</p>
+
+<p><strong>Step 2: what follows.</strong> Empirically, a stock like A outperforms over periods of 5 years or more, because B's "growth story" tends to disappoint while A keeps compounding.</p>
+</div>
+
+<p>The <span class="gloss" title="A portfolio tilt toward the stocks of profitable, financially sound companies.">quality factor</span> is multi-dimensional. In a 2019 paper in the <em>Review of Accounting Studies</em> (RAS), Asness, Frazzini and Pedersen build their <strong>quality minus junk</strong> (QMJ) factor on four pillars:</p>
 
 <ul>
-<li><strong>Composite ≥ +40</strong>: Strong bull. New long swing trades permitted at full intended size.</li>
-<li><strong>Composite +10 to +40</strong>: Bull tilt. Long trades permitted at 70-80% of intended size.</li>
-<li><strong>Composite −10 to +10</strong>: Neutral. Take only the highest-conviction setups. Size at 50%.</li>
-<li><strong>Composite −10 to −40</strong>: Bear tilt. Long trades suspended; tactical shorts permitted if in mandate.</li>
-<li><strong>Composite ≤ −40</strong>: Strong bear. Defensive only. Mechanical foundation sleeves continue; no new tactical positions.</li>
+<li><strong>Profitability:</strong> gross profits divided by assets, return on assets (ROA) and return on equity (ROE).</li>
+<li><strong>Growth:</strong> the stability and the rate of growth of profits.</li>
+<li><strong>Safety:</strong> low beta, low leverage and low volatility of earnings.</li>
+<li><strong>Payout:</strong> stable dividends and share buybacks.</li>
 </ul>
 
-<figure class="fig" id="fig-composite-scorecard">
-  <canvas id="composite-scorecard-c" data-h="250"></canvas>
-  <canvas id="composite-scorecard-g" data-h="78"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="composite-scorecard-vol">volatility / fear</label>
-      <input type="range" id="composite-scorecard-vol" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-vol-o" for="composite-scorecard-vol"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-credit">credit</label>
-      <input type="range" id="composite-scorecard-credit" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-credit-o" for="composite-scorecard-credit"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-rates">rates</label>
-      <input type="range" id="composite-scorecard-rates" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-rates-o" for="composite-scorecard-rates"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-dollar">dollar / FX</label>
-      <input type="range" id="composite-scorecard-dollar" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-dollar-o" for="composite-scorecard-dollar"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-comm">commodities</label>
-      <input type="range" id="composite-scorecard-comm" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-comm-o" for="composite-scorecard-comm"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-global">global / overnight</label>
-      <input type="range" id="composite-scorecard-global" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-global-o" for="composite-scorecard-global"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-trend">trend</label>
-      <input type="range" id="composite-scorecard-trend" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-trend-o" for="composite-scorecard-trend"></output>
-    </div>
-    <div class="ctrl">
-      <label for="composite-scorecard-sentiment">sentiment</label>
-      <input type="range" id="composite-scorecard-sentiment" min="-1" max="1" step="0.05" value="0.2">
-      <output id="composite-scorecard-sentiment-o" for="composite-scorecard-sentiment"></output>
-    </div>
-  </div>
-  <p class="readout" aria-live="polite"><b id="composite-scorecard-vk"></b> <span id="composite-scorecard-vt"></span></p>
-  <figcaption><b>Eight readings, one bias.</b> Each slider scores one dimension of market
-  state from −1 (most bearish) to +1 (most bullish). The top panel shows each score times its
-  weight, in points of the composite, over a pale track as wide as that weight allows; the
-  composite is their sum, placed on the −100 to +100 scale below, whose shaded bands are the
-  five regime buckets. Every dimension starts at +0.20, which puts the composite at +20, a
-  bull tilt.</figcaption>
-</figure>
+<p>Holding high-quality stocks long and junky ones short gives the QMJ factor.</p>
 
-<h2 id="the-composite-vs-conviction-score-preview">3 · The composite vs conviction score (preview)</h2>
+<h3 id="the-evidence">The evidence</h3>
 
-<p>The composite signal answers "what is the regime?" The conviction score in <a class="xref" href="12b.html">Section 12B</a> answers "given the regime, should I take this specific trade?" They are complementary. A composite of +50 doesn't earn you the trade — you still need to score E × M × R × X × S. But a composite of −60 zeroes the R factor for most long strategies, regardless of how high the other factors are.</p>
+<ul>
+<li><strong>Novy-Marx (2013)</strong>, "The Other Side of Value: The Gross Profitability Premium", in the <em>Journal of Financial Economics</em> (JFE), won the 2013 Fama-DFA Prize.</li>
+<li><strong>Asness, Frazzini and Pedersen (2019)</strong> report a QMJ <span class="gloss" title="Return beyond what a model's risk factors explain, often claimed as the reward for a manager's skill.">alpha</span>, the return beyond what standard factor models explain (<a class="xref" href="1d.html">Chapter 1D</a>), of 0.66% a month in the US and 0.45% globally, across about 24 countries. The US figure is roughly 8% a year.</li>
+<li><strong>Quality was the single factor that did not crash through the value drawdown of 2017 to 2022</strong>, a key test in real markets rather than in a backtest.</li>
+</ul>
 
-<p>Use the composite to <strong>filter the universe of trades you'll consider</strong>. Use the conviction score to <strong>evaluate the trades that survived the filter</strong>.</p>
+<h3 id="why-it-exists">Why it exists</h3>
 
-<!--SCRIPT-->
-/* ============================================================
-   The Other End of the Trade: what every figure shares.
+<p>The mechanism is mixed. As a risk premium, quality firms carry lower distress risk, for which investors might rationally pay. As a behavioral effect, investors overpay for a narrative of growth and underpay for boring profitability. The mixed source explains why quality has held up better than the purely behavioral factors: the risk-based part of the premium does not decay, while the behavioral part might (<a class="xref" href="1g.html">Chapter 1G</a>).</p>
 
-   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
-   the figures on that page, so a figure may call DL.* freely. The numbers are
-   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
-   ported line for line, so a figure computes what the app's widget computed.
-   Everything drawn goes through NMT.Plot and takes its colours from the
-   theme's roles (DL.color), so a figure follows the light and dark themes
-   and redraws when the reader switches.
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Three funds bring quality into a retail account:</p>
 
-   Two rules every figure keeps, because the build runs the page and saves
-   its column (DESIGN.md section 8):
-   - the markup is static. A script writes text into outputs and draws on
-     canvases; it never adds or removes elements inside the figure;
-   - the first state is fixed. Seeds are constants and nothing animates
-     until the reader asks, so two builds of the same source are identical.
-   ============================================================ */
-var DL = (function () {
-  'use strict';
+<ul>
+<li><strong>QUAL</strong>, the iShares MSCI USA Quality ETF, has a 0.15% expense ratio and tracks the MSCI Quality Index.</li>
+<li><strong>COWZ</strong>, the Pacer US Cash Cows 100 ETF, has a 0.49% expense ratio and holds a more concentrated list chosen for a high <span class="gloss" title="The cash a company's operations generate after the spending needed to maintain and expand its assets. Abbreviated FCF.">free cash flow</span> yield.</li>
+<li><strong>DGRO</strong>, the iShares Core Dividend Growth ETF, is a proxy through the stability of dividends.</li>
+</ul>
 
-  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
-  function N(x) {
-    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
-        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    var sign = x < 0 ? -1 : 1;
-    var ax = Math.abs(x) / Math.sqrt(2);
-    var t = 1 / (1 + p * ax);
-    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
-    return 0.5 * (1 + sign * y);
-  }
-  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+<p>An <strong><span class="gloss" title="A fund's yearly charge as a percentage of the money invested in it, taken out of the fund's returns.">expense ratio</span></strong> is a fund's yearly charge as a share of your holding, so 0.15% costs $15 a year on $10,000. QUAL is a <em>partial</em> implementation of academic quality: MSCI's index methodology captures perhaps 60% to 70% of the academic factor premium. That is still meaningful: close to the live factor portfolio after fees and execution. QUAL and COWZ differ in breadth, a broad index against a concentrated list built on one pillar, cash generation.</p>
+</div>
 
-  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
-  function d1(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
-  }
-  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
-  function bsPrice(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
-    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsDelta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) {
-      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
-      return S < K ? -1 : S > K ? 0 : -0.5;
-    }
-    var D1 = d1(S, K, T, sigma, r, q);
-    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
-  }
-  function bsGamma(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 1e-6) return S === K ? 1000 : 0;
-    var D1 = d1(S, K, T, sigma, r, q);
-    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
-  }
-  function bsVega(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
-  }
-  function bsTheta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
-    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
-    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsRho(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D2 = d2(S, K, T, sigma, r, q);
-    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
-  }
-  function bsVanna(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
-  }
-  function bsCharm(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
-    return Math.exp(-q * T) * term;
-  }
-  /* every price and Greek at once, as the app's bsm() */
-  function bsm(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
-    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
-    return {
-      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
-      callPrice: S * eqT * Nd1 - K * erT * Nd2,
-      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
-      callDelta: eqT * Nd1,
-      putDelta: eqT * (Nd1 - 1),
-      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
-      vega: S * eqT * pd1 * sT,
-      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
-      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
-      callRho: K * T * erT * Nd2,
-      putRho: -K * T * erT * (1 - Nd2),
-      vanna: -eqT * pd1 * (D2 / sigma),
-      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
-    };
-  }
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Through the value drawdown of 2017 to 2022, quality's drawdowns were much smaller than those of the other factors, but no factor is permanently safe. A regime that rewards risky, junky names, such as the meme-stock rally of 2020 and 2021, can produce one to two years in which quality underperforms.</p>
+</div>
 
-  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
-  function rng(seed) {
-    var a = seed >>> 0;
-    return function () {
-      var t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function gauss(r) {
-    var u = 1 - r(), v = r();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Give quality 5% to 15% of the equity sleeve, through QUAL or COWZ. Do not over-concentrate: tilt toward quality rather than replacing SPX with it.</p>
+</div>
 
-  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
-  var REGIMES = [
-    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
-    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
-    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
-    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
-    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
-    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
-    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
-  ];
-  function ohlc(n, seed, regimes, start) {
-    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
-    var r = rng(seed), out = [], price = start;
-    for (var i = 0; i < n; i++) {
-      var g = null;
-      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
-      if (!g) g = regimes[regimes.length - 1];
-      var ret = g.drift + g.vol * gauss(r);
-      var open = price, close = Math.max(0.5, price * (1 + ret));
-      var wick = price * g.vol * (0.4 + r() * 0.9);
-      var high = Math.max(open, close) + wick * r();
-      var low = Math.min(open, close) - wick * r();
-      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
-      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
-                 regime: g.label, stage: g.stage });
-      price = close;
-    }
-    return out;
-  }
-  function aggregate(data, k) {
-    var out = [];
-    for (var i = 0; i < data.length; i += k) {
-      var ch = data.slice(i, Math.min(i + k, data.length));
-      if (!ch.length) break;
-      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
-                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
-                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
-                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
-    }
-    return out;
-  }
+<div class="callout warn">
+<span class="ct">Common mistake: "quality is just a fancy way to buy expensive stocks"</span>
+<p>Quality and value are <em>distinct</em> factors with different mechanisms. The QMJ construction controls for valuation, so the quality premium exists <em>after</em> you control for value. Quality is not growth dressed up, because it measures fundamentals such as profitability and stability, where value measures price through ratios such as P/E and price to book value.</p>
+</div>
 
-  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
-  function key(k) { return k || 'close'; }
-  function sma(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = 0;
-      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
-      return s / n;
-    });
-  }
-  function ema(data, n, k) {
-    k = key(k);
-    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
-    data.forEach(function (d, i) {
-      if (i === 0) r.push(prev);
-      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
-    });
-    return r;
-  }
-  function stdDev(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
-      s.forEach(function (x) { m += x[k]; }); m /= n;
-      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
-      return Math.sqrt(v / n);
-    });
-  }
-  function bollinger(data, n, mult) {
-    n = n || 20; mult = mult || 2;
-    var m = sma(data, n), s = stdDev(data, n);
-    return { mid: m,
-             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
-             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
-  }
-  function trueRange(data) {
-    return data.map(function (d, i) {
-      if (i === 0) return d.high - d.low;
-      var pc = data[i - 1].close;
-      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
-    });
-  }
-  function atr(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), r = [], prev = null;
-    tr.forEach(function (v, i) {
-      if (i < n - 1) { r.push(null); return; }
-      if (i === n - 1) {
-        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
-        r.push(init); prev = init; return;
-      }
-      prev = (prev * (n - 1) + v) / n;
-      r.push(prev);
-    });
-    return r;
-  }
-  function donchian(data, n) {
-    n = n || 20;
-    return data.map(function (_, i) {
-      if (i < n - 1) return { upper: null, lower: null, mid: null };
-      var s = data.slice(i - n + 1, i + 1);
-      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
-      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
-      return { upper: u, lower: l, mid: (u + l) / 2 };
-    });
-  }
-  function rsi(data, n) {
-    n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
-    for (var i = 1; i < data.length; i++) {
-      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
-      if (i <= n) {
-        g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
-      } else {
-        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
-      }
-    }
-    return r;
-  }
-  function macd(data, fast, slow, signal) {
-    fast = fast || 12; slow = slow || 26; signal = signal || 9;
-    var ef = ema(data, fast), es = ema(data, slow);
-    var line = ef.map(function (v, i) { return v - es[i]; });
-    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
-    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
-  }
-  function adx(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), plusDM = [], minusDM = [];
-    for (var i = 0; i < data.length; i++) {
-      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
-      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
-      plusDM.push(up > dn && up > 0 ? up : 0);
-      minusDM.push(dn > up && dn > 0 ? dn : 0);
-    }
-    function wilder(arr) {
-      var r = new Array(arr.length).fill(null), prev = null;
-      arr.forEach(function (v, i) {
-        if (i < n - 1) return;
-        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
-        prev = prev - prev / n + v; r[i] = prev;
-      });
-      return r;
-    }
-    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
-    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
-    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
-    var dx = plusDI.map(function (v, i) {
-      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
-    });
-    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
-    for (var j = 0; j < dx.length; j++) {
-      if (dx[j] == null) continue;
-      count++;
-      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
-      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
-    }
-    return { adx: out, plusDI: plusDI, minusDI: minusDI };
-  }
+<h2 id="momentum">3 · Momentum</h2>
 
-  /* ---------- writing numbers ----------
-     A true minus sign (U+2212) rather than a hyphen, as the prose writes
-     them, and thousands grouped with commas. */
-  var MINUS = '−';
-  function num(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    d = d == null ? 2 : d;
-    var s = Math.abs(x).toFixed(d);
-    var parts = s.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    s = parts.join('.');
-    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
-  }
-  function signed(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(x, d);
-    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
-  }
-  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
-  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
-  function usd(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(Math.abs(x), d == null ? 2 : d);
-    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
-  }
-  function compact(x, d, prefix) {
-    if (x == null || !isFinite(x)) return '—';
-    prefix = prefix || ''; d = d == null ? 1 : d;
-    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
-    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
-    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
-    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
-    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
-    return sign + prefix + a.toFixed(d);
-  }
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Stocks that have outperformed over the past 6 to 12 months tend to keep outperforming over the next 1 to 3 months. The mechanism is behavioral: investors under-react to news, then over-react at the extremes of a trend. That over-reaction is what creates the risk of a crash when a trend reverses.</p>
+</div>
 
-  /* ---------- the page: outputs and controls ---------- */
-  function $(id) { return document.getElementById(id); }
-  /* Text into an element, only when it changes, so the build captures one
-     settled state and a redraw does not churn the DOM. */
-  function out(id, text) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el && el.textContent !== String(text)) el.textContent = String(text);
-  }
-  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
-  function checked(id) { var el = $(id); return !!(el && el.checked); }
-  /* Call fn whenever any of these controls moves. */
-  function bind(ids, fn) {
-    ids.forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener('input', fn);
-      el.addEventListener('change', fn);
-    });
-  }
-  /* A row of buttons acting as one choice: each button carries data-v, the one
-     chosen has .on and aria-pressed="true". Returns a function giving the
-     current value. The first state is whichever button the markup marked
-     .on, so the saved page and the live page agree. */
-  function seg(id, fn) {
-    var box = $(id);
-    if (!box) return function () { return null; };
-    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
-    function current() {
-      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
-      return bs.length ? bs[0].getAttribute('data-v') : null;
-    }
-    bs.forEach(function (b) {
-      b.addEventListener('click', function () {
-        bs.forEach(function (o) {
-          var on = o === b;
-          o.classList.toggle('on', on);
-          o.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-        if (fn) fn(b.getAttribute('data-v'));
-      });
-    });
-    return current;
-  }
-  function still() {
-    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-  /* Register a canvas figure. draw(canvas) is called now, on resize and on
-     a change of theme (NMT.figure). Returns the redraw. */
-  function figure(canvasId, draw) {
-    if (!window.NMT) return function () {};
-    return NMT.figure(canvasId, draw) || function () {};
-  }
-  function redraw() { if (window.NMT) NMT.redrawAll(); }
+<p>This is <strong>cross-sectional</strong> <span class="gloss" title="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past.">momentum</span>, which compares stocks with one another. Its cousin, the time-series momentum of <a class="xref" href="10d.html">Chapter 10D</a>, trades each asset on its own past.</p>
 
-  /* ---------- colour ----------
-     A role from the stylesheet, resolved for the current theme: accent,
-     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
-     paper, bg. The app's amber is the accent here; its cyan and violet are
-     familiar, its green insight, its rose plain. */
-  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
-  function fade(c, a) {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
-    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
-    var r = /rgba?\(([^)]+)\)/.exec(c || '');
-    if (r) {
-      var p = r[1].split(',');
-      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
-    }
-    return c;
-  }
+<div class="worked">
+<span class="ct">Worked example: Winners minus losers</span>
+<p><strong>Step 1: the sort.</strong> Rank all S&amp;P 500 stocks by total return over the last 12 months, as of last month, skipping the most recent month because it has reversal effects of its own. Buy the top decile of 50 winners and sell short the bottom decile of 50 losers, the canonical "winners minus losers" factor.</p>
 
-  /* ---------- drawing on an NMT.Plot ---------- */
+<p><strong>Step 2: a month of it.</strong> If the winners return 2.0% the next month and the losers 0.8%, the factor earns \(2.0\% - 0.8\% = 1.2\%\).</p>
+</div>
 
-  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
-       o.x, o.y      a function (value, step) -> label, or false for none
-       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
-       o.xs, o.ys    the tick values themselves, overriding nx and ny
-       o.grid        false for no grid (default: the plot's own setting)
-     Paints the ground first, as Plot.axes does, so call it before drawing. */
-  function ticks(lo, hi, target) {
-    var span = hi - lo, raw = span / (target || 6);
-    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
-    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
-    var out = [];
-    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
-      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
-    return { vals: out, step: step };
-  }
-  function axes(p, o) {
-    o = o || {};
-    var g = p.g, P = p.o;
-    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
-                  : ticks(P.xmin, P.xmax, o.nx || 6);
-    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
-                  : ticks(P.ymin, P.ymax, o.ny || 5);
-    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
-    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
-    g.clearRect(0, 0, p.w, p.h);
-    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
-    if (o.grid == null ? P.grid : o.grid) {
-      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
-      tx.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
-      ty.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
-    }
-    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
-    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
-    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
-    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
-    if (o.yAxis !== false) {
-      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
-    }
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    if (fx) {
-      g.textAlign = 'center'; g.textBaseline = 'top';
-      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
-    }
-    if (fy) {
-      g.textAlign = 'right'; g.textBaseline = 'middle';
-      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
-    }
-    if (P.xlabel) {
-      g.textAlign = 'right'; g.textBaseline = 'bottom';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
-    }
-    if (P.ylabel) {
-      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
-      g.textAlign = 'right'; g.textBaseline = 'top';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.ylabel, 0, 0); g.restore();
-    }
-    return p;
-  }
+<p>The factor is called UMD, for up minus down. It is <a class="eqref" href="#e-factor"></a> with past returns as the ranking:</p>
 
-  function clip(p) {
-    var g = p.g, o = p.o;
-    g.save();
-    g.beginPath();
-    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
-    g.clip();
-  }
-  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
-     o.color is a colour or a function (value, index) -> colour. */
-  function bars(p, xs, ys, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
-    clip(p);
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) continue;
-      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
-      var y0 = p.Y(base), y1 = p.Y(ys[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
-    }
-    g.restore();
-  }
-  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
-  function hbars(p, ys, xs, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
-    clip(p);
-    for (var i = 0; i < ys.length; i++) {
-      if (xs[i] == null || !isFinite(xs[i])) continue;
-      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
-      var x0 = p.X(base), x1 = p.X(xs[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
-    }
-    g.restore();
-  }
-  /* A filled band between two curves (lo may be a number: the baseline). */
-  function band(p, xs, hi, lo, fill) {
-    var g = p.g;
-    clip(p);
-    g.beginPath();
-    var started = false;
-    for (var i = 0; i < xs.length; i++) {
-      if (hi[i] == null) continue;
-      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
-      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
-    }
-    for (var j = xs.length - 1; j >= 0; j--) {
-      var l = typeof lo === 'number' ? lo : lo[j];
-      if (l == null || hi[j] == null) continue;
-      g.lineTo(p.X(xs[j]), p.Y(l));
-    }
-    g.closePath();
-    g.fillStyle = fill;
-    g.fill();
-    g.restore();
-  }
-  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
-  function line(p, xs, ys, o) {
-    var pts = [], runs = [];
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
-      pts.push([xs[i], ys[i]]);
-    }
-    if (pts.length) runs.push(pts);
-    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
-  }
-  function hline(p, y, o) {
-    o = o || {};
-    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  function vline(p, x, o) {
-    o = o || {};
-    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  /* Candles for OHLC data at x = index. */
-  function candles(p, data, o) {
-    o = o || {};
-    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
-    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
-    clip(p);
-    data.forEach(function (d, i) {
-      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
-      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
-      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
-      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
-    });
-    g.restore();
-  }
-  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
-  function legend(p, items, o) {
-    o = o || {};
-    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
-    g.save();
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    items.forEach(function (it) {
-      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
-      if (it.box) g.fillRect(x, y - 4, 12, 8);
-      else {
-        g.setLineDash(it.dash || []);
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
-        g.setLineDash([]);
-      }
-      g.fillStyle = color('ink-soft');
-      g.fillText(it.label, x + 19, y);
-      x += 19 + g.measureText(it.label).width + 14;
-    });
-    g.restore();
-  }
-  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
-     p.axes({nx: 0}) or grid off first. */
-  function xticks(p, xs, fmt) {
-    var g = p.g;
-    g.save();
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'center'; g.textBaseline = 'top';
-    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
-    g.restore();
-  }
+<div class="eq" id="e-umd">
+\[ \text{UMD}_t = R^{\text{Winners}}_t - R^{\text{Losers}}_t \]
+</div>
 
-  return {
-    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
-    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
-    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
-    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
-    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
-    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
-    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
-    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
-    figure: figure, redraw: redraw,
-    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
-    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
-    candles: candles, legend: legend, xticks: xticks
-  };
-})();
+<h3 id="the-evidence-2">The evidence</h3>
 
-/* ---------- composite-scorecard ---------- */
-(function () {
-  var U = 'composite-scorecard';
-  /* the app's eight dimensions and their weights, in percent */
-  var DIMS = [
-    { id: 'vol', label: 'volatility / fear', w: 18 },
-    { id: 'credit', label: 'credit', w: 15 },
-    { id: 'rates', label: 'rates', w: 12 },
-    { id: 'dollar', label: 'dollar / FX', w: 10 },
-    { id: 'comm', label: 'commodities', w: 8 },
-    { id: 'global', label: 'global / overnight', w: 10 },
-    { id: 'trend', label: 'trend', w: 17 },
-    { id: 'sentiment', label: 'sentiment', w: 10 }
-  ];
-  var BUCKETS = [
-    { lo: -100, hi: -40, name: 'Strong bear', role: 'plain', a: 0.26,
-      strategy: 'Defensive only. Mechanical foundation sleeves continue; no new tactical positions.' },
-    { lo: -40, hi: -10, name: 'Bear tilt', role: 'plain', a: 0.11,
-      strategy: 'Long trades suspended; tactical shorts permitted if in mandate.' },
-    { lo: -10, hi: 10, name: 'Neutral', role: 'accent', a: 0.13,
-      strategy: 'Take only the highest-conviction setups. Size at 50%.' },
-    { lo: 10, hi: 40, name: 'Bull tilt', role: 'insight', a: 0.11,
-      strategy: 'Long trades permitted at 70-80% of intended size.' },
-    { lo: 40, hi: 100, name: 'Strong bull', role: 'insight', a: 0.26,
-      strategy: 'New long swing trades permitted at full intended size.' }
-  ];
+<ul>
+<li><strong>Jegadeesh and Titman (1993, <em>Journal of Finance</em>, JF)</strong> is the canonical study. UMD earned about 1% a month, with a t-statistic of about 3 and a Sharpe ratio of about 0.5 unlevered, that is, without borrowing to scale the portfolio up.</li>
+<li><strong>Asness, Moskowitz and Pedersen (2013, JF)</strong>, "Value and Momentum Everywhere", found momentum pervasive across 8 asset classes globally.</li>
+<li><strong>Daniel and Moskowitz (2016, JFE)</strong> add the <em>critical caveat</em> that momentum lost 73% from March to May 2009, in the V-bottom that ended a bear market.</li>
+<li><strong>Jensen, Kelly and Pedersen (2023, JF)</strong> document a decline of about 47% after publication across hundreds of factors.</li>
+</ul>
 
-  /* The composite is sum(score x weight) x 100, as the app. Scores move in
-     steps of 0.05 and weights are whole percents, so the composite lies on a
-     grid of 0.05 points: k counts those steps, exactly, with no rounding
-     noise at a bucket edge. The buckets are the app's: >= 40, >= 10, > -10,
-     > -40, the rest. */
-  function score(d) { return parseFloat(DL.$(U + '-' + d.id).value); }
-  function steps() {
-    return DIMS.reduce(function (k, d) { return k + Math.round(score(d) * 20) * d.w; }, 0);
-  }
-  function bucket(k) {
-    return k >= 800 ? BUCKETS[4] : k >= 200 ? BUCKETS[3] : k > -200 ? BUCKETS[2]
-         : k > -800 ? BUCKETS[1] : BUCKETS[0];
-  }
-  /* shown to one decimal, cut toward zero, so the number never reads as
-     past an edge its bucket has not crossed (39.95 shows as +39.9) */
-  function shown(k) {
-    var tenths = (k < 0 ? -1 : 1) * Math.floor(Math.abs(k) / 2);
-    return DL.signed(tenths / 10, 1);
-  }
+<h3 id="why-it-exists-2">Why it exists</h3>
 
-  function sgn(v) { return (v >= 0 ? '+' : '') + DL.num(v, 2); }
+<p>Momentum is mostly behavioral, Source 2 of <a class="xref" href="1g.html">Chapter 1G</a>. Investors under-react to news because they anchor on old information, then over-react at trend extremes by chasing what has already risen. Momentum is possibly also compensation for crash risk in V-shaped reversals, whose mechanics a toy example shows.</p>
 
-  var draw = DL.figure(U + '-c', function (c) {
-    var k = steps(), comp = k / 20, B = bucket(k);
-    var font = '11px ' + DL.color('sans');
+<div class="worked">
+<span class="ct">Worked example: Why momentum crashes at a market bottom</span>
+<p><strong>Step 1: the portfolio after a bear market.</strong> Suppose the market has fallen for a year. The losers are the stocks that fell hardest, which tend to be the most sensitive to the market, with a <span class="gloss" title="A measure of how much an asset moves with the market. A stock with a beta of 1.5 moves, on average, 1.5% for each 1% move in the market.">beta</span> of, say, 1.8. The winners held up, with a beta of 0.6, so the long-short portfolio's beta is \(0.6 - 1.8 = -1.2\), a large bet that the market keeps falling.</p>
 
-    /* each dimension's part of the composite, in points */
-    var narrow = (c.clientWidth || 640) < 520;
-    var p = new NMT.Plot(c, { xmin: -20, xmax: 20, ymin: 0, ymax: 8, grid: true,
-      pad: narrow ? { l: 10, r: 12, t: 14, b: 22 } : { l: 150, r: 14, t: 6, b: 22 } });
-    DL.axes(p, { xs: [-20, -10, 0, 10, 20], ys: [], y: false, yAt: 0,
-                 x: function (v) { return DL.signed(v, 0); } });
-    var track = DL.fade(DL.color('ink-faint'), 0.16), h = narrow ? 0.34 : 0.46;
-    DIMS.forEach(function (d, i) {
-      var y = 7.5 - i, part = score(d) * d.w;
-      DL.hbars(p, [y], [d.w], { base: -d.w, h: h, color: track });
-      if (part !== 0) DL.hbars(p, [y], [part], { h: h,
-          color: DL.fade(DL.color(part > 0 ? 'insight' : 'plain'), 0.85) });
-      var name = d.label + ' · ' + d.w + '%';
-      if (narrow) p.text(-20, y, name, { dx: 2, dy: -(h / 2) * (p.Y(0) - p.Y(1)) - 2,
-                          color: DL.color('ink-soft'), font: font });
-      else p.text(-20, y, name, { dx: -8, align: 'right', baseline: 'middle',
-                   color: DL.color('ink-soft'), font: font });
-    });
-    DL.vline(p, 0, { color: DL.color('rule'), width: 1.4 });
+<p><strong>Step 2: the rebound.</strong> The market then rallies 30% in three months. From beta alone the winners rise \(0.6 \times 30\% = 18\%\) and the losers \(1.8 \times 30\% = 54\%\), so the portfolio loses 36% before any return of its own.</p>
+</div>
 
-    /* the composite on the bucket scale */
-    var c2 = DL.$(U + '-g');
-    var q = new NMT.Plot(c2, { xmin: -100, xmax: 100, ymin: 0, ymax: 1, grid: false,
-                               pad: { l: 14, r: 14, t: 22, b: 22 } });
-    DL.axes(q, { xs: [-100, -40, -10, 10, 40, 100], ys: [], y: false, yAxis: false, grid: false,
-                 x: function (v) { return DL.signed(v, 0); } });
-    var slim = (c2.clientWidth || 640) < 520;
-    BUCKETS.forEach(function (R) {
-      var on = R === B, col = DL.color(R.role);
-      q.path([[R.lo, 0], [R.hi, 0], [R.hi, 1], [R.lo, 1]],
-             { close: true, fill: DL.fade(col, on ? Math.min(0.5, R.a * 2.2) : R.a), color: null });
-      if (on || !slim)
-        q.text((R.lo + R.hi) / 2, 0.5, R.name.toLowerCase(), { align: 'center', baseline: 'middle',
-               color: on ? DL.color('ink') : DL.color('ink-soft'), font: (on ? '600 ' : '') + font });
-    });
-    q.seg(comp, 0, comp, 1, { color: DL.color('ink'), width: 2.2 });
-    var label = 'composite ' + shown(k);
-    q.g.font = '600 ' + font;
-    var half = q.g.measureText(label).width / 2 + 2, px = q.X(comp);
-    var at = Math.min(Math.max(px, half), q.w - half);
-    q.text(comp, 1, label, { dx: at - px, dy: -5, align: 'center', color: DL.color('ink'),
-           font: '600 ' + font });
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Two funds implement momentum: <strong>MTUM</strong>, the iShares MSCI USA Momentum ETF, with a 0.15% expense ratio, and <strong>PDP</strong>, the Invesco DWA Momentum ETF.</p>
 
-    DIMS.forEach(function (d) { DL.out(U + '-' + d.id + '-o', sgn(score(d))); });
-    DL.out(U + '-vk', B.name + ', composite ' + shown(k) + '.');
-    DL.out(U + '-vt', B.strategy);
-  });
-  DL.bind(DIMS.map(function (d) { return U + '-' + d.id; }), draw);
-})();
-<!--/SCRIPT-->
+<p>Momentum's high <strong><span class="gloss" title="How much of a portfolio is sold and replaced over a year, as a share of its value. High turnover raises trading costs and, in a taxable account, realizes gains sooner.">turnover</span></strong>, about 80% of the portfolio a year, makes it tax-inefficient. In a taxable account the trading generates <span class="gloss" title="A gain on a position held for a year or less, taxed at the ordinary income rate.">short-term capital gains</span>, taxed as ordinary income, which drag significantly on after-tax returns. Suppose, hypothetically, that trading realizes $8,000 of short-term gains in a year on a $100,000 sleeve. At a 35% rate the tax is $2,800, or 2.8% of the sleeve, where an index fund held for years defers almost all of its tax. Momentum is best held in a tax-advantaged account such as a retirement account (<a class="xref" href="2e.html">Chapter 2E</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p><strong>Momentum crashes.</strong> When the market reverses sharply, as when a bear market bottoms, the losers you were short rally violently and the winners you were long collapse. Daniel and Moskowitz documented a loss of 73% in 3 months in 2009. Their vol-scaled, or dynamic, construction cuts exposure when crash conditions are flagged. This roughly doubles the unconditional Sharpe ratio, measured over all periods together, though it is harder to implement in a retail account.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Give momentum 5% to 10% of the equity sleeve, through MTUM. That is less than quality because momentum carries a higher risk of decay and worse tax behavior. Two kill criteria apply:</p>
+
+<ul>
+<li><strong>After a sustained equity drawdown of 6 months or more</strong>, momentum's crash risk is elevated. Cut the exposure by 50% until the equity market's 3-month return turns positive.</li>
+<li><strong>If MTUM's tracking error to the academic UMD factor exceeds 4% a year</strong>, switch to another vehicle.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "momentum has worked for 30 years, so it must keep working"</span>
+<p>Momentum has decayed materially since publication, by about 47% in the study by Jensen, Kelly and Pedersen (2023). It can also produce drawdowns of 70% in 3 months. The strategy still has a positive expected return, but a smaller one with worse path properties than data from the 1990s suggests.</p>
+</div>
+
+<h2 id="value">4 · Value</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Cheap stocks, whose price is low relative to fundamentals such as book value, earnings or cash flow, outperform expensive stocks over long horizons. Why they do is debated. The candidates are a risk premium for distress, a behavioral over-extrapolation of growth and a problem measuring intangible assets under modern accounting.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Cheap against expensive</span>
+<p><strong>Step 1: the ratio.</strong> For each stock, divide the book value of its equity by its market value. A high <strong><span class="gloss" title="The book value of a company's equity, from its accounts, divided by its market value. A high ratio marks a stock the market prices cheaply. Abbreviated B/M.">book-to-market ratio</span></strong> (B/M) means the market prices the company cheaply relative to its accounts.</p>
+
+<p><strong>Step 2: the portfolio and its history.</strong> Sort the S&amp;P 500 by B/M, then buy the cheap top decile and sell short the expensive bottom decile. This is the canonical Fama-French HML factor, for high minus low. It produced reliable excess returns from 1927 to 2010, then went into the worst drawdown in modern history.</p>
+</div>
+
+<div class="eq" id="e-hml">
+\[ \text{HML}_t = R^{\text{High B/M}}_t - R^{\text{Low B/M}}_t \]
+</div>
+
+<p>Modern variations may control for sector exposure and rank on a composite: E/P (earnings to price), B/M, FCF/P (free cash flow, FCF, to price) and EV/EBITDA. The last divides enterprise value (EV), the shares plus debt less cash, by earnings before interest, taxes, depreciation and amortization (EBITDA).</p>
+
+<h3 id="the-evidence-3">The evidence</h3>
+
+<ul>
+<li><strong>Fama and French (1993, JFE)</strong> is the canonical study. HML earned 0.40% to 0.50% a month, with a t-statistic of about 3 and a long-run Sharpe ratio of about 0.4.</li>
+<li><strong>The years 2010 to 2020 brought the worst documented value drawdown in modern history.</strong> AQR Equity Market Neutral lost about 38% from peak to trough by December 2020.</li>
+<li><strong>Arnott, Harvey, Kalesnik and Linnainmaa (2021)</strong> wrote "Reports of Value's Death May Be Greatly Exaggerated" in the <em>Journal of Portfolio Management</em> (JPM). They attribute the drawdown to a widening of the valuation spread, which is cyclical, not to fundamentals.</li>
+<li><strong>The rebound followed.</strong> AQR Absolute Return gained 43.5% in 2022 and 18.5% in 2023, while the Russell 1000 Value index gained 24.9% in 2024.</li>
+</ul>
+
+<p>The <strong><span class="gloss" title="How many times more expensive the most expensive stocks are than the cheapest, measured against book value or another fundamental. When it widens, value stocks fall behind even if their businesses do well.">valuation spread</span></strong> is how many times more expensive the expensive stocks are than the cheap ones. Write each group's price as a multiple \(m\) of its book value. The spread is then \(V = m_e/m_c\), where \(e\) marks the expensive group and \(c\) the cheap one. From the start of a period, 0, to its end, 1, regrouping the multiples and the book values gives</p>
+
+<div class="eq" id="e-spread">
+\[ \begin{aligned}
+\frac{1 + R_c}{1 + R_e}
+&amp;= \frac{V_0}{V_1} \times \frac{1 + g_c}{1 + g_e}
+\end{aligned} \]
+</div>
+
+<p>where \(R\) is each group's return and \(g\) the growth of its book value. Value's return against expensive stocks is the change in the spread times the ratio of their fundamental growth.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Losing without anything going wrong</span>
+<p><strong>Step 1: the spread widens.</strong> Suppose the cheap stocks trade at 1 times book and the expensive ones at 4 times, a spread of 4. Both groups grow their book value at the same rate while investors bid the expensive stocks up to 6 times book. By <a class="eqref" href="#e-spread"></a> the ratio is \(4/6 = 0.667\), so the cheap side has lost 33% relative to the expensive side with nothing wrong in its businesses.</p>
+
+<p><strong>Step 2: the spread narrows.</strong> If the spread later returns to 4, the ratio is \(6/4 = 1.5\), a relative gain of 50%. That is the cyclical reading of Arnott and colleagues: prices alone can swamp years of fundamental advantage, then repay it.</p>
+</div>
+
+<h3 id="why-it-exists-3">Why it exists</h3>
+
+<p>The source of the value premium is disputed among three views:</p>
+
+<ul>
+<li><strong>The risk-premium view of Fama and French:</strong> value stocks bear the risk of financial distress.</li>
+<li><strong>The behavioral view of Lakonishok, Shleifer and Vishny:</strong> investors over-extrapolate growth and underpay for boring value.</li>
+<li><strong>The intangibles view of Lev and Srivastava:</strong> book-to-market is mismeasured as intangible assets have grown. An HML adjusted for intangibles works better after 1993.</li>
+</ul>
+
+<p>Accounting records most spending on research, software and brands as an expense rather than an asset. A company built that way reports a small book value, so the sort files it as expensive even when it is not. Probably all three views hold: the source is mixed, mostly behavioral and partly risk-based.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Three kinds of fund implement value:</p>
+
+<ul>
+<li><strong>RAFI and Schwab fundamental funds</strong> (FNDX, FNDA) weight companies by fundamentals: cash flow, sales, book value and dividends.</li>
+<li><strong>IVE</strong>, the iShares S&amp;P 500 Value ETF, is traditional value.</li>
+<li><strong>AVUV</strong>, the Avantis US Small-Cap Value ETF, captures value among small companies filtered for quality.</li>
+</ul>
+
+<p>The haircut runs from an academic HML Sharpe ratio of 0.4, to 0.15 to 0.30 in live funds, to 0.10 to 0.30 in a user account. Much of the last step is behavior, as investors leave during long drawdowns.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Value fails through multi-year drawdowns. The years 2010 to 2020 were the worst in modern history, with AQR funds losing about 40% over 5 years and breaking many investors' commitment. Had you panic-exited in 2020, you would have missed the rebound of 43.5% in 2022.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Take a small tilt of 3% to 8% of the equity sleeve, and only with a commitment to multi-decade patience. <strong>If you would panic-exit during a 5-year drawdown, do not allocate to value.</strong> The episode of 2010 to 2020 showed how punishing the path can be.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A regimen's benefit among the patients who completed every cycle overstates what it delivers to everyone who starts it, because some stop early. A factor's published return is the completers' result, earned by an investor who held through every drawdown. If a five-year drawdown would make you stop, expect the result of the patients who discontinued: the toxicity without the benefit.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "value has come back, so this is a new value-friendly regime"</span>
+<p>Value has rebounded from a deep drawdown, but it is still cyclical. The outperformance of 2022 to 2024 might be a regime shift, or it might be a bear-market mean reversion that reverses in the next bull market. Do not extrapolate it: allocate to value only with multi-decade tolerance.</p>
+</div>
+
+<h2 id="low-volatility-and-betting-against-beta">5 · Low volatility and betting against beta</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Low-volatility stocks have outperformed high-volatility stocks on a risk-adjusted basis. This <span class="gloss" title="The pattern in which low-volatility, low-beta stocks earn more relative to their risk than high-volatility stocks, against the simple rule that more risk pays more.">low-volatility anomaly</span> contradicts the textbook model, in which more exposure to the market earns more, and it is one of the most counterintuitive results in the factor literature. The proposed mechanism is that investors who cannot borrow bid up high-beta stocks to get equity exposure, depressing their later returns.</p>
+</div>
+
+<p>The textbook model is the <strong><span class="gloss" title="The textbook model in which a stock's expected return above the risk-free rate equals its beta times the market's expected return above that rate. Abbreviated CAPM.">capital asset pricing model</span></strong> (CAPM). It says a stock's expected excess return is its beta times the market's:</p>
+
+<div class="eq" id="e-capm">
+\[ \mathbb{E}[R_i] - r = \beta_i \left(\mathbb{E}[R_m] - r\right) \]
+</div>
+
+<p>Here \(R_i\) is the stock's return, \(R_m\) the market's, \(r\) the risk-free rate and \(\beta_i\) the stock's beta.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two stocks against the model</span>
+<p><strong>Step 1: prediction and outcome.</strong> With \(r = 0\) and a market expected to return 10%, <a class="eqref" href="#e-capm"></a> gives Stock A, with a beta of 0.6, an expected return of 6%, and Stock B, with a beta of 1.5, one of 15%. Empirically, a stock like A returns more like 8% and a stock like B more like 11%. Both diverge from the model in the same direction, with low beta earning more than predicted and high beta less.</p>
+
+<p><strong>Step 2: the bet.</strong> The <strong><span class="gloss" title="A strategy that holds low-beta stocks against high-beta ones. Its premise is that investors unable to borrow bid up high-beta stocks to get more market exposure.">betting against beta</span></strong> (BAB) strategy goes long Stock A levered up and short Stock B levered down, so that each side has a beta of 1.</p>
+</div>
+
+<p>The factor scales each side to a beta of 1 before taking the difference:</p>
+
+<div class="eq" id="e-bab">
+\[ \begin{aligned}
+\text{BAB}_t = {}&amp;\tfrac{1}{\beta_L}\left(R_{L,t} - r\right) \\
+&amp;- \tfrac{1}{\beta_H}\left(R_{H,t} - r\right)
+\end{aligned} \]
+</div>
+
+<p>Here \(L\) marks the low-beta portfolio and \(H\) the high-beta one, and the portfolio's beta is \(\beta_L/\beta_L - \beta_H/\beta_H = 0\). With the example's numbers and \(r = 0\), the long side earns \(8\%/0.6 = 13.3\%\) and the short side costs \(11\%/1.5 = 7.3\%\). BAB earns 6.0% a year with no market exposure, though only after borrowing 67 cents for every dollar in the low-beta side, since \(1/0.6 = 1.67\).</p>
+
+<h3 id="the-evidence-4">The evidence</h3>
+
+<ul>
+<li><strong>Frazzini and Pedersen (2014, JFE)</strong>, "Betting Against Beta", report a US BAB Sharpe ratio of 0.78 over 1926 to 2012.</li>
+<li><strong>Novy-Marx and Velikov (2022, JFE)</strong>, "Betting Against Betting Against Beta", add a <em>critical caveat</em>. The Frazzini-Pedersen Sharpe ratio is largely an artifact of two choices: a non-standard rank weighting that overweights micro- and nano-caps, the smallest companies, and a specific beta shrinkage. In a value-weighted version the BAB Sharpe ratio falls to about 0.49, still positive at a t-statistic of 3.5 and 76 bps a month, but materially smaller.</li>
+<li><strong>Bali and colleagues (2017)</strong> find that lottery demand for high-beta, lottery-like stocks creates the same effect.</li>
+</ul>
+
+<p>A <strong>value-weighted</strong> portfolio weights each stock by its <span class="gloss" title="A company's share price times its number of shares: the value the market puts on the whole company.">market capitalization</span>, while a rank weighting gives tiny companies as much weight as giants. Shrinkage pulls each noisy beta estimate part of the way toward 1. Such choices are ordinary, which makes a result that depends on them fragile.</p>
+
+<h3 id="why-it-exists-4">Why it exists</h3>
+
+<p>Low volatility is mainly an institutional friction, Source 3 of <a class="xref" href="1g.html">Chapter 1G</a>. Leverage-constrained investors such as mutual funds and pensions cannot borrow, so they buy high-beta stocks to get more equity exposure, and high beta becomes overpriced. Lottery demand for high-beta names adds a behavioral overlay.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Two funds implement low volatility: <strong>USMV</strong>, the iShares MSCI USA Min Vol ETF, with a 0.15% expense ratio, and <strong>SPLV</strong>, the Invesco S&amp;P 500 Low Volatility ETF, with 0.25%. A long-only fund captures roughly half the long-short Sharpe ratio but is fully scalable. Do not try to replicate the leveraged long-short version, because the leverage is what makes BAB break in stress.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Liquidity stress has historically punished BAB. <a class="xref" href="10h.html">Chapter 10H</a> marks it by a TED spread, a gauge of banks' borrowing costs, above 200 bps, or a MOVE index of Treasury volatility above 150. Long-only low volatility still carries equity beta and loses in crashes, about 0.6 of SPX's losses. In a 30% fall that is a loss of about 18%, which makes the fund a smaller equity position rather than a hedge.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Give low volatility 3% to 8% of the equity sleeve, through USMV. Keep it small, because the academic Sharpe ratio is overstated and the live haircut is large. In a liquidity-stress regime (<a class="xref" href="10h.html">Chapter 10H</a>), cut the allocation by 25%.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "BAB has a Sharpe ratio of 0.78, so it is a great factor"</span>
+<p>Novy-Marx and Velikov (2022) show that the 0.78 figure is specific to one methodology. The value-weighted version is 0.49, still positive but materially smaller, so do not over-allocate on the Frazzini-Pedersen number.</p>
+</div>
+
+<h2 id="size-once-the-junk-is-removed">6 · Size, once the junk is removed</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Banz (1981) reported a size premium of about 5% a year: small companies outperformed large ones. On its own, the effect has been roughly flat since 1981. Among small companies of high quality, with the junky ones excluded, the size premium re-emerges substantially.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: One index, two groups inside it</span>
+<p><strong>Step 1: the aggregate.</strong> Since 1980, the Russell 2000 index of small companies and the S&amp;P 500 have had roughly equal long-run returns. Split the Russell 2000 into high-quality companies, profitable and with low leverage, and junk, unprofitable and highly levered. The high-quality small caps outperform significantly, while the junk underperforms significantly.</p>
+
+<p><strong>Step 2: the blend.</strong> As hypothetical arithmetic, if 60% of the index earns 12% and 40% earns 3%, the index earns \(0.6 \times 12\% + 0.4 \times 3\% = 8.4\%\). Measured against large companies that also earn 8.4%, small companies as a whole show no premium, because the junk drags the aggregate down.</p>
+</div>
+
+<p>Size is usually measured as SMB, for small minus big. Conditioned on quality, it compares small, high-quality companies with large ones:</p>
+
+<div class="eq" id="e-smb">
+\[ \text{SMB}^{\text{adj}}_t = R^{\text{small, quality}}_t - R^{\text{large}}_t \]
+</div>
+
+<p>Asness, Frazzini, Israel, Moskowitz and Pedersen (2018, JFE), "Size Matters, If You Control Your Junk", find that the premium nearly doubles after controlling for quality. The source is mixed: a risk premium for the illiquidity and distress risk of small companies, plus behavioral underpricing of obscure ones. Conditioning on quality removes the "junk" drag.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Take a modest tilt, 3% to 7% of the equity sleeve, through a fund that filters for quality within small companies. <strong>AVUV</strong> is the Avantis US Small-Cap Value ETF, with a 0.25% expense ratio, and <strong>DFSV</strong> the Dimensional US Small Cap Value ETF, with 0.30%. <strong>ZIG</strong>, the Acquirers Fund, buys deep value. Standalone size, such as a fund of all small companies like IWM, is much weaker than size and quality combined.</p>
+</div>
+
+<h2 id="combining-the-factors">7 · Combining the factors</h2>
+
+<p>Within the equity allocation, the Edge Book suggests this set of tilts:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Factor</th><th class="c-other">Weight in the equity sleeve</th><th>Vehicle</th></tr></thead><tbody><tr><td class="c-trial" data-label="Factor">Quality</td><td class="c-other" data-label="Weight in the equity sleeve">8% to 12%</td><td data-label="Vehicle">QUAL or COWZ</td></tr><tr><td class="c-trial" data-label="Factor">Momentum</td><td class="c-other" data-label="Weight in the equity sleeve">5% to 10%</td><td data-label="Vehicle">MTUM</td></tr><tr><td class="c-trial" data-label="Factor">Value</td><td class="c-other" data-label="Weight in the equity sleeve">3% to 8%</td><td data-label="Vehicle">RAFI fund or AVUV</td></tr><tr><td class="c-trial" data-label="Factor">Low volatility</td><td class="c-other" data-label="Weight in the equity sleeve">3% to 8%</td><td data-label="Vehicle">USMV</td></tr><tr><td class="c-trial" data-label="Factor">Size and quality</td><td class="c-other" data-label="Weight in the equity sleeve">3% to 7%</td><td data-label="Vehicle">AVUV</td></tr><tr><td class="c-trial" data-label="Factor">Pure cap weight</td><td class="c-other" data-label="Weight in the equity sleeve">The remainder (50% to 70%)</td><td data-label="Vehicle">SPY or VTI</td></tr></tbody></table></div></div>
+
+<p>The factor tilts together take 25% to 40% of the equity sleeve. Do not go higher, because the <span class="gloss" title="The standard deviation of the difference between a strategy's returns and its benchmark's returns.">tracking error</span> against broad equity becomes large while the diversification benefit between factors saturates. Read the table as a range for each tilt rather than as a sum. A total held to 25% to 40% leaves 60% to 75% for the index, more than the remainder column says, and AVUV appears in two rows, so count it only once. The Edge Book's own summary of the category, in <a class="xref" href="10a.html">Chapter 10A</a>, puts the tilts lower, at 15% to 30% of the sleeve.</p>
+
+<p>Factors do not all underperform at the same time:</p>
+
+<ul>
+<li><strong>2020 to 2021:</strong> momentum strong, value weak, quality held up.</li>
+<li><strong>2022:</strong> value strong, momentum mixed, quality held up.</li>
+<li><strong>2008:</strong> low volatility best, momentum and value badly hit.</li>
+<li><strong>The 1990s:</strong> value and momentum strong, low volatility weaker.</li>
+</ul>
+
+<p>Diversifying across 4 to 5 factors smooths the path materially, while a single-factor concentration produces multi-year drawdowns that test patience. The algebra of <a class="xref" href="1f.html">Chapter 1F</a> shows how much combining helps, and where the help stops.</p>
+
+<details class="grind"><summary>The Sharpe ratio of an equal mix of factors</summary><div class="grind-body">
+<p>Take \(N\) factors, each with volatility \(\sigma\) and Sharpe ratio SR, with the same correlation \(\rho\) between every pair. An equal-weight mix holds \(N\) variance terms of \(\sigma^2/N^2\) and \(N(N-1)\) covariance terms of \(\rho\sigma^2/N^2\), so its variance is</p>
+
+<div class="eq">
+\[ \frac{\sigma^2}{N}\big(1 + (N-1)\rho\big) \]
+</div>
+
+<p>The mix earns the same excess return per dollar as each factor. Dividing that return by the square root of the variance gives the result below.</p>
+</div></details>
+
+<div class="eq" id="e-mix">
+\[ \text{SR}_N = \text{SR}\sqrt{\frac{N}{1 + (N-1)\rho}} \]
+</div>
+
+<p>With a hypothetical Sharpe ratio of 0.4 for each factor and a correlation of 0.2 between them, four factors give \(0.4 \times \sqrt{4/1.6} = 0.63\). As \(N\) grows, the fraction under the root approaches \(1/\rho\), so no number of such factors beats \(0.4/\sqrt{0.2} = 0.89\). That ceiling is what "the diversification benefit saturates" means: the fifth factor adds less than the second, and a twentieth adds almost nothing.</p>
+
+<h3 id="what-the-whole-set-adds">What the whole set adds</h3>
+
+<p>An academic combined factor portfolio earns about 2% to 3% a year of excess return over cap weighting, with a Sharpe ratio of about 0.6. A realistic retail implementation earns about 0.5% to 1.5% a year, with a Sharpe ratio of about 0.2 to 0.4 above cap weighting, which is the <span class="gloss" title="A strategy's average return above a benchmark divided by the standard deviation of that difference, its tracking error.">information ratio</span> of <a class="xref" href="1d.html">Chapter 1D</a>. The retail haircut is large for three reasons: the ETFs implement the factors only partially, tax friction matters and behavioral exits during multi-year drawdowns are common.</p>
+
+<p>The Edge Book also says that combining quality, momentum, value and low volatility can add 0.2 to 0.4 of Sharpe ratio to the equity sleeve. Read that as the tilts' information ratio, not as a rise in the whole sleeve's ratio.</p>
+
+<div class="worked">
+<span class="ct">Worked example: What 1% a year does to a sleeve</span>
+<p><strong>Step 1: the sleeve.</strong> Suppose, hypothetically, the equity sleeve earns 6% a year above cash with a volatility of 16%, a Sharpe ratio of \(6/16 = 0.375\). Tilts that add 1% a year at about the same volatility lift it to \(7/16 = 0.44\), a rise of only about 0.06.</p>
+
+<p><strong>Step 2: the tilts on their own.</strong> If the tilts differ from the index with a tracking error of 3% a year, their information ratio is \(1/3 = 0.33\), inside the range of 0.2 to 0.4. By <a class="eqref" href="#e-tstat"></a>, that needs \((2 \times 3)^2 = 36\) years to reach a t-statistic of 2, so your own account cannot confirm within an investing lifetime that the tilts work.</p>
+</div>
+
+<p>That is why the tilts are worth doing only with a multi-decade commitment and an explicit understanding of the path.</p>
+
+<h2 id="why-not-time-the-factors">8 · Why not time the factors</h2>
+
+<p>Factor performance is highly cyclical and difficult to predict. Most of the academic literature finds that <strong><span class="gloss" title="Shifting weight between equity factors according to a forecast of which will do best next, rather than holding them at fixed weights.">factor timing</span></strong>, shifting weight toward whichever factor looks set to do well, adds no value relative to a static, diversified factor allocation. The exception is timing value by its valuation spread when the spread is extreme, and even that is contentious. Default to static, diversified tilts.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "I can time factor rotation by buying whichever factor is hot"</span>
+<p>A factor that is hot may simply have had its valuation spread move in its favor, which by <a class="eqref" href="#e-spread"></a> is a return already earned, and one that reverses if the spread narrows. Rotation also adds turnover, and so taxes, to strategies whose edge is measured in fractions of a percent.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Keep the cap-weighted index as the core of the equity sleeve. Put momentum, with its turnover, in a tax-advantaged account, and low-turnover tilts such as quality and low volatility in a taxable one. Once a year, compare each fund with its academic factor, and switch vehicle when the tracking error exceeds 4% a year.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Factor tilts decay after publication, and they crash, as momentum did in 2009. They also drift through drawdowns so long that investors leave before the rebound, as value investors did from 2010 to 2020.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Allocate 25% to 40% of the equity sleeve to tilts,</strong> spread across quality, momentum, value, low volatility and size among quality companies.</li>
+<li><strong>Size each tilt by its path rather than its paper Sharpe ratio.</strong> Value and momentum get less than quality because of their drawdowns, decay and taxes.</li>
+<li><strong>Skip any tilt you would abandon in a drawdown.</strong> Value in particular is only for an investor who can hold through five bad years.</li>
+<li><strong>Do not rotate.</strong> Keep the weights static and rebalance back to them.</li>
+</ul>
+</div>
+
+<p><a class="xref" href="10g.html">Chapter 10G</a> turns to calendar and flow effects: the FOMC cycle, end-of-quarter (EOQ) rebalancing, options expiration (OPEX) and the seasons. They are smaller than the factor tilts and modulate existing positions rather than holding a sleeve of their own.</p>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A factor is a ranking of stocks that has predicted returns, measured as a long-short portfolio and held as a long-only tilt.</li>
+<li>Quality has held up best because part of its premium is a risk premium. The more behavioral or institutional factors have decayed or crashed.</li>
+<li>Paper Sharpe ratios of 0.4 to 0.6 shrink to 0.10 to 0.45 in a user account, and BAB's 0.78 is 0.49 when value-weighted.</li>
+<li>Diversifying across factors raises the Sharpe ratio toward a ceiling set by their correlation.</li>
+<li>A realistic set of tilts adds 0.5% to 1.5% a year, too little to confirm from your own record: hold it statically, on the evidence, for decades.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Name the four pillars of QMJ, and explain why quality has held up better than the other factors.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Profitability, growth, safety and payout. Quality's premium is partly a risk premium, for lower distress risk, and partly behavioral, from overpaying for narrative growth. The risk-based part does not decay, which is why quality was the single factor that did not crash through the value drawdown of 2017 to 2022.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Define the momentum factor, state the Daniel-Moskowitz finding, and say why momentum is tax-inefficient.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>UMD is the return on the top decile of stocks by past 12-month return, skipping the latest month, minus that on the bottom decile. Daniel and Moskowitz (2016) found that it lost 73% from March to May 2009, as the losers it was short rallied off a bear-market bottom. Its turnover of about 80% a year realizes short-term capital gains, taxed at ordinary income rates.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Value and quality have similar academic Sharpe ratios. Why is value harder to allocate to?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Value's path is far worse. From 2010 to 2020 it had the worst drawdown in modern history, about 40% over 5 years at AQR's funds. Investors who left in 2020 missed the rebound of 43.5% in 2022. Its haircut is also steeper, to 0.10 to 0.30 in an account against 0.30 to 0.45 for quality.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>What mechanism does betting against beta rest on? What did Novy-Marx and Velikov show, and why is a long-only fund better for a retail account?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Leverage-constrained investors, such as mutual funds and pensions, buy high-beta stocks to get more equity exposure, which overprices them. Novy-Marx and Velikov (2022) showed that the Sharpe ratio of 0.78 rests on rank weighting and a specific beta shrinkage, and is about 0.49 value-weighted. The long-short version needs the leverage that breaks it in stress, while a long-only fund such as USMV keeps roughly half the Sharpe ratio without borrowing.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p><a class="xref" href="13b.html">Chapter 13B</a>'s conviction score, \(C = E \times M \times R \times X \times S\), multiplies scores from 0 to 1 for evidence, mechanism, regime, execution and sizing survivability, and below 0.3 means no trade. Score putting the whole equity sleeve into momentum in a calm regime. What binds?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Suppose, hypothetically, \(E = 0.8\), \(M = 0.7\), \(R = 0.8\) in a calm market and \(X = 0.9\) for a liquid ETF. A sleeve that can lose 73% in three months is not survivable, so say \(S = 0.2\). Then \(C = 0.8 \times 0.7 \times 0.8 \times 0.9 \times 0.2 = 0.08\), far below 0.3. Sizing binds: the same factor at 5% to 10% of the sleeve has an \(S\) near 1.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>A combined academic factor portfolio has a Sharpe ratio of about 0.6. What does a retail account realistically get, and why do four factors beat one?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>About 0.5% to 1.5% a year over cap weighting, with a Sharpe ratio of about 0.2 to 0.4 on that excess, because funds implement the factors partially, taxes bite and investors leave during drawdowns. Several factors help because they do not lag at the same time: by <a class="eqref" href="#e-mix"></a>, four factors with Sharpe ratios of 0.4 and a correlation of 0.2 give 0.63 together.</p>
+</div></details>
+</div>
+</div>

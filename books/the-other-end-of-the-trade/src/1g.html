@@ -1,0 +1,374 @@
+<p class="eyebrow">Part I · Returns and risk · Chapter 1G</p>
+
+<h1>Where an edge comes from</h1>
+
+<p class="subtitle">Risk premia, behavior, institutions and market plumbing</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 1A to 1F built a language for returns and risk: distributions, expected value, the Sharpe ratio, drawdown, leverage, correlation and liquidity. This chapter uses that language to ask a prior question: why should any strategy have a positive expected return at all? The answer sorts every claimed edge into four sources, whose differences decide how to size an edge, how long to trust it and when to kill it.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Expected value, and an edge as a positive expected value after costs (<a class="xref" href="1c.html">Chapter 1C</a>).</li>
+<li>Drawdown and the gain needed to recover from it (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>Tail correlation, liquidity, and the difference between a signal, a strategy and an allocation (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+</ul>
+</div>
+
+<p>When practitioners say "<span class="gloss" title="The expected value of a trade or strategy, net of all costs. A trade has edge only if that number is positive.">edge</span>", they usually mean one of four very different things. Mixing them is the single most common analytical error in trading literature. It leads directly to over-allocating to overlays, the tactical positions laid on top of a portfolio, and under-allocating to genuine premia, the payments for bearing risk. The taxonomy in this chapter is the most important conceptual tool in this book's treatment of edges.</p>
+
+<h2 id="the-four-sources">1 · The four sources</h2>
+
+<p>Every documented edge in financial markets traces back to one of four sources, or to a combination of them:</p>
+
+<ol>
+<li><strong>Compensated risk premia</strong>: payment for bearing risk that cannot be diversified away.</li>
+<li><strong>Behavioral and cognitive frictions</strong>: payment for being on the right side of systematic mispricing.</li>
+<li><strong>Institutional frictions and constraints</strong>: payment for accommodating predictable flow driven by mandates.</li>
+<li><strong>Microstructure and flow</strong>: payment for providing liquidity at high frequencies.</li>
+</ol>
+
+<p>The four differ in <em>why</em> they pay, <em>how durably</em> they pay and <em>who can capture</em> them. Take the <span class="gloss" title="The extra return that stocks are expected to pay over safe assets, as payment for bearing the risk that they fall when times are already bad.">equity risk premium</span> (ERP), the extra return that stocks are expected to pay over safe assets. Set beside it an OPEX-week tilt, a change of positioning in the week of the monthly <span class="gloss" title="The date on which a series of listed options expires, abbreviated OPEX. The monthly SPX expiration falls on the third Friday of the month.">options expiration</span> (OPEX). Treating these two as comparable allocations is wrong, because they are fundamentally different objects that need different sizing, different persistence assumptions and different <span class="gloss" title="A rule, set in advance, for when to stop trading a strategy, such as a drawdown or a shortfall against its expected return beyond a stated limit.">kill criteria</span>. A kill criterion is a rule, set in advance, for abandoning a strategy.</p>
+
+<h2 id="source-1-compensated-risk-premia">2 · Source 1: compensated risk premia</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>The market pays you to take risks that other people would pay to avoid. Equities are riskier than bonds in a particular way: they crash when consumption, what households can spend, is already low, as in recessions. So equities trade at a discount to their expected dividends, which means they offer a higher expected return. The premium is compensation for bearing that consumption risk.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: An island with two assets</span>
+<p><strong>Step 1: two assets and their payoffs.</strong> Imagine an island economy with two assets: a bond that pays $100 every year, no matter what, and a stock that pays $120 in good years and $60 in bad years. The odds are even, so the stock's expected payoff is \(0.5 \times 120 + 0.5 \times 60 = \$90\).</p>
+
+<p><strong>Step 2: what each asset costs.</strong> Naive analysis says nobody buys the stock, since its expected $90 is less than the bond's certain $100. In reality the stock might trade at, say, $70 while the bond trades at $90.</p>
+
+<p><strong>Step 3: the expected return on each.</strong> At those prices the bond returns \(100/90 - 1 = 11.1\%\) for certain. The stock returns \(120/70 - 1 = 71.4\%\) in a good year and \(60/70 - 1 = -14.3\%\) in a bad one, for an expected \(90/70 - 1 = 28.6\%\). The gap of about 17.5 percentage points is this island's risk premium.</p>
+
+<p><strong>Step 4: why the stock is cheap.</strong> Bad years are exactly when you most need cash, because your job income is also low and your household is stressed. People discount the stock's bad-year payoff, which is low-quality cash, more heavily than the same amount from the bond. The result is a <strong><span class="gloss" title="An expected return above the risk-free rate, paid to whoever bears a risk that others would pay to avoid.">risk premium</span></strong>: an expected excess return for accepting bad-year risk.</p>
+</div>
+
+<details class="grind"><summary>What the island pays for a dollar in each kind of year</summary><div class="grind-body">
+<p>Let \(q_g\) be today's price of a dollar paid only in a good year, and \(q_b\) the price of a dollar paid only in a bad year. The bond pays $100 in both kinds of year and the stock pays $120 and $60, so their prices give two equations:</p>
+
+<div class="eq">
+\[ \begin{aligned} 100\,q_g + 100\,q_b &amp;= 90 \\ 120\,q_g + 60\,q_b &amp;= 70 \end{aligned} \]
+</div>
+
+<p>Substituting \(q_b = 0.9 - q_g\) from the first equation into the second gives \(60\,q_g + 54 = 70\), so \(q_g = 0.267\) and \(q_b = 0.633\).</p>
+
+<p>The two kinds of year are equally likely, yet the island pays 63 cents today for a bad-year dollar and only 27 cents for a good-year dollar. A dollar that arrives when you need it is worth more than twice one that arrives when you do not. The stock is cheap because it delivers most of its dollars in good years.</p>
+</div></details>
+
+<p>For any compensated risk premium, the formal object is</p>
+
+<div class="eq" id="e-premium">
+\[ \mathbb{E}[R_i] - r = \beta_i\,\pi \]
+</div>
+
+<p>where \(R_i\) is the return on asset \(i\), \(r\) the <span class="gloss" title="The return on money lent to a safe borrower, usually the US government, for the period in question. Excess returns are measured above it.">risk-free rate</span>, \(\beta_i\) the asset's exposure to the priced risk factor and \(\pi\) the price of that risk per unit of exposure. With a hypothetical \(\pi = 5\%\), an asset with \(\beta_i = 1.2\) is expected to earn \(1.2 \times 5\% = 6\%\) above the risk-free rate.</p>
+
+<p>The key feature is that <strong>the premium cannot be arbitraged away, because the risk is real.</strong> An <span class="gloss" title="A profit made without bearing risk, by exploiting a difference between prices that should agree.">arbitrage</span> is a profit without risk, and none is on offer here. Whoever bears the risk is paid for bearing it.</p>
+
+<h3 id="what-is-in-this-category">What is in this category</h3>
+
+<ul>
+<li><strong>The equity risk premium</strong>: payment for risk that is correlated with consumption (<a class="xref" href="10b.html">Chapter 10B</a>).</li>
+<li><strong>The <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> (VRP)</strong>: payment for taking the other side of investors who want to hedge volatility (<a class="xref" href="10c.html">Chapter 10C</a>).</li>
+<li><strong>The <span class="gloss" title="The extra return expected from holding long-term bonds rather than rolling over short-term ones, as payment for bearing interest rate risk.">term premium</span></strong>: payment for accepting interest rate risk on long bonds.</li>
+<li><strong>Carry and the commodity <span class="gloss" title="The benefit of holding a physical commodity rather than a contract to receive it later, such as being able to use it during a shortage.">convenience yield</span></strong>: payment for supplying storage or for accepting the risk that prices revert (<a class="xref" href="10e.html">Chapter 10E</a>).</li>
+<li><strong>Trend following, with caveats</strong>: partly compensation for accepting tail risk in exchange for diversifying behavior (<a class="xref" href="10d.html">Chapter 10D</a>).</li>
+</ul>
+
+<h3 id="why-it-matters-persistence">Why it matters: persistence</h3>
+
+<p><strong>Risk premia are the most durable source of return.</strong> They do not disappear when more capital chases them, because the risk is the reason the premium exists. If more capital takes the risk, the premium might compress. It cannot go to zero: at zero, no one would bear the risk, and the market would break down. This is the strongest argument for anchoring a portfolio in risk premia, whose persistence is more robust than that of behavioral or institutional edges.</p>
+
+<h3 id="what-it-costs">What it costs</h3>
+
+<p>Risk premia are <strong>not free lunches</strong>: in stress, they pay their cost. The ERP is paid for in drawdowns of 30% to 50%, which by the arithmetic of <a class="xref" href="1e.html">Chapter 1E</a> need gains of 43% to 100% to repair. The VRP is paid for in crashes, when implied volatility explodes. Trend is paid for in long whipsaw periods, when prices keep reversing before a trend can form. The premium <em>exists because</em> of these costs.</p>
+
+<p>A common retail confusion is to treat risk premia as if they were behavioral mispricings that should always pay, which they do not. They pay on average across regimes while hurting badly in specific regimes, and the average is what compounds.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "if VRP exists, every short option has positive expected value"</span>
+<p>VRP is a long-run premium: within any period, your specific option, entry timing, size and exit can produce a negative expected value (EV) even though the underlying premium is real. The premium is a population average, while your individual trade lives in the tail of that distribution.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A trial's average treatment effect can be clearly positive while some patients in the treated arm do worse than they would have without treatment. The effect belongs to the population, not to each patient. The variance risk premium is an average treatment effect across many option sales and many years. Your one trade is one patient.</p>
+</div>
+
+<h2 id="source-2-behavioral-and-cognitive-frictions">3 · Source 2: behavioral and cognitive frictions</h2>
+
+<p>Investors systematically misprice information or extrapolate from it. Efficient-market theory holds that prices already reflect what is known, so mispricings should vanish quickly. They persist longer than the theory predicts, for two reasons. First, <span class="gloss" title="The costs, risks and capital constraints that stop rational traders from betting fully against a mispricing, so that it can persist.">limits to arbitrage</span> prevent rational traders from fully correcting them. Second, behavioral biases are remarkably stable over time: people do not become less prone to recency bias, the overweighting of recent events, just because they have read about it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Post-earnings announcement drift</span>
+<p><strong>Step 1: an earnings surprise of 20%.</strong> A stock reports earnings 20% above consensus, the average of analysts' forecasts. In an efficient market, the stock should jump 20% immediately and stay there.</p>
+
+<p><strong>Step 2: what the price actually does.</strong> Empirically, it jumps maybe 12% on the day and then drifts up another 4% to 5% over the following weeks. This is <strong><span class="gloss" title="The tendency of a stock's price to keep moving in the direction of an earnings surprise for weeks after the announcement. Abbreviated PEAD.">post-earnings announcement drift</span></strong> (PEAD), which <a class="xref" href="11j.html">Chapter 11J</a> turns into a swing trade.</p>
+
+<p><strong>Step 3: why investors under-react.</strong> Investors under-react to surprising news for three reasons:</p>
+
+<ul>
+<li>Their priors were anchored on the old number.</li>
+<li>They wait to see whether the surprise reverses.</li>
+<li>Institutional mandates limit their ability to act quickly on news about a single stock.</li>
+</ul>
+</div>
+
+<p>A behavioral edge typically takes the form of a pricing error \(e_t\), the gap between what the market believes and the true value:</p>
+
+<div class="eq" id="e-error">
+\[ e_t = \text{belief}_t - \text{value}_t \neq 0 \]
+</div>
+
+<p>The error then decays at a predictable rate:</p>
+
+<div class="eq" id="e-decay">
+\[ e_{t+1} = \phi\,e_t + \varepsilon_t \]
+</div>
+
+<p>Here \(\phi\) lies between 0 and 1, so that a fraction of the error persists into the next period, while \(\varepsilon_t\) is noise with a mean of zero. That persistence, the AR(1) behavior of <a class="xref" href="3b.html">Chapter 3B</a>, is what creates exploitable predictability. With a hypothetical \(\phi = 0.6\), an error of 10 percentage points is expected to shrink to 6 in the next period and 3.6 in the one after. A trader who bets on the correction expects to earn 4 points in the first period and 2.4 in the second, before costs.</p>
+
+<h3 id="what-is-in-this-category-2">What is in this category</h3>
+
+<ul>
+<li><strong><span class="gloss" title="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past.">Momentum</span></strong>, both cross-sectional and time-series: under-reaction followed by over-reaction. Cross-sectional momentum buys the recent winners among stocks and sells the recent losers. Time-series momentum is the trend following of <a class="xref" href="10d.html">Chapter 10D</a>, which trades each asset on its own past.</li>
+<li><strong>PEAD</strong>, post-earnings announcement drift: under-reaction to fundamental news.</li>
+<li><strong>The value premium, in part</strong>: over-extrapolation of growth in glamour stocks, the expensive shares of fast-growing companies (<a class="xref" href="10f.html">Chapter 10F</a>).</li>
+<li><strong>Lottery demand and the <span class="gloss" title="The pattern in which low-volatility, low-beta stocks earn more relative to their risk than high-volatility stocks, against the simple rule that more risk pays more.">low-volatility anomaly</span></strong>: over-payment for high-<span class="gloss" title="A measure of how much an asset moves with the market. A stock with a beta of 1.5 moves, on average, 1.5% for each 1% move in the market.">beta</span> stocks with lottery-like payoffs (<a class="xref" href="10f.html">Chapter 10F</a>).</li>
+<li><strong>Seasonality effects</strong>, such as the Halloween and January effects: the mechanisms are less clear, but the patterns persist (<a class="xref" href="10g.html">Chapter 10G</a>).</li>
+</ul>
+
+<h3 id="why-it-matters-decay">Why it matters: decay</h3>
+
+<p><strong>Behavioral edges decay when capital exploits them.</strong> Once enough sophisticated investors learn about PEAD, they buy the post-earnings winners, and the drift compresses. McLean and Pontiff (2016) document a decline of 26% to 58% in factor returns after publication, depending on the factor. Jensen, Kelly and Pedersen (2023) document a decline of about 47% after publication across hundreds of factors.</p>
+
+<p>The decay is not to zero, because institutional and behavioral frictions remain, but it is substantial. <strong>Do not assume that an edge found in 1990s data still works at the same magnitude.</strong></p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A published effect can shrink for a reason every trialist knows: the winner's curse. Among many studies, the ones that overestimated an effect are the likeliest to reach print, so later estimates tend to come in lower. Markets add a second reason with no clinical counterpart. A tumor does not change its biology because a paper described it, but a market changes once traders read the paper and act on it.</p>
+</div>
+
+<h3 id="what-it-costs-2">What it costs</h3>
+
+<p>Behavioral edges typically have lower drawdowns than risk premia, since they are not insurance products. They can, however, have <strong>catastrophic single-event losses</strong> when the regime that supported them flips. Momentum lost 73% from March to May 2009. Value's drawdown from 2010 to 2020 was the worst in modern history. The costs are different from those of a risk premium, episodic rather than systematic, but they are real.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: mining psychology for new edges</span>
+<p>The belief is that you can extrapolate behavioral biases from psychology research and find new edges. Most biases that produce robust edges are already well documented, because the academic literature has been mining this seam for 30 years. Novel "behavioral edges" usually fall into one of two categories, so be skeptical: (a) already documented under different names, or (b) not actually edges, just narratives.</p>
+</div>
+
+<h2 id="source-3-institutional-frictions-and-constraints">4 · Source 3: institutional frictions and constraints</h2>
+
+<p>Institutional frictions create predictable price pressure through mandates, leverage limits, accounting rules and regulatory constraints. Big institutional investors do not trade like the rational agents of economic theory. They trade according to mandates, the written rules that say what a fund must hold, which often produce predictable behavior. If you can identify the mandate-driven flow, you can position ahead of it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A pension fund rebalances</span>
+<p><strong>Step 1: the drift away from 60/40.</strong> Pension fund X has a mandate of 60% stocks and 40% bonds, rebalanced quarterly (a <span class="gloss" title="A portfolio holding 60% of its value in stocks and 40% in bonds, rebalanced back to those weights from time to time.">60/40 portfolio</span>). In the first quarter (Q1), stocks rise 8% and bonds 1%. Each $100 of the fund, split $60 and $40 at the start, becomes $64.80 in stocks and $40.40 in bonds.</p>
+
+<p><strong>Step 2: the trade the mandate forces.</strong> The fund is now $105.20, with 61.6% in stocks, so getting back to 60% means holding \(0.6 \times \$105.20 = \$63.12\) there. By rule, in the last few days of Q1, the fund must <em>sell</em> $1.68 of stock and <em>buy</em> $1.68 of bonds for every $100 it started with. For a hypothetical fund of $10 billion, that is $168 million of stock sold for no reason except the rule.</p>
+
+<p><strong>Step 3: the trade on the other side.</strong> This selling is forced, predictable and not driven by any view of value. If you go <em>short</em> stocks (selling borrowed shares) and <em>long</em> bonds in the last week of Q1, reversing early in Q2, you provide the liquidity the fund needs. You earn a small premium for this service.</p>
+</div>
+
+<p>Institutional frictions create flow imbalances, and the imbalances move prices:</p>
+
+<div class="eq" id="e-flow">
+\[ \begin{aligned} \Delta P_t = a &amp;+ b \cdot \text{Imbalance}_t \\ &amp;+ \varepsilon_t \end{aligned} \]
+</div>
+
+<p>Here \(\Delta P_t\) is the price change over period \(t\), \(\text{Imbalance}_t\) the mandate-driven buying less the mandate-driven selling, \(b\) the price move per unit of imbalance, \(a\) a constant and \(\varepsilon_t\) noise. Suppose, hypothetically, that \(a = 0\) and each $1 billion of net forced selling moves the index down 0.1%. The pension fund's $168 million then moves it \(0.168 \times 0.1\% \approx 0.017\%\), under 2 basis points. The premium is small per trade but mechanically repeating.</p>
+
+<h3 id="what-is-in-this-category-3">What is in this category</h3>
+
+<ul>
+<li><strong><span class="gloss" title="A strategy that holds low-beta stocks against high-beta ones. Its premise is that investors unable to borrow bid up high-beta stocks to get more market exposure.">Betting against beta</span> (BAB)</strong>: leverage-constrained investors bid up high-beta stocks, so low-beta stocks outperform (<a class="xref" href="10f.html">Chapter 10F</a>).</li>
+<li><strong>End-of-quarter rebalancing flows</strong>: 60/40 mandates create predictable flow between asset classes (<a class="xref" href="10g.html">Chapter 10G</a>).</li>
+<li><strong>Demand-based option pricing</strong>: asset managers' need for hedges pushes up put prices.</li>
+<li><strong>Index reconstitution effects</strong>, largely dead: S&amp;P 500 additions historically rallied (<a class="xref" href="10i.html">Chapter 10I</a>).</li>
+<li><strong>Forced liquidations and margin-call cascades</strong>, which create predictable reversals once stress passes (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li><strong>Securities lending and short-borrow markets</strong>: the "specials" premium, the high fee earned by lending out a stock that short sellers find hard to borrow.</li>
+</ul>
+
+<h3 id="why-it-matters-persistence-against-regulatory-risk">Why it matters: persistence against regulatory risk</h3>
+
+<p><strong>Institutional frictions persist as long as the constraint persists.</strong> They can disappear quickly when regulations or product structures change. The S&amp;P 500 inclusion premium, the jump in a stock added to the index, was a real effect of about 7% in the 1990s. It has since fallen below 1% (Greenwood and Sammon 2024), because index funds got smarter about avoiding the obvious arbitrage.</p>
+
+<p>This differs from risk premia, which persist as long as the risk is real, and from behavioral edges, which decay slowly. An institutional edge can vanish in a regulatory update.</p>
+
+<h3 id="what-it-costs-3">What it costs</h3>
+
+<p>The costs are usually small per trade and concentrated in stress periods. When the flow gets dislocated, the institutional player you are trading against may default. Trade slippage and execution costs are the main retail enemies, because the edge per trade is small (<a class="xref" href="1f.html">Chapter 1F</a> and <a class="xref" href="2d.html">Chapter 2D</a>).</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "if I find an institutional flow pattern, I can scale it"</span>
+<p>Institutional edges are typically capacity-constrained, because the flow you are front-running is finite. An edge's <strong><span class="gloss" title="The amount of capital a strategy can absorb before its own trading erodes its edge.">capacity</span></strong> is the capital it can absorb before trading it erases it. As more capital tries to capture the same edge, the imbalance gets eaten before the mandate forces the trade. Most institutional edges work at small size and break at large size.</p>
+</div>
+
+<h2 id="source-4-microstructure-and-flow">5 · Source 4: microstructure and flow</h2>
+
+<p>Microstructure edges are short-horizon predictability driven by order-flow imbalance, dealer hedging or liquidity provision. <span class="gloss" title="The stream of buy and sell orders arriving at a market, and the imbalance between them.">Order flow</span> is the stream of buy and sell orders arriving at the market. The economic magnitudes are usually small per trade and, for retail traders, dominated by transaction costs. Institutions capture them as part of market making, the business of the <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">dealers</span> whose hedging Parts VI to IX study.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Trading ahead of a large order</span>
+<p><strong>Step 1: a large order worked through the day.</strong> A large mutual fund needs to buy 1M shares of XYZ over the trading day. Its algorithms break the order into hundreds of small pieces, so there is persistent buying pressure throughout the day.</p>
+
+<p><strong>Step 2: the edge from trading ahead of it.</strong> If you can detect this pressure and position ahead of it, long for an hour and out when the buying pressure abates, you earn a few cents per share. On a hypothetical $100 stock, 3 cents a share is 3 basis points.</p>
+
+<p><strong>Step 3: how the edge becomes a business.</strong> Repeated thousands of times across many names, this is high-frequency market making. It pays only at scale and at a very low cost per trade.</p>
+</div>
+
+<p>Microstructure edges live at the level of the order book (<a class="xref" href="2c.html">Chapter 2C</a>):</p>
+
+<div class="eq" id="e-micro">
+\[ \begin{aligned} &amp;\mathbb{E}[R_{t+\Delta t}] \\ &amp;\ = f\big(\text{order-flow imbalance}_t, \\ &amp;\qquad \text{spread}_t, \\ &amp;\qquad \text{dealer position}_t\big) \end{aligned} \]
+</div>
+
+<p>Over a horizon \(\Delta t\) of seconds to minutes, \(f\) stands for whatever relation the data support, since the point of the formula is its inputs. The edge per unit is tiny, basis points or less, and viable only at scale with low transaction costs. An edge of 2 basis points on a $20,000 trade is $4, so any round-trip cost above $4 turns it negative.</p>
+
+<h3 id="what-is-in-this-category-4">What is in this category</h3>
+
+<ul>
+<li><strong>Short-term reversal</strong> over 1 to 5 days: liquidity provision after sharp moves.</li>
+<li><strong>Dealer gamma effects</strong>: hedging flows around major strikes and around OPEX (<a class="xref" href="8a.html">Part VIII</a>).</li>
+<li><strong>Intraday momentum and mean reversion</strong>: patterns in order flow within the day.</li>
+<li><strong><span class="gloss" title="The risk, near expiry, that the underlying settles close to a strike, leaving it uncertain whether an option is exercised.">Pin risk</span> and OPEX dynamics</strong>: options-related flows around expiry (<a class="xref" href="5f.html">Chapter 5F</a>).</li>
+<li><strong>Market-making spreads</strong>: quoting prices and providing immediacy.</li>
+</ul>
+
+<h3 id="why-it-matters-not-retail-tradable">Why it matters: not retail-tradable</h3>
+
+<p><strong>Microstructure edges are essentially institutional-only.</strong> The edge per trade is usually 1 to 5 bps, which retail commission and slippage costs alone exceed. The infrastructure required is institutional too: low-latency execution, order-book data, and a large account for cross-margining, in which margin is set across related positions together.</p>
+
+<p>A retail trader trying to capture microstructure edges is playing on a field where every other participant has structural cost advantages. Each of them is taking your money on each trade.</p>
+
+<h3 id="what-it-costs-4">What it costs</h3>
+
+<p>For retail, the cost is just the transaction friction. For institutions, it is the rare <span class="gloss" title="The loss from trading with someone who knows more than you do, so that the trades you get are the ones that are bad for you.">adverse selection</span> event when the flow pattern reverses: the "buyer" you were front-running was actually informed, and the news drops.</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "GEX scalping is a retail edge"</span>
+<p>The belief is that you can sell at the call wall and buy at the put wall. <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX) is an estimate of the dealers' net gamma, whose largest concentrations by strike are the call and put walls (<a class="xref" href="8a.html">Chapter 8A</a>).</p>
+
+<p>Public GEX models are model-dependent estimates of dealer position. The most cited models, SqueezeMetrics and SpotGamma, make assumptions about who is long and who is short which strikes. Those assumptions have not been validated since 2022 and the rise of <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options, which expire on the day they trade. Cboe's 2025 study estimated that 0DTE market-maker gamma hedging represents only about 0.2% of SPX daily liquidity. The dealer-gamma narrative was always overstated. Specific rules for trading at particular levels are not retail edges. Use the directional sign of GEX as low-confidence regime context only (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+</div>
+
+<h3 id="where-this-books-chapters-disagree">Where this book's chapters disagree</h3>
+
+<p>That caution is not shared by every chapter of this book. Parts VI to IX, which build the dealer's view of the market, give dealer positioning more weight. Their reason is the hedging mechanism they derive: a dealer who is long gamma sells into rallies and buys into falls to stay hedged, which damps moves. The market dashboard of <a class="xref" href="11a.html">Chapter 11A</a> therefore reads the largest call strike above spot as potential resistance and the largest put strike below as potential support. The conviction score of <a class="xref" href="13b.html">Chapter 13B</a> asks whether dealer positioning supports a trade's path.</p>
+
+<p>This chapter's reasons for caution are the three above: vendor models disagree, 0DTE changed who holds what, and the measured hedging flow is small. On one point both views agree: scalping level by level is not supported by the evidence (<a class="xref" href="13f.html">Chapter 13F</a>). The sign of dealer gamma is regime context, not a trade by itself.</p>
+
+<h2 id="why-the-taxonomy-matters-in-practice">6 · Why the taxonomy matters in practice</h2>
+
+<p>The source of an edge determines its persistence, its capacity, and how to use it:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Source</th><th class="c-endpoint">Persistence</th><th class="c-other">Capacity</th><th class="c-other">Best implementation</th><th class="c-endpoint">Worst implementation</th></tr></thead><tbody><tr><td class="c-trial" data-label="Source">Risk premium</td><td class="c-endpoint" data-label="Persistence">High: the premium is there because the risk is real</td><td class="c-other" data-label="Capacity">Very high</td><td class="c-other" data-label="Best implementation">Foundation <span class="gloss" title="The part of a portfolio given to one strategy, with its own capital or risk budget.">sleeve</span></td><td class="c-endpoint" data-label="Worst implementation">Naive sizing without crash awareness</td></tr><tr><td class="c-trial" data-label="Source">Behavioral</td><td class="c-endpoint" data-label="Persistence">Medium: decays as capital arrives</td><td class="c-other" data-label="Capacity">Medium</td><td class="c-other" data-label="Best implementation">Factor tilt</td><td class="c-endpoint" data-label="Worst implementation">Treating a decayed effect as live</td></tr><tr><td class="c-trial" data-label="Source">Institutional</td><td class="c-endpoint" data-label="Persistence">Medium: depends on regulation</td><td class="c-other" data-label="Capacity">Low to medium</td><td class="c-other" data-label="Best implementation">Tactical overlay</td><td class="c-endpoint" data-label="Worst implementation">Scaling beyond capacity</td></tr><tr><td class="c-trial" data-label="Source">Microstructure</td><td class="c-endpoint" data-label="Persistence">High at institutional scale, about zero at retail</td><td class="c-other" data-label="Capacity">Institutional only</td><td class="c-other" data-label="Best implementation">Do not</td><td class="c-endpoint" data-label="Worst implementation">Anything retail</td></tr></tbody></table></div></div>
+
+<p>A <strong>sleeve</strong> is the part of a portfolio given to one strategy. A <strong>factor tilt</strong> leans a stock portfolio toward shares with a chosen trait, such as value or quality. A <strong>tactical overlay</strong> adjusts the portfolio's existing exposure for a limited time rather than running as a strategy of its own. When you see a new edge, classify it first. This single classification step eliminates 80% of the noise in retail trading content.</p>
+
+<h2 id="mixed-source-edges">7 · Mixed-source edges</h2>
+
+<p>Some edges combine several sources, which is fine as long as you can <em>decompose</em> them:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Edge</th><th class="c-result">Risk premium</th><th class="c-endpoint">Behavioral</th><th class="c-endpoint">Institutional</th></tr></thead><tbody><tr><td class="c-trial" data-label="Edge">Trend following</td><td class="c-result" data-label="Risk premium">Partly: compensation for accepting whipsaw risk</td><td class="c-endpoint" data-label="Behavioral">Partly: under-reaction to information</td><td class="c-endpoint" data-label="Institutional">Partly: the hedging needs of commodity producers</td></tr><tr><td class="c-trial" data-label="Edge">VRP</td><td class="c-result" data-label="Risk premium">Mostly: compensation for accepting crash risk</td><td class="c-endpoint" data-label="Behavioral">Small: retail call-buying during bull markets</td><td class="c-endpoint" data-label="Institutional">Partly: asset managers' hedging demand</td></tr><tr><td class="c-trial" data-label="Edge">Momentum</td><td class="c-result" data-label="Risk premium">Partly: accepting crash risk in V-shaped reversals</td><td class="c-endpoint" data-label="Behavioral">Mostly: under-reaction, then over-reaction</td><td class="c-endpoint" data-label="Institutional">Small: chasing by fund managers</td></tr></tbody></table></div></div>
+
+<p>The decomposition matters because the parts age differently. In trend following, the behavioral part is at risk of decay and has already partly decayed, while the risk-premium and institutional parts are more durable. A purely behavioral reading of trend would be more pessimistic about its forward returns than the academic mixed view.</p>
+
+<p>Most of the VRP is real risk premium, which does not decay. Some of it is institutional and might compress as hedging product structures evolve. A small behavioral part might decay further. Most of momentum is behavioral and has decayed substantially since publication. Its real crash-risk component explains why momentum can lose 73% in a quarter.</p>
+
+<h2 id="from-four-sources-to-five-categories">8 · From four sources to five categories</h2>
+
+<p><a class="xref" href="10a.html">Chapter 10A</a> introduces a five-category taxonomy: foundation premia, factor tilts, structural overlays, regime filters, and rejected. The sources map onto the categories roughly like this:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Source</th><th class="c-other">Most common category</th></tr></thead><tbody><tr><td class="c-trial">Risk premium</td><td class="c-other">Foundation premium</td></tr><tr><td class="c-trial">Behavioral</td><td class="c-other">Factor tilt</td></tr><tr><td class="c-trial">Institutional</td><td class="c-other">Structural overlay</td></tr><tr><td class="c-trial">Microstructure</td><td class="c-other">Regime filter or rejected</td></tr></tbody></table></div></div>
+
+<p>The mapping is not deterministic: VRP is a risk premium <em>and</em> sometimes implemented as a tilt, and BAB is institutional <em>and</em> often classified as a factor. Even so, the rough mapping helps you place a new edge quickly.</p>
+
+<p>The key cognitive rule is this: <strong>before you can know how to size a strategy and how to kill it, you have to know what kind of edge it is.</strong> That is why this chapter comes before any single edge is examined in <a class="xref" href="10a.html">Part X</a>. The reasoning runs from distributions (<a class="xref" href="1b.html">Chapter 1B</a>) through the sources of edge in this chapter. It continues with why the <span class="gloss" title="A strategy's mean return above the risk-free rate divided by the standard deviation of its returns: the excess return earned per unit of volatility.">Sharpe ratio</span> misleads on negatively skewed strategies (<a class="xref" href="1d.html">Chapter 1D</a>) and with realistic retail expectations, which differ by source (<a class="xref" href="13a.html">Chapter 13A</a>). From there it runs through the conviction framework (<a class="xref" href="13b.html">Chapter 13B</a>), the five categories (<a class="xref" href="10a.html">Chapter 10A</a>) and the dossiers of <a class="xref" href="10a.html">Part X</a> to the operational chapters of <a class="xref" href="13a.html">Part XIII</a>.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Before you put money behind any edge, write down its source and what the source implies. A risk premium earns a place in the core of the portfolio, sized so that its crash, a 30% to 50% drawdown for the equity premium, is one you can recover from. A behavioral tilt gets a smaller allocation and a review date, because it decays. An institutional overlay stays small, because it breaks at size. A microstructure pattern gets no allocation at all.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The classification is a judgement, not a measurement, and an edge's mix can shift. A risk premium can be crowded until it compresses. An institutional edge can vanish with one change in regulation. Most edges are mixed, so file each one by its largest component and watch the others. Revisit the classification whenever the reason an edge pays has changed.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Classify every new edge before sizing it:</p>
+
+<ul>
+<li><strong>A risk premium</strong> can anchor a sleeve, but size it for its crash behavior.</li>
+<li><strong>A behavioral edge</strong> is a tilt with decay risk: size it modestly and assume less than the published effect.</li>
+<li><strong>An institutional edge</strong> is a tactical overlay subject to capacity: keep it small and quit when the constraint behind it changes.</li>
+<li><strong>A microstructure edge</strong> you almost certainly cannot trade profitably: do not try.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Every edge traces to a risk premium, a behavioral friction, an institutional constraint or market microstructure, or to a mix of them.</li>
+<li>Risk premia persist because the risk is real, and are paid for in crashes and long drawdowns.</li>
+<li>Behavioral edges decay once published and exploited, by 26% to 58% in one study and about 47% across hundreds of factors in another.</li>
+<li>Institutional edges last as long as the constraint behind them and break at large size.</li>
+<li>Microstructure edges pay 1 to 5 bps a trade, less than retail costs, so they belong to institutions.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>State the four sources of edge, with one example of each from this chapter.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Compensated risk premia, such as the equity risk premium or the VRP. Behavioral and cognitive frictions, such as momentum or post-earnings announcement drift. Institutional frictions and constraints, such as end-of-quarter rebalancing or betting against beta. Microstructure and flow, such as short-term reversal or market-making spreads.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Why are risk premia more durable than behavioral edges?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A risk premium is payment for a real risk. More capital can compress it but cannot push it to zero, because at zero nobody would bear the risk. A behavioral edge is a mispricing, which the capital exploiting it removes. McLean and Pontiff (2016) put the decline after publication at 26% to 58%, depending on the factor.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Why are institutional edges typically capacity-constrained?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The flow you trade against is finite: one fund's quarter-end rebalance is a fixed amount of stock. As more capital tries to trade ahead of it, the imbalance is absorbed before the mandate forces the trade, and the edge disappears. Such edges work at small size and break at large size.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Using numbers, explain why microstructure edges are essentially not retail-tradable.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The edge per trade is usually 1 to 5 bps, so on a $20,000 trade even 3 bps is only $6. A retail account's commission and slippage alone exceed an amount like that. The edge also needs institutional infrastructure: low-latency execution, order-book data and a large cross-margined account.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Decompose "earnings vol harvest", the selling of options before companies report earnings, into the four sources. What is the dominant component?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It is mainly a risk premium: the seller insures the buyer against the size of the earnings move, which is the variance risk premium of <a class="xref" href="10c.html">Chapter 10C</a> applied to one company. A smaller part may be behavioral, if buyers overpay for the lottery-like payoff of a big move. Classifying it as a risk premium tells you how it pays: through small, frequent gains and rare, large losses, so it must be sized for the loss. <a class="xref" href="10i.html">Chapter 10I</a> examines the evidence for the naive single-stock version and rejects it for retail accounts.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>A newsletter claims that the index tends to rise in the week of the monthly options expiration. Classify the claim, and say what the classification implies for sizing.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Its story is dealer hedging around expiry, which puts it under microstructure and flow, where this chapter lists OPEX dynamics. <a class="xref" href="10g.html">Chapter 10G</a>, which examines calendar and expiry-week effects, files it as part microstructure and part institutional. Either way it maps to a regime filter or an overlay, not a foundation. At most it should adjust the size of positions you already hold, never carrying an allocation of its own.</p>
+</div></details>
+</div>
+</div>

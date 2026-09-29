@@ -11,8 +11,8 @@ source: src/interactives/DeflatedSharpeCalculator.jsx
       <output id="{{uid}}-sr-o" for="{{uid}}-sr"></output>
     </div>
     <div class="ctrl">
-      <label for="{{uid}}-n">sample size N</label>
-      <input type="range" id="{{uid}}-n" min="50" max="5000" step="10" value="252">
+      <label for="{{uid}}-n">daily returns N</label>
+      <input type="range" id="{{uid}}-n" min="50" max="5000" step="2" value="252">
       <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
     </div>
     <div class="ctrl">
@@ -39,8 +39,9 @@ source: src/interactives/DeflatedSharpeCalculator.jsx
   <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
   <p class="readout" id="{{uid}}-why"></p>
   <figcaption><b>The more strategies tried, the higher the bar.</b> The deflated Sharpe ratio
-  sets an observed Sharpe against the best one expected from luck alone across the trials run;
-  the sample size, skew and kurtosis set how far above that benchmark it has to sit. The curve
+  sets an observed annual Sharpe, from a backtest of N daily returns, against the best one
+  expected from luck alone across the trials run; the length of the backtest, the skew and the
+  kurtosis set how far above that benchmark it has to sit. The curve
   is the probability that the strategy is real at each observed Sharpe, with the dot at the
   chosen one, the vertical line at the chance benchmark and the horizontal lines at the 50% and
   95% thresholds. Add trials and the whole curve slides to the right.</figcaption>
@@ -50,16 +51,48 @@ source: src/interactives/DeflatedSharpeCalculator.jsx
   var U = '{{uid}}';
   var GAMMA = 0.5772156649;   /* Euler's constant, as the app */
 
-  /* the app's computation: the expected best Sharpe by chance across the
-     trials, the standard error of the observed Sharpe given N, skew and
-     kurtosis, and the probability N(z) that the observed one beats chance */
+  /* The method of Bailey and López de Prado (2014), in consistent units. The
+     slider's Sharpe ratio is annual and the sample is N daily returns, so the
+     test runs on the daily ratio, sr / sqrt(252). Under the null every trial's
+     true Sharpe ratio is zero, and its estimate scatters with variance
+     1 / (N - 1); the best of K such trials is expected at
+     sqrt(V) [(1 - g) Ninv(1 - 1/K) + g Ninv(1 - 1/(K e))]. The standard error
+     of the observed ratio carries its skew and kurtosis. The app's widget took
+     sqrt(2 ln K) - g / sqrt(2 ln K) for the bracket, set V to 1, and put the
+     annual ratio into the per-day standard error. */
+  var DAYS = 252;
+  function ninv(p) {                      /* Acklam's inverse normal */
+    var a = [-39.69683028665376, 220.9460984245205, -275.9285104469687,
+             138.357751867269, -30.66479806614716, 2.506628277459239],
+        b = [-54.47609879822406, 161.5858368580409, -155.6989798598866,
+             66.80131188771972, -13.28068155288572],
+        c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838,
+             -2.549732539343734, 4.374664141464968, 2.938163982698783],
+        d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+    var q, r;
+    if (p < 0.02425) {
+      q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+             ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    if (p > 1 - 0.02425) {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+              ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    q = p - 0.5; r = q * q;
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+           (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  }
   function calc(sr, n, trials, skew, kurt) {
-    var nt = Math.max(trials, 1);
-    var emax = Math.sqrt(2 * Math.log(nt)) - GAMMA / Math.sqrt(2 * Math.log(nt));
-    var varSR = (1 - skew * sr + ((kurt - 1) / 4) * sr * sr) / (n - 1);
-    var sd = Math.sqrt(Math.max(varSR, 1e-9));
-    var z = (sr - emax) / Math.max(sd, 1e-9);
-    return { nt: nt, emax: emax, z: z, psr: Math.max(0, Math.min(1, DL.N(z))) };
+    var nt = Math.max(Math.round(trials), 1);
+    var bracket = nt < 2 ? 0 : (1 - GAMMA) * ninv(1 - 1 / nt) + GAMMA * ninv(1 - 1 / (nt * Math.E));
+    var sd0 = Math.sqrt(1 / (n - 1));                       /* per day, under the null */
+    var srd = sr / Math.sqrt(DAYS);
+    var se = Math.sqrt(Math.max(1 - skew * srd + ((kurt - 1) / 4) * srd * srd, 1e-9) / (n - 1));
+    var z = (srd - sd0 * bracket) / se;
+    return { nt: nt, emax: sd0 * bracket * Math.sqrt(DAYS), z: z,
+             psr: Math.max(0, Math.min(1, DL.N(z))) };
   }
   /* one trial sends the benchmark to minus infinity; say so rather than a dash */
   function fmt(x, d) {
