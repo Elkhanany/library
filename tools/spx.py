@@ -1014,18 +1014,63 @@ Eight Nine Ten Step Example Question Answer Part Chapter Section Figure Table No
 Most Many Some All Both Either Neither Here Now Also Yes Consider Suppose Take Let Use""".split())
 
 
-def canon_numbers(text):
+SCALE = {"k": 1e3, "K": 1e3, "thousand": 1e3, "M": 1e6, "mn": 1e6, "million": 1e6,
+         "B": 1e9, "bn": 1e9, "billion": 1e9, "trillion": 1e12}
+SCALED = re.compile(r"(\$?)(\d[\d,]*(?:\.\d+)?)\s?(k|K|thousand|million|billion|trillion)\b"
+                    r"|(\$)(\d[\d,]*(?:\.\d+)?)\s?(M|mn|B|bn)\b")
+
+
+def canon_numbers(text, both=False):
     """Every number in a text, as digits without grouping commas or signs. In
-    maths a grouping comma is written {,} (22{,}500), which is still a comma."""
-    t = re.sub(r"\\[a-zA-Z]+|[{}\\]", " ", text.replace("{,}", ","))
-    out = set()
+    maths a grouping comma is written {,} (22{,}500), which is still a comma.
+    A scaled amount ("958k", "$7.9 billion", "$2B") counts as its full value;
+    with both=True, as its written digits too, so that a chapter which writes
+    "1.3 million to 1.4 million" still states the source's "1.3 to 1.4 million"."""
+    t = text.replace("{,}", ",")
+    extra = set()
+
+    def scale(mo):
+        num, unit = (mo.group(2), mo.group(3)) if mo.group(2) else (mo.group(5), mo.group(6))
+        v = float(num.replace(",", "")) * SCALE[unit]
+        if both:
+            extra.add(canon_one(num))
+        return " %d " % round(v) if abs(v - round(v)) < 1e-6 else " %r " % v
+    t = SCALED.sub(scale, t)
+    t = re.sub(r"\\[a-zA-Z]+|[{}\\]", " ", t)
+    out = set(extra)
     for mo in re.finditer(r"(?<![\w.])\d[\d,]*(?:\.\d+)?|(?<![\w\d])\.\d+", t):
-        n = mo.group(0).replace(",", "")
-        try:
-            out.add(repr(float(n)).rstrip("0").rstrip(".") if "." in n else str(int(n)))
-        except ValueError:
-            pass
+        n = canon_one(mo.group(0))
+        if n is not None:
+            out.add(n)
+    out.discard(None)
     return out
+
+
+def number_forms(text):
+    """Each number a source states, with the forms that count as stating it: a
+    scaled amount ("193k") is stated by its full value or by its digits alone,
+    as a table headed "$ thousands" writes it."""
+    t = text.replace("{,}", ",")
+    forms = {}
+
+    def scale(mo):
+        num, unit = (mo.group(2), mo.group(3)) if mo.group(2) else (mo.group(5), mo.group(6))
+        v = float(num.replace(",", "")) * SCALE[unit]
+        full = str(int(round(v))) if abs(v - round(v)) < 1e-6 else repr(v)
+        forms.setdefault(full, set()).update({full, canon_one(num)})
+        return " "
+    t = SCALED.sub(scale, t)
+    for n in canon_numbers(t):
+        forms.setdefault(n, set()).add(n)
+    return forms
+
+
+def canon_one(n):
+    n = n.replace(",", "")
+    try:
+        return repr(float(n)).rstrip("0").rstrip(".") if "." in n else str(int(n))
+    except ValueError:
+        return None
 
 
 def facts_of(text):
@@ -1034,11 +1079,11 @@ def facts_of(text):
     t = re.sub(r"\[INTERACTIVE:[^\]]*\]", " ", t)
     t = re.sub(r"^#+ .*$", " ", t, flags=re.M)
     t = re.sub(r"[*_`]", "", t)
-    nums = set()
-    for n in canon_numbers(t):
+    nums = {}
+    for n, alts in number_forms(t).items():
         if "." not in n and n.isdigit() and int(n) <= 10:
             continue
-        nums.add(n)
+        nums[n] = alts
     names = set()
     for mo in re.finditer(r"(?<=[a-z,;:(\"] )([A-Z][a-zA-Z&'-]+(?: (?:of |and |& )?[A-Z][a-zA-Z&'-]+)*)", t):
         w = mo.group(1)
@@ -1081,10 +1126,10 @@ def facts(m, slug, src):
                              + ["%s %s" % (e["term"], e["def"]) for e in gl.values()])
         notes = " ".join(library.read(os.path.join(NOTES, d["slug"] + ".md")) for d in sharing
                          if os.path.exists(os.path.join(NOTES, d["slug"] + ".md")))
-        have_nums = canon_numbers(have)
+        have_nums = canon_numbers(have, both=True)
         nums, names = facts_of(text)
-        note_nums = canon_numbers(notes)
-        lost_n = sorted(n for n in nums if n not in have_nums and n not in note_nums)
+        note_nums = canon_numbers(notes, both=True)
+        lost_n = sorted(n for n, alts in nums.items() if not (alts & have_nums) and not (alts & note_nums))
         lost_w = sorted(w for w in names if w not in have
                         and not re.search(r"(?<!\w)%s(?!\w)" % re.escape(w), notes))
         if lost_n or lost_w:
