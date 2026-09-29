@@ -16,9 +16,9 @@
 <script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
 <script src="../assets/pwa.js" defer></script>
 <!--/PWA-->
-<title>6E Gamma — The Other End of the Trade</title>
-<meta name="description" content="Chapter 6E of The Other End of the Trade: Gamma.">
-
+<title>6E How often to hedge — The Other End of the Trade</title>
+<meta name="description" content="Chapter 6E of The Other End of the Trade: How often to hedge.">
+<link rel="stylesheet" href="assets/katex.min.css">
 <link rel="stylesheet" href="assets/book.css">
 <!--NAVCSS-->
 <link rel="stylesheet" href="../assets/nav.css">
@@ -39,1009 +39,238 @@
 <!--/NAV-->
 <div class="wrap">
 <nav class="sidebar" aria-label="Chapter sections">
-  <a class="sb-home" href="contents.html#sec-5">← Part VI · Dealer Mechanics</a>
-  <div class="sb-folio"><a class="sb-prev" href="6d.html" aria-label="Previous chapter: 6D · Delta hedging" title="Previous chapter: 6D · Delta hedging (←)">‹ 6D</a><p class="sb-title"><span class="sb-at">Chapter 6E ·</span> <span class="sb-at">29 of 67</span></p><a class="sb-next" href="6f.html" aria-label="Next chapter: 6F · The hedging frequency vs cost tradeoff" title="Next chapter: 6F · The hedging frequency vs cost tradeoff (→)">6F ›</a></div>
-  <div id="sb-toc"><a href="#the-black-scholes-gamma-formula">1 · The Black-Scholes gamma formula</a><a href="#the-dealer-chases-delta">2 · The dealer chases delta</a><a href="#the-long-gamma-mirror-worked-out">3 · The long-gamma mirror, worked out</a><a href="#dollar-gamma-the-unit-that-matters">4 · Dollar gamma: the unit that matters</a><a href="#the-mechanisms-predictions">5 · The mechanism's predictions</a></div>
+  <a class="sb-home" href="contents.html#sec-5">← Part VI · Dealers</a>
+  <div class="sb-folio"><a class="sb-prev" href="6d.html" aria-label="Previous chapter: 6D · Gamma" title="Previous chapter: 6D · Gamma (←)">‹ 6D</a><p class="sb-title"><span class="sb-at">Chapter 6E ·</span> <span class="sb-at">31 of 83</span></p><a class="sb-next" href="7a.html" aria-label="Next chapter: 7A · Why hedging works" title="Next chapter: 7A · Why hedging works (→)">7A ›</a></div>
+  <div id="sb-toc"><a href="#the-rebalance-threshold">1 · The rebalance threshold</a><a href="#what-a-coarse-threshold-gives-up">2 · What a coarse threshold gives up</a><a href="#stylized-arithmetic-at-spx-scale">3 · Stylized arithmetic at SPX scale</a><a href="#why-the-spread-matters">4 · Why the spread matters</a><a href="#what-this-means-for-gamma-exposure">5 · What this means for gamma exposure</a><a href="#check-yourself">6 · Check yourself</a></div>
 </nav>
 <main class="main" id="text">
 <div class="col">
 
-<p class="eyebrow">Part VI · Dealer Mechanics · Chapter 6E</p>
+<p class="eyebrow">Part VI · Dealers · Chapter 6E</p>
 
-<h1>Gamma</h1>
+<h1>How often to hedge</h1>
 
-<p class="subtitle">The engine of forced flow</p>
+<p class="subtitle">Hedging frequency against cost</p>
 
-<p>Gamma is the partial derivative of delta with respect to spot. It is the second derivative of the option price with respect to spot. Pronouncing those words and <em>understanding what gamma actually does</em> are different things, so let me show you rather than tell you.</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="6d.html">Chapter 6D</a> assumed continuous hedging, with the dealer delta-flat at every instant. Real dealers do not rebalance continuously, because each rebalance crosses the bid-ask spread and the friction is not free. This chapter weighs how often to re-hedge against what it costs, with a stylized SPX example, and says what the answer means for the gamma exposure of <a class="xref" href="8a.html">Part VIII</a>.</p>
+</div>
 
-<h2 id="the-black-scholes-gamma-formula">1 · The Black-Scholes gamma formula</h2>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Dollar gamma per 1%, and the gamma gain or loss of a move, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>×</mo><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>×</mo><msup><mi>p</mi><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>100</mn></mrow><annotation encoding="application/x-tex">\tfrac12 \times \$\Gamma_{1\%} \times p^2/100</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.0641em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">/100</span></span></span></span></span> for a move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span></span> percent (<a class="xref" href="6d.html">Chapter 6D</a>).</li>
+<li>The noise of hedging at intervals, and the practitioners' thresholds (<a class="xref" href="6c.html">Chapter 6C</a>).</li>
+<li>The bid-ask spread (<a class="xref" href="1f.html">Chapter 1F</a>) and basis points (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>Mean reversion, random walks and the variance ratio (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+</ul>
+</div>
 
-<pre>Γ = e^(-qT) × φ(d1) / (S × σ × √T)</pre>
+<p>The real optimization a dealer faces is <strong>how often to re-hedge</strong>. It must re-hedge often enough to keep its gamma exposure under control. It must not re-hedge so often that spread costs devour the variance it set out to capture, if it is long gamma, or to accept, if it is short.</p>
 
-<p>where φ(·) is the standard normal density function (the bell-curve height, not the CDF area). Three things to notice:</p>
+<h2 id="the-rebalance-threshold">1 · The rebalance threshold</h2>
 
-<p><strong>First</strong>, gamma is the same for a call and the corresponding put with the same strike — put-call parity guarantees it.</p>
+<p>Practitioners parameterize discrete hedging by a <strong><span class="gloss" data-facts="The drift in a hedged position's delta, or the move in the underlying since the last hedge, that triggers the next re-hedge. A tighter threshold gives closer control at a higher cost in spreads." tabindex="0" role="button">rebalance threshold</span></strong>: a delta-equivalent or a move in basis points from the last hedged level that triggers a fresh rebalance. Two examples are "rebalance when net delta drifts more than 5,000 share-equivalents" and "rebalance after every 25 bps move in SPX". A tighter threshold means more frequent rebalances, which give tighter gamma control and cost more in spread. The trade-off runs one way on each side, and the question is where the <em>net</em> optimum sits.</p>
 
-<p><strong>Second</strong>, gamma is maximized at-the-money: φ(d1) is the bell-curve density, which peaks when its argument is zero, which happens approximately when spot equals strike.</p>
+<p>The two kinds of threshold are the same thing in different units, and dollar gamma converts between them. Write <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\$\Gamma_{1\%}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span></span></span></span></span> for a book's dollar gamma per 1%, the dollar value of the hedge trade that a 1% move forces (<a class="xref" href="6d.html">Chapter 6D</a>). A move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span></span> percent then forces a rebalance worth <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">\$\Gamma_{1\%} \times p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span></span> in notional, the dollar value of the underlying traded.</p>
 
-<p><strong>Third</strong>, and this is the explosive observation, <strong>gamma is proportional to 1/√T</strong>. As time to expiration shrinks toward zero, ATM gamma diverges to infinity. This is not a mathematical curiosity. It is the dominant feature of modern intraday microstructure, because 0DTE options live exactly in this regime.</p>
+<div class="worked">
+<span class="ct">Worked example: Converting a threshold</span>
+<p><strong>Step 1: the book.</strong> Take the long-gamma dealer of this chapter's main example, whose calls carry <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>=</mo><mi mathvariant="normal">$</mi><mn>230</mn></mrow><annotation encoding="application/x-tex">\$\Gamma_{1\%} = \$230</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$230</span></span></span></span></span> million.</p>
 
-<h2 id="the-dealer-chases-delta">2 · The dealer chases delta</h2>
+<p><strong>Step 2: from basis points to shares.</strong> A 25 bp move forces a rebalance of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>230</mn><mo>×</mo><mn>0.25</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>57.5</mn></mrow><annotation encoding="application/x-tex">230 \times 0.25 = \$57.5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">230</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.25</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$57.5</span></span></span></span></span> million, which at an index level of 6,000 is about 9,600 share-equivalents.</p>
 
-<p>The dealer who has sold 1,000 ATM calls at strike $100 with 30 days to expiry initially hedges by buying shares equal to their net short delta. As spot moves, delta changes — and the existing share position becomes wrong. The dealer must rebalance.</p>
+<p><strong>Step 3: from shares to basis points.</strong> A threshold of 5,000 share-equivalents is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mn>6</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>30</mn></mrow><annotation encoding="application/x-tex">5{,}000 \times 6{,}000 = \$30</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">5</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">6</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$30</span></span></span></span></span> million of notional. That is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>30</mn><mi mathvariant="normal">/</mi><mn>230</mn><mo>=</mo><mn>0.13</mn></mrow><annotation encoding="application/x-tex">30/230 = 0.13</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">30/230</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.13</span></span></span></span></span> of the dollar gamma per 1%, so for this book it fires after a move of about 13 bps.</p>
+</div>
 
-<figure class="fig" id="fig-gamma-hedge-sim">
-  <canvas id="gamma-hedge-sim-c" data-h="280" width="631" height="280" style="height: 280px;"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="gamma-hedge-sim-bar">bar</label>
-      <input type="range" id="gamma-hedge-sim-bar" min="0" max="50" step="1" value="0">
-      <output id="gamma-hedge-sim-bar-o" for="gamma-hedge-sim-bar">0/50</output>
-    </div>
-    <div class="ctrl" role="group" aria-label="Playback">
-      <button type="button" id="gamma-hedge-sim-play">play</button>
-      <button type="button" id="gamma-hedge-sim-pause">pause</button>
-      <button type="button" id="gamma-hedge-sim-reset">reset</button>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="gamma-hedge-sim-spot">spot = $100.00</output></div>
-    <div class="ctrl"><output id="gamma-hedge-sim-delta">current delta = 0.534</output></div>
-    <div class="ctrl"><output id="gamma-hedge-sim-trade">shares this bar = 0</output></div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="gamma-hedge-sim-theta">theta income = $0</output></div>
-    <div class="ctrl"><output id="gamma-hedge-sim-cost">gamma rebal cost = $0</output></div>
-    <div class="ctrl"><output id="gamma-hedge-sim-net">net dealer P&amp;L = $0</output></div>
-  </div>
-  <p class="readout" aria-live="polite"><b id="gamma-hedge-sim-vk">Realized stayed below implied:</b> <span id="gamma-hedge-sim-vt">the rebalancing cost so far is no more than the theta income.</span></p>
-  <figcaption><b>The short-gamma dealer chases the move.</b> A dealer who sold 1,000
-  at-the-money calls (strike $100, 30 days, IV 20%) holds delta × 100,000 shares as the hedge
-  along one simulated path of 50 daily bars. Press play or drag the bar slider: the bars at the
-  top are the shares the dealer buys (up) or sells (down) on each bar, at full height from 3,000
-  shares, and the hedge buys as the price rises and sells as it falls. The dealer's P&amp;L per bar is
-  ½Γ·S²·[σ²·dt − (dS/S)²]: the theta income ½Γ·S²·σ²·dt, less the cost of rebalancing,
-  ½Γ·(dS)², the buy-high, sell-low loss of short gamma. The calls run out at bar 30 deep in the
-  money, so from there the hedge stays at 100,000 shares and trades nothing.</figcaption>
-</figure>
+<h2 id="what-a-coarse-threshold-gives-up">2 · What a coarse threshold gives up</h2>
 
-<p><strong>The dealer is short gamma. Their forced trades go in the same direction as the price move.</strong> They buy as price rises and sell as it falls. This is the destabilizing pattern that dominates negative-GEX regimes at the market level: every dollar of move generates more flow in the direction of the move, which generates more move. The feedback loop is what makes Volmageddon, March 2020, and individual gamma squeezes like GME possible. It also explains why such episodes feel so "violent" — they're not violent because of news but because of mechanical positive feedback.</p>
+<p><a class="xref" href="6c.html">Chapter 6C</a> found that hedging at intervals adds noise that averages zero. On a random walk, then, a coarse threshold changes the <em>spread</em> of the dealer's result, not its expected value. The expected variance captured is the same whether the dealer rebalances every 5 bps or every 50.</p>
 
-<p>The opposite case — the dealer <strong>long gamma</strong>, buying dips and selling rallies — is what stabilizes most days in modern markets and what gives positive-GEX regimes their characteristic mean-reverting feel. We'll see in <a class="xref" href="9b.html">Section 9B</a> that current 0DTE market structure has dealers in aggregate <em>long</em> gamma most days (because retail is selling and dealers are buying), which is partly why intraday SPX volatility has compressed even as headline option volume has exploded.</p>
+<p>A real intraday path can double back on itself, and then the threshold matters for the average too. Each round trip that stays inside the threshold is a move the hedger never trades, so its gamma is never collected.</p>
 
-<h2 id="the-long-gamma-mirror-worked-out">3 · The long-gamma mirror, worked out</h2>
+<div class="worked">
+<span class="ct">Worked example: An index that doubles back</span>
+<p><strong>Step 1: the path.</strong> In one day the index goes 6,000, 6,015, 6,000, 6,015, 6,000: four moves of 0.25% that end where they started.</p>
 
-<p>Mirror the short-gamma example above, sign-reversed, at SPX scale so it lines up with the $46k per-contract baseline used in the rest of this section.</p>
+<p><strong>Step 2: the 25 bp hedger.</strong> A long-gamma dealer with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>=</mo><mi mathvariant="normal">$</mi><mn>230</mn></mrow><annotation encoding="application/x-tex">\$\Gamma_{1\%} = \$230</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$230</span></span></span></span></span> million rebalances after every move. By <a class="xref" href="6d.html">Chapter 6D</a>, each move earns <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>×</mo><mn>230</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mn>0.2</mn><msup><mn>5</mn><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>100</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>71</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>875</mn></mrow><annotation encoding="application/x-tex">\tfrac12 \times 230{,}000{,}000 \times 0.25^2/100 = \$71{,}875</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">230</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.0641em; vertical-align: -0.25em;"></span><span class="mord">0.2</span><span class="mord"><span class="mord">5</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">/100</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$71</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">875</span></span></span></span></span>, so the four earn $287,500. Each rebalance trades $57.5 million and pays 0.83 bp of spread, $4,773, so the net is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>287</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>500</mn><mo>−</mo><mn>4</mn><mo>×</mo><mn>4</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>773</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>268</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>408</mn></mrow><annotation encoding="application/x-tex">287{,}500 - 4 \times 4{,}773 = \$268{,}408</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">287</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">500</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">4</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">773</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$268</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">408</span></span></span></span></span>.</p>
 
-<p>Suppose a dealer is <em>long</em> 1,000 SPX 6,000 calls with 30 DTE, IV 18%. Per-call ATM delta ≈ 0.52. Total delta exposure from the calls: 1,000 × 100 × 0.52 = +52,000 share-equivalents long. To neutralize, the dealer hedges by going <strong>short 52,000 share-equivalents</strong> of SPX (futures, basket, or ETF).</p>
+<p><strong>Step 3: the 50 bp hedger.</strong> The same dealer with a 50 bp threshold never trades, because no move reaches 50 bps. It collects none of the four moves. Both dealers pay the same theta, so the coarse hedger is about $268,000 behind.</p>
 
-<p>Now spot ticks up 1% to 6,060. With Γ ≈ 0.0013 per dollar of spot, the per-call delta moves by 0.0013 × 60 ≈ 0.078 — from 0.52 to roughly 0.60. New total long delta from the calls: 1,000 × 100 × 0.60 = +60,000 share-equivalents. To stay flat, the dealer's hedge must grow to short 60,000. They were short 52,000. <strong>They sell 8,000 more shares</strong>.</p>
+<p><strong>Step 4: the other sign.</strong> For a short-gamma dealer every sign flips. The 25 bp hedger <em>pays</em> $287,500 plus the spread, while the 50 bp hedger pays nothing.</p>
+</div>
 
-<p>Spot rising → dealer sells more → presses the rally back toward equilibrium. The opposite holds on a down-move: spot to 5,940 takes delta from 0.52 to 0.44, the dealer's required short hedge shrinks from 52,000 to 44,000, and the dealer <strong>buys</strong> 8,000 shares to close part of the short. Spot falling → dealer buys → absorbs the fall.</p>
+<p>This is the mean reversion of <a class="xref" href="3b.html">Chapter 3B</a> at intraday scale. On a path that doubles back, the variance of long steps is less than the sum of the variances of the short ones. The <span class="gloss" data-facts="A test of the random-walk hypothesis from Lo and MacKinlay (1988) that compares the variance of multi-period returns with the one-period variance times the number of periods. A ratio above 1 indicates momentum, and below 1 mean reversion." tabindex="0" role="button">variance ratio test</span> of <a class="xref" href="3b.html">Chapter 3B</a> reads this as a ratio below 1. A hedger collects the variance of the steps it actually trades, so a coarse threshold collects less.</p>
 
-<p><strong>The pattern reverses the short-gamma case at every step.</strong> Where the short-gamma dealer's forced trades reinforce the price move (sell into dumps, buy into rallies), the long-gamma dealer's forced trades fade it. Same 8,000-share rebalance per 1% move, opposite sign. This is the structural source of the stabilizing dynamic in positive-GEX regimes — not because someone is "providing liquidity" with judgment, but because the math of delta-hedging requires the opposite-direction trade when the dealer's gamma is the other sign.</p>
+<h2 id="stylized-arithmetic-at-spx-scale">3 · Stylized arithmetic at SPX scale</h2>
 
-<p><strong>Bridge to <a class="xref" href="8a.html">Section 8A</a>.</strong> Long gamma damps; short gamma amplifies. The aggregate dealer book in any given product is a <em>sum</em> of both signs across all dealers, strikes, and expirations. When that sum is positive (dealers net long gamma), the market behaves like the long-gamma case writ large; when negative, like the short-gamma case. The aggregation in 8A is doing exactly this — collapsing thousands of individual long- and short-gamma positions into a single signed scalar that classifies the prevailing regime.</p>
+<p>The dealer-mechanics tradition of this part works the trade-off through for a long-gamma book at SPX scale. Take the long-gamma dealer of <a class="xref" href="6d.html">Chapter 6D</a>, scaled from 1,000 calls to 5,000: long 5,000 SPX 6,000 calls at 18% IV with 30 days to expiry (DTE). Its daily theta is about $1.0 million, the per-contract theta of about $200 times 5,000. Its aggregate dollar gamma per 1% move is about $230 million, 5,000 times the $46,000 of one contract.</p>
 
-<h2 id="dollar-gamma-the-unit-that-matters">4 · Dollar gamma: the unit that matters</h2>
+<p>Suppose the day's realized volatility is 20% annualized, slightly above the 18% IV, or about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.20</mn><mi mathvariant="normal">/</mi><msqrt><mn>252</mn></msqrt><mo>=</mo><mn>1.26</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.20/\sqrt{252} = 1.26\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1572em; vertical-align: -0.25em;"></span><span class="mord">0.20/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">252</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">1.26%</span></span></span></span></span> a day. With continuous hedging, the expected gamma capture is</p>
 
-<p>Raw gamma is in units of "delta per dollar of spot move," which is a hard number to interpret across stocks of different prices. The standardized unit dealers actually care about is <strong>dollar gamma per 1% move</strong>:</p>
+<div class="eq" id="e-capture">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="double-struck">E</mi><mo stretchy="false">[</mo><mtext>capture</mtext><mo stretchy="false">]</mo><mo>=</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo>×</mo><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>×</mo><msubsup><mi>σ</mi><mi>d</mi><mn>2</mn></msubsup><mo>×</mo><mn>100</mn></mrow><annotation encoding="application/x-tex"> \mathbb{E}[\text{capture}] = \tfrac12 \times \$\Gamma_{1\%} \times \sigma_d^2 \times 100 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathbb">E</span><span class="mopen">[</span><span class="mord text"><span class="mord">capture</span></span><span class="mclose">]</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.1111em; vertical-align: -0.247em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -2.453em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.247em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">100</span></span></span></span></span></span>
+<span class="eqnum">(6E.1)</span></div>
 
-<pre>$Γ_1% = Γ × S² × 0.01</pre>
+<p>where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mi>d</mi></msub></mrow><annotation encoding="application/x-tex">\sigma_d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the daily volatility as a decimal and the 100 converts the per-1% unit. This is <a class="xref" href="6d.html">Chapter 6D</a>'s gamma gain for a move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>1.26</mn></mrow><annotation encoding="application/x-tex">p = 1.26</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1.26</span></span></span></span></span> percent, and with the numbers it is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>×</mo><mn>230</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mn>0.012</mn><msup><mn>6</mn><mn>2</mn></msup><mo>×</mo><mn>100</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>1.83</mn></mrow><annotation encoding="application/x-tex">\tfrac12 \times 230{,}000{,}000 \times 0.0126^2 \times 100 = \$1.83</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">230</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8974em; vertical-align: -0.0833em;"></span><span class="mord">0.012</span><span class="mord"><span class="mord">6</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">100</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$1.83</span></span></span></span></span> million. Net of the $1.0 million of theta, the frictionless P&amp;L lands near <strong>+$830,000 a day</strong>, and that is the upper bound.</p>
 
-<p>Why this form? A 1% move in price is ΔS = 0.01 × S. The dealer's delta changes by Γ × ΔS = 0.01 × Γ × S per share. To hedge, they transact that many shares per share of original exposure. The dollar value of that flow is (0.01 × Γ × S) × S = 0.01 × Γ × S² per share, or scaling by contracts, 0.01 × Γ × S² × OI × 100. Dropping the 100 (a constant convention), you get the formula above — the canonical "$Γ per 1%" used in every GEX model from SqueezeMetrics onward.</p>
+<p>Now add friction, taking a spread on the hedge of about 1.7 bps, so that each rebalance pays about 0.83 bp, half the spread, as it crosses. A threshold of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> bps makes each rebalance trade <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">$</mi><msub><mi mathvariant="normal">Γ</mi><mrow><mn>1</mn><mi mathvariant="normal">%</mi></mrow></msub><mo>×</mo><mi>h</mi><mi mathvariant="normal">/</mi><mn>100</mn></mrow><annotation encoding="application/x-tex">\$\Gamma_{1\%} \times h/100</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9691em; vertical-align: -0.2191em;"></span><span class="mord">$</span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3448em;"><span class="" style="top: -2.5198em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1%</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2191em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">h</span><span class="mord">/100</span></span></span></span></span> of notional: a 50 bp threshold on $230 million of dollar gamma rebalances about $115 million. The spread paid per rebalance is that notional times the half-spread, about $9,500 at 50 bps.</p>
 
-<p>For a typical ATM SPX option at spot 6,000 with 30 days to expiry and 18% IV, single-contract dollar gamma per 1% move is approximately <strong>$46,000</strong> (Γ ≈ 0.0013 per dollar of spot; per 1%: 0.0013 × 6000² × 0.01 ≈ $464/share × 100 share multiplier = $46,400). For SPY at $600 spot: approximately <strong>$460 per contract per 1%</strong> (same Γ, 100× smaller notional).</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">Threshold</th><th style="text-align:right">Variance captured</th><th style="text-align:right">Gamma gross</th><th style="text-align:right">Rebalances a day</th><th style="text-align:right">Spread cost a day</th><th style="text-align:right">Net P&amp;L</th></tr></thead><tbody><tr><td class="c-trial" data-label="Threshold" style="text-align:right">Continuous, frictionless</td><td data-label="Variance captured" style="text-align:right">about 100%</td><td data-label="Gamma gross" style="text-align:right">+$1.83M</td><td data-label="Rebalances a day" style="text-align:right">none</td><td data-label="Spread cost a day" style="text-align:right">$0</td><td data-label="Net P&amp;L" style="text-align:right"><strong>+$830k</strong></td></tr><tr><td class="c-trial" data-label="Threshold" style="text-align:right">5 bps</td><td data-label="Variance captured" style="text-align:right">about 95%</td><td data-label="Gamma gross" style="text-align:right">+$1.74M</td><td data-label="Rebalances a day" style="text-align:right">about 40</td><td data-label="Spread cost a day" style="text-align:right">−$80k</td><td data-label="Net P&amp;L" style="text-align:right"><strong>+$660k</strong></td></tr><tr><td class="c-trial" data-label="Threshold" style="text-align:right">15 bps</td><td data-label="Variance captured" style="text-align:right">about 85%</td><td data-label="Gamma gross" style="text-align:right">+$1.56M</td><td data-label="Rebalances a day" style="text-align:right">about 15</td><td data-label="Spread cost a day" style="text-align:right">−$36k</td><td data-label="Net P&amp;L" style="text-align:right"><strong>+$520k</strong></td></tr><tr><td class="c-trial" data-label="Threshold" style="text-align:right">25 bps</td><td data-label="Variance captured" style="text-align:right">about 70%</td><td data-label="Gamma gross" style="text-align:right">+$1.28M</td><td data-label="Rebalances a day" style="text-align:right">about 6</td><td data-label="Spread cost a day" style="text-align:right">−$22k</td><td data-label="Net P&amp;L" style="text-align:right"><strong>+$258k</strong></td></tr><tr><td class="c-trial" data-label="Threshold" style="text-align:right">50 bps</td><td data-label="Variance captured" style="text-align:right">about 45%</td><td data-label="Gamma gross" style="text-align:right">+$820k</td><td data-label="Rebalances a day" style="text-align:right">about 3</td><td data-label="Spread cost a day" style="text-align:right">−$15k</td><td data-label="Net P&amp;L" style="text-align:right"><strong>−$195k</strong></td></tr><tr><td class="c-trial" data-label="Threshold" style="text-align:right">200 bps</td><td data-label="Variance captured" style="text-align:right">about 12%</td><td data-label="Gamma gross" style="text-align:right">+$220k</td><td data-label="Rebalances a day" style="text-align:right">about 0.5</td><td data-label="Spread cost a day" style="text-align:right">−$3k</td><td data-label="Net P&amp;L" style="text-align:right"><strong>−$783k</strong></td></tr></tbody></table></div></div>
 
-<figure class="fig" id="fig-dollar-gamma-units-lab">
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-s">spot S</label>
-      <input type="range" id="dollar-gamma-units-lab-s" min="3000" max="8000" step="5" value="6000">
-      <output id="dollar-gamma-units-lab-s-o" for="dollar-gamma-units-lab-s">6,000</output>
-    </div>
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-k">strike K</label>
-      <input type="range" id="dollar-gamma-units-lab-k" min="3000" max="8000" step="5" value="6000">
-      <output id="dollar-gamma-units-lab-k-o" for="dollar-gamma-units-lab-k">6,000</output>
-    </div>
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-t">DTE</label>
-      <input type="range" id="dollar-gamma-units-lab-t" min="1" max="365" step="1" value="30">
-      <output id="dollar-gamma-units-lab-t-o" for="dollar-gamma-units-lab-t">30d</output>
-    </div>
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-iv">IV σ</label>
-      <input type="range" id="dollar-gamma-units-lab-iv" min="0.05" max="1" step="0.01" value="0.18">
-      <output id="dollar-gamma-units-lab-iv-o" for="dollar-gamma-units-lab-iv">18%</output>
-    </div>
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-oi">open interest</label>
-      <input type="range" id="dollar-gamma-units-lab-oi" min="100" max="500000" step="100" value="10000">
-      <output id="dollar-gamma-units-lab-oi-o" for="dollar-gamma-units-lab-oi">10,000</output>
-    </div>
-    <div class="ctrl">
-      <label for="dollar-gamma-units-lab-m">multiplier</label>
-      <input type="range" id="dollar-gamma-units-lab-m" min="1" max="1000" step="1" value="100">
-      <output id="dollar-gamma-units-lab-m-o" for="dollar-gamma-units-lab-m">100</output>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl" role="group" aria-label="Dealer sign convention" id="dollar-gamma-units-lab-conv">
-      <label>convention</label>
-      <button type="button" data-v="0dte" class="on" aria-pressed="true">0DTE-era (call short)</button>
-      <button type="button" data-v="jpm" aria-pressed="false">JPM-era (call long)</button>
-    </div>
-  </div>
-  <div class="evidence"><div class="ev-scroll"><table class="trials">
-    <thead><tr><th class="c-trial">Unit</th><th>Formula</th><th>Value</th></tr></thead>
-    <tbody>
-      <tr><td class="c-trial">Γ per share</td><td data-label="Formula">Black-Scholes gamma</td><td data-label="Value" id="dollar-gamma-units-lab-v0">1.28&nbsp;×&nbsp;10⁻³</td></tr>
-      <tr><td class="c-trial">Γ per contract</td><td data-label="Formula">Γ × multiplier</td><td data-label="Value" id="dollar-gamma-units-lab-v1">1.28&nbsp;×&nbsp;10⁻¹</td></tr>
-      <tr><td class="c-trial">$Γ per $1 (1 contract)</td><td data-label="Formula">Γ × S × multiplier</td><td data-label="Value" id="dollar-gamma-units-lab-v2">$769.99</td></tr>
-      <tr><td class="c-trial">$Γ per 1% (1 contract)</td><td data-label="Formula">Γ × S² × 0.01 × multiplier</td><td data-label="Value" id="dollar-gamma-units-lab-v3">$46.20k</td></tr>
-      <tr><td class="c-trial">Unsigned $Γ per 1%</td><td data-label="Formula">× open interest</td><td data-label="Value" id="dollar-gamma-units-lab-v4">$461.99M</td></tr>
-      <tr><td class="c-trial">Signed (dealer perspective)</td><td data-label="Formula" id="dollar-gamma-units-lab-sg">× dealer sign (−1)</td><td data-label="Value" id="dollar-gamma-units-lab-v5">−⁠$461.99M</td></tr>
-    </tbody>
-  </table></div></div>
-  <p class="readout" aria-live="polite"><b id="dollar-gamma-units-lab-vk">Short γ, destabilizing.</b> <span id="dollar-gamma-units-lab-vt">Signed from the dealer's side, the open interest carries −⁠$461.99M of dollar gamma per 1% move.</span></p>
-  <figcaption><b>From gamma per share to dollars per 1% move.</b> One option's Black-Scholes
-  gamma (r = 4%) carried through the units of this section: per share, per contract, in dollars
-  per $1 of spot and per 1% move, then across the open interest and signed for the dealer. At the
-  defaults, an at-the-money SPX option at 6,000 with 30 days to run and 18% IV, one contract
-  carries about $46.2k of dollar gamma per 1% move, the $46,000 of the text. The two conventions
-  put the dealer short the calls (0DTE era) or long them (JPM era), as in Section 8A.</figcaption>
-</figure>
+<p>Each row's gross is the captured share of $1.83 million, and its net is the gross less the $1.0 million of theta and the day's spread cost. For the 5 bp row, for example, the net is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.74</mn><mo>−</mo><mn>1.00</mn><mo>−</mo><mn>0.08</mn><mo>=</mo><mn>0.66</mn></mrow><annotation encoding="application/x-tex">1.74 - 1.00 - 0.08 = 0.66</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1.74</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1.00</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.08</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.66</span></span></span></span></span> million.</p>
 
-<p>Aggregate dealer dollar gamma across the listed SPX book typically ranges from $20B to $100B per 1% move on a normal day. This is the scale of mechanical hedging flow potentially sitting in dealer inventory — meaning a 1% move in SPX could generate tens of billions of dollars of forced rebalancing, depending on the sign of dealer net gamma.</p>
+<p>The lesson of the example is a U-shape in the net column, in which a threshold of 5 to 15 bps is near optimal. Below 5 bps the spread eats every wiggle, and above 25 bps the dealer leaves so much variance uncollected that theta exceeds the gamma it captures. The 50 bp and 200 bp rows show the strategy flipping from positive to negative as the threshold widens: same option position, same realized volatility, same dealer.</p>
 
-<p>This is what <a class="xref" href="8a.html">Section 8A</a> formalizes into the GEX metric and what <a class="xref" href="8b.html">Section 8B</a> shows can drive market regime characterization. The dollar gamma magnitude tells you the <em>potential size</em> of mechanical flow. The sign tells you the <em>direction</em>. Together they characterize the dealer-hedging engine that drives the modern intraday market.</p>
+<p>The captured-variance column reflects the path's mean-reverting jaggedness. Across 1.26% of daily net motion, the cumulative <em>path length</em>, the sum of every absolute move, is typically 2.5 to 4 times the net move. The sum of squared moves then depends on how finely you slice the path. Fine thresholds catch nearly all of it, and coarse ones catch only the large swings.</p>
 
-<h2 id="the-mechanisms-predictions">5 · The mechanism's predictions</h2>
+<div class="callout warn">
+<span class="ct">Reading the table with care</span>
+<ul>
+<li><strong>Its left arm is not in the table.</strong> The continuous row is frictionless, so the claim that hedging finer than 5 bps loses to the spread is asserted rather than shown by a row.</li>
+<li><strong>Its clocks differ.</strong> The $1.0 million of theta is per calendar day, while the capture uses a trading day's move, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mi mathvariant="normal">/</mi><msqrt><mn>252</mn></msqrt></mrow><annotation encoding="application/x-tex">\sigma/\sqrt{252}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1572em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord">/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">252</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span></span></span></span></span> for an annual volatility <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span>. On one clock, realized 20% against implied 18% nets about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>×</mo><mn>230</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mn>100</mn><mo>×</mo><mo stretchy="false">(</mo><mn>0.2</mn><msup><mn>0</mn><mn>2</mn></msup><mo>−</mo><mn>0.1</mn><msup><mn>8</mn><mn>2</mn></msup><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mn>252</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>347</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">\tfrac12 \times 230{,}000{,}000 \times 100 \times (0.20^2 - 0.18^2)/252 = \$347{,}000</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">230</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">100</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.0641em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">0.2</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.0641em; vertical-align: -0.25em;"></span><span class="mord">0.1</span><span class="mord"><span class="mord">8</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/252</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$347</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span></span></span></span></span> a trading day before friction, not $830,000. Every net figure falls by about $480,000, and the net turns negative between 15 and 25 bps rather than between 25 and 50. The ranking of the thresholds does not change.</li>
+<li><strong>Its captured-variance column is an assumption about the path.</strong> On a random walk every threshold would capture about 100% on average, and a coarse one would add only noise (<a class="xref" href="6c.html">Chapter 6C</a>).</li>
+<li><strong>Its spread is larger than the quoted SPX spread.</strong> The SPX spread quoted with this example, about $0.10 on 6,000, is only 0.17 bp. The table's costs use 1.7 bps, which on 6,000 is about $1.</li>
+</ul>
+</div>
 
-<p>If the framework so far is correct, several predictions follow:</p>
+<h2 id="why-the-spread-matters">4 · Why the spread matters</h2>
 
-<ol>
-<li><p><strong>Intraday momentum should be observable in markets dominated by short-gamma dealer positioning.</strong> ✓ Baltussen et al. (2021) document this across 60+ futures markets.</p></li>
-<li><p><strong>Intraday mean reversion should be observable in markets dominated by long-gamma dealer positioning.</strong> ✓ Modern SPX intraday character has compressed measurably since 0DTE growth, consistent with the Cboe and Dim-Eraker-Vilkov finding that 0DTE dealer positioning is net long-gamma on average.</p></li>
-<li><p><strong>Volatility should be self-reinforcing in short-gamma regimes.</strong> ✓ Volmageddon and March 2020 case studies in <a class="xref" href="8c.html">Section 8C</a> document exactly this.</p></li>
-<li><p><strong>The transition between regimes — the "gamma flip" — should be marked by visible character change.</strong> ✓ Practitioner experience and academic literature both confirm this, though precise identification of the flip level is contested across vendor methodologies.</p></li>
-</ol>
+<p>The spread cost of each rebalance is about the notional rebalanced times the half-spread. For SPX, at 1.7 bps of spread, that is about 0.83 bp per crossing. A 5 bp rebalance pays about 17% of the move's width in spread, and a 50 bp rebalance about 1.7%.</p>
 
-<p>The framework is empirically supported, but not in a "gamma squeeze accounts for everything" sense — in a "gamma hedging accounts for measurable tens-of-basis-points effects, with occasional larger episodes during stress" sense. <a class="xref" href="8a.html">Section 8</a> quantifies this; <a class="xref" href="9a.html">Section 9</a> applies it; <a class="xref" href="12a.html">Section 12</a> sizes for it.</p>
+<p>Set against what the rebalance earns, the tax is heavier still. A rebalance of notional <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span></span></span></span></span> after a move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> earns about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>N</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">\tfrac12 N h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1901em; vertical-align: -0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8451em;"><span class="" style="top: -2.655em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.394em;"><span class="pstrut" style="height: 3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.345em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="mord mathnormal">h</span></span></span></span></span>, the triangle of <a class="xref" href="6d.html">Chapter 6D</a>, and pays <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">N s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="mord mathnormal">s</span></span></span></span></span>, where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span></span> is the half-spread, so the ratio of cost to gain is</p>
 
+<div class="eq" id="e-tax">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mtext>spread&nbsp;cost</mtext><mtext>gamma&nbsp;gain</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>2</mn><mi>s</mi></mrow><mi>h</mi></mfrac></mrow><annotation encoding="application/x-tex"> \frac{\text{spread cost}}{\text{gamma gain}} = \frac{2s}{h} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 2.2519em; vertical-align: -0.8804em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3714em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord text"><span class="mord">gamma&nbsp;gain</span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord text"><span class="mord">spread&nbsp;cost</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.8804em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.0074em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3214em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">2</span><span class="mord mathnormal">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(6E.2)</span></div>
 
+<div class="worked">
+<span class="ct">Worked example: The spread tax at three thresholds</span>
+<p><strong>Step 1: SPX.</strong> With <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mn>0.83</mn></mrow><annotation encoding="application/x-tex">s = 0.83</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.83</span></span></span></span></span> bp, <a class="eqref" href="#e-tax">(6E.2)</a> gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>0.83</mn><mi mathvariant="normal">/</mi><mn>5</mn><mo>=</mo><mn>0.33</mn></mrow><annotation encoding="application/x-tex">2 \times 0.83/5 = 0.33</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.83/5</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.33</span></span></span></span></span> at a 5 bp threshold, so a third of each rebalance's gain goes to the spread. At 50 bps it gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>0.83</mn><mi mathvariant="normal">/</mi><mn>50</mn><mo>=</mo><mn>0.033</mn></mrow><annotation encoding="application/x-tex">2 \times 0.83/50 = 0.033</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.83/50</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.033</span></span></span></span></span>, about 3%.</p>
+
+<p><strong>Step 2: a single stock.</strong> With a spread of 10 bps, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">s = 5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">5</span></span></span></span></span> bps, a 5 bp threshold gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>5</mn><mi mathvariant="normal">/</mi><mn>5</mn><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 5/5 = 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">5/5</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">2</span></span></span></span></span>: each rebalance pays twice what it earns. A 30 bp threshold brings the ratio down to 0.33, and 60 bps to 0.17.</p>
+</div>
+
+<p>For tight thresholds, then, friction is a tax of several percent of the trade. That is exactly why <strong><span class="gloss" data-facts="Trading by firms that use fast automated systems to quote and trade many times a second, typically as market makers earning small spreads on very large volumes. Abbreviated HFT." tabindex="0" role="button">high-frequency trading</span></strong> (HFT) market makers, who provide the liquidity the dealer's rebalances consume, earn a steady fraction of the spread. The dealer's discrete hedging <em>creates the order flow</em> that the HFT layer is selling into.</p>
+
+<p>For single-stock options, where spreads run 5 to 15 bps rather than 1.7, the optimum threshold widens to 30 to 60 bps. The dealer simply cannot afford fine-grained rebalancing, as Step 2 shows. This is also why dealers' realized-volatility estimates in illiquid products tend to <em>exceed</em> the underlying's true volatility: every hedge carries a spread-cost overhead that does not appear in the unhedged price path.</p>
+
+<h2 id="what-this-means-for-gamma-exposure">5 · What this means for gamma exposure</h2>
+
+<p><a class="xref" href="8a.html">Chapter 8A</a> treats gamma exposure (GEX) as if every contract's gamma were hedged instantly on every spot move, <strong>which it is not</strong>. A frequency-dependent friction layer sits between open interest and the dealer flow you actually observe. The idealization is <em>approximately</em> correct at daily and longer frequencies, because the path catches up over a day. It loosens visibly at intraday horizons, where discrete rebalancing shows up as latency in the hedge response and as residual delta drifting between rebalances.</p>
+
+<p>So when you read "GEX is +$5B today, expect mean-reverting intraday character", add a mental supplement. Expect mean-reverting intraday character <em>averaged over a rebalance cycle of a few hours</em>. Expect also bursts of the opposite character at the moments a large dealer is sitting on hedge it has not yet delivered. <a class="xref" href="7a.html">Chapter 7A</a>'s hedging-friction figure lets you hedge one path on several schedules and compare what each costs.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>If you hedge an option position yourself, price your spread first.</strong> Compute <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>s</mi><mi mathvariant="normal">/</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">2s/h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord">/</span><span class="mord mathnormal">h</span></span></span></span></span> with your own half-spread before choosing a threshold. A threshold that suits a dealer paying 0.83 bp can hand most of a retail hedger's gain to the spread.</li>
+<li><strong>Read gamma exposure over hours, not minutes.</strong> A positive reading implies damping averaged over the dealers' rebalance cycle, not at every tick.</li>
+<li><strong>Discount single-stock hedging results for cost</strong>, since wider thresholds and wider spreads make realized volatility measured through a hedge look higher than the stock's own.</li>
+<li><strong>Know where the two traditions part.</strong> This chapter's arithmetic is a dealer's, while the edge-by-edge case of <a class="xref" href="10a.html">Part X</a> rejects a related retail practice, trading around published gamma-exposure levels, as never robust at retail (<a class="xref" href="10i.html">Chapter 10I</a>).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The optimum threshold depends on how much the day's path doubles back, and that changes from day to day and regime to regime. On a random walk the expected capture is the same at every threshold, and the choice trades cost against noise alone. The table's rebalance counts, spreads and captured shares are stylized, so read it for its shape, not its levels.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "hedge as often as you can"</span>
+<p>Tighter is not always better: at 5 bps a third of each SPX rebalance's gain goes to the spread, while for a single stock the same threshold loses money on every trade. For a short-gamma book on a path that doubles back, tighter hedging also means paying for more of the wiggles.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Set the threshold where the spread tax <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>s</mi><mi mathvariant="normal">/</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">2s/h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord">/</span><span class="mord mathnormal">h</span></span></span></span></span> is a modest fraction of each rebalance's gain.</strong> For SPX at 1.7 bps of spread, the example puts the optimum at 5 to 15 bps, and for single stocks at 5 to 15 bps of spread, at 30 to 60 bps.</li>
+<li><strong>Widen the threshold as your spread widens</strong>, and never hedge on every tick.</li>
+<li><strong>Put theta and variance on one clock</strong> before trusting any hedging P&amp;L arithmetic, your own included.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A dealer hedges on a rebalance threshold, in share-equivalents or in basis points, and dollar gamma converts one into the other.</li>
+<li>On a random walk the threshold changes only the noise of the result. On a path that doubles back, a coarse threshold also collects less of the variance.</li>
+<li>The spread tax on each rebalance is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>s</mi><mi mathvariant="normal">/</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">2s/h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord">/</span><span class="mord mathnormal">h</span></span></span></span></span> of its gamma gain, so thin spreads allow fine thresholds and wide spreads force coarse ones.</li>
+<li>In the stylized SPX example, 5 to 15 bps is near optimal, and wide thresholds turn a profitable long-gamma book into a losing one.</li>
+<li>Gamma exposure describes dealer flow averaged over a rebalance cycle of hours, not tick by tick.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">6 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A book has $230 million of dollar gamma per 1%. What notional does a 20 bp rebalance trade, and what does it pay at a half-spread of 0.83 bp?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It trades <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>230</mn><mo>×</mo><mn>0.20</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>46</mn></mrow><annotation encoding="application/x-tex">230 \times 0.20 = \$46</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">230</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.20</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$46</span></span></span></span></span> million, and pays <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>46</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>000</mn><mo>×</mo><mn>0.000083</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>3</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>818</mn></mrow><annotation encoding="application/x-tex">46{,}000{,}000 \times 0.000083 = \$3{,}818</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">46</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">000</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.000083</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$3</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">818</span></span></span></span></span> of spread.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>What share of a rebalance's gamma gain goes to the spread at a 10 bp threshold with a half-spread of 0.83 bp?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-tax">(6E.2)</a>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>0.83</mn><mi mathvariant="normal">/</mi><mn>10</mn><mo>=</mo><mn>0.17</mn></mrow><annotation encoding="application/x-tex">2 \times 0.83/10 = 0.17</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.83/10</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.17</span></span></span></span></span>, about a sixth.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Why does a coarse threshold capture less variance on the example's path but not, on average, on a random walk?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>On a random walk the variance of long steps equals the sum of the variances of the short steps they contain, so the expected capture does not depend on the threshold. The example's path doubles back, so many small moves cancel before a coarse threshold is reached, and the hedger never trades them.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>In the doubling-back example, what does a short-gamma dealer pay with a 25 bp threshold, and with a 50 bp one?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>With 25 bps it pays <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mo>×</mo><mn>71</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>875</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>287</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>500</mn></mrow><annotation encoding="application/x-tex">4 \times 71{,}875 = \$287{,}500</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">71</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">875</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$287</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">500</span></span></span></span></span> of gamma plus <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mo>×</mo><mn>4</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>773</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>19</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>092</mn></mrow><annotation encoding="application/x-tex">4 \times 4{,}773 = \$19{,}092</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">4</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">773</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.9444em; vertical-align: -0.1944em;"></span><span class="mord">$19</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">092</span></span></span></span></span> of spread, about $306,600. With 50 bps it never trades and pays nothing on those moves.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>A single-stock option has a spread of 12 bps. What threshold keeps the spread tax at a third of each rebalance's gain?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The half-spread is 6 bps, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>6</mn><mi mathvariant="normal">/</mi><mi>h</mi><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>3</mn></mrow><annotation encoding="application/x-tex">2 \times 6/h = 1/3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">6/</span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/3</span></span></span></span></span> gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mn>36</mn></mrow><annotation encoding="application/x-tex">h = 36</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">36</span></span></span></span></span> bps, inside the 30 to 60 bps given for single stocks.</p>
+</div></details>
+</div>
+</div>
 
 <nav class="chapnav" aria-label="Previous and next chapter">
-<a class="prev" href="6d.html" rel="prev"><span>Previous</span>6D · Delta hedging</a>
-<a class="next" href="6f.html" rel="next"><span>Next</span>6F · The hedging frequency vs cost tradeoff</a>
+<a class="prev" href="6d.html" rel="prev"><span>Previous</span>6D · Gamma</a>
+<a class="next" href="7a.html" rel="next" data-part="Part VII · Theory"><span>Next</span>7A · Why hedging works</a>
 </nav>
 
 </div>
 </main>
 </div>
 <script src="assets/book.js"></script>
-<script>
 
-/* ============================================================
-   The Other End of the Trade: what every figure shares.
-
-   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
-   the figures on that page, so a figure may call DL.* freely. The numbers are
-   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
-   ported line for line, so a figure computes what the app's widget computed.
-   Everything drawn goes through NMT.Plot and takes its colours from the
-   theme's roles (DL.color), so a figure follows the light and dark themes
-   and redraws when the reader switches.
-
-   Two rules every figure keeps, because the build runs the page and saves
-   its column (DESIGN.md section 8):
-   - the markup is static. A script writes text into outputs and draws on
-     canvases; it never adds or removes elements inside the figure;
-   - the first state is fixed. Seeds are constants and nothing animates
-     until the reader asks, so two builds of the same source are identical.
-   ============================================================ */
-var DL = (function () {
-  'use strict';
-
-  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
-  function N(x) {
-    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
-        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    var sign = x < 0 ? -1 : 1;
-    var ax = Math.abs(x) / Math.sqrt(2);
-    var t = 1 / (1 + p * ax);
-    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
-    return 0.5 * (1 + sign * y);
-  }
-  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
-
-  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
-  function d1(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
-  }
-  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
-  function bsPrice(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
-    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsDelta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) {
-      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
-      return S < K ? -1 : S > K ? 0 : -0.5;
-    }
-    var D1 = d1(S, K, T, sigma, r, q);
-    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
-  }
-  function bsGamma(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 1e-6) return S === K ? 1000 : 0;
-    var D1 = d1(S, K, T, sigma, r, q);
-    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
-  }
-  function bsVega(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
-  }
-  function bsTheta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
-    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
-    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsRho(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D2 = d2(S, K, T, sigma, r, q);
-    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
-  }
-  function bsVanna(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
-  }
-  function bsCharm(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
-    return Math.exp(-q * T) * term;
-  }
-  /* every price and Greek at once, as the app's bsm() */
-  function bsm(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
-    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
-    return {
-      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
-      callPrice: S * eqT * Nd1 - K * erT * Nd2,
-      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
-      callDelta: eqT * Nd1,
-      putDelta: eqT * (Nd1 - 1),
-      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
-      vega: S * eqT * pd1 * sT,
-      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
-      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
-      callRho: K * T * erT * Nd2,
-      putRho: -K * T * erT * (1 - Nd2),
-      vanna: -eqT * pd1 * (D2 / sigma),
-      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
-    };
-  }
-
-  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
-  function rng(seed) {
-    var a = seed >>> 0;
-    return function () {
-      var t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function gauss(r) {
-    var u = 1 - r(), v = r();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
-
-  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
-  var REGIMES = [
-    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
-    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
-    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
-    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
-    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
-    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
-    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
-  ];
-  function ohlc(n, seed, regimes, start) {
-    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
-    var r = rng(seed), out = [], price = start;
-    for (var i = 0; i < n; i++) {
-      var g = null;
-      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
-      if (!g) g = regimes[regimes.length - 1];
-      var ret = g.drift + g.vol * gauss(r);
-      var open = price, close = Math.max(0.5, price * (1 + ret));
-      var wick = price * g.vol * (0.4 + r() * 0.9);
-      var high = Math.max(open, close) + wick * r();
-      var low = Math.min(open, close) - wick * r();
-      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
-      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
-                 regime: g.label, stage: g.stage });
-      price = close;
-    }
-    return out;
-  }
-  function aggregate(data, k) {
-    var out = [];
-    for (var i = 0; i < data.length; i += k) {
-      var ch = data.slice(i, Math.min(i + k, data.length));
-      if (!ch.length) break;
-      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
-                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
-                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
-                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
-    }
-    return out;
-  }
-
-  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
-  function key(k) { return k || 'close'; }
-  function sma(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = 0;
-      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
-      return s / n;
-    });
-  }
-  function ema(data, n, k) {
-    k = key(k);
-    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
-    data.forEach(function (d, i) {
-      if (i === 0) r.push(prev);
-      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
-    });
-    return r;
-  }
-  function stdDev(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
-      s.forEach(function (x) { m += x[k]; }); m /= n;
-      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
-      return Math.sqrt(v / n);
-    });
-  }
-  function bollinger(data, n, mult) {
-    n = n || 20; mult = mult || 2;
-    var m = sma(data, n), s = stdDev(data, n);
-    return { mid: m,
-             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
-             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
-  }
-  function trueRange(data) {
-    return data.map(function (d, i) {
-      if (i === 0) return d.high - d.low;
-      var pc = data[i - 1].close;
-      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
-    });
-  }
-  function atr(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), r = [], prev = null;
-    tr.forEach(function (v, i) {
-      if (i < n - 1) { r.push(null); return; }
-      if (i === n - 1) {
-        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
-        r.push(init); prev = init; return;
-      }
-      prev = (prev * (n - 1) + v) / n;
-      r.push(prev);
-    });
-    return r;
-  }
-  function donchian(data, n) {
-    n = n || 20;
-    return data.map(function (_, i) {
-      if (i < n - 1) return { upper: null, lower: null, mid: null };
-      var s = data.slice(i - n + 1, i + 1);
-      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
-      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
-      return { upper: u, lower: l, mid: (u + l) / 2 };
-    });
-  }
-  function rsi(data, n) {
-    n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
-    for (var i = 1; i < data.length; i++) {
-      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
-      if (i <= n) {
-        g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
-      } else {
-        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
-      }
-    }
-    return r;
-  }
-  function macd(data, fast, slow, signal) {
-    fast = fast || 12; slow = slow || 26; signal = signal || 9;
-    var ef = ema(data, fast), es = ema(data, slow);
-    var line = ef.map(function (v, i) { return v - es[i]; });
-    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
-    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
-  }
-  function adx(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), plusDM = [], minusDM = [];
-    for (var i = 0; i < data.length; i++) {
-      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
-      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
-      plusDM.push(up > dn && up > 0 ? up : 0);
-      minusDM.push(dn > up && dn > 0 ? dn : 0);
-    }
-    function wilder(arr) {
-      var r = new Array(arr.length).fill(null), prev = null;
-      arr.forEach(function (v, i) {
-        if (i < n - 1) return;
-        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
-        prev = prev - prev / n + v; r[i] = prev;
-      });
-      return r;
-    }
-    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
-    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
-    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
-    var dx = plusDI.map(function (v, i) {
-      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
-    });
-    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
-    for (var j = 0; j < dx.length; j++) {
-      if (dx[j] == null) continue;
-      count++;
-      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
-      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
-    }
-    return { adx: out, plusDI: plusDI, minusDI: minusDI };
-  }
-
-  /* ---------- writing numbers ----------
-     A true minus sign (U+2212) rather than a hyphen, as the prose writes
-     them, and thousands grouped with commas. */
-  var MINUS = '−';
-  function num(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    d = d == null ? 2 : d;
-    var s = Math.abs(x).toFixed(d);
-    var parts = s.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    s = parts.join('.');
-    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
-  }
-  function signed(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(x, d);
-    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
-  }
-  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
-  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
-  function usd(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(Math.abs(x), d == null ? 2 : d);
-    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
-  }
-  function compact(x, d, prefix) {
-    if (x == null || !isFinite(x)) return '—';
-    prefix = prefix || ''; d = d == null ? 1 : d;
-    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
-    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
-    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
-    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
-    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
-    return sign + prefix + a.toFixed(d);
-  }
-
-  /* ---------- the page: outputs and controls ---------- */
-  function $(id) { return document.getElementById(id); }
-  /* Text into an element, only when it changes, so the build captures one
-     settled state and a redraw does not churn the DOM. */
-  function out(id, text) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el && el.textContent !== String(text)) el.textContent = String(text);
-  }
-  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
-  function checked(id) { var el = $(id); return !!(el && el.checked); }
-  /* Call fn whenever any of these controls moves. */
-  function bind(ids, fn) {
-    ids.forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener('input', fn);
-      el.addEventListener('change', fn);
-    });
-  }
-  /* A row of buttons acting as one choice: each button carries data-v, the one
-     chosen has .on and aria-pressed="true". Returns a function giving the
-     current value. The first state is whichever button the markup marked
-     .on, so the saved page and the live page agree. */
-  function seg(id, fn) {
-    var box = $(id);
-    if (!box) return function () { return null; };
-    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
-    function current() {
-      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
-      return bs.length ? bs[0].getAttribute('data-v') : null;
-    }
-    bs.forEach(function (b) {
-      b.addEventListener('click', function () {
-        bs.forEach(function (o) {
-          var on = o === b;
-          o.classList.toggle('on', on);
-          o.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-        if (fn) fn(b.getAttribute('data-v'));
-      });
-    });
-    return current;
-  }
-  function still() {
-    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-  /* Register a canvas figure. draw(canvas) is called now, on resize and on
-     a change of theme (NMT.figure). Returns the redraw. */
-  function figure(canvasId, draw) {
-    if (!window.NMT) return function () {};
-    return NMT.figure(canvasId, draw) || function () {};
-  }
-  function redraw() { if (window.NMT) NMT.redrawAll(); }
-
-  /* ---------- colour ----------
-     A role from the stylesheet, resolved for the current theme: accent,
-     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
-     paper, bg. The app's amber is the accent here; its cyan and violet are
-     familiar, its green insight, its rose plain. */
-  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
-  function fade(c, a) {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
-    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
-    var r = /rgba?\(([^)]+)\)/.exec(c || '');
-    if (r) {
-      var p = r[1].split(',');
-      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
-    }
-    return c;
-  }
-
-  /* ---------- drawing on an NMT.Plot ---------- */
-
-  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
-       o.x, o.y      a function (value, step) -> label, or false for none
-       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
-       o.xs, o.ys    the tick values themselves, overriding nx and ny
-       o.grid        false for no grid (default: the plot's own setting)
-     Paints the ground first, as Plot.axes does, so call it before drawing. */
-  function ticks(lo, hi, target) {
-    var span = hi - lo, raw = span / (target || 6);
-    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
-    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
-    var out = [];
-    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
-      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
-    return { vals: out, step: step };
-  }
-  function axes(p, o) {
-    o = o || {};
-    var g = p.g, P = p.o;
-    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
-                  : ticks(P.xmin, P.xmax, o.nx || 6);
-    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
-                  : ticks(P.ymin, P.ymax, o.ny || 5);
-    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
-    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
-    g.clearRect(0, 0, p.w, p.h);
-    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
-    if (o.grid == null ? P.grid : o.grid) {
-      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
-      tx.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
-      ty.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
-    }
-    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
-    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
-    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
-    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
-    if (o.yAxis !== false) {
-      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
-    }
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    if (fx) {
-      g.textAlign = 'center'; g.textBaseline = 'top';
-      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
-    }
-    if (fy) {
-      g.textAlign = 'right'; g.textBaseline = 'middle';
-      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
-    }
-    if (P.xlabel) {
-      g.textAlign = 'right'; g.textBaseline = 'bottom';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
-    }
-    if (P.ylabel) {
-      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
-      g.textAlign = 'right'; g.textBaseline = 'top';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.ylabel, 0, 0); g.restore();
-    }
-    return p;
-  }
-
-  function clip(p) {
-    var g = p.g, o = p.o;
-    g.save();
-    g.beginPath();
-    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
-    g.clip();
-  }
-  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
-     o.color is a colour or a function (value, index) -> colour. */
-  function bars(p, xs, ys, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
-    clip(p);
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) continue;
-      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
-      var y0 = p.Y(base), y1 = p.Y(ys[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
-    }
-    g.restore();
-  }
-  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
-  function hbars(p, ys, xs, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
-    clip(p);
-    for (var i = 0; i < ys.length; i++) {
-      if (xs[i] == null || !isFinite(xs[i])) continue;
-      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
-      var x0 = p.X(base), x1 = p.X(xs[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
-    }
-    g.restore();
-  }
-  /* A filled band between two curves (lo may be a number: the baseline). */
-  function band(p, xs, hi, lo, fill) {
-    var g = p.g;
-    clip(p);
-    g.beginPath();
-    var started = false;
-    for (var i = 0; i < xs.length; i++) {
-      if (hi[i] == null) continue;
-      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
-      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
-    }
-    for (var j = xs.length - 1; j >= 0; j--) {
-      var l = typeof lo === 'number' ? lo : lo[j];
-      if (l == null || hi[j] == null) continue;
-      g.lineTo(p.X(xs[j]), p.Y(l));
-    }
-    g.closePath();
-    g.fillStyle = fill;
-    g.fill();
-    g.restore();
-  }
-  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
-  function line(p, xs, ys, o) {
-    var pts = [], runs = [];
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
-      pts.push([xs[i], ys[i]]);
-    }
-    if (pts.length) runs.push(pts);
-    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
-  }
-  function hline(p, y, o) {
-    o = o || {};
-    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  function vline(p, x, o) {
-    o = o || {};
-    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  /* Candles for OHLC data at x = index. */
-  function candles(p, data, o) {
-    o = o || {};
-    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
-    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
-    clip(p);
-    data.forEach(function (d, i) {
-      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
-      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
-      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
-      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
-    });
-    g.restore();
-  }
-  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
-  function legend(p, items, o) {
-    o = o || {};
-    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
-    g.save();
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    items.forEach(function (it) {
-      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
-      if (it.box) g.fillRect(x, y - 4, 12, 8);
-      else {
-        g.setLineDash(it.dash || []);
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
-        g.setLineDash([]);
-      }
-      g.fillStyle = color('ink-soft');
-      g.fillText(it.label, x + 19, y);
-      x += 19 + g.measureText(it.label).width + 14;
-    });
-    g.restore();
-  }
-  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
-     p.axes({nx: 0}) or grid off first. */
-  function xticks(p, xs, fmt) {
-    var g = p.g;
-    g.save();
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'center'; g.textBaseline = 'top';
-    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
-    g.restore();
-  }
-
-  return {
-    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
-    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
-    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
-    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
-    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
-    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
-    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
-    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
-    figure: figure, redraw: redraw,
-    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
-    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
-    candles: candles, legend: legend, xticks: xticks
-  };
-})();
-
-/* ---------- gamma-hedge-sim ---------- */
-(function () {
-  var U = 'gamma-hedge-sim';
-  var BAR = DL.$(U + '-bar');
-
-  /* The app's path: seed 13, 50 bars of drift 0.12% and 1.1% noise from 100. */
-  var path = [{ t: 0, S: 100 }];
-  (function () {
-    var rng = DL.rng(13), S = 100;
-    for (var i = 1; i <= 50; i++) {
-      S *= 1 + (0.0012 + 0.011 * DL.gauss(rng));
-      path.push({ t: i, S: S });
-    }
-  })();
-
-  /* The dealer is short 1,000 calls, K = 100, IV 20%, 30 days (r = 4%), and
-     holds delta × 100,000 shares. Time left falls a day per bar (floored at
-     0.001 years); theta income accrues at dt = 1/252 a bar, the rebalancing
-     cost at ½Γ·(dS)², as in the app. Each bar depends only on the bars
-     before it, so the whole history is computed once. */
-  var sigma = 0.2, TT = 30 / 365, K = 100, contracts = 1000, dt = 1 / 252;
-  var hist = [];
-  (function () {
-    var cumTheta = 0, cumGammaCost = 0, lastSpot = 100;
-    for (var i = 0; i < path.length; i++) {
-      var p = path[i];
-      var remT = Math.max(0.001, TT - p.t / 365);
-      var d = DL.bsDelta(p.S, K, remT, sigma, 'call');
-      var g = DL.bsGamma(p.S, K, remT, sigma);
-      var shares = Math.round(d * contracts * 100);
-      if (i > 0) {
-        cumTheta += 0.5 * g * p.S * p.S * sigma * sigma * dt * contracts * 100;
-        var dS = p.S - lastSpot;
-        cumGammaCost += 0.5 * g * dS * dS * contracts * 100;
-      }
-      hist.push({ t: p.t, S: p.S, delta: d, shares: shares, cumTheta: cumTheta,
-                  cumGammaCost: cumGammaCost, net: cumTheta - cumGammaCost });
-      lastSpot = p.S;
-    }
-  })();
-  var LAST = path.length - 1;
-  var allS = path.map(function (q) { return q.S; });
-  var yMin = Math.min.apply(null, allS) * 0.98, yMax = Math.max.apply(null, allS) * 1.02;
-
-  var step = 0;
-  var FLOW_Y = 34, FLOW_H = 20, MAX_FLOW = 3000;
-
-  var draw = DL.figure(U + '-c', function (c) {
-    var p = new NMT.Plot(c, { xmin: 0, xmax: LAST, ymin: yMin, ymax: yMax,
-                              pad: { l: 44, r: 54, t: 66, b: 26 } });
-    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50], ys: [yMin, (yMin + yMax) / 2, yMax],
-                 x: function (v) { return v === 0 ? 'bar 0' : String(v); },
-                 y: function (v) { return '$' + v.toFixed(0); } });
-    var g = p.g, font = '11px ' + DL.color('sans');
-    var cAcc = DL.color('accent'), cSpot = DL.color('familiar'),
-        cBuy = DL.color('insight'), cSell = DL.color('plain');
-
-    /* the strike */
-    p.seg(0, K, LAST, K, { color: DL.fade(cAcc, 0.45), width: 1, dash: [3, 3] });
-    p.text(LAST, K, 'K=$' + K, { dx: 6, baseline: 'middle', color: cAcc, font: font });
-
-    /* the path: all of it faint, the part walked so far solid */
-    DL.line(p, path.map(function (q) { return q.t; }), allS,
-            { color: DL.fade(cSpot, 0.25), width: 1.4 });
-    var walked = path.slice(0, step + 1);
-    if (walked.length > 1)
-      DL.line(p, walked.map(function (q) { return q.t; }), walked.map(function (q) { return q.S; }),
-              { color: cSpot, width: 1.8 });
-
-    /* the dealer's trades, a band above the chart: buys up, sells down */
-    g.save();
-    g.strokeStyle = DL.color('rule'); g.lineWidth = 1;
-    g.beginPath(); g.moveTo(p.X(0), FLOW_Y + 0.5); g.lineTo(p.X(LAST), FLOW_Y + 0.5); g.stroke();
-    var bw = Math.max(2, (p.X(1) - p.X(0)) * 0.62);
-    for (var i = 1; i <= step; i++) {
-      var flow = hist[i].shares - hist[i - 1].shares;
-      if (!flow) continue;
-      var bh = Math.min(FLOW_H, Math.abs(flow) / MAX_FLOW * FLOW_H);
-      g.fillStyle = DL.fade(flow > 0 ? cBuy : cSell, 0.75);
-      g.fillRect(p.X(hist[i].t) - bw / 2, flow > 0 ? FLOW_Y - bh : FLOW_Y + 1, bw, bh);
-    }
-    g.font = font; g.textBaseline = 'middle';
-    g.textAlign = 'right'; g.fillStyle = DL.color('ink-faint');
-    g.fillText('flow', p.X(0) - 7, FLOW_Y);
-    g.textAlign = 'left';
-    g.fillStyle = cBuy; g.fillText('▲ buys', p.X(LAST) + 6, FLOW_Y - 10);
-    g.fillStyle = cSell; g.fillText('▼ sells', p.X(LAST) + 6, FLOW_Y + 11);
-    g.restore();
-
-    /* where the walk has got to */
-    var cur = hist[step];
-    g.save();
-    g.strokeStyle = DL.fade(cAcc, 0.3); g.lineWidth = 1;
-    g.beginPath(); g.moveTo(p.X(cur.t) + 0.5, FLOW_Y - FLOW_H - 2);
-    g.lineTo(p.X(cur.t) + 0.5, p.Y(yMin)); g.stroke();
-    g.restore();
-    p.dot(cur.t, cur.S, { r: 4, color: cAcc, ring: true });
-
-    var prev = hist[step - 1], trade = prev ? cur.shares - prev.shares : 0;
-    DL.out(U + '-bar-o', step + '/' + LAST);
-    DL.out(U + '-spot', 'spot = $' + cur.S.toFixed(2));
-    DL.out(U + '-delta', 'current delta = ' + cur.delta.toFixed(3));
-    DL.out(U + '-trade', 'shares this bar = ' + (trade === 0 ? '0' : DL.signed(trade, 0)));
-    /* signed as the app writes them, but a plain $0 before the first bar */
-    function money(x, sign) {
-      var s = DL.usd(Math.abs(x), 0);
-      return s === '$0' ? s : sign + s;
-    }
-    DL.out(U + '-theta', 'theta income = ' + money(cur.cumTheta, '+'));
-    DL.out(U + '-cost', 'gamma rebal cost = ' + money(cur.cumGammaCost, DL.MINUS));
-    DL.out(U + '-net', 'net dealer P&L = ' + money(cur.net, cur.net >= 0 ? '+' : DL.MINUS));
-    var over = cur.cumGammaCost > cur.cumTheta;
-    DL.out(U + '-vk', over ? 'Realized exceeded implied:' : 'Realized stayed below implied:');
-    DL.out(U + '-vt', over ? 'the rebalancing cost so far is more than the theta income.'
-                           : 'the rebalancing cost so far is no more than the theta income.');
-  });
-
-  /* Playback: nothing moves until play is pressed. One bar every 220 ms, as
-     the app; reduced motion jumps straight to the last bar. */
-  var raf = null, last = 0, acc = 0;
-  function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
-  function show(s) { step = s; BAR.value = s; draw(); }
-  function tick(ts) {
-    if (!last) last = ts;
-    acc += ts - last; last = ts;
-    var s = step;
-    while (acc >= 220 && s < LAST) { acc -= 220; s++; }
-    if (s !== step) show(s);
-    raf = s < LAST ? requestAnimationFrame(tick) : null;
-  }
-  function play() {
-    stop();
-    if (DL.still()) { show(LAST); return; }
-    show(0);
-    last = 0; acc = 0;
-    raf = requestAnimationFrame(tick);
-  }
-  function reset() { stop(); show(0); }
-
-  DL.$(U + '-play').addEventListener('click', play);
-  DL.$(U + '-pause').addEventListener('click', stop);
-  DL.$(U + '-reset').addEventListener('click', reset);
-  DL.bind([U + '-bar'], function () { stop(); step = parseInt(BAR.value, 10); draw(); });
-  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
-})();
-
-/* ---------- dollar-gamma-units-lab ---------- */
-(function () {
-  var U = 'dollar-gamma-units-lab';
-  var IDS = ['s', 'k', 't', 'iv', 'oi', 'm'].map(function (k) { return U + '-' + k; });
-  var conv = DL.seg(U + '-conv', update);
-
-  /* the app's fmt: $, then k, M or B past a thousand, two decimals */
-  function fmt(v) {
-    /* a word joiner keeps the minus on the line of its number */
-    var a = Math.abs(v), s = v < 0 ? DL.MINUS + '⁠' : '';
-    if (a >= 1e9) return s + '$' + DL.num(a / 1e9, 2) + 'B';
-    if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(2) + 'M';
-    if (a >= 1e3) return s + '$' + (a / 1e3).toFixed(2) + 'k';
-    return s + '$' + a.toFixed(2);
-  }
-  /* toExponential(2), as the app shows gamma, written 1.28 × 10⁻³ */
-  var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
-              '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
-  function sci(x) {
-    if (!isFinite(x)) return '—';
-    if (x === 0) return '0.00';
-    var p = x.toExponential(2).split('e'), e = String(parseInt(p[1], 10));
-    /* no-break spaces: a phone's narrow cell must not split the number */
-    return p[0] + ' × 10' + e.replace(/[-0-9]/g, function (ch) { return SUP[ch]; });
-  }
-
-  function update() {
-    var spot = DL.val(U + '-s'), strike = DL.val(U + '-k'), dte = DL.val(U + '-t'),
-        iv = DL.val(U + '-iv'), oi = DL.val(U + '-oi'), multiplier = DL.val(U + '-m');
-
-    /* the widget's chain, r = 4%, q = 0 */
-    var T = dte / 365;
-    var gPerShare = DL.bsGamma(spot, strike, T, iv);
-    var gPerContract = gPerShare * multiplier;
-    var dollarPerOnePerContract = gPerShare * spot * multiplier;
-    var dollarPerPctPerContract = gPerContract * spot * spot * 0.01;
-    var aggregate = dollarPerPctPerContract * oi;
-    var sign = conv() === '0dte' ? -1 : 1;
-    var signedAggregate = aggregate * sign;
-    /* gamma is never negative, so the dealer's side of the calls sets the sign */
-    var longGamma = sign > 0;
-
-    DL.out(U + '-s-o', DL.num(spot, 0));
-    DL.out(U + '-k-o', DL.num(strike, 0));
-    DL.out(U + '-t-o', dte + 'd');
-    DL.out(U + '-iv-o', (iv * 100).toFixed(0) + '%');
-    DL.out(U + '-oi-o', DL.num(oi, 0));
-    DL.out(U + '-m-o', String(multiplier));
-
-    DL.out(U + '-v0', sci(gPerShare));
-    DL.out(U + '-v1', sci(gPerContract));
-    DL.out(U + '-v2', fmt(dollarPerOnePerContract));
-    DL.out(U + '-v3', fmt(dollarPerPctPerContract));
-    DL.out(U + '-v4', fmt(aggregate));
-    DL.out(U + '-sg', '× dealer sign (' + (sign < 0 ? DL.MINUS : '+') + '1)');
-    DL.out(U + '-v5', fmt(signedAggregate));
-    DL.out(U + '-vk', longGamma ? 'Long γ, stabilizing.' : 'Short γ, destabilizing.');
-    DL.out(U + '-vt', 'Signed from the dealer\'s side, the open interest carries ' +
-           fmt(signedAggregate) + ' of dollar gamma per 1% move.');
-  }
-  DL.bind(IDS, update);
-  DL.figure('fig-' + U, update);
-})();
-
-</script>
 </body>
 </html>

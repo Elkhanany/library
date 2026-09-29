@@ -1,0 +1,164 @@
+<p class="eyebrow">Part XII · Strategy atlas · Chapter 12G</p>
+
+<h1>Options margin</h1>
+
+<p class="subtitle">How much capital a position ties up</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="1e.html">Chapter 1E</a> showed how margin works and why it can be called, and <a class="xref" href="2e.html">Chapter 2E</a> gave the rules of each kind of account. This chapter gives the margin on each options structure. Margin decides <em>how big</em> a position the broker allows, which directly caps the strategies you can run. The same legs can draw wildly different charges in different accounts.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Margin, margin calls, forced liquidation and path dependency (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
+<li>The account tiers: cash, Reg-T, portfolio margin and futures (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+<li>The strategy entries of Chapters 12B to 12E, and the out-of-the-money amount of an option (<a class="xref" href="5a.html">Chapter 5A</a>).</li>
+</ul>
+</div>
+
+<h2 id="three-retail-regimes-and-span">1 · Three retail regimes, and SPAN</h2>
+
+<p>Retail options accounts run under one of three margin regimes: a cash account, Reg-T margin or portfolio margin. Futures and options on futures have a fourth, SPAN, set by the exchange. This section takes them in that order, then gathers the charges for each structure in one table.</p>
+
+<h3 id="cash-account">Cash account</h3>
+
+<p>In a <span class="gloss" title="A brokerage account that trades only with settled cash and lends nothing, so it can never receive a margin call. Options sold in it must be covered by shares or by cash.">cash account</span> you post the full <span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional</span> of any obligation you take on. A cash-secured put requires the strike times 100 in cash per contract, and a covered call requires owning the underlying shares. You cannot sell naked calls or naked puts, and you cannot hold a spread whose short leg is not collateralized.</p>
+
+<p>This is the most restrictive regime, and also the safest. It has <em>no margin calls, because nothing in it is borrowed</em>. Most retail accounts that are not actively trading should default to a cash account and upgrade only when a strategy demands it.</p>
+
+<h3 id="reg-t-margin">Reg-T margin</h3>
+
+<p><span class="gloss" title="A margin model, named for the Federal Reserve's Regulation T, that requires a fixed percentage of each position's value. It is simple and does not change with market stress.">Reg-T margin</span> sets requirements by formula, with these key charges for options:</p>
+
+<ul>
+<li><strong>Long call or long put:</strong> pay the premium in full, with no further margin.</li>
+<li><strong>Short uncovered call:</strong> 20% of the underlying's value, less the amount the call is out of the money, plus the option's premium, with a floor of 10% of the underlying.</li>
+<li><strong>Short uncovered put:</strong> the same formula, with the same floor of 10%. A cash-secured put is the other way to hold a short put: it posts the strike in cash instead, as in a cash account.</li>
+<li><strong>Vertical credit spread:</strong> the width of the spread less the net credit received.</li>
+<li><strong>Vertical debit spread:</strong> pay the net debit, with no further margin.</li>
+<li><strong>Iron condor or iron butterfly:</strong> the larger of the two vertical spreads' requirements, since the underlying cannot finish in both wings at once. This netting assumes symmetrical wings; brokers treat unequal wings differently.</li>
+<li><strong>Calendar or diagonal:</strong> the long leg's debit less the short leg's credit. The long expiry counts in full, and you net the short leg's credit against it.</li>
+</ul>
+
+<p>For a short uncovered option, write \(P\) for its premium, \(S\) for the underlying's value and \(O\) for the out-of-the-money amount, all in points, so that the requirement per point is</p>
+
+<div class="eq" id="e-naked">
+\[ P + \max(0.20\,S - O,\ 0.10\,S) \]
+</div>
+
+<p>A contract's requirement is that times $100, as in the example below.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A naked call against a call spread</span>
+<p><strong>Step 1: the naked call.</strong> With SPX at 6,000, sell the 6,100 call, which is 100 points out of the money (OTM). The formula's main term is \(0.20 \times 6{,}000 - 100\), which is 1,100 points, or $110,000 of margin per contract before the premium. If the call sold for 15 points, <a class="eqref" href="#e-naked"></a> gives \(15 + 1{,}100 = 1{,}115\) points, or $111,500, well above the floor of \(15 + 600\).</p>
+
+<p><strong>Step 2: the same call, spread.</strong> Buy the 6,150 call against it, the bear call spread of <a class="xref" href="12c.html">Chapter 12C</a>, for a net credit of 8. The requirement becomes the width less the credit, \(50 - 8 = 42\) points, or $4,200.</p>
+
+<p><strong>Step 3: compare.</strong> A long call costing 7 points cut the requirement from $111,500 to $4,200, by a factor of about 27. It also turned an unbounded loss into a maximum loss of $4,200.</p>
+</div>
+
+<p>A 10-wide SPX put credit spread sold for $2 requires \((10 - 2) \times \$100\), which is $800 per contract. The iron condor of <a class="xref" href="12c.html">Chapter 12C</a>, with 50-point wings and a total credit of 15, requires the larger spread's width less the credit: \(50 - 15 = 35\) points, $3,500, exactly its maximum loss.</p>
+
+<p>Reg-T is <em>fixed</em> and <em>formulaic</em>, with no volatility parameter, so it does not move with realized volatility. The requirement on a short option changes only as the formula's inputs change: the index level, the out-of-the-money amount and the premium. In stress, what changes is not the formula but your account equity, if the position goes against you. The danger in Reg-T is not margin expansion but <em>position size relative to equity</em>: if equity falls and the margin obligation does not, you get a margin call.</p>
+
+<h3 id="portfolio-margin">Portfolio margin</h3>
+
+<p><span class="gloss" title="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress.">Portfolio margin</span> (PM) is <em>risk-based</em>: the broker simulates your whole portfolio under a move of ±15% in SPX combined with shocks to implied volatility. It then requires collateral against the <em>worst-case loss</em> in that set of scenarios. For diversified, hedged portfolios, PM is far more capital-efficient than Reg-T. The risk is the same, but the broker's netting reflects that the position is hedged.</p>
+
+<p>The catch is that <strong>PM is stress-tested</strong>: when realized volatility spikes, the broker widens its implied-volatility shock, the worst case gets worse and the requirement expands. In calm markets, a PM account might run at 5 to 10 times the leverage Reg-T would permit. In stress like March 2020 or Volmageddon (<a class="xref" href="8c.html">Chapter 8C</a>), the same account could see its requirements double or triple overnight.</p>
+
+<p>PM requires a minimum account size, typically $125,000 and sometimes $150,000 to $200,000 depending on the broker, along with demonstrated experience and an application. The capital efficiency is real, but so is the amplification in stress.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The naked call under a stress grid</span>
+<p><strong>Step 1: the calm grid.</strong> Value the naked 6,100 call from the example above at what it would pay at expiry, a simplification <a class="xref" href="2e.html">Chapter 2E</a> also uses. At +15%, SPX is at 6,900 and the call pays 800 points. Less the 15 of premium, the loss is 785 points, or $78,500, which is the requirement, below Reg-T's $111,500.</p>
+
+<p><strong>Step 2: a wider grid.</strong> If the broker widens the scenario to ±20%, SPX at 7,200 gives a loss of 1,085 points, or $108,500. At ±25%, SPX at 7,500 gives 1,385 points, or $138,500, now above Reg-T's figure. The position has not changed, and implied volatility has not yet been shocked at all.</p>
+</div>
+
+<h3 id="span-for-futures-and-options-on-futures">SPAN for futures and options on futures</h3>
+
+<p>Futures such as ES, MES and VIX futures (/VX), and options on futures such as ES options and crude oil options (/CL), are margined under <span class="gloss" title="The risk-based margin system for futures and options on futures, developed by the CME, which sets the requirement from the worst loss across a set of price and volatility scenarios.">SPAN</span>, the Standard Portfolio Analysis of Risk. SPAN is a risk-based system that CME developed. Like PM, it simulates a range of price and volatility scenarios and charges against the worst case. It operates at the <em>exchange clearing</em> layer instead, so the exchange sets its parameters, and they apply uniformly across all futures-cleared accounts.</p>
+
+<p>SPAN is typically far more capital-efficient than Reg-T for futures and options on futures. A single ES futures contract carries roughly $13,000 to $15,000 of initial SPAN margin, against a notional of \(\$50 \times 6{,}000\), or $300,000: 20 to 23 times leverage. <a class="xref" href="2e.html">Chapter 2E</a> quotes a higher range, $15,000 to $22,000, depending on conditions.</p>
+
+<p>That is why futures are the cleanest leveraged equity exposure available. SPAN's risk-based approach captures the actual hedging, a futures contract has no exercise that could be assigned early, and the Section 1256 tax treatment is automatic (<a class="xref" href="2e.html">Chapter 2E</a>).</p>
+
+<h2 id="margin-by-structure">2 · Margin by structure</h2>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Structure</th><th class="c-endpoint">Cash account</th><th class="c-other">Reg-T</th></tr></thead><tbody><tr><td class="c-trial" data-label="Structure">Long call or put</td><td class="c-endpoint" data-label="Cash account">Premium in full</td><td class="c-other" data-label="Reg-T">Premium in full</td></tr><tr><td class="c-trial" data-label="Structure">Covered call</td><td class="c-endpoint" data-label="Cash account">Own the shares</td><td class="c-other" data-label="Reg-T">Own the shares</td></tr><tr><td class="c-trial" data-label="Structure">Short put</td><td class="c-endpoint" data-label="Cash account">Strike × 100 in cash, as a cash-secured put</td><td class="c-other" data-label="Reg-T"><a class="eqref" href="#e-naked"></a> × $100, as an uncovered put</td></tr><tr><td class="c-trial" data-label="Structure">Short call, uncovered</td><td class="c-endpoint" data-label="Cash account">Not allowed</td><td class="c-other" data-label="Reg-T"><a class="eqref" href="#e-naked"></a> × $100</td></tr><tr><td class="c-trial" data-label="Structure">Vertical credit spread</td><td class="c-endpoint" data-label="Cash account">Only with the short leg collateralized</td><td class="c-other" data-label="Reg-T">Width less the credit</td></tr><tr><td class="c-trial" data-label="Structure">Vertical debit spread</td><td class="c-endpoint" data-label="Cash account">Only with the short leg collateralized</td><td class="c-other" data-label="Reg-T">Net debit</td></tr><tr><td class="c-trial" data-label="Structure">Iron condor or iron butterfly</td><td class="c-endpoint" data-label="Cash account">Only with the short legs collateralized</td><td class="c-other" data-label="Reg-T">The larger of the two spreads' requirements, for symmetrical wings</td></tr><tr><td class="c-trial" data-label="Structure">Calendar or diagonal</td><td class="c-endpoint" data-label="Cash account">Only with the short leg collateralized</td><td class="c-other" data-label="Reg-T">Net debit</td></tr></tbody></table></div></div>
+
+<p>Under portfolio margin, every structure is charged by the stress test: the worst loss of the whole portfolio across the broker's scenarios. Futures and options on futures are charged by SPAN, whose parameters the exchange sets.</p>
+
+<h2 id="what-to-take-away">3 · What to take away</h2>
+
+<p>The choice of margin regime is a strategic decision tied to the composition of your portfolio and your tolerance for stress. It is not a choice where more leverage is better. Cash accounts have zero margin-call risk, Reg-T offers leverage at a fixed cost, PM offers capital efficiency that contracts violently in stress, and SPAN offers the cleanest risk-based margin for futures-based strategies. Match the regime to the strategy.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Before opening any short-option position, compute its requirement in your own account: the formula for Reg-T, and the ±15%, ±20% and ±25% losses for portfolio margin. Size so that the widest of these still fits, with room for the position to move against you. Brokers add their own house requirements above these minimums (<a class="xref" href="1e.html">Chapter 1E</a>), so read your broker's schedule rather than relying on the formulas alone. Prefer a spread to a naked short when capital is the constraint: the bought wing buys both a capped loss and a far smaller requirement.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The requirement you see at entry is not the one you may have to meet in stress. Portfolio margin expands exactly when positions lose, as it did in March 2020 (<a class="xref" href="2e.html">Chapter 2E</a>). Reg-T does not expand by scenario, but a falling account can still breach it. A cash account cannot be called, yet it still loses whatever the positions lose.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Default to a cash account</strong> unless a strategy needs margin, and upgrade one tier at a time (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+<li><strong>Under Reg-T, size from the maximum loss</strong>, not from the requirement, since a spread's requirement equals its maximum loss but a naked option's does not.</li>
+<li><strong>Under portfolio margin, size to the ±25% requirement</strong>, not the ±15% one.</li>
+<li><strong>Use SPAN futures for leveraged index exposure</strong> rather than options bought on margin.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading the requirement as the risk</span>
+<p>A naked put's Reg-T requirement is a fraction of the loss it can take, and a portfolio-margin requirement in calm markets is about as small as it gets. Neither is the risk. The risk is the loss on the position in the move you are guarding against, and the requirement can grow to meet it only after the loss has begun.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A cash account posts the full notional and cannot be called. Reg-T sets requirements by formula, portfolio margin by a stress test and SPAN by the exchange.</li>
+<li>Under Reg-T, an uncovered option needs its premium plus 20% of the underlying less the out-of-the-money amount, with a floor of 10%. A credit spread needs its width less its credit, and a debit spread only its debit.</li>
+<li>A bought wing cut a naked call's requirement from $111,500 to $4,200 in the example, and capped its loss.</li>
+<li>Portfolio margin can run at 5 to 10 times Reg-T's leverage in calm markets and double or triple its requirements in stress.</li>
+<li>Match the regime to the strategy and to the stress you can survive.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">4 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>With SPX at 6,000, you sell a 5,900 put for 20 points in a Reg-T account. What margin does the formula require?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The put is 100 points out of the money, so by <a class="eqref" href="#e-naked"></a> the requirement is \(20 + \max(1{,}200 - 100,\ 600) = 1{,}120\) points, or $112,000 per contract.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>You sell a 25-wide SPX call spread for 6 points. What does Reg-T require, and how does that compare with its maximum loss?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The requirement is \((25 - 6) \times \$100\), which is $1,900, the same as its maximum loss.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Your portfolio-margin requirement is $40,000 in calm markets. What could it become in a March 2020-type stress?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Requirements could double or triple, to $80,000 or $120,000, while the positions are losing. Size so that the tripled figure still fits.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>One ES contract at 6,000 carries $13,000 of initial SPAN margin. What leverage does that give you?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The notional is \(\$50 \times 6{,}000\), which is $300,000, so the leverage is \(300{,}000/13{,}000\), about 23 times.</p>
+</div></details>
+</div>
+</div>

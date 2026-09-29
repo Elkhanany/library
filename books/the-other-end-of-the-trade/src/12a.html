@@ -1,154 +1,338 @@
-<p class="eyebrow">Part XII · Discipline · Chapter 12A</p>
+<p class="eyebrow">Part XII · Strategy atlas · Chapter 12A</p>
 
-<h1>The retail haircut for swing strategies</h1>
+<h1>Choosing a strategy by purpose</h1>
+
+<p class="subtitle">Start from what you want the position to do</p>
 
 <div class="callout where">
-<span class="ct">About this part</span>
-<p>Everything in Sections 1-11 was about understanding the mechanism. This section is about the operational discipline that turns understanding into compound returns. The framework is specifically oriented around <strong>swing trading SPX/SPY/QQQ/Mag-7 setups on horizons of 2 to 20 trading days</strong>, which is where most of the framework lives and where the dealer-mechanics framework has its sharpest practical application.</p>
+<span class="ct">Where we are</span>
+<p>Parts V to XI built the pieces: the option contract, its Greeks, the dealers on the other side and the views a swing trader forms. Part XII is the atlas that joins them, about 58 named option strategies, each taken apart into its legs. This chapter is its front door, which starts from what you want a position to do rather than from the strategies you happen to know.</p>
+</div>
 
-<p>The retail trader's problem isn't usually edge — most have access to genuinely tradeable setups. The problem is the gap between paper performance and live performance, which is dominated by behavioral and operational factors. <strong>A strategy with paper Sharpe of 0.80 routinely shows 0.20-0.40 in a retail account.</strong> This section is about closing that gap.</p>
-
-<p>Five sub-chapters:</p>
-
+<div class="tools"><b>What you need first</b>
 <ul>
-<li><strong>12A</strong> — The retail haircut. Why paper Sharpe degrades to user-account Sharpe, with concrete numbers.</li>
-<li><strong>12B</strong> — The conviction score. E × M × R × X × S as a pre-trade discipline.</li>
-<li><strong>12C</strong> — Pipeline and kill rules. Observation → interpretation → trade implication → sizing → invalidation, plus three levels of kill rules.</li>
-<li><strong>12D</strong> — Ten worked examples. Real swing-trade reasoning chains, applied.</li>
-<li><strong>12E</strong> — Setup cards. Operational one-pagers for the four core swing archetypes plus do-not-trade reference cards.</li>
+<li>The four primitive positions and their payoffs at expiry (<a class="xref" href="5a.html">Chapter 5A</a>).</li>
+<li>The Greeks: delta, gamma, theta and vega (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>The IV percentile, which decides whether implied volatility is cheap or rich (<a class="xref" href="5g.html">Chapter 5G</a>).</li>
+<li>The market thesis, the regime dashboard and the composite scorecard (Chapters 11B, 11A and 11G).</li>
 </ul>
 </div>
 
-<hr>
+<h2 id="how-the-atlas-is-built">1 · How the atlas is built</h2>
 
-<p>A swing strategy with paper Sharpe of 1.0 in a clean backtest routinely shows Sharpe of 0.3-0.5 in a retail account. The gap is not because backtests are wrong (well, sometimes they are — but assume yours isn't). The gap is because real implementation introduces friction at multiple layers, each one compounding on the previous.</p>
+<p>Every options strategy you meet, in retail content or on an institutional desk, reduces to a combination of the four primitives of <a class="xref" href="5a.html">Chapter 5A</a>, sometimes with a position in the underlying added. The primitives are the long call, the short call, the long put and the short put. The atlas catalogs approximately 58 named strategies, from the long call to the double diagonal, in four tiers of difficulty: novice, intermediate, advanced and expert (Chapters 12B to 12E). Within a tier, strategies are grouped by category: basic, income, credit spreads, neutral, calendar, debit spreads, directional, naked, ratio, ladders, synthetic, arbitrage and other.</p>
 
-<div class="callout brick">
-<p><strong>Defining "mechanical sleeve."</strong> Throughout Section 12 (and in the kill rules of 12C, the conviction discussion of 12B, and the discipline pipeline), the term <em>mechanical sleeve</em> refers to a rules-only sub-portfolio that executes predefined entries and exits without discretionary override. Examples: a systematic SPX cash-secured-put writing program; a 200-day-moving-average crossover allocation; a Connors RSI(2) mean-reversion bot on QQQ; a fixed monthly Iron Condor sale at 30 DTE. The defining property is that <em>no human judgment intervenes between signal and execution</em>.</p>
+<p>Each entry gives the same things in the same order. It starts with the legs, the market view the position expresses, its maximum profit and loss, its breakevens and its net Greeks at entry. Where it adds something, it gives the dealer's side of the trade: who takes the other side, and why. It closes with the regime the strategy fits, its common variations, how it fails and a worked example with strikes, premiums and profit or loss.</p>
 
-<p>Why the distinction matters: mechanical sleeves provide <strong>baseline market exposure</strong> that continues to compound during periods when discretionary judgment must be suspended — drawdown timeouts (per 12C kill rules), personal/health events, regime confusion, or simple loss-of-conviction phases. The mechanical sleeve is the portfolio's heartbeat; the discretionary sleeve is its thinking layer. A trader running only discretionary positions has no baseline; if discretion fails (and it sometimes will), the entire portfolio sits in cash earning Treasury yields.</p>
+<p>The treatment is reference-grade, so read it as a lookup rather than a narrative. Three chapters follow the tiers: <a class="xref" href="12f.html">Chapter 12F</a> maps market views to structures, <a class="xref" href="12g.html">Chapter 12G</a> gives the margin each structure ties up, and <a class="xref" href="12h.html">Chapter 12H</a> covers exercise and assignment.</p>
 
-<p><strong>Sleeve sizing.</strong> A reasonable structure for a swing-trading retail account is <strong>60-80% mechanical, 20-40% discretionary</strong>, with the mechanical sleeve weighted toward systematic equity exposure (factor or buy-and-hold) plus modest systematic premium selling. The discretionary sleeve takes the swing trades described in <a class="xref" href="10a.html">Section 10</a> and is where this entire curriculum's tactical layer operates.</p>
+<h3 id="reading-any-structure-add-the-legs">Reading any structure: add the legs</h3>
 
-<p>When this curriculum talks about "stopping all trading after a 25% drawdown" (12C) or "the conviction score governing entries" (12B), those rules apply to the <strong>discretionary</strong> sleeve only. Mechanical sleeves run regardless.</p>
+<p>A structure is a sum of legs, so its profit or loss (P&amp;L) at expiry is the sum of the legs' P&amp;Ls. Write \(S_T\) for the underlying's price at expiry and \(K\) for a strike. A call pays \(\max(S_T - K, 0)\) and a put \(\max(K - S_T, 0)\), counted plus if you bought it and minus if you sold it. Add the payoffs, then subtract the net debit you paid or add the net credit you received.</p>
+
+<p>Each payoff is a straight line with a single bend at its strike, so the sum is made of straight pieces that bend only at strikes. Measured per share, or per point of an index, the slope of the P&amp;L at a price \(S_T\) is</p>
+
+<div class="eq" id="e-slope">
+\[ \text{slope} = c - p + h \]
 </div>
 
-<h2 id="the-four-layers-of-friction-for-swing-strategies">1 · The four layers of friction for swing strategies</h2>
+<p>where \(c\) is the net number of calls struck below \(S_T\) (bought minus sold), \(p\) the net number of puts struck above \(S_T\), and \(h\) the number of shares held for each share an option covers, so a covered call has \(h = 1\).</p>
 
-<p><strong>1. Paper backtest.</strong> Baseline performance on historical data. Mid-quote fills (entry at midpoint of bid-ask). No transaction costs beyond a token commission. No taxes. Idealized entries. This is what the backtest engine produces.</p>
+<p>The slope tells you where to look: the maximum profit and the maximum loss sit at a strike, or far out at one end of the range. A profit or loss is unbounded only if the slope beyond the highest strike is not zero. Each breakeven lies on a sloped piece, where you can solve a straight-line equation for it.</p>
 
-<p><strong>2. Out-of-sample.</strong> Same strategy, same parameters, but on unseen data. This is where overfitting bias appears. A strategy with paper Sharpe 1.0 from in-sample optimization typically delivers Sharpe 0.5-0.7 out-of-sample on truly fresh data. The gap is the <strong>deflation factor</strong> from López de Prado's work (<a class="xref" href="1a.html">Section 1A</a>).</p>
+<div class="worked">
+<span class="ct">Worked example: Reading a call debit spread</span>
+<p><strong>Step 1: write the P&amp;L.</strong> Buy a 6,000 SPX call for 35 points and sell a 6,100 call for 15, a net debit of 20 points. At expiry the P&amp;L is \(\max(S_T - 6{,}000, 0) - \max(S_T - 6{,}100, 0) - 20\).</p>
 
-<p><strong>3. Live execution.</strong> Real bid-ask spreads on entry and exit (not mid-quote). Real slippage when sizing exceeds top-of-book depth. Real timing — you don't always see the setup form in real time as cleanly as you see it in the backtest. Real-world execution typically introduces another 20-30% Sharpe degradation.</p>
+<p><strong>Step 2: count the slopes.</strong> Below 6,000 no option is in the money, so the slope is 0. Between the strikes the bought call counts, so \(c = 1\) and the slope is +1. Above 6,100 the sold call cancels it, and the slope returns to 0.</p>
 
-<p><strong>4. After-tax, after-behavior.</strong> Tax friction (ordinary income on short-term gains for SPY/QQQ; 1256 60/40 for SPX/XSP, ES). Behavioral interventions — early exits, missed setups, position-size inconsistencies, the urge to revenge-trade after a loss. Behavioral friction is the largest single source of loss in the chain, and the one most retail traders deny exists.</p>
+<p><strong>Step 3: read the extremes.</strong> Below 6,000 the P&amp;L is −20 points, the maximum loss of $2,000 on the $100 multiplier. Above 6,100 it is \(100 - 20 = 80\) points, the maximum profit of $8,000.</p>
 
-<h2 id="the-compounding-haircut-equation">2 · The compounding haircut equation</h2>
+<p><strong>Step 4: solve for the breakeven.</strong> On the rising piece between the strikes, \(S_T - 6{,}000 - 20 = 0\) gives a breakeven of 6,020.</p>
+</div>
 
-<pre>SR_user = SR_paper × h_1 × h_2 × h_3 × h_4
+<p>Every formula in Chapters 12B to 12E comes from this counting. Where an entry gives no formula, as for calendars, the reason is that one leg is still alive when the other expires.</p>
 
-typical product: 0.30-0.60 — i.e., 30-60% of the paper Sharpe survives</pre>
+<h2 id="the-four-question-filter">2 · The four-question filter</h2>
 
-<p>Typical haircut values for a competent retail swing trader operating with discipline:</p>
+<p>The strategies in the atlas are vehicles, not edges. Do not ask which strategy you know. Ask instead: "<strong>what am I trying to express, and which structure expresses it most cleanly given current conditions?</strong>" Read this section before you open any entry.</p>
 
-<ul>
-<li><strong>h₁ = 0.70-0.85</strong> (out-of-sample degradation)</li>
-<li><strong>h₂ = 0.80-0.90</strong> (execution slippage and timing)</li>
-<li><strong>h₃ = 0.85-0.95</strong> (tax friction; depends heavily on instrument choice — XSP vs SPY)</li>
-<li><strong>h₄ = 0.70-0.90</strong> (behavioral; depends on discipline)</li>
-</ul>
+<p>Before choosing a structure, answer four questions in writing:</p>
 
-<p>Product: 0.35-0.58. A paper-Sharpe-1.0 strategy typically delivers user-Sharpe 0.4-0.6 in practice. <strong>This is the median outcome, not a pessimistic projection.</strong></p>
+<ol>
+<li><strong>Direction:</strong> is your view bullish, bearish, or neutral (range-bound, or no view)?</li>
+<li><strong>Conviction time horizon:</strong> does the view play out over days, weeks or months?</li>
+<li><strong>IV regime:</strong> is implied volatility cheap, with an <span class="gloss" title="The share of trading days in the past 52 weeks on which implied volatility was below today's level. It says how unusual today's level is among the days that actually occurred.">IV percentile</span> below 30, normal (30 to 70) or rich (above 70)?</li>
+<li><strong>Catalyst:</strong> is the view driven by a scheduled event, such as earnings, a Federal Reserve (<span class="gloss" title="The committee of the Federal Reserve that sets US short-term interest rates. It meets about eight times a year, roughly every six weeks. Abbreviated FOMC.">FOMC</span>) meeting or a Food and Drug Administration (FDA) decision, or by trend and structure?</li>
+</ol>
 
-<figure class="fig" id="fig-retail-haircut-decomposition">
-  <canvas id="retail-haircut-decomposition-c" data-h="184"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="retail-haircut-decomposition-sr">paper Sharpe</label>
-      <input type="range" id="retail-haircut-decomposition-sr" min="0" max="3" step="0.05" value="1">
-      <output id="retail-haircut-decomposition-sr-o" for="retail-haircut-decomposition-sr"></output>
-    </div>
-    <div class="ctrl">
-      <label for="retail-haircut-decomposition-h1">h₁ · out-of-sample</label>
-      <input type="range" id="retail-haircut-decomposition-h1" min="0.5" max="1" step="0.01" value="0.8">
-      <output id="retail-haircut-decomposition-h1-o" for="retail-haircut-decomposition-h1"></output>
-    </div>
-    <div class="ctrl">
-      <label for="retail-haircut-decomposition-h2">h₂ · execution</label>
-      <input type="range" id="retail-haircut-decomposition-h2" min="0.5" max="1" step="0.01" value="0.85">
-      <output id="retail-haircut-decomposition-h2-o" for="retail-haircut-decomposition-h2"></output>
-    </div>
-    <div class="ctrl">
-      <label for="retail-haircut-decomposition-h3">h₃ · tax</label>
-      <input type="range" id="retail-haircut-decomposition-h3" min="0.5" max="1" step="0.01" value="0.85">
-      <output id="retail-haircut-decomposition-h3-o" for="retail-haircut-decomposition-h3"></output>
-    </div>
-    <div class="ctrl">
-      <label for="retail-haircut-decomposition-h4">h₄ · behavior</label>
-      <input type="range" id="retail-haircut-decomposition-h4" min="0.5" max="1" step="0.01" value="0.8">
-      <output id="retail-haircut-decomposition-h4-o" for="retail-haircut-decomposition-h4"></output>
-    </div>
+<p>The four answers typically narrow the 58 strategies to 1 to 3 candidates.</p>
+
+<h2 id="the-selection-matrix">3 · The selection matrix</h2>
+
+<p>The matrix maps the answers to preferred structures. It has no column for the horizon, because the horizon sets the expiry of the structure you choose (<a class="xref" href="11m.html">Chapter 11M</a>), not the structure itself.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">View</th><th>IV regime</th><th>Catalyst</th><th class="c-result">Preferred structures</th></tr></thead><tbody><tr><td class="c-trial" data-label="View">Bullish</td><td data-label="IV regime">Cheap</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures">Long call; <span class="gloss" title="A position that buys a call and sells a call with a higher strike on the same underlying and expiry, for a net payment. It profits if the underlying rises, with both its gain and its loss capped. Also called a bull call spread or a long call spread.">call debit spread</span>; shares, or a LEAPS call as a <span class="gloss" title="A diagonal call spread that buys a deep in-the-money call with a distant expiry, often a LEAPS call, in place of shares, and sells shorter-dated out-of-the-money calls against it. Abbreviated PMCC.">poor man's covered call</span> (PMCC)</td></tr><tr><td class="c-trial" data-label="View">Bullish</td><td data-label="IV regime">Cheap</td><td data-label="Catalyst">Positive catalyst</td><td class="c-result" data-label="Preferred structures">Long call; call debit spread; <span class="gloss" title="A position that sells one option and buys more options of the same type further out of the money, often for little or no net premium. The call version profits most from a strong rally, the put version from a crash.">call ratio backspread</span></td></tr><tr><td class="c-trial" data-label="View">Bullish</td><td data-label="IV regime">Normal</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures">Call debit spread; shares; <span class="gloss" title="A position that sells a put and buys a put with a lower strike on the same underlying and expiry, for a net credit. It profits if the underlying stays above the sold strike, and its loss is capped by the bought put. Also called a bull put spread.">put credit spread</span></td></tr><tr><td class="c-trial" data-label="View">Bullish</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures"><strong>Put credit spread</strong>, preferred over a long call when IV is rich; <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">cash-secured put</span> on XSP</td></tr><tr><td class="c-trial" data-label="View">Bullish</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">Positive catalyst</td><td class="c-result" data-label="Preferred structures">Diagonal call spread; put credit spread. Avoid long calls, which risk an <span class="gloss" title="The fall in implied volatility once an awaited event, such as an earnings report, has passed. It cuts the value of options bought before the event, even when the price moves the way their buyer expected.">IV crush</span></td></tr><tr><td class="c-trial" data-label="View">Bearish</td><td data-label="IV regime">Cheap</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures">Long put; <span class="gloss" title="A position that buys a put and sells a put with a lower strike on the same underlying and expiry, for a net payment. It profits if the underlying falls, with both its gain and its loss capped. Also called a bear put spread or a long put spread.">put debit spread</span></td></tr><tr><td class="c-trial" data-label="View">Bearish</td><td data-label="IV regime">Normal</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures">Put debit spread; <span class="gloss" title="A position that sells a call and buys a call with a higher strike on the same underlying and expiry, for a net credit. It profits if the underlying stays below the sold strike, and its loss is capped by the bought call. Also called a bear call spread.">bear call spread</span></td></tr><tr><td class="c-trial" data-label="View">Bearish</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">Trend</td><td class="c-result" data-label="Preferred structures"><strong>Bear call spread</strong>, preferred; put debit spread</td></tr><tr><td class="c-trial" data-label="View">Bearish</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">Negative catalyst</td><td class="c-result" data-label="Preferred structures">Diagonal put spread; bear call spread. Avoid long puts</td></tr><tr><td class="c-trial" data-label="View">Neutral or range</td><td data-label="IV regime">Cheap</td><td data-label="Catalyst">None</td><td class="c-result" data-label="Preferred structures">Long <span class="gloss" title="A position that sells an option at one expiry and buys an option of the same type and strike at a later expiry, profiting from how the two re-price over time.">calendar</span> or <span class="gloss" title="A position that sells an option at one expiry and buys an option of the same type at a later expiry and a different strike. It is a calendar spread with the strikes moved apart.">diagonal</span>; long <span class="gloss" title="A position of a put and a call on the same underlying and expiry, with the put's strike below the price and the call's above it. Selling one is a bet that the price stays between the strikes.">strangle</span>, if the range is expected to break</td></tr><tr><td class="c-trial" data-label="View">Neutral or range</td><td data-label="IV regime">Normal</td><td data-label="Catalyst">None</td><td class="c-result" data-label="Preferred structures"><span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">Iron condor</span>, with extreme selectivity (<a class="xref" href="12c.html">Chapter 12C</a>); credit spreads on either side</td></tr><tr><td class="c-trial" data-label="View">Neutral or range</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">None</td><td class="c-result" data-label="Preferred structures">Iron condor or <span class="gloss" title="A four-option position that sells a put and a call at the same strike and buys a put below and a call above it as wings. It profits most if the underlying finishes at the middle strike, and the wings cap its loss.">iron butterfly</span> at an extreme IV percentile; short strangle if margin permits</td></tr><tr><td class="c-trial" data-label="View">Long volatility: a move expected, direction unknown</td><td data-label="IV regime">Cheap</td><td data-label="Catalyst">Imminent catalyst</td><td class="c-result" data-label="Preferred structures"><strong>Long <span class="gloss" title="A position of a call and a put on the same underlying with the same strike and expiry. Buying one is a bet on a large move either way; selling one is a bet that the underlying stays near the strike.">straddle</span> or strangle</strong>; ratio backspread</td></tr><tr><td class="c-trial" data-label="View">Long volatility</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">Imminent catalyst</td><td class="c-result" data-label="Preferred structures">Calendar or diagonal: long <span class="gloss" title="The implied volatility the market prices for the window between two expiries, found from the two expiries' implied volatilities because implied variance adds over time.">forward volatility</span> while short event volatility</td></tr><tr><td class="c-trial" data-label="View">Short volatility: no move expected</td><td data-label="IV regime">Rich</td><td data-label="Catalyst">None</td><td class="c-result" data-label="Preferred structures">Iron condor at an extreme IV percentile; short strangle; calendar</td></tr></tbody></table></div></div>
+
+<p>Two names in the table recur throughout the atlas. A <strong><span class="gloss" title="A spread of options bought for a net payment. The most it can lose is that payment.">debit spread</span></strong> is a spread bought for a net payment, and a <strong><span class="gloss" title="A spread of options sold for a net receipt, which is the most it can make. The bought option or options cap its loss.">credit spread</span></strong> a spread sold for a net receipt. An IV crush is the fall in implied volatility once an awaited event is past, which cuts the value of every option bought before it.</p>
+
+<h2 id="four-worked-examples">4 · Four worked examples</h2>
+
+<div class="worked">
+<span class="ct">Worked example: A trend on SPX</span>
+<p><strong>Step 1: answer the four questions.</strong> SPX is at 6,000 with a <span class="gloss" title="A single regime score from minus 100 to plus 100, built as a weighted average of eight dimensions of market state such as volatility, credit and trend. It permits and sizes swing trades rather than triggering them.">composite signal</span> of +45 (<a class="xref" href="11g.html">Chapter 11G</a>), a VIX of 14 (an IV percentile of 25%), <span class="gloss" title="One of the four phases of Stan Weinstein's stage analysis: Stage 1 basing, Stage 2 markup, Stage 3 distribution and Stage 4 markdown, read from the slope of a 30-bar moving average and where the price sits against it.">Stage 2</span> confirmed (<a class="xref" href="11e.html">Chapter 11E</a>) and no imminent catalyst. The view is bullish, the horizon a two-week swing, IV cheap, and the driver the trend.</p>
+
+<p><strong>Step 2: read the matrix.</strong> The bullish, cheap, trend row gives a long call, a call debit spread, or shares or a LEAPS call. The call debit spread is preferred, for its defined risk and capital efficiency given the modest IV.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: NVDA into earnings</span>
+<p><strong>Step 1: answer the four questions.</strong> NVDA is at $700 with earnings in 4 days, an IV percentile of 92% and a momentum signal firing on the screen. The view is bullish, the horizon runs through earnings, IV is very rich and the catalyst is imminent.</p>
+
+<p><strong>Step 2: read the matrix.</strong> The row gives a diagonal call spread or a put credit spread, and says to avoid long calls. The diagonal call spread is preferred: long a back-month call, short a front-month call at a strike near the <span class="gloss" title="The move the options market prices for a period, read as the price of the at-the-money straddle for that period divided by the price of the underlying. It approximates the average absolute move, about 0.8 of a one-standard-deviation move.">implied move</span> boundary. The implied move is the at-the-money straddle's price as a share of the stock price (<a class="xref" href="11i.html">Chapter 11I</a>). The diagonal captures the IV crush after earnings while keeping bullish exposure.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: A range on SPY</span>
+<p><strong>Step 1: answer the four questions.</strong> SPY is at $580 with a VIX of 28 (an IV percentile of 85%), a composite signal of +10 and an <span class="gloss" title="Wilder's measure of trend strength from 0 to 100, regardless of direction: a smoothed average of how one-sided the recent up and down moves have been. Abbreviated ADX. Below 20 is conventionally no trend and above 25 a strong one.">ADX</span> of 30, an extended trend (<a class="xref" href="11c.html">Chapter 11C</a>). The view is neutral because the composite is weak, with a 3-week horizon, rich IV and no catalyst.</p>
+
+<p><strong>Step 2: read the matrix.</strong> The row gives an iron condor or iron butterfly at an extreme IV percentile, or a short strangle. A defined-risk iron condor is preferred, because a composite of +10 is not strong enough to take a direction, while IV is rich enough to justify short volatility.</p>
+
+<p><strong>Step 3: size it, the critical step.</strong> Size very small, given the empirical underperformance of the CNDR iron condor index (<a class="xref" href="12c.html">Chapter 12C</a>): 0.25% of the portfolio at risk, not 1%.</p>
+</div>
+
+<p>The two traditions this book draws on disagree about this example, and both positions stand. The atlas allows the condor at a quarter of normal risk. The Edge Book rejects systematic iron condors for retail accounts on the CNDR record, allowing only occasional, discretionary condors at extreme implied volatility, sized small (<a class="xref" href="10i.html">Chapter 10I</a>). Whether a condor chosen for its regime escapes the systematic result is the open question between them (<a class="xref" href="10a.html">Chapter 10A</a>).</p>
+
+<div class="worked">
+<span class="ct">Worked example: AAPL before a product launch</span>
+<p><strong>Step 1: answer the four questions.</strong> AAPL is at $230 with an FDA-equivalent event in 7 days, here a product launch, an IV percentile of 70% and a screener flagging constructive momentum. The view is bullish, the horizon runs through the event, IV is elevated and the catalyst is imminent.</p>
+
+<p><strong>Step 2: read the matrix.</strong> An IV percentile of 70 sits on the line between normal and rich, which the example reads as rich. That row gives a diagonal call spread, long the back month and short the front month near the implied move, or a put credit spread.</p>
+
+<p><strong>Step 3: choose by the Greeks budget.</strong> For the most upside after the event, use a call debit spread sized small to absorb the IV crush. To trade a mispricing of event volatility, use the diagonal.</p>
+</div>
+
+<p>The last example steps outside its own row, since the matrix lists the call debit spread only where IV is cheap or normal. Read the matrix as a starting list, not a verdict.</p>
+
+<h2 id="the-selection-tree">5 · The selection tree</h2>
+
+<p>The figure turns the filter into a lookup, with one row of buttons for each question. Direction offers five answers: bullish, bearish, neutral or range, long volatility and short volatility. The horizon offers days, weeks or months, and the catalyst none, positive or negative. The IV regime offers cheap, normal or rich, labeled by IVp, the IV percentile: below 30, 30 to 70 and above 70.</p>
+
+<p>The figure starts at bullish, weeks, normal and no catalyst, and lists the structures its rules recommend, ranked, with the preferred one starred. Change the horizon first, then try bearish with rich IV and a negative catalyst, and short volatility with normal IV.</p>
+
+<figure class="fig" id="fig-strategy-selection-tree">
+  <div class="ctrls" role="group" aria-label="Direction" id="strategy-selection-tree-d">
+    <div class="ctrl"><label>1 · direction</label></div>
+    <div class="ctrl"><button type="button" data-v="bull" class="on" aria-pressed="true">Bullish</button>
+      <button type="button" data-v="bear" aria-pressed="false">Bearish</button>
+      <button type="button" data-v="neutral" aria-pressed="false">Neutral / range</button></div>
+    <div class="ctrl"><button type="button" data-v="longvol" aria-pressed="false">Long vol (move expected, direction unknown)</button></div>
+    <div class="ctrl"><button type="button" data-v="shortvol" aria-pressed="false">Short vol (no move expected)</button></div>
   </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="retail-haircut-decomposition-user"></output></div>
-    <div class="ctrl"><output id="retail-haircut-decomposition-drag"></output></div>
-    <div class="ctrl"><output id="retail-haircut-decomposition-bind"></output></div>
+  <div class="ctrls" role="group" aria-label="Time horizon" id="strategy-selection-tree-h">
+    <div class="ctrl"><label>2 · time horizon</label></div>
+    <div class="ctrl"><button type="button" data-v="days" aria-pressed="false">Days</button>
+      <button type="button" data-v="weeks" class="on" aria-pressed="true">Weeks</button>
+      <button type="button" data-v="months" aria-pressed="false">Months</button></div>
   </div>
-  <p class="readout" aria-live="polite"><b id="retail-haircut-decomposition-vk"></b> <span id="retail-haircut-decomposition-vt"></span></p>
-  <figcaption><b>Four haircuts between the backtest and the account.</b> Paper Sharpe × h₁ × h₂
-  × h₃ × h₄ = user Sharpe: each bar is the Sharpe left after one more layer of friction
-  (out-of-sample, execution, tax, behavior), and the binding constraint is the layer with the
-  largest drag. The dashed line is buy-and-hold SPX, which delivers a user Sharpe of roughly
-  0.40 after retail-typical tax and behavior haircuts; a strategy that ends below it is paying
-  you to underperform the index. The starting haircuts sit inside the typical ranges above and
-  turn a paper Sharpe of 1.0 into 0.46.</figcaption>
+  <div class="ctrls" role="group" aria-label="IV regime" id="strategy-selection-tree-iv">
+    <div class="ctrl"><label>3 · IV regime</label></div>
+    <div class="ctrl"><button type="button" data-v="cheap" aria-pressed="false">Cheap (IVp &lt; 30)</button>
+      <button type="button" data-v="normal" class="on" aria-pressed="true">Normal (30-70)</button></div>
+    <div class="ctrl"><button type="button" data-v="rich" aria-pressed="false">Rich (&gt; 70)</button></div>
+  </div>
+  <div class="ctrls" role="group" aria-label="Catalyst" id="strategy-selection-tree-cat">
+    <div class="ctrl"><label>4 · catalyst</label></div>
+    <div class="ctrl"><button type="button" data-v="none" class="on" aria-pressed="true">None / trend-driven</button></div>
+    <div class="ctrl"><button type="button" data-v="pos" aria-pressed="false">Catalyst (positive)</button>
+      <button type="button" data-v="neg" aria-pressed="false">Catalyst (negative)</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Recommended structures (ranked)</th><th>Note</th></tr></thead>
+    <tbody id="strategy-selection-tree-l0" hidden>
+      <tr class="on"><td class="c-trial">★ Call debit spread<span class="ev-meta">Preferred</span></td><td>Defined risk, capital efficient for cheap IV</td></tr>
+      <tr><td class="c-trial">2. Long call</td><td>Pure directional; IV is cheap so premium is fair</td></tr>
+      <tr><td class="c-trial">3. Shares + LEAP (PMCC)</td><td>If horizon extends to months</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l1" hidden>
+      <tr class="on"><td class="c-trial">★ Long call<span class="ev-meta">Preferred</span></td><td>Cheap IV + bullish catalyst = max convex upside</td></tr>
+      <tr><td class="c-trial">2. Call ratio backspread</td><td>Tail-explosion bet for free or small credit</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l2">
+      <tr class="on"><td class="c-trial">★ Call debit spread<span class="ev-meta">Preferred</span></td><td>Balanced cost vs upside cap</td></tr>
+      <tr><td class="c-trial">2. Put credit spread</td><td>Capture VRP on the bullish thesis</td></tr>
+      <tr><td class="c-trial">3. Shares</td><td>If horizon ≥ weeks and IV not a factor</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l3" hidden>
+      <tr class="on"><td class="c-trial">★ Put credit spread<span class="ev-meta">Preferred</span></td><td>Sell the rich put-side IV; bullish exposure</td></tr>
+      <tr><td class="c-trial">2. Cash-secured XSP put</td><td>Tax-efficient retail VRP harvest</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l4" hidden>
+      <tr class="on"><td class="c-trial">★ Diagonal call spread<span class="ev-meta">Preferred</span></td><td>Long back-month, short front-month near implied-move</td></tr>
+      <tr><td class="c-trial">2. Put credit spread</td><td>Avoid long calls — vol crush risk</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l5" hidden>
+      <tr class="on"><td class="c-trial">★ Long put<span class="ev-meta">Preferred</span></td><td>Cheap IV + bearish thesis = clean expression</td></tr>
+      <tr><td class="c-trial">2. Put debit spread</td><td>Defined-risk version</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l6" hidden>
+      <tr class="on"><td class="c-trial">★ Put debit spread<span class="ev-meta">Preferred</span></td><td>Balanced cost</td></tr>
+      <tr><td class="c-trial">2. Bear call spread</td><td>Credit version if you don't want directional debit</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l7" hidden>
+      <tr class="on"><td class="c-trial">★ Bear call spread<span class="ev-meta">Preferred</span></td><td>Capture rich IV with capped risk</td></tr>
+      <tr><td class="c-trial">2. Put debit spread</td><td>If you want directional debit despite expensive premium</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l8" hidden>
+      <tr class="on"><td class="c-trial">★ Long calendar / diagonal<span class="ev-meta">Preferred</span></td><td>Long forward vol; cheap entry</td></tr>
+      <tr><td class="c-trial">2. Long strangle</td><td>If range is expected to break</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l9" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor<span class="ev-meta">Preferred</span></td><td>Defined-risk income; size small per CNDR empirical data</td></tr>
+      <tr><td class="c-trial">2. Credit spread (either side)</td><td>Pick the side with richer skew</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l10" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor (at IVp &gt; 80)<span class="ev-meta">Preferred</span></td><td>Sized very small; wing breaks dominate long-run</td></tr>
+      <tr><td class="c-trial">2. Iron butterfly</td><td>Tighter zone, larger credit</td></tr>
+      <tr><td class="c-trial">3. Short strangle (margin only)</td><td>Only if PM permits and kill rules pre-committed</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l11" hidden>
+      <tr class="on"><td class="c-trial">★ Long straddle / strangle<span class="ev-meta">Preferred</span></td><td>Cheap IV + imminent move = positive convexity bet</td></tr>
+      <tr><td class="c-trial">2. Ratio backspread</td><td>Asymmetric long convexity for cheap entry</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l12" hidden>
+      <tr class="on"><td class="c-trial">★ Calendar / diagonal<span class="ev-meta">Preferred</span></td><td>Long forward vol while short event vol — captures the IV-crush asymmetry</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l13" hidden>
+      <tr class="on"><td class="c-trial">★ Long straddle<span class="ev-meta">Preferred</span></td><td>If a catalyst arrives</td></tr>
+      <tr><td class="c-trial">2. Long calendar (back-month)</td><td>Vega-positive with controlled theta</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l14" hidden>
+      <tr class="on"><td class="c-trial">★ Iron condor at IVp &gt; 80<span class="ev-meta">Preferred</span></td><td>Defined risk; size small</td></tr>
+      <tr><td class="c-trial">2. Short strangle (margin only)</td><td>Naked convexity for size; demanding regime check</td></tr>
+      <tr><td class="c-trial">3. Calendar (sell front, buy back)</td><td>If term-structure is backwardated</td></tr>
+    </tbody>
+    <tbody id="strategy-selection-tree-l15" hidden>
+      <tr class="on"><td class="c-trial">★ No clean fit<span class="ev-meta">Preferred</span></td><td>Re-check IV regime; short vol in non-rich IV is structural negative EV</td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>The four-question filter, as a lookup.</b> Answer the four questions and the
+  table lists the structures the app's rules recommend for that combination, ranked, with the
+  preferred one starred. The rules are distilled from the selection matrix above: direction,
+  IV regime and catalyst choose the list, and the time horizon enters only through the notes. A
+  combination the rules do not cover returns no clean fit.</figcaption>
 </figure>
 
-<p>If you find yourself thinking "I'll be better than the median because I'm more disciplined," you may be right — but the burden of proof is on you. Most traders who think they'll be better than the median are wrong.</p>
-
-<h2 id="the-behavioral-component-is-the-biggest-single-factor">3 · The behavioral component is the biggest single factor</h2>
-
-<p>Of the four haircut layers, the user-account layer (h₄) is consistently the largest single source of loss. <strong>Morningstar's annual <em>Mind the Gap</em> study has measured this for two decades</strong>: the difference between time-weighted fund returns and dollar-weighted investor returns runs consistently 100-200 basis points annually, with the gap widest in volatile, complex, and non-intuitive strategies.</p>
-
-<p>For swing trading specifically, the behavioral failure modes are:</p>
-
-<ol>
-<li><strong>Position-size inconsistency.</strong> Sizing larger after wins, smaller after losses. The reverse of what disciplined trading requires.</li>
-<li><strong>Stop migration.</strong> Moving stops further away as price approaches them, "to give the trade more room." This converts small losses into large ones.</li>
-<li><strong>Premature exits on winners.</strong> Closing winners early to "lock in profit" while letting losers run. The classic disposition effect.</li>
-<li><strong>Revenge trading.</strong> Taking marginal setups after a loss to "make it back," with predictable consequences.</li>
-<li><strong>Setup creep.</strong> Lowering the bar for what counts as a valid setup during slow weeks.</li>
-<li><strong>News chasing.</strong> Entering positions based on news after the move has already happened, rather than based on setup geometry.</li>
-</ol>
-
-<p>The fix is not "I'll behave better than the average investor." Most people who think this are wrong. <strong>The fix is structural</strong>: written rules, pre-committed entry criteria, mechanical position sizing, pre-committed kill criteria. Discipline only exists when it is binding under stress, and it is only binding when it was written down in calm conditions before the trade.</p>
-
-<h2 id="worked-example-a-swing-setup-paper-to-user">4 · Worked example: a swing setup, paper to user</h2>
-
-<p>Consider a trend-pullback swing setup on SPY: enter on RSI(2) &lt; 10 during Stage 2, exit at 21-EMA reclaim or 3-day time stop, fixed dollar-risk position sizing.</p>
+<p>At the start the table lists a call debit spread, starred, then a put credit spread and shares. Changing the horizon changes nothing: the figure asks the question, but no rule reads the answer, as its caption says. The figure keeps the app's rules word for word. They differ from the matrix above in these places:</p>
 
 <ul>
-<li><strong>Paper backtest</strong> (2015-2024, in-sample optimization): Sharpe 1.1, average trade duration 4 days, win rate 67%, average win/loss ratio 1.4:1.</li>
-<li><strong>Out-of-sample</strong> (2025 forward-walk, parameters frozen): Sharpe 0.8. Win rate drops to 60%.</li>
-<li><strong>Live execution</strong> (slippage on entry/exit at limit orders that don't always fill at mid): Sharpe 0.65.</li>
-<li><strong>After-tax</strong>: For a top-bracket US retail trader, all gains are short-term. Effective tax rate ~40%. After-tax Sharpe 0.45.</li>
-<li><strong>After-behavior</strong>: Sharpe 0.30-0.35.</li>
+<li><strong>Bearish, rich IV and a negative catalyst</strong> give the trend list, a bear call spread and a put debit spread, where the matrix gives a diagonal put spread and a bear call spread.</li>
+<li><strong>Bullish, cheap IV and a positive catalyst</strong> give a long call and a call ratio backspread, leaving out the matrix's call debit spread.</li>
+<li><strong>"Extreme" gets a number:</strong> the figure's condors are "at IVp &gt; 80", where the matrix says only "at an extreme IV percentile".</li>
+<li><strong>The figure ranks what the matrix only lists.</strong> It also adds a list for long volatility with normal IV or no catalyst: a long straddle, then a long back-month calendar.</li>
+<li><strong>Where the matrix has no row</strong>, such as short volatility when IV is not rich, the figure answers "No clean fit".</li>
 </ul>
 
-<p>The paper 1.1 became user 0.30-0.35. <strong>A 65-70% Sharpe haircut.</strong> This is normal. Plan for it.</p>
+<p>Where the two differ, treat both lists as candidates and let the rest of the filter decide.</p>
 
-<h2 id="plan-for-the-haircut-not-against-it">5 · Plan for the haircut, not against it</h2>
-
-<p>When you read a strategy description claiming Sharpe 0.85, your default expectation should be user-account 0.30-0.40. Use the haircut equation to <strong>filter strategies before committing capital</strong>: if the user-after-tax Sharpe doesn't beat just holding SPX outright, the strategy isn't worth the operational complexity.</p>
-
-<p>The honest framing: spending 100 hours implementing a paper-Sharpe-1.0 swing strategy and realizing 0.35 user-Sharpe is the median outcome. The win condition is to:</p>
+<h2 id="three-principles-that-override-the-matrix">6 · Three principles that override the matrix</h2>
 
 <ol>
-<li><strong>Pick strategies whose value doesn't depend on perfect execution.</strong></li>
-<li><strong>Pick instruments with favorable tax treatment.</strong> XSP/SPX/ES over SPY for the 1256 60/40 advantage.</li>
-<li><strong>Pick setups with simple, mechanical entry/exit rules.</strong></li>
-<li><strong>Pre-commit to position sizing.</strong></li>
+<li><strong>Defined risk over naked risk for single-stock positions through an event week, always.</strong> The matrix may suggest a long call or a short put. If the position is on a single name through a catalyst, spread it: the short put becomes a put credit spread, and the long call a call debit spread.</li>
+<li><strong>When in doubt, choose the simpler structure:</strong> a two-leg debit spread you understand executes better than a four-leg structure you sort of understand. Complexity has its own friction, since every leg crosses its own bid-ask spread (<a class="xref" href="2d.html">Chapter 2D</a>).</li>
+<li><strong>Match the instrument to size and tax bracket.</strong> Use XSP for retail swings on the index, SPX for size and the <span class="gloss" title="A market nickname, abbreviated Mag-7, for seven of the largest US companies by market value: NVDA, AAPL, GOOGL, MSFT, META, AMZN and TSLA.">Mag-7</span> single names for momentum plays (<a class="xref" href="11l.html">Chapter 11L</a>). Use anything else only if its liquidity is verified. XSP and SPX options are Section 1256 contracts, taxed 60/40 (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
 </ol>
+
+<h2 id="the-structure-is-not-the-thesis">7 · The structure is not the thesis</h2>
+
+<p>Every strategy in the atlas needs five things before it becomes a trade. The first two are a market thesis (<a class="xref" href="11b.html">Chapter 11B</a>) and a regime check against the dashboard and the composite (Chapters 11A and 11G). The other three are a conviction score (<a class="xref" href="13b.html">Chapter 13B</a>), explicit sizing (<a class="xref" href="13c.html">Chapter 13C</a>) and kill conditions committed in advance (<a class="xref" href="13c.html">Chapter 13C</a>). The structure expresses the thesis without constituting it.</p>
+
+<p>Choosing iron condors for their high probability of profit, without understanding the regime, is how retail traders lose money systematically over long horizons. The CNDR index, drawn against SPX in <a class="xref" href="12c.html">Chapter 12C</a>, is the evidence, and Chapters 10I and 13F take it further. Choosing long straddles before earnings without analyzing the volatility surface (<a class="xref" href="5g.html">Chapter 5G</a>) is how event-volatility traders give the entire risk premium back to the dealer.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>The work that produces edge is in the four-question filter. The structure is just the wrapper.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The structure is the regimen, not the diagnosis. A treatment guideline narrows the regimens for a tumor once its histology, stage, biomarkers and the patient's performance status are known, much as the matrix narrows 58 strategies to one to three. The guideline cannot make the diagnosis. A regimen chosen because it is familiar, before the workup, treats the wrong disease. A structure chosen before the thesis, because it wins often, trades the wrong market.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Write the four answers down before you look at an option chain, with the IV percentile as a number rather than a word. Record the structure you chose and why the other candidates lost. Count the legs as a cost: a four-leg structure crosses four bid-ask spreads to open and four more to close. Each leg also adds a way for expiry to go wrong (<a class="xref" href="12h.html">Chapter 12H</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The filter is only as good as its answers. An IV percentile ranks today's implied volatility against the past 52 weeks (<a class="xref" href="5g.html">Chapter 5G</a>), which does not prove that options are mispriced. The regime can change after you enter, turning a neutral view into a trend that breaks a condor's wing. The matrix also encodes preferences, not evidence: it says which structure fits a view, never whether the view has edge.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Answer the four questions in writing</strong> before you choose a structure.</li>
+<li><strong>Take the matrix row as a list of one to three candidates</strong>, then apply the three overriding principles.</li>
+<li><strong>Do not trade the structure</strong> until the thesis, regime check, conviction score, size and kill conditions exist (Chapters 11B, 13B and 13C).</li>
+<li><strong>For any iron condor, risk no more than 0.25% of the portfolio.</strong> Read Chapters 12C and 10I first.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: starting from the strategy you know</span>
+<p>Traders reach for the structure they have traded before and fit a view to it. The filter runs the other way, with the view first and the structure second. A trader who knows only iron condors finds a range in every chart.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Every strategy is a sum of the four primitives, so its P&amp;L at expiry is made of straight pieces that bend only at strikes, with slopes you can count.</li>
+<li>Four questions choose the structure: direction, horizon, IV regime and catalyst. The matrix narrows 58 strategies to 1 to 3, while the horizon sets only the expiry.</li>
+<li>Three principles override the matrix: defined risk on single names through events, the simpler structure when in doubt, and the instrument that fits your size and taxes.</li>
+<li>The selection tree keeps the app's rules, which differ from the matrix in a few named places.</li>
+<li>The structure expresses a thesis but never supplies one.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A call debit spread buys a 5,900 call and sells a 6,000 call for a net debit of 30 points. Use <a class="eqref" href="#e-slope"></a> to find its maximum profit, maximum loss and breakeven.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The slope is 0 below 5,900, +1 between the strikes and 0 above 6,000. Below 5,900 the P&amp;L is −30 points, a loss of $3,000. Above 6,000 it is \(100 - 30 = 70\) points, a profit of $7,000. The breakeven is where \(S_T - 5{,}900 - 30 = 0\), which is 5,930.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>You are bearish on SPX, the IV percentile is 80 and nothing is scheduled. Which structures does the matrix suggest?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The bearish, rich, trend row gives a bear call spread, preferred, or a put debit spread. The figure gives the same two, ranked the same way.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>You hold the same view, but with a negative catalyst ahead. Where do the matrix and the figure part ways?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The matrix gives a diagonal put spread or a bear call spread, and says to avoid long puts. The figure's rules return the trend list, a bear call spread and a put debit spread. Treat both lists as candidates.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A short put fits your view on a single stock that reports earnings this week. What does the first principle tell you to trade instead?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The first principle puts defined risk over naked risk for single names through an event. Buy a lower-strike put against the short one to make a put credit spread, whose loss is capped at the distance between the strikes less the credit.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Is a strategy that wins 85% of its trades worth choosing for that reason?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No, because a win rate says nothing about the size of the losses (<a class="xref" href="1c.html">Chapter 1C</a>). Iron condors win often, yet the CNDR index lagged SPX by a wide margin (<a class="xref" href="12c.html">Chapter 12C</a>). Choose the structure for the view it expresses, after the filter.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -394,15 +578,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;
@@ -760,81 +947,40 @@ var DL = (function () {
   };
 })();
 
-/* ---------- retail-haircut-decomposition ---------- */
+/* ---------- strategy-selection-tree ---------- */
 (function () {
-  var U = 'retail-haircut-decomposition';
-  var LAYERS = [
-    { key: 'h1', name: 'out-of-sample' },
-    { key: 'h2', name: 'execution' },
-    { key: 'h3', name: 'tax' },
-    { key: 'h4', name: 'behavior' }
-  ];
-  var LABELS = ['Paper', '× h₁', '× h₁h₂', '× h₁h₂h₃', 'User Sharpe'];
-  /* the app's baseline: buy-and-hold SPX, about 0.40 user Sharpe */
-  var BASE = 0.40;
+  var U = 'strategy-selection-tree';
+  var dir = DL.seg(U + '-d', update), hor = DL.seg(U + '-h', update),
+      ivr = DL.seg(U + '-iv', update), cat = DL.seg(U + '-cat', update);
 
-  /* a label centred on x, kept inside the canvas */
-  function tag(p, x, y, s, color, dy) {
-    var font = '11px ' + DL.color('sans');
-    p.g.font = font;
-    var w = p.g.measureText(s).width, px = p.X(x);
-    var at = Math.min(Math.max(px, w / 2 + 2), p.w - w / 2 - 2);
-    p.text(x, y, s, { dx: at - px, dy: dy, align: 'center', color: color, font: font });
+  /* the app's recommend(): its chain of rules, in its order, each ending in
+     one of the sixteen ranked lists (the horizon is asked but no rule reads it) */
+  function leaf(d, iv, c) {
+    if (d === 'bull' && iv === 'cheap' && c === 'none') return 0;
+    if (d === 'bull' && iv === 'cheap' && c === 'pos') return 1;
+    if (d === 'bull' && iv === 'normal') return 2;
+    if (d === 'bull' && iv === 'rich' && c === 'none') return 3;
+    if (d === 'bull' && iv === 'rich' && c === 'pos') return 4;
+    if (d === 'bear' && iv === 'cheap') return 5;
+    if (d === 'bear' && iv === 'normal') return 6;
+    if (d === 'bear' && iv === 'rich') return 7;
+    if (d === 'neutral' && iv === 'cheap') return 8;
+    if (d === 'neutral' && iv === 'normal') return 9;
+    if (d === 'neutral' && iv === 'rich') return 10;
+    if (d === 'longvol' && iv === 'cheap' && c !== 'none') return 11;
+    if (d === 'longvol' && iv === 'rich' && c !== 'none') return 12;
+    if (d === 'longvol') return 13;
+    if (d === 'shortvol' && iv === 'rich') return 14;
+    return 15;
   }
-
-  var draw = DL.figure(U + '-c', function (c) {
-    var paper = DL.val(U + '-sr');
-    var h = LAYERS.map(function (l) { return DL.val(U + '-' + l.key); });
-    var values = [paper, paper * h[0], paper * h[0] * h[1], paper * h[0] * h[1] * h[2],
-                  paper * h[0] * h[1] * h[2] * h[3]];
-    var user = values[4];
-    var maxBar = Math.max.apply(null, values.concat([0.01]));
-    /* the binding constraint: the first layer with the largest drag 1 - h */
-    var bind = 0;
-    for (var i = 1; i < 4; i++) if (1 - h[i] > 1 - h[bind]) bind = i;
-    /* the verdict sets the user Sharpe against the 0.40 baseline it names */
-    var above = user >= BASE;
-
-    /* bars top to bottom: paper at y = 5, user Sharpe at y = 1 */
-    var p = new NMT.Plot(c, { xmin: 0, xmax: Math.max(maxBar, BASE), ymin: 0.45, ymax: 5.55,
-                              pad: { l: 84, r: 46, t: 22, b: 6 }, grid: false });
-    DL.axes(p, { x: false, y: false, grid: false });
-    var start = DL.fade(DL.color('accent'), 0.6), mid = DL.fade(DL.color('familiar'), 0.45),
-        end = DL.fade(DL.color(above ? 'insight' : 'plain'), 0.7);
-    var ys = [5, 4, 3, 2, 1];
-    /* the baseline first, so the bars and their values sit over it */
-    DL.vline(p, BASE, { color: DL.color('ink-soft'), dash: [4, 4], width: 1.2 });
-    tag(p, BASE, 5.55, 'SPX buy-and-hold ≈ 0.40', DL.color('ink-soft'), -6);
-    DL.hbars(p, ys, values, { h: 0.62, color: function (v, k) {
-      return k === 0 ? start : k === 4 ? end : mid; } });
-    var font = '11px ' + DL.color('sans'), paperC = DL.color('paper');
-    values.forEach(function (v, k) {
-      p.text(0, ys[k], LABELS[k], { dx: -8, align: 'right', baseline: 'middle', font: font,
-                                    color: DL.color(k === 4 ? 'ink' : 'ink-soft') });
-      var s = v.toFixed(3);
-      p.g.font = font;
-      p.g.fillStyle = paperC;
-      p.g.fillRect(p.X(v) + 3, p.Y(ys[k]) - 7, p.g.measureText(s).width + 6, 14);
-      p.text(v, ys[k], s, { dx: 6, baseline: 'middle', font: font,
-                            color: DL.color(k === 4 ? (above ? 'insight' : 'plain') : 'ink-soft') });
-    });
-
-    DL.out(U + '-sr-o', paper.toFixed(2));
-    LAYERS.forEach(function (l, k) { DL.out(U + '-' + l.key + '-o', h[k].toFixed(2)); });
-    DL.out(U + '-user', 'user Sharpe = ' + user.toFixed(3));
-    /* 1 - user / paper, which is 1 - h1 h2 h3 h4 whatever the paper Sharpe,
-       so a paper Sharpe of zero still has a drag */
-    var drag = paper > 0 ? 1 - user / paper : 1 - h[0] * h[1] * h[2] * h[3];
-    DL.out(U + '-drag', 'total drag = ' + (drag * 100).toFixed(1) + '%');
-    DL.out(U + '-bind', 'binding = ' + LAYERS[bind].name + ' (' + ((1 - h[bind]) * 100).toFixed(0) + '%)');
-    if (above) {
-      DL.out(U + '-vk', 'Above the buy-and-hold baseline.');
-      DL.out(U + '-vt', 'Edge is plausibly real.');
-    } else {
-      DL.out(U + '-vk', 'Below the SPX buy-and-hold baseline (~0.40 user Sharpe).');
-      DL.out(U + '-vt', 'The paper strategy does not survive the haircut.');
+  function update() {
+    hor();
+    var k = leaf(dir(), ivr(), cat());
+    for (var j = 0; j < 16; j++) {
+      var body = DL.$(U + '-l' + j), show = j === k;
+      if (body.hidden === show) body.hidden = !show;
     }
-  });
-  DL.bind([U + '-sr', U + '-h1', U + '-h2', U + '-h3', U + '-h4'], draw);
+  }
+  DL.figure('fig-' + U, update);
 })();
 <!--/SCRIPT-->

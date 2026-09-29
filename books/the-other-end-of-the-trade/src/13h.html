@@ -1,0 +1,1090 @@
+<p class="eyebrow">Part XIII · Discipline · Chapter 13H</p>
+
+<h1>Managing total vega</h1>
+
+<p class="subtitle">The portfolio's exposure to volatility</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Parts V to IX treated vega one position at a time: what it measures, how it scales with DTE and IV, and how vanna and volga refine it. They did not ask what happens when five short-premium positions run at once. This chapter adds a book's vega up across positions, measures it against a budget, and hedges it. It closes with the trade journal that records every decision in the framework.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li><span class="gloss" title="The change in an option's value for a rise of one percentage point in implied volatility. It is positive for bought calls and puts, and largest for long-dated options at the money.">Vega</span> per <span class="gloss" title="One percentage point of annualized volatility, as in a move from 20% to 21% implied volatility. Also called a vol point.">volatility point</span>, and the multiplier that turns it into dollars (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>The VIX and its term structure (Chapters 5E and 9A), and <span class="gloss" title="A measure of how much an asset moves with the market. A stock with a beta of 1.5 moves, on average, 1.5% for each 1% move in the market.">beta</span> as a sensitivity to a common factor (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+<li>Correlations that rise in a crash (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+<li>The swing setups and short-premium structures whose vegas you add up (Chapters 11H and 12C), and the risk budgets of <a class="xref" href="13c.html">Chapter 13C</a>.</li>
+</ul>
+</div>
+
+<h2 id="why-vega-per-position-is-not-enough">1 · Why vega per position is not enough</h2>
+
+<p>The aggregate vega of a swing portfolio is rarely discussed in retail education. The Dealer Mechanics Lab calls it the single largest source of catastrophic loss in real premium-selling portfolios. Consider a swing trader running all of these at once:</p>
+
+<ul>
+<li>One SPX <span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">iron condor</span>, short vega.</li>
+<li>Two short <span class="gloss" title="A position that sells a put and buys a put with a lower strike on the same underlying and expiry, for a net credit. It profits if the underlying stays above the sold strike, and its loss is capped by the bought put. Also called a bull put spread.">put credit spreads</span> on SPY, short vega.</li>
+<li>One short <span class="gloss" title="A position of a put and a call on the same underlying and expiry, with the put's strike below the price and the call's above it. Selling one is a bet that the price stays between the strikes.">strangle</span> on QQQ, short vega.</li>
+<li>A program of <span class="gloss" title="A sold call option backed by owning the shares it may require you to deliver.">covered calls</span> on individual stocks, short vega.</li>
+<li>A LEAP <span class="gloss" title="A position that holds shares, buys a put below their price and sells a call above it, often at no net cost, so that both the loss and the gain on the shares are capped.">collar</span> on a core equity holding, with mixed vega.</li>
+</ul>
+
+<p>Each position, viewed alone, looks reasonable, and the trader has given each one 1% to 2% of the portfolio's risk. But the <strong><span class="gloss" title="The total change in a portfolio's value for a rise of one point in implied volatility, found by adding every position's vega in dollars, each scaled by its underlying's VIX beta. It measures how much a whole book loses when volatility rises.">aggregate vega</span></strong>, the total dollar P&amp;L for each volatility point the VIX moves, is typically the equivalent of being short several hundred dollars of SPX vega per point. When the VIX moves from 15 to 25 over three days, a routine stress episode and not a tail event, the mark-to-market loss across the portfolio can exceed the sum of the individual stop-loss budgets. Each stop was set on the price of its underlying and sized for the loss a price move would cause. A jump in implied volatility adds a loss that no price stop sees, in every position at once, before any single stop triggers.</p>
+
+<p>This is the <strong>vega correlation problem</strong>. Short-vega positions across SPX, SPY, QQQ and individual stocks are <em>not</em> diversified: they all lose together in a VIX-spike regime. The rule of risking 1% a trade, which works well for delta exposure, produces concentrated portfolio risk on the vega axis.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The problem is overlapping toxicity. Each drug in a regimen can be dosed within its own limit, but three drugs that all suppress the marrow add their toxicity on the same axis, and the patient meets the sum. Each short-premium position has its own risk limit, and all of them lose on the same axis when implied volatility rises. An aggregate vega budget is a cumulative limit for the whole regimen, set on that shared axis.</p>
+</div>
+
+<h2 id="adding-up-the-books-vega">2 · Adding up the book's vega</h2>
+
+<p>For each position \(i\), write \(\nu_i\) for the option's vega per unit of the underlying per volatility point, the number a platform shows (<a class="xref" href="5c.html">Chapter 5C</a>). With \(n_i\) contracts, a <span class="gloss" title="The number that converts an option's quoted price into dollars per contract: 100 for US stock and ETF options, and 100 dollars per index point for SPX options.">contract multiplier</span> \(m\) of 100, and a sign \(s_i\) of +1 for a long position and −1 for a short one, the position's vega in dollars per volatility point is</p>
+
+<div class="eq" id="e-pv">
+\[ V_i = s_i\, n_i\, m\, \nu_i \]
+</div>
+
+<p>If your platform gives vega per unit of \(\sigma\), the formula's own value, where 1.0 means 100 volatility points, multiply by 0.01 as well. The Dealer Mechanics Lab writes the rule with that factor for this reason.</p>
+
+<p>Single-name vega does not move one for one with the VIX. So scale each position by the <strong><span class="gloss" title="How many points an underlying's implied volatility typically moves for each point the VIX moves: 1.0 for SPX and SPY by definition, and less for single stocks, whose implied volatility is partly specific to the company.">VIX beta</span></strong> of its underlying, the number of points its implied volatility typically moves for each point of the VIX. The book's aggregate vega is then the sum</p>
+
+<div class="eq" id="e-agg">
+\[ V = \sum_i \beta_i\, V_i \]
+</div>
+
+<p>and a VIX move of \(\Delta\)VIX points changes the book's value by about \(V \times \Delta\text{VIX}\). The Lab gives typical VIX betas as ranges:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Underlying</th><th class="c-other">VIX beta</th><th class="c-result">Why</th></tr></thead><tbody><tr><td class="c-trial" data-label="Underlying">SPX, SPY</td><td class="c-other" data-label="VIX beta">1.00</td><td class="c-result" data-label="Why">By definition, since the VIX is SPX's volatility</td></tr><tr><td class="c-trial" data-label="Underlying">QQQ</td><td class="c-other" data-label="VIX beta">0.85 to 0.95</td><td class="c-result" data-label="Why">High beta, with slightly less movement in its implied volatility than SPX</td></tr><tr><td class="c-trial" data-label="Underlying">IWM</td><td class="c-other" data-label="VIX beta">0.80 to 0.90</td><td class="c-result" data-label="Why">Small companies, a different index</td></tr><tr><td class="c-trial" data-label="Underlying">Large single stocks, such as NVDA, MSFT and AAPL</td><td class="c-other" data-label="VIX beta">0.60 to 0.85</td><td class="c-result" data-label="Why">Varies by company</td></tr><tr><td class="c-trial" data-label="Underlying">Mid-cap and small-cap stocks</td><td class="c-other" data-label="VIX beta">0.40 to 0.65</td><td class="c-result" data-label="Why">Implied volatility specific to the company, less correlated with the VIX</td></tr></tbody></table></div></div>
+
+<p>A single at-the-money SPX option carries a lot of vega. <a class="xref" href="5c.html">Chapter 5C</a> puts a 30-day at-the-money SPX call at about 6.8 index points per volatility point with the index at 6,000 and implied volatility at 20%, about $680 a contract. Two short SPX puts like it hold about −$1,360 of vega per point on their own.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Adding up a swing book</span>
+<p><strong>Step 1: the positions.</strong> Take the book above with hypothetical vegas per contract, in dollars per volatility point, as a platform would show them after the multiplier:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Position</th><th>Side and size</th><th>Vega per contract</th><th>\(V_i\)</th><th>VIX beta</th><th>\(\beta_i V_i\)</th></tr></thead><tbody><tr><td class="c-trial" data-label="Position">SPX iron condor</td><td data-label="Side and size">Short 1</td><td data-label="Vega per contract">$300</td><td data-label="\(V_i\)">−$300</td><td data-label="VIX beta">1.00</td><td data-label="\(\beta_i V_i\)">−$300</td></tr><tr><td class="c-trial" data-label="Position">SPY put credit spreads, first</td><td data-label="Side and size">Short 10</td><td data-label="Vega per contract">$8</td><td data-label="\(V_i\)">−$80</td><td data-label="VIX beta">1.00</td><td data-label="\(\beta_i V_i\)">−$80</td></tr><tr><td class="c-trial" data-label="Position">SPY put credit spreads, second</td><td data-label="Side and size">Short 10</td><td data-label="Vega per contract">$8</td><td data-label="\(V_i\)">−$80</td><td data-label="VIX beta">1.00</td><td data-label="\(\beta_i V_i\)">−$80</td></tr><tr><td class="c-trial" data-label="Position">QQQ short strangle</td><td data-label="Side and size">Short 3</td><td data-label="Vega per contract">$30</td><td data-label="\(V_i\)">−$90</td><td data-label="VIX beta">0.90</td><td data-label="\(\beta_i V_i\)">−$81</td></tr><tr><td class="c-trial" data-label="Position">NVDA covered calls</td><td data-label="Side and size">Short 5</td><td data-label="Vega per contract">$20</td><td data-label="\(V_i\)">−$100</td><td data-label="VIX beta">0.75</td><td data-label="\(\beta_i V_i\)">−$75</td></tr><tr><td class="c-trial" data-label="Position">AAPL covered calls</td><td data-label="Side and size">Short 5</td><td data-label="Vega per contract">$15</td><td data-label="\(V_i\)">−$75</td><td data-label="VIX beta">0.70</td><td data-label="\(\beta_i V_i\)">−$52.50</td></tr></tbody></table></div></div>
+
+<p><strong>Step 2: the total.</strong> By <a class="eqref" href="#e-agg"></a>, the book holds \(V = -300 - 80 - 80 - 81 - 75 - 52.50 = -\$668.50\) per volatility point. The LEAP collar is left out, since a long put and a short call on the same holding offset each other's vega.</p>
+
+<p><strong>Step 3: the stress.</strong> A move in the VIX from 15 to 25 costs about \(10 \times 668.50 = \$6{,}685\), with no move in any price at all. On a $500,000 account that is 1.3% of the portfolio, spread across six positions none of whose stops has been touched.</p>
+</div>
+
+<h3 id="how-much-is-too-much">How much is too much</h3>
+
+<p>For a swing account of $250,000 to $1 million, the Lab puts a reasonable upper bound on aggregate short vega at $500 to $1,500 per volatility point. At that bound, a spike of 10 points in the VIX costs $5,000 to $15,000 on the marks. Beyond that, the portfolio becomes a directional bet on the VIX rather than a diversified swing book. The book in the example, at $668.50, sits inside the band.</p>
+
+<p>The Lab also gives a stress threshold in proportion to the account. When aggregate short vega exceeds 1% of the net asset value (NAV) per volatility point, the portfolio is over-concentrated: trim or hedge before adding any new short-premium position. The two limits do not agree. On a $1 million account, 1% of NAV per point is $10,000 per point, almost seven times the top of the band, and a 10-point spike at that level costs 10% of NAV. On $250,000 it is $2,500 per point. Use the dollar band as the working limit, since it binds first, and treat the NAV threshold as the point past which no new short premium goes on at all.</p>
+
+<h2 id="a-monitoring-cadence-for-vega">3 · A monitoring cadence for vega</h2>
+
+<ul>
+<li><strong>Daily, at the end of the day:</strong> compute aggregate vega from the current marks and compare it with last week's number. A large change needs investigating.</li>
+<li><strong>Weekly, at Friday's close:</strong> write a full report of the aggregate vega, each position's contribution, and the share of NAV that a spike of 10 volatility points would cost.</li>
+<li><strong>Before each event,</strong> such as an FOMC meeting, a <span class="gloss" title="A monthly index of the prices American consumers pay for a basket of goods and services, and a headline measure of US inflation. Its release is a scheduled market event. Abbreviated CPI.">Consumer Price Index</span> (CPI) release, <span class="gloss" title="The monthly change in the number of US jobs outside farming, the headline figure of the government's Employment Situation report, usually released on the first Friday of the month. Abbreviated NFP.">Non-Farm Payrolls</span> (NFP) or a major earnings report in a name the portfolio holds, recompute the aggregate vega. Consider trimming if it is elevated.</li>
+<li><strong>At the stress threshold:</strong> above 1% of NAV per volatility point, trim or hedge before adding any new short-premium position.</li>
+</ul>
+
+<h2 id="the-vega-portfolio-monitor">4 · The vega portfolio monitor</h2>
+
+<p>The figure adds up a book by <a class="eqref" href="#e-pv"></a> and <a class="eqref" href="#e-agg"></a>. Each row is a position: choose its instrument and side, and enter its contracts and its vega per contract in dollars per volatility point, from your platform at current marks. The VIX-beta adjustment uses a fixed value for each instrument: 1.00 for SPX and SPY, 0.90 for QQQ, 0.85 for IWM, 0.75 for NVDA, 0.70 for AAPL, 0.65 for MSFT and 0.50 for any other name. The figure opens with two positions, each short 5 SPY contracts at $25 of vega, and holds up to six. A strip marks the aggregate against the bands at $500 and $1,500 a point, and readouts give the book's P&amp;L for VIX spikes of 5, 10 and 15 points.</p>
+
+<p>Below the strip sits the macro vega overlay. Choose a target vega, <em>flat</em>, <em>half</em> or <em>full</em>, and set the VIX's spot level, 17 when the figure opens. The overlay counts the 90-day VIX calls, struck near 1.4 times the VIX's spot level and carrying about $80 of vega each, that take the book's vega to the target. <em>Flat</em> means a full hedge, down to zero vega. <em>Half</em> keeps half of today's vega. <em>Full</em> leaves the whole vega in place, so it buys nothing, and for a book that is long vega the overlay counts calls to sell instead. The monitor has no input for delta or for days to expiry: it needs only each position's vega at today's marks.</p>
+
+<p>The opening book's two positions of \(-5 \times 25 = -\$125\) make −$250 a point, so a spike of 10 points costs $2,500. At the half target the overlay buys \(\lceil 125/80 \rceil = 2\) calls struck near \(1.4 \times 17 \approx 24\), where \(\lceil\ \rceil\) rounds up. Then enter the worked example's six positions and switch between the targets.</p>
+
+<figure class="fig" id="fig-vega-portfolio-monitor">
+  <canvas id="vega-portfolio-monitor-c" data-h="120"></canvas>
+  <div class="ctrls">
+    <div class="ctrl"><output id="vega-portfolio-monitor-count"></output></div>
+    <div class="ctrl"><button type="button" id="vega-portfolio-monitor-add">+ add position</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Position</th><th>Ctr</th><th>Vega / ctr</th><th>β · vega_adj</th></tr></thead>
+    <tbody>
+      <tr id="vega-portfolio-monitor-p0"><td class="c-trial"><select aria-label="Position 1 instrument" id="vega-portfolio-monitor-i0"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 1 side" id="vega-portfolio-monitor-s0"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x0" aria-label="Remove position 1">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 1 contracts" id="vega-portfolio-monitor-n0" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 1 vega per contract" id="vega-portfolio-monitor-v0" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a0"></td></tr>
+      <tr id="vega-portfolio-monitor-p1"><td class="c-trial"><select aria-label="Position 2 instrument" id="vega-portfolio-monitor-i1"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 2 side" id="vega-portfolio-monitor-s1"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x1" aria-label="Remove position 2">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 2 contracts" id="vega-portfolio-monitor-n1" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 2 vega per contract" id="vega-portfolio-monitor-v1" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a1"></td></tr>
+      <tr id="vega-portfolio-monitor-p2" hidden><td class="c-trial"><select aria-label="Position 3 instrument" id="vega-portfolio-monitor-i2"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 3 side" id="vega-portfolio-monitor-s2"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x2" aria-label="Remove position 3">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 3 contracts" id="vega-portfolio-monitor-n2" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 3 vega per contract" id="vega-portfolio-monitor-v2" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a2"></td></tr>
+      <tr id="vega-portfolio-monitor-p3" hidden><td class="c-trial"><select aria-label="Position 4 instrument" id="vega-portfolio-monitor-i3"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 4 side" id="vega-portfolio-monitor-s3"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x3" aria-label="Remove position 4">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 4 contracts" id="vega-portfolio-monitor-n3" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 4 vega per contract" id="vega-portfolio-monitor-v3" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a3"></td></tr>
+      <tr id="vega-portfolio-monitor-p4" hidden><td class="c-trial"><select aria-label="Position 5 instrument" id="vega-portfolio-monitor-i4"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 5 side" id="vega-portfolio-monitor-s4"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x4" aria-label="Remove position 5">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 5 contracts" id="vega-portfolio-monitor-n4" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 5 vega per contract" id="vega-portfolio-monitor-v4" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a4"></td></tr>
+      <tr id="vega-portfolio-monitor-p5" hidden><td class="c-trial"><select aria-label="Position 6 instrument" id="vega-portfolio-monitor-i5"><option value="SPX">SPX</option><option value="SPY" selected>SPY</option><option value="QQQ">QQQ</option><option value="IWM">IWM</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="Other">Other</option></select>
+        <select aria-label="Position 6 side" id="vega-portfolio-monitor-s5"><option value="short" selected>short</option><option value="long">long</option></select>
+        <div class="ctrl"><button type="button" id="vega-portfolio-monitor-x5" aria-label="Remove position 6">×</button></div></td>
+        <td data-label="Ctr"><input type="number" aria-label="Position 6 contracts" id="vega-portfolio-monitor-n5" min="0" max="999" step="1" value="5"></td>
+        <td data-label="Vega / ctr"><input type="number" aria-label="Position 6 vega per contract" id="vega-portfolio-monitor-v5" min="0" max="9999" step="1" value="25"></td>
+        <td data-label="β · vega_adj" id="vega-portfolio-monitor-a5"></td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="vega-portfolio-monitor-agg"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="vega-portfolio-monitor-k5"></output></div>
+    <div class="ctrl"><output id="vega-portfolio-monitor-k10"></output></div>
+    <div class="ctrl"><output id="vega-portfolio-monitor-k15"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Target vega" id="vega-portfolio-monitor-tgt">
+      <label>target vega</label>
+      <button type="button" data-v="flat" aria-pressed="false">flat</button>
+      <button type="button" data-v="half" class="on" aria-pressed="true">half</button>
+      <button type="button" data-v="full" aria-pressed="false">full</button>
+    </div>
+    <div class="ctrl">
+      <label for="vega-portfolio-monitor-vix">VIX spot</label>
+      <input type="number" id="vega-portfolio-monitor-vix" min="1" max="150" step="1" value="17">
+    </div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="vega-portfolio-monitor-vk"></b> <span id="vega-portfolio-monitor-vt"></span></p>
+  <figcaption><b>Short vega does not diversify.</b> Each position's vega per contract, in
+  dollars per vol point, times its contracts and side, is scaled by its underlying's VIX beta
+  (SPX and SPY 1.00, QQQ 0.90, IWM 0.85, NVDA 0.75, AAPL 0.70, MSFT 0.65, other 0.50), and the
+  sum is the aggregate vega: the strip marks it against the bands at $500 and $1,500 a vol
+  point, and a VIX spike of 5, 10 or 15 points moves the book by that many times it. The overlay
+  counts the 90-DTE VIX calls, struck near 1.4 × VIX spot with about $80 of vega each, that take
+  the vega to a target: flat (a full hedge), half of today's, or the full vega left in
+  place.</figcaption>
+</figure>
+
+<p>For the worked book the aggregate reads −$669 a point, the figure's rounding of −$668.50, inside the band, and a spike of 15 points costs $10,028. A half target buys \(\lceil 334.25/80 \rceil = 5\) calls, a flat target 9, and a full target none. Switching a covered call from NVDA to "other" shrinks its contribution, since the figure's beta for other names is 0.50. The counts are informational only, because a VIX call's vega varies with implied volatility and time to expiry.</p>
+
+<h2 id="hedging-short-vega-the-macro-vega-overlay">5 · Hedging short vega: the macro vega overlay</h2>
+
+<p>Three practical hedges fit a book with too much short vega:</p>
+
+<ol>
+<li><strong>Long-dated VIX calls, 90 to 180 days to expiry.</strong> The cleanest macro hedge of vega. Strike them at a VIX of 25 to 30, well above the mean of about 17 for the curve from the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next nine days, the short end of the VIX term structure.">VIX9D</span> to the VIX3M. Size them to cover <em>half</em> of the aggregate short vega, since a full hedge costs too much carry and defeats the purpose of harvesting the VRP. Roll them quarterly. The figure's strike of 1.4 times spot lands in that range when the VIX is between about 18 and 21.</li>
+<li><strong>Long SPX puts, 90 to 180 days to expiry, struck at 90% to 92% of the index.</strong> These carry direction along with vega. They are cheaper than VIX calls in absolute dollars but more correlated with the delta book, so they are less pure as a hedge of vega. They are useful when the swing portfolio is already net long delta.</li>
+<li><strong>Purchases of long-dated SPX call spreads or put spreads, 60 to 90 days to expiry.</strong> They have defined risk and a small positive vega. They are less powerful than the first two but cheaper, and useful as a partial offset when the short vega is modest, below 0.5% of NAV per volatility point.</li>
+</ol>
+
+<p><strong>Do not hedge short vega with more option sales.</strong> Selling deeper out-of-the-money (OTM) puts to "fund" the hedge increases the aggregate short vega rather than reducing it. The hedge must consume premium, not generate it. <a class="xref" href="12f.html">Chapter 12F</a> lists the same first two hedges for a short-volatility book, and <a class="xref" href="10i.html">Chapter 10I</a> sets these VIX calls apart from the VIX exchange-traded products it rejects.</p>
+
+<h2 id="common-failure-modes">6 · Common failure modes</h2>
+
+<div class="callout warn">
+<span class="ct">Common mistake: stealth accumulation of vega</span>
+<p>A trader adds one iron condor a month for six months. Each looks like 1% of risk, but the aggregate vega has grown to six times the size of one position, and no single decision triggered a review. Track aggregate vega as a portfolio-level metric, not only the risk of each position.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: a pre-event hedge that is too small</span>
+<p>Before an FOMC meeting, the trader buys $500 of VIX calls "for protection" against a book with $1,200 of short vega per point. At a hypothetical $250 a call, $500 buys 2 calls and about $160 of vega, 13% of the exposure, which is too small to matter. Size a hedge as a fraction of the gross exposure it hedges, 30% to 50%, not as a fraction of free cash: here $360 to $600 of vega, 5 to 8 calls.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: hedging with VIX calls that expire this month</span>
+<p>Short-dated VIX calls decay catastrophically. The VIX's own volatility of volatility, which the <span class="gloss" title="Cboe's index of the implied volatility of options on the VIX: the volatility of volatility. It is high when traders pay up for protection against sudden jumps in the VIX.">VVIX</span> measures, is high, so the calls carry a lot of time value, and near expiry it melts fast while <span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">charm</span> pulls their delta toward zero. Long-dated calls cost more in absolute dollars but decay more slowly, and they protect across a stress that unfolds over several weeks.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: counting a LEAP collar as short vega</span>
+<p>A covered call on a stock together with a protective put, the classic LEAP collar, is approximately vega-neutral. Do not count it as short vega in the aggregate.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Add up vega every day,</strong> beta-adjusted, across every position, and report it weekly with the cost of a 10-point spike.</li>
+<li><strong>Keep aggregate short vega within $500 to $1,500 per point</strong> on a $250,000 to $1 million account, and add no short premium above 1% of NAV per point.</li>
+<li><strong>Hedge about half of it</strong> with VIX calls 90 to 180 days out, rolled quarterly, or with longer-dated SPX puts when the book is already long delta.</li>
+<li><strong>Recompute before every scheduled event,</strong> and never hedge by selling more options.</li>
+</ul>
+</div>
+
+<h2 id="the-trade-journal">7 · The trade journal</h2>
+
+<p>Every trade in the framework is logged with the same fields. Implement the template in any tool, such as Notion, Obsidian, Sheets or plain markdown, and keep the field set the same across trades:</p>
+
+<pre>Trade ID: YYYY-MM-DD-N
+
+=== PRE-TRADE ===
+Date and time of decision:
+Symbol and instrument:
+Setup type: [Trend Pullback | Compression Breakout |
+             Undercut and Reclaim | IBS+RSI |
+             Pre-earnings momentum | Other]
+Macro regime (composite signal):
+Stage classification:
+Required conditions (check all):
+  [ ] Composite signal conditions met
+  [ ] Setup-specific entry trigger fired
+  [ ] No event-day overlay restrictions
+  [ ] Position size within portfolio limits
+  [ ] Conviction score:
+        E (evidence):
+        M (mechanism):
+        R (regime):
+        X (execution):
+        S (sizing):
+        C (product):
+
+=== EXECUTION ===
+Mid price at decision:
+Limit order submitted:
+Fill price:
+Fill time:
+Bid-ask spread at fill:
+Slippage against mid (bps):
+Time of day:
+
+=== POSITION ===
+Risk budget (dollars):
+Risk budget (% of portfolio):
+Entry price:
+Stop level:
+Position size:
+Notional deployed:
+Notional as % of portfolio:
+Time stop:
+Profit target:
+
+=== MANAGEMENT ===
+[Adjustments during the trade: additions, partial exits, stop moves]
+[Allowed: a stop trailed up behind a winner, or a full exit.
+ Not allowed: stop migration, moving the stop away from the price.]
+
+=== OUTCOME ===
+Exit reason: [profit target | stop | time stop |
+              discretionary | event-driven]
+Exit price:
+Exit time:
+Days held:
+P&amp;L (dollars):
+P&amp;L (% of portfolio):
+R-multiple (P&amp;L / risk budget):
+
+=== POST-TRADE REVIEW ===
+What went as planned:
+What surprised me:
+Errors made:
+Framework lessons:
+Should I have skipped this trade, in hindsight? Why?
+Did the regime change during the hold?</pre>
+
+<p>The management line allows only two stop moves: a <span class="gloss" title="A stop-loss order that is moved up behind a rising price, for example to just below a rising moving average, so that it protects gains without capping them.">trailing stop</span> raised behind a winning long position, or a full exit. It forbids <span class="gloss" title="Moving a stop-loss order further from the price as the price approaches it, to avoid taking the planned loss. It turns small planned losses into large ones.">stop migration</span>, moving the stop further from the price as the price approaches it (<a class="xref" href="11n.html">Chapter 11N</a>), which turns a planned loss into a larger one. A trade's R-multiple is its P&amp;L divided by the risk budget, R (<a class="xref" href="11h.html">Chapter 11H</a>).</p>
+
+<p>Three principles make the journal work:</p>
+
+<ol>
+<li><strong>Write everything before the trade.</strong> The pre-trade fields are filled in before you click buy, which catches lazy setups.</li>
+<li><strong>Do not editorialize the outcome.</strong> Record what happened, not what should have happened.</li>
+<li><strong>Review monthly.</strong> Scan the trades of the prior 4 to 6 weeks and look for patterns: which setups produced positive <span class="gloss" title="A trade's profit or loss divided by R, the dollar loss planned if its stop is hit. A gain of twice the planned risk is 2R, and a full stop-out is minus 1R.">R-multiples</span>, and which regimes worked.</li>
+</ol>
+
+<p>The journal is the framework's external memory. Without it, the framework cannot improve over time.</p>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Short-vega positions across SPX, SPY, QQQ and single stocks lose together in a VIX spike, so per-trade risk limits leave the vega axis concentrated.</li>
+<li>A position's vega in dollars per point is \(s_i\, n_i\, m\, \nu_i\). Scale each by its underlying's VIX beta and add them up.</li>
+<li>Keep aggregate short vega within $500 to $1,500 per point on a swing account of $250,000 to $1 million; the dollar band binds before the NAV rule.</li>
+<li>Hedge about half the short vega with VIX calls 90 to 180 days out, never with more option sales.</li>
+<li>Log every trade in the journal, with pre-trade fields filled before entry, and review the patterns monthly.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>You are short 4 SPX puts with a vega of $650 a contract and short 10 QQQ puts with a vega of $12 a contract. What is the aggregate vega, and what does a 10-point VIX spike cost?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The SPX puts give \(-4 \times 650 = -\$2{,}600\) per point at a beta of 1.00. The QQQ puts give \(-10 \times 12 = -\$120\), scaled by 0.90 to −$108. The aggregate is −$2,708 per point, and a 10-point spike costs about $27,080. That is well above the $1,500 top of the band, so trim or hedge before adding anything.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Your book holds −$1,200 of vega per point, and you want to hedge half of it with VIX calls carrying about $80 of vega each. How many do you buy, and why not hedge it all?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Half is $600, so \(600/80 = 7.5\), which rounds up to 8 calls. A full hedge costs too much in carry: the calls decay while you wait for a spike, and flattening the vega completely gives up the VRP the book exists to harvest.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>In the figure, what do the flat, half and full targets do to a book of −$400 per point?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Flat takes the vega to zero, which needs \(\lceil 400/80 \rceil = 5\) calls. Half takes it to −$200, which needs \(\lceil 200/80 \rceil = 3\) calls. Full leaves the whole −$400 in place, so the overlay buys nothing.</p>
+</div></details>
+</div>
+</div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- vega-portfolio-monitor ---------- */
+(function () {
+  var U = 'vega-portfolio-monitor', MAX = 6;
+  var VIX_BETA = { SPX: 1.00, SPY: 1.00, QQQ: 0.90, IWM: 0.85, NVDA: 0.75, AAPL: 0.70,
+                   MSFT: 0.65, Other: 0.50 };
+  var FRESH = { i: 'SPY', s: 'short', n: '5', v: '25' };
+  var n = 2;
+  var target = DL.seg(U + '-tgt', function () { draw(); });
+
+  function el(f, k) { return DL.$(U + '-' + f + k); }
+  function num(id) { var x = parseFloat(DL.$(id).value); return isFinite(x) ? x : 0; }
+  /* the app's fmt(): a sign on positives, dollars with no cents */
+  function fmt(v) { return (v >= 0 ? '+' : DL.MINUS) + '$' + DL.num(Math.abs(v), 0); }
+  /* the same in a readout, where a word joiner keeps the sign on the line
+     with the dollar sign */
+  function money(v) { return (v >= 0 ? '+' : DL.MINUS) + '\u2060$' + DL.num(Math.abs(v), 0); }
+  /* tick labels: the app's bands while they are in view, round steps beyond */
+  function short(v) {
+    if (v === 0) return '$0';
+    var s = DL.compact(Math.abs(v), 1, '$').replace('.0', '');
+    return (v > 0 ? '+' : DL.MINUS) + s;
+  }
+
+  function compute() {
+    var rows = [], pv = 0;
+    for (var k = 0; k < n; k++) {
+      var inst = el('i', k).value;
+      /* the app looked "Other" up in a beta override it never let the reader
+         set (1.00); the figure uses the table's own 0.50 */
+      var beta = VIX_BETA[inst];
+      var sign = el('s', k).value === 'long' ? 1 : -1;
+      var adj = num(U + '-v' + k) * num(U + '-n' + k) * sign * beta;
+      rows.push({ beta: beta, adj: adj });
+      pv += adj;
+    }
+    var t = target();
+    var tv = t === 'flat' ? 0 : t === 'half' ? pv / 2 : pv;
+    return { rows: rows, pv: pv, target: t, tv: tv, gap: tv - pv };
+  }
+  function tone(pv) {
+    var a = Math.abs(pv);
+    return a < 500 ? 'insight' : a < 1500 ? 'accent' : 'plain';
+  }
+  /* a label centred on x, kept inside the canvas */
+  function tag(p, x, y, s, color, dy, base) {
+    var font = '11px ' + DL.color('sans');
+    p.g.font = font;
+    var w = p.g.measureText(s).width, px = p.X(x);
+    var at = Math.min(Math.max(px, w / 2 + 2), p.w - w / 2 - 2);
+    p.text(x, y, s, { dx: at - px, dy: dy, align: 'center', baseline: base || 'bottom',
+                      color: color, font: font });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var st = compute(), pv = st.pv;
+    var m = Math.max(2000, Math.abs(pv) * 1.15);
+    var p = new NMT.Plot(c, { xmin: -m, xmax: m, ymin: 0, ymax: 1,
+                              pad: { l: 18, r: 18, t: 24, b: 24 }, grid: false });
+    /* ticks at the band edges while their labels have room, round steps beyond */
+    var room = function (v) { return p.X(v) - p.X(0); }, xs, wide = false;
+    if (room(500) >= 46) xs = [-1500, -500, 0, 500, 1500];
+    else if (room(1500) >= 56 && m < 6000) xs = [-1500, 0, 1500];
+    else {
+      wide = true;
+      xs = DL.ticks(-m, m, Math.max(2, Math.floor((p.w - 36) / 90))).vals;
+    }
+    DL.axes(p, { xs: xs, y: false, yAxis: false, grid: false,
+                 x: function (v) { return v === 0 ? '$0' : wide ? short(v) : fmt(v); } });
+    /* the app's tone bands on the size of the aggregate vega */
+    var y0 = p.Y(0.66), y1 = p.Y(0.3);
+    [[-m, -1500, 'plain'], [-1500, -500, 'accent'], [-500, 500, 'insight'],
+     [500, 1500, 'accent'], [1500, m, 'plain']].forEach(function (z) {
+      p.g.fillStyle = DL.fade(DL.color(z[2]), 0.2);
+      p.g.fillRect(p.X(z[0]), y0, p.X(z[1]) - p.X(z[0]), y1 - y0);
+    });
+    DL.vline(p, 0, { color: DL.color('rule') });
+    /* where the overlay would take the book, then the book itself */
+    if (Math.abs(st.tv - pv) > 1e-9) {
+      p.seg(st.tv, 0.2, st.tv, 0.76, { color: DL.color('ink-soft'), dash: [3, 3], width: 1.4 });
+      tag(p, st.tv, 0.2, 'target', DL.color('ink-soft'), 1, 'top');
+    }
+    var col = DL.color(tone(pv));
+    p.seg(pv, 0.22, pv, 0.9, { color: col, width: 2.2 });
+    p.dot(pv, 0.48, { r: 4.5, color: col, ring: true });
+    tag(p, pv, 0.9, 'net ' + fmt(pv) + '/vp', col, -2);
+  });
+
+  function update() {
+    var st = compute();
+    for (var k = 0; k < MAX; k++) {
+      var row = el('p', k), show = k < n;
+      if (row.hidden === show) row.hidden = !show;
+      if (show) DL.out(U + '-a' + k, 'β=' + st.rows[k].beta.toFixed(2) + ' · ' + money(st.rows[k].adj));
+    }
+    var add = DL.$(U + '-add');
+    if (add.disabled !== (n >= MAX)) add.disabled = n >= MAX;
+    DL.out(U + '-count', 'positions (' + n + '/' + MAX + ')');
+    DL.out(U + '-agg', 'aggregate vega = ' + money(st.pv) + ' / vol point');
+    DL.out(U + '-k5', 'VIX +5 P&L = ' + money(st.pv * 5));
+    DL.out(U + '-k10', 'VIX +10 P&L = ' + money(st.pv * 10));
+    DL.out(U + '-k15', 'VIX +15 P&L = ' + money(st.pv * 15));
+    var calls = Math.ceil(Math.abs(st.gap) / 80);
+    var strike = Math.round(num(U + '-vix') * 1.4);
+    /* calls add vega: a long-vega book reaches a lower target by selling them */
+    DL.out(U + '-vk', 'Macro vega overlay.');
+    DL.out(U + '-vt', 'To reach the ' + st.target + '-vega target (' + money(st.tv) + '/vp), ' +
+           (st.gap < 0 ? 'sell' : 'buy') + ' approximately ' + calls + ' 90\u2011DTE VIX calls at strike ~' +
+           strike + '. Informational sizing only; actual vega per VIX call varies by IV and DTE.');
+  }
+  var redraw = draw;
+  draw = function () { update(); redraw(); };
+
+  /* removing a position closes the gap, as the app's list does */
+  function remove(k) {
+    if (k >= n) return;
+    for (var j = k; j < n - 1; j++) {
+      ['i', 's', 'n', 'v'].forEach(function (f) { el(f, j).value = el(f, j + 1).value; });
+    }
+    n -= 1;
+    draw();
+  }
+  function add() {
+    if (n >= MAX) return;
+    el('i', n).value = FRESH.i; el('s', n).value = FRESH.s;
+    el('n', n).value = FRESH.n; el('v', n).value = FRESH.v;
+    n += 1;
+    draw();
+  }
+  var ids = [U + '-vix'];
+  for (var k = 0; k < MAX; k++) {
+    (function (k) { el('x', k).addEventListener('click', function () { remove(k); }); })(k);
+    ids.push(U + '-i' + k, U + '-s' + k, U + '-n' + k, U + '-v' + k);
+  }
+  DL.$(U + '-add').addEventListener('click', add);
+  DL.bind(ids, function () { draw(); });
+  update();
+})();
+<!--/SCRIPT-->

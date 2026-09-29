@@ -1,18 +1,66 @@
-<p class="eyebrow">Part IX · Vol &amp; Practice · Chapter 9B</p>
+<p class="eyebrow">Part IX · Volatility in practice · Chapter 9B</p>
 
-<h1>0DTE: the singularity at the strike</h1>
+<h1>Same-day options</h1>
 
-<p>The most consequential shift in modern equity microstructure is the rise of <strong>zero-days-to-expiration options</strong>. From under 5% of SPX volume in 2016, 0DTE reached <strong>62.4% of all SPX volume in August 2025</strong> and <strong>60% in September 2025</strong>, with monthly averages between 56% and 62% across all of 2025. Average daily 0DTE volume hit <strong>2.4 million contracts in August 2025</strong>; total SPX options volume hit a record <strong>4.26 million contracts/day in September 2025</strong>.</p>
+<p class="subtitle">0DTE and the singularity at the strike</p>
 
-<p>Industry-wide, 0DTE was approximately 24% of all US listed options volume by late 2024 and is on track to grow further. This is the largest single shift in options market structure since the SPX weeklies launch in 2005.</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="9a.html">Chapter 9A</a> built the VIX and its term structure, down to the one-day VIX1D. This chapter goes to the shortest horizon of all: options that expire on the day they trade. It shows why their gamma piles up at the strike, what the evidence says about whether they have destabilized the market, and why the end of the day now runs on a clock.</p>
+</div>
 
-<p>The mechanical reason 0DTE matters is what we covered in <a class="xref" href="6e.html">Section 6E</a>: <strong>Γ ∝ 1/√T</strong>. As T shrinks toward zero, at-the-money gamma diverges. Computing T in years for consistency:</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li><span class="gloss" title="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry.">Gamma</span>, \(\Gamma = \varphi(d_1)/(S\sigma\sqrt{T})\) with no dividends, largest <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at the money</span> (<a class="xref" href="5c.html">Chapter 5C</a>), and the dealer's chase of <span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span> that it forces (<a class="xref" href="6d.html">Chapter 6D</a>).</li>
+<li><span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">Charm</span> and <span class="gloss" title="The rate at which an option's gamma changes as the underlying's price moves: the third derivative of the option's value with respect to that price.">speed</span>, which grow as expiry nears (<a class="xref" href="5d.html">Chapter 5D</a>).</li>
+<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span>, whose sign rests on an assumption about who holds what (<a class="xref" href="8a.html">Chapter 8A</a>), and the two regimes that sign separates (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li>The closing auction and market-on-close orders (<a class="xref" href="2c.html">Chapter 2C</a>).</li>
+</ul>
+</div>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">DTE</th><th>T (years)</th><th>√T</th><th>Γ ratio vs 30-DTE</th></tr></thead><tbody><tr><td class="c-trial" data-label="DTE">30 days</td><td data-label="T (years)">0.0822</td><td data-label="√T">0.2867</td><td data-label="Γ ratio vs 30-DTE">1.0× (baseline)</td></tr><tr><td class="c-trial" data-label="DTE">7 days</td><td data-label="T (years)">0.0192</td><td data-label="√T">0.1385</td><td data-label="Γ ratio vs 30-DTE">2.07×</td></tr><tr><td class="c-trial" data-label="DTE">1 day</td><td data-label="T (years)">0.00274</td><td data-label="√T">0.0524</td><td data-label="Γ ratio vs 30-DTE">5.47×</td></tr><tr><td class="c-trial" data-label="DTE">4 hours</td><td data-label="T (years)">4.57e-4</td><td data-label="√T">0.0214</td><td data-label="Γ ratio vs 30-DTE"><strong>13.4×</strong></td></tr><tr><td class="c-trial" data-label="DTE">30 min</td><td data-label="T (years)">5.71e-5</td><td data-label="√T">0.00756</td><td data-label="Γ ratio vs 30-DTE"><strong>37.9×</strong></td></tr><tr><td class="c-trial" data-label="DTE">5 min</td><td data-label="T (years)">9.51e-6</td><td data-label="√T">0.00308</td><td data-label="Γ ratio vs 30-DTE"><strong>93.0×</strong></td></tr></tbody></table></div></div>
+<h2 id="the-rise-of-same-day-options">1 · The rise of same-day options</h2>
 
-<p>These ratios apply to ATM gamma. For OTM strikes the divergence is faster — gamma compresses into ATM as T shrinks; OTM gamma collapses.</p>
+<p>The most consequential shift in modern equity microstructure is the rise of <strong>zero-days-to-expiration options</strong>, or <strong><span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span></strong> options, which expire on the day they trade. From under 5% of SPX volume in 2016, 0DTE reached 62.4% of all SPX volume in August 2025 and 60% in September 2025. Its monthly averages ran between 56% and 62% across all of 2025. Average daily 0DTE volume hit 2.4 million contracts in August 2025. Total SPX options volume hit a record 4.26 million contracts a day in September 2025.</p>
 
-<p>This concentration produces the strange 0DTE consequence: when the dealer is short a slightly-OTM 0DTE call and spot ticks above strike, delta jumps from near zero to near one almost discontinuously. <strong>The dealer must buy a large block of stock at that strike.</strong> When many dealers face this near the same level, you get the "magnet" — price snapping to a strike where hedging flow concentrates.</p>
+<p>Industry-wide, 0DTE was approximately 24% of all US listed options volume by late 2024. The Dealer Mechanics Lab describes it as on track to grow further. It calls this the largest single shift in options market structure since the launch of SPX weekly options in 2005.</p>
+
+<h2 id="why-expiry-concentrates-gamma">2 · Why expiry concentrates gamma</h2>
+
+<p>The mechanical reason 0DTE matters is the gamma formula of <a class="xref" href="6d.html">Chapter 6D</a>: <strong>gamma grows as \(1/\sqrt{T}\)</strong>. At the money \(d_1\) is close to zero, so \(\varphi(d_1)\) is close to its peak of 0.399, and at-the-money gamma is about \(0.399/(S\sigma\sqrt{T})\). With spot and volatility held fixed, the ratio of at-the-money gamma at two times to expiry is therefore</p>
+
+<div class="eq" id="e-ratio">
+\[ \frac{\Gamma(T_1)}{\Gamma(T_2)} \approx \sqrt{\frac{T_2}{T_1}} \]
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Four hours against thirty days</span>
+<p><strong>Step 1: put both times in hours.</strong> Thirty days is \(30 \times 24 = 720\) hours. Only the ratio of the two times enters <a class="eqref" href="#e-ratio"></a>, so the unit does not matter.</p>
+
+<p><strong>Step 2: take the square root.</strong> At-the-money gamma four hours before expiry is \(\sqrt{720/4} = \sqrt{180} = 13.4\) times its 30-day value. Half an hour before expiry it is \(\sqrt{1{,}440} = 37.9\) times.</p>
+</div>
+
+<p>Computing \(T\) in years for consistency, the Dealer Mechanics Lab tabulates the divergence:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Days to expiry</th><th class="c-other">\(T\) (years)</th><th>\(\sqrt{T}\)</th><th>Gamma ratio against 30 days</th></tr></thead><tbody><tr><td class="c-trial" data-label="Days to expiry">30 days</td><td class="c-other" data-label="\(T\) (years)">0.0822</td><td data-label="\(\sqrt{T}\)">0.2867</td><td data-label="Gamma ratio against 30 days">1.0× (baseline)</td></tr><tr><td class="c-trial" data-label="Days to expiry">7 days</td><td class="c-other" data-label="\(T\) (years)">0.0192</td><td data-label="\(\sqrt{T}\)">0.1385</td><td data-label="Gamma ratio against 30 days">2.07×</td></tr><tr><td class="c-trial" data-label="Days to expiry">1 day</td><td class="c-other" data-label="\(T\) (years)">0.00274</td><td data-label="\(\sqrt{T}\)">0.0523</td><td data-label="Gamma ratio against 30 days">5.48×</td></tr><tr><td class="c-trial" data-label="Days to expiry">4 hours</td><td class="c-other" data-label="\(T\) (years)">\(4.57 \times 10^{-4}\)</td><td data-label="\(\sqrt{T}\)">0.0214</td><td data-label="Gamma ratio against 30 days"><strong>13.4×</strong></td></tr><tr><td class="c-trial" data-label="Days to expiry">30 minutes</td><td class="c-other" data-label="\(T\) (years)">\(5.71 \times 10^{-5}\)</td><td data-label="\(\sqrt{T}\)">0.00756</td><td data-label="Gamma ratio against 30 days"><strong>37.9×</strong></td></tr><tr><td class="c-trial" data-label="Days to expiry">5 minutes</td><td class="c-other" data-label="\(T\) (years)">\(9.51 \times 10^{-6}\)</td><td data-label="\(\sqrt{T}\)">0.00308</td><td data-label="Gamma ratio against 30 days"><strong>93.0×</strong></td></tr></tbody></table></div></div>
+
+<p>These ratios apply to at-the-money gamma. Away from the strike, time works the other way: as \(T\) shrinks, gamma compresses into the at-the-money strike and out-of-the-money gamma collapses, which is the negative color of <a class="xref" href="5d.html">Chapter 5D</a>.</p>
+
+<p>This concentration produces the strange 0DTE consequence. When a dealer is short a slightly out-of-the-money 0DTE call and spot ticks above the strike, delta jumps from near zero to near one almost discontinuously. <strong>The dealer must buy a large block of stock at that strike.</strong></p>
+
+<div class="worked">
+<span class="ct">Worked example: One strike, one hour before the close</span>
+<p><strong>Step 1: the call's delta across the strike.</strong> Take a 0DTE call struck at 6,000 with one hour left, <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> at 15% and a zero rate, so \(T = 1/8{,}760\) of a year. Spot's one-sigma move over that hour is \(6{,}000 \times 0.15 \times \sqrt{1/8{,}760} = 9.6\) points. With spot at 5,988 the delta is 0.106, and with spot at 6,012 it is 0.894.</p>
+
+<p><strong>Step 2: the dealer's buying.</strong> A dealer short 1,000 of these calls must hedge \((0.894 - 0.106) \times 100 \times 1{,}000 = 78{,}800\) more share-equivalents as spot crosses those 24 points, a move of 0.4%. The same call with 30 days left would need only about 3,700.</p>
+
+<p><strong>Step 3: the ratio.</strong> The hour-before-close hedge is about 21 times the 30-day one across this range, close to the \(\sqrt{720} = 26.8\) of <a class="eqref" href="#e-ratio"></a> at the strike itself.</p>
+</div>
+
+<p>When many dealers face this near the same level, the Dealer Mechanics Lab calls the result the "magnet": price snapping to a strike where hedging flow concentrates. Which way that flow pushes depends on the sign of the dealers' gamma. Dealers short the calls buy as spot rises through the strike, which presses the move on. Dealers long options at the strike sell above it and buy below it, which holds price near it, the pinning of <a class="xref" href="9c.html">Chapter 9C</a>.</p>
+
+<p>The figure below draws gamma for a $100-strike option with an implied volatility of 18%, across spot from $92 to $108. Faint lines are fixed references at 30, 7 and 1 days to expiry. The bold curve is the days to expiry on the slider, which runs on a logarithmic scale from 0.05 days, about an hour, to 90 days, starting at 30. The vertical scale follows the bold curve's peak, so the references flatten as it grows. Readouts give the at-the-money gamma, its ratio to the 30-day baseline, and the \(1/\sqrt{T}\) expectation for that ratio.</p>
+
+<p>Drag the slider down to about 0.17 days, which the readout shows as 4.0 hours, and compare the two ratios. Then press auto-shrink, which runs the clock down to about an hour and starts again from 90 days, or reset to return to 30.</p>
 
 <figure class="fig" id="fig-gamma-profile-dte">
   <canvas id="gamma-profile-dte-c" data-h="270"></canvas>
@@ -40,55 +88,177 @@
   peak is about 13 times the 30-day one, the 1/√T divergence of the table above.</figcaption>
 </figure>
 
-<h2 id="the-did-0dte-break-the-market-debate">1 · The "did 0DTE break the market?" debate</h2>
+<p>At 30 days the at-the-money gamma reads 0.0770. At 4 hours the peak is about 13 times the 30-day one, 13.5 on the readout against an expectation of 13.4. The curve has become a spike a few dollars wide. At about an hour the ratio reads 24.6 against an expectation of 24.5. The reference curves shrink to a flat line near zero, because the vertical scale follows the peak.</p>
 
-<p>A reasonable concern, given the gamma math above: has 0DTE destabilized markets? The empirical answer — repeatedly confirmed by Cboe's own data, by Dim, Eraker, and Vilkov (2024), and by the Adams et al. (2025) successor paper — is <strong>no, on average it has reduced realized volatility</strong>.</p>
+<h2 id="did-0dte-break-the-market">3 · Did 0DTE break the market?</h2>
 
-<p>The reasoning is subtle and worth unpacking.</p>
+<p>Given the gamma maths above, a reasonable concern is whether 0DTE has destabilized markets. The empirical answer, repeatedly confirmed by Cboe's own data, by Dim, Eraker and Vilkov (2024), and by the 2025 successor paper of Adams and colleagues, is <strong>no: on average it has reduced <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">realized volatility</span>.</strong> The reasoning is subtle and worth unpacking.</p>
 
-<p><strong>Cboe's analysis</strong> ("Much Ado About 0DTEs," Mandy Xu, September 2023) found that <strong>net market maker gamma in 0DTE positions has a median value of about +$173 million per percentage point</strong>, with the 25th–75th percentile range from −$1.1 billion to +$2.4 billion. For context, S&amp;P futures trade about $400 billion in daily liquidity. The 0DTE hedging flow is therefore about 0.04% to 0.17% of futures liquidity at the median — <strong>meaningful but not market-moving on a typical day</strong>.</p>
+<h3 id="how-big-the-hedging-flow-is">How big the hedging flow is</h3>
 
-<p><strong>Dim, Eraker, and Vilkov (2024)</strong> — the academic gold standard on this topic — found:</p>
+<p>Cboe's analysis, "Much Ado About 0DTEs" by Mandy Xu (September 2023), found that <strong>net market-maker gamma in 0DTE positions has a median of about +$173 million per percentage point</strong>. Its 25th to 75th percentile range runs from −$1.1 billion to +$2.4 billion. "Per percentage point" means that for each 1% move in SPX, the median day's 0DTE hedging trades about $173 million of the index. For context, S&amp;P futures trade about $400 billion in daily liquidity.</p>
 
-<div class="callout brick">
-<p><em>"We find that Market Makers' inventory, as measured by the net gamma of their positions, is on average positive and negatively related to future intraday volatility. Our empirical evidence is consistent with delta-hedging but inconsistent with information-based trading."</em></p>
+<div class="worked">
+<span class="ct">Worked example: The flow as a share of the market</span>
+<p><strong>Step 1: the median day.</strong> A 1% move asks for $173 million of hedging against $400 billion of daily futures liquidity, which is \(173/400{,}000 = 0.043\%\).</p>
+
+<p><strong>Step 2: a busier day.</strong> Even at the 75th percentile, $2.4 billion per point, a 1% move asks for \(2{,}400/400{,}000 = 0.6\%\) of a day's futures liquidity.</p>
 </div>
 
-<p>Translation: most 0DTE flow is retail and small institutions <em>selling</em> premium (credit spreads, iron condors, cash-secured puts). Dealers <em>buy</em> it. The dealers are therefore <strong>long gamma in aggregate in 0DTE</strong>, and their hedging — sell rallies, buy dips — is <em>stabilizing</em>. This is the opposite sign from the original SqueezeMetrics convention, and it explains why intraday volatility has compressed even as headline option volume has exploded.</p>
+<p>The Dealer Mechanics Lab puts the 0DTE hedging flow at about 0.04% to 0.17% of futures liquidity at the median: <strong>meaningful but not market-moving on a typical day</strong>. The Edge Book cites a 2025 Cboe estimate of the same order, 0DTE market-maker hedging at about 0.2% of SPX daily liquidity. It draws from that a more skeptical conclusion about trading on dealer gamma (Chapters 1G and 10H).</p>
 
-<p><strong>Adams, Dim, Eraker, Fontaine, Ornthanalai, and Vilkov (2025)</strong> — posted December 3, 2025 — extends this finding causally and identifies the mechanism more precisely. They exploit a natural experiment: Tuesday and Thursday SPXW expirations were not available for trading until April 26 and May 19, 2022 respectively. Using this discontinuity, they show:</p>
-
-<div class="callout brick">
-<p><em>"The presence of 0DTEs dampens market volatility through a shift in market makers' hedging needs. Importantly, this shift occurs not due to trading 0DTEs on their expiration day but due to positions in longer-dated options accumulated earlier and becoming 0DTEs."</em></p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A 0DTE contract's gamma is like a large hazard ratio on a rare event. The relative effect is enormous: 13 times the 30-day gamma four hours out. Yet the absolute flow it produces is a small fraction of the market. A treatment that triples the risk of an event with a 0.1% baseline adds 0.2 percentage points of absolute risk. You judge its clinical weight by that absolute number, and 0DTE hedging by its share of the day's liquidity.</p>
 </div>
 
-<p>This is critical: the volatility attenuation effect operates through <em>longer-dated positions becoming 0DTEs</em> as time passes, not through 0DTE expiration-day trading. The structural existence of more 0DTE expirations (Mon/Tue/Wed/Thu/Fri now all available) changes the dynamics of dealer hedging across the entire options-life cycle, not just on the day of expiration.</p>
+<h3 id="the-academic-evidence">The academic evidence</h3>
 
-<p><strong>Brogaard, Han, and Won (2024)</strong> — University of Utah working paper — independently confirmed that 0DTE introduction did not increase market volatility, using event-study methodology around the staggered introduction of Tuesday/Thursday SPXW expirations.</p>
+<p>Dim, Eraker and Vilkov (2024), which the Dealer Mechanics Lab calls the academic gold standard on this topic, found:</p>
 
-<p>The current academic consensus, as of late 2025/early 2026, is that <strong>0DTE has stabilized rather than destabilized SPX intraday markets on average</strong>, while still allowing episodic destabilization when dealer positioning flips negative.</p>
+<div class="callout brick">
+<p>"... Market Makers' inventory, as measured by the net gamma of their positions, is on average positive and negatively related to future intraday volatility."</p>
 
-<h2 id="the-same-data-show-0dte-can-be-episodically-destabilizing">2 · The same data show 0DTE can be episodically destabilizing</h2>
+<p>Dim, Eraker and Vilkov (2024)</p>
+</div>
 
-<p>The right tail is real. When net dealer 0DTE gamma flips short on event days (FOMC, CPI, NFP), the small notional combines with the enormous per-contract gamma to generate concentrated flow that can amplify intraday moves. The character of the modern market is therefore "<strong>quiet most days, sharp on event days</strong>" — punctuated equilibria driven by which side of gamma dealers sit on at the moment.</p>
+<p>The authors add that their evidence is "consistent with delta-hedging but inconsistent with information-based trading." The Dealer Mechanics Lab's translation runs as follows. Most 0DTE flow is retail and small institutions <em>selling</em> premium, through credit spreads, <span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">iron condors</span> and <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">cash-secured puts</span>. The <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">dealers</span> <em>buy</em> it, so they are <strong>long gamma in aggregate in 0DTE</strong>. Their hedging, which sells rallies and buys dips, is therefore <em>stabilizing</em>. That is the opposite sign from the original SqueezeMetrics convention (<a class="xref" href="8a.html">Chapter 8A</a>). It explains why intraday volatility has compressed even as headline option volume has exploded.</p>
 
-<p>The April 2025 "Liberation Day" tariff-related sell-off and the October 10, 2025 follow-through (which set the single-day options volume record of 110 million contracts) both showed this dynamic. On those days, dealer gamma in 0DTE was likely net short (because retail was buying directional protection rather than selling premium), and the hedging flow amplified the directional move.</p>
+<p>Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025), posted December 3, 2025, extend this finding causally and identify the mechanism more precisely. They exploit a natural experiment: Tuesday and Thursday <span class="gloss" title="The symbol of the S&amp;P 500 index options with weekly and daily expirations, which settle on the closing price rather than on the morning's opening quotation used by the monthly SPX options. Tuesday and Thursday expirations began in April and May 2022.">SPXW</span> expirations were not available for trading until April 26 and May 19, 2022 respectively. Using this discontinuity, they show:</p>
 
-<h2 id="the-intraday-charm-clock">3 · The intraday charm clock</h2>
+<div class="callout brick">
+<p>"The presence of 0DTEs dampens market volatility through a shift in market makers' hedging needs. Importantly, this shift occurs not due to trading 0DTEs on their expiration day but due to positions in longer-dated options accumulated earlier and becoming 0DTEs."</p>
 
-<p>Charm scales with 1/T, and for 0DTE that scaling factor accumulates aggressively through the day. A 0DTE option's delta decays smoothly through the morning, then accelerates dramatically after lunch. By 3:30 PM ET, charm has typically delivered most of its mechanical flow.</p>
+<p>Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025)</p>
+</div>
 
-<p>This is one reason the <strong>last 30 minutes</strong> of the day — already concentrated for end-of-day rebalancing per Baltussen et al. (2021) — has become even more mechanical in the 0DTE era. The combination of (a) charm-driven dealer rebalancing in 0DTE, (b) end-of-day delta rebalancing of longer-dated dealer positions, and (c) closing-auction mechanical flow from passive funds, all concentrate into the same 30-minute window.</p>
+<p>This is critical. The dampening works through <em>longer-dated positions becoming 0DTEs</em> as time passes, not through trading on the expiration day. Once Tuesday and Thursday joined Monday, Wednesday and Friday, every weekday had an expiration. The structural existence of more 0DTE expirations changes the dynamics of dealer hedging across the whole life cycle of an option, not just on the day it expires.</p>
 
-<p>For retail traders, the implication: <strong>the last 30 minutes are not a normal trading window</strong>. Strategies that work in the middle of the day may not work in the close. Strategies that explicitly target the close (MOC orders into rebalancing flow) work differently than strategies that try to fade the close (mean reversion against mechanical flow).</p>
+<p>Brogaard, Han and Won (2024), a University of Utah working paper, independently confirmed that the introduction of 0DTE did not increase market volatility. They used an event-study methodology around the staggered introduction of the Tuesday and Thursday SPXW expirations.</p>
 
-<h2 id="cboes-own-data-on-0dte-composition">4 · Cboe's own data on 0DTE composition</h2>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The two new expiration days arrived on two dates, 23 days apart, which makes them a stepped rollout of a single intervention. It is the logic of a stepped-wedge design, in which the same market is observed before and after each step. The second step gives a second chance to see the effect. The steps were not randomized, so anything else that changed around those dates is a candidate confounder. That is why an independent event study pointing the same way adds real weight.</p>
+</div>
 
-<p>Cboe's late 2025 disclosures, via Mandy Xu's monthly volatility digest, show that <strong>retail trading makes up roughly 50-54% of total SPX 0DTE volume</strong> as of mid-2025. The retail share has grown structurally as Robinhood (January 2025) and other retail brokers expanded index options access.</p>
+<p>The academic consensus, as of late 2025 and early 2026, is that <strong>0DTE has stabilized rather than destabilized SPX intraday markets on average</strong>. It still allows episodic destabilization when dealer positioning flips negative.</p>
 
-<p>Importantly, retail 0DTE flow is mostly <em>premium selling</em> — credit spreads and iron condors — not directional purchases. This is what keeps dealers net long gamma in 0DTE on most days. If retail flow flipped to net premium buying (e.g., during a sustained bull market with retail aggressive call buying), the regime would flip and dealers would become net short gamma in 0DTE — at which point the same product that has been stabilizing markets could become destabilizing.</p>
+<h2 id="quiet-most-days-sharp-on-event-days">4 · Quiet most days, sharp on event days</h2>
 
-<p>The character of 0DTE markets, in other words, depends critically on the <em>direction</em> of retail demand. The Cboe data show this direction is currently selling premium, which is stabilizing. There is no guarantee it will remain so.</p>
+<p>The same data show that 0DTE can be episodically destabilizing, and the right tail is real. The dangerous days are event days: the Federal Reserve's rate decisions (FOMC), consumer price releases (CPI) and the monthly jobs report (nonfarm payrolls, NFP). When net dealer 0DTE gamma flips short on such a day, the small <span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional</span> combines with the enormous per-contract gamma. The result is concentrated flow that can amplify intraday moves. The character of the modern market is therefore "<strong>quiet most days, sharp on event days</strong>": punctuated equilibria, driven by which side of gamma dealers sit on at the moment.</p>
+
+<p>The April 2025 "Liberation Day" tariff-related sell-off and the October 10, 2025 follow-through both showed this dynamic. The second of these set the single-day options volume record of 110 million contracts. On those days, dealer gamma in 0DTE was likely net short, because retail was buying directional protection rather than selling premium. The hedging flow then amplified the directional move.</p>
+
+<h2 id="the-intraday-charm-clock">5 · The intraday charm clock</h2>
+
+<p>Charm, the drift of delta with time, scales with \(1/T\) (<a class="xref" href="5d.html">Chapter 5D</a>). For a 0DTE option that factor builds aggressively through the day. Its delta decays smoothly through the morning, then accelerates dramatically after lunch. By 3:30 PM Eastern Time (ET), charm has typically delivered most of its mechanical flow.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A call struck 0.2% above spot, from the open to the close</span>
+<p>Take a 0DTE call struck at 6,012 with spot held at 6,000, implied volatility at 15% and a zero rate. The option expires at the 4:00 PM close, so at 9:30 it has 6.5 hours left.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Time (ET)</th><th>Hours left</th><th>Delta</th></tr></thead><tbody><tr><td class="c-trial" data-label="Time (ET)">9:30 AM</td><td data-label="Hours left">6.5</td><td data-label="Delta">0.313</td></tr><tr><td class="c-trial" data-label="Time (ET)">11:30 AM</td><td data-label="Hours left">4.5</td><td data-label="Delta">0.279</td></tr><tr><td class="c-trial" data-label="Time (ET)">1:30 PM</td><td data-label="Hours left">2.5</td><td data-label="Delta">0.216</td></tr><tr><td class="c-trial" data-label="Time (ET)">3:00 PM</td><td data-label="Hours left">1.0</td><td data-label="Delta">0.106</td></tr><tr><td class="c-trial" data-label="Time (ET)">3:30 PM</td><td data-label="Hours left">0.5</td><td data-label="Delta">0.039</td></tr></tbody></table></div></div>
+
+<p><strong>Step 1: the morning.</strong> From 9:30 to 11:30 the delta falls by 0.034, with spot unchanged.</p>
+
+<p><strong>Step 2: the afternoon.</strong> From 1:30 to 3:30 it falls by 0.177, more than five times the morning's pace. By 3:30 it has lost 0.274 of its 0.313, 88% of the day's decay.</p>
+
+<p><strong>Step 3: the dealer.</strong> A dealer long 1,000 of these calls, bought from a premium seller, opens with a short hedge of 31,300 share-equivalents. With spot never moving, charm alone makes it buy back 17,700 of them between 1:30 and 3:30.</p>
+</div>
+
+<p>This is one reason the <strong>last 30 minutes</strong> of the day have become even more mechanical in the 0DTE era. That window was already concentrated for end-of-day rebalancing, as Baltussen et al. (2021) documented (<a class="xref" href="6c.html">Chapter 6C</a>). Three flows now arrive in the same 30 minutes:</p>
+
+<ul>
+<li>Charm-driven dealer rebalancing in 0DTE options.</li>
+<li>End-of-day delta rebalancing of longer-dated dealer positions.</li>
+<li>Mechanical flow from passive funds in the <span class="gloss" title="The process in the last minutes of the American trading day in which the exchanges gather orders and fill them all at one price, the official close.">closing auction</span>.</li>
+</ul>
+
+<p>For retail traders the implication is that <strong>the last 30 minutes are not a normal trading window</strong>. Strategies that work in the middle of the day may not work in the close. Strategies that explicitly target the close, such as <span class="gloss" title="An order to trade at the official closing price, which the closing auction sets. Abbreviated MOC.">market-on-close orders</span> (MOC) into rebalancing flow, work differently from strategies that try to fade the close with mean reversion against mechanical flow.</p>
+
+<h2 id="who-trades-0dte">6 · Who trades 0DTE</h2>
+
+<p>Cboe's late-2025 disclosures, through Mandy Xu's monthly volatility digest, show that <strong>retail trading makes up roughly 50% to 54% of total SPX 0DTE volume</strong> as of mid-2025. The retail share has grown structurally as Robinhood, in January 2025, and other retail brokers expanded access to index options.</p>
+
+<p>Importantly, retail 0DTE flow is mostly <em>premium selling</em>, credit spreads and iron condors, not directional purchases. This is what keeps dealers net long gamma in 0DTE on most days. Suppose retail flow flipped to net premium buying, for example during a sustained bull market with aggressive retail call buying. The regime would then flip, with dealers net short gamma in 0DTE. At that point the same product that has been stabilizing markets could become destabilizing.</p>
+
+<p>The character of 0DTE markets, in other words, depends critically on the <em>direction</em> of retail demand. The Cboe data show that this direction is selling premium, which is stabilizing. Nothing ensures that it stays so. <a class="xref" href="8a.html">Chapter 8A</a>'s warning applies in full: every sign here is an assumption about who holds what.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>If you sell 0DTE premium, you are short the gamma this chapter describes. An hour before the close, a 0.4% move across your short strike can swing its delta from 0.1 to 0.9, about 21 times what the same move does to a 30-day option. A defined-risk spread caps the loss, but not the speed at which you reach it. The Edge Book also counts 0DTE premium selling as one more short-volatility sleeve, which in a liquidity event moves with every other one (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+
+<p>If you trade the index rather than its options, the chapter still reaches your account twice. Event days can turn the usual damping into amplification. The last 30 minutes run on flows that have nothing to do with the news.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The stabilizing result is an average over days. It says nothing about the event days in the right tail, when dealer 0DTE gamma can turn short, as it likely did in April and October 2025. It also rests on the direction of retail flow, which Cboe measures but which can change. Every public estimate of dealer gamma assumes who holds what (<a class="xref" href="8a.html">Chapter 8A</a>), so a vendor's reading can have the wrong sign on exactly the day it matters.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>On FOMC, CPI and NFP days</strong>, assume dealer 0DTE gamma may be short. Do not sell 0DTE premium into the release at your usual size.</li>
+<li><strong>Size a short 0DTE option for its afternoon gamma</strong>, not its morning delta: the size you could hold through a 0.4% move across the strike in the last hour.</li>
+<li><strong>Treat the last 30 minutes as a separate window.</strong> Decide in advance whether a trade there goes with the closing flow, as an MOC order does, or against it. Do not carry a midday strategy into it by default.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading 0DTE volume as dealer risk</span>
+<p>Volume says how much traded, not who holds what. Half of 0DTE volume being retail is consistent with dealers net long gamma, and so a calmer market, as long as that retail flow sells premium. A day of heavy 0DTE volume is dangerous only when the flow has turned to buying.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>At-the-money gamma grows as \(1/\sqrt{T}\): 13.4 times its 30-day value four hours before expiry, 37.9 times at 30 minutes and 93 times at 5 minutes.</li>
+<li>Near expiry a dealer's hedge jumps from almost nothing to almost everything as spot crosses the strike.</li>
+<li>On average 0DTE has reduced SPX realized volatility, because dealers are net long 0DTE gamma, and Adams et al. (2025) trace the effect to longer-dated positions becoming 0DTEs.</li>
+<li>Event days are the exception: "quiet most days, sharp on event days".</li>
+<li>Charm delivers most of a 0DTE option's delta decay by 3:30 PM, which makes the last 30 minutes a mechanical window.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">7 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>By what factor does at-the-money gamma grow between 30 days and one hour before expiry, with spot and volatility unchanged?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-ratio"></a> it grows by \(\sqrt{720/1} = 26.8\), since 30 days is 720 hours. The figure's readout at about an hour, 0.05 days, gives about 24.5, the ratio for 1.2 hours.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>On a day at Cboe's median, SPX moves 2%. How much 0DTE hedging does that ask for, as a share of futures liquidity?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>About \(2 \times \$173\) million, or $346 million, which is \(346/400{,}000 = 0.087\%\) of $400 billion. That is meaningful but not market-moving, as the chapter says.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Why do the dates April 26 and May 19, 2022 matter, and what did Adams et al. (2025) find about where the dampening comes from?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Tuesday and Thursday SPXW expirations started on those dates, which gives a natural experiment: the same market with and without an extra 0DTE expiry. The paper finds that the dampening comes from longer-dated positions accumulated earlier and becoming 0DTEs, not from trading on the expiration day.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A dealer is short 1,000 of the chapter's 6,012-strike calls and spot sits at 6,000 all day. Which way does it trade between 1:30 and 3:30, and how much?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Short calls are short delta, so it opens long 31,300 share-equivalents as its hedge. Charm pulls the calls' delta from 0.216 to 0.039, so its hedge must shrink by 17,700, which it sells. This is the mirror of the worked example's dealer, who is long the calls and buys.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>What would turn 0DTE from a stabilizing force into a destabilizing one?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A flip in the direction of retail flow from selling premium to buying it, for example through aggressive call buying in a sustained rally. Dealers would then be net short 0DTE gamma, with hedging that buys rallies and sells dips.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -334,15 +504,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

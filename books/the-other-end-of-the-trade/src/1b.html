@@ -1,145 +1,373 @@
-<p class="eyebrow">Part I · Foundation · Chapter 1B</p>
+<p class="eyebrow">Part I · Returns and risk · Chapter 1B</p>
 
-<h1>Log returns and why they're additive</h1>
+<h1>The shape of returns</h1>
 
-<p>Before we can talk about volatility, expected value, or compounding coherently, we need a return definition that behaves mathematically. The standard simple percentage return — (P_t − P_{t−1}) / P_{t−1} — has a quiet but fatal flaw: it is <em>asymmetric</em>. A stock that goes up 20% and then comes back to its starting price has, by simple-return arithmetic, gone up 20% and then down 16.67% — two different magnitudes for what is obviously the same-sized round trip. Professionals use logarithmic returns instead, and the reasons run deeper than mere convenience.</p>
+<p class="subtitle">Distributions, skew and fat tails</p>
 
-<h2 id="two-return-definitions">1 · Two return definitions</h2>
-
-<pre class="aligned">Simple return:   r_t = (P_t − P_{t−1}) / P_{t−1}
-
-Log return:      r_t = ln(P_t / P_{t−1})  =  ln(P_t) − ln(P_{t−1})</pre>
-
-<p>These two definitions agree for small moves (they're equal to first order in the Taylor expansion of ln(1+x) ≈ x), but they diverge for large moves and they have fundamentally different mathematical properties.</p>
-
-<h2 id="property-1-log-returns-are-symmetric">2 · Property 1: log returns are symmetric</h2>
-
-<p>A stock at $100 goes up to $120, then comes back down to $100. Simple returns describe this as:</p>
-
-<pre class="aligned">Up:    (120 − 100) / 100 = +20.0%
-Down:  (100 − 120) / 120 = −16.67%</pre>
-
-<p>Same round trip, two different magnitudes. The asymmetry is real: a 20% gain followed by a 16.67% loss does indeed return to the starting price, because multiplicative returns require a smaller down-percentage to undo a bigger up-percentage. But this asymmetry makes simple returns awkward to reason about.</p>
-
-<p>Log returns describe the same round trip as:</p>
-
-<pre class="aligned">Up:    ln(120/100) = +0.1823
-Down:  ln(100/120) = −0.1823</pre>
-
-<p>The same magnitude in opposite directions. Symmetric. Negation. This matters when you're trying to build intuition about volatility — which is, after all, a measure of magnitude irrespective of direction.</p>
-
-<figure class="fig" id="fig-log-return-symmetry">
-  <canvas id="log-return-symmetry-c" data-h="200"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="log-return-symmetry-up">up move</label>
-      <input type="range" id="log-return-symmetry-up" min="1" max="50" step="0.5" value="20">
-      <output id="log-return-symmetry-up-o" for="log-return-symmetry-up"></output>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="log-return-symmetry-path"></output></div>
-    <div class="ctrl"><output id="log-return-symmetry-simple"></output></div>
-    <div class="ctrl"><output id="log-return-symmetry-log"></output></div>
-  </div>
-  <figcaption><b>The same round trip, measured two ways.</b> A price rises from $100 by the
-  up move on the slider and falls back to $100. The bars are the size of each leg: as simple
-  returns the fall is smaller than the rise, as log returns the two are equal and opposite.
-  The larger the move, the wider the gap between the simple legs.</figcaption>
-</figure>
-
-<h2 id="property-2-log-returns-are-additive-over-time">3 · Property 2: log returns are additive over time</h2>
-
-<p>The multi-period simple return requires chaining multiplications:</p>
-
-<pre>Total simple return over T periods:
-R_total = ∏_{t=1}^{T} (1 + r_t) − 1</pre>
-
-<p>That's a product, not a sum. Annoying to work with, hard to differentiate, hard to bound, and a nightmare in any time-series statistical analysis.</p>
-
-<p>The multi-period log return is just the sum:</p>
-
-<pre>Total log return over T periods:
-r_total = ln(P_T / P_0) = ∑_{t=1}^{T} ln(P_t / P_{t−1}) = ∑_{t=1}^{T} r_t</pre>
-
-<p>This is the <strong>additivity property</strong>: total log return is the sum of period-by-period log returns. The proof is one line — a telescoping product of price ratios collapses to a single ratio, and the log of a single ratio is one log. It is the single most useful property in quantitative finance.</p>
-
-<p>Why does additivity matter operationally?</p>
-
-<p><strong>Volatility scaling becomes clean.</strong> If you assume returns are independent over time, the variance of a sum is the sum of variances, so:</p>
-
-<pre>σ²_total = ∑_{t=1}^{T} σ²_t</pre>
-
-<p>If daily log returns have constant variance σ²_daily, then T-day variance is T·σ²_daily, and T-day standard deviation is σ_daily·√T. This is the famous <strong>square-root-of-time rule</strong>. It only works cleanly for log returns under independence.</p>
-
-<p><strong>Annualization becomes trivial.</strong> Daily log returns annualize as:</p>
-
-<pre>σ_annual = σ_daily × √252</pre>
-
-<p>(252 trading days per year). Weekly: ×√52. Monthly: ×√12. These are exact under the independence assumption, not approximations.</p>
-
-<p><strong>Multi-day stress tests become a clean sum.</strong> If you want to ask "what's the cumulative drawdown over a 5-day stress event?" you sum five log returns. With simple returns you'd be compounding (1+r) terms, which produces convexity errors when the moves are large — exactly when you most want the answer to be accurate.</p>
-
-<p><strong>Distributional assumptions become natural.</strong> The classical Black-Scholes model assumes asset prices follow geometric Brownian motion, which in continuous time means log returns are normally distributed. Under that assumption, the sum of independent normals is normal — so the T-period log return is also normal, with mean Tμ and variance Tσ². No correction. With simple returns, the sum of percentage returns is not even well-defined as a distribution under most reasonable models.</p>
-
-<h2 id="the-it-correction-a-preview">4 · The Itô correction (a preview)</h2>
-
-<p>There's a subtle point that becomes important in <a class="xref" href="7a.html">Section 7</a>. If a stock's instantaneous return is normally distributed with mean μ_dt and variance σ²·dt, the <em>instantaneous log return</em> is NOT normal with mean μ·dt — it's normal with mean (μ − ½σ²)·dt. The −½σ² term is called the <strong>Itô drift correction</strong> or <strong>variance drag</strong>. It arises because the log function is concave: when you log-transform a random variable, you don't just transform the mean by ln(mean) — you also pick up a negative term proportional to variance.</p>
-
-<p>The practical implication: a stock with 10% expected simple return per year and 20% volatility has expected log return of only:</p>
-
-<pre>E[ln(1+r)] ≈ μ − ½σ² = 0.10 − 0.5 × 0.04 = 0.08 = 8%</pre>
-
-<p>The 2% gap between expected simple return and expected log return is variance drag. It's the reason that, all else equal, lower-volatility strategies compound to higher terminal wealth than higher-volatility strategies <em>with the same arithmetic mean return</em>. This is also the mathematical engine behind the Kelly criterion, which we'll cover in 1C and 2E.</p>
-
-<div class="callout brick">
-<p><em>Variance drag is why a sequence of returns +50%, −50%, +50%, −50%, … ends in ruin even though the arithmetic mean is zero. The geometric mean — which is what compounding actually delivers — is √(1.5 × 0.5) − 1 = −13.4% per pair.</em></p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="1a.html">Chapter 1A</a> defined a return and showed how volatility, the standard deviation of returns, grows with time and drags on compounding. This chapter asks what else a set of returns has besides a mean and a standard deviation. The answer, skew and fat tails, explains how a strategy that sells options can look safe for years and then give back a year of gains in a single bad month.</p>
 </div>
 
-<figure class="fig" id="fig-variance-drag-explorer">
-  <canvas id="variance-drag-explorer-c" data-h="250"></canvas>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Log returns, volatility and the square-root-of-time rule (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>From introductory statistics: the mean, the standard deviation and the normal curve.</li>
+</ul>
+</div>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Two strategies can have the same average return and the same standard deviation and still be completely different bets. One wins and loses in moderate amounts, spread evenly around its average. The other wins a little almost every month and, now and then, loses a lot. The mean and the standard deviation cannot tell these two apart. Two further numbers can: the skew, which measures lopsidedness, and the kurtosis, which measures how much weight sits in the extreme tails. Selling options produces the second, lopsided shape by construction, and that shape is where option sellers lose serious money.</p>
+</div>
+
+<h2 id="what-a-return-distribution-is">1 · What a return distribution is</h2>
+
+<p>A <strong><span class="gloss" title="The set of possible outcomes of a strategy or asset over a period, each weighted by its probability.">return distribution</span></strong> is the set of possible outcomes of a strategy, each weighted by its probability. Every strategy you trade has one, whether or not you describe it that way.</p>
+
+<p>Start with a toy: suppose you and a friend bet on a coin, where heads means you pay your friend $1 and tails means your friend pays you $1. Your return distribution has two outcomes, +$1 with probability 50% and −$1 with probability 50%. It is boring but instructive, because every distribution in this book is built the same way: a list of outcomes and a probability for each, with the probabilities adding to 1.</p>
+
+<p>Now consider selling a 30-<span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span> <span class="gloss" title="A contract giving its holder the right, not the obligation, to sell the underlying at the strike price on or before expiry.">put</span> on <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span> for $3 of <span class="gloss" title="The price of an option, paid by the buyer to the seller when the trade is made.">premium</span>. A put is a contract that pays its holder if the index ends below a set price, the <span class="gloss" title="The price at which an option's holder may buy the underlying, for a call, or sell it, for a put.">strike</span>, at <span class="gloss" title="The date on which an option stops trading and is settled or lapses.">expiry</span>. The seller collects the premium up front and owes the payout. <a class="xref" href="5c.html">Chapter 5C</a> teaches delta, but for now read a 30-delta put as one whose strike sits far enough below the index that it expires worthless most of the time. The distribution of a short 30-delta put looks roughly like this:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">outcome</th><th class="c-other">probability</th><th class="c-other">result</th></tr></thead><tbody><tr><td class="c-trial" data-label="outcome">"win": the option expires worthless</td><td class="c-other" data-label="probability">roughly 70%</td><td class="c-other" data-label="result">+$3</td></tr><tr><td class="c-trial" data-label="outcome">small loss: a modest pullback</td><td class="c-other" data-label="probability">roughly 20%</td><td class="c-other" data-label="result">−$2 to −$10</td></tr><tr><td class="c-trial" data-label="outcome">medium loss: a correction</td><td class="c-other" data-label="probability">roughly 8%</td><td class="c-other" data-label="result">−$10 to −$30</td></tr><tr><td class="c-trial" data-label="outcome">tail loss: a crash</td><td class="c-other" data-label="probability">roughly 2%</td><td class="c-other" data-label="result">−$30 to −$100 or more</td></tr></tbody></table></div></div>
+
+<p>The probabilities add to 100%, as they must, but the key point is the shape: most of the time you win a little, and occasionally you lose a lot. This is what a <strong>negatively skewed</strong> distribution looks like, and it characterizes almost every <span class="gloss" title="A position that profits when the underlying moves less than option prices imply, usually built by selling options, and loses when it moves more.">short-volatility</span> strategy: any strategy that earns money when markets stay calm, usually by selling options.</p>
+
+<p>When outcomes can take any value in a range, as returns can, the list becomes a smooth curve called a density, like the normal curve you know. The area under the curve between two values is the probability of landing between them, and the whole area is 1.</p>
+
+<h2 id="four-numbers-describe-a-distribution">2 · Four numbers describe a distribution</h2>
+
+<p>For any return distribution, four numbers tell you most of what you need to know. They are its first four <strong><span class="gloss" title="One of a series of averages that summarize a distribution. The mean is the first, the variance the second, and the standardized third and fourth are the skewness and the kurtosis.">moments</span></strong>, and each answers an intuitive question.</p>
+
+<p>All four are averages, so they need one piece of notation first. The <strong>expected value</strong> of a quantity \(X\), written \(\mathbb{E}[X]\), is its probability-weighted average over all outcomes:</p>
+
+<div class="eq" id="e-ev">
+\[ \mathbb{E}[X] = \sum_i p_i\, x_i \]
+</div>
+
+<p>Here \(x_i\) is the \(i\)-th possible outcome and \(p_i\) its probability. For the coin, the expected value is \(\mathbb{E}[X] = 0.5 \times 1 + 0.5 \times (-1) = 0\). <a class="xref" href="1c.html">Chapter 1C</a> builds on this definition, because the expected value of a trade is what this book means by edge.</p>
+
+<h3 id="the-mean">The mean</h3>
+
+<p>The <strong>first moment</strong> is the mean, \(\mu = \mathbb{E}[R]\), where \(R\) is the return. It answers the question: what is the average return? This is the number every <span class="gloss" title="A test of a trading rule on historical data, showing what the rule would have earned had it been followed.">backtest</span> tab brags about. By itself it tells you almost nothing, because wildly different distributions can produce the same mean.</p>
+
+<h3 id="the-variance">The variance</h3>
+
+<p>The <strong>second moment</strong> about the mean is the variance, \(\sigma^2 = \mathbb{E}[(R - \mu)^2]\), the average squared distance from the mean. Its square root, \(\sigma\), is the standard deviation. It answers the question: how spread out are the returns around the mean? Variance is the engine of the <span class="gloss" title="A strategy's mean return above the risk-free rate divided by the standard deviation of its returns: the excess return earned per unit of volatility.">Sharpe ratio</span> of <a class="xref" href="1d.html">Chapter 1D</a>, which divides the mean by the standard deviation. A high mean with a low variance produces a high Sharpe ratio, and a high mean with a high variance a mediocre one.</p>
+
+<h3 id="the-skewness">The skewness</h3>
+
+<p>The <strong>third moment</strong>, standardized by \(\sigma^3\), is the <strong><span class="gloss" title="The third standardized moment of a distribution, measuring its asymmetry. Negative skewness means a longer tail of losses than of gains; a normal distribution has zero.">skewness</span></strong>:</p>
+
+<div class="eq" id="e-skew">
+\[ \gamma_3 = \mathbb{E}\!\left[\left(\frac{R - \mu}{\sigma}\right)^{3}\right] \]
+</div>
+
+<p>It answers the question: is the distribution symmetric, or is one tail longer than the other? Dividing by \(\sigma\) first turns each outcome into a number of standard deviations from the mean, so the skewness has no units. Cubing keeps the sign of each deviation and exaggerates the large ones. A long tail of large losses therefore makes the skewness negative, and a long tail of large gains makes it positive.</p>
+
+<p>For a true normal (Gaussian) distribution, the skewness is zero. For SPX daily returns over multi-decade samples, it is approximately −0.7: left-skewed, with the left tail, the loss tail, longer than the right. The <strong><span class="gloss" title="A Cboe benchmark that tracks a strategy of selling at-the-money SPX puts each month, fully backed by cash. It has been tracked since June 1986.">CBOE PUT Index</span></strong> is a benchmark for systematic monthly <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at-the-money</span> put-writing on SPX, which Cboe has tracked since June 1986. Its skewness on monthly returns is roughly −2.1, and Oleg Bondarenko's analysis of the index puts it at approximately −2.09. The PUT Index has a skew approximately three times worse than the underlying it sells protection on. Selling premium does not eliminate skew; it <em>concentrates</em> it.</p>
+
+<p>Other measurements run in the same direction: one puts the skewness of SPX itself at about −0.81, and a short far <span class="gloss" title="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it.">out-of-the-money</span> put can reach −5 or worse. Treat the comparison between the PUT Index and SPX as rough, because the −2.09 is measured on monthly returns and the −0.7 on daily ones. Skewness changes with the length of the period it is measured over.</p>
+
+<h3 id="the-kurtosis">The kurtosis</h3>
+
+<p>The <strong>fourth moment</strong>, standardized by \(\sigma^4\), is the <strong><span class="gloss" title="The fourth standardized moment of a distribution, measuring how much weight sits in its extreme tails. A normal distribution has a kurtosis of 3.">kurtosis</span></strong>:</p>
+
+<div class="eq" id="e-kurt">
+\[ \gamma_4 = \mathbb{E}\!\left[\left(\frac{R - \mu}{\sigma}\right)^{4}\right] \]
+</div>
+
+<p>It answers the question: how fat are the tails relative to a normal distribution? The fourth power makes every deviation positive and exaggerates the extreme ones even more than the cube does, so the kurtosis is driven almost entirely by the rare outcomes far from the mean. For a true normal distribution the kurtosis is exactly 3. Some texts use <strong><span class="gloss" title="Kurtosis minus 3, so that a normal distribution scores zero and a fat-tailed one scores above it.">excess kurtosis</span></strong>, the kurtosis minus 3, so that zero means normal. This book uses the kurtosis itself, as the formulas in <a class="xref" href="1d.html">Chapter 1D</a> do.</p>
+
+<p>For SPX daily returns since 1928, the kurtosis is roughly 15 to 20, depending on the sample: five to seven times the normal value. Another estimate puts it around 18, six times normal, and the PUT Index has even higher kurtosis. Returns are massively fatter-tailed than a normal distribution.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">moment</th><th class="c-other">symbol</th><th class="c-other">what it measures</th><th class="c-endpoint">why it matters</th></tr></thead><tbody><tr><td class="c-trial" data-label="moment">mean</td><td class="c-other" data-label="symbol">\(\mu\)</td><td class="c-other" data-label="what it measures">the average outcome</td><td class="c-endpoint" data-label="why it matters">the thing you are trying to maximize</td></tr><tr><td class="c-trial" data-label="moment">variance</td><td class="c-other" data-label="symbol">\(\sigma^2\)</td><td class="c-other" data-label="what it measures">spread around the mean</td><td class="c-endpoint" data-label="why it matters">how uncertain the outcome is</td></tr><tr><td class="c-trial" data-label="moment">skewness</td><td class="c-other" data-label="symbol">\(\gamma_3\)</td><td class="c-other" data-label="what it measures">asymmetry</td><td class="c-endpoint" data-label="why it matters">whether bad outcomes are bigger than good ones</td></tr><tr><td class="c-trial" data-label="moment">kurtosis</td><td class="c-other" data-label="symbol">\(\gamma_4\)</td><td class="c-other" data-label="what it measures">tail fatness</td><td class="c-endpoint" data-label="why it matters">how likely extreme events are</td></tr></tbody></table></div></div>
+
+<p>A normal distribution is fully described by its mean and variance: its skewness is always 0 and its kurtosis always 3. For symmetric, thin-tailed returns like these, the first two moments are enough. Real financial returns almost never look normal, and for them, which means essentially every options strategy, all four matter.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The four moments of a put spread</span>
+<p>Suppose a put spread collects a $1 credit and can lose at most $9. A <span class="gloss" title="A position of two put options on the same underlying and expiry but with different strikes, one bought and one sold. Its gain or loss at expiry is capped by the distance between the strikes.">put spread</span> sells one put and buys a cheaper one further from the index, which caps the loss, and <a class="xref" href="12c.html">Chapter 12C</a> covers it. For this example, suppose it keeps the $1 in 90% of months and loses the full $9 in the other 10%.</p>
+
+<p><strong>Step 1: the mean.</strong> By <a class="eqref" href="#e-ev"></a>, the mean is \(\mu = 0.9 \times 1 + 0.1 \times (-9) = 0.9 - 0.9 = 0\), so the trade is fair: it neither makes nor loses money on average.</p>
+
+<p><strong>Step 2: the variance.</strong> The squared distances from the mean are \(1^2 = 1\) and \(9^2 = 81\), so \(\sigma^2 = 0.9 \times 1 + 0.1 \times 81 = 9\) and \(\sigma = 3\).</p>
+
+<p><strong>Step 3: standardize each outcome.</strong> Measured in standard deviations from the mean, the win is \(+1/3\) and the loss is \(-9/3 = -3\).</p>
+
+<p><strong>Step 4: the skewness.</strong> Formula <a class="eqref" href="#e-skew"></a> weights the cube of each standardized outcome by its probability:</p>
+
+<div class="eq">
+\[ \begin{aligned}
+\gamma_3 &amp;= 0.9 \times (1/3)^3 \\
+&amp;\quad + 0.1 \times (-3)^3 \\
+&amp;= 0.033 - 2.7 = -2.67
+\end{aligned} \]
+</div>
+
+<p><strong>Step 5: the kurtosis.</strong> Formula <a class="eqref" href="#e-kurt"></a> does the same with the fourth power:</p>
+
+<div class="eq">
+\[ \begin{aligned}
+\gamma_4 &amp;= 0.9 \times (1/3)^4 \\
+&amp;\quad + 0.1 \times (-3)^4 \\
+&amp;= 0.011 + 8.1 = 8.11
+\end{aligned} \]
+</div>
+
+<p>The skewness of −2.67 says the loss sits three standard deviations below the mean while the win sits only a third of one above it. The kurtosis of 8.11, an excess of 5.11, says the variance is dominated by one rare outcome: 8.1 of the 9 comes from the loss.</p>
+</div>
+
+<p>For any bet with just two outcomes, the skewness depends only on the probability \(p\) of the winning outcome, not on the sizes of the win and the loss:</p>
+
+<div class="eq" id="e-twopoint">
+\[ \gamma_3 = \frac{1 - 2p}{\sqrt{p(1-p)}} \]
+</div>
+
+<p>At \(p = 0.9\) this gives \(-0.8/0.3 = -2.67\), as in the worked example. At \(p = 0.95\) it gives \(-0.9/0.218 = -4.13\), and at \(p = 0.5\) it gives zero. The higher the win rate of a two-outcome bet, the more negative its skew. The sizes of the win and the loss decide something else, the mean, which is the subject of <a class="xref" href="1c.html">Chapter 1C</a>.</p>
+
+<details class="grind"><summary>Why a two-outcome bet's skew depends only on its win rate</summary><div class="grind-body">
+<p><strong>Step 1: write the bet as a coin.</strong> Let \(B\) be 1 with probability \(p\) and 0 otherwise. A bet that wins \(a\) or loses \(b\) is \(X = -b + (a + b)B\): a shift and a positive stretch of \(B\).</p>
+
+<p><strong>Step 2: shifts and stretches do not change skewness.</strong> Standardizing subtracts the mean, which removes the shift, and divides by the standard deviation, which removes the stretch. So \(X\) and \(B\) have the same skewness.</p>
+
+<p><strong>Step 3: compute it for \(B\).</strong> The mean of \(B\) is \(p\) and its variance is \(p(1-p)\). Its third central moment, the average cubed distance from its mean, is</p>
+
+<div class="eq">
+\[ \begin{aligned}
+&amp; p(1-p)^3 + (1-p)(-p)^3 \\
+&amp;= p(1-p)\left[(1-p)^2 - p^2\right] \\
+&amp;= p(1-p)(1 - 2p)
+\end{aligned} \]
+</div>
+
+<p><strong>Step 4: standardize.</strong> Dividing by \(\sigma^3 = [p(1-p)]^{3/2}\) gives the skewness, \((1 - 2p)/\sqrt{p(1-p)}\).</p>
+</div></details>
+
+<h2 id="why-selling-options-produces-negative-skew">3 · Why selling options produces negative skew</h2>
+
+<p>The put spread is not a special case, since small frequent gains and rare large losses are the structural shape of all premium-selling strategies. A typical short volatility strategy splits its trades into three groups:</p>
+
+<ul>
+<li><strong>Most trades, 70% to 90% of them,</strong> make a small positive return: the premium, less minor <span class="gloss" title="Valuing a position at the current market price, with the gain or loss counted in the account each day whether or not the position is closed.">mark-to-market</span> swings.</li>
+<li><strong>Some trades, 5% to 20% of them,</strong> make a moderate negative return: the position moved against you and you closed it for a loss.</li>
+<li><strong>A few trades, 1% to 5% of them,</strong> make a large negative return: a market shock blew through your strikes.</li>
+</ul>
+
+<p>The mean of this distribution is the premium minus the expected loss in the tail. If the premium is high enough, the mean is positive. But the <strong>median</strong>, the middle outcome, and the <strong>mode</strong>, the most common one, are both positive, while the mean can be barely positive or negative, because the tail dominates it. Picture the bulk of the probability sitting just right of zero, in a tall peak of frequent small wins, with a long thin tail stretching far to the left. The mean is dragged left by that tail; the median stays right of zero.</p>
+
+<h3 id="the-payoff-makes-the-shape">The payoff makes the shape</h3>
+
+<p>Sell an option and you collect the premium up front. That caps the right tail: your maximum gain is the premium. Your maximum loss is much larger than the premium. That is especially true for puts on equity indices, where the underlying can drop 30% or more and you owe the difference between the strike and the index level.</p>
+
+<p>Asymmetric payoffs produce asymmetric distributions. Capped gains and uncapped (or merely large) losses inevitably create negative skew, and there is no way to construct a short-option position without it. The pattern is general:</p>
+
+<ul>
+<li><strong>Lottery tickets</strong> have positive skew: small probable losses and rare large gains.</li>
+<li><strong>Selling insurance</strong> has negative skew: small probable gains and rare large losses.</li>
+<li><strong>Most short volatility strategies</strong> have negative skew, often severe.</li>
+</ul>
+
+<p>The seller of an option is an insurer: the buyer pays a premium to be protected against a large move, and the seller is paid to carry that move's risk. Whether the premium is enough to pay for it is an empirical question, which <a class="xref" href="10c.html">Chapter 10C</a> takes up as the variance risk premium.</p>
+
+<h3 id="what-the-premium-has-to-pay-for">What the premium has to pay for</h3>
+
+<p>If you sell premium, you collect a small expected gain in exchange for accepting negative skew and high kurtosis. The premium has to compensate you for three things:</p>
+
+<ul>
+<li>The expected loss in the tail.</li>
+<li>The illiquidity of unwinding the position in stress, when everyone wants out at once.</li>
+<li>The path-dependent risk of a <span class="gloss" title="The capital a broker requires you to hold in the account to keep a position open. It acts as a deposit against losses.">margin</span> breach before prices revert, which <a class="xref" href="1e.html">Chapter 1E</a> develops.</li>
+</ul>
+
+<p>If the premium is too small to cover these, which is often true for retail-sized accounts, you have a strategy with a positive <em>median</em> outcome but a negative <em>mean</em> outcome. You win most of the time and lose money over the long run.</p>
+
+<h2 id="same-mean-same-spread-different-shape">4 · Same mean, same spread, different shape</h2>
+
+<p>The mean and standard deviation of two strategies can match exactly while their shapes differ completely. <a class="xref" href="1d.html">Chapter 1D</a> defines the Sharpe ratio properly; for this example, read it as the mean return divided by its standard deviation.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two strategies with a Sharpe ratio of 0.5</span>
+<p><strong>Step 1: set the targets.</strong> Both strategies have a mean return of 5% a year and a standard deviation of 10% a year, so both have a Sharpe ratio of \(5/10 = 0.5\). By the rules of <a class="xref" href="1a.html">Chapter 1A</a>, the monthly mean is \(5\%/12 = 0.417\%\) and the monthly standard deviation is \(10\%/\sqrt{12} = 2.89\%\).</p>
+
+<p><strong>Step 2: strategy A is roughly normal.</strong> Its returns spread evenly around the mean, with a worst month in a long record of about −8%, which is 2.9 standard deviations below the monthly mean. You can plan around a month like that.</p>
+
+<p><strong>Step 3: strategy B wins 95% of months.</strong> It gains 1.08% in 95% of months and loses 12.17% in the other 5%. Its monthly mean is \(0.95 \times 1.08 - 0.05 \times 12.17 = 0.417\%\), the same as A's. By the variance formula, its monthly standard deviation is \(\sqrt{0.95 \times 0.05} \times (1.08 + 12.17) = 2.89\%\), also the same.</p>
+
+<p><strong>Step 4: compare the shapes.</strong> A has a skewness of 0 and a kurtosis of 3. By <a class="eqref" href="#e-twopoint"></a>, B has a skewness of −4.13, and its kurtosis works out at 18.05. B's worst month is −12.17%, far worse than A's −8%. In real short volatility strategies the loss months also cluster: when you lose, you often lose several months in a row.</p>
+</div>
+
+<p>The Sharpe ratio does not see the difference. This is not a small problem: it is the central reason that naive risk measures underestimate the danger of short volatility strategies, and <a class="xref" href="1d.html">Chapter 1D</a> develops it fully.</p>
+
+<p>The kurtosis of strategy B shows what fat tails mean in practice. Its loss month sits \((-12.17 - 0.417)/2.89 = -4.36\) standard deviations from its mean. A normal model gives a month that bad a probability of about 1 in 154,000, once in roughly 12,800 years, yet strategy B has one every 20 months.</p>
+
+<h2 id="fat-tails-rare-events-are-not-as-rare-as-the-normal-curve-says">5 · Fat tails: rare events are not as rare as the normal curve says</h2>
+
+<p>Kurtosis measures how often "rare" events happen, and the lesson it carries is structural. On October 19, 1987, the S&amp;P 500 closed down 22.6% in a single day. Measured against a normal model with volatility calibrated to the preceding decade, the fall was about 22 standard deviations. Another reckoning, using a pre-1987 normal model, puts it at about 25. A move of 25 standard deviations has a normal probability of roughly \(10^{-137}\), and even a move of 22 has a probability of only about \(10^{-107}\).</p>
+
+<p>That number is so absurd it should have ended faith in normal models for good. Give the model every chance: count every second in the lifetime of the universe, about \(4 \times 10^{17}\), across perhaps \(10^5\) markets. That is \(4 \times 10^{22}\) trading opportunities, and the chance of seeing the crash even once is about \(4 \times 10^{22} \times 10^{-137} = 4 \times 10^{-115}\), still essentially zero. The event happened anyway. Anyone who told you in 1986 that the normal model was an acceptable approximation owed you an apology by the next day.</p>
+
+<p>Sigma counts, the number of standard deviations a move represents, get unintuitive past about four. Here are the normal model's odds for a single day's fall of each size, with the waiting time at 252 trading days a year:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">a fall of</th><th class="c-other">normal probability on a given day</th><th class="c-other">about once every</th></tr></thead><tbody><tr><td class="c-trial" data-label="a fall of">3 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in 740</td><td class="c-other" data-label="about once every">2.9 years</td></tr><tr><td class="c-trial" data-label="a fall of">4 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in 31,500</td><td class="c-other" data-label="about once every">125 years</td></tr><tr><td class="c-trial" data-label="a fall of">5 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in 3.5 million</td><td class="c-other" data-label="about once every">14,000 years</td></tr><tr><td class="c-trial" data-label="a fall of">6 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in 1.0 billion</td><td class="c-other" data-label="about once every">4 million years</td></tr><tr><td class="c-trial" data-label="a fall of">22 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in \(10^{107}\)</td><td class="c-other" data-label="about once every">never, in practice</td></tr><tr><td class="c-trial" data-label="a fall of">25 standard deviations</td><td class="c-other" data-label="normal probability on a given day">1 in \(10^{137}\)</td><td class="c-other" data-label="about once every">never, in practice</td></tr></tbody></table></div></div>
+
+<p>Yet the 22-sigma event happened. So did an 18-sigma move during the 2008 financial crisis, a 14-sigma move on COVID Monday in March 2020, and a 19-sigma single-day move in the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> during Volmageddon in 2018. The tail events that matter most are Black Monday in 1987, October 2008, Volmageddon in 2018 and March 2020. None of them is a fluke against the right baseline: each is routine against an empirically calibrated baseline that admits fat tails. So-called five-sigma events, which the normal model puts at once in 14,000 years, actually happen every few years in financial markets.</p>
+
+<p>The lesson is not that markets are mysterious or that quantitative analysts are foolish. The lesson is that <strong>the normal (Gaussian) assumption is wrong</strong>. Returns have <span class="gloss" title="A distribution has fat tails when extreme outcomes are much more likely than a normal distribution with the same mean and standard deviation would make them.">fat tails</span> and high kurtosis, and "once-per-century" events happen several times in a career.</p>
+
+<p>For options strategies this matters a great deal, because the tail of the loss distribution is where you actually lose serious money. Underestimating kurtosis means underestimating tail risk. Any sizing model that assumes normal tails under-sizes its stress reserves by orders of magnitude.</p>
+
+<h2 id="measuring-the-tail">6 · Measuring the tail</h2>
+
+<p>If the standard deviation cannot describe the tail, you need numbers that describe it directly, and two are standard.</p>
+
+<p><strong><span class="gloss" title="The return at a chosen percentile of the return distribution. The 95% value at risk is the return that is worse than 95% of outcomes.">Value at risk</span></strong> at the 95% level, written \(\text{VaR}_{95}\), is the 5th percentile of the return distribution: the return that is worse than 95% of outcomes. It answers the question: how bad is the loss at the 5th percentile?</p>
+
+<p><strong><span class="gloss" title="The average return in the part of the distribution beyond the value at risk, such as the worst 5% of months. Also called conditional value at risk.">Expected shortfall</span></strong> at the 95% level, also called conditional value at risk (CVaR), is the average of the returns in that worst 5%:</p>
+
+<div class="eq" id="e-es">
+\[ \text{ES}_{95} = \mathbb{E}\left[R \mid R \le \text{VaR}_{95}\right] \]
+</div>
+
+<p>The vertical bar means "given that", so the expected shortfall is the mean return of the months that are at or beyond the 5th percentile. Where VaR asks how bad the loss at the 5th percentile is, ES asks: given that you hit the 5th percentile or worse, how bad is it on average? ES is the measure Basel III adopted for bank capital after the 2008 crisis, precisely because VaR is silent about the size of losses beyond its threshold. For short volatility sizing, ES is the single most useful number you can compute.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The tails of strategies A and B</span>
+<p><strong>Step 1: strategy A's VaR.</strong> For a normal distribution, the 5th percentile sits 1.645 standard deviations below the mean, so \(\text{VaR}_{95} = 0.417\% - 1.645 \times 2.89\% = -4.33\%\).</p>
+
+<p><strong>Step 2: strategy A's ES.</strong> For a normal distribution, the worst 5% average 2.063 standard deviations below the mean, a factor equal to \(\varphi(1.645)/0.05\), where \(\varphi\) is the height of the standard normal curve, so \(\text{ES}_{95} = 0.417\% - 2.063 \times 2.89\% = -5.54\%\).</p>
+
+<p><strong>Step 3: strategy B's VaR and ES.</strong> Exactly 5% of B's months are losses of 12.17%, so both its 5th percentile and the average beyond it are −12.17%.</p>
+
+<p><strong>Step 4: compare the two.</strong> With the same mean and the same standard deviation, B's expected shortfall is more than twice A's: −12.17% against −5.54% a month.</p>
+</div>
+
+<p>The figure below draws one distribution whose shape a slider sets. The slider is labeled shape and runs from −4 to +4, starting at −1.5: it sets the shape of the curve rather than the skewness itself. The "skew" readout reports the skewness that the shape produces, which stays between about −0.8 and +0.8. The horizontal axis is in units of σ. The shaded bars left of −1.645σ mark the loss tail, the dashed line is the mean, and the solid line is the expected shortfall of the worst 5% of outcomes. The readouts give the mean, the standard deviation, the skewness, a Sharpe ratio computed as the mean over the standard deviation, and \(\text{ES}_{95}\).</p>
+
+<p>Start at −0.5 and drag the slider slowly to −4, watching the standard deviation and the ES together.</p>
+
+<figure class="fig" id="fig-skew-simulator">
+  <canvas id="skew-simulator-c" data-h="260"></canvas>
   <div class="ctrls">
     <div class="ctrl">
-      <label for="variance-drag-explorer-mu">arithmetic mean μ</label>
-      <input type="range" id="variance-drag-explorer-mu" min="-0.2" max="0.5" step="0.01" value="0.1">
-      <output id="variance-drag-explorer-mu-o" for="variance-drag-explorer-mu"></output>
-    </div>
-    <div class="ctrl">
-      <label for="variance-drag-explorer-sigma">volatility σ</label>
-      <input type="range" id="variance-drag-explorer-sigma" min="0.05" max="1.5" step="0.01" value="0.3">
-      <output id="variance-drag-explorer-sigma-o" for="variance-drag-explorer-sigma"></output>
-    </div>
-    <div class="ctrl">
-      <label for="variance-drag-explorer-years">horizon (years)</label>
-      <input type="range" id="variance-drag-explorer-years" min="1" max="30" step="1" value="10">
-      <output id="variance-drag-explorer-years-o" for="variance-drag-explorer-years"></output>
-    </div>
-    <div class="ctrl">
-      <label for="variance-drag-explorer-seed">seed</label>
-      <input type="range" id="variance-drag-explorer-seed" min="1" max="1000" step="1" value="42">
-      <output id="variance-drag-explorer-seed-o" for="variance-drag-explorer-seed"></output>
+      <label for="skew-simulator-skew">shape</label>
+      <input type="range" id="skew-simulator-skew" min="-4" max="4" step="0.1" value="-1.5">
+      <output id="skew-simulator-skew-o" for="skew-simulator-skew"></output>
     </div>
   </div>
   <div class="ctrls">
-    <div class="ctrl"><output id="variance-drag-explorer-drag"></output></div>
-    <div class="ctrl"><output id="variance-drag-explorer-g"></output></div>
-    <div class="ctrl"><output id="variance-drag-explorer-gap"></output></div>
-    <div class="ctrl"><output id="variance-drag-explorer-ten"></output></div>
+    <div class="ctrl"><output id="skew-simulator-mean"></output></div>
+    <div class="ctrl"><output id="skew-simulator-std"></output></div>
+    <div class="ctrl"><output id="skew-simulator-sk"></output></div>
+    <div class="ctrl"><output id="skew-simulator-sr"></output></div>
+    <div class="ctrl"><output id="skew-simulator-es"></output></div>
   </div>
-  <p class="readout" aria-live="polite" id="variance-drag-explorer-read"></p>
-  <figcaption><b>What compounding takes from the arithmetic mean.</b> Six simulated wealth
-  paths with arithmetic mean μ and volatility σ, each compounded twice from the same daily
-  shocks, once as simple returns and once as log returns, which is why every pair of lines
-  nearly coincides. The paths gather around e^(Gt), where G = μ − σ²/2, rather than the e^(μt)
-  the arithmetic mean promises, and the gap widens with volatility. Holding μ fixed, doubling
-  volatility from 20% to 40% raises the drag from 2% to 8% a year.</figcaption>
+  <figcaption><b>A thinner spread over the same tail.</b> A skew-normal return distribution
+  whose shape the slider sets, in units of σ; the skew readout gives the skewness that shape
+  produces. The bars left of −1.645σ mark the loss tail, the dashed line is the mean, and the
+  solid line is the expected shortfall, ES₉₅, the average of the worst 5%. Drag the shape from −0.5
+  toward −4: the standard deviation falls by about a third while ES₉₅ hardly moves, so a
+  summary by mean and spread reads less risk where the tail is as bad as it was.</figcaption>
 </figure>
 
-<h2 id="the-convention">5 · The convention</h2>
+<p>As you drag, the standard deviation falls from about 0.93 to about 0.63, which a mean-and-spread summary reads as a third less risk. The expected shortfall hardly moves, staying near −1.9: the worst 5% of outcomes are as bad as they were. Divided by the distribution's own standard deviation, the expected shortfall has grown from about 2 to about 3. The Sharpe readout moves too, because this figure's mean shifts as the shape changes, but it is built from the mean and the standard deviation alone. Nothing in it registers that the tail stayed put while the spread shrank. Now set the slider to +3: the same standard deviation as at −3, 0.65, comes with an ES of only −0.73, because the long tail is now on the side of the gains.</p>
 
-<p>For the rest of this book, "return" means log return unless otherwise stated. Volatility, Sharpe ratio, variance, drift — all of them assume log returns under the hood. When you see σ_daily × √252 to annualize, that's a log-return convention. When you see a derivation of Black-Scholes invoking dS/S = μ·dt + σ·dW, recognize that as a statement about log returns. Almost every formula in derivatives pricing is more natural in log space.</p>
+<h3 id="stress-scenarios-not-percentiles">Stress scenarios, not percentiles</h3>
 
-<p>The one place where simple returns persist is in reporting to non-quant audiences: clients want to hear "the strategy returned 12% this year," not "log return of 0.1133." That's fine. Translate at the boundary, not in the middle of your math.</p>
+<p>This is also why quantitative risk managers talk about <em>stress scenarios</em> rather than <em>VaR percentiles</em>. A <strong><span class="gloss" title="A concrete hypothetical market move, such as the index falling 20% while the VIX rises 25 points, used to compute what a position would lose.">stress scenario</span></strong> asks a concrete question: what happens if SPX falls 20% in three days and the VIX goes from 15 to 60? You can answer it with explicit calculations from an option's <span class="gloss" title="The measures of how an option's value changes with the underlying's price, with time, with volatility and with interest rates: delta, gamma, theta, vega and rho.">Greeks</span>, which <a class="xref" href="5a.html">Part V</a> teaches. A VaR percentile asks what the 99th-percentile loss is, and its answer depends entirely on the tail thickness you assumed. The first question survives bad assumptions; the second is hostage to them.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Your statement shows the median, not the mean.</strong> Month after month, the profit and loss (P&amp;L) on a short put's statement shows the typical outcome: the premium kept. The mean, which decides whether the strategy makes money, lives in the rare months your statement has not shown you yet.</li>
+<li><strong>Short records hide the tail.</strong> Take the short put's roughly 2% monthly chance of a crash. A backtest of 36 monthly returns contains no crash at all with probability \(0.98^{36} = 48\%\), so about half of all three-year backtests of that strategy show no left tail. Their skewness and kurtosis look harmless because the sample never reached the tail.</li>
+<li><strong>Size to the tail, not to the spread.</strong> The standard deviation of a short volatility position understates what it can lose. Size it from its expected shortfall and its losses in explicit stress scenarios.</li>
+<li><strong>Skew has no line on the statement.</strong> It costs nothing until the month it costs everything, which is why it must be priced before the trade and not discovered after it.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Moments estimated from data are unstable. The kurtosis of SPX runs from 15 to 20 depending on the sample, and one extreme day can move it a long way, because the fourth power gives that day enormous weight. A sample with no crash in it reports a mild skew and a kurtosis near normal, whatever the true distribution is.</p>
+
+<p>Even four moments describe a distribution only to a first approximation. Two strategies can share all four and still differ in the tail, and a historical expected shortfall is only as bad as the worst history in the sample. That is why the decision rule below leans on stress scenarios as well as on measured moments.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Assume fat tails.</strong> Put a kurtosis between 10 and 20 into any tail model, and treat any "30-sigma" event as roughly a 1-in-30-years event.</li>
+<li><strong>Size to survive a large move.</strong> Size your largest single position so that a 4-standard-deviation move, measured against the empirical distribution rather than the normal one, does not threaten the survival of the account.</li>
+<li><strong>Ask stress questions.</strong> Before sizing a short volatility position, compute its \(\text{ES}_{95}\) and its loss in explicit stress scenarios. <a class="xref" href="1d.html">Chapter 1D</a> turns this into a full stress test.</li>
+<li><strong>Judge a premium-selling strategy by its mean.</strong> A high win rate and a positive median say nothing about whether it makes money.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "defined-risk spreads eliminate the skew problem"</span>
+<p>A spread caps the loss, but the cap is still much larger than the gain. A put spread with a $1 credit and a $9 maximum loss risks nine times what it can make on a single trade. At a 90% win rate its skewness is −2.67, as the worked example showed.</p>
+
+<p>Aggregating many trades narrows the skew but does not remove it. For \(n\) independent trades, the skewness of the total is the single trade's skewness divided by \(\sqrt{n}\): over 100 independent spreads, \(-2.67/10 = -0.27\). But spreads on the same index open at the same time are not independent, because one crash hits them all together, so the portfolio keeps much of a single trade's skew. The structural issue is the asymmetric payoff. Spreads do not fix an asymmetric payoff; they just bound the worst case. <a class="xref" href="1d.html">Chapter 1D</a> returns to this with the iron condor.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "I win 80% of my trades, so I have edge"</span>
+<p>Win rate alone is meaningless, and you can engineer a high win rate with a bad expected value trivially. Take a bet that wins $0.10 and loses $1. It only breaks even if it wins 10 times for every loss, a win rate of \(10/11 = 90.9\%\). At an 80% win rate it loses \(0.8 \times 0.10 - 0.2 \times 1 = -\$0.12\) a trade. What matters is the full distribution: each outcome's size times its probability, including the tail. <a class="xref" href="1c.html">Chapter 1C</a> makes this precise.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>You know a skewed distribution from survival analysis. When a trial has a tail of long-term survivors, a few patients live far longer than the rest, and they pull mean survival above median survival. Trial reports lead with the median partly because it is robust to that tail. A premium seller's monthly results are the mirror image. Most months are small wins, so the median is positive, while a long left tail of rare large losses drags the mean below it, sometimes below zero. Judging a short volatility record by its typical month is like judging a survival curve by its median alone: the tail that decides the outcome is exactly what that number leaves out.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A return distribution lists each outcome with its probability, and four moments summarize it: the mean, the variance, the skewness and the kurtosis.</li>
+<li>Selling options caps the gain at the premium and leaves a large loss, so every short-option position is negatively skewed: a positive median can sit beside a negative mean.</li>
+<li>Real returns have fat tails: SPX daily returns have a kurtosis of roughly 15 to 20 against the normal's 3, and "impossible" moves recur several times in a career.</li>
+<li>The standard deviation cannot see the tail. Expected shortfall and explicit stress scenarios can, and they are the numbers to size by.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">7 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A bet wins $2 with probability 0.8 and loses $8 with probability 0.2. Compute its mean, standard deviation, skewness and kurtosis.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The mean is \(0.8 \times 2 - 0.2 \times 8 = 0\) and the variance is \(0.8 \times 4 + 0.2 \times 64 = 16\), so the standard deviation is \(\sigma = 4\). Standardized, the win is \(+0.5\) and the loss \(-2\). The skewness is \(0.8 \times 0.125 + 0.2 \times (-8) = -1.5\), which matches \((1 - 1.6)/\sqrt{0.16} = -1.5\) from <a class="eqref" href="#e-twopoint"></a>. The kurtosis is \(0.8 \times 0.0625 + 0.2 \times 16 = 3.25\), so this bet is strongly skewed yet has a kurtosis close to the normal's 3: the two moments measure different things.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Why is every short-option position negatively skewed, whatever its strike?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The seller's gain is capped at the premium collected, while the loss can be many times larger. Capped gains beside large losses always put the long tail on the loss side. A spread bounds the loss, but the bound is still far larger than the premium.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Two strategies have the same mean and standard deviation. Strategy B loses 12.17% in 5% of months; strategy A is normal with a monthly standard deviation of 2.89%. Which has the larger expected shortfall at 95%, and by how much?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Strategy B does. Its worst 5% of months all lose 12.17%, so its \(\text{ES}_{95}\) is −12.17%, against A's \(0.417\% - 2.063 \times 2.89\% = -5.54\%\). B's expected shortfall is more than twice A's, although a summary by mean and standard deviation calls the two identical.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A normal model gives a 5-standard-deviation daily fall a probability of 1 in 3.5 million. What should you conclude if you see several in one career?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>That the model's tails are too thin, not that you have been unlucky. At 252 trading days a year, 1 in 3.5 million days is once in about 14,000 years. Seeing several in a career means the true distribution puts far more weight in the tail, which is what a kurtosis of 15 to 20 describes.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You backtest a strategy that has a 2% chance each month of a large loss, using 36 months of data. How likely is it that your backtest contains no such loss? And if you hold 25 of these positions, independent of each other, what happens to the skewness of the total?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The chance of 36 clean months is \(0.98^{36} = 0.48\), about a coin flip. For 25 independent positions, the skewness of the total is the single position's divided by \(\sqrt{25} = 5\). Positions on one index during one crash are not independent, though, and then the total keeps most of the single position's skew.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -385,15 +613,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;
@@ -751,129 +982,66 @@ var DL = (function () {
   };
 })();
 
-/* ---------- log-return-symmetry ---------- */
+/* ---------- skew-simulator ---------- */
 (function () {
-  var U = 'log-return-symmetry';
+  var U = 'skew-simulator';
+  var slider = DL.$(U + '-skew');
 
-  /* the app's arithmetic: $100 up by the slider's percentage, then back to $100 */
-  function legs(pUp) {
-    var start = 100, mid = start * (1 + pUp / 100), end = start;
-    return { mid: mid,
-             upSimple: (mid - start) / start * 100, downSimple: (end - mid) / mid * 100,
-             upLog: Math.log(mid / start) * 100, downLog: Math.log(end / mid) * 100 };
-  }
-  function pc(x) { return (x > 0 ? '+' : '') + DL.num(x, 2) + '%'; }
-
-  var draw = DL.figure(U + '-c', function (c) {
-    var pUp = DL.val(U + '-up'), r = legs(pUp);
-    var span = r.upSimple * 1.42;
-    var p = new NMT.Plot(c, { xmin: 0, xmax: span, ymin: 0, ymax: 5.2,
-                              pad: { l: 44, r: 14, t: 6, b: 30 }, grid: false });
-    DL.axes(p, { nx: 5, y: false, yAxis: true,
-                 x: function (v) { return DL.num(v, 0) + '%'; } });
-    var simple = DL.color('accent'), log = DL.color('insight');
-    /* each leg's size; the down legs drawn fainter */
-    DL.hbars(p, [4.1, 3.3], [r.upSimple, -r.downSimple],
-             { h: 0.62, color: function (v, i) { return DL.fade(simple, i ? 0.45 : 0.8); } });
-    DL.hbars(p, [1.6, 0.8], [r.upLog, -r.downLog],
-             { h: 0.62, color: function (v, i) { return DL.fade(log, i ? 0.45 : 0.8); } });
-    var soft = DL.color('ink-soft'), f11 = '11px ' + DL.color('sans');
-    [[4.1, 'up'], [3.3, 'down'], [1.6, 'up'], [0.8, 'down']].forEach(function (row) {
-      p.text(0, row[0], row[1], { dx: -6, dy: 1, align: 'right', baseline: 'middle',
-                                  font: f11, color: soft });
-    });
-    [[4.1, r.upSimple], [3.3, r.downSimple], [1.6, r.upLog], [0.8, r.downLog]].forEach(function (row) {
-      p.text(Math.abs(row[1]), row[0], pc(row[1]), { dx: 6, dy: 1, baseline: 'middle',
-                                                   font: f11, color: DL.color('ink') });
-    });
-    p.text(0, 4.95, 'simple returns', { dx: 2, baseline: 'middle', color: simple });
-    p.text(span, 4.95, '|up| ≠ |down|', { dx: -2, align: 'right', baseline: 'middle',
-                                         font: f11, color: DL.color('plain') });
-    p.text(0, 2.45, 'log returns', { dx: 2, baseline: 'middle', color: log });
-    p.text(span, 2.45, '|up| = |down|', { dx: -2, align: 'right', baseline: 'middle',
-                                         font: f11, color: log });
-
-    DL.out(U + '-up-o', DL.num(pUp, 1) + '%');
-    DL.out(U + '-path', 'path = $100 → ' + DL.usd(r.mid, 2) + ' → $100');
-    DL.out(U + '-simple', 'simple returns = ' + pc(r.upSimple) + ' · ' + pc(r.downSimple));
-    DL.out(U + '-log', 'log returns = ' + pc(r.upLog) + ' · ' + pc(r.downLog));
-  });
-  DL.bind([U + '-up'], draw);
-})();
-
-/* ---------- variance-drag-explorer ---------- */
-(function () {
-  var U = 'variance-drag-explorer';
-
-  /* the app's six paths: daily steps, one point kept every 21 days. A compounds
-     the simple return mu dt + sigma sqrt(dt) z; G compounds the log return
-     (mu - sigma^2/2) dt + sigma sqrt(dt) z from the same z. */
-  var memo = { key: null };
-  function paths(mu, sigma, years, seed) {
-    var key = [mu, sigma, years, seed].join();
-    if (memo.key === key) return memo;
-    var nSteps = years * 252, dt = 1 / 252, arith = [], geom = [];
-    for (var p = 0; p < 6; p++) {
-      var r = DL.rng(seed + p), A = 1, G = 1, aP = [A], gP = [G];
-      for (var i = 0; i < nSteps; i++) {
-        var z = DL.gauss(r);
-        A *= 1 + (mu * dt + sigma * Math.sqrt(dt) * z);
-        G *= Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * z);
-        if (i % 21 === 0) { aP.push(A); gP.push(G); }
-      }
-      arith.push(aP); geom.push(gP);
+  /* the app's skew-normal, 81 bins on [-4, 4], normalised to unit mass */
+  function distribution(alpha) {
+    var bins = 81, lo = -4, hi = 4, dx = (hi - lo) / (bins - 1), total = 0, raw = [];
+    for (var i = 0; i < bins; i++) {
+      var x = lo + i * dx, z = x - (alpha < 0 ? 0.4 : -0.4);
+      var v = 2 * DL.phi(z) * DL.N(alpha * z);
+      total += v;
+      raw.push({ x: x, p: v });
     }
-    memo = { key: key, arith: arith, geom: geom };
-    return memo;
+    return raw.map(function (b) { return { x: b.x, p: b.p / total }; });
   }
-  function tick(v, st) {
-    if (Math.abs(v) >= 1000) return DL.compact(v, 0);
-    return DL.num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 3));
+  function moments(dist) {
+    var m = 0, v = 0, s = 0;
+    dist.forEach(function (b) { m += b.x * b.p; });
+    dist.forEach(function (b) { var d = b.x - m; v += d * d * b.p; s += d * d * d * b.p; });
+    var sd = Math.sqrt(v);
+    return { mean: m, std: sd, skew: s / (sd * sd * sd), sharpe: m / sd };
+  }
+  function es95(dist) {
+    var cum = 0, tail = 0, mass = 0;
+    for (var i = 0; i < dist.length; i++) {
+      var b = dist[i];
+      if (cum + b.p < 0.05) { tail += b.x * b.p; mass += b.p; }
+      else { var need = 0.05 - cum; tail += b.x * need; mass += need; break; }
+      cum += b.p;
+    }
+    return tail / mass;
   }
 
   var draw = DL.figure(U + '-c', function (c) {
-    var mu = DL.val(U + '-mu'), sigma = DL.val(U + '-sigma'),
-        years = DL.val(U + '-years'), seed = DL.val(U + '-seed');
-    var drag = sigma * sigma / 2, g = mu - drag;
-    /* ten years of the drag, both rates compounded the same (continuous) way */
-    var ten = Math.exp(10 * mu) / Math.exp(10 * g) - 1;
-    var P = paths(mu, sigma, years, seed);
+    var skew = parseFloat(slider.value);
+    var dist = distribution(skew), m = moments(dist), es = es95(dist);
+    var pMax = Math.max.apply(null, dist.map(function (b) { return b.p; })) * 1.18;
+    var p = new NMT.Plot(c, { xmin: -4.1, xmax: 4.1, ymin: 0, ymax: pMax,
+                              pad: { l: 14, r: 14, t: 16, b: 30 } });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], ny: 4, y: false, yAxis: false,
+                 x: function (v) { return (v < 0 ? DL.MINUS + (-v) : v) + 'σ'; } });
+    var tail = DL.fade(DL.color('plain'), 0.75), body = DL.fade(DL.color('accent'), 0.55);
+    DL.bars(p, dist.map(function (b) { return b.x; }), dist.map(function (b) { return b.p; }),
+            { w: 0.085, color: function (v, i) { return dist[i].x <= -1.645 ? tail : body; } });
+    DL.vline(p, m.mean, { color: DL.color('familiar'), dash: [4, 4], width: 1.3 });
+    DL.vline(p, es, { color: DL.color('plain'), width: 1.5 });
+    p.text(m.mean, pMax, 'μ = ' + DL.num(m.mean, 2),
+           { dx: 5, dy: 14, color: DL.color('familiar') });
+    p.text(es, pMax, 'ES₉₅ = ' + DL.num(es, 2),
+           { dx: -5, dy: 14, align: 'right', color: DL.color('plain') });
+    p.text(-4.1, pMax * 0.22, 'left tail (5%)', { dx: 4, color: DL.color('plain') });
 
-    var lo = 0.5, hi = 1.5;
-    P.arith.concat(P.geom).forEach(function (a) {
-      a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; });
-    });
-    var n = P.arith[0].length;
-    var xs = P.arith[0].map(function (_, i) { return i / (n - 1) * years; });
-    var p = new NMT.Plot(c, { xmin: 0, xmax: years, ymin: lo, ymax: hi + (hi - lo) * 0.22,
-                              pad: { l: 42, r: 14, t: 10, b: 34 }, xlabel: 'years' });
-    DL.axes(p, { nx: 6, ny: 5, yAt: 0, x: tick, y: tick });
-    DL.hline(p, 1, { color: DL.color('ink-faint'), dash: [2, 3] });
-
-    var fam = DL.fade(DL.color('familiar'), 0.5), pla = DL.fade(DL.color('plain'), 0.5);
-    P.arith.forEach(function (a) { DL.line(p, xs, a, { color: fam, width: 1.1 }); });
-    P.geom.forEach(function (a) { DL.line(p, xs, a, { color: pla, width: 1.1 }); });
-    p.fn(function (t) { return Math.exp(mu * t); }, { color: DL.color('ink-soft'), width: 1.6, dash: [5, 4] });
-    p.fn(function (t) { return Math.exp(g * t); }, { color: DL.color('accent'), width: 2.2 });
-
-    p.g.textAlign = 'left';   /* DL.legend leaves the alignment as the axes left it */
-    DL.legend(p, [{ label: 'e^(μt)', color: DL.color('ink-soft'), dash: [5, 4] },
-                  { label: 'e^(Gt)', color: DL.color('accent') }]);
-    DL.legend(p, [{ label: 'simple returns', color: DL.color('familiar') },
-                  { label: 'log returns', color: DL.color('plain') }], { dy: 15 });
-
-    DL.out(U + '-mu-o', DL.num(mu * 100, 0) + '%');
-    DL.out(U + '-sigma-o', DL.num(sigma * 100, 0) + '%');
-    DL.out(U + '-years-o', years + 'y');
-    DL.out(U + '-seed-o', String(seed));
-    DL.out(U + '-drag', 'variance drag σ²/2 = ' + DL.num(drag * 100, 2) + '%');
-    DL.out(U + '-g', 'geometric G = ' + DL.num(g * 100, 2) + '%');
-    DL.out(U + '-gap', 'gap A − G = ' + DL.num(drag * 100, 2) + 'pp');
-    DL.out(U + '-ten', '10-yr drag (compounded) = ' + DL.num(ten * 100, 1) + '%');
-    DL.out(U + '-read', 'A strategy with arithmetic mean ' + DL.num(mu * 100, 0) +
-           '% and volatility ' + DL.num(sigma * 100, 0) + '% compounds at only ' +
-           DL.num(g * 100, 2) + '% a year.');
+    DL.out(U + '-skew-o', DL.num(skew, 1));
+    DL.out(U + '-mean', 'mean μ = ' + DL.num(m.mean, 3));
+    DL.out(U + '-std', 'std σ = ' + DL.num(m.std, 3));
+    DL.out(U + '-sk', 'skew = ' + DL.num(m.skew, 2));
+    DL.out(U + '-sr', 'Sharpe (blind to skew) = ' + DL.num(m.sharpe, 2));
+    DL.out(U + '-es', 'ES₉₅ = ' + DL.num(es, 2));
   });
-  DL.bind([U + '-mu', U + '-sigma', U + '-years', U + '-seed'], draw);
+  DL.bind([U + '-skew'], draw);
 })();
 <!--/SCRIPT-->

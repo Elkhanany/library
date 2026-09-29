@@ -1,0 +1,247 @@
+<p class="eyebrow">Part XI · Swing trading · Chapter 11B</p>
+
+<h1>Conditional mean reversion</h1>
+
+<p class="subtitle">The central claim, and the conditions it needs</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="11a.html">Chapter 11A</a> built the dashboard that reads the regime. This chapter says what to do when that read says the market is mean-reverting. It states the conditional thesis, the three layers every trade must pass, and how to grade the evidence and the horizon behind each signal.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Mean reversion, momentum and the regime problem in an AR(1) model (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+<li>The market dashboard and its four questions (<a class="xref" href="11a.html">Chapter 11A</a>).</li>
+<li>Gamma exposure, the gamma flip and the two regimes of dealer hedging (Chapters 8A and 8B).</li>
+<li>The square-root-of-time rule (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>The Edge Book's evidence tiers (<a class="xref" href="10a.html">Chapter 10A</a>) and its view of microstructure edges (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+</ul>
+</div>
+
+<h2 id="the-thesis-stated-with-its-conditions">1 · The thesis, stated with its conditions</h2>
+
+<p>The dashboard of <a class="xref" href="11a.html">Chapter 11A</a> tells you <em>what regime you are in</em>. This chapter is about what to do when it says the regime is mean-reverting. That means three things hold at once: the macro layer allows <span class="gloss" title="The tendency of a move to be followed by a move in the opposite direction, so that prices drift back toward where they were. In a return series it shows as negative autocorrelation.">mean reversion</span> as the prior, structure puts the market at a pullback level, and dealer gamma positioning makes damping intraday flow likely. The conditional thesis is not "SPY mean reverts" but "SPY mean reverts when measurable conditions hold". The dashboard's four checks are exactly those measurable conditions.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A rule like "buy SPY after it falls" is right in some markets and ruinous in others. The thesis names those markets in advance: the rule works only when the trend is up, volatility is calm, credit is quiet and dealers are hedging against moves. It tells you to stand aside whenever one of those fails.</p>
+</div>
+
+<p>As a <em>universal</em> claim about SPY, mean reversion is empirically false. <a class="xref" href="3b.html">Chapter 3B</a> showed why a pooled fit can hide it: the sign of the effect changes with the regime. The classic statistic compares the average next-bar return after an up stretch with the average after a down stretch. Write \(m_{\text{up}}\) for the mean return of the bar after a trailing \(N\)-bar return above zero, and \(m_{\text{down}}\) for the mean after one below zero. The statistic is their difference:</p>
+
+<div class="eq" id="e-d">
+\[ D = m_{\text{up}} - m_{\text{down}} \]
+</div>
+
+<p>A positive \(D\) is <span class="gloss" title="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past.">momentum</span>: up stretches are followed by higher returns than down stretches. A negative \(D\) is mean reversion: down stretches are followed by the higher returns. On SPY the sign of \(D\) depends on the regime. Sort the days by VIX level, by the sign of GEX or by the direction of credit spreads, and the sign flips. A trader who claims to be "a mean-reversion guy" is making a regime assumption without realizing it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A pooled average hides the regime</span>
+<p><strong>Step 1: two regimes.</strong> Suppose, hypothetically, that 80% of days are calm and 20% stressed. After a down week, the next day's mean return is +0.10% in calm regimes and −0.15% in stressed ones. Down weeks come on 35% of calm days and 60% of stressed ones.</p>
+
+<p><strong>Step 2: which regime a down week comes from.</strong> By Bayes' theorem, the chance that a down week falls in the stressed regime is \(0.2 \times 0.6 / (0.8 \times 0.35 + 0.2 \times 0.6) = 0.12/0.40 = 0.30\). Stress is 20% of days but 30% of down weeks.</p>
+
+<p><strong>Step 3: the pooled edge.</strong> Averaged over every down week, the next day returns \(0.70 \times 0.10\% + 0.30 \times (-0.15\%) = 0.070\% - 0.045\% = 0.025\%\).</p>
+
+<p><strong>Step 4: what conditioning buys.</strong> At a hypothetical round-trip cost of 0.05%, the pooled buy-the-dip rule loses money after costs. The same rule taken only in the calm regime earns 0.10% before costs and 0.05% after them. It also skips the days that lose 0.15%.</p>
+</div>
+
+<h2 id="writing-the-conditions-down">2 · Writing the conditions down</h2>
+
+<p>The conditional framing avoids the trap. You write down the conditions under which you expect the edge to be positive, and you check them. If any condition fails, you do not take the trade. Some condition fails on most days, which is the system working, not a sign that it is broken.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A trial's eligibility criteria work the same way. Most patients screened for a targeted-therapy trial fail screening, which is no flaw in the protocol. The criteria exist because the effect is expected only in the eligible population. Enrolling the ineligible to fill the trial dilutes the effect toward zero, just as taking every dip dilutes a conditional edge into a pooled one.</p>
+</div>
+
+<h2 id="three-nested-horizons">3 · Three nested horizons</h2>
+
+<p>The framework is a hierarchy in which each layer answers a different question, runs on a different clock and uses different inputs. <strong>A signal at one layer never overrides a contradicting signal at a higher layer.</strong></p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Layer</th><th class="c-other">Clock</th><th class="c-result">What it decides</th></tr></thead><tbody><tr><td class="c-trial" data-label="Layer">1. Macro regime</td><td class="c-other" data-label="Clock">Weeks to months</td><td class="c-result" data-label="What it decides">Whether the mean-reversion edge is positive, weak or negative: the prior</td></tr><tr><td class="c-trial" data-label="Layer">2. Market structure</td><td class="c-other" data-label="Clock">2 to 10 days</td><td class="c-result" data-label="What it decides">Whether this setup sits at a level where the macro edge can be expressed cleanly</td></tr><tr><td class="c-trial" data-label="Layer">3. Dealer gamma and path</td><td class="c-other" data-label="Clock">Intraday to 2 days</td><td class="c-result" data-label="What it decides">Whether today's mechanical flow supports the trade or works against it</td></tr></tbody></table></div></div>
+
+<p><strong>Layer 1, the macro regime, sets the prior.</strong> Its inputs are the equity drift, read from the slope of the 200-day SMA, the VIX level and term structure, and credit and rates stress: HY OAS, IG OAS and the MOVE index. It also reads the yield curve, as 10Y−2Y and 10Y−3M, the dollar and FX (DXY, USD/JPY) and the <span class="gloss" title="A single regime score from minus 100 to plus 100, built as a weighted average of eight dimensions of market state such as volatility, credit and trend. It permits and sizes swing trades rather than triggering them.">composite signal</span> score of <a class="xref" href="11g.html">Chapter 11G</a>. In its default states, positive drift with contango and tight credit means mean reversion is on. An inverted curve with widening credit and backwardation means mean reversion is suspended.</p>
+
+<p><strong>Layer 2, market structure, finds the level and the pattern.</strong> Its inputs are the Weinstein stage (<a class="xref" href="11e.html">Chapter 11E</a>), the location against key moving averages (the 10-, 21-, 50- and 200-day EMAs), pattern detection (<a class="xref" href="11d.html">Chapter 11D</a>) and <span class="gloss" title="The price of a stock divided by the price of a benchmark such as the S&amp;P 500, followed over time. A rising ratio means the stock is outperforming. It is unrelated to the relative strength index.">relative strength</span> against a benchmark. It decides whether <em>this specific setup</em> sits where the macro edge can be expressed cleanly.</p>
+
+<p><strong>Relative strength</strong> is the price of the stock or index divided by the price of a benchmark, followed over time. A stock that gains 8% while SPX gains 3% sees its relative strength rise by \(1.08/1.03 - 1 = 4.9\%\). "Relative strength positive" means the ratio is rising. <a class="xref" href="11d.html">Chapter 11D</a> gives the Mansfield version, which compares the ratio with its own average. Relative strength has nothing to do with the relative strength index of <a class="xref" href="11c.html">Chapter 11C</a>, despite the name.</p>
+
+<p><strong>Layer 3, dealer gamma and path, sets the execution context.</strong> Its inputs are net dealer GEX (<a class="xref" href="8a.html">Chapter 8A</a>), the distance to the gamma flip, how the VIX behaves intraday, options skew and the time of day. It decides whether <em>today specifically</em> supports the trade, or whether mechanical flow works against the position.</p>
+
+<h2 id="the-decision-tree">4 · The decision tree</h2>
+
+<p>The layers combine into a decision tree that you run in order:</p>
+
+<pre>1. Macro regime supportive?
+   (high composite signal, contango,
+    positive drift)
+   If NO:  no trade.
+   If YES: continue.
+
+2. Structure says BUY?
+   (Stage 2 pullback to a defined level,
+    pivot intact, relative strength positive)
+   If NO:  no trade.
+   If YES: continue.
+
+3. Gamma regime says the PATH is acceptable?
+   (positive GEX above the flip, OR a clear
+    setup for an amplification trade below it)
+   If NO:  skip.
+   If YES: take the trade.
+
+4. Size for the loss budget (Chapter 13C),
+   pre-commit the invalidation (Chapter 13C),
+   record the trade in your journal.</pre>
+
+<p>Most days you stop at step 1 or step 2, which is correct for a framework designed to filter aggressively. The Dealer Mechanics Lab adds that trades surviving all three gates should be sized larger than trades that fail any of them. Since the tree takes no trade that fails a gate, read this as: concentrate your size in the few survivors rather than spreading it across every setup you see.</p>
+
+<div class="worked">
+<span class="ct">Worked example: How often the gates open</span>
+<p><strong>Step 1: the pass rates.</strong> Suppose, hypothetically, that Layer 1 is supportive on 60% of trading days. Structure offers a Stage 2 pullback on 15% of those days, with an acceptable gamma path on 70% of those.</p>
+
+<p><strong>Step 2: the product.</strong> Each rate is a share of the days that passed the gates before it. All three therefore open on \(0.60 \times 0.15 \times 0.70 = 0.063\) of days, about \(0.063 \times 252 = 16\) days in a year of 252 trading days.</p>
+
+<p><strong>Step 3: what it means for size.</strong> Sixteen trades a year cannot carry an account at a tiny size each. The capital that a pooled strategy would spread over 252 days waits for those 16, sized by the loss budget of <a class="xref" href="13c.html">Chapter 13C</a>.</p>
+</div>
+
+<p>Sizing the survivors larger has a formal reason in the <span class="gloss" title="The rule for sizing a bet or position that maximizes the long-run compound growth rate of wealth, which is the same as maximizing the expected logarithm of wealth.">Kelly criterion</span>, whose bet grows with the edge per unit of variance (<a class="xref" href="3d.html">Chapter 3D</a>). A trade with a higher expected return earns a larger fraction of capital. A <span class="gloss" title="Sizing at a fixed fraction of the Kelly bet, usually a half or a quarter. It gives up some long-run growth for much shallower drawdowns and a buffer against an overestimated edge.">fractional Kelly</span> bet keeps that ordering at a safer scale. The gates raise the expected return of the trades they pass, which is why the survivors deserve more.</p>
+
+<h3 id="where-the-edge-book-disagrees">Where the Edge Book disagrees</h3>
+
+<p>The Edge Book is far less confident that this edge is open to a retail account. It files <strong>short-term reversal over 1 to 5 days</strong>, liquidity provision after sharp moves, among the microstructure edges (<a class="xref" href="1g.html">Chapter 1G</a>). It calls those essentially institutional-only: the edge per trade is usually 1 to 5 bps, which retail commission and slippage alone exceed. It also treats the sign of GEX, the core input of Layer 3, as low-confidence context worth only a fraction of one filter's weight (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+
+<p>The Dealer Mechanics Lab's case rests on the conditioning itself. It points to positive-gamma dealer hedging, which sells rallies and buys falls, as the mechanism behind reversal in calm regimes (Chapters 3B and 8B). It also holds each trade for 2 to 10 days rather than minutes. Neither source reports the conditional edge per trade after retail costs. Only your own out-of-sample test can supply the number that decides the question: if the conditioned edge does not clear your round-trip cost, the Edge Book's objection stands.</p>
+
+<h2 id="grading-the-evidence">5 · Grading the evidence</h2>
+
+<p>Not every claim in this framework carries the same weight of evidence. The Dealer Mechanics Lab tags each with a tier:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Tier</th><th class="c-result">What it covers</th><th class="c-result">Examples</th></tr></thead><tbody><tr><td class="c-trial" data-label="Tier">A</td><td class="c-result" data-label="What it covers">Peer-reviewed papers, multi-decade replication, official exchange or regulatory data</td><td class="c-result" data-label="Examples">The equity risk premium (Mehra-Prescott; Dimson-Marsh-Staunton), the variance risk premium (Bondarenko; Carr-Wu), the Fed meeting week return anomaly (Cieslak-Morse-Vissing-Jorgensen 2019), <span class="gloss" title="The tendency for the return over the last 30 minutes of the trading day to go the same way as the return over the rest of the day. Baltussen, Da, Lammers and Martens (2021) document it across more than 60 futures markets and attribute it to hedging that trades with the move.">intraday momentum</span> (Baltussen et al. 2021, JFE), the <span class="gloss" title="The pull of a strike with heavy open interest on the price of the underlying near expiry, as dealer hedging sells above the strike and buys below it. The measured effect is small, about 16.5 basis points on equity expiration days.">pinning</span> effect (Ni-Pearson-Poteshman 2005)</td></tr><tr><td class="c-trial" data-label="Tier">B</td><td class="c-result" data-label="What it covers">Vendor statistics or backtests with credible methodology but no peer review</td><td class="c-result" data-label="Examples">SqueezeMetrics GEX models, 0DTE composition data from Cboe, VIX term-structure rules from practitioner research</td></tr><tr><td class="c-trial" data-label="Tier">C</td><td class="c-result" data-label="What it covers">Practitioner pattern language that needs operationalizing</td><td class="c-result" data-label="Examples">VCP detection (Minervini), cup-and-handle pivot rules (O'Neil), Weinstein stage analysis</td></tr></tbody></table></div></div>
+
+<p>Tier C is real but heuristic, which leaves the rigorous formalization to you. Chapters 11D and 11E do some of it, turning pattern language into explicit thresholds. Always tag in your own notes which tier each claim sits in. The tier does not disqualify a claim, but it sets the prior for how heavily to weight it.</p>
+
+<p>The Edge Book grades evidence on a different axis. Its <span class="gloss" title="A grade for the evidence behind an edge: T1 for peer-reviewed, replicated, multi-decade results, T2 for strong but methodology-sensitive results, and T3 for thin or decayed ones.">evidence tiers</span> T1 to T3 grade how strong and durable the evidence for an <em>edge</em> is (<a class="xref" href="10a.html">Chapter 10A</a>), while Tiers A to C grade the <em>kind of source</em>. The two can diverge: a peer-reviewed paper can document an effect that has since decayed, which <a class="xref" href="10i.html">Chapter 10I</a> shows happening more than once.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The tiers echo the levels of evidence you use every week. Tier A is the randomized trial, the meta-analysis and the registry. Tier B is the sponsor's data presented without peer review: credible, useful and not yet checked. Tier C is expert opinion, which is not wrong for being an opinion but has to be written into a protocol before it can be tested. A guideline weighs all three and weighs them differently, as the tiers ask you to.</p>
+</div>
+
+<h2 id="tagging-the-horizon">6 · Tagging the horizon</h2>
+
+<p>Every signal also gets a horizon tag: a macro regime call works over weeks to months, a structural pattern over 2 to 10 days, and a gamma-driven intraday move resolves in hours. <strong>Mixing horizons is the second-most-common failure, after mixing tiers.</strong> People see a 5-minute breakout and infer a 6-month thesis, or hold a 6-month thesis and trade it on a 5-minute chart.</p>
+
+<p>The arithmetic of <a class="xref" href="1a.html">Chapter 1A</a> shows why a thesis at one horizon says little at another. Over a horizon \(h\) in years, a drift \(\mu\) moves the price by about \(\mu h\), while the noise has a standard deviation of \(\sigma\sqrt{h}\). Their ratio is the signal-to-noise ratio of the thesis at that horizon:</p>
+
+<div class="eq" id="e-snr">
+\[ \frac{\mu h}{\sigma \sqrt{h}} = \frac{\mu}{\sigma}\,\sqrt{h} \]
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: A thesis at the wrong horizon</span>
+<p><strong>Step 1: the thesis.</strong> You expect the index to drift up 10% a year, with a volatility of 16%, so \(\mu/\sigma = 0.625\).</p>
+
+<p><strong>Step 2: six months.</strong> With \(h = 0.5\), <a class="eqref" href="#e-snr"></a> gives \(0.625 \times \sqrt{0.5} = 0.44\). The thesis is visible, if not certain, over its own horizon.</p>
+
+<p><strong>Step 3: five minutes.</strong> A trading year holds about \(252 \times 390 = 98{,}280\) minutes, so 5 minutes is \(h = 5/98{,}280 = 0.0000509\) years. Then \(\sqrt{h} = 0.00713\), which makes the ratio \(0.625 \times 0.00713 = 0.0045\), a hundred times smaller. On a 5-minute chart, a 6-month thesis is invisible in the noise.</p>
+</div>
+
+<p>The discipline is to write the horizon of every trade idea down before you enter. If the horizon you stated does not match the indicators you are using, fix one or the other before you click buy.</p>
+
+<h2 id="what-the-next-chapters-build">7 · What the next chapters build</h2>
+
+<p>The rest of the machinery comes in five chapters:</p>
+
+<ul>
+<li><strong><a class="xref" href="11c.html">Chapter 11C</a></strong> builds the indicator foundations: RSI, MACD, ATR, ADX, Bollinger Bands and Donchian Channels. It asks which feature of the data each measures, and which combinations are genuine confluence rather than reparameterization.</li>
+<li><strong><a class="xref" href="11d.html">Chapter 11D</a></strong> builds a pattern library of the volatility contraction pattern (VCP), the cup and handle and the bull flag, as detectors with explicit geometric thresholds.</li>
+<li><strong><a class="xref" href="11e.html">Chapter 11E</a></strong> gives Weinstein's four-stage classifier and its overlap with GEX regimes.</li>
+<li><strong><a class="xref" href="11f.html">Chapter 11F</a></strong> gives Elder's <span class="gloss" title="Alexander Elder's rule for trading across timeframes: a higher timeframe sets the direction, an intermediate one the timing and a lower one the entry, and a trade is taken only when all three agree.">triple screen</span> across timeframes. The higher timeframe (HTF) sets the direction, the intermediate one (ITF) the timing and the lower one (LTF) the trigger, with confluence as a discipline against impulse.</li>
+<li><strong><a class="xref" href="11g.html">Chapter 11G</a></strong> aggregates an eight-dimensional regime scorecard into a single bias number. Its dimensions are volatility, credit, rates, the dollar, commodities, global markets, trend and sentiment.</li>
+</ul>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Keep the conditions on paper</strong>: a written checklist of the three layers, with thresholds, filled in before you look at a chart. A condition you invent after seeing a setup is a rationalization.</li>
+<li><strong>Count the failures</strong>: log which gate stopped you each day. After a few months the counts show whether your conditions are too loose, since trades should be rare, or too tight to ever pass.</li>
+<li><strong>Price the costs in</strong>: the conditional edge must clear the round trip, spread and slippage included (<a class="xref" href="2d.html">Chapter 2D</a>). A short holding period also makes gains on SPY short-term for tax, where SPX and XSP options get Section 1256 treatment (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>A gate that passed at entry can fail on day 3, when the regime turns, credit widens or GEX crosses the flip. A trade that was conditional is then unconditional. Re-read the dashboard every day you hold the position, letting the invalidation rules of <a class="xref" href="13c.html">Chapter 13C</a> close it. The conditions themselves can also be overfitted: a VIX threshold tuned until the backtest looks best has used the data twice.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Before any trade</strong>, run the three layers in order and stop at the first failure. A lower layer never overrides a higher one.</li>
+<li><strong>Trade only the survivors</strong>, sized from the loss budget of <a class="xref" href="13c.html">Chapter 13C</a>, with the invalidation level set before entry.</li>
+<li><strong>Tag every claim</strong> with its evidence tier and its horizon. If the horizon of the idea and the horizon of the indicators differ, fix one before entering.</li>
+<li><strong>Test the conditional edge out of sample, net of costs.</strong> If it does not clear the round trip, the Edge Book's objection holds and the trade is not worth taking.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: a lower layer overruling a higher one</span>
+<p>An indicator at a textbook oversold extreme (<a class="xref" href="11c.html">Chapter 11C</a>), on a day when the VIX curve is in backwardation, feels like a gift. It is a Layer 2 signal contradicting a Layer 1 "suspended", which the hierarchy settles in favor of the higher layer. The oversold reading in a stress regime is the momentum case of <a class="eqref" href="#e-d"></a>, not the reversal case.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: choosing the conditions after the fact</span>
+<p>Every extra condition you try on past data is another comparison that can look good by chance alone. Fix the conditions and their thresholds before the test. Discount a backtest that tried many, as <a class="xref" href="1d.html">Chapter 1D</a>'s deflated Sharpe ratio does.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The thesis is conditional: SPY mean-reverts over short horizons only when measurable conditions hold. Pooled across regimes, the effect can vanish or reverse.</li>
+<li>Three layers decide each trade, on three clocks: the macro regime over weeks to months, structure over 2 to 10 days, and dealer gamma and path over hours to 2 days. A lower layer never overrides a higher one.</li>
+<li>On most days some condition fails, which makes no trade the correct result. The few survivors deserve concentrated size.</li>
+<li>Tag every claim with its evidence tier (A, B or C) and its horizon. The Edge Book doubts that short-term reversal pays a retail account at all, so test the conditional edge net of costs.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Calm days are 70% of all days and stressed days 30%. After a down week the next-day mean is +0.12% in calm regimes and −0.20% in stress. Down weeks come on 40% of calm days and 60% of stressed ones. What is the pooled next-day mean after a down week?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A down week comes from stress with probability \(0.3 \times 0.6/(0.7 \times 0.4 + 0.3 \times 0.6) = 0.18/0.46 = 0.39\). The pooled mean is \(0.61 \times 0.12\% + 0.39 \times (-0.20\%) = 0.073\% - 0.078\% = -0.005\%\), slightly negative. Pooled, the rule looks useless, while conditioned on calm it earns 0.12%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Layer 1 reads "suspended": the curve is inverted and credit is widening. Layer 2 shows a clean Stage 2 pullback, and Layer 3 shows GEX positive, well above the flip. What does the tree say?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No trade: the tree stops at step 1, because a signal at a lower layer never overrides a contradicting signal at a higher one.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Place each claim in a tier: a SqueezeMetrics GEX estimate, a published study of intraday momentum replicated across decades, and a rule that a cup's handle should retrace less than half its depth.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Tier B for the vendor's GEX model, credible but not peer-reviewed. Tier A for the replicated peer-reviewed study. Tier C for the handle rule, practitioner pattern language that needs operationalizing.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Your thesis is a 2-week reversal. Which of these indicators match its horizon: a 200-day moving average, a daily RSI (the oscillator of <a class="xref" href="11c.html">Chapter 11C</a>), or 1-minute order flow?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The daily RSI, which measures stretches over days. The 200-day average speaks to the macro layer, weeks to months, and 1-minute flow to intraday execution. Using either to time a 2-week trade mixes horizons.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>With a drift of 8% a year and a volatility of 20%, what is the thesis's signal-to-noise ratio over three months, and over one day?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Here \(\mu/\sigma = 0.4\), so over three months, with \(h = 0.25\), the ratio is \(0.4 \times 0.5 = 0.20\). Over one day, \(h = 1/252\) and \(\sqrt{h} = 0.063\), so the ratio is \(0.4 \times 0.063 = 0.025\), eight times smaller.</p>
+</div></details>
+</div>
+</div>

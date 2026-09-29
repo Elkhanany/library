@@ -1,134 +1,350 @@
-<p class="eyebrow">Part II · Quant Trading · Chapter 2D</p>
+<p class="eyebrow">Part II · Markets · Chapter 2D</p>
 
-<h1>Making vs taking: the order book mechanics</h1>
+<h1>What execution costs</h1>
 
-<p>Strategies fall into two execution families that have fundamentally different P&amp;L characteristics: <strong>making</strong> (adding liquidity to the order book, earning the spread, paying low or even negative fees) and <strong>taking</strong> (removing liquidity, paying the spread and higher fees). The same predictive model can be wrapped in either execution layer, with very different results. Understanding the order book mechanics is what separates retail traders who lose 50 bps per round trip to slippage from professionals who lose 5 bps.</p>
+<p class="subtitle">Spreads, slippage and market impact</p>
 
-<h2 id="the-order-book">1 · The order book</h2>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="2c.html">Chapter 2C</a> showed how an order meets the book, and what making and taking each cost. This chapter adds those costs up, setting the spread, <span class="gloss" title="The gap between the price you expected or used as a reference, such as the best quote or the mid, and the average price you actually got.">slippage</span> and market impact against the edge a strategy earns. It gives five rules that stop execution from eating the edge.</p>
+</div>
 
-<p>The order book is the live record of supply (asks) and demand (bids) for a given security, organized in price levels. The <strong>best bid</strong> is the highest price any buyer is currently willing to pay. The <strong>best ask</strong> (or "offer") is the lowest price any seller is currently willing to accept. The gap between them is the <strong>bid-ask spread</strong>. The midpoint of the bid-ask spread is the <strong>mid price</strong>.</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Expected value, and an edge as a positive expected value after costs (<a class="xref" href="1c.html">Chapter 1C</a>).</li>
+<li>The Sharpe ratio (<a class="xref" href="1d.html">Chapter 1D</a>).</li>
+<li>The spread, the mid, slippage and the order types (<a class="xref" href="2c.html">Chapter 2C</a>).</li>
+</ul>
+</div>
 
-<pre class="aligned">ASKS (sellers)
-$118 @ 12   ← deeper ask levels (worse prices, more quantity)
-$117 @ 8
-$116 @ 5
-$115 @ 3    ← best ask (top of book)
-        ____________________  spread = $2  mid = $114.0
-$113 @ 5    ← best bid (top of book)
-$112 @ 8
-$111 @ 10
-$110 @ 15   ← deeper bid levels (worse prices, more quantity)
-BIDS (buyers)</pre>
+<p>A strategy with a positive paper Sharpe ratio and unsurprising mechanics can still be a net loser in a retail account. The reason is rarely the model but the <strong>gap between the price you saw and the price you got</strong>. Across the four-layer haircut framework of <a class="xref" href="13a.html">Chapter 13A</a>, execution friction (layer 3) typically destroys 20% to 30% of the paper <span class="gloss" title="A strategy's mean return above the risk-free rate divided by the standard deviation of its returns: the excess return earned per unit of volatility.">Sharpe ratio</span> even before behavior is considered. For multi-leg options strategies in single-name <span class="gloss" title="The asset, index, rate or other price on which a derivative is written, and from which its payoff is computed.">underlyings</span>, the destruction can exceed 50%.</p>
 
-<p>When a new order arrives, one of three things happens:</p>
+<p>This chapter consolidates the practical rules of execution, whose mathematics is simple. The discipline to follow them is the hard part.</p>
 
-<ol>
-<li><p><strong>A limit order at a price away from the book</strong> — the order goes onto the book as a resting order, becoming part of the bid or ask at its specified price level. The trader is <em>adding</em> liquidity.</p></li>
-<li><p><strong>A limit order at a price that crosses the book</strong> — for a buy limit at or above the current best ask, the order <em>takes</em> liquidity by matching against the resting ask. Same for a sell limit at or below the best bid.</p></li>
-<li><p><strong>A market order</strong> — fills immediately at whatever prices are available on the opposite side, walking through the book as deep as necessary to fill the requested quantity.</p></li>
-</ol>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Every trade pays to get in and pays again to get out. On a liquid index product the toll is a sliver of a percent, while on a thin option it can be a fifth of what the option costs. A strategy's edge is what is left after that toll, multiplied by the number of times you pay it. Execution is the one cost you can measure before you trade and cut by how you trade.</p>
+</div>
 
-<h2 id="the-bid-ask-bounce">2 · The bid-ask bounce</h2>
+<h2 id="the-bid-ask-trap-in-numbers">1 · The bid-ask trap, in numbers</h2>
 
-<p>The "last trade" price alternates between bid and ask as trades alternate between buy-driven and sell-driven flow. This produces a sawtooth pattern called the <strong>bid-ask bounce</strong> that adds noise to any "last price" series. Professional quant work uses the <strong>mid price</strong> instead — the average of bid and ask — because mid is a less-biased estimator of the security's true value.</p>
+<p>On any <span class="gloss" title="The table a broker shows of every listed option on one underlying for a chosen expiry, with calls on one side, puts on the other and strikes down the middle, giving each option's bid, ask, volume and open interest.">options chain</span> for a single-name stock, the "last" price you see is irrelevant. It is the price of the last trade, which may have been seconds or hours ago, at whatever spread happened to exist then. The actionable prices are the <strong>bid</strong>, what you can sell at right now, and the <strong>ask</strong>, what you can buy at right now. Between them is the <strong><span class="gloss" title="The gap between the highest price a buyer offers, the bid, and the lowest price a seller asks, the ask. Crossing it is the immediate cost of trading.">spread</span></strong>, and the spread is where edges go to die.</p>
 
-<p>For SPY, where the bid-ask spread is typically $0.01 to $0.02, the bid-ask bounce is small. For SPX (the cash index), there is no bid-ask bounce because it's not directly tradable — the "level" is computed from constituent stocks. For SPX options, where spreads can be $0.10 to $0.30 wide, the bid-ask bounce dominates the high-frequency dynamics and any backtest that uses "last" instead of "mid" prices is systematically biased.</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Options on</th><th class="c-other">Strike</th><th class="c-other">Typical bid-ask spread</th></tr></thead><tbody><tr><td class="c-trial" data-label="Options on">SPX, regular hours</td><td class="c-other" data-label="Strike">At the money</td><td class="c-other" data-label="Typical bid-ask spread">$0.10 to $0.30</td></tr><tr><td class="c-trial" data-label="Options on">SPX, regular hours</td><td class="c-other" data-label="Strike">Wing strikes</td><td class="c-other" data-label="Typical bid-ask spread">$0.50 to $1.00</td></tr><tr><td class="c-trial" data-label="Options on">SPY</td><td class="c-other" data-label="Strike">At the money</td><td class="c-other" data-label="Typical bid-ask spread">$0.01 to $0.03</td></tr><tr><td class="c-trial" data-label="Options on">NVDA or AAPL</td><td class="c-other" data-label="Strike">At the money, typical strikes</td><td class="c-other" data-label="Typical bid-ask spread">$0.05 to $0.15</td></tr><tr><td class="c-trial" data-label="Options on">A thinly traded single name, three weeks out</td><td class="c-other" data-label="Strike">30-<span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span></td><td class="c-other" data-label="Typical bid-ask spread">$0.50 to $1.50 on a $5 premium</td></tr></tbody></table></div></div>
 
-<h2 id="walking-the-book">3 · Walking the book</h2>
+<p>The last row is <strong>10% to 30% of the <span class="gloss" title="The price of an option, paid by the buyer to the seller when the trade is made.">premium</span> itself</strong>. If you buy at the ask and later sell at the bid while the mid stays put, the <span class="gloss" title="Opening a position and later closing it, such as a buy followed by a sale. Trading costs are often quoted per round trip, since both legs pay them.">round trip</span> costs the whole spread \(s\). Measured against an option whose mid is \(m\), that is a fraction \(s/m\) of what the option is worth: \(0.50/5 = 10\%\) at the narrow end and \(1.50/5 = 30\%\) at the wide end.</p>
 
-<p>A large market order that exceeds the quantity available at the top level <strong>walks the book</strong> — fills are spread across multiple levels, with each successive contract filling at a worse price.</p>
+<p>A strategy that harvests the <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> (VRP) sells options priced above the <span class="gloss" title="The annualized standard deviation of log returns, quoted as a percentage. A volatility of 20% corresponds to a typical daily move of about 1.26%.">volatility</span> that follows (<a class="xref" href="10c.html">Chapter 10C</a>). It might collect 80 <span class="gloss" title="One hundredth of a percentage point, so 20 basis points is 0.20%. Abbreviated bp, plural bps.">basis points</span> a year of edge over realized variance, which a single 30% round-trip spread erases. In dollars per spread, suppose you harvest $0.30 of edge and give $0.40 to execution across entry and exit. The net is \(0.30 - 0.40 = -\$0.10\) a trade: you lose money holding a "winning" strategy.</p>
 
-<figure class="fig" id="fig-order-book-walking">
-  <canvas id="order-book-walking-c" data-h="250"></canvas>
+<p>This is the <span class="gloss" title="The expected value of a trade or strategy, net of all costs. A trade has edge only if that number is positive.">edge</span> of <a class="xref" href="1c.html">Chapter 1C</a> with the cost term made concrete. A trade is worth taking only when its expected gain exceeds its round-trip cost:</p>
+
+<div class="eq" id="e-net">
+\[ \mathbb{E}[\text{gain}] - c_{\text{RT}} &gt; 0 \]
+</div>
+
+<p>where \(c_{\text{RT}}\) is everything the round trip pays: spread, slippage, market impact and commissions.</p>
+
+<p>This is not hypothetical: it is the single most common reason retail options strategies underperform their <span class="gloss" title="A test of a trading rule on historical data, showing what the rule would have earned had it been followed.">backtests</span>.</p>
+
+<h2 id="the-five-rules-of-options-execution">2 · The five rules of options execution</h2>
+
+<h3 id="rule-1-the-mid-is-the-only-fair-reference-price">Rule 1: the mid is the only fair reference price</h3>
+
+<p>Compute the mid, \(m = (\text{bid} + \text{ask})/2\), at the moment of decision, and compare any <span class="gloss" title="An order to buy at or below a stated price, or to sell at or above it. It promises the price but not a fill.">limit order</span> you place with it. "Selling at the mid" means an order at the mid. "Selling at $0.05 better than mid" means an order at the mid plus $0.05. The last price is decorative, however prominently the screen shows it. A theoretical price from a vendor's model is informational, not actionable.</p>
+
+<p>The mid also gives slippage a scale: for a fill at price \(P\), with \(d = +1\) for a buy and \(d = -1\) for a sell, the slippage as a share of the spread is</p>
+
+<div class="eq" id="e-slipshare">
+\[ \text{slippage share} = \frac{d\,(P - m)}{s} \]
+</div>
+
+<p>A fill at the mid scores 0%, and a fill at the far side of the spread scores 50%. A score above 50% means you filled worse than the quote.</p>
+
+<h3 id="rule-2-marketable-limits-not-market-orders">Rule 2: marketable limits, not market orders</h3>
+
+<p>A <span class="gloss" title="An order to buy or sell at once at the best available prices. It promises a fill but not a price.">market order</span> on a thin option chain at 9:32 AM can fill 30% above the prevailing mid in stress. Always use a limit, as <a class="xref" href="2c.html">Chapter 2C</a> argued for every order of meaningful size. The limit can be aggressive, at the ask for a fast fill or one penny inside it, but it must exist. The only exception is a clear emergency, and a planned exit is never an emergency.</p>
+
+<h3 id="rule-3-multi-leg-orders-go-in-as-multi-leg-spreads">Rule 3: multi-leg orders go in as multi-leg spreads</h3>
+
+<p>Many option positions have several legs, such as a <strong><span class="gloss" title="A position of two options of the same type on the same underlying and expiry, one bought and one sold at different strikes. A put spread is one kind.">vertical spread</span></strong>: an option bought and another sold on the same underlying and <span class="gloss" title="The date on which an option stops trading and is settled or lapses.">expiry</span> at different strikes. When you place a vertical spread as two separate orders, you <strong><span class="gloss" title="Entering or closing a multi-leg option position one leg at a time, as separate orders, which exposes you to price moves between the fills.">leg in</span></strong>: you sell one side, then buy the other. You take execution risk on the timing gap between the fills. Even a 5-second gap during a fast tape can cost 5% to 15% of the spread's credit. Use your broker's multi-leg ticket and price the spread as a single net debit or credit. The broker's <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market makers</span> either fill it or do not, but you take no legging risk.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Five seconds of legging</span>
+<p><strong>Step 1: the plan.</strong> You want to sell a <span class="gloss" title="A position of two put options on the same underlying and expiry but with different strikes, one bought and one sold. Its gain or loss at expiry is capped by the distance between the strikes.">put spread</span>: sell a put with a mid of $2.00 and buy a lower-strike put with a mid of $1.00, for a net credit of $1.00, or $100 a spread.</p>
+
+<p><strong>Step 2: legging in.</strong> You sell the higher-strike put first, at its $2.00 mid. Five seconds later the market has fallen, and the put you meant to buy for $1.00 now costs $1.10.</p>
+
+<p><strong>Step 3: the cost.</strong> Your credit is \(2.00 - 1.10 = \$0.90\). The five seconds cost $0.10, 10% of the credit, inside the 5% to 15% range above.</p>
+</div>
+
+<h3 id="rule-4-avoid-the-open-the-close-and-the-lunch-hour">Rule 4: avoid the open, the close and the lunch hour</h3>
+
+<p>Unless trading those windows is part of your strategy, avoid three parts of the day. The first 15 minutes after the open have the widest spreads of the day, as overnight <span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">charm</span> and <span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">vanna</span> unwinds clear (<a class="xref" href="5d.html">Chapter 5D</a>). The last 30 minutes carry mechanical rebalancing that creates price pressure unrelated to your thesis (<a class="xref" href="2c.html">Chapter 2C</a>, on the <span class="gloss" title="The process in the last minutes of the American trading day in which the exchanges gather orders and fill them all at one price, the official close.">closing auction</span>). The middle of the lunch hour, roughly 12:00 to 1:00 PM ET, often has thin liquidity. <strong>The cleanest execution windows are generally 10:30 to 11:30 AM ET and 1:30 to 2:30 PM ET.</strong></p>
+
+<h3 id="rule-5-estimate-slippage-before-entering-not-after">Rule 5: estimate slippage before entering, not after</h3>
+
+<p>Before every click, ask what having to exit at the bid, or buy at the ask, does to your expected profit. Exiting at the unfavorable side instead of the mid costs half the spread on each contract. Compare that with the trade's expected profit:</p>
+
+<div class="eq" id="e-exitratio">
+\[ \text{exit-cost ratio} = \frac{(s/2)\,n\,M}{\mathbb{E}[\text{profit}]} \]
+</div>
+
+<p>Here \(n\) is the number of contracts and \(M\) the <span class="gloss" title="The number that converts an option's quoted price into dollars per contract: 100 for US stock and ETF options, and 100 dollars per index point for SPX options.">contract multiplier</span>, 100 for these options. Above 25%, the trade is execution-marginal: either improve the execution, with tighter strikes or more liquid expirations, or skip the trade.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Two trades through Rule 5</span>
+<p><strong>Step 1: an XSP trade.</strong> You plan 2 XSP contracts with an expected profit of $200, quoted $0.10 wide. Exiting at the bid costs \(0.05 \times 2 \times 100 = \$10\), and <a class="eqref" href="#e-exitratio"></a> gives \(10/200 = 5\%\), so the trade passes the test easily.</p>
+
+<p><strong>Step 2: a thin single name.</strong> You plan 1 contract on a small-cap stock, quoted $1.00 wide around a $3.00 mid, with an expected profit of $150. Exiting at the bid costs \(0.50 \times 1 \times 100 = \$50\), which is 33% of the expected profit. The trade is execution-marginal, so improve it or skip it.</p>
+</div>
+
+<h2 id="what-execution-takes-from-a-year">3 · What execution takes from a year</h2>
+
+<p>Rule 5 prices one trade, while a strategy repeats its trades and pays its costs every time. The figure below adds up a year of round trips. In its model, every trade is a round trip that pays, on each leg, half the bid-ask spread and a market impact, plus a commission each way. The year's costs are charged against the capital, which the model takes to be one trade's <span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional</span> \(N\).</p>
+
+<p>Write \(s\) for the spread and \(i\) for the market impact of one leg, both as fractions of the notional. Write \(k\) for the commission per leg and \(n\) for the number of round trips a year. One round trip then costs \((s + 2i)N + 2k\), and the year's <strong>friction drag</strong> on the return is</p>
+
+<div class="eq" id="e-drag">
+\[ D = n\left(s + 2i + \frac{2k}{N}\right) \]
+</div>
+
+<p>The bracket is the all-in cost of one round trip as a fraction of the notional, and the drag is that cost times the turnover. The net return is the paper return \(R\) minus \(D\). The figure scales the paper Sharpe ratio by the same proportion, \(\text{SR}_{\text{net}} = \text{SR}\,(R - D)/R\), which assumes the costs leave the volatility unchanged.</p>
+
+<p>The figure's controls are these:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Control</th><th class="c-other">Range</th><th>Starts at</th></tr></thead><tbody><tr><td class="c-trial" data-label="Control">Trades per year</td><td class="c-other" data-label="Range">1 to 1,000</td><td data-label="Starts at">120</td></tr><tr><td class="c-trial" data-label="Control">Notional per trade</td><td class="c-other" data-label="Range">$1,000 to $1,000,000</td><td data-label="Starts at">$50,000</td></tr><tr><td class="c-trial" data-label="Control">Bid-ask spread</td><td class="c-other" data-label="Range">0.5 to 50 bps</td><td data-label="Starts at">4 bps</td></tr><tr><td class="c-trial" data-label="Control">Market impact, per leg</td><td class="c-other" data-label="Range">0 to 50 bps</td><td data-label="Starts at">2 bps</td></tr><tr><td class="c-trial" data-label="Control">Commission per trade</td><td class="c-other" data-label="Range">$0 to $20</td><td data-label="Starts at">$1</td></tr><tr><td class="c-trial" data-label="Control">Paper Sharpe ratio</td><td class="c-other" data-label="Range">0.2 to 3</td><td data-label="Starts at">1.00</td></tr><tr><td class="c-trial" data-label="Control">Paper annual return</td><td class="c-other" data-label="Range">5% to 100%</td><td data-label="Starts at">20%</td></tr></tbody></table></div></div>
+
+<p>A verdict turns yellow when the drag passes 20% of the paper return and red past 50%. Start at the defaults, then halve the number of trades.</p>
+
+<figure class="fig" id="fig-slippage-cost-calculator">
+  <canvas id="slippage-cost-calculator-c" data-h="150"></canvas>
   <div class="ctrls">
     <div class="ctrl">
-      <label for="order-book-walking-n">market buy</label>
-      <input type="range" id="order-book-walking-n" min="1" max="20" step="1" value="3">
-      <output id="order-book-walking-n-o" for="order-book-walking-n"></output>
+      <label for="slippage-cost-calculator-n">trades per year</label>
+      <input type="range" id="slippage-cost-calculator-n" min="1" max="1000" step="1" value="120">
+      <output id="slippage-cost-calculator-n-o" for="slippage-cost-calculator-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-notional">notional per trade</label>
+      <input type="range" id="slippage-cost-calculator-notional" min="1000" max="1000000" step="1000" value="50000">
+      <output id="slippage-cost-calculator-notional-o" for="slippage-cost-calculator-notional"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-spread">bid-ask spread</label>
+      <input type="range" id="slippage-cost-calculator-spread" min="0.5" max="50" step="0.5" value="4">
+      <output id="slippage-cost-calculator-spread-o" for="slippage-cost-calculator-spread"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-impact">market impact</label>
+      <input type="range" id="slippage-cost-calculator-impact" min="0" max="50" step="0.5" value="2">
+      <output id="slippage-cost-calculator-impact-o" for="slippage-cost-calculator-impact"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-comm">commission per trade</label>
+      <input type="range" id="slippage-cost-calculator-comm" min="0" max="20" step="0.1" value="1">
+      <output id="slippage-cost-calculator-comm-o" for="slippage-cost-calculator-comm"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-sharpe">paper Sharpe</label>
+      <input type="range" id="slippage-cost-calculator-sharpe" min="0.2" max="3" step="0.05" value="1">
+      <output id="slippage-cost-calculator-sharpe-o" for="slippage-cost-calculator-sharpe"></output>
+    </div>
+    <div class="ctrl">
+      <label for="slippage-cost-calculator-ret">paper annual return</label>
+      <input type="range" id="slippage-cost-calculator-ret" min="0.05" max="1" step="0.01" value="0.20">
+      <output id="slippage-cost-calculator-ret-o" for="slippage-cost-calculator-ret"></output>
     </div>
   </div>
   <div class="ctrls">
-    <div class="ctrl"><output id="order-book-walking-lv"></output></div>
-    <div class="ctrl"><output id="order-book-walking-avg"></output></div>
-    <div class="ctrl"><output id="order-book-walking-slip"></output></div>
-    <div class="ctrl"><output id="order-book-walking-left"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-rtbps"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-rtusd"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-annual"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-allin"></output></div>
   </div>
-  <figcaption><b>A market buy walks up the ask side.</b> The book from the text: four ask
-  levels above a $2 spread, four bid levels below it, each bar the contracts resting at that
-  price. Set the size of a market buy; it takes the best ask first and then each next level up
-  until it is filled, and the amber part of each bar is what it took. The average fill climbs
-  away from the $115 best ask as the order walks: 20 contracts average $116.65, $1.65 of
-  slippage.</figcaption>
+  <div class="ctrls">
+    <div class="ctrl"><output id="slippage-cost-calculator-paper"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-drag"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-net"></output></div>
+    <div class="ctrl"><output id="slippage-cost-calculator-nsharpe"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="slippage-cost-calculator-vk"></b> <span id="slippage-cost-calculator-vt"></span></p>
+  <figcaption><b>What execution takes from a paper return.</b> Every trade is a round trip
+  (RT): half the bid-ask spread and the market impact on each leg, plus a commission each way.
+  A year of round trips is charged against the capital, taken as one trade's notional: that is
+  the friction drag, and the net Sharpe is the paper Sharpe scaled by net over paper return. The
+  verdict turns yellow when the drag passes 20% of the paper return and red past 50%.</figcaption>
 </figure>
 
-<p>For a small retail SPY market buy of 100 shares against a top-of-book ask of 1,000 shares, the entire order fills at the best ask with no slippage. For a 100,000-share market order, the order walks several levels and the average fill price might be 5 cents worse than the top-of-book ask — about 0.5 bps of slippage on a $580 stock. For a 10-million-share market order, the order might move the price by several dollars before completion.</p>
+<div class="worked">
+<span class="ct">Worked example: The figure's starting values</span>
+<p><strong>Step 1: one round trip.</strong> The spread costs half of 4 bps on each leg, 4 bps in all, and the impact 2 bps on each leg, another 4 bps. The round trip costs 8 bps, which on $50,000 is \(0.0008 \times 50{,}000 = \$40\).</p>
 
-<p>This is why institutional-scale execution is its own specialty. Large orders are broken into many small pieces, executed over time using algorithms like VWAP (Volume-Weighted Average Price), TWAP (Time-Weighted Average Price), or implementation shortfall optimizers that trade off market impact against opportunity cost. The optimal execution problem was formalized by Almgren and Chriss (2000) and remains an active research area.</p>
+<p><strong>Step 2: a year.</strong> With $2 of commission per round trip, 120 round trips cost \(120 \times (40 + 2) = \$5{,}040\). Charged against $50,000 of capital, that is a drag of 10.08%. In <a class="eqref" href="#e-drag"></a>, the bracket is 8.4 bps and \(120 \times 8.4 = 1{,}008\) bps.</p>
 
-<h2 id="maker-taker-fee-structure">4 · Maker-taker fee structure</h2>
+<p><strong>Step 3: what is left.</strong> The net return is \(20\% - 10.08\% = 9.92\%\), and the net Sharpe ratio \(1.00 \times 9.92/20 = 0.50\). The drag is 50.4% of the paper return, just past the line, so the verdict is red.</p>
+</div>
 
-<p>US exchanges operate a <strong>maker-taker fee model</strong> for most equity and options trading:</p>
+<p>Halving the trades to 60 halves the drag to 5.04%, which is 25% of the paper return, and the verdict turns yellow with a net Sharpe ratio of 0.75. At 40 trades the drag is 3.36%, the verdict green and the net Sharpe ratio 0.83. Nothing about the strategy's signal changed: only how often it paid the toll. The costs that look negligible per trade, 8.4 basis points, become half the return at 120 round trips a year.</p>
+
+<h2 id="market-impact-the-square-root-law">4 · Market impact: the square-root law</h2>
+
+<p>Beyond the spread and commission that every order pays, a large order also moves the price against itself: that is its <strong><span class="gloss" title="The move in price that your own order causes, paid as a worse fill that grows with the size of the order.">market impact</span></strong>. A practical model that captures most of the empirical behavior of trade execution is</p>
+
+<div class="eq" id="e-sqrt">
+\[ \text{slippage (bps)} \approx k\sqrt{\frac{Q}{\text{ADV}}} \]
+</div>
+
+<p>where \(Q\) is the order's size, <strong><span class="gloss" title="The number of shares or contracts of a security that trade on a typical day, averaged over a recent period. Abbreviated ADV.">average daily volume</span></strong> (ADV) is how much of the security trades on a typical day, and \(k\) is a constant for the security and the conditions. Slippage scales as the square root of relative order size. Taking out 1% of ADV produces 10 times the slippage of taking out 0.01% of ADV, not 100 times: that is the importance of the square root. This is the Almgren-Chriss "square-root law" of market impact, validated by extensive empirical work.</p>
+
+<p>The square root has two consequences for how cost grows with size. Per share, a bigger order costs more, but less than in proportion: four times the size doubles the slippage. In total dollars, the cost is the slippage times the size, so it grows as \(Q^{3/2}\): four times the size costs eight times as much.</p>
+
+<p>For SPY, daily volume is approximately 50 to 80 million shares. A 1,000-share retail trade is 0.001% to 0.002% of ADV, well below the threshold where impact becomes measurable. For a 1-million-share institutional trade, 1% to 2% of ADV, impact is noticeable, perhaps 5 to 15 bps depending on conditions. For a 100-million-share trade, covering days of execution, the price impact is large, and institutional execution algorithms slice the order across hours or days to minimize the total.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Calibrating the law</span>
+<p><strong>Step 1: the constant.</strong> Suppose 1% of ADV costs 10 bps, the middle of the 5 to 15 bps range. Then \(10 = k\sqrt{0.01} = 0.1k\), so \(k = 100\) bps.</p>
+
+<p><strong>Step 2: other sizes.</strong> At 2% of ADV the law gives \(100\sqrt{0.02} = 14\) bps, still inside the range. At 8% of ADV it gives \(100\sqrt{0.08} = 28\) bps: four times the 2% order, for twice the slippage per share and eight times the total cost.</p>
+</div>
+
+<p>The law describes orders large enough to eat into the book over time. The same effect on a small retail buy is usually negligible. SPY's top of book is many millions of shares deep, so a 100-share retail order has zero market impact. For institutional flow that needs to move millions at a time, slippage and market impact are the dominant execution costs. They are why <strong><span class="gloss" title="A large limit order that shows only a small part of its size on the book at a time, replacing each part as it fills.">iceberg orders</span></strong>, which show only a small part of their size at a time, VWAP execution algorithms and <span class="gloss" title="A trading venue that does not display its orders, run by a bank or broker. Its trades fill at or inside the public best bid and offer, often at the midpoint.">dark pools</span> exist. This is also why dealer <span class="gloss" title="Taking a position whose gains offset losses on a risk you already hold, such as selling futures against a crop or buying puts against a stock holding.">hedging</span> flow (<a class="xref" href="6a.html">Part VI</a> onward) uses ES futures rather than spot SPY. The futures book is the most capital-efficient place to absorb large hedging size with minimal market impact.</p>
+
+<h2 id="instrument-selection-is-an-execution-decision">5 · Instrument selection is an execution decision</h2>
+
+<p>SPX, SPY and XSP all reference the same underlying but have different execution characteristics:</p>
 
 <ul>
-<li><strong>Makers</strong> (resting orders that get filled when someone crosses them) typically receive a small <strong>rebate</strong> — they're paid to provide liquidity.</li>
-<li><strong>Takers</strong> (incoming orders that cross the spread to fill against resting orders) pay a <strong>fee</strong> — they're paying for immediate execution.</li>
+<li><strong><span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span></strong> has the tightest bid-ask spreads on liquid strikes, measured against the contract's size, and 1256 tax treatment. It is cash-settled, so there is no <span class="gloss" title="What happens to the seller of an option when its holder exercises it: the seller must buy or sell the underlying, or pay the cash difference, at the strike.">assignment</span> risk. Its contract is the largest, $100 per index point, or $500,000 of notional at SPX 5,000. It is the best for size and the worst for small accounts.</li>
+<li><strong><span class="gloss" title="The Mini-SPX index option, one tenth the size of an SPX option.">XSP</span></strong> has the identical structure to SPX at one tenth of the contract size, with 1256 tax treatment and <span class="gloss" title="Settling an option or future by paying the in-the-money amount in cash instead of delivering the underlying. SPX options are cash-settled.">cash settlement</span>. Its spreads are sometimes wider in proportion than SPX's. <strong>It is the best instrument for most retail swing-options traders.</strong></li>
+<li><strong><span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span></strong> has the highest liquidity in raw volume and the tightest absolute spreads in dollars. Its tax treatment is ordinary, labeled "1099" in <a class="xref" href="2e.html">Chapter 2E</a>'s tax figure. It is American-style, so there is early-assignment risk on <span class="gloss" title="Said of an option that would pay something if exercised now: a call whose strike is below the underlying's price, or a put whose strike is above it.">in-the-money</span> short legs near an <span class="gloss" title="The first day on which a buyer of a stock no longer receives its next dividend. The share price typically drops by about the dividend that morning.">ex-dividend date</span>. It is the best for share-level execution and tax-disadvantaged for short-term trading.</li>
 </ul>
 
-<p>For US equity exchanges, the maker rebate is typically 0.2 to 0.3 cents per share, and the taker fee is typically 0.3 to 0.4 cents per share. The exchange keeps the small difference. On 100 shares of SPY traded round-trip as a taker on both legs, that's roughly $0.60 of exchange fees — small but real.</p>
+<p><a class="xref" href="2a.html">Chapter 2A</a> found SPY's options slightly tighter than XSP's, at $0.01 to $0.02 against $0.05 to $0.10. That is the same ranking in dollars: SPY wins on the dollar spread, while SPX's spreads are the tightest in proportion to what a contract controls.</p>
 
-<p>For US options, the maker-taker structure is more variable across exchanges and contract types. SPX options on Cboe have a different fee schedule than SPY options across multiple competing venues. Institutional traders care deeply about these differences; retail traders rarely see them because their broker (Robinhood, Fidelity, Schwab) routes orders through wholesalers that internalize the fee structure (see <a class="xref" href="3b.html">Section 3B</a> on PFOF).</p>
+<p>For a retail trader running a Trend Pullback or a Compression Breakout setup (<a class="xref" href="11h.html">Chapter 11H</a>), <strong>XSP is the default choice</strong>. Against SPY, its marginal spread cost is paid back many times over in tax efficiency (<a class="xref" href="2e.html">Chapter 2E</a>). Against SPX, its smaller contract size permits cleaner position sizing.</p>
 
-<h2 id="inverted-markets-subsidy-markets">5 · Inverted markets (subsidy markets)</h2>
+<h3 id="single-name-options">Single-name options</h3>
 
-<p>A small number of US equity exchanges run <strong>inverted markets</strong> — they pay takers and charge makers. The economic rationale: traders who <em>want</em> immediate execution badly enough are willing to pay for it explicitly, while liquidity is harder to attract. Inverted markets exist at small share but provide a price-improvement venue for orders that absolutely must fill now.</p>
+<p>The Mag-7 names, NVDA, AAPL, GOOGL, MSFT, META, AMZN and TSLA, have institutional-grade options liquidity, with bid-ask spreads of $0.05 to $0.15 on near-dated <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at-the-money</span> strikes. Below the top 50 names, spreads widen dramatically. A small-cap biotech option might have $1.00 spreads on $3.00 premiums. <strong>That is untradeable for any strategy whose edge is measured in implied-volatility mispricing rather than in percentage moves of the underlying.</strong></p>
 
-<h2 id="queue-position">6 · Queue position</h2>
+<h2 id="when-legging-is-acceptable">6 · When legging is acceptable</h2>
 
-<p>When you place a limit order at a price level that already has resting orders, you go to the <strong>back of the queue</strong> at that price level. When a market order arrives and consumes some of the resting quantity, it fills against the front of the queue first. The order at position 50 in a queue of 100 contracts has to wait for 49 fills ahead of it before it gets to fill.</p>
+<p>Despite Rule 3, there are two cases where leg-by-leg execution beats a multi-leg order:</p>
 
-<p>Queue position matters enormously for market makers, who rely on being at the front of the queue to capture maximum order flow. Latency arbitrage — the ability to update quotes faster than competitors — is largely about queue position management. A market maker that can see incoming flow microseconds before competitors can adjust their resting orders accordingly, capturing or avoiding the resulting fills.</p>
+<ol>
+<li><strong>When the multi-leg order does not fill:</strong> on some thinly traded strikes, market makers do not price the spread as a package but do price each leg individually. After 30 seconds with no fill on a multi-leg order at the mid, you can try legging, but accept that your edge has just degraded.</li>
+<li><strong>When you are closing a position into rapid movement and want to capture one side quickly.</strong> Suppose the short call of your <span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">iron condor</span> has moved deep in the money and the put side is worthless. Closing the call side first protects against further loss, and the worthless put side can close whenever. This is "scratching the trade": not optimal execution, but valid risk management.</li>
+</ol>
 
-<p>For retail traders, queue position is invisible because retail orders are routed to wholesalers (not directly to exchanges) and wholesalers internalize execution against their own principal book. But understanding that queue position exists is important: a limit order at the NBBO might not fill even if the price touches your level, because there were 10,000 other contracts in the queue ahead of you.</p>
+<h2 id="the-execution-journal">7 · The execution journal</h2>
 
-<h2 id="adverse-selection">7 · Adverse selection</h2>
+<p>The mark of execution discipline is the post-trade journal, in which you record six things for every trade:</p>
 
-<p>A subtle and important risk for makers: when your resting order fills, the trade was almost certainly initiated by someone with marginally more information than the market consensus. If the price was about to move <em>up</em> and you had a resting ask, your ask gets filled and the price immediately moves above your fill price — you sold too cheaply. If the price was about to move <em>down</em> and you had a resting bid, your bid gets filled and the price immediately moves below your fill — you bought too high. This is <strong>adverse selection</strong> — the systematic tendency of your fills to come from informed counterparties at exactly the worst moments.</p>
+<ul>
+<li>the mid at decision time, before clicking;</li>
+<li>the limit price submitted;</li>
+<li>the fill price;</li>
+<li>the spread width at decision time;</li>
+<li>the time of day;</li>
+<li>the volume in the contract that day.</li>
+</ul>
 
-<p>Adverse selection is the central risk that market makers manage. The bid-ask spread exists, fundamentally, to compensate the market maker for adverse selection. If spreads were too narrow, market makers would systematically lose to informed flow. If spreads were too wide, no one would trade and the market maker would earn nothing. The equilibrium spread is the one where the spread captured exactly compensates for adverse selection losses, plus a margin.</p>
+<p>Over 50 trades, this dataset reveals your personal slippage profile. Most retail traders, asked to estimate their average slippage, guess 10% to 20% of the spread. The journaled data routinely shows 40% to 60%. The difference is not skill but discipline, and recognizing the gap is the first step to closing it.</p>
 
-<h2 id="order-types-what-retail-actually-has">8 · Order types: what retail actually has</h2>
+<div class="worked">
+<span class="ct">Worked example: One journal entry</span>
+<p><strong>Step 1: the record.</strong> At decision time an option is quoted $2.00 bid and $2.20 ask, so the mid is $2.10 and the spread $0.20. You send a buy limit at $2.20 and fill at $2.19.</p>
 
-<p>US brokerages typically expose five order types to retail traders. Each one has a specific contract — what it promises, what it doesn't guarantee, and when each one is appropriate.</p>
+<p><strong>Step 2: the score.</strong> By <a class="eqref" href="#e-slipshare"></a>, the slippage share is \((2.19 - 2.10)/0.20 = 45\%\): nearly the whole half-spread. A trader who remembers the fill as "about the mid" would have guessed 10% to 20%.</p>
+</div>
 
-<p><strong>Market order.</strong> Buy at the best available ask / sell at the best available bid. Crosses the spread. No price guarantee — you fill at whatever price is available. In thin markets, at the open, or in stressed conditions, can fill far from the NBBO. Use cautiously.</p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The journal does for execution what pill counts do for adherence. Patients asked how many doses they missed report fewer than the bottle shows, and traders asked about their slippage report less than their fills show. In both cases the self-report is sincere, and only the measured record is evidence.</p>
+</div>
 
-<p><strong>Limit order.</strong> Buy at or below a stated price / sell at or above. No fill guarantee — your order sits passive on the book until either matched or canceled. Use when price is more important than execution.</p>
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>Execution is the only Greek not derived from Black-Scholes. It is the largest, the most controllable, and the one most retail traders ignore.</p>
+</div>
 
-<p><strong>Marketable limit.</strong> A limit order set at or through the current NBBO. Behaves like a market order in normal conditions (gets you filled at the NBBO) but caps slippage in stress (won't fill above your limit). The recommended default for any retail order of meaningful size.</p>
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>In a real account, execution costs arrive in three sizes. On SPX, XSP and SPY at the money, the spread is small. There your order type does most of the work: a limit at or near the mid, a multi-leg ticket, a mid-morning or mid-afternoon window. On single-name options, the spread can be a fifth of the premium, so Rule 5 decides whether the trade exists at all. At institutional size, the square-root law takes over, and slicing replaces a single order. Keep the journal in every case, and compare its average slippage share with the one you assumed in the backtest.</p>
+</div>
 
-<p><strong>IOC (Immediate-or-Cancel).</strong> Fill whatever portion you can at the limit price right now; cancel the rest. Useful when you want to take some liquidity but not leave a resting order.</p>
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The rules assume a quoted spread you can see and a mid that means something. In a fast market or a quote dropout, the mid is stale and a limit at the "mid" may never fill. The friction model's fixed costs also understate what a stressed exit pays, when spreads can widen many times over (<a class="xref" href="1f.html">Chapter 1F</a>). Budget execution for the day you most need to get out, not only for the calm days of the backtest.</p>
+</div>
 
-<p><strong>MOC (Market-on-Close).</strong> Execute at the official closing print, which is determined by the closing auction (see below). MOC orders are guaranteed to fill at the close, but the close price itself is set by the auction imbalance.</p>
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Before every options trade, work through five checks:</p>
 
-<p>The recommended retail discipline: <strong>use marketable limits as the default</strong>. They give you fills in normal conditions while protecting you from blow-up fills in stress. Save market orders for tiny orders in highly liquid names where slippage is bound to be negligible.</p>
+<ul>
+<li><strong>Compute the mid</strong> and set your limit relative to it, never from the last price.</li>
+<li><strong>Run Rule 5:</strong> if exiting at the unfavorable side costs more than 25% of the expected profit, improve the trade or skip it.</li>
+<li><strong>Enter multi-leg positions as one order</strong>, and leg only in the two cases above.</li>
+<li><strong>Trade in the clean windows</strong>, 10:30 to 11:30 AM ET or 1:30 to 2:30 PM ET, unless the strategy is about the open or the close.</li>
+<li><strong>For a strategy</strong>, check that its turnover times its all-in round-trip cost stays below 20% of its paper return.</li>
+</ul>
+</div>
 
-<h2 id="the-closing-auction">9 · The closing auction</h2>
+<div class="callout warn">
+<span class="ct">Common mistake: judging a strategy by its trade count</span>
+<p>More trades feel like more chances to win. Each one also pays the toll, so a strategy's friction drag is its turnover times its round-trip cost. At the figure's starting values, cutting from 120 to 40 trades a year turns a red verdict green with no change to the signal.</p>
+</div>
 
-<p>Between 3:50 PM and 4:00 PM ET, US equity exchanges enter their closing auction process. The exchanges publish <strong>imbalances</strong> every few seconds starting around 3:50 — "12 million shares of SPY to buy at the close, market-on-close" — so that liquidity providers know to step in if they want to take the other side. The final 10 seconds of trading set the official close, which is the print used by MOC orders, by ETF NAV computations, by index benchmark closing levels, and by most institutional performance measurement.</p>
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The last price is decorative. The mid is the reference, and the spread is the first cost of every trade.</li>
+<li>A trade needs an expected gain above its round-trip cost, and a strategy needs a paper return well above its turnover times that cost.</li>
+<li>Use marketable limits, enter spreads as one order, avoid the open, the close and lunch, and run the 25% exit-cost test before trading.</li>
+<li>Market impact grows with the square root of order size relative to daily volume, so total impact cost grows as the 3/2 power of size.</li>
+<li>Keep a journal: most traders guess their slippage at 10% to 20% of the spread, and their journals routinely show 40% to 60%.</li>
+</ul>
+</div>
 
-<p>Approximately 10-15% of daily NYSE volume trades in the closing auction. For index ETFs (SPY, QQQ, IWM), the share is even higher — closer to 20-25% — because passive index funds rebalance to the close. This is why the last fifteen minutes of every trading day has a different microstructure character than the rest of the day: it is dominated by mechanical, non-fundamental order flow.</p>
-
-<p>This mechanical flow is <em>also</em> where dealer end-of-day hedging happens. The Baltussen-Da-Lammers-Martens paper on intraday momentum (2021, <em>Journal of Financial Economics</em>) shows that the first half-hour of return predicts the last half-hour of return with statistical significance across 60+ futures contracts globally. The mechanism is the same in every market: dealers carry net option exposure through the day, accumulate hedging needs as the day progresses, and concentrate those hedging trades into the close. This is where <a class="xref" href="6a.html">Section 6</a> picks up.</p>
-
-<h2 id="slippage-scaling">10 · Slippage scaling</h2>
-
-<p>A practical model that captures most of the empirical behavior of trade execution:</p>
-
-<pre>Slippage (bps) ≈ k × √(Order_size / ADV)</pre>
-
-<p>where ADV is average daily volume. Slippage scales as the square root of relative order size — taking out 1% of ADV produces 10× more slippage than taking out 0.01% of ADV (not 100× more — that's the importance of the square root). This is the Almgren-Chriss "square-root law" of market impact, validated by extensive empirical work.</p>
-
-<p>For SPY, daily volume is approximately 50-80 million shares; a 1,000-share retail trade is 0.001-0.002% of ADV, well below the threshold where impact becomes measurable. For a 1-million-share institutional trade — 1-2% of ADV — impact is noticeable, perhaps 5-15 bps depending on conditions. For a 100-million-share trade — covering days of execution — the price impact is large, and institutional execution algorithms slice the order across hours or days to minimize total impact.</p>
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>An option is quoted $1.40 bid and $1.60 ask. You buy at the ask and later sell at the bid, and the mid never moves. What did the round trip cost, as a share of the option's value?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>You paid $1.60 and received $1.40, so the round trip cost $0.20, or $20 a contract. Against the $1.50 mid, that is \(0.20/1.50 = 13\%\) of the option's value.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>You plan 2 contracts with an expected profit of $120, quoted $0.20 wide: does the trade pass Rule 5?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Exiting at the bid costs \(0.10 \times 2 \times 100 = \$20\), and <a class="eqref" href="#e-exitratio"></a> gives \(20/120 = 17\%\), under 25%. It passes, though with less room than the XSP trade in the worked example.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>A strategy trades 250 round trips a year on $20,000 of notional, with an all-in spread and impact cost of 10 bps a round trip and $1 of commission a leg. What is its friction drag?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-drag"></a>, \(D = 250 \times (0.0010 + 2/20{,}000) = 250 \times 0.0011 = 0.275\). It needs a paper return well above 27.5% a year to survive its execution, and above 55% to stay out of the red.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>An order of 0.5% of ADV costs 7 bps of impact. By the square-root law, what does an order of 2% of ADV cost, per share and in total?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Four times the size gives \(\sqrt{4} = 2\) times the slippage, 14 bps per share. The total cost is the slippage times the size, \(2 \times 4 = 8\) times as much.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>You sell the first leg of a put spread at $3.00 and, 5 seconds later, buy the second at $1.55 instead of the $1.40 it was quoted at. What did the legging cost?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The planned credit was \(3.00 - 1.40 = \$1.60\), and the actual credit is \(3.00 - 1.55 = \$1.45\). The gap cost $0.15, about 9% of the credit.</p>
+</div></details>
+</div>
+</div>
 
 <!--SCRIPT-->
 /* ============================================================
@@ -374,15 +590,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;
@@ -740,70 +959,74 @@ var DL = (function () {
   };
 })();
 
-/* ---------- order-book-walking ---------- */
+/* ---------- slippage-cost-calculator ---------- */
 (function () {
-  var U = 'order-book-walking';
-  var NS = DL.$(U + '-n');
-  /* the app's book */
-  var BIDS = [{ price: 113, qty: 5 }, { price: 112, qty: 8 }, { price: 111, qty: 10 }, { price: 110, qty: 15 }];
-  var ASKS = [{ price: 115, qty: 3 }, { price: 116, qty: 5 }, { price: 117, qty: 8 }, { price: 118, qty: 12 }];
-  var MAXQ = 15;
+  var U = 'slippage-cost-calculator';
+  var IDS = ['n', 'notional', 'spread', 'impact', 'comm', 'sharpe', 'ret'];
 
-  /* the app's walk: take the asks in order until the order is filled */
-  function walk(size) {
-    var remaining = size, fills = [], i = 0;
-    while (remaining > 0 && i < ASKS.length) {
-      var take = Math.min(remaining, ASKS[i].qty);
-      fills.push({ price: ASKS[i].price, qty: take });
-      remaining -= take;
-      i++;
-    }
-    var cost = fills.reduce(function (s, f) { return s + f.price * f.qty; }, 0);
-    var avg = cost / (size - remaining || 1);
-    return { fills: fills, avg: avg, slippage: avg - ASKS[0].price, remaining: remaining };
+  function verdict(ratio) {
+    if (ratio < 0.20) return ['Green.', 'Friction drag is under 20% of the paper return: ' +
+                              'the strategy survives its execution costs.'];
+    if (ratio < 0.50) return ['Yellow.', 'Friction is 20 to 50% of the paper return: the ' +
+                              'strategy is degraded but viable. Consider lower turnover.'];
+    return ['Red.', 'Friction exceeds 50% of the paper return: the strategy is mostly paying ' +
+            'execution costs to the wholesaler. Re-evaluate.'];
   }
 
   var draw = DL.figure(U + '-c', function (c) {
-    var size = parseInt(NS.value, 10), res = walk(size);
-    var eaten = {};
-    res.fills.forEach(function (f) { eaten[f.price] = f.qty; });
+    var tradesPerYear = DL.val(U + '-n'), notionalPerTrade = DL.val(U + '-notional'),
+        spreadBps = DL.val(U + '-spread'), impactBps = DL.val(U + '-impact'),
+        commPerTrade = DL.val(U + '-comm'), paperSharpe = DL.val(U + '-sharpe'),
+        paperReturn = DL.val(U + '-ret');
 
-    /* a ladder, as the text draws it: asks above, the spread, bids below.
-       Rows sit at y = 1..4 (bids) and 6..9 (asks); bar length is contracts. */
-    var p = new NMT.Plot(c, { xmin: 0, xmax: MAXQ * 2, ymin: 0.4, ymax: 9.6,
-                              pad: { l: 46, r: 10, t: 18, b: 18 } });
-    var g = p.g, sans = '11px ' + DL.color('sans');
-    g.clearRect(0, 0, p.w, p.h);
-    g.fillStyle = DL.color('paper');
-    g.fillRect(0, 0, p.w, p.h);
-    p.seg(0, 0.4, 0, 9.6, { color: DL.color('rule'), width: 1.4 });
+    /* the app's arithmetic, line for line */
+    var halfSpread = spreadBps / 2;
+    var roundTripBps = (halfSpread * 2) + (impactBps * 2);
+    var slipDollarPerTrade = (roundTripBps / 10000) * notionalPerTrade;
+    var annualSlipDollar = (slipDollarPerTrade + commPerTrade * 2) * tradesPerYear;
+    var annualTurnover = notionalPerTrade * tradesPerYear;
+    var annualSlipBps = annualTurnover > 0 ? (annualSlipDollar / annualTurnover) * 10000 : 0;
+    var slipDragOnReturn = annualSlipDollar / Math.max(notionalPerTrade, 1);
+    var netReturn = paperReturn - slipDragOnReturn;
+    var sharpeShrinkage = paperReturn > 0 ? netReturn / paperReturn : 0;
+    var netSharpe = paperSharpe * sharpeShrinkage;
+    var ratio = slipDragOnReturn / Math.max(paperReturn, 1e-6);
 
-    var bid = DL.color('insight'), ask = DL.color('plain'), acc = DL.color('accent');
-    function row(y, lvl, col, took) {
-      DL.hbars(p, [y], [lvl.qty], { h: 0.62, color: DL.fade(col, 0.35) });
-      if (took) DL.hbars(p, [y], [took], { h: 0.62, color: DL.fade(acc, 0.8) });
-      p.text(0, y, '$' + lvl.price, { dx: -8, align: 'right', baseline: 'middle', color: col, font: sans });
-      p.text(lvl.qty, y, String(lvl.qty) + (took ? ' · ' + took + ' filled' : ''),
-             { dx: 6, baseline: 'middle', color: took ? acc : col, font: sans });
-    }
-    ASKS.forEach(function (a, i) { row(6 + i, a, ask, eaten[a.price] || 0); });
-    BIDS.forEach(function (b, i) { row(4 - i, b, bid, 0); });
+    /* the paper return, what friction takes, and what is left */
+    var span = Math.max(paperReturn, slipDragOnReturn, Math.abs(netReturn)) * 1.15;
+    var plot = new NMT.Plot(c, { xmin: -span, xmax: span, ymin: 0, ymax: 3.2,
+                                 pad: { l: 14, r: 14, t: 8, b: 30 }, grid: false });
+    DL.axes(plot, { nx: 6, y: false, yAxis: false,
+                    x: function (v, st) { return DL.pct(v, st * 100 >= 1 ? 0 : 1); } });
+    DL.hbars(plot, [2.45], [paperReturn], { h: 0.55, color: DL.fade(DL.color('familiar'), 0.7) });
+    DL.hbars(plot, [1.6], [-slipDragOnReturn], { h: 0.55, color: DL.fade(DL.color('plain'), 0.7) });
+    DL.hbars(plot, [0.75], [netReturn], { h: 0.55, color: DL.color(netReturn >= 0 ? 'accent' : 'plain') });
+    DL.vline(plot, 0, { color: DL.color('ink-faint') });
+    plot.text(0, 2.45, 'paper return', { dx: -6, dy: 4, baseline: 'middle', align: 'right',
+                                         color: DL.color('ink-soft') });
+    plot.text(0, 1.6, 'friction drag', { dx: 6, dy: 4, baseline: 'middle', color: DL.color('ink-soft') });
+    plot.text(0, 0.75, 'net return', { dx: netReturn >= 0 ? -6 : 6, dy: 4, baseline: 'middle',
+                                       align: netReturn >= 0 ? 'right' : 'left', color: DL.color('ink') });
 
-    var spread = ASKS[0].price - BIDS[0].price, mid = (ASKS[0].price + BIDS[0].price) / 2;
-    var label = 'spread = $' + spread + ' · mid = $' + DL.num(mid, 1);
-    g.font = sans;
-    var lw = g.measureText(label).width;
-    p.seg(0, 5, p.invX(p.X(MAXQ * 2) - lw - 10), 5, { color: DL.fade(acc, 0.55), dash: [3, 3], width: 1 });
-    p.text(MAXQ * 2, 5, label, { align: 'right', baseline: 'middle', color: acc, font: sans });
-    p.text(0, 9.6, 'asks (sellers)', { dx: 2, dy: -4, color: ask, font: sans });
-    p.text(0, 0.4, 'bids (buyers)', { dx: 2, dy: 4, baseline: 'top', color: bid, font: sans });
-
-    DL.out(U + '-n-o', size + (size === 1 ? ' contract' : ' contracts'));
-    DL.out(U + '-lv', 'levels eaten = ' + res.fills.length);
-    DL.out(U + '-avg', 'avg fill price = ' + DL.usd(res.avg, 2));
-    DL.out(U + '-slip', 'slippage = +' + DL.usd(res.slippage, 2));
-    DL.out(U + '-left', 'unfilled = ' + (res.remaining > 0 ? res.remaining : '—'));
+    var v = verdict(ratio);
+    DL.out(U + '-n-o', String(tradesPerYear));
+    DL.out(U + '-notional-o', '$' + (notionalPerTrade / 1000).toFixed(0) + 'k');
+    DL.out(U + '-spread-o', spreadBps.toFixed(1) + ' bps');
+    DL.out(U + '-impact-o', impactBps.toFixed(1) + ' bps');
+    DL.out(U + '-comm-o', DL.usd(commPerTrade, 2));
+    DL.out(U + '-sharpe-o', paperSharpe.toFixed(2));
+    DL.out(U + '-ret-o', (paperReturn * 100).toFixed(0) + '%');
+    DL.out(U + '-rtbps', 'RT cost = ' + roundTripBps.toFixed(1) + ' bps');
+    DL.out(U + '-rtusd', 'RT cost = ' + DL.usd(slipDollarPerTrade, 2));
+    DL.out(U + '-annual', 'annual friction = ' + DL.usd(annualSlipDollar, 0));
+    DL.out(U + '-allin', 'all-in RT cost = ' + DL.num(annualSlipBps, 0) + ' bps');
+    DL.out(U + '-paper', 'paper return = ' + DL.num(paperReturn * 100, 1) + '%');
+    DL.out(U + '-drag', 'friction drag = ' + DL.num(slipDragOnReturn * 100, 2) + '%');
+    DL.out(U + '-net', 'net return = ' + DL.num(netReturn * 100, 2) + '%');
+    DL.out(U + '-nsharpe', 'net Sharpe = ' + DL.num(netSharpe, 2));
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
   });
-  DL.bind([U + '-n'], draw);
+  DL.bind(IDS.map(function (k) { return U + '-' + k; }), draw);
 })();
 <!--/SCRIPT-->

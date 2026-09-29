@@ -1205,7 +1205,10 @@ def html_words(frag):
     defaults = [d for _c, d, _n in CALLOUTS.values() if d] + list(SPECIAL.values())
     for d in defaults:
         frag = frag.replace('<span class="ct">%s</span>' % d, " ").replace("<b>%s</b>" % d, " ")
-        frag = frag.replace("<summary>%s</summary>" % d, " ").replace(">%s</h2>" % d, "> </h2>")
+        frag = frag.replace("<summary>%s</summary>" % d, " ")
+    # a check's default heading, which the markdown leaves out; a section a writer
+    # titles "In practice" or "Check yourself" is prose, and stays
+    frag = re.sub(r">%s</h2>(\s*<div class=\"problems\">)" % re.escape(SPECIAL["check"]), r"> </h2>\1", frag)
     frag = frag.replace('<span class="ct">Worked example: ', '<span class="ct">')
     frag = re.sub(r"</?(?:td|th|tr|p|li|h[1-6]|div|pre|table|thead|tbody|ul|ol|hr|br|details|summary)\b[^>]*>",
                   " ", frag)

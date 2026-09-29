@@ -1,0 +1,933 @@
+<p class="eyebrow">Part XI · Swing trading · Chapter 11F</p>
+
+<h1>Multiple timeframes</h1>
+
+<p class="subtitle">Elder's triple screen</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 11C to 11E built the instruments, from indicators and chart patterns to the stage of a trend, each reading one chart at one scale. This chapter makes them check each other across scales with Elder's triple screen, which takes a trade only when three timeframes agree.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Bars, and the simple and exponential moving averages that smooth them (<a class="xref" href="11a.html">Chapter 11A</a>).</li>
+<li>The relative strength index, MACD and the average true range (<a class="xref" href="11c.html">Chapter 11C</a>).</li>
+<li>The slope of the 30-bar moving average, and the four stages of a trend it helps classify (<a class="xref" href="11e.html">Chapter 11E</a>).</li>
+<li>The rule that a lower layer of the hierarchy never overrides a higher one (<a class="xref" href="11b.html">Chapter 11B</a>).</li>
+</ul>
+</div>
+
+<h2 id="three-screens-three-jobs">1 · Three screens, three jobs</h2>
+
+<p>The Dealer Mechanics Lab calls Alexander Elder's <strong><span class="gloss" title="Alexander Elder's rule for trading across timeframes: a higher timeframe sets the direction, an intermediate one the timing and a lower one the entry, and a trade is taken only when all three agree.">triple screen</span></strong>, formalized in his <em>Trading for a Living</em> (1993), the cleanest formalization of multi-timeframe discipline. At any moment three timeframes are at work, each with one job: the <strong>higher timeframe</strong> (HTF) sets the direction, the <strong>intermediate timeframe</strong> (ITF) signals the timing, and the <strong>lower timeframe</strong> (LTF) triggers the entry. <strong>All three must agree.</strong></p>
+
+<p>A <strong><span class="gloss" title="The length of the bars a price chart is drawn in, such as a week, a day or an hour. A higher timeframe shows the same prices in fewer, longer bars.">timeframe</span></strong> is the length of the bars a chart is drawn in. A bar, as <a class="xref" href="11a.html">Chapter 11A</a> defined it, is one period of the chart, with its open, high, low and close. A weekly bar condenses five daily bars: it opens at Monday's open, closes at Friday's close, and takes the week's highest high and lowest low as its own. For daily swing trading the HTF is typically weekly, the ITF daily and the LTF intraday. For intraday trading the whole ladder moves down a step, so that the HTF is daily.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Ask three questions, each from a different distance, and act only when all three answer yes. From far away you ask which way the tide is running, from closer in whether a wave is coming in now, and up close whether this is the moment to step in. The order matters, because a perfect moment to step into an ebbing tide is still a mistake.</p>
+</div>
+
+<h2 id="the-higher-timeframe-sets-the-direction">2 · The higher timeframe sets the direction</h2>
+
+<p>The HTF reads the slope of the 30-bar <span class="gloss" title="The plain average of the last n closing prices, recomputed at each bar. A 50-day simple moving average, abbreviated SMA, averages the last 50 daily closes.">simple moving average</span> (SMA). Writing \(C_t\) for the close of bar \(t\), the SMA of the last 30 closes and its slope over the last \(k\) bars are</p>
+
+<div class="eq">
+\[ M_t = \frac{1}{30}\sum_{i=0}^{29} C_{t-i} \]
+</div>
+
+<div class="eq" id="e-slope">
+\[ \text{slope}_t = \frac{M_t - M_{t-k}}{k} \]
+</div>
+
+<p>A positive slope permits bullish trades only and a negative slope bearish trades only, while a flat slope permits no trade at all.</p>
+
+<p>The rule does not say how flat is flat. <a class="xref" href="11e.html">Chapter 11E</a>'s stage classifier gives a usable answer: take \(k = 5\), divide the slope by the 14-bar <span class="gloss" title="The true range averaged over n bars, usually 14, with Wilder smoothing: the typical size of a bar, in price units. Abbreviated ATR.">average true range</span> (ATR), and call anything between −0.05 and +0.05 flat. The ATR is the typical size of a bar, so dividing by it lets one threshold serve any price level and any timeframe.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Reading the weekly screen</span>
+<p><strong>Step 1: the slope.</strong> Suppose SPY's 30-week SMA stands at 560.0 today and stood at 552.0 five weeks ago. By <a class="eqref" href="#e-slope"></a> the slope is \((560.0 - 552.0)/5 = 1.6\) a week.</p>
+
+<p><strong>Step 2: normalize it.</strong> With a weekly ATR of 14.0, the normalized slope is \(1.6/14.0 = 0.11\). That is above +0.05, so the direction is up and only long trades are allowed.</p>
+</div>
+
+<h2 id="the-intermediate-timeframe-opens-the-window">3 · The intermediate timeframe opens the window</h2>
+
+<p>The ITF watches the histogram of <span class="gloss" title="A trend indicator: the 12-bar exponential moving average of price minus the 26-bar one, with a 9-bar average of that difference as its signal line and the gap between the two as its histogram. Abbreviated MACD.">moving average convergence divergence</span> (MACD), typically on daily bars when the HTF is weekly. Write \(E^{(n)}_t\) for the \(n\)-bar <span class="gloss" title="A moving average updated at each bar by moving a fixed fraction of the way from its last value toward the new price, so that recent prices count most. For an n-bar average the fraction is 2 divided by n plus 1. Abbreviated EMA.">exponential moving average</span> (EMA) of <a class="xref" href="11a.html">Chapter 11A</a>, which moves a fraction \(\alpha = 2/(n+1)\) of the way toward each new close. The MACD line is the gap between a fast and a slow EMA:</p>
+
+<div class="eq">
+\[ \text{MACD}_t = E^{(12)}_t - E^{(26)}_t \]
+</div>
+
+<p>The <strong>histogram</strong> is the gap between the MACD line and its <strong>signal line</strong>, which is the 9-bar EMA of the MACD line, with \(\alpha = 2/10 = 0.2\):</p>
+
+<div class="eq" id="e-hist">
+\[ \text{hist}_t = \text{MACD}_t - \text{signal}_t \]
+</div>
+
+<p>The MACD line is positive whenever the fast average sits above the slow one. The histogram asks whether that gap is wider than its own recent average, so it crosses zero exactly when the MACD line crosses its signal line.</p>
+
+<p>A cross above zero opens the bullish window and a cross below zero closes it, so the ITF picks out the <em>moment</em> within the direction the HTF allows.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A window opens</span>
+<p><strong>Step 1: the MACD line.</strong> Today SPY's 12-day EMA is 603.20 and its 26-day EMA is 601.80, so MACD is 1.40.</p>
+
+<p><strong>Step 2: the signal line.</strong> Moving a fifth of the way from yesterday's 1.10 toward 1.40 gives \(1.10 + 0.2 \times (1.40 - 1.10) = 1.16\).</p>
+
+<p><strong>Step 3: the histogram.</strong> By <a class="eqref" href="#e-hist"></a> it is \(1.40 - 1.16 = +0.24\), up from −0.05 yesterday. It crossed zero today, so the bullish window has just opened.</p>
+</div>
+
+<h2 id="the-lower-timeframe-pulls-the-trigger">4 · The lower timeframe pulls the trigger</h2>
+
+<p>The LTF, typically drawn in intraday bars, waits for two things at once: a pullback of the price to its 21-bar EMA, and the <span class="gloss" title="An oscillator from 0 to 100 that compares recent gains with recent losses: 100 times the average gain divided by the sum of the average gain and the average loss over n bars. Abbreviated RSI. Above 70 is conventionally called overbought and below 30 oversold.">relative strength index</span> (RSI) in the band from 40 to 65. The pullback to the moving average supplies the <em>location</em>. The RSI band confirms that momentum has cooled without breaking, which makes the pair a <em>trigger</em>.</p>
+
+<p>RSI compares recent gains with recent losses. With \(\bar{U}\) and \(\bar{D}\) the average gain and the average loss over \(n\) bars, each smoothed in Wilder's way (<a class="xref" href="11c.html">Chapter 11C</a>), it is</p>
+
+<div class="eq" id="e-rsi">
+\[ \text{RSI} = 100 - \frac{100}{1 + \bar{U}/\bar{D}} \]
+</div>
+
+<p>Below 40 the pullback has broken momentum rather than cooled it, while above 65 momentum has not cooled at all. The rule names neither an RSI period nor a distance that counts as touching the average. The figure below supplies both: the 14-bar RSI, and a close within 0.5% of the 21-EMA.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A trigger on the hourly chart</span>
+<p><strong>Step 1: the location.</strong> The hourly 21-EMA stands at 599.74 when SPY closes the hour at 600.40. With \(\alpha = 2/22 = 0.091\), the EMA moves to \(599.74 + 0.091 \times 0.66 = 599.80\), so the close sits 0.10% above it.</p>
+
+<p><strong>Step 2: the momentum.</strong> With 14-hour averages of 0.42 for the gains and 0.38 for the losses, <a class="eqref" href="#e-rsi"></a> gives an RSI of \(100 - 100/(1 + 1.105) = 52.5\), inside the band.</p>
+
+<p><strong>Step 3: the verdict.</strong> The weekly slope is up and the daily window is open, so all three screens agree and you enter.</p>
+</div>
+
+<h2 id="when-the-screens-disagree">5 · When the screens disagree</h2>
+
+<p>Most of the time the screens disagree. <strong>That is the point.</strong> What to do about a disagreement is settled by a mechanical decision tree, not by judgment in the moment:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Higher</th><th>Intermediate</th><th>Lower</th><th class="c-result">Action</th></tr></thead><tbody><tr><td class="c-trial" data-label="Higher">Flat</td><td data-label="Intermediate">Any</td><td data-label="Lower">Any</td><td class="c-result" data-label="Action">No trade. Wait for a direction: the higher screens dominate</td></tr><tr><td class="c-trial" data-label="Higher">Up</td><td data-label="Intermediate">Bearish window</td><td data-label="Lower">Any</td><td class="c-result" data-label="Action">No trade. The bullish window is closed, so wait for it to reopen</td></tr><tr><td class="c-trial" data-label="Higher">Up</td><td data-label="Intermediate">Bullish window</td><td data-label="Lower">Waiting</td><td class="c-result" data-label="Action">A setup, not an entry. Wait for the lower screen to retrace or confirm</td></tr><tr><td class="c-trial" data-label="Higher">Up</td><td data-label="Intermediate">Bullish window</td><td data-label="Lower">Trigger</td><td class="c-result" data-label="Action">Enter. Size by <a class="xref" href="13c.html">Chapter 13C</a>, and invalidate on a lower-screen close below the 21-EMA</td></tr><tr><td class="c-trial" data-label="Higher">Down</td><td data-label="Intermediate">Any</td><td data-label="Lower">Any</td><td class="c-result" data-label="Action">Mirror the rules if shorting is in your mandate. If it is not, no trade</td></tr></tbody></table></div></div>
+
+<p>The table is <a class="xref" href="11b.html">Chapter 11B</a>'s hierarchy at small scale, in which a signal on a lower screen never overrides a contradicting higher one. <strong>Invalidation</strong> is the condition, fixed before entry, that proves a trade wrong and closes it.</p>
+
+<h2 id="three-screens-on-one-tape">6 · Three screens on one tape</h2>
+
+<p>The figure draws one synthetic tape of 350 bars at three aggregations, each panel spanning the same stretch of time. The lowest panel shows the raw bars, while the middle one merges every 5 bars into one and the top one every 25, leaving the top panel only 14 bars. So the top screen uses a 10-bar SMA rather than a 30-bar one and reads its slope over the last four bars. It calls the direction up when that slope is above +0.05 a bar, in the tape's price units, down below −0.05 and flat between.</p>
+
+<p>The middle screen reads the sign of its MACD histogram, with the standard 12, 26 and 9 bars. The lowest triggers when the close is within 0.5% of the 21-EMA and the 14-bar RSI is strictly between 40 and 65. A slider picks the tape by its seed, from 1 to 30 and starting at 7, while readouts give each screen's state, a verdict and the numbers behind them. Start at seed 7, then try seeds 9, 18 and 25.</p>
+
+<figure class="fig" id="fig-multi-timeframe">
+  <canvas id="multi-timeframe-h" data-h="100"></canvas>
+  <canvas id="multi-timeframe-i" data-h="100"></canvas>
+  <canvas id="multi-timeframe-l" data-h="100"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="multi-timeframe-seed">tape seed</label>
+      <input type="range" id="multi-timeframe-seed" min="1" max="30" step="1" value="7">
+      <output id="multi-timeframe-seed-o" for="multi-timeframe-seed"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="multi-timeframe-htf"></output></div>
+    <div class="ctrl"><output id="multi-timeframe-itf"></output></div>
+    <div class="ctrl"><output id="multi-timeframe-ltf"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="multi-timeframe-vk"></b> <span id="multi-timeframe-vt"></span></p>
+  <p class="readout"><span id="multi-timeframe-why"></span></p>
+  <figcaption><b>Three screens on one tape.</b> The same synthetic 350-bar tape at three
+  aggregations, each panel spanning the same stretch of time: 25 bars to one (HTF), 5 to one
+  (ITF) and the raw bars (LTF). The HTF reads direction from the slope of its 10-bar SMA over
+  the last four bars, the ITF reads the sign of its MACD histogram, and the LTF triggers when
+  the close is within 0.5% of the 21-EMA with RSI between 40 and 65. Re-roll the seed: on most
+  tapes at least one screen disagrees.</figcaption>
+</figure>
+
+<p>At seed 7 the top screen is up, with a slope of +6.35 a bar, while the middle screen's histogram of −1.13 marks a bearish window. The lowest screen is waiting, with the close 1.43% from its EMA and an RSI of 43.9. The verdict is no trade until the screens agree, the second row of the decision tree.</p>
+
+<p>Seed 9 is the only one of the 30 tapes on which all three screens agree. Its verdict says enter, "with explicit invalidation per <a class="xref" href="13c.html">Chapter 13C</a>". The lowest screen triggers inside a closed window at seed 18 and with the window open but the direction down at seed 25. The figure trades only long, so both are no-trades. Seed 19 is the one flat tape, with a slope of +0.04 a bar.</p>
+
+<h2 id="why-the-discipline-matters">7 · Why the discipline matters</h2>
+
+<p>The bias toward action pushes you to trade on a single screen: a daily breakout is exciting, so you act before checking the weekly chart. But the weekly trend was rolling over, which means you bought into <span class="gloss" title="In trading, the gradual selling of a large position by institutions into strength, which shows on a chart as a top where an advance stalls.">distribution</span> disguised as a <span class="gloss" title="A move of the price beyond a level that has held it, such as the top of a trading range or of a chart pattern, taken as the start of a new advance.">breakout</span>, the Stage 3 top of <a class="xref" href="11e.html">Chapter 11E</a>. <strong>The triple screen exists specifically to slow you down at the moment you most want to act.</strong></p>
+
+<p>The Dealer Mechanics Lab judges the selectivity this discipline brings to be worth more than any stack of indicators. It presents the triple screen as a discipline rather than as a tested edge, and it cites no study of the rule's returns.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Requiring all three screens is serial testing, in which a case is called positive only when every test in the series is positive. Specificity rises and sensitivity falls: you miss some good trades in order to avoid many bad ones. The gain in specificity is largest when the tests err independently of each other. Three screens computed from one price series are not independent, since they share the <span class="gloss" title="Strong correlation among the inputs to a model or a decision rule, so that they carry largely the same information. Counting such inputs as separate confirmations overstates the evidence.">multicollinearity</span> of <a class="xref" href="11c.html">Chapter 11C</a>. So they filter less than multiplying their false-positive rates would suggest.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Fix the three timeframes in writing</strong> before the session, as <a class="xref" href="11b.html">Chapter 11B</a> asks you to state the horizon of every trade. Weekly, daily and hourly bars suit a daily swing trader.</li>
+<li><strong>Mind the notional.</strong> A close below the hourly 21-EMA makes a tight stop, which <a class="xref" href="13c.html">Chapter 13C</a>'s loss budget turns into a large position. With a $200,000 account, a 1% risk budget and a stop $1.60 below a $600.40 entry, the budget allows 1,250 shares: $750,500 of SPY, about 3.75 times the account.</li>
+<li><strong>Cap it by buying power.</strong> Under <span class="gloss" title="A margin model, named for the Federal Reserve's Regulation T, that requires a fixed percentage of each position's value. It is simple and does not change with market stress.">Reg-T margin</span> an overnight stock position can be at most twice the equity (<a class="xref" href="2e.html">Chapter 2E</a>), which caps this one at about 666 shares risking $1,066 at the stop.</li>
+<li><strong>An hourly stop does not guard the night.</strong> A <span class="gloss" title="An order that waits until the price reaches a set level and then becomes an order to close the position. It caps the loss only if it fills near that level, which a gap can prevent.">stop-loss order</span> fills at the first price available after an overnight gap, however far beyond the stop that is (<a class="xref" href="5f.html">Chapter 5F</a>).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<ul>
+<li><strong>A flat higher screen.</strong> When the slope hovers near the edge of the flat band, the direction flickers between allowed and forbidden, and the rule <span class="gloss" title="Repeated losses from being pushed into and out of positions by a signal or a price that keeps reversing across a threshold before any trend develops.">whipsaws</span>.</li>
+<li><strong>Lag.</strong> Every screen is an average of past prices. A sharp reversal therefore shows first on the lower screen and last on the higher one, by which time the move is old.</li>
+<li><strong>Gaps.</strong> A shock can jump the price through the lower screen's invalidation overnight, leaving a loss larger than the one you sized for.</li>
+<li><strong>Shared inputs.</strong> Agreement among three screens built from one price series is weaker evidence than agreement among three independent tests.</li>
+</ul>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Direction:</strong> trade only in the direction the higher screen's slope points and do nothing while it is flat.</li>
+<li><strong>Timing:</strong> enter only while the intermediate window is open, from a histogram cross above zero until the next cross below it.</li>
+<li><strong>Entry:</strong> wait for the lower screen's trigger, a pullback to the 21-EMA with RSI between 40 and 65.</li>
+<li><strong>Size and exit:</strong> size from the loss budget of <a class="xref" href="13c.html">Chapter 13C</a>, and close the trade on a lower-screen close below the 21-EMA.</li>
+<li><strong>Downtrends:</strong> mirror the rules only if shorting is in your mandate, and otherwise stand aside.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: trading one screen</span>
+<p>The breakout on the daily chart may be real and is still only one screen, so read the weekly slope and the daily window before acting. A breakout against a rolling-over weekly trend is the distribution trap described above.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: shopping for a timeframe</span>
+<p>If the weekly chart says no, a monthly or a four-day chart may say yes. Switching timeframes until one agrees turns the rule into a search, with the multiple-comparisons problem of <a class="xref" href="1d.html">Chapter 1D</a>. Choose the three timeframes before the session, and keep them whatever the charts say.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Three timeframes, three jobs: the higher sets the direction, the intermediate opens the window and the lower triggers the entry. All three must agree.</li>
+<li>Each screen reads one number: the 30-bar SMA's slope for the direction, the MACD histogram's sign for the window, and a pullback to the 21-EMA with RSI between 40 and 65 for the trigger.</li>
+<li>Most of the time the screens disagree, which means no trade, because a higher screen always overrides a lower one.</li>
+<li>The rule's value is selectivity: it slows you down at the moment you most want to act.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>The weekly slope is up and the daily MACD histogram is −0.3 and falling, while on the hourly chart SPY has pulled back to its 21-EMA with RSI at 50. What do you do?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Nothing yet, because the intermediate window is closed although the lower screen has triggered: the second row of the decision tree. Wait for the histogram to cross back above zero and take the next trigger after that.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A stock's 30-week SMA is 412.0 today and was 411.0 five weeks ago, with a weekly ATR of 9.0. Is the higher screen up?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The slope is \((412.0 - 411.0)/5 = 0.2\) a week, and divided by the ATR it is \(0.2/9.0 = 0.022\). That is inside the flat band from −0.05 to +0.05, so the direction is flat and there is no trade, although the average is still rising.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>With a 12-day EMA of 101.5, a 26-day EMA of 101.9 and yesterday's signal line at −0.50, is the daily window open?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>MACD is \(101.5 - 101.9 = -0.4\), which moves the signal line to \(-0.50 + 0.2 \times (-0.4 + 0.50) = -0.48\) and makes the histogram \(-0.4 - (-0.48) = +0.08\). The window is open although the MACD line is still negative, because the histogram measures the line against its own average, not against zero.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Across the figure's 30 tapes, the top screen reads up on 19, the middle window is open on 20 and the lowest screen triggers on 5. If the screens were independent, on how many tapes would all three agree? The figure finds one: why might the two numbers differ?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Under independence, \(30 \times \tfrac{19}{30} \times \tfrac{20}{30} \times \tfrac{5}{30} = 2.1\) tapes would agree, against the single tape, seed 9, that does. Thirty tapes are too few to tell 1 from 2.1 apart. Nor are the screens independent, since all three are computed from the same prices.</p>
+</div></details>
+</div>
+</div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- multi-timeframe ---------- */
+(function () {
+  var U = 'multi-timeframe';
+  var SEED = DL.$(U + '-seed');
+  /* The app took the HTF slope as (SMA[last] - SMA[last - 5]) / 5. With 350
+     bars there are only 14 HTF bars, so a 10-bar SMA has 5 values and the
+     bar five back is always empty: the app's HTF read was "—" on every seed.
+     Four bars back is the furthest the tape allows. */
+  var BACK = 4;
+
+  var st = { seed: null };
+  function load() {
+    var s = parseInt(SEED.value, 10);
+    if (st.seed === s) return st;
+    var ltf = DL.ohlc(350, s), itf = DL.aggregate(ltf, 5), htf = DL.aggregate(ltf, 25);
+    var htfSma = DL.sma(htf, 10), itfMacd = DL.macd(itf, 12, 26, 9);
+    var ltfEma = DL.ema(ltf, 21), ltfRsi = DL.rsi(ltf, 14);
+
+    var last = htfSma[htfSma.length - 1], prev = htfSma[htfSma.length - 1 - BACK];
+    var slope = null, dir = '—';
+    if (last != null && prev != null) {
+      slope = (last - prev) / BACK;
+      dir = slope > 0.05 ? 'UP' : slope < -0.05 ? 'DOWN' : 'FLAT';
+    }
+    var h = itfMacd.hist[itfMacd.hist.length - 1];
+    var win = h == null ? '—' : h > 0 ? 'BULL window' : 'BEAR window';
+    var r = ltfRsi[ltfRsi.length - 1], close = ltf[ltf.length - 1].close, ema = ltfEma[ltfEma.length - 1];
+    var gap = null, trig = '—';
+    if (r != null && ema != null) {
+      gap = Math.abs(close - ema) / ema;
+      trig = gap < 0.005 && r > 40 && r < 65 ? 'TRIGGER' : 'waiting';
+    }
+    st = { seed: s, ltf: ltf, itf: itf, htf: htf, htfSma: htfSma, ltfEma: ltfEma,
+           slope: slope, dir: dir, h: h, win: win, r: r, gap: gap, trig: trig };
+    return st;
+  }
+
+  /* one screen: the closes at its aggregation, with its moving average */
+  function panel(id, pick, after) {
+    return DL.figure(U + '-' + id, function (c) {
+      var s = load(), o = pick(s);
+      var close = o.bars.map(function (b) { return b.close; });
+      var xs = o.bars.map(function (_, i) { return i; });
+      var lo = Math.min.apply(null, close) * 0.98, hi = Math.max.apply(null, close) * 1.02;
+      var p = new NMT.Plot(c, { xmin: 0, xmax: o.bars.length - 1, ymin: lo, ymax: hi,
+                                pad: { l: 40, r: 12, t: 20, b: 8 } });
+      DL.axes(p, { xs: [], ny: 3, x: false });
+      DL.line(p, xs, close, { color: DL.color(o.role), width: 1.4 });
+      if (o.ma) DL.line(p, xs, o.ma, { color: DL.fade(DL.color('accent'), 0.65), width: 1.2 });
+      p.text(0, hi, o.label, { dy: -5, font: '11px ' + DL.color('sans'), color: DL.color(o.role) });
+      if (after) after(s);
+    });
+  }
+
+  var drawH = panel('h', function (s) {
+    return { bars: s.htf, ma: s.htfSma, role: 'familiar', label: 'HTF · direction (10-bar SMA)' };
+  });
+  var drawI = panel('i', function (s) {
+    return { bars: s.itf, ma: null, role: 'accent', label: 'ITF · timing (MACD histogram)' };
+  });
+  var drawL = panel('l', function (s) {
+    return { bars: s.ltf, ma: s.ltfEma, role: 'familiar', label: 'LTF · entry (21-EMA pullback + RSI)' };
+  }, function (s) {
+    var agree = s.dir === 'UP' && s.win === 'BULL window' && s.trig === 'TRIGGER';
+    DL.out(U + '-seed-o', '#' + s.seed);
+    DL.out(U + '-htf', 'HTF · direction = ' + s.dir);
+    DL.out(U + '-itf', 'ITF · window = ' + s.win);
+    DL.out(U + '-ltf', 'LTF · trigger = ' + s.trig);
+    DL.out(U + '-vk', agree ? 'All three screens agree.' : 'One or more screens disagree.');
+    DL.out(U + '-vt', agree
+      ? "Elder's triple screen says enter, with explicit invalidation per Chapter 13C."
+      : 'No trade. Wait for confluence.');
+    DL.out(U + '-why', 'HTF slope ' + DL.signed(s.slope, 2) + ' a bar; ITF MACD histogram ' +
+      DL.signed(s.h, 2) + '; LTF close ' + DL.num(s.gap * 100, 2) + '% from its 21-EMA, RSI ' +
+      DL.num(s.r, 1) + '.');
+  });
+
+  DL.bind([U + '-seed'], function () { drawH(); drawI(); drawL(); });
+})();
+<!--/SCRIPT-->

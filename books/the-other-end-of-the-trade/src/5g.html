@@ -1,28 +1,55 @@
 <p class="eyebrow">Part V · Options · Chapter 5G</p>
 
-<h1>The vol surface in operational depth</h1>
+<h1>The volatility surface</h1>
 
-<p>We covered the vol surface conceptually in 5E — that implied volatility varies by strike (skew) and by expiration (term structure). This subsection makes it operational. The question we're answering: <strong>given the current state of the surface, which structure is mispriced and which is not?</strong></p>
+<p class="subtitle">Skew, term structure and IV rank</p>
 
-<p>The cleanest version of options edge comes from finding strikes or expirations where IV is systematically richer or cheaper than realized vol forecasts justify. The surface tells you where to look.</p>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="5e.html">Chapter 5E</a> showed that implied volatility varies by strike (the skew) and by expiration (the term structure). This chapter makes that surface operational, answering one question: <strong>given the current state of the surface, which structure is mispriced and which is not?</strong> With it, <a class="xref" href="5a.html">Part V</a> comes to a close.</p>
+</div>
 
-<h2 id="iv-rank-vs-iv-percentile-the-distinction-that-matters">1 · IV rank vs IV percentile — the distinction that matters</h2>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Implied and realized volatility, skew, term structure, contango and backwardation (<a class="xref" href="5e.html">Chapter 5E</a>).</li>
+<li>Variance that adds over time, which gives the square-root-of-time rule (Chapters 1A and 5E).</li>
+<li>Delta as a way to name strikes, as in a 25-delta put (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li>Percentiles of a distribution (<a class="xref" href="1b.html">Chapter 1B</a>).</li>
+</ul>
+</div>
 
-<p>These terms get used interchangeably. They are not the same.</p>
+<p>The cleanest version of options edge comes from finding strikes or expirations where IV is systematically richer or cheaper than realized-volatility forecasts justify. The surface tells you where to look.</p>
 
-<p><strong>IV rank</strong> = (current IV − 52-week low IV) / (52-week high IV − 52-week low IV)</p>
+<h2 id="iv-rank-and-iv-percentile">1 · IV rank and IV percentile</h2>
 
-<p>A linear interpolation. An IV of 25 in a 52-week range of [10, 50] has IV rank = (25-10)/(50-10) = 0.375.</p>
+<p>These two terms get used interchangeably, but they are not the same.</p>
 
-<p><strong>IV percentile</strong> = fraction of trading days in the trailing 52 weeks on which IV was <em>below</em> the current level.</p>
+<p><strong><span class="gloss" title="Where today's implied volatility sits between its lowest and highest readings of the past 52 weeks, as a fraction of that range. Rare spikes stretch the range and pull the rank down.">IV rank</span></strong> places today's implied volatility on the line from the lowest to the highest reading of the past 52 weeks:</p>
 
-<p>A distribution-aware measure. If IV has been at 25 or below on 60% of the prior 252 trading days, IV percentile = 60%.</p>
+<div class="eq" id="e-ivrank">
+\[ \text{IV rank} = \frac{\text{IV}_{\text{now}} - \text{IV}_{\text{low}}}{\text{IV}_{\text{high}} - \text{IV}_{\text{low}}} \]
+</div>
 
-<p>The two metrics diverge when the IV distribution is skewed (which it almost always is — IV spikes upward, mean-reverts downward, spends most of its life in the lower half of the range). <strong>In typical equity environments, IV percentile is roughly 2× IV rank.</strong> A stock with IV rank 30 typically has IV percentile near 60.</p>
+<p>It is a linear interpolation, so an IV of 25 in a 52-week range of 10 to 50 has an IV rank of \((25 - 10)/(50 - 10) = 0.375\).</p>
 
-<p><strong>Operational rule:</strong> Use IV percentile, not IV rank, for strategy selection. IV rank exaggerates the apparent "richness" of vol because the rare upward spikes pull the range maximum far above the typical level. IV percentile correctly accounts for how often vol actually sits at various levels.</p>
+<p><strong><span class="gloss" title="The share of trading days in the past 52 weeks on which implied volatility was below today's level. It says how unusual today's level is among the days that actually occurred.">IV percentile</span></strong> is the fraction of trading days in the trailing 52 weeks on which IV was <em>below</em> the current level, which makes it a distribution-aware measure. If IV has been at 25 or below on 60% of the prior 252 trading days, the IV percentile is 60%. Whether a day exactly at today's level counts as below matters only for ties.</p>
 
-<p>A stock at IV percentile 80% has been at this IV level or lower on 80% of days — vol is elevated relative to its own history. A stock at IV percentile 30% has been here or lower 30% of the time — vol is depressed.</p>
+<p>The two metrics diverge when the IV distribution is skewed, which it almost always is: IV spikes upward, mean-reverts downward and spends most of its life in the lower half of its range. <strong>In typical equity environments, IV percentile is roughly twice IV rank.</strong> A stock with an IV rank of 30 typically has an IV percentile near 60.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One spike, two readings</span>
+<p>Take a short history of ten daily IV readings, in percent: 12, 13, 12, 14, 13, 15, 12, 40, 14 and 13, with today's IV at 16.</p>
+
+<p><strong>Step 1: the rank.</strong> The low is 12 and the high is 40, the single spike. By <a class="eqref" href="#e-ivrank"></a>, the rank is \((16 - 12)/(40 - 12) = 4/28 = 0.14\).</p>
+
+<p><strong>Step 2: the percentile.</strong> Nine of the ten days were below 16, so the percentile is 90%.</p>
+
+<p><strong>Step 3: read them.</strong> The rank says IV is near the bottom of its range, while the percentile says it is higher than on almost every recent day. One spike stretched the range, which pulled the rank down without changing how often IV actually sat below 16.</p>
+</div>
+
+<p><strong>The operational rule is to use IV percentile, not IV rank, for strategy selection.</strong> In a typical equity history the rank understates how elevated vol is, because the rare upward spikes pull the range maximum far above the typical level. IV percentile correctly accounts for how often vol actually sits at various levels. A stock at an IV percentile of 80% has been at this IV level or lower on 80% of days, so vol is elevated relative to its own history. A stock at an IV percentile of 30% has been here or lower 30% of the time, so vol is depressed.</p>
+
+<p>The figure draws a synthetic year of daily implied vol, 252 trading days, with today's IV as a flat line. Its sliders set today's IV (starting at 22%), the mean and the standard deviation of the year's IV (starting at 18% and 5%) and a seed from 1 to 1,000 that picks the draw. Three buttons choose the shape of the history: normal, spiky (bottom-heavy) or clustered. The readouts give the rank, the percentile, the gap between them in points and the year's low and high. A sentence then says which to trust. Start with the normal history, then choose the spiky one, then slide today's IV.</p>
 
 <figure class="fig" id="fig-iv-rank-vs-percentile">
   <canvas id="iv-rank-vs-percentile-c" data-h="220"></canvas>
@@ -69,30 +96,47 @@
   percentile, the gap the text describes for typical equity IV.</figcaption>
 </figure>
 
-<h2 id="forward-iv-the-structure-of-the-future-variable">2 · Forward IV — the structure-of-the-future variable</h2>
+<p>At the starting settings the normal history gives a rank of 65.1 and a percentile of 77.8, a gap of −12.6 points. Choose the spiky history and the rank falls to 38.7 while the percentile stays at 75.4, so the rank is about half the percentile, as the text says of typical equity IV. The figure calls that history bottom-heavy: most days were at low IV, with a few large spikes pulling the maximum up, so the rank understates how elevated today's IV is. When a few rare lows pull the minimum down instead, the history is top-heavy: the rank sits above the percentile and exaggerates. The clustered history, with a narrow range of 11.8% to 22.8%, puts today's 22% near its top on both measures: a rank of 92.6 and a percentile of 96.8.</p>
 
-<p>The term structure tells you what the market is implying about volatility <em>during</em> future windows.</p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>IV rank is like reporting a laboratory value as its position between the lowest and highest results ever recorded in a cohort. One patient with an extreme C-reactive protein stretches that range, so a clearly raised value sits low on it. Reference intervals are built from percentiles for this reason. An IV percentile reads the same way, saying how unusual today's value is among the days that actually occurred.</p>
+</div>
 
-<p>Given two implied vols σ_1 (front-month, T_1 days) and σ_2 (back-month, T_2 days, T_2 &gt; T_1), the <strong>forward implied vol</strong> from T_1 to T_2 is:</p>
+<h2 id="forward-iv-the-volatility-of-a-future-window">2 · Forward IV: the volatility of a future window</h2>
 
-<pre>σ_forward² × (T_2 − T_1) = σ_2² × T_2 − σ_1² × T_1</pre>
+<p>The term structure tells you what the market is implying about volatility <em>during</em> future windows, not only up to each expiry. <a class="xref" href="5e.html">Chapter 5E</a> showed that variance adds over time, so the total implied variance to an expiry, \(\sigma^2 T\), is the sum of the variances of the windows before it. Write \(\sigma_1\) for the front month's implied vol and \(T_1\) for its days to expiry, with \(\sigma_2\) and \(T_2\) for the back month, which expires later. The total to \(T_2\) is the total to \(T_1\) plus the variance of the window between them:</p>
 
-<p>Solving:</p>
+<div class="eq" id="e-fwdvar">
+\[ \sigma_f^2\,(T_2 - T_1) = \sigma_2^2 T_2 - \sigma_1^2 T_1 \]
+</div>
 
-<pre>σ_forward = √[ (σ_2² × T_2 − σ_1² × T_1) / (T_2 − T_1) ]</pre>
+<p>Solving for \(\sigma_f\), the <strong><span class="gloss" title="The implied volatility the market prices for the window between two expiries, found from the two expiries' implied volatilities because implied variance adds over time.">forward implied volatility</span></strong> from \(T_1\) to \(T_2\), gives</p>
 
-<p>This is the implied vol the market is pricing for the <em>interval between</em> T_1 and T_2. It is the quantity that determines whether calendar spreads and diagonals are mispriced.</p>
+<div class="eq" id="e-fwd">
+\[ \sigma_f = \sqrt{\frac{\sigma_2^2 T_2 - \sigma_1^2 T_1}{T_2 - T_1}} \]
+</div>
 
-<p><strong>Worked example.</strong> AAPL trades at $230. AAPL earnings in 7 days. 14-DTE ATM IV = 38%. 35-DTE ATM IV = 28%.</p>
+<p>This is the implied vol that the market is pricing for the <em>interval between</em> \(T_1\) and \(T_2\). It is the quantity that determines whether <span class="gloss" title="A position that sells an option at one expiry and buys an option of the same type and strike at a later expiry, profiting from how the two re-price over time.">calendar spreads</span> and diagonals are mispriced. The times can be in days or in years, as long as both are in the same unit, because they appear in the ratio above and below the line.</p>
 
-<pre>σ_forward² × 21 = 0.28² × 35 − 0.38² × 14
-σ_forward² × 21 = 2.744 − 2.022 = 0.722
-σ_forward² = 0.0344
-σ_forward = 18.5%</pre>
+<div class="worked">
+<span class="ct">Worked example: Forward IV around an earnings date</span>
+<p>AAPL trades at $230, with earnings due in 7 days, a 14-day ATM IV of 38% and a 35-day ATM IV of 28%.</p>
 
-<p>The market is implying just 18.5% vol for the 21-day window <em>after</em> earnings. That's much lower than the 28% headline 35-DTE figure suggests, because the front 14 days contain the earnings event, which is being priced at much higher vol.</p>
+<p><strong>Step 1: the two total variances.</strong> The back month carries \(0.28^2 \times 35 = 2.744\) and the front month \(0.38^2 \times 14 = 2.022\), both in units of variance times days.</p>
 
-<p>If your forecast is that AAPL realized vol after earnings will run 22-25%, the forward IV at 18.5% is <strong>structurally cheap</strong> — and a calendar or diagonal that's net long the back month and short the front month is the surface-aware way to express that view.</p>
+<p><strong>Step 2: the window's variance.</strong> By <a class="eqref" href="#e-fwdvar"></a>, the 21 days between them carry \(2.744 - 2.022 = 0.722\), so \(\sigma_f^2 = 0.722/21 = 0.0344\).</p>
+
+<p><strong>Step 3: the forward vol.</strong> Taking the square root gives \(\sigma_f = 18.5\%\), the vol priced for the 21 days after the front month expires.</p>
+</div>
+
+<p>The market is implying just 18.5% vol for the 21-day window <em>after</em> earnings. That is much lower than the 28% headline 35-day figure suggests, because the front 14 days contain the earnings event, which is being priced at much higher vol.</p>
+
+<p>If you forecast AAPL's realized vol after earnings at 22% to 25%, the forward IV of 18.5% is <strong>structurally cheap</strong>. A calendar or a <strong><span class="gloss" title="A position that sells an option at one expiry and buys an option of the same type at a later expiry and a different strike. It is a calendar spread with the strikes moved apart.">diagonal spread</span></strong> that is net long the back month and short the front month is the surface-aware way to express that view. A diagonal differs from a calendar in using a different strike for each expiry.</p>
+
+<p>The formula has a built-in consistency check, because the forward variance must be positive: \(\sigma_1^2 T_1\) cannot exceed \(\sigma_2^2 T_2\). With the back month at 28% for 35 days, a 14-day front month above \(28\% \times \sqrt{35/14} = 44.3\%\) would imply a negative variance for the window, which no consistent term structure allows.</p>
+
+<p>The figure computes the forward vol for any pair of expiries. Its sliders set each month's IV, from 5% to 200%, starting at 38% for the front and 28% for the back. They also set each month's days to expiry, starting at 14 and 35 days, with the back month always at least a day after the front. Three bars show the front IV, the forward IV and the back IV, with readouts for the forward variance, the forward IV and the window. Raise the front IV past 44% and watch the middle bar.</p>
 
 <figure class="fig" id="fig-forward-iv-calculator">
   <canvas id="forward-iv-calculator-c" data-h="190"></canvas>
@@ -132,43 +176,160 @@
   negative, which no consistent term structure allows.</figcaption>
 </figure>
 
+<p>At the starting settings the middle bar reads 18.5%, the forward variance 0.0344, and the window 14 to 35 days. The verdict says the forward IV is meaningfully below the back-month IV, a discount that calendar and diagonal spreads benefit from: sell the front, buy the back. Once the front IV passes about 44%, the forward variance turns negative and the middle bar drops to a dash. The figure then calls the inputs an arbitrage, warning that this almost always means a data error rather than a tradable mispricing.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Forward variance works like conditional survival, which a clinician reads off a survival curve. The curve gives the chance of reaching each time from diagnosis. The chance of surviving three more years, given two years survived, comes from the difference between two points on the cumulative hazard. Total implied variance plays the part of the cumulative hazard. It only accumulates, so the difference between two expiries gives the variance of the window between them. Just as a patient cohort cannot have a negative hazard in a window, a term structure cannot have a negative forward variance.</p>
+</div>
+
 <h2 id="skew-steepness-as-information">3 · Skew steepness as information</h2>
 
-<p>We covered skew in 5E. Here we operationalize.</p>
+<p><a class="xref" href="5e.html">Chapter 5E</a> covered skew as a shape, which this section turns into a number you can track. The conventional skew metric is the difference between the IV of the 25-delta put and the IV of the 25-delta call at a fixed <span class="gloss" title="The number of calendar days until an option expires, abbreviated DTE. An option with zero days to expiry expires today.">DTE</span>:</p>
 
-<p>The conventional skew metric is the difference between the 25-delta put IV and the 25-delta call IV at a fixed DTE:</p>
+<div class="eq" id="e-skew">
+\[ \text{skew} = \text{IV}_{25\Delta\,\text{put}} - \text{IV}_{25\Delta\,\text{call}} \]
+</div>
 
-<pre>Skew = IV(25Δ put) − IV(25Δ call)</pre>
+<p>A 25-delta put is the put whose delta is −0.25, while a 25-delta call is the call whose delta is 0.25 (<a class="xref" href="5c.html">Chapter 5C</a>). Measuring at fixed deltas rather than fixed strikes compares like with like as the index moves. In SPX this metric is reliably positive, because puts are richer than calls (the equity skew). Its typical value is 4 to 8 vol points in normal conditions, expanding to 12 to 15 vol points during stress.</p>
 
-<p>In SPX, this is reliably positive (puts richer than calls — equity skew). Typical value: 4-8 vol points in normal conditions, expanding to 12-15 vol points during stress.</p>
+<p><strong>Skew steepening</strong>, the metric rising, signals demand for downside protection growing faster than upside speculation. Empirically, skew tends to steepen 1 to 3 days before broader equity sell-offs, then peak coincident with the sell-off, then mean-revert. <a class="xref" href="5e.html">Chapter 5E</a> gave a slower pattern beside this one: long quiet stretches in which skew flattens tend to come before vol spikes more often than chance would suggest.</p>
 
-<p><strong>Skew steepening</strong> (skew metric rising) signals demand for downside protection growing faster than upside speculation. Empirically, skew tends to steepen 1-3 days before broader equity sell-offs, then peak coincident with the sell-off, then mean-revert.</p>
+<p><strong>Skew flattening</strong>, the metric falling, signals the opposite: speculation is bidding up call IV relative to put IV. This often happens during melt-up phases, such as late 2020 and the mid-2024 periods led by NVDA, when retail call-buying compresses the skew.</p>
 
-<p><strong>Skew flattening</strong> (skew metric falling) signals the opposite — speculation is bidding up call IV relative to put IV. This often happens during melt-up phases (late 2020, mid-2024 NVDA-led periods) when retail call-buying compresses the skew.</p>
+<p><strong>The operational rule:</strong> if you are considering a <span class="gloss" title="A position that sells a put and buys a put with a lower strike on the same underlying and expiry, for a net credit. It profits if the underlying stays above the sold strike, and its loss is capped by the bought put. Also called a bull put spread.">put credit spread</span> or another structure short the put side, check the direction of skew first. If skew is steepening, defer the trade, because skew expansion means the short put side is increasingly expensive to close. If it is flattening, proceed, because the cost of being short puts has been declining.</p>
 
-<p><strong>Operational rule:</strong> If you're considering a put credit spread or other short-put-side structure, check whether skew is steepening (defer the trade — skew expansion means short-put-side is increasingly expensive to close) or flattening (proceed — the cost of being short puts has been declining).</p>
+<div class="worked">
+<span class="ct">Worked example: A week of skew before a put credit spread</span>
+<p>On Monday the 30-day 25-delta put trades at 22% IV and the 25-delta call at 16%, a skew of 6 points, inside the normal 4 to 8. By Friday the put is at 27% and the call at 16.5%, a skew of 10.5 points.</p>
+
+<p><strong>Step 1: read the level.</strong> At 10.5 points the skew has left the normal band but is short of the 12 to 15 seen in stress.</p>
+
+<p><strong>Step 2: read the direction.</strong> It has risen 4.5 points in a week, so it is steepening. By the rule above, you defer the put credit spread.</p>
+
+<p><strong>Step 3: see why.</strong> The short put of the spread has gained 5 points of IV since Monday. Had you sold it on Monday, you would now be buying it back higher, with a further steepening raising that cost again.</p>
+</div>
 
 <h2 id="surface-aware-strategy-choice">4 · Surface-aware strategy choice</h2>
 
-<p>The most common retail mistake is "high IV → sell premium." This is a one-dimensional projection of a two-dimensional surface. The correct question is: <strong>where on the surface is IV mispriced?</strong></p>
+<p>The most common retail mistake is the rule "high IV → sell premium". It is a one-dimensional projection of a two-dimensional surface. The correct question is <strong>where on the surface is IV mispriced?</strong></p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Surface observation</th><th class="c-result">Operational implication</th></tr></thead><tbody><tr><td class="c-trial" data-label="Surface observation"><strong>Front IV high, back IV low</strong> (steep contango — i.e., backwardation since front &gt; back)</td><td class="c-result" data-label="Operational implication">Short front-vol structures: cash-secured puts, put credit spreads in the front, calendar spreads (sell front, buy back)</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Back IV high, front IV low</strong> (normal contango)</td><td class="c-result" data-label="Operational implication">Long forward vol: long diagonals, LEAPS strategies, calendars that benefit from forward vol moving up</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Skew very steep (12+ point) at near-term DTE</strong></td><td class="c-result" data-label="Operational implication">Put-side is structurally rich; sell premium via put credit spreads at high-delta strikes</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Skew flat or inverted</strong> (rare; signals melt-up)</td><td class="c-result" data-label="Operational implication">Call-side is rich; sell premium via call credit spreads at high-delta strikes</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Pre-earnings IV elevated, post-earnings forward IV cheap</strong></td><td class="c-result" data-label="Operational implication">Calendar or diagonal: sell front-month earnings vol, buy back-month forward vol</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>High IV percentile, flat term structure</strong></td><td class="c-result" data-label="Operational implication">Vol is high everywhere; sell premium broadly with defined risk</td></tr><tr><td class="c-trial" data-label="Surface observation"><strong>Low IV percentile, steep term structure</strong></td><td class="c-result" data-label="Operational implication">Vol is cheap front, normal further out; buy near-dated options for catalyst plays</td></tr></tbody></table></div></div>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">surface observation</th><th class="c-result">operational implication</th></tr></thead><tbody><tr><td class="c-trial"><strong>Front IV high, back IV low</strong> (backwardation: front above back)</td><td class="c-result">Short front-vol structures: cash-secured puts, put credit spreads in the front, calendar spreads (sell front, buy back)</td></tr><tr><td class="c-trial"><strong>Back IV high, front IV low</strong> (normal contango)</td><td class="c-result">Long forward vol: long diagonals, LEAPS strategies, calendars that benefit from forward vol moving up</td></tr><tr><td class="c-trial"><strong>Skew very steep (12+ points) at near-term DTE</strong></td><td class="c-result">The put side is structurally rich: sell premium through put credit spreads at high-delta strikes</td></tr><tr><td class="c-trial"><strong>Skew flat or inverted</strong> (rare; signals a melt-up)</td><td class="c-result">The call side is rich: sell premium through <span class="gloss" title="A position that sells a call and buys a call with a higher strike on the same underlying and expiry, for a net credit. It profits if the underlying stays below the sold strike, and its loss is capped by the bought call. Also called a bear call spread.">call credit spreads</span> at high-delta strikes</td></tr><tr><td class="c-trial"><strong>Pre-earnings IV elevated, post-earnings forward IV cheap</strong></td><td class="c-result">Calendar or diagonal: sell front-month earnings vol, buy back-month forward vol</td></tr><tr><td class="c-trial"><strong>High IV percentile, flat term structure</strong></td><td class="c-result">Vol is high everywhere: sell premium broadly, with defined risk</td></tr><tr><td class="c-trial"><strong>Low IV percentile, steep term structure</strong></td><td class="c-result">Vol is cheap in front and normal further out: buy near-dated options for catalyst plays</td></tr></tbody></table></div></div>
+
+<p>The structures are named here and built in <a class="xref" href="12a.html">Part XII</a>. <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">Cash-secured puts</span> are among the novice strategies of <a class="xref" href="12b.html">Chapter 12B</a>, while credit spreads, calendars and diagonals are among the intermediate strategies of <a class="xref" href="12c.html">Chapter 12C</a>. <strong><span class="gloss" title="Listed options with expiries more than a year away. The name stands for Long-term Equity AnticiPation Securities.">LEAPS</span></strong> are listed options with expiries more than a year away.</p>
+
+<p>The two rows of the table that concern skew fit with the rule of the last section. The level of skew says which side is rich, while its direction says whether it is still getting richer. A steep skew that has stopped steepening is the case for selling the put side. A steep skew that is still steepening is the case for waiting.</p>
 
 <h2 id="why-high-iv-sell-premium-is-too-crude">5 · Why "high IV → sell premium" is too crude</h2>
 
-<p>Consider two stocks both at IV percentile 75%:</p>
+<p>Consider two stocks, both at an IV percentile of 75%:</p>
 
 <ul>
-<li><strong>Stock A</strong>: front-month IV 35%, 90-day IV 32%. Term structure flat. IV is high across the curve. Selling premium at any DTE collects similar VRP.</li>
-<li><strong>Stock B</strong>: front-month IV 60%, 90-day IV 28%. Earnings in 5 days. Steep backwardation. IV is high because of an imminent event, not because forward vol is elevated.</li>
+<li><strong>Stock A:</strong> front-month IV 35%, 90-day IV 32%. The term structure is flat, and IV is high across the curve. Selling premium at any DTE collects similar VRP.</li>
+<li><strong>Stock B:</strong> front-month IV 60%, 90-day IV 28%, earnings in 5 days. This is steep backwardation, where IV is high because of an imminent event, not because forward vol is elevated.</li>
 </ul>
 
-<p>A naïve "high IV → sell premium" strategy treats these identically. The surface-aware approach recognizes that Stock A is a normal short-premium candidate, while Stock B is an <strong>event-trade candidate where you specifically want to sell front-month event vol against long back-month forward vol</strong> — i.e., a diagonal or calendar.</p>
+<p>A naive "high IV → sell premium" strategy treats these identically. The surface-aware approach recognizes that Stock A is a normal short-premium candidate. Stock B is an <strong>event-trade candidate where you specifically want to sell front-month event vol against long back-month forward vol</strong>: a diagonal or a calendar.</p>
 
-<p>The surface is the map. The composite-signal scorecard tells you the regime; the surface tells you where on the regime to position.</p>
+<div class="worked">
+<span class="ct">Worked example: Forward vol for the two stocks</span>
+<p>Suppose, hypothetically, that each front month has 10 days left, so the window to the 90-day expiry is 80 days.</p>
+
+<p><strong>Step 1: Stock A.</strong> By <a class="eqref" href="#e-fwd"></a>, \(\sigma_f^2 = (0.32^2 \times 90 - 0.35^2 \times 10)/80 = (9.216 - 1.225)/80 = 0.0999\), so \(\sigma_f = 31.6\%\). The market prices the window after the front month at nearly the front month's own level: vol is high all the way out.</p>
+
+<p><strong>Step 2: Stock B.</strong> Here \(\sigma_f^2 = (0.28^2 \times 90 - 0.60^2 \times 10)/80 = (7.056 - 3.600)/80 = 0.0432\), so \(\sigma_f = 20.8\%\). The front month's 60% is mostly the earnings event: the market prices the months after it at about a third of that level.</p>
+
+<p><strong>Step 3: choose.</strong> For Stock A, a plain short-premium structure sells vol that is high everywhere. For Stock B, selling the front month and buying the back sells the event and buys the cheap forward vol, which is the calendar or the diagonal.</p>
+</div>
+
+<p>The surface is the map: the composite-signal scorecard of <a class="xref" href="11g.html">Chapter 11G</a> tells you the regime, while the surface tells you where within that regime to position.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>Most retail strategy choice operates on the single dimension of "IV is high or low". The professional choice operates on the two-dimensional surface of strike × expiration. The difference shows up immediately in calendar and diagonal strategies and over time in single-name event trades.</p>
+</div>
+
+<h2 id="what-part-v-gave-you">6 · What Part V gave you</h2>
+
+<p>You now have the options foundation: contract mechanics, premium anatomy, the chain, all five primary Greeks and the higher-order Greeks. You also have volatility, from log returns to estimators to the surface, as well as put-call parity and the structural risks the Greeks miss. Everything from here on builds on these primitives: dealer mechanics (Parts VI and VII), <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">gamma exposure</span> (GEX) aggregation (<a class="xref" href="8a.html">Part VIII</a>), regime analysis (<a class="xref" href="9a.html">Part IX</a>), tactical swing trading (<a class="xref" href="11a.html">Part XI</a>) and the strategy atlas (<a class="xref" href="12a.html">Part XII</a>). If a later chapter assumes something you have not seen yet, the answer is almost always in <a class="xref" href="5a.html">Part V</a> or in Parts I to IV.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Before you sell premium on a stock or an index, read three things off the surface, in this order. First, read the IV percentile, not the rank, for how elevated vol is against its own year. Second, read the term structure: compute the forward vol of the window you would hold through and compare it with your realized-vol forecast. Third, read the level and the direction of skew if the trade is short the put side. Only then choose the structure from the table, sizing it for the loss the structure can take (<a class="xref" href="1e.html">Chapter 1E</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>IV percentile describes one trailing year, so a calm year makes an ordinary level look elevated, while a year that contains a crisis makes an elevated level look ordinary. Forward vol trusts two quotes, each with its own bid-ask spread. Small errors in the front month move the forward a lot when the front carries most of the variance. An earnings date that moves, or an event the market has not priced, breaks the arithmetic. The skew pattern is a tendency ("tends to steepen 1 to 3 days before"), not a rule, so waiting on steepening sometimes misses a good entry. A calendar long the back month still loses if the underlying moves far from its strike.</p>
+</div>
 
 <div class="callout brick">
-<p><em>Most retail strategy choice operates on the single dimension of "IV is high/low." The professional choice operates on the two-dimensional surface of strike × expiration. The difference shows up immediately in calendar and diagonal strategies, and shows up over time in single-name event trades.</em></p>
+<span class="ct">Decision rule</span>
+<ol>
+<li><strong>Use the percentile.</strong> Judge whether vol is high by IV percentile, never by IV rank alone.</li>
+<li><strong>Find the window.</strong> Compute the forward vol for the window you would hold through. Treat it as cheap if your realized forecast is above it and as rich if your forecast is below it.</li>
+<li><strong>Check skew before selling puts.</strong> Defer a put credit spread while skew is steepening, proceeding only when it is flat or flattening.</li>
+<li><strong>Match the structure to the surface.</strong> Sell the part of the surface that is rich and buy the part that is cheap, using the table to name the structure. If nothing on the surface is mispriced against your forecast, do not trade.</li>
+</ol>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "high IV, so sell premium"</span>
+<p>A high IV percentile says vol is high somewhere, not where. When the height is an event in the front month, selling longer-dated premium sells cheap forward vol, not the event. Compute the forward vol before you choose the expiry.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading IV rank as a percentile</span>
+<p>An IV rank of 30 does not mean vol is lower than on 70% of days. In a typical equity history, a rank of 30 goes with a percentile near 60. A trader who waits for a rank of 50 before selling premium can be waiting for vol that has been exceeded on only a small share of days.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>IV rank places today's IV between the year's low and high, while IV percentile counts the days below it. Spikes make typical equity IV bottom-heavy, so the percentile runs at about twice the rank. Use the percentile.</li>
+<li>Forward vol, \(\sigma_f = \sqrt{(\sigma_2^2 T_2 - \sigma_1^2 T_1)/(T_2 - T_1)}\), prices the window between two expiries. It exposes an event in the front month, as the 18.5% after AAPL's earnings showed.</li>
+<li>Skew, the 25-delta put IV minus the 25-delta call IV, runs at 4 to 8 points in SPX normally and 12 to 15 in stress. Defer short-put structures while it is still steepening.</li>
+<li>Choose structures from the whole surface, strike by expiration, not from the level of IV alone.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">7 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A stock's IV is 30, and its 52-week range is 15 to 65. On 58% of the past year's trading days its IV was below 30. Give its IV rank and IV percentile, and say which to trust.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The rank is \((30 - 15)/(65 - 15) = 0.30\), and the percentile is 58%. The percentile is nearly twice the rank, the typical bottom-heavy shape in which rare spikes stretch the high. Trust the percentile: vol is above its median level of the past year, not in the bottom third.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>The 30-day ATM IV is 25% and the 90-day ATM IV is 22%. What is the forward vol for days 30 to 90?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-fwd"></a>, \(\sigma_f^2 = (0.22^2 \times 90 - 0.25^2 \times 30)/60 = (4.356 - 1.875)/60 = 0.0414\), so \(\sigma_f = 20.3\%\). The back month's 22% is an average that includes the richer first 30 days.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>In the example of Stock B, suppose the front month had 30 days left rather than 10. What does the forward-vol formula say, and what should you conclude?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The numerator becomes \(0.28^2 \times 90 - 0.60^2 \times 30 = 7.056 - 10.800 = -3.744\), a negative forward variance. No consistent term structure allows it: a 30-day front month could carry at most \(28\% \times \sqrt{90/30} = 48.5\%\). As the forward IV figure warns, a negative forward variance almost always means a data error, so re-check the quotes.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>You are considering a put credit spread after SPX 30-day skew has risen from 6 to 11 points over a week. What does the chapter's rule say?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The rule says defer. At 11 points skew has left the normal 4 to 8 band and is still steepening, so the short put side is getting more expensive to close. Wait until it stops steepening or starts to flatten.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>The front month's IV is high and the back month's low, while your forecast of realized vol after the front expiry is above the forward vol. Which structure does the surface suggest?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Sell the front and buy the back: a calendar or a diagonal. The front month's high IV is the part of the surface to sell, while the forward vol below your forecast is the part to buy.</p>
+</div></details>
+</div>
 </div>
 
 <!--SCRIPT-->
@@ -415,15 +576,18 @@ var DL = (function () {
   }
   function rsi(data, n) {
     n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
     for (var i = 1; i < data.length; i++) {
       var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
       if (i <= n) {
         g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
+        if (i === n) r[i] = value();
       } else {
         g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
+        r[i] = value();
       }
     }
     return r;

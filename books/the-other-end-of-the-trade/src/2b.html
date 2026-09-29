@@ -1,936 +1,291 @@
-<p class="eyebrow">Part II · Quant Trading · Chapter 2B</p>
+<p class="eyebrow">Part II · Markets · Chapter 2B</p>
 
-<h1>Mean reversion vs momentum (an AR(1) model)</h1>
+<h1>Where your order goes</h1>
 
-<p>The simplest possible model — an auto-regressive linear regression of order one, or <strong>AR(1)</strong> — captures the two most fundamental trading behaviors: mean reversion and momentum. The model predicts the next log return as a linear function of the previous log return:</p>
+<p class="subtitle">Exchanges, wholesalers and the best bid and offer</p>
 
-<pre>ŷ_t = w × r_{t−1} + b</pre>
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="2a.html">Chapter 2A</a> named the products that carry the S&amp;P 500. This chapter follows an order for one of them from your click to its fill: who takes the other side, on what venue and at what price. The answer decides how much of each trade you keep, and it shapes the dealer <span class="gloss" title="Taking a position whose gains offset losses on a risk you already hold, such as selling futures against a crop or buying puts against a stock holding.">hedging</span> that Parts VI to IX study.</p>
+</div>
 
-<p>Just two parameters: a weight w and a bias b. That's it. The sign of w determines everything.</p>
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The bid-ask spread and the mid-quote (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+<li>Adverse selection, and why microstructure edges belong to institutions (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+<li>The six S&amp;P 500 products, and the difference between SPX and SPY (<a class="xref" href="2a.html">Chapter 2A</a>).</li>
+</ul>
+</div>
 
-<h2 id="three-regimes">1 · Three regimes</h2>
+<p>Most retail traders see "buy" and "sell" as primitive actions. They are not. Between your click and the actual counterparty sits a routing decision that determines who fills you, at what price and on what venue. Understanding the routing layer is the difference between believing that "the market" took the other side of your trade and knowing that a <em>specific wholesaler</em> with a specific business model did.</p>
 
-<p><strong>w &lt; 0 · Mean reversion.</strong> A negative weight flips the sign of the lag. A positive return is predicted to be followed by a negative one; a negative return predicts a positive next return. "What goes up must come down." This regime is common at second-to-minute timescales in liquid markets, where dealer mean-reversion (from gamma hedging) and microstructure noise (bid-ask bounce) dominate. It's also common at multi-week timescales for individual equities and indices, where overreaction-then-correction patterns recur.</p>
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>When you press "buy" on shares or on <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> options, your broker usually does not send the order to a stock exchange. It sends it to a wholesaler, a trading firm that fills the order from its own inventory at a price at least as good as the best public quote. The wholesaler pays the broker for that flow of orders and earns part of the <span class="gloss" title="The gap between the highest price a buyer offers, the bid, and the lowest price a seller asks, the ask. Crossing it is the immediate cost of trading.">bid-ask spread</span> on each one. Index options such as <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span> and <span class="gloss" title="The Mini-SPX index option, one tenth the size of an SPX option.">XSP</span> take a different path, straight to the public <span class="gloss" title="The live list of resting buy orders (bids) and sell orders (asks) for a security, arranged by price, with the quantity waiting at each level.">order book</span> at Cboe.</p>
+</div>
 
-<p><strong>w &gt; 0 · Momentum.</strong> A positive weight reinforces the sign. "What goes up keeps going up." This regime is most common at intermediate timescales (weeks to months) across asset classes — the empirical foundation of decades of trend-following research and the basis of factor strategies like Jegadeesh-Titman 12-1 momentum (Jegadeesh and Titman, 1993, <em>Journal of Finance</em>). Cross-asset trend has been documented in 140+ years of data by Hurst, Ooi, and Pedersen (2017, <em>Journal of Portfolio Management</em>).</p>
+<h2 id="the-nbbo-the-rule-everyone-is-supposedly-following">1 · The NBBO: the rule everyone is supposedly following</h2>
 
-<p><strong>w ≈ 0 · Random walk.</strong> No predictive content. The next return is independent of the previous one. This is the efficient market hypothesis in its weakest form, and it's a good approximation at most timescales for most liquid markets. Trade fees, slippage, and adverse selection eat any strategy that operates in this regime.</p>
+<p>Since the Securities and Exchange Commission (SEC) adopted <strong><span class="gloss" title="The SEC rules of 2005 for the National Market System, which require American equity trades to execute at or better than the National Best Bid and Offer and govern how venues are linked.">Regulation NMS</span></strong> in 2005, American equities and single-name options have been required to execute at or better than the <strong><span class="gloss" title="The highest bid and the lowest offer displayed for a security across the registered exchanges at a given moment. Trades must execute at or inside it. Abbreviated NBBO.">National Best Bid and Offer</span></strong> (NBBO). The NBBO is the highest bid and the lowest offer displayed across the registered exchanges at the moment of execution. It is computed continuously by the <strong><span class="gloss" title="The regulated system that gathers quotes and trades from every American equity venue, computes the National Best Bid and Offer and publishes the consolidated tape. Abbreviated SIP.">Securities Information Processor</span></strong> (SIP), a regulated infrastructure that aggregates quotes from every venue and publishes a consolidated tape of them.</p>
 
-<p>The AR(1) process is <strong>stationary</strong> when |w| &lt; 1 — variance stays bounded, distributions don't drift, forecasts converge. As |w| approaches 1, the process becomes non-stationary; variance grows unbounded with horizon and the AR(1) model loses predictive validity. Watch the simulated paths fan out as you push the weight toward ±1.</p>
+<p>When you submit a <span class="gloss" title="An order to buy or sell at once at the best available prices. It promises a fill but not a price.">market order</span>, your broker must route it to a venue that can fill you at or inside the SIP NBBO at that microsecond. This sounds like a hard constraint. In practice it is a soft one, and the reality of execution is more interesting than the regulation suggests.</p>
 
-<figure class="fig" id="fig-ar1-regime-explorer">
-  <canvas id="ar1-regime-explorer-c" data-h="290"></canvas>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="ar1-regime-explorer-phi">weight φ</label>
-      <input type="range" id="ar1-regime-explorer-phi" min="-0.9" max="0.95" step="0.01" value="0">
-      <output id="ar1-regime-explorer-phi-o" for="ar1-regime-explorer-phi"></output>
-    </div>
-    <div class="ctrl">
-      <label for="ar1-regime-explorer-sigma">innovation vol σ</label>
-      <input type="range" id="ar1-regime-explorer-sigma" min="0.005" max="0.05" step="0.001" value="0.01">
-      <output id="ar1-regime-explorer-sigma-o" for="ar1-regime-explorer-sigma"></output>
-    </div>
-    <div class="ctrl">
-      <label for="ar1-regime-explorer-steps">steps per path</label>
-      <input type="range" id="ar1-regime-explorer-steps" min="100" max="500" step="10" value="250">
-      <output id="ar1-regime-explorer-steps-o" for="ar1-regime-explorer-steps"></output>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl" role="group" aria-label="Paths" id="ar1-regime-explorer-paths">
-      <label>paths</label>
-      <button type="button" data-v="10" aria-pressed="false">10</button>
-      <button type="button" data-v="50" class="on" aria-pressed="true">50</button>
-      <button type="button" data-v="200" aria-pressed="false">200</button>
-    </div>
-    <div class="ctrl">
-      <label for="ar1-regime-explorer-seed">seed</label>
-      <input type="number" id="ar1-regime-explorer-seed" value="42" step="1">
-      <button type="button" id="ar1-regime-explorer-regen">regenerate</button>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="ar1-regime-explorer-rho"></output></div>
-    <div class="ctrl"><output id="ar1-regime-explorer-hurst"></output></div>
-    <div class="ctrl"><output id="ar1-regime-explorer-abs"></output></div>
-  </div>
-  <p class="readout" aria-live="polite"><b id="ar1-regime-explorer-vk"></b> <span id="ar1-regime-explorer-vt"></span></p>
-  <figcaption><b>One weight, three regimes.</b> Simulated price paths whose log returns follow
-  an AR(1) process, r<sub>t</sub> = φ × r<sub>t−1</sub> + ε<sub>t</sub>, with innovations of
-  volatility σ, all starting at 100. Push φ toward 1 and the paths fan out; push it negative
-  and they stay closer to their start than a random walk does. The readouts estimate the lag-1
-  autocorrelation and the Hurst exponent from the first path.</figcaption>
-</figure>
+<div class="worked">
+<span class="ct">Worked example: Building the NBBO</span>
+<p><strong>Step 1: three venues' quotes.</strong> Suppose three exchanges show these prices for one stock at the same instant:</p>
 
-<h2 id="how-to-interpret-a-fitted-weight">2 · How to interpret a fitted weight</h2>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Venue</th><th class="c-other">Bid</th><th class="c-endpoint">Ask</th></tr></thead><tbody><tr><td class="c-trial" data-label="Venue">Exchange A</td><td class="c-other" data-label="Bid">$100.00 for 300 shares</td><td class="c-endpoint" data-label="Ask">$100.06 for 200 shares</td></tr><tr><td class="c-trial" data-label="Venue">Exchange B</td><td class="c-other" data-label="Bid">$100.02 for 500 shares</td><td class="c-endpoint" data-label="Ask">$100.05 for 400 shares</td></tr><tr><td class="c-trial" data-label="Venue">Exchange C</td><td class="c-other" data-label="Bid">$99.99 for 800 shares</td><td class="c-endpoint" data-label="Ask">$100.04 for 100 shares</td></tr></tbody></table></div></div>
 
-<p>The weight in a fitted AR(1) is interpretable as the <strong>first-order autocorrelation</strong> of returns:</p>
+<p><strong>Step 2: the best of each side.</strong> The best bid is B's $100.02 and the best ask is C's $100.04. The NBBO is therefore $100.02 by $100.04, with a <span class="gloss" title="The price halfway between the bid and the ask, and the price at which academic backtests assume trades are filled.">mid-quote</span> of $100.03, although no single venue shows that quote.</p>
 
-<pre>w ≈ Corr(r_t, r_{t−1})</pre>
+<p><strong>Step 3: what the rule allows.</strong> A market buy must fill at $100.04 or better. A fill at $100.05 on exchange B would <em>trade through</em> C's better offer. A wholesaler that fills the buy at $100.035 gives half a cent a share of <strong><span class="gloss" title="A fill at a better price than the National Best Bid and Offer on your side: below the best offer for a buy, or above the best bid for a sell.">price improvement</span></strong>, which is $0.50 on 100 shares.</p>
+</div>
 
-<p>A weight of −0.05 means returns are weakly mean-reverting — a 1% up move predicts roughly a 0.05% down move on average. A weight of +0.10 means returns are weakly momentum-driven. The magnitude tells you the predictive content, and the magnitudes in financial markets are <em>small</em> — typical first-order autocorrelations on daily SPX returns are between −0.05 and +0.05, with most of the absolute value coming from microstructure noise rather than fundamental signal.</p>
+<h2 id="three-kinds-of-venue">2 · Three kinds of venue</h2>
 
-<h2 id="hurst-exponent-and-the-variance-ratio-test">3 · Hurst exponent and the variance ratio test</h2>
+<p>American equity orders can be routed to three types of venue: lit exchanges, dark pools and wholesalers.</p>
 
-<p>A more powerful way to detect mean reversion vs momentum than just fitting AR(1) is to compute the <strong>Hurst exponent (H)</strong> of the return series. The Hurst exponent measures how variance scales with time horizon:</p>
+<h3 id="lit-exchanges">Lit exchanges</h3>
 
-<pre>Var(returns over T periods) ∝ T^(2H)</pre>
+<p><strong><span class="gloss" title="A registered exchange that displays its order book publicly, so that its best bids and offers feed the National Best Bid and Offer.">Lit exchanges</span></strong> display their order books publicly. As of 2025 there are 16 registered American equity exchanges. The major ones are NYSE, Nasdaq, Cboe BZX, Cboe BYX, Cboe EDGX, Cboe EDGA, IEX (the "speed-bump" exchange), MEMX, MIAX Pearl, NYSE Arca, NYSE American and several others. Each one has its own fee schedule, its own latency profile (how fast it handles an order) and its own matrix of order types. Institutional orders typically route across several lit exchanges to minimize their impact on the price.</p>
 
-<p>For a random walk (no autocorrelation), H = 0.5 and variance scales linearly with time (because 2H = 1). For mean-reverting series, H &lt; 0.5 — variance grows more slowly than linearly because reversals shrink the cumulative move. For momentum-driven (persistent) series, H &gt; 0.5 — variance grows faster than linearly because trends compound.</p>
+<h3 id="dark-pools">Dark pools</h3>
 
-<p>The related <strong>variance ratio test</strong> (Lo and MacKinlay, 1988, <em>Review of Financial Studies</em>) formalizes this into a statistical test of the random-walk null hypothesis. The variance ratio at lag k is:</p>
+<p><strong><span class="gloss" title="A trading venue that does not display its orders, run by a bank or broker. Its trades fill at or inside the public best bid and offer, often at the midpoint.">Dark pools</span></strong>, formally called <strong><span class="gloss" title="The regulatory name for a trading venue that is not a registered exchange, such as a dark pool. Abbreviated ATS.">alternative trading systems</span></strong> (ATSs), are non-displayed order books run by banks and brokers. Examples are UBS ATS, Goldman Sigma X, JP Morgan JPM-X, Credit Suisse CrossFinder, Barclays LX, Liquidnet and many others. Orders rest in a dark pool without being publicly displayed, and they fill against incoming orders at the prevailing NBBO mid or at negotiated levels of price improvement. Because they display nothing, dark pools trade at or inside the NBBO rather than setting it. Dark pools handle roughly 12% to 15% of American equity volume on a typical day. On stress days the share can rise, as institutional sell flow seeks anonymity.</p>
 
-<pre>VR(k) = Var(r_t + r_{t+1} + ... + r_{t+k−1}) / (k × Var(r_t))</pre>
+<h3 id="wholesalers">Wholesalers</h3>
 
-<p>Under the random walk null, VR(k) = 1 for all k. VR(k) &gt; 1 indicates momentum; VR(k) &lt; 1 indicates mean reversion. Lo and MacKinlay's 1988 paper found significant momentum in weekly US stock returns (VR &gt; 1 at lags of 1 to 4 weeks), challenging the random-walk hypothesis on those horizons.</p>
-
-<p>These tools are how the academic literature has built robust statistical support for both mean reversion (at very short and very long horizons) and momentum (at intermediate horizons). The retail trader who claims "I'm a mean reversion guy" is making a horizon-specific assumption they may not realize they're making.</p>
-
-<figure class="fig" id="fig-ar-fit-widget">
-  <canvas id="ar-fit-widget-c" data-h="220"></canvas>
-  <div class="ctrls">
-    <div class="ctrl" role="group" aria-label="True regime of the returns" id="ar-fit-widget-mode">
-      <label>regime</label>
-      <button type="button" data-v="mr" class="on" aria-pressed="true">mean reversion</button>
-      <button type="button" data-v="momentum" aria-pressed="false">momentum</button>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl">
-      <label for="ar-fit-widget-w">weight w</label>
-      <input type="range" id="ar-fit-widget-w" min="-1.5" max="1.5" step="0.05" value="-0.6">
-      <output id="ar-fit-widget-w-o" for="ar-fit-widget-w"></output>
-    </div>
-    <div class="ctrl">
-      <label for="ar-fit-widget-b">bias b</label>
-      <input type="range" id="ar-fit-widget-b" min="-0.005" max="0.005" step="0.0005" value="0">
-      <output id="ar-fit-widget-b-o" for="ar-fit-widget-b"></output>
-    </div>
-    <div class="ctrl">
-      <label for="ar-fit-widget-seed">seed</label>
-      <input type="range" id="ar-fit-widget-seed" min="1" max="30" step="1" value="7">
-      <output id="ar-fit-widget-seed-o" for="ar-fit-widget-seed"></output>
-    </div>
-  </div>
-  <div class="ctrls">
-    <div class="ctrl"><output id="ar-fit-widget-sign"></output></div>
-    <div class="ctrl"><output id="ar-fit-widget-true"></output></div>
-    <div class="ctrl"><output id="ar-fit-widget-acc"></output></div>
-  </div>
-  <figcaption><b>The sign of w is the regime.</b> The solid line is sixty synthetic returns from
-  an AR(1) with a true weight of −0.55 (mean reversion) or +0.55 (momentum), drawn from the
-  chosen seed; the dashed line is the one-step prediction ŷ<sub>t</sub> = w × r<sub>t−1</sub> +
-  b made with the weight and bias on the sliders. Directional accuracy is the share of steps on
-  which the prediction and the return have the same sign. With b at zero only the sign of w
-  moves it: on the default returns any negative weight scores 66.1% and any positive one
-  32.2%.</figcaption>
-</figure>
-
-<h2 id="why-ar1-is-the-right-starting-point">4 · Why AR(1) is the right starting point</h2>
-
-<p>You will not get rich on AR(1) alone. The reason to learn it is pedagogical: it is the simplest non-trivial model that captures the essential question every trading system must answer — do I expect the next move to continue the current move (momentum) or reverse it (mean reversion)? Every more sophisticated model is a refinement of this question:</p>
+<p><strong><span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">Wholesalers</span></strong> are off-exchange principal liquidity providers. They pay broker-dealers for the right to <strong><span class="gloss" title="Filling a customer's order against the firm's own book instead of sending it to an exchange. A wholesaler that internalizes nets buyers against sellers and hedges only the difference.">internalize</span></strong> retail <span class="gloss" title="The stream of buy and sell orders arriving at a market, and the imbalance between them.">order flow</span> against their own principal books, rather than route the orders to exchanges. Trading as <em>principal</em> means that the wholesaler is itself your counterparty, filling your buy from its own inventory. The American wholesaler hierarchy in retail equities, as of late 2025 and early 2026 data, runs as follows:</p>
 
 <ul>
-<li>ARMA models add moving-average residual terms</li>
-<li>ARIMA models handle non-stationarity</li>
-<li>GARCH models add time-varying volatility</li>
-<li>Kalman filters add latent-state inference</li>
-<li>Hidden Markov models add discrete regime switching</li>
-<li>LSTMs and transformers add nonlinear temporal interactions</li>
+<li><strong>Citadel Securities:</strong> approximately 35% of all American-listed retail equities and options volume, and about 25% of total equities trading across all customer types.</li>
+<li><strong>Virtu Financial:</strong> approximately 15% to 20%, the historical second place.</li>
+<li><strong>Hudson River Trading (HRT):</strong> approximately 20% of American cash equities, institutional and retail together. It launched in retail wholesaling in 2022.</li>
+<li><strong>Jane Street:</strong> approximately 10% of American cash equities, dominant in <span class="gloss" title="A fund whose shares trade on an exchange like a stock, usually built to track an index. Abbreviated ETF.">ETF</span> and institutional trading. It launched retail wholesaling in 2019.</li>
+<li><strong>G1 Execution Services (Susquehanna):</strong> a smaller share, historically dominant in options.</li>
+<li><strong>Wolverine Trading, IMC, DRW and Optiver:</strong> institutional and option-specific franchises.</li>
 </ul>
 
-<p>All of them, in their cleanest formulation, are answering some version of "given what we've seen, what do we expect next?" — and the simplest answer is a weighted combination of recent values. Start with AR(1); add complexity only when residuals demand it.</p>
+<p>Read these shares with their denominators. Citadel's 35% is of retail volume, while HRT's 20% and Jane Street's 10% are of all cash equities, institutional flow included. The percentages describe different populations, so they cannot be compared directly or added up.</p>
 
-<h2 id="the-regime-problem">5 · The regime problem</h2>
+<p>The numbers shift by product. Citadel Securities is overwhelmingly dominant in retail equities. Jane Street has emerged as the dominant ETF <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market maker</span>. Susquehanna and Wolverine retain large institutional options franchises. Concentration in retail flow has <em>increased</em> since 2020 despite the entry of HRT and Jane Street, because the franchise economics favor scale.</p>
 
-<p>The most important practical issue with AR(1) and its descendants is that <strong>the sign of w changes over time</strong>. SPX intraday autocorrelation in calm regimes is mildly negative (mean-reverting, courtesy of positive-gamma dealer hedging — we'll see this in <a class="xref" href="6a.html">Section 6</a>). In stress regimes, intraday autocorrelation flips positive (momentum, courtesy of negative-gamma dealer hedging amplifying moves). A static AR(1) fit to "all available data" averages across these regimes and produces an estimated w near zero — neither regime, not predictive.</p>
+<p>For American-listed options specifically, the wholesaler share is even higher than for equities. Citadel Securities, Susquehanna and Wolverine together execute roughly 85% of retail options order flow. Most retail options orders never touch a public order book.</p>
 
-<p>The fix is <strong>regime-conditional modeling</strong>: fit one AR(1) for "calm" regimes and another for "stress" regimes, with a classifier that identifies which regime is currently active. This is the essence of regime-switching models and the foundation of every serious quant trading framework. We'll return to this in Sections 8B (positive vs negative GEX as regime indicator) and 10F (composite regime scorecard).</p>
+<div class="callout brick">
+<p>"As the leading U.S. retail market maker, executing roughly 35% of all U.S.-listed retail volume, Citadel Securities has a unique vantage point into retail investor behavior and the forces shaping market impact." Citadel Securities, Equity Pulse, January 2026</p>
+</div>
 
-<!--SCRIPT-->
-/* ============================================================
-   The Other End of the Trade: what every figure shares.
+<p>Jane Street disclosed revenue of $20.5 billion in 2024 and $39.6 billion in 2025 from its market-making operations. The rough size of those numbers tells you how thick the layer of intermediation is between you and any retail counterparty with an actual directional view.</p>
 
-   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
-   the figures on that page, so a figure may call DL.* freely. The numbers are
-   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
-   ported line for line, so a figure computes what the app's widget computed.
-   Everything drawn goes through NMT.Plot and takes its colours from the
-   theme's roles (DL.color), so a figure follows the light and dark themes
-   and redraws when the reader switches.
+<h2 id="payment-for-order-flow">3 · Payment for order flow</h2>
 
-   Two rules every figure keeps, because the build runs the page and saves
-   its column (DESIGN.md section 8):
-   - the markup is static. A script writes text into outputs and draws on
-     canvases; it never adds or removes elements inside the figure;
-   - the first state is fixed. Seeds are constants and nothing animates
-     until the reader asks, so two builds of the same source are identical.
-   ============================================================ */
-var DL = (function () {
-  'use strict';
+<p><strong><span class="gloss" title="The payment a wholesaler makes to a broker for the right to fill that broker's customer orders. Abbreviated PFOF.">Payment for order flow</span></strong> (PFOF) is the payment a wholesaler sends back to the broker for the right to fill that broker's order flow. The wholesaler earns the bid-ask spread on each trade, less any price improvement it chooses to give you. It shares a small portion of what it earns with the broker, as a per-contract or per-share kickback.</p>
 
-  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
-  function N(x) {
-    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
-        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    var sign = x < 0 ? -1 : 1;
-    var ax = Math.abs(x) / Math.sqrt(2);
-    var t = 1 / (1 + p * ax);
-    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
-    return 0.5 * (1 + sign * y);
-  }
-  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+<p>For American-listed equities, PFOF runs in the range of $0.001 to $0.003 per share, roughly 0.1 to 0.3 <span class="gloss" title="One hundredth of a percentage point, so 20 basis points is 0.20%. Abbreviated bp, plural bps.">basis points</span> on a $100 stock, which is small. For American-listed options, PFOF is much larger relative to position size: $0.40 to $0.65 per contract per side for retail SPY and QQQ options. On a 1-contract retail SPY options trade, the broker is paid roughly $0.50 to internalize it through a wholesaler. The wholesaler earns multiple dollars of <span class="gloss" title="The expected value of a trade or strategy, net of all costs. A trade has edge only if that number is positive.">edge</span> on the trade, as compensation for taking the position and the hedge obligation that comes with it.</p>
 
-  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
-  function d1(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
-  }
-  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
-  function bsPrice(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
-    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsDelta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) {
-      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
-      return S < K ? -1 : S > K ? 0 : -0.5;
-    }
-    var D1 = d1(S, K, T, sigma, r, q);
-    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
-  }
-  function bsGamma(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 1e-6) return S === K ? 1000 : 0;
-    var D1 = d1(S, K, T, sigma, r, q);
-    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
-  }
-  function bsVega(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
-  }
-  function bsTheta(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
-    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
-    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
-  }
-  function bsRho(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
-    if (T <= 0) return 0;
-    var D2 = d2(S, K, T, sigma, r, q);
-    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
-  }
-  function bsVanna(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
-  }
-  function bsCharm(S, K, T, sigma, type, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    if (T <= 0) return 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
-    return Math.exp(-q * T) * term;
-  }
-  /* every price and Greek at once, as the app's bsm() */
-  function bsm(S, K, T, sigma, r, q) {
-    r = r == null ? 0.04 : r; q = q || 0;
-    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
-    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
-    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
-    return {
-      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
-      callPrice: S * eqT * Nd1 - K * erT * Nd2,
-      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
-      callDelta: eqT * Nd1,
-      putDelta: eqT * (Nd1 - 1),
-      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
-      vega: S * eqT * pd1 * sT,
-      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
-      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
-      callRho: K * T * erT * Nd2,
-      putRho: -K * T * erT * (1 - Nd2),
-      vanna: -eqT * pd1 * (D2 / sigma),
-      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
-    };
-  }
+<p>To compare the two, divide the payment by the value of what was traded and express it in basis points:</p>
 
-  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
-  function rng(seed) {
-    var a = seed >>> 0;
-    return function () {
-      var t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function gauss(r) {
-    var u = 1 - r(), v = r();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
+<div class="eq" id="e-pfof">
+\[ \text{bps} = 10{,}000 \times \frac{\text{payment}}{\text{value}} \]
+</div>
 
-  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
-  var REGIMES = [
-    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
-    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
-    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
-    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
-    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
-    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
-    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
-  ];
-  function ohlc(n, seed, regimes, start) {
-    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
-    var r = rng(seed), out = [], price = start;
-    for (var i = 0; i < n; i++) {
-      var g = null;
-      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
-      if (!g) g = regimes[regimes.length - 1];
-      var ret = g.drift + g.vol * gauss(r);
-      var open = price, close = Math.max(0.5, price * (1 + ret));
-      var wick = price * g.vol * (0.4 + r() * 0.9);
-      var high = Math.max(open, close) + wick * r();
-      var low = Math.min(open, close) - wick * r();
-      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
-      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
-                 regime: g.label, stage: g.stage });
-      price = close;
-    }
-    return out;
-  }
-  function aggregate(data, k) {
-    var out = [];
-    for (var i = 0; i < data.length; i += k) {
-      var ch = data.slice(i, Math.min(i + k, data.length));
-      if (!ch.length) break;
-      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
-                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
-                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
-                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
-    }
-    return out;
-  }
+<p>On a $100 stock, $0.002 a share is \(0.002/100 \times 10{,}000 = 0.2\) basis points. On a hypothetical SPY option priced at $2.00, which costs $200 a contract, a $0.50 payment is \(0.50/200 \times 10{,}000 = 25\) basis points of the <span class="gloss" title="The price of an option, paid by the buyer to the seller when the trade is made.">premium</span>, over a hundred times as much in proportion.</p>
 
-  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
-  function key(k) { return k || 'close'; }
-  function sma(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = 0;
-      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
-      return s / n;
-    });
-  }
-  function ema(data, n, k) {
-    k = key(k);
-    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
-    data.forEach(function (d, i) {
-      if (i === 0) r.push(prev);
-      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
-    });
-    return r;
-  }
-  function stdDev(data, n, k) {
-    k = key(k);
-    return data.map(function (_, i) {
-      if (i < n - 1) return null;
-      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
-      s.forEach(function (x) { m += x[k]; }); m /= n;
-      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
-      return Math.sqrt(v / n);
-    });
-  }
-  function bollinger(data, n, mult) {
-    n = n || 20; mult = mult || 2;
-    var m = sma(data, n), s = stdDev(data, n);
-    return { mid: m,
-             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
-             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
-  }
-  function trueRange(data) {
-    return data.map(function (d, i) {
-      if (i === 0) return d.high - d.low;
-      var pc = data[i - 1].close;
-      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
-    });
-  }
-  function atr(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), r = [], prev = null;
-    tr.forEach(function (v, i) {
-      if (i < n - 1) { r.push(null); return; }
-      if (i === n - 1) {
-        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
-        r.push(init); prev = init; return;
-      }
-      prev = (prev * (n - 1) + v) / n;
-      r.push(prev);
-    });
-    return r;
-  }
-  function donchian(data, n) {
-    n = n || 20;
-    return data.map(function (_, i) {
-      if (i < n - 1) return { upper: null, lower: null, mid: null };
-      var s = data.slice(i - n + 1, i + 1);
-      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
-      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
-      return { upper: u, lower: l, mid: (u + l) / 2 };
-    });
-  }
-  function rsi(data, n) {
-    n = n || 14;
-    var r = new Array(data.length).fill(null), g = 0, l = 0, rs;
-    for (var i = 1; i < data.length; i++) {
-      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
-      if (i <= n) {
-        g += gain / n; l += loss / n;
-        if (i === n) { rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs); }
-      } else {
-        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
-        rs = l === 0 ? 100 : g / l; r[i] = 100 - 100 / (1 + rs);
-      }
-    }
-    return r;
-  }
-  function macd(data, fast, slow, signal) {
-    fast = fast || 12; slow = slow || 26; signal = signal || 9;
-    var ef = ema(data, fast), es = ema(data, slow);
-    var line = ef.map(function (v, i) { return v - es[i]; });
-    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
-    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
-  }
-  function adx(data, n) {
-    n = n || 14;
-    var tr = trueRange(data), plusDM = [], minusDM = [];
-    for (var i = 0; i < data.length; i++) {
-      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
-      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
-      plusDM.push(up > dn && up > 0 ? up : 0);
-      minusDM.push(dn > up && dn > 0 ? dn : 0);
-    }
-    function wilder(arr) {
-      var r = new Array(arr.length).fill(null), prev = null;
-      arr.forEach(function (v, i) {
-        if (i < n - 1) return;
-        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
-        prev = prev - prev / n + v; r[i] = prev;
-      });
-      return r;
-    }
-    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
-    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
-    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
-    var dx = plusDI.map(function (v, i) {
-      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
-    });
-    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
-    for (var j = 0; j < dx.length; j++) {
-      if (dx[j] == null) continue;
-      count++;
-      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
-      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
-    }
-    return { adx: out, plusDI: plusDI, minusDI: minusDI };
-  }
+<p>PFOF is controversial because the broker's incentive is to route to the highest-paying venue, which is not necessarily the venue with the best execution. The historical academic debate has been whether retail execution under PFOF is genuinely worse than execution on lit exchanges, after accounting for the price improvement that wholesalers do typically provide. The empirical evidence is mixed and depends on the metric used.</p>
 
-  /* ---------- writing numbers ----------
-     A true minus sign (U+2212) rather than a hyphen, as the prose writes
-     them, and thousands grouped with commas. */
-  var MINUS = '−';
-  function num(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    d = d == null ? 2 : d;
-    var s = Math.abs(x).toFixed(d);
-    var parts = s.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    s = parts.join('.');
-    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
-  }
-  function signed(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(x, d);
-    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
-  }
-  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
-  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
-  function usd(x, d) {
-    if (x == null || !isFinite(x)) return '—';
-    var s = num(Math.abs(x), d == null ? 2 : d);
-    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
-  }
-  function compact(x, d, prefix) {
-    if (x == null || !isFinite(x)) return '—';
-    prefix = prefix || ''; d = d == null ? 1 : d;
-    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
-    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
-    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
-    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
-    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
-    return sign + prefix + a.toFixed(d);
-  }
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The American approach to PFOF resembles the handling of industry payments to physicians. The payment is permitted and must be disclosed. Whether it biases the referral is left to whoever reads the disclosure. Rule 606, below, is the broker's disclosure of who pays it for your orders. Rule 605 is the nearest thing to an outcomes registry for the venues that receive them.</p>
+</div>
 
-  /* ---------- the page: outputs and controls ---------- */
-  function $(id) { return document.getElementById(id); }
-  /* Text into an element, only when it changes, so the build captures one
-     settled state and a redraw does not churn the DOM. */
-  function out(id, text) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el && el.textContent !== String(text)) el.textContent = String(text);
-  }
-  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
-  function checked(id) { var el = $(id); return !!(el && el.checked); }
-  /* Call fn whenever any of these controls moves. */
-  function bind(ids, fn) {
-    ids.forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener('input', fn);
-      el.addEventListener('change', fn);
-    });
-  }
-  /* A row of buttons acting as one choice: each button carries data-v, the one
-     chosen has .on and aria-pressed="true". Returns a function giving the
-     current value. The first state is whichever button the markup marked
-     .on, so the saved page and the live page agree. */
-  function seg(id, fn) {
-    var box = $(id);
-    if (!box) return function () { return null; };
-    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
-    function current() {
-      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
-      return bs.length ? bs[0].getAttribute('data-v') : null;
-    }
-    bs.forEach(function (b) {
-      b.addEventListener('click', function () {
-        bs.forEach(function (o) {
-          var on = o === b;
-          o.classList.toggle('on', on);
-          o.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-        if (fn) fn(b.getAttribute('data-v'));
-      });
-    });
-    return current;
-  }
-  function still() {
-    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-  /* Register a canvas figure. draw(canvas) is called now, on resize and on
-     a change of theme (NMT.figure). Returns the redraw. */
-  function figure(canvasId, draw) {
-    if (!window.NMT) return function () {};
-    return NMT.figure(canvasId, draw) || function () {};
-  }
-  function redraw() { if (window.NMT) NMT.redrawAll(); }
+<h3 id="rule-615-proposed-and-withdrawn">Rule 615, proposed and withdrawn</h3>
 
-  /* ---------- colour ----------
-     A role from the stylesheet, resolved for the current theme: accent,
-     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
-     paper, bg. The app's amber is the accent here; its cyan and violet are
-     familiar, its green insight, its rose plain. */
-  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
-  function fade(c, a) {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
-    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
-    var r = /rgba?\(([^)]+)\)/.exec(c || '');
-    if (r) {
-      var p = r[1].split(',');
-      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
-    }
-    return c;
-  }
+<p>In December 2022, the SEC under then-Chair Gary Gensler proposed <strong>Rule 615</strong>, the "Order Competition Rule". It would have required certain retail marketable equity orders that were going to be internalized to be exposed instead to a public auction, to potentially capture price improvement competitively. A marketable order is one priced to trade at once against the NBBO (<a class="xref" href="2c.html">Chapter 2C</a>). The Commission voted 3-2 to propose the rule, but it was never finalized.</p>
 
-  /* ---------- drawing on an NMT.Plot ---------- */
+<p>On June 17, 2025, the SEC under the new administration formally withdrew Rule 615, along with twelve other Gensler-era proposed rules. After that withdrawal, PFOF remains legal in the United States. The UK and EU regulators have banned PFOF outright. The United States allows it with disclosure requirements, the Rule 605 and Rule 606 reports, but with no structural intervention against the wholesaler-internalization business model.</p>
 
-  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
-       o.x, o.y      a function (value, step) -> label, or false for none
-       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
-       o.xs, o.ys    the tick values themselves, overriding nx and ny
-       o.grid        false for no grid (default: the plot's own setting)
-     Paints the ground first, as Plot.axes does, so call it before drawing. */
-  function ticks(lo, hi, target) {
-    var span = hi - lo, raw = span / (target || 6);
-    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
-    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
-    var out = [];
-    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
-      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
-    return { vals: out, step: step };
-  }
-  function axes(p, o) {
-    o = o || {};
-    var g = p.g, P = p.o;
-    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
-                  : ticks(P.xmin, P.xmax, o.nx || 6);
-    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
-                  : ticks(P.ymin, P.ymax, o.ny || 5);
-    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
-    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
-    g.clearRect(0, 0, p.w, p.h);
-    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
-    if (o.grid == null ? P.grid : o.grid) {
-      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
-      tx.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
-      ty.vals.forEach(function (v) {
-        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
-    }
-    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
-    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
-    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
-    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
-    if (o.yAxis !== false) {
-      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
-    }
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    if (fx) {
-      g.textAlign = 'center'; g.textBaseline = 'top';
-      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
-    }
-    if (fy) {
-      g.textAlign = 'right'; g.textBaseline = 'middle';
-      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
-    }
-    if (P.xlabel) {
-      g.textAlign = 'right'; g.textBaseline = 'bottom';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
-    }
-    if (P.ylabel) {
-      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
-      g.textAlign = 'right'; g.textBaseline = 'top';
-      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
-      g.fillText(P.ylabel, 0, 0); g.restore();
-    }
-    return p;
-  }
+<div class="callout brick">
+<p>"Without accurately assessing current retail execution quality (including reviewing execution quality reports from retail broker-dealers), the Commission can't conclude that fundamental changes to retail order execution practices are warranted, as contemplated by the 'Best Execution' and 'Order Competition' proposals." Citadel Securities, public comment letter on Rule 615 (2023)</p>
+</div>
 
-  function clip(p) {
-    var g = p.g, o = p.o;
-    g.save();
-    g.beginPath();
-    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
-    g.clip();
-  }
-  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
-     o.color is a colour or a function (value, index) -> colour. */
-  function bars(p, xs, ys, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
-    clip(p);
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) continue;
-      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
-      var y0 = p.Y(base), y1 = p.Y(ys[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
-    }
-    g.restore();
-  }
-  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
-  function hbars(p, ys, xs, o) {
-    o = o || {};
-    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
-    clip(p);
-    for (var i = 0; i < ys.length; i++) {
-      if (xs[i] == null || !isFinite(xs[i])) continue;
-      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
-      var x0 = p.X(base), x1 = p.X(xs[i]);
-      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
-      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
-    }
-    g.restore();
-  }
-  /* A filled band between two curves (lo may be a number: the baseline). */
-  function band(p, xs, hi, lo, fill) {
-    var g = p.g;
-    clip(p);
-    g.beginPath();
-    var started = false;
-    for (var i = 0; i < xs.length; i++) {
-      if (hi[i] == null) continue;
-      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
-      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
-    }
-    for (var j = xs.length - 1; j >= 0; j--) {
-      var l = typeof lo === 'number' ? lo : lo[j];
-      if (l == null || hi[j] == null) continue;
-      g.lineTo(p.X(xs[j]), p.Y(l));
-    }
-    g.closePath();
-    g.fillStyle = fill;
-    g.fill();
-    g.restore();
-  }
-  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
-  function line(p, xs, ys, o) {
-    var pts = [], runs = [];
-    for (var i = 0; i < xs.length; i++) {
-      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
-      pts.push([xs[i], ys[i]]);
-    }
-    if (pts.length) runs.push(pts);
-    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
-  }
-  function hline(p, y, o) {
-    o = o || {};
-    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  function vline(p, x, o) {
-    o = o || {};
-    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
-  }
-  /* Candles for OHLC data at x = index. */
-  function candles(p, data, o) {
-    o = o || {};
-    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
-    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
-    clip(p);
-    data.forEach(function (d, i) {
-      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
-      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
-      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
-      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
-    });
-    g.restore();
-  }
-  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
-  function legend(p, items, o) {
-    o = o || {};
-    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
-    g.save();
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    items.forEach(function (it) {
-      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
-      if (it.box) g.fillRect(x, y - 4, 12, 8);
-      else {
-        g.setLineDash(it.dash || []);
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
-        g.setLineDash([]);
-      }
-      g.fillStyle = color('ink-soft');
-      g.fillText(it.label, x + 19, y);
-      x += 19 + g.measureText(it.label).width + 14;
-    });
-    g.restore();
-  }
-  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
-     p.axes({nx: 0}) or grid off first. */
-  function xticks(p, xs, fmt) {
-    var g = p.g;
-    g.save();
-    g.fillStyle = color('ink-faint');
-    g.font = '11px ' + color('sans');
-    g.textAlign = 'center'; g.textBaseline = 'top';
-    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
-    g.restore();
-  }
+<p>For the foreseeable future, the wholesaler model is the operational reality of American retail trading.</p>
 
-  return {
-    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
-    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
-    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
-    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
-    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
-    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
-    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
-    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
-    figure: figure, redraw: redraw,
-    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
-    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
-    candles: candles, legend: legend, xticks: xticks
-  };
-})();
+<h2 id="rules-605-and-606-the-only-public-lens-on-execution-quality">4 · Rules 605 and 606: the only public lens on execution quality</h2>
 
-/* ---------- ar1-regime-explorer ---------- */
-(function () {
-  var U = 'ar1-regime-explorer';
-  var seedBox = DL.$(U + '-seed');
-  var paths = DL.seg(U + '-paths', function () { draw(); });
+<p>Two disclosure rules under Regulation NMS let you see, on average, what happens to retail orders.</p>
 
-  /* the app's paths: each its own Mulberry32 stream, returns r = phi r_prev + eps */
-  var memo = { key: null };
-  function simulate(phi, sigma, numPaths, numSteps, seed) {
-    var key = [phi, sigma, numPaths, numSteps, seed].join();
-    if (memo.key === key) return memo.out;
-    var out = [];
-    for (var p = 0; p < numPaths; p++) {
-      var r = DL.rng((seed + p * 7919) >>> 0), rPrev = 0, price = 100, path = [100];
-      for (var i = 1; i <= numSteps; i++) {
-        var ret = phi * rPrev + sigma * DL.gauss(r);
-        rPrev = ret;
-        price *= Math.exp(ret);
-        path.push(price);
-      }
-      out.push(path);
-    }
-    memo = { key: key, out: out };
-    return out;
-  }
-  function logRets(path) {
-    var rets = [];
-    for (var i = 1; i < path.length; i++) rets.push(Math.log(path[i] / path[i - 1]));
-    return rets;
-  }
-  /* empirical lag-1 autocorrelation of the first path's returns */
-  function rho(rets) {
-    if (rets.length < 2) return 0;
-    var mean = rets.reduce(function (a, b) { return a + b; }, 0) / rets.length, num = 0, den = 0, i;
-    for (i = 1; i < rets.length; i++) num += (rets[i] - mean) * (rets[i - 1] - mean);
-    for (i = 0; i < rets.length; i++) den += (rets[i] - mean) * (rets[i] - mean);
-    return den > 0 ? num / den : 0;
-  }
-  /* Hurst exponent from the variance ratio at lag k: VR(k) = k^(2H - 1) */
-  function hurst(rets) {
-    var k = Math.min(8, Math.floor(rets.length / 4));
-    if (k < 2) return 0.5;
-    var v1 = rets.reduce(function (a, x) { return a + x * x; }, 0) / rets.length, agg = [];
-    for (var i = 0; i + k <= rets.length; i++) {
-      var s = 0;
-      for (var j = 0; j < k; j++) s += rets[i + j];
-      agg.push(s);
-    }
-    var vk = agg.reduce(function (a, x) { return a + x * x; }, 0) / agg.length;
-    var ratio = vk / (k * v1);
-    if (ratio <= 0) return 0.5;
-    return (Math.log(ratio) + Math.log(k)) / (2 * Math.log(k));
-  }
-  /* The app's four regimes. It calls every |phi| >= 0.85 near-non-stationary,
-     but its own paths narrow as phi goes toward -0.9 (the Hurst estimate
-     falls below zero); only phi >= 0.85 fans out faster than a random walk,
-     so the negative end reads as the mean reversion it is. */
-  function regime(phi) {
-    if (phi >= 0.85) return ['plain', 'Near-non-stationary.',
-      'φ approaches 1. Variance scales faster than linearly with time; forecasts diverge. ' +
-      'AR(1) loses predictive validity; handling it needs GARCH or regime-switching.'];
-    if (phi > 0.3) return ['plain', 'Momentum, trending.',
-      'Positive autocorrelation. Up-moves predict more up-moves; down-moves predict more ' +
-      'down-moves. Runs persist longer than a random walk would imply. Empirically rare at ' +
-      'daily SPX scale; common at 1-12 month cross-asset.'];
-    if (phi < -0.3) return ['insight', 'Mean reversion.',
-      'Negative autocorrelation. Up-moves predict pullbacks; down-moves predict bounces. ' +
-      'Characteristic of positive-GEX intraday SPX and of multi-week individual equity overshoots.'];
-    return ['familiar', 'Random walk regime.',
-      'Near-zero autocorrelation. The next move is statistically independent of the last. ' +
-      'No exploitable signal at this horizon. Frictions (spread, slippage) will eat any ' +
-      'attempted strategy operating here.'];
-  }
-  function seedNow() { return Number(seedBox.value) || 0; }
-  function tick(v) {
-    return Math.abs(v) >= 1e6 ? v.toExponential(1).replace('e+', 'e') : DL.num(v, 1);
-  }
+<p><strong><span class="gloss" title="The SEC rule requiring every market center to publish monthly averages of its execution quality by order type, such as effective spread and price improvement.">Rule 605</span></strong>, in force since 2001 and amended substantially in 2024, requires each market center to publish monthly reports on execution quality at the <em>order-type level</em>. A market center is an exchange, an ATS or a wholesaler that internalizes. The mandatory metrics include the realized spread, the effective spread, the price-improvement rate and the average response time. Since the 2024 amendments, the reports also break these down by order size and by time-of-day bucket. They are downloadable as plain text from each market center's website.</p>
 
-  var draw = DL.figure(U + '-c', function (c) {
-    var phi = DL.val(U + '-phi'), sigma = DL.val(U + '-sigma'), steps = DL.val(U + '-steps'),
-        n = parseInt(paths(), 10), seed = seedNow();
-    var ps = simulate(phi, sigma, n, steps, seed);
+<p><strong><span class="gloss" title="The SEC rule requiring every broker to publish quarterly where it routed its customers' orders and what it was paid for them.">Rule 606</span></strong>, in force since 2001 and amended in 2018 and 2020, requires each broker-dealer to publish quarterly reports on <em>where</em> it routed retail and institutional non-directed orders. A non-directed order is one whose customer did not choose the venue. The report gives the proportion of total flow sent to each market center. Since 2018 it also includes the dollar amount of PFOF received from each routing venue, broken down by S&amp;P 500 against non-S&amp;P stocks, by market against <span class="gloss" title="A limit order priced at or through the current best quote on the other side, so that it fills at once in normal conditions but never beyond its limit.">marketable limit orders</span>, and by other categories.</p>
 
-    var lo = Infinity, hi = -Infinity;
-    ps.forEach(function (a) { a.forEach(function (v) { if (v < lo) lo = v; if (v > hi) hi = v; }); });
-    var pad = (hi - lo) * 0.05 || 1;
-    lo -= pad; hi += pad;
-    var ys = [0, 1, 2, 3, 4, 5].map(function (i) { return lo + i / 5 * (hi - lo); });
-    var xs = [0, 0.25, 0.5, 0.75, 1].map(function (f) { return f * steps; });
-    var p = new NMT.Plot(c, { xmin: 0, xmax: steps, ymin: lo, ymax: hi,
-                              pad: { l: 48, r: 14, t: 12, b: 34 }, xlabel: 'step' });
-    DL.axes(p, { xs: xs, ys: ys, x: function (v) { return String(Math.round(v)); }, y: tick });
-    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+<h3 id="reading-the-spread-metrics">Reading the spread metrics</h3>
 
-    var role = phi > 0.3 ? 'plain' : phi < -0.3 ? 'insight' : 'familiar';
-    var col = DL.fade(DL.color(role), Math.max(0.1, 0.7 / Math.sqrt(n)));
-    var t = ps[0].map(function (_, i) { return i; });
-    ps.forEach(function (a) { DL.line(p, t, a, { color: col, width: n > 50 ? 0.8 : 1.1 }); });
-    p.text(0, hi, 'φ = ' + DL.num(phi, 2) + ' · ' + n + ' paths',
-           { dx: 6, dy: 16, color: DL.color(role) });
+<p>Two of the Rule 605 metrics measure what an order paid. Write \(P\) for the fill price, \(M_0\) for the NBBO mid when the order arrived and \(M_1\) for the mid a short interval later. Let \(d = +1\) for a buy and \(d = -1\) for a sell. Then</p>
 
-    var rets = logRets(ps[0]), g = regime(phi);
-    DL.out(U + '-phi-o', DL.num(phi, 2));
-    DL.out(U + '-sigma-o', DL.num(sigma * 100, 1) + '%');
-    DL.out(U + '-steps-o', String(steps));
-    DL.out(U + '-rho', 'empirical ρ (lag 1) = ' + DL.num(rho(rets), 3));
-    DL.out(U + '-hurst', 'Hurst H (path 0) = ' + DL.num(hurst(rets), 2));
-    DL.out(U + '-abs', '|φ| = ' + DL.num(Math.abs(phi), 2));
-    DL.out(U + '-vk', g[1]);
-    DL.out(U + '-vt', g[2]);
-  });
-  DL.$(U + '-regen').addEventListener('click', function () {
-    seedBox.value = String((seedNow() + 1) | 0);
-    draw();
-  });
-  DL.bind([U + '-phi', U + '-sigma', U + '-steps', U + '-seed'], draw);
-})();
+<div class="eq" id="e-eff">
+\[ \text{effective spread} = 2d\,(P - M_0) \]
+</div>
 
-/* ---------- ar-fit-widget ---------- */
-(function () {
-  var U = 'ar-fit-widget';
-  var mode = DL.seg(U + '-mode', function () { draw(); });
+<div class="eq" id="e-real">
+\[ \text{realized spread} = 2d\,(P - M_1) \]
+</div>
 
-  /* the app's returns: r_t = ±0.55 r_(t-1) + 0.008 ε, sixty of them from r_0 = 0 */
-  var memo = { key: null };
-  function series(seed, m) {
-    var key = seed + m;
-    if (memo.key === key) return memo.out;
-    var r = DL.rng(seed), coef = m === 'mr' ? -0.55 : 0.55, data = [0];
-    for (var i = 1; i < 60; i++) data.push(coef * data[i - 1] + DL.gauss(r) * 0.008);
-    memo = { key: key, out: data };
-    return data;
-  }
-  function pctTick(v, st) { return DL.num(v * 100, st * 100 < 0.999 ? 1 : 0) + '%'; }
+<p>The <strong><span class="gloss" title="Twice the distance between a fill price and the midpoint of the bid and ask when the order arrived: what the order paid, on the same scale as a quoted spread.">effective spread</span></strong> is what you paid against the mid, doubled so that it compares with a quoted spread: a buy at the ask of a 2-cent market has an effective spread of 2 cents. The <strong><span class="gloss" title="Twice the distance between a fill price and the midpoint a short interval later: what the firm that filled the order kept after the price moved on.">realized spread</span></strong> is what the firm that filled you kept, once the price had moved on. The difference between them, \(2d\,(M_1 - M_0)\), is the price impact: how far the mid moved in the direction of your trade. Price improvement is measured from the NBBO on your side: for a buy, the ask minus your fill, and for a sell, your fill minus the bid.</p>
 
-  var draw = DL.figure(U + '-c', function (c) {
-    var w = DL.val(U + '-w'), b = DL.val(U + '-b'), seed = DL.val(U + '-seed'), m = mode();
-    var s = series(seed, m);
-    var pred = s.map(function (v, i) { return i === 0 ? null : w * s[i - 1] + b; });
-    /* directional accuracy as the app counts it: Math.sign of prediction and return agree */
-    var hit = 0, total = 0;
-    for (var i = 1; i < s.length; i++) {
-      if (Math.sign(pred[i]) === Math.sign(s[i])) hit++;
-      total++;
-    }
-    var acc = hit / total * 100;
+<div class="worked">
+<span class="ct">Worked example: Reading one fill</span>
+<p><strong>Step 1: price improvement.</strong> Take the NBBO of $100.02 by $100.04 from the first worked example, with its mid at $100.03. A wholesaler fills your 100-share buy at $100.035. The ask was $100.04, so you gained half a cent a share, $0.50 in all.</p>
 
-    /* the app scales to every value drawn; headroom on top keeps the key clear */
-    var lo = Infinity, hi = -Infinity;
-    s.concat(pred).forEach(function (v) {
-      if (v == null) return;
-      if (v < lo) lo = v;
-      if (v > hi) hi = v;
-    });
-    var span = (hi - lo) || 1;
-    var p = new NMT.Plot(c, { xmin: 0, xmax: s.length - 1, ymin: lo - span * 0.04,
-                              ymax: hi + span * 0.2, pad: { l: 44, r: 14, t: 8, b: 26 } });
-    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50], ny: 5, y: pctTick,
-                 x: function (v) { return String(v); } });
-    var t = s.map(function (_, j) { return j; });
-    DL.line(p, t, s, { color: DL.color('familiar'), width: 1.6 });
-    DL.line(p, t, pred, { color: DL.color('accent'), width: 1.4, dash: [3, 3] });
-    DL.legend(p, [{ label: 'actual', color: DL.color('familiar') },
-                  { label: 'predicted', color: DL.color('accent'), dash: [3, 3] }]);
+<p><strong>Step 2: effective spread.</strong> By <a class="eqref" href="#e-eff"></a>, the effective spread is \(2 \times (100.035 - 100.03) = \$0.01\) a share, half the quoted 2-cent spread.</p>
 
-    var sign = w > 0.05 ? 'momentum' : w < -0.05 ? 'mean reversion' : 'neutral';
-    DL.out(U + '-w-o', DL.num(w, 2));
-    DL.out(U + '-b-o', DL.num(b, 4));
-    DL.out(U + '-seed-o', '#' + seed);
-    DL.out(U + '-sign', 'weight sign = ' + sign);
-    DL.out(U + '-true', 'true regime = ' + (m === 'mr' ? 'mean reversion' : 'momentum'));
-    DL.out(U + '-acc', 'directional accuracy = ' + DL.num(acc, 1) + '%');
-  });
-  DL.bind([U + '-w', U + '-b', U + '-seed'], draw);
-})();
-<!--/SCRIPT-->
+<p><strong>Step 3: realized spread and impact.</strong> Suppose the mid a short while later is $100.04. By <a class="eqref" href="#e-real"></a>, the realized spread is \(2 \times (100.035 - 100.04) = -\$0.01\): the firm that sold to you lost a cent a share against the later mid. The price impact is \(2 \times (100.04 - 100.03) = \$0.02\), and the effective spread is the realized spread plus the impact, \(0.01 = -0.01 + 0.02\).</p>
+</div>
+
+<h3 id="what-the-reports-show-and-what-they-do-not">What the reports show, and what they do not</h3>
+
+<p>The Rule 605 reports show <em>averages</em> of execution quality. An illustrative line might say: "Citadel Securities provided $0.0017 per share of price improvement on average for SPY market orders sized 100-499 shares in October." This is informative but coarse. Two important things the reports do <em>not</em> show:</p>
+
+<ol>
+<li><strong>Order-level execution quality:</strong> you cannot reconstruct your own trades from them.</li>
+<li><strong>How price improvement was distributed across orders:</strong> a wholesaler can boost the average by improving large favorable trades while leaving small marginal trades at the NBBO.</li>
+</ol>
+
+<p>Suppose a wholesaler fills one 1,000-share order with half a cent of improvement and ten 100-share orders at the NBBO. Weighted by shares, the average improvement is \(1{,}000 \times 0.005/2{,}000 = \$0.0025\), a quarter of a cent a share, although ten of the eleven orders got nothing.</p>
+
+<p>For options, the equivalent disclosures are weaker still. The Rule 605 framework was built around NMS stocks, and option-specific reporting standards are still evolving.</p>
+
+<p>In practice, to compare brokers you read two sets of reports together. Your broker's Rule 606 reports answer where it sends your orders. The Rule 605 reports of those venues answer what execution quality they deliver, on average. The combination gives a defensible, like-for-like comparison across brokers. It is the single most underused public dataset in retail execution analysis. Most retail traders have never opened either report, and both are public.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>To compare brokers on execution:</p>
+
+<ul>
+<li><strong>Open each broker's latest Rule 606 report:</strong> note the venues that receive most of its orders of your type, and the PFOF each venue pays.</li>
+<li><strong>Open those venues' Rule 605 reports:</strong> compare effective spread and price improvement for your order type and size bucket.</li>
+<li><strong>Choose on execution, not on payment:</strong> prefer the broker whose venues show the lower effective spread for orders like yours.</li>
+<li><strong>For SPX and XSP, skip this:</strong> those orders go to Cboe, and your limit price matters more than your broker's routing (<a class="xref" href="2c.html">Chapter 2C</a>).</li>
+</ul>
+</div>
+
+<h2 id="the-franchise-one-firm-on-both-sides">5 · The franchise: one firm on both sides</h2>
+
+<p>Citadel Securities, Susquehanna International Group and Wolverine are not just options market makers. They are also the dominant retail equity wholesalers. The same firm that takes the other side of your SPY <span class="gloss" title="A contract giving its holder the right, not the obligation, to sell the underlying at the strike price on or before expiry.">put option</span> also takes the other side of your SPY share purchase. The two desks share infrastructure, capital and inventory, and they hedge across each other. When Citadel sells you a SPY put, the SPY shares it sells as the hedge may go to another piece of internal Citadel flow, crossing the book entirely without touching a lit exchange.</p>
+
+<p>This is the <strong>internalization</strong> model in its full form. Retail buy-side flow and retail sell-side flow are netted against each other inside the wholesaler's book. Only the residual, the net of all retail buys against retail sells, actually needs to be hedged in the external market. Retail flow is roughly balanced on most days, with slightly more buying than selling on average but only a small imbalance. So the gross flow the wholesaler sees is far larger than the net hedging flow it actually generates.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Gross flow and net hedge</span>
+<p><strong>Step 1: the flow.</strong> In one hour, a wholesaler's retail customers buy 10,000 SPY shares and sell 9,000. The wholesaler fills all 19,000 from its own book.</p>
+
+<p><strong>Step 2: the hedge.</strong> The 9,000 shares it bought offset 9,000 of the 10,000 it sold. Only the 1,000-share imbalance needs a hedge in the market, about 5% of the gross flow.</p>
+</div>
+
+<h3 id="no-wholesaler-for-spx">No wholesaler for SPX</h3>
+
+<p>For SPX, XSP and other index options, the routing is simpler. They trade only on Cboe, and most retail brokers route them directly to the Cboe order book. <strong>There is no wholesaler bypass for SPX.</strong> This is one of several reasons SPX and XSP spreads are somewhat wider than SPY's: the wholesaler price-improvement machinery does not apply.</p>
+
+<p>It is also one of the reasons that <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">gamma exposure</span> (GEX) models computed from SPY open interest can be misleading, a point <a class="xref" href="8a.html">Chapter 8A</a> develops. <strong><span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">Open interest</span></strong> (OI) is the number of contracts outstanding at a strike. SPY open interest is gross, but the hedge flow that SPY options actually generate is much smaller than that gross, because wholesalers internalize so much of it. SPX open interest, by contrast, represents flow that all sits on the Cboe book. Wholesalers cannot internalize it because they are not the counterparty. So the dealer-hedging implications of SPX open interest are larger, per contract of open interest, than those of the same open interest in SPY.</p>
+
+<h2 id="flex-options-the-institutional-sidewalk">6 · FLEX options: the institutional sidewalk</h2>
+
+<p>A growing share of institutional options trading happens through <strong><span class="gloss" title="An option listed on Cboe whose strike, expiration, exercise style and settlement the parties choose, cleared through the OCC like a standard listed option.">FLEX options</span></strong>: exchange-listed contracts with customizable strikes, expirations and exercise styles, traded primarily on Cboe (<a class="xref" href="4a.html">Chapter 4A</a>). FLEX volumes have exploded:</p>
+
+<ul>
+<li><strong>In 2012</strong>, about 12 million FLEX contracts traded in the year.</li>
+<li><strong>In 2019</strong>, about 125,000 contracts traded a day, with total open interest of 2 million.</li>
+<li><strong>In 2024</strong>, about 200 million FLEX contracts traded in the year.</li>
+<li><strong>In 2025</strong>, <span class="gloss" title="The number of shares or contracts of a security that trade on a typical day, averaged over a recent period. Abbreviated ADV.">average daily volume</span> reached <strong>1.3 to 1.4 million contracts a day</strong>, up 65% on the year before. By type, single-stock FLEX averaged about 958,000 a day, ETF FLEX about 301,000 and index FLEX about 29,000. Open interest reached 35 million contracts, 17.5 times the 2019 level.</li>
+</ul>
+
+<div class="worked">
+<span class="ct">Worked example: Putting the FLEX numbers on one scale</span>
+<p><strong>Step 1: annual to daily.</strong> A year has about 252 trading days. The 2012 total of 12 million is about \(12{,}000{,}000/252 = 47{,}600\) contracts a day, and the 2024 total of 200 million is about 794,000 a day.</p>
+
+<p><strong>Step 2: check the growth.</strong> Growing 65% from 794,000 gives \(794{,}000 \times 1.65 = 1.31\) million a day, consistent with the 2025 average. The three 2025 components add up to \(958{,}000 + 301{,}000 + 29{,}000 = 1.29\) million.</p>
+
+<p><strong>Step 3: the compound rate.</strong> From about 47,600 a day in 2012 to about 1.35 million in 2025 is a factor of about 28 in 13 years. The compound growth rate \(g\) solves \((1 + g)^{13} = 28\), so \(g = e^{\ln 28/13} - 1 = 0.29\), about 29% a year (<a class="xref" href="1a.html">Chapter 1A</a>).</p>
+</div>
+
+<p>FLEX growth has tracked institutional demand for tailored hedges. A pension fund may want a put struck exactly at its actuarial liability level, not at the nearest 25-point strike on the listed grid. The issuer of an autocallable, a <span class="gloss" title="An investment product issued by a bank that combines a bond or note with derivatives to give a tailored payoff, such as an autocallable note or a principal-protected note.">structured product</span> whose payoff switches at preset index levels, may need to hedge a knock-in level at a specific spot price. A structured-product desk may need a non-standard expiration to match an internal liability schedule. All of them use FLEX. The dealer on the other side of a FLEX position hedges it alongside its listed book. The resulting hedge flows show up in the lit markets without any FLEX identifier on the trade tape.</p>
+
+<p>This matters for GEX modeling. FLEX positions are visible to Cboe, which records the trades. They are not visible on the public OPRA feed, the consolidated feed of options trades, in a way that attributes them to specific strikes for a GEX computation. The major published GEX models (SqueezeMetrics, SpotGamma, Tier1Alpha) all see FLEX volume in aggregate but cannot decompose it cleanly by strike. The result: published GEX models systematically <em>under</em>-count the gamma exposure dealers actually have. This effect is small on a typical day and large during stress episodes, when FLEX-based hedging activity spikes. <a class="xref" href="8a.html">Chapter 8A</a> returns to it in detail.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>Public open interest misstates dealer hedging in two directions at once. For SPY, internalization makes the gross open interest overstate the hedge flow. For FLEX, invisibility by strike makes published gamma exposure understate it. The second is small on a typical day and large in stress.</p>
+</div>
+
+<h2 id="what-this-means-for-dealers">7 · What this means for dealers</h2>
+
+<p>Dealer hedging, the subject of every chapter from <a class="xref" href="6a.html">Part VI</a> on, is executed primarily in two places. <span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">Delta</span> hedges go to shares on the lit exchanges, SPY or the SPX component stocks, and larger or more cost-sensitive hedges go to ES futures on the CME. <a class="xref" href="2a.html">Chapter 2A</a> gives the reasons an SPX dealer leans on ES and uses shares only at the margin. The wholesaler ecosystem described in this chapter is one piece. The dealer-hedging ecosystem on top of it is another.</p>
+
+<p>Baltussen, Da, Lammers and Martens (2021) found that the last 30 minutes of trading concentrate <span class="gloss" title="The tendency for the return over the last 30 minutes of the trading day to go the same way as the return over the rest of the day. Baltussen, Da, Lammers and Martens (2021) document it across more than 60 futures markets and attribute it to hedging that trades with the move.">intraday momentum</span>, and <a class="xref" href="6c.html">Chapter 6C</a> examines their paper. The finding is partly mechanical, because dealers' end-of-day rebalancing flows through the <span class="gloss" title="The process in the last minutes of the American trading day in which the exchanges gather orders and fill them all at one price, the official close.">closing auction</span>, the matching of orders that sets the official close (<a class="xref" href="2c.html">Chapter 2C</a>). There it interacts with mandatory index-fund rebalancing and with the day's accumulated <span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">charm</span> and <span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">vanna</span> decay from the options book. Charm and vanna are the rates at which an option's delta drifts with time and with <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> (<a class="xref" href="5d.html">Chapter 5D</a>). The auction is where the day's options-related hedge obligations get settled into the underlying.</p>
+
+<p>One subtle implication of wholesaler concentration is that SPY options flow is largely internalized. The wholesaler sees both retail buys and retail sells and crosses them internally, so the actual dealer delta hedge it needs is smaller than the gross retail flow suggests. SPX options flow, by contrast, all hits the Cboe order book, and the institutional dealer there has to hedge the full <em>gross</em> position, not the net. This is one reason why "SPX dealer gamma" and "SPY dealer gamma" are not literally the same concept. It is also why SqueezeMetrics-style GEX calculations on SPY tend to overestimate the actual hedge flow.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>For shares and SPY options, your broker's routing decides your fill more than the exchange does. Your effective spread should never exceed the quoted spread, and price improvement is the part of it the wholesaler hands back. PFOF is tiny per share but much larger per option contract in proportion to the premium. For SPX and XSP, your order goes to Cboe's book: there is no PFOF, and no wholesaler to improve your price either. A <span class="gloss" title="An order to buy at or below a stated price, or to sell at or above it. It promises the price but not a fill.">limit order</span> placed with reference to the mid does that work (<a class="xref" href="2d.html">Chapter 2D</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The Rule 605 and Rule 606 reports are averages over a month or a quarter, by order type and size bucket. They cannot tell you what happened to your own orders, and a good average can hide poor fills on the small, marginal orders a retail account sends. For options the reporting standards are weaker still. Your own journal of fills against the mid, which <a class="xref" href="2d.html">Chapter 2D</a> sets up, is the only order-level evidence you have.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "the market took the other side"</span>
+<p>For a retail SPY trade, the other side is almost always a wholesaler with a business model. It earns the spread, pays your broker, nets your order against other retail flow and hedges only the residual. Treating the fill as an anonymous market price hides both the cost you paid and who earned it.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The NBBO is the best bid and offer displayed across the exchanges, and American equities and single-name options must fill at or inside it.</li>
+<li>Orders go to lit exchanges, dark pools or wholesalers. Most retail share and SPY-option orders go to a wholesaler, which pays the broker PFOF and fills them from its own book.</li>
+<li>Rule 606 reports say where your broker routes. Rule 605 reports say how well those venues fill, on average.</li>
+<li>SPX and XSP orders go straight to Cboe's book, with no wholesaler in between.</li>
+<li>Internalization makes SPY open interest overstate hedge flow, while FLEX makes published GEX understate dealer gamma.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Three exchanges quote a stock at $50.10 by $50.14, $50.11 by $50.15 and $50.09 by $50.13. What is the NBBO, and what is the most a market buy may pay?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The best bid is $50.11 and the best ask $50.13, so the NBBO is $50.11 by $50.13, with a mid of $50.12. A market buy must fill at $50.13 or better.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>With that NBBO, a wholesaler buys 200 shares from a retail seller at $50.115. What are the price improvement and the effective spread?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>For a sell, price improvement is the fill minus the bid: $0.005 a share, or $1.00 on 200 shares. With \(d = -1\) and the mid at $50.12, <a class="eqref" href="#e-eff"></a> gives \(2 \times (-1) \times (50.115 - 50.12) = \$0.01\) a share, half the quoted spread.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>How many basis points is PFOF of $0.002 a share on a $50 stock?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-pfof"></a>, \(0.002/50 \times 10{,}000 = 0.4\) basis points.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A wholesaler's customers buy 30,000 shares and sell 26,000 in an hour. How much must it hedge in the market?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It crosses 26,000 shares internally, and only the 4,000-share imbalance needs an external hedge, about 7% of the 56,000 shares of gross flow.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Why is SPX open interest a better guide to dealer hedging than SPY open interest, and why does even SPX understate it?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>SPX orders all reach the Cboe book, where a dealer takes the gross position and must hedge it. SPY flow is largely internalized, so its hedge flow is only the net. Even SPX misses FLEX: those trades are hedged alongside listed books but cannot be assigned to strikes from the public feed, so published GEX undercounts dealer gamma.</p>
+</div></details>
+</div>
+</div>
