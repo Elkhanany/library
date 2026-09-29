@@ -865,17 +865,13 @@ def questions_file(m):
     out = []
     total = 0
     for c in m.chapters:
-        path = os.path.join(NOTES, c["slug"] + ".md")
-        if not os.path.exists(path):
+        # "- None." (and "- None beyond those of ...") says there is no question
+        items = [it for it in list_items(notes_section(c["slug"], "Questions for the author"))
+                 if not re.match(r"- None\b", it)]
+        if not items:
             continue
-        mo = re.search(r"^## Questions for the author[ \t]*\n(.*?)(?=^## |\Z)", library.read(path),
-                       re.M | re.S)
-        body = mo.group(1).strip() if mo else ""
-        n = len(re.findall(r"^- ", body, re.M))
-        if not n:
-            continue
-        total += n
-        out += ["## %s · %s" % (c["num"], c["title"]), "", body, ""]
+        total += len(items)
+        out += ["## %s · %s" % (c["num"], c["title"]), ""] + items + [""]
     head = ["# Questions for the author", "",
             "%d question%s the rewrite raised, collected by `tools/spx.py` from the \"Questions for "
             "the author\" in `notes/*.md`. Answer them there, or in the chapter, not here."

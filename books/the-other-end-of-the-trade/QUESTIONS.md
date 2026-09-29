@@ -1,10 +1,9 @@
 # Questions for the author
 
-364 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
+339 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
 
 ## 1A · What a return is
 
-- Length. The chapter's prose runs about 3,900 words against dl:1B's 1,000, well above the 1.2 to 1.5 times the brief expects for dealer-lab material. The excess is the teaching the brief asks for in the book's first chapter (logarithms, e, compounding, two derivations) plus the chapter shape (practice, rule, mistakes, recap, check). If it should be shorter, the first cuts are the grind box on ln(1 + x), the ln table and the second common mistake.
 - Symbol clash across chapters: 1E (another writer) uses G for the gain needed to recover a drawdown, D/(1 − D). Here G is the compound growth rate μ − σ²/2, as in the variance-drag figure's readouts. Symbols are defined per chapter, but one book-wide choice would be cleaner.
 - The source says "a stock with 10% expected simple return per year". In discrete annual terms, E[ln(1 + R)] with a 10% mean and 20% standard deviation is about 7.9%, not 8%; the 8% is exact for the continuous-time drift. The text frames μ as the continuous-time arithmetic drift, which keeps the source's numbers exact. Say if you want the discrete caveat spelled out.
 
@@ -24,7 +23,6 @@
 - "Most published 'anomaly' Sharpe ratios in the academic literature shrink to indistinguishable-from-zero after deflation" is attributed by dl:1A to Bailey and López de Prado. Worth checking: the usual citation for the multiple-testing critique of published factors is Harvey, Liu and Zhu (2016).
 - "A strategy with Sharpe of 4.0 (typical of intraday market-making)": kept as stated. Is there a source?
 - spx:2.8 attributes "ES₉₅ for monthly returns of ATM PUT is roughly −8%" to Bondarenko's 2019 data; the headline numbers the sources quote from that paper do not include it. Keep the attribution?
-- Recovery arithmetic overlaps with 1E (another writer), which derives D/(1 − D) and tabulates 20% to 60%. This chapter refers there and adds only the 70% to 90% rows and dl:1A's narrative.
 - The worked long-equity/short-put example now uses a 1-in-100-year loss rather than a 5%-of-years one (above). If you prefer 5% of years, the loss that keeps the mean at $5 and the standard deviation at $10 is about $38.60, with gains of about $7.30, and B's worst year is then only 1.5 times A's.
 
 ## 1E · Drawdown, leverage and margin
@@ -57,7 +55,6 @@
 - The tick column gives "$0.05 / $0.10" for SPX and XSP and "$0.01 / $0.05" for SPY. Which increment applies when (by premium level, or by product class)? The text gives both values without the rule.
 - Which year is the divisor "in the eight-billion range"?
 - Are any XSP series AM-settled? The table says PM; the SOQ paragraph lists XSP with SPX and VIX.
-- Length. The chapter runs about 6,000 words without its figure ideas, about 5,000 of them running prose, against dl:3A's 2,600: two to two and a half times the source, above the 1.2 to 1.5 times the brief expects. The excess is teaching the reader needs before Parts IV and V: what an option, a future and an ETF are, the index toy and its events, the SOQ toy, the settlement toy and the fair value of a future. First cuts, if it should be shorter: the grind box, the price-weighted paragraph, Step 3 of the fair-value example, and the last check question.
 
 ## 2B · Where your order goes
 
@@ -66,15 +63,10 @@
 - Rule 605's realized spread is measured against the mid "a short interval later". Should the text give the interval the 2024 amendments use?
 - The two block quotations run to 39 and 46 words, over the brief's sentence limit. They are verbatim and kept whole.
 
-- Length. The chapter runs about 4,500 words without its figure ideas, about 4,000 of them running prose, against the roughly 2,100 words of dl:3B that stay here once the order types and the auction move to 2C: about twice the source. The excess is the worked NBBO, the spread metrics a reader needs to open a Rule 605 report, and the FLEX arithmetic. First cuts, if it should be shorter: the FLEX worked example and the fifth check question.
-
 ## 2C · The order book
 
 - Inverted markets. The source's rationale, "traders who want immediate execution badly enough are willing to pay for it explicitly, while liquidity is harder to attract", does not say which side pays for what: on an inverted venue the resting order pays and the taker is paid. The text keeps the source's sentence. Should the mechanism be spelled out?
 - "When your resting order fills, the trade was almost certainly initiated by someone with marginally more information": kept at its strength, though the break-even model the text adds lets any fraction of traders be informed.
-- The square-root law's attribution to Almgren and Chriss moves with it to Chapter 2D; see notes/2d.md.
-
-- Length. The chapter runs about 5,400 words without its figure ideas, about 4,700 of them running prose, against about 3,250 words of source once the dl:3B material arrives and the square-root law leaves: 1.45 to 1.65 times.
 
 ## 2D · What execution costs
 
@@ -83,8 +75,6 @@
 - Rule 4's windows (10:30 to 11:30 AM and 1:30 to 2:30 PM ET) and "the first 15 minutes ... widest spreads of the day as overnight charm and vanna unwinds clear": is there a source to cite?
 - The journal's "Most retail traders ... guess 10-20% of spread. The journaled data routinely shows 40-60%": whose data? The text keeps the claim at its strength.
 
-- Length. The chapter runs about 4,000 words without its figure ideas, about 3,300 of them running prose, against about 1,500 words of source (dl:3E plus the market-impact material moved in): 2.2 to 2.7 times, above the brief's 1.2 to 1.5. The excess is the working of the figure's model and the three formulas that make the rules checkable (slippage share, exit-cost ratio, friction drag). First cuts, if it should be shorter: the plain callout, the calibration example and the common mistake, which repeats the figure's lesson.
-
 ## 2E · Accounts, margin and taxes
 
 - The corrected tax gap (10.2 points like for like, not 12 to 14) also changes Chapter 2A's summary, which now quotes both. Is the author content with presenting the quoted figures beside the corrected ones, or should the quoted ones go?
@@ -92,24 +82,19 @@
 - "Most retail accounts with $2,000+ equity qualify for Reg-T margin" and "The first PM account every trader opens is operated incorrectly": kept at the source's strength. Is there a source for either?
 - Do the Pattern Day Trader thresholds need a date, given the rule's history of proposed changes?
 
-- Length. The chapter runs about 4,900 words without its figure ideas, about 4,200 of them running prose, against dl:3C's 1,940: 2.1 to 2.5 times, above the brief's 1.2 to 1.5. Most of the excess is the tax arithmetic that the correction needs (the like-for-like table, the saving identity, the computed decade), the scenario grid and the three short tax examples. First cuts, if it should be shorter: the year-end mark example, the first common mistake and one check question.
-
 ## 3A · What a trading model is
 
 - Purged k-fold cross-validation as López de Prado (2018) describes it also trains on data after the test fold, with purging and an embargo, rather than strictly before it. Should the chapter describe that procedure, or is the walk-forward description the intended one?
 - "Lookahead bias is the most common backtest error in retail strategy development" and "the central empirical finding of three decades of academic finance" carry no citation in the source. They are kept at the source's strength. Is there a source to name?
-- Length. The chapter's prose runs about 3,700 words against dl:2A's 1,600, about 2.3 times, above the 1.2 to 1.5 the brief expects. The excess is the chapter shape (practice, rule, mistakes, recap, check), two worked examples, the figure's reading and two clinical analogies. The first cuts, if wanted, are the plain callout, the familiar callout on immortal time bias and the base-rate paragraph.
 
 ## 3B · Mean reversion and momentum
 
 - The Hurst paragraph says H < 0.5 for mean-reverting and H > 0.5 for persistent series. For any AR(1) with |w| < 1 the variance ratio settles at (1 + w)/(1 − w) at long lags, so over very long horizons the variance grows linearly again. The H the figure reads is a short-horizon one (lag 8). The text says the readout uses lag 8 but does not open this subtlety. Should it?
 - "Typical first-order autocorrelations on daily SPX returns are between −0.05 and +0.05": which period and which data? A figure of the estimate over time would need them.
-- Length. The chapter's prose is about 2,900 words against dl:2B's 860, about 3.4 times. The source is short and dense: stationarity, autocorrelation, the Hurst exponent and the variance ratio each arrive in a sentence or two, two figures need describing, and the known error needed a derivation. The first cuts, if wanted, are the bid-ask bounce section, the sample-size worked example and the second paragraph after the AR-fit figure.
 
 ## 3C · Fitting a model
 
 - "Saddle points ... are vastly more common than local minima in high-dimensional spaces" and "Adam ... the default choice in most modern ML codebases" carry no citation in the source and are kept at its strength.
-- Length. The chapter's prose is about 2,800 words against dl:2C's 930, about 3.0 times. The source names the derivative, the gradient, the matrix inverse and convexity without defining them, and the brief asks for each to be taught where first needed. The first cuts, if wanted, are the grind box deriving the AR(1) formulas and the momentum steady state.
 
 ## 3D · Position size and trading frequency
 
@@ -117,7 +102,6 @@
 - The source says Thorp's research was "extended by Kelly (1956)". Kelly's paper came first, and Thorp's work applied it to gambling and markets. Should the text give the order, and with what dates for Thorp?
 - "In any realistic behavioral model" (quarter-Kelly with a 30% discipline beating full Kelly) and "the dominant retail cost is slippage" carry no citation in the source. They are kept at its strength.
 - "Most production quant strategies use either piecewise-linear or smooth-tanh sizing, calibrated so that the cap corresponds to half-Kelly": kept at the source's strength. Is there a source?
-- Length. The chapter's prose is about 3,650 words against dl:2E's 1,430, about 2.6 times. The two fixes, the derivations the brief asks for and the chapter shape account for the excess. The first cuts, if wanted, are the grind box on shading a noisy estimate, the sizing worked example and the strategy A and B example.
 
 ## 4A · What a derivative is
 
@@ -145,7 +129,6 @@
 
 - "US-listed broad-based index options (SPX, XSP, NDX, RUT, VIX) are European-style: this is a structural consequence of the cash settlement." The chapter keeps the claim. Cash-settled index options can be American-style, though (the S&P 100's OEX options are one example), so European exercise may be better described as a design choice that goes with cash settlement than as a consequence of it. Should the sentence say "goes with"?
 - The XSP example's "potential assignment liability equal to 10 × $100 × strike ... $580,000 of cash-secured collateral obligation". For a cash-settled put, assignment pays the in-the-money amount in cash; $580,000 is the obligation only if XSP went to zero ($575,500 net of the premium). The text calls it the potential assignment liability and the collateral a cash-secured version must hold, which is accurate. Is that the intended reading?
-- Glossary: Part IV (parallel writer) may also define "exercise" or "cash settlement", which dl:4A introduces. This chapter defines both in glossary/V-a.json. If glossary/IV*.json adds either, one entry should go.
 
 ## 5B · What an option's price is made of
 
@@ -159,11 +142,9 @@
 - The vega correction above: is $680 a contract (6.8 points) the figure you want, or did the source mean a different expiry or unit?
 - "The 2022-2023 Fed hiking cycle moved option valuations measurably through the rho channel for the first time in over a decade" and "the variance risk premium is, in aggregate, the empirical observation that this trade has paid for the dealer historically" are kept as the source states them. Neither names a study or data; Chapter 10C may be the place for the evidence.
 - The probability map uses a 1.5% dividend yield, while the simulator and the Greek surface use none. The text says so where it quotes each, but the three figures would be easier to compare with one convention.
-- "standard normal distribution" is added to the glossary with chapter 5C. Chapter 1D uses N(·) first but did not add a glossary entry. If Part I prefers to own the term, move the entry's chapter to 1D.
 
 ## 5D · Higher-order Greeks
 
-- Length. Counted as running prose (without maths, numbers, code blocks or figure ideas), the chapter has about 4,700 words against dl:5D's 1,380, about 3.4 times, well above the 1.2 to 1.5 times the brief expects. The excess is teaching the source assumes (derivatives of the Black-Scholes formula, a worked example per Greek) plus the chapter shape. If it should be shorter, the first cuts are the charm grind box, the straddle table and the Greek grid.
 - "The well-documented 'Monday gap-up' anomaly" and "the empirical regularity of Monday gaps and the 'charm bid' into OPEX Fridays": the source cites no study. Is there one to name?
 - "Charm ... operates on calendar time": this is true of the Black-Scholes clock, which counts calendar days. Should the text say that desks that price on a trading-day clock see the weekend drift at Monday's open instead? The chapter keeps the source's statement and offers this as a figure idea only.
 - "Roughly 95% of the higher-order dynamics": the author's own estimate, kept as such. Confirm it should stand without a source.
@@ -172,7 +153,6 @@
 
 ## 5E · Volatility
 
-- Length. Counted as running prose (without maths, numbers, code blocks or figure ideas), the chapter has about 3,300 words against dl:5E's 1,120, about 3.0 times, above the 1.2 to 1.5 times the brief expects. The excess is the chapter shape (practice, rule, mistakes, recap, check), the estimator and inversion examples and the figure's walk-through. If it should be shorter, the first cuts are the ATM-shortcut grind box, the hypothetical surface table and the second common mistake.
 - "If the market is quoting a 30-day ATM SPX call at $35": no index level is given. By the ATM shortcut, $35 for 30 days implies an IV near 5% at an index of 6,000, so the number reads as an illustration of the definition only. The chapter keeps it and does not compute its IV; the worked inversion uses a hypothetical $100 underlying instead.
 - Which Bondarenko analysis gives the +4.2 vol points for 1990 to 2018? The Edge Book cites Bondarenko (2014, 2019).
 - The efficiency figures (about five and seven to eight times close-to-close) hold for a driftless continuous price without gaps. Should the text say so? The "When it fails" callout says the range estimators assume continuous prices within the day.
@@ -181,7 +161,6 @@
 
 ## 5F · Put-call parity and the risks at expiry
 
-- Length. Counted as running prose (without maths, numbers, code blocks or figure ideas), the chapter has about 3,600 words against dl:5F's 1,550, about 2.3 times, above the 1.2 to 1.5 times the brief expects. If it should be shorter, the first cuts are the roll worked example, the covered-call table and the expensive-borrow paragraph's added arithmetic.
 - "Each of these risks has destroyed more retail accounts than missed delta calls": kept as the author's judgment. Is there evidence behind it, or should it be softened?
 - "The OCC has never failed to deliver in its history": kept. Is there a date or source to cite?
 - "Gap risk is ... modest for SPY (typical Monday gap of 0.2-0.5%, occasionally 2-5% on stress weekends)": over what period were these measured?
@@ -191,7 +170,6 @@
 
 ## 5G · The volatility surface
 
-- Length. Counted as running prose (without maths, numbers, code blocks or figure ideas), the chapter has about 3,200 words against dl:5G's 1,010, about 3.2 times, above the 1.2 to 1.5 times the brief expects; about 110 of those words are the Part V close moved from dl:5F. If it should be shorter, the first cuts are the skew week worked example and one of the two Familiar callouts.
 - Skew timing: are the 5E pattern (flattening before vol spikes) and the 5G pattern (steepening 1 to 3 days before sell-offs) meant as two horizons of one cycle? Is there a source for either?
 - "In typical equity environments, IV percentile is roughly 2× IV rank": over what sample of stocks and years?
 - "Typical value: 4-8 vol points in normal conditions, expanding to 12-15 vol points during stress": at which tenor? The chapter's toy and check use 30 days.
@@ -210,7 +188,6 @@
 ## 6B · What the dealer inherits
 
 - The source explains ½σ² in d₁ as accounting for "the lognormal distribution's mean [being] shifted upward relative to the median in log space". The chapter keeps that reading and illustrates it. Strictly, d₂ carries r − q − ½σ² (the risk-neutral median of the log price), and d₁ adds σ√T to it. Is a sentence on that wanted, or is the heuristic enough at this level?
-- Length: the prose runs about 2,100 words against dl:6C's 900, about 2.3 times, above the brief's 1.2 to 1.5. The excess is three worked examples, the figure's description and the chapter shape. The first cut, if one is wanted, is the "drift of at-the-money delta" example.
 
 ## 6C · Delta hedging
 
@@ -234,7 +211,6 @@
 
 ## 7A · Why hedging works
 
-- Length. The chapter runs about 8,400 words by `wc` (about 6,900 words of prose outside maths and figure ideas) against dl:7A's 2,180, well above the brief's 1.2 to 1.5 times. The excess is the stochastic calculus the brief asked to be taught from scratch (random walk, Brownian motion, quadratic variation, Itô's lemma), the chapter shape, and the friction figure's statistics. If it should be shorter, the first cuts are the 500-seed paragraph and the square-root paragraph after the friction figure (Chapter 6E owns that trade-off), the flat-gamma strip worked example, and the one-day drift-against-noise example.
 - "It falls out of the PDE": the PDE is derived for one price-taking hedger, whose trades do not move the price. The feedback loop needs aggregate short gamma and hedging large enough to move the price, which is Chapter 8B's model. Should the sentence say it falls out of the hedging P&L once dealers' trades move the price? Kept as written.
 - "The unique correct strategy": unique under the model's assumptions (continuous trading, no costs, no jumps). Kept as written; the "When it fails" callout lists the assumptions.
 - "For most retail-scale ... delta-hedged positions, the first-order framing captures the bulk of P&L variability": is there a study behind this, or is it the author's judgement? Kept without attribution.
@@ -249,7 +225,6 @@
 - The charm example states no IV. Should it give one (about 16% with zero rates), so a reader can reproduce 0.004 a day?
 - "100,000 SPX OTM put contracts (a typical institutional book)" sits oddly beside the FOMC example's "500,000-contract aggregate put book" for the whole dealer community. Is 100,000 meant per institution and 500,000 for one strike's aggregate?
 - "Roughly 95%" (both versions) is unsourced; confirm it should stand as the author's estimate.
-- Length: about 5,300 words by `wc` (about 4,500 words of prose outside maths and figure ideas) against dl:7B's 1,720, above the brief's 1.2 to 1.5 times. The first cuts, if wanted, are the "What the first-order bet leaves out" section with its worked sell-off (which answers Chapter 7A's third caveat) and the figure reading guide.
 
 ## 8A · Gamma exposure
 
@@ -409,7 +384,7 @@
 
 - ADX above 25 "corresponds empirically to negative-GEX regimes": is there a study or a dataset behind this? The text says the source cites none.
 - "Donchian breakouts often coincide with mechanical institutional rebalancing flow at quarter ends": the Edge Book treats quarter-end rebalancing as a small effect (10G, 10I). Is there evidence for the coincidence?
-- `pandas.ewm(span=n).mean()` defaults to `adjust=True`, which weights the first values differently from the recursive EMA until the history is long. The text keeps the source's code as given. Should it say `adjust=False` for both?
+- `s.ewm(span=n).mean()` defaults to `adjust=True`, which weights the first values differently from the recursive EMA until the history is long. The text keeps the source's call for the standard EMA, now written as a method of a series, and gives `adjust=False` only for Wilder. Should it say `adjust=False` for both?
 - "The 23-indicator menagerie": the source names 16 plus "several others". The text keeps "some 23".
 
 ## 11D · Chart patterns
@@ -571,7 +546,6 @@
 - Example 2: where was the planned stop? A loss of $3,500 at 140% of plan implies the exit (5,920) came below the planned level, presumably Friday's low.
 - Example 8: "NVDA gaps 7% on earnings" does not give the direction. The lesson ("the trades you skip are sometimes the trades that would have hurt you most") implies a gap against the long; the text leaves the direction open.
 - Example 7: "vol crush gives 0.5R" gives no mechanism for a gain on a long index trade; kept as stated.
-- Length: the chapter's prose is about 2,800 words against dl:12D's 992, nearly three times the source. The known errors and the other arithmetic fixes, the cross-chapter conflicts the brief asks to state (Chapters 11C, 11H, 11N, 13B, 13C), the notes on Example 6's notional and exit, and the chapter's opening, closing and self-check account for it. The first cuts, if wanted, are Example 6's second and third notes and the paragraph after Example 8.
 
 ## 13E · Worked examples: the portfolio
 
@@ -600,11 +574,6 @@
 
 - The two vega limits: were the NAV percentages meant per 10 volatility points? At 0.1% of NAV per point, a $1 million account's threshold would be $1,000 a point, inside the $500 to $1,500 band, and "0.5% of NAV" would become $500 a point, the band's floor.
 - "Several hundred SPX vega units": is the unit dollars per volatility point, as the text assumes?
-- Chapter 13B points here for delta limits on the book. Should this chapter give one, or should 13B's pointer name vega only?
-
-## R1 · Glossary
-
-- None.
 
 ## R2 · The maths on one page
 
@@ -614,7 +583,3 @@
 
 - Which author list is right for the 2021 paper on the disappearing pre-FOMC drift: Kurov, Sancetta, Strasser and Wolfe, or Kurov, Halova, Wolfe and Gilbert?
 - "Bondarenko (2014), Cboe PUT Index empirical analysis" has no title or journal, and the chapters also cite Bondarenko (2019). Should the list give both, with titles?
-
-## R4 · Checklists
-
-- None beyond those of Chapters 1D, 13B and 13G.

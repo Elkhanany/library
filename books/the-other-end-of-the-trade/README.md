@@ -92,6 +92,49 @@ What the rewrite keeps, adds and fixes:
   that disagree) is in the chapter's notes under "Questions for the author", and all of them
   are gathered in `QUESTIONS.md`.
 
+## What the rewrite corrected
+
+Every correction the rewrite made to a source is in `CORRECTIONS.md`, by chapter, so that it
+can be carried back to the app and to the Edge Book. Each chapter's text was checked twice:
+by its writer, and by a second, independent check that recomputed every worked example,
+formula and answer and ran the figures' own code. The corrections that change a number or a
+conclusion a reader would act on:
+
+- **Compounding (1A).** A +50% gain followed by a −50% loss costs 25% a pair, not 13.4%, and
+  repeating the pair grinds wealth toward zero without ever reaching it.
+- **Tail events (1B).** A 3-sigma day comes about once every 2.9 years, not twice a decade.
+- **Utility (1C).** The log-utility example's expected log return is +0.0501, positive, where
+  the source called it negative.
+- **Risk-adjusted return (1D).** The ruin formula's exponent is 2μ/σ² − 1, the Sortino ratio
+  exceeds the Sharpe ratio even for a symmetric strategy, and the Sharpe ratio is return per
+  unit of risk, where the source had it the other way up.
+- **Taxes and contract size (2D, 2E).** The like-for-like tax gap between SPY and XSP at the
+  top bracket is 10.2 points, not 12 to 14. XSP's tax advantage is against SPY, not SPX. An
+  SPX option carries $100 a point, or $500,000 of notional at 5,000.
+- **Kelly sizing (3D).** The source's example put dollars per share where fractions of
+  capital belong; full Kelly for that edge is five times the account, and quarter-Kelly
+  keeps about 44% of the growth rate, rather than giving 44% up.
+- **Options (5B to 5D).** The synthetic option chain broke put-call parity and is rebuilt. An
+  at-the-money 30-day SPX call carries about $680 of vega a contract, not $10. With the strike
+  below spot, d₁ and d₂ are positive.
+- **Dealers (6B, 6D, 7A, 7B).** SPY's dollar gamma is a tenth of SPX's, not a hundredth. What
+  stays flat is gamma times the price squared, not gamma. Four signs and directions in the
+  vanna and charm examples are corrected.
+- **The whole market (8A, 8B, 9A).** Dealers cannot be short calls bought from customers. The
+  feedback coefficient grows as market depth falls, not with it. The vanna loop's opening
+  hedge sells tens of thousands of shares, not 410. The VIX scales with the square root of the
+  options' prices, not linearly.
+- **Edges (10E, 10F).** Carry is (S − F)/F, positive in backwardation. The betting-against-beta
+  weights had their betas swapped, so the portfolio was not beta-neutral.
+- **Strategies (12C, 12D, 12H).** A long calendar is short gamma at its strike. A naked put's
+  loss is bounded. Cash-settled SPX options assign no stock.
+- **Discipline (13D, 13E, 13H).** The trade at C = 0.282 is a pass under the 0.3 threshold,
+  and a 0.497 score is not high conviction. The vega monitor's three buttons set a target
+  vega.
+
+What the sources leave open (an unsourced statistic, two figures that disagree, a claim the
+arithmetic does not support) is in `QUESTIONS.md`, with the chapter each question comes from.
+
 ## How a chapter becomes a page
 
 `tools/spx.py` turns `chapters/<slug>.md` into `src/<slug>.html`, and `outline.json` into
