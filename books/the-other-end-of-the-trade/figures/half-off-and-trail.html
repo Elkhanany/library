@@ -20,11 +20,11 @@ source: new for this book: chapter 11J, "Half off and trail"
     </div>
   </div>
   <div class="evidence"><div class="ev-scroll"><table class="trials">
-    <thead><tr><th class="c-trial">Exit rule</th><th>Median</th><th>Mean</th><th>Losing trades</th><th>Best 10% from</th></tr></thead>
+    <thead><tr><th class="c-trial">Exit rule</th><th>Mean</th><th>Losing trades</th><th>90th percentile</th></tr></thead>
     <tbody>
-      <tr><td class="c-trial">all out at +0.75R</td><td data-label="Median" id="{{uid}}-a0"></td><td data-label="Mean" id="{{uid}}-a1"></td><td data-label="Losing trades" id="{{uid}}-a2"></td><td data-label="Best 10% from" id="{{uid}}-a3"></td></tr>
-      <tr><td class="c-trial">half off at +0.75R, rest trailed</td><td data-label="Median" id="{{uid}}-b0"></td><td data-label="Mean" id="{{uid}}-b1"></td><td data-label="Losing trades" id="{{uid}}-b2"></td><td data-label="Best 10% from" id="{{uid}}-b3"></td></tr>
-      <tr><td class="c-trial">all held to day 60</td><td data-label="Median" id="{{uid}}-c0"></td><td data-label="Mean" id="{{uid}}-c1"></td><td data-label="Losing trades" id="{{uid}}-c2"></td><td data-label="Best 10% from" id="{{uid}}-c3"></td></tr>
+      <tr><td class="c-trial">all out at +0.75R</td><td data-label="Mean" id="{{uid}}-a1"></td><td data-label="Losing trades" id="{{uid}}-a2"></td><td data-label="90th percentile" id="{{uid}}-a3"></td></tr>
+      <tr><td class="c-trial">half off, rest trailed</td><td data-label="Mean" id="{{uid}}-b1"></td><td data-label="Losing trades" id="{{uid}}-b2"></td><td data-label="90th percentile" id="{{uid}}-b3"></td></tr>
+      <tr><td class="c-trial">all held to day 60</td><td data-label="Mean" id="{{uid}}-c1"></td><td data-label="Losing trades" id="{{uid}}-c2"></td><td data-label="90th percentile" id="{{uid}}-c3"></td></tr>
     </tbody>
   </table></div></div>
   <div class="ctrls">
@@ -33,10 +33,11 @@ source: new for this book: chapter 11J, "Half off and trail"
   <figcaption><b>The half that is sold, and the half that runs.</b> Four hundred made-up
   trades, each a random walk in units of R, with daily moves of about 0.25R and a drift drawn
   for each trade: most small, a few large. Each trade is stopped at −1R and taken three ways:
-  all out at +0.75R, half out at +0.75R with the rest behind a trailing stop, and all held to
-  day 60. The lines sort each rule's results from worst to best, and stops and targets fill at
-  their levels. Set the drift to zero: no rule then makes money on average, and each only
-  reshapes the results.</figcaption>
+  all out at +0.75R; half out at +0.75R, with the rest behind a stop that trails the highest
+  price by the distance set; and all held to day 60. The lines sort each rule's results from
+  worst to best, with stops and targets filled at their levels. Set the drift to zero and all
+  three means fall to about zero: an exit rule reshapes the results but creates no
+  edge.</figcaption>
 </figure>
 <script>
 (function () {
@@ -119,7 +120,9 @@ source: new for this book: chapter 11J, "Half off and trail"
     var p = new NMT.Plot(c, { xmin: 0, xmax: 1, ymin: -1.5, ymax: top,
                               pad: { l: 40, r: 12, t: 12, b: 24 } });
     /* the trades in order along the bottom, worst to best, with the median in the middle */
-    DL.axes(p, { xs: [0, 0.25, 0.5, 0.75, 1], ny: 5,
+    var ys = [-1], step = top > 6 ? 2 : 1;
+    for (var v = 0; v <= top; v += step) ys.push(v);
+    DL.axes(p, { xs: [0, 0.25, 0.5, 0.75, 1], ys: ys,
                  x: function (v) {
                    return v === 0 ? 'worst' : v === 1 ? 'best' : v === 0.5 ? 'median' :
                           Math.round(v * 100) + '%';
@@ -130,13 +133,12 @@ source: new for this book: chapter 11J, "Half off and trail"
       var v = s.R[r], pts = v.map(function (y, i) { return [(i + 0.5) / v.length, y]; });
       p.path(pts, { color: DL.color(ROLES[r]), width: r === 1 ? 2.4 : 1.6 });
     });
-    [2, 0, 1].forEach(function (r) {
-      p.dot(0.5, s.S[r].med, { r: 3.5, color: DL.color(ROLES[r]), ring: true });
-    });
+
     /* the key, stacked at the top left, where the worst trades never reach */
     var g = p.g, x0 = p.X(0) + 10, y0 = p.Y(top) + 10;
     g.save();
     g.font = font();
+    g.textAlign = 'left';
     g.textBaseline = 'middle';
     NAMES.forEach(function (name, r) {
       var y = y0 + r * 16;
@@ -159,7 +161,6 @@ source: new for this book: chapter 11J, "Half off and trail"
     DL.out(U + '-k-o', DL.num(s.k, 2) + 'R');
     ['a', 'b', 'c'].forEach(function (key, r) {
       var x = s.S[r];
-      DL.out(U + '-' + key + '0', rr(x.med));
       DL.out(U + '-' + key + '1', DL.signed(x.mean, 2) + 'R');
       DL.out(U + '-' + key + '2', DL.pct(x.lose, 0));
       DL.out(U + '-' + key + '3', rr(x.p90));

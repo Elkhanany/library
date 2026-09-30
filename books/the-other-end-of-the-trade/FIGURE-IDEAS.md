@@ -1,6 +1,6 @@
 # Where a new figure would help
 
-459 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
+457 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
 
 ## 1A · What a return is
 
@@ -672,7 +672,6 @@
 
 ## 13F · Setup cards
 
-- *What a setup card is.* A card with live checks. The reader enters today's readings: the composite signal, the VIX and VIX/VIX3M, ADX, the stage, the sign of GEX and the 21-day realized volatility. Every card in the chapter lights each of its rows green or red, and a column of verdicts reads trade, reduce, halt or skip. It shows how one change in the regime, such as the VIX crossing 22, switches several cards off at once.
 - *Where the cards and the chapters disagree.* A swing card as a sizing sheet. The reader picks one of the four cards and enters the portfolio, the entry, the stop and, for an option, its delta. The sheet fills in the size from the card's risk percentage, the notional and its ratio to the portfolio, the targets in R and in price, and the date of the time stop. It shows the four cards producing very different notionals from the same 1% of risk, because their stops sit at different distances.
 - *Risk overlay cards.* An event-overlay calculator. The reader sets the portfolio, the normal risk per trade, the stop distance and the implied move of a coming FOMC meeting or earnings report. The figure applies the overlay's rules, halving the size, widening the stop, testing the veto and capping the position so that the implied move costs no more than 2% of the portfolio, and draws the position before and after. It shows how much smaller a trade becomes inside an event window.
 - *Card 01: long equity.* Card 01's kill rule through time. Two synthetic lines, a cyclically adjusted earnings yield and a 10-year yield, run across the years with their gap shaded and a line at −1%, above bars for 12-month earnings growth. The reader sets how many months count as "sustained", and the rule lights only where the gap stays below −1% while earnings growth is negative. It shows that the rule needs both conditions at once, and how the definition of "sustained" moves the dates on which it fires.
@@ -682,7 +681,6 @@
 
 ## 13G · The portfolio
 
-- *The reference allocation.* Capital against risk. Two bars divide the same portfolio, one by dollars and one by share of volatility, with a band for each sleeve's range in the reference table. The reader sets each sleeve's dollars, volatility and correlation with equity, and the risk bar redraws. It shows a calm sleeve taking little risk for its dollars, and a sleeve that moves with equity taking more risk than its volatility alone suggests.
 - *Sizing from a stress loss.* A risk-contribution calculator. The reader sets the dollars, volatility and pairwise correlations of up to five sleeves, and a stacked bar shows each sleeve's share of risk beside its share of dollars. A button solves for the dollar weights that give equal contributions, and a second for the Edge Book's pragmatic target. It shows how a sleeve's correlation with equity changes its share of risk as much as its own volatility does.
 - *What "survivable" means.* The stress table as a live grid. Rows are sleeves and columns scenarios, with each cell editable, and a toggle replaces the Edge Book's allowances with values computed from the cards: contracts times the put's floor for the VRP, the card's ranges for trend and carry. Totals, the gain needed and the years to recover at a rate the reader sets update beneath. It shows which rows drive the S3 loss, and how much the answer depends on trend paying in a crash.
 - *The gut check.* The gut check as a path. A portfolio path falls to S3's loss of 30% and then takes one more 10% day, with the gain needed to recover drawn beside it. The reader sets the extra fall and a panic threshold, and a second line follows an investor who sells at the threshold and buys back a year later. It compares the cost of exiting near the bottom with the cost of sizing 25% smaller from the start.
