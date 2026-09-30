@@ -1,0 +1,129 @@
+<!--
+name: feedback cascade
+source: new for this book: chapter 8D, "The feedback multiplier as a cascade"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-kg">feedback κG</label>
+      <input type="range" id="{{uid}}-kg" min="-0.9" max="0.95" step="0.05" value="0.45">
+      <output id="{{uid}}-kg-o" for="{{uid}}-kg"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-n">rounds of hedging</label>
+      <input type="range" id="{{uid}}-n" min="0" max="12" step="1" value="12">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-tot"></output></div>
+    <div class="ctrl"><output id="{{uid}}-run"></output></div>
+    <div class="ctrl"><output id="{{uid}}-last"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One shock, and the hedging it sets off.</b> The first bar is a news shock,
+  ε. Each bar after it is one round of dealer hedging, κG times the round before, drawn from
+  where the last one ended, so the bars add up to the running total. The rounds slider adds
+  them one at a time. κG is positive when dealers are net short gamma, which is negative
+  published GEX. Every round then joins the move before it (rose), and the total climbs toward
+  ε/(1 − κG), the dashed line and the last bar. With κG negative every round opposes the move
+  before it (green), and the total zigzags down to a level below the shock. Drag κG toward 0.95
+  and the rounds stop dying out: 12 of them leave the total far short of its limit.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var KG = DL.$(U + '-kg'), NN = DL.$(U + '-n');
+  var ROUNDS = 12, XT = ROUNDS + 2, st;
+
+  /* The cascade of the chapter's feedback multiplier, in units of the shock: the news moves
+     the price by 1, and round n of hedging adds (kG)^n, so after n rounds the total is
+     (1 - (kG)^(n+1)) / (1 - kG), which tends to 1 / (1 - kG) while |kG| < 1 */
+  function compute() {
+    var kg = +KG.value, n = +NN.value, steps = [], tot = [], t = 0;
+    for (var i = 0; i <= ROUNDS; i++) {
+      var s = Math.pow(kg, i);
+      steps.push(s);
+      t += s;
+      tot.push(t);
+    }
+    st = { kg: kg, n: n, steps: steps, tot: tot, lim: 1 / (1 - kg) };
+  }
+
+  /* the effective vol explorer's names for the regimes, on kG */
+  function regime(d) {
+    if (d > 0.7) return 'Explosive.';
+    if (d > 0) return 'Amplifying.';
+    if (d === 0) return 'Neutral.';
+    if (d > -0.3) return 'Damped.';
+    return 'Strongly damped.';
+  }
+  function eps(x, d) { return DL.num(x, d == null ? 2 : d) + 'ε'; }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var hi = Math.max(st.lim, Math.max.apply(null, st.tot)) * 1.14;
+    var p = new NMT.Plot(c, { xmin: -0.7, xmax: XT + 0.7, ymin: 0, ymax: hi,
+                              pad: { l: 40, r: 12, t: 24, b: 26 } });
+    var ty = DL.ticks(0, hi, 4), dp = ty.step >= 1 ? 0 : ty.step >= 0.1 ? 1 : 2;
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.7,
+                 y: function (v) { return v === 0 ? '0' : DL.num(v, dp); } });
+    var news = DL.color('accent'), col = st.kg > 0 ? DL.color('plain') : DL.color('insight');
+    var faint = DL.color('ink-faint'), soft = DL.color('ink-soft');
+
+    /* the limit, dashed across, and as the last bar */
+    DL.hline(p, st.lim, { color: soft, dash: [5, 4], width: 1.2 });
+    DL.bars(p, [XT], [st.lim], { w: 0.72, color: DL.fade(DL.color('ink'), 0.28) });
+    p.text(XT, st.lim, eps(st.lim), { dy: -5, align: 'center', font: font(), color: DL.color('ink') });
+
+    /* the shock, and each round of hedging from where the last one ended */
+    for (var i = 0; i <= st.n; i++) {
+      var from = i === 0 ? 0 : st.tot[i - 1];
+      DL.bars(p, [i], [st.tot[i]], { base: from, w: 0.72, color: i === 0 ? news : DL.fade(col, 0.85) });
+      if (i < st.n) p.seg(i + 0.36, st.tot[i], i + 0.64, st.tot[i], { color: faint, width: 1 });
+    }
+
+    /* rounds along the bottom: every one when there is room, every other one when not */
+    var room = p.X(1) - p.X(0) > 22, xs = [0];
+    for (var r = 1; r <= ROUNDS; r++) if (room || r % 2 === 0) xs.push(r);
+    xs.push(XT);
+    DL.xticks(p, xs, function (x) { return x === 0 ? 'news' : x === XT ? 'total' : String(x); });
+    p.text(-0.7, hi, 'running total, in units of the news shock ε',
+           { dx: -34, dy: -8, font: font(), color: soft });
+  });
+
+  function update() {
+    compute();
+    var n = st.n, run = st.tot[n], share = run / st.lim, last = st.steps[n];
+    DL.out(U + '-kg-o', DL.signed(st.kg, 2));
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-tot', 'total ε/(1 − κG) = ' + eps(st.lim));
+    DL.out(U + '-run', 'after ' + n + (n === 1 ? ' round: ' : ' rounds: ') + eps(run) +
+                       ' (' + DL.pct(share, 0) + ')');
+    DL.out(U + '-last', n === 0 ? 'no hedging yet'
+                                : 'round ' + n + ' adds ' + (last === 0 ? 'nothing' : Math.abs(last) < 0.005 ? 'under 0.01ε'
+                                                                               : DL.signed(last, 2) + 'ε'));
+    DL.out(U + '-vk', regime(st.kg));
+    var times = DL.num(st.lim, 2) + ' times the news';
+    if (st.kg === 0) {
+      DL.out(U + '-vt', 'With no feedback the dealers add nothing, and the total is the news itself.');
+    } else if (st.kg < -0.7) {
+      DL.out(U + '-vt', 'Each round opposes the move before it and shrinks only slowly, so the total zigzags toward ' +
+                        times + '.');
+    } else if (st.kg < 0) {
+      DL.out(U + '-vt', 'Each round opposes the move before it, so the rounds alternate and the total settles at ' +
+                        times + '.');
+    } else if (st.kg <= 0.7) {
+      DL.out(U + '-vt', 'Each round joins the move before it, so the total grows to ' + times + '.');
+    } else {
+      DL.out(U + '-vt', 'Each round joins the move before it and shrinks only slowly: the total heads for ' +
+                        times + '.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-kg', U + '-n'], update);
+})();
+</script>

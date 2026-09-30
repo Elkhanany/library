@@ -1,0 +1,295 @@
+<!--
+name: compression breakout
+source: new for this book: chapter 11H, "Anatomy of a Compression Breakout"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <canvas id="{{uid}}-v" data-h="100"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-vol">breakout volume</label>
+      <input type="range" id="{{uid}}-vol" min="80" max="200" step="5" value="145">
+      <output id="{{uid}}-vol-o" for="{{uid}}-vol"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-fill">fill</label>
+      <input type="range" id="{{uid}}-fill" min="602" max="603.5" step="0.05" value="602.5">
+      <output id="{{uid}}-fill-o" for="{{uid}}-fill"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="What the price does after the breakout" id="{{uid}}-next">
+      <label>then</label>
+      <button type="button" data-v="plan" class="on" aria-pressed="true">plan</button>
+      <button type="button" data-v="run" aria-pressed="false">run</button>
+      <button type="button" data-v="fake" aria-pressed="false">fakeout</button>
+      <button type="button" data-v="stall" aria-pressed="false">stall</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-stop"></output></div>
+    <div class="ctrl"><output id="{{uid}}-size"></output></div>
+    <div class="ctrl"><output id="{{uid}}-tgt"></output></div>
+    <div class="ctrl"><output id="{{uid}}-time"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The whole plan, written before the entry.</b> A made-up SPY base between
+  590 and 602, with each day's volume beneath as a share of its 20-day average. The trigger
+  needs breakout volume of at least 130% of that average and a fill no more than 0.1% above the
+  602.00 pivot. The stop sits at the range's midpoint, the size follows from a $3,000 budget on
+  $300,000, and the target is the measured move or 2R, whichever comes first. Choose what the
+  price does next to see which exit closes the trade: the target, the invalidation or the time
+  stop on day 8.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var VOL = DL.$(U + '-vol'), FILL = DL.$(U + '-fill');
+  var next = DL.seg(U + '-next', update);
+
+  /* the worked example: the range, its midpoint (the stop), the highest acceptable fill,
+     the budget, the portfolio and the time stop in trading days */
+  var LO = 590, HI = 602, MID = (LO + HI) / 2, CAP = HI * 1.001;
+  var BUDGET = 3000, PORT = 300000, TSTOP = 8;
+  var XMIN = -31, XMAX = 10;
+
+  /* the made-up tape, [day, open, high, low, close]: five days of advance, a 25-day base
+     between 590 and 602 that tightens toward its top, and the breakout bar on day 0 */
+  var TAPE = [[-30, 578.6, 581.99, 577.8, 581.2], [-29, 581.2, 585.15, 580.46, 584.5],
+    [-28, 584.5, 588.83, 583.3, 588], [-27, 588, 593.78, 587.29, 592.6],
+    [-26, 592.6, 598.2, 591.5, 597.4], [-25, 597.4, 601.86, 595.29, 600.78],
+    [-24, 600.78, 601.26, 598.24, 599.95], [-23, 599.95, 600.32, 594.01, 595.57],
+    [-22, 595.57, 597.22, 590.2, 590.64], [-21, 590.64, 591.65, 590.62, 591.24],
+    [-20, 591.24, 594.71, 590, 594.57], [-19, 594.57, 600.12, 593.41, 598.8],
+    [-18, 598.8, 601.49, 598.3, 600.84], [-17, 600.84, 601.19, 598.3, 599.02],
+    [-16, 599.02, 600.21, 593.53, 593.9], [-15, 593.9, 594.47, 592, 592.24],
+    [-14, 592.24, 594.68, 591.67, 593.87], [-13, 593.87, 597.32, 593.08, 597.25],
+    [-12, 597.25, 602, 596.75, 600.73], [-11, 600.73, 601.3, 599, 600],
+    [-10, 600, 600.45, 597.3, 597.56], [-9, 597.56, 598.47, 594.16, 595.24],
+    [-8, 595.24, 596.1, 594.06, 595.37], [-7, 595.37, 598.1, 595.3, 597.53],
+    [-6, 597.53, 600.28, 597.52, 599.45], [-5, 599.45, 601.12, 599.42, 600.32],
+    [-4, 600.32, 600.95, 599.6, 599.9], [-3, 599.9, 600.9, 599.7, 600.6],
+    [-2, 600.6, 601.2, 600, 600.25], [-1, 600.25, 601.35, 600.1, 601.05],
+    [0, 601.05, 603.6, 600.9, 603.2]];
+  /* volume as a percentage of its 20-day average: heavier in the advance, drying up from
+     the high 80s to the mid 70s through the base, 80% on average */
+  var VR = [108, 121, 114, 126, 102, 88, 84, 86, 83, 85, 82, 84, 81, 83, 80, 82, 79, 81, 78,
+            80, 77, 79, 76, 78, 75, 77, 76, 76, 75, 75];
+  /* three made-up ways the next eight days can go, each starting from the breakout's close */
+  var PATHS = {
+    run: [[1, 603.2, 605.3, 602.8, 604.9], [2, 604.9, 606.8, 604.1, 606.4],
+          [3, 606.4, 607, 604.6, 605.3], [4, 605.3, 609.5, 605, 609.1],
+          [5, 609.1, 611.6, 608.4, 611], [6, 611, 614.8, 610.6, 614.2],
+          [7, 614.2, 615.1, 612.9, 613.4], [8, 613.4, 614.6, 612.2, 614.3]],
+    fake: [[1, 603.2, 603.9, 599.8, 600.4], [2, 600.4, 601.2, 597.9, 598.6],
+           [3, 598.6, 599.8, 597.1, 599.3], [4, 599.3, 600.5, 598.2, 598.9],
+           [5, 598.9, 599.6, 596.9, 597.6], [6, 597.6, 599.1, 596.8, 598.8],
+           [7, 598.8, 600.2, 598.1, 599.5], [8, 599.5, 600.1, 597.8, 598.3]],
+    stall: [[1, 603.2, 604.6, 602.6, 603.9], [2, 603.9, 605.2, 603.1, 604.7],
+            [3, 604.7, 605, 602.9, 603.5], [4, 603.5, 604.4, 602.4, 602.9],
+            [5, 602.9, 604.1, 602.2, 603.8], [6, 603.8, 605.5, 603.3, 605],
+            [7, 605, 605.6, 603.6, 604], [8, 604, 604.9, 603.4, 604.2]]
+  };
+
+  /* the plan, and the first exit the rules call on the chosen path: the stop, the target,
+     a close back inside the range within 2 sessions or below the midpoint, or day 8 */
+  function plan() {
+    var vol = parseFloat(VOL.value), fill = parseFloat(FILL.value), v = next();
+    var R = fill - MID, n = Math.floor(BUDGET / R + 1e-9);
+    var measured = HI + (HI - LO), twoR = fill + 2 * R, target = Math.min(measured, twoR);
+    var s = { vol: vol, fill: fill, v: v, R: R, n: n, notional: n * fill, measured: measured,
+              twoR: twoR, target: target, volOk: vol >= 130, fillOk: fill <= CAP + 1e-9 };
+    s.trade = s.volOk && s.fillOk;
+    s.exit = null;
+    if (v !== 'plan') {
+      var P = PATHS[v];
+      for (var i = 0; i < P.length && !s.exit; i++) {
+        var b = P[i], d = b[0];
+        if (b[3] <= MID) s.exit = { d: d, px: Math.min(b[1], MID), why: 'stop' };
+        else if (b[2] >= target) s.exit = { d: d, px: Math.max(b[1], target), why: 'target' };
+        else if (d <= 2 && b[4] < HI) s.exit = { d: d, px: b[4], why: 'back' };
+        else if (b[4] < MID) s.exit = { d: d, px: b[4], why: 'mid' };
+        else if (d === TSTOP) s.exit = { d: d, px: b[4], why: 'time' };
+      }
+      s.exit.r = (s.exit.px - fill) / R;
+      s.exit.usd = n * (s.exit.px - fill);
+    }
+    return s;
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  function px(x) { return DL.num(x, 2); }
+  function money(x) { return (x > 0 ? '+' : '') + DL.usd(x, 0); }
+
+  /* candles in one ink: hollow when the day closed up, filled when it closed down */
+  function candles(p, bars, col, upTo) {
+    var g = p.g, w = Math.max(1.5, (p.X(1) - p.X(0)) * 0.56);
+    DL.clip(p);
+    g.strokeStyle = col;
+    g.fillStyle = col;
+    g.lineWidth = 1;
+    bars.forEach(function (b) {
+      if (upTo != null && b[0] > upTo) return;
+      var x = Math.round(p.X(b[0])) + 0.5;
+      var top = p.Y(Math.max(b[1], b[4])), bot = p.Y(Math.min(b[1], b[4]));
+      g.beginPath();
+      g.moveTo(x, p.Y(b[2]));
+      g.lineTo(x, top);
+      g.moveTo(x, bot);
+      g.lineTo(x, p.Y(b[3]));
+      g.stroke();
+      if (b[4] >= b[1]) g.strokeRect(x - w / 2, top, w, Math.max(1, bot - top));
+      else g.fillRect(x - w / 2, top, w, Math.max(1, bot - top));
+    });
+    g.restore();
+  }
+
+  var st = plan();
+  var PAD = { l: 40, r: 46 };
+
+  var drawP = DL.figure(U + '-c', function (c) {
+    var s = st;
+    var p = new NMT.Plot(c, { xmin: XMIN, xmax: XMAX, ymin: 576, ymax: 622,
+                              pad: { l: PAD.l, r: PAD.r, t: 10, b: 8 } });
+    DL.axes(p, { xs: [], x: false, ys: [580, 590, 600, 610, 620],
+                 y: function (v) { return DL.num(v, 0); } });
+    var g = p.g, acc = DL.color('accent'), ins = DL.color('insight'), pla = DL.color('plain'),
+        ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var on = s.trade;
+
+    /* the range, its midpoint and the pivot at its top */
+    DL.clip(p);
+    g.fillStyle = DL.fade(acc, 0.08);
+    g.fillRect(p.X(-25.5), p.Y(HI), p.X(-0.5) - p.X(-25.5), p.Y(LO) - p.Y(HI));
+    g.restore();
+    p.seg(-25.5, HI, 0, HI, { color: acc, width: 1.2 });
+    p.seg(-25.5, LO, -0.5, LO, { color: acc, width: 1.2 });
+    p.seg(-25.5, MID, 0, MID, { color: faint, width: 1, dash: [3, 3] });
+    p.text(-25.5, HI, 'range ' + px(LO) + ' to ' + px(HI), { dy: -4, color: soft, font: font() });
+
+    /* the plan from the breakout to the time stop: reward above the fill, risk below it */
+    if (on) {
+      DL.clip(p);
+      g.fillStyle = DL.fade(ins, 0.1);
+      g.fillRect(p.X(0), p.Y(s.target), p.X(TSTOP) - p.X(0), p.Y(s.fill) - p.Y(s.target));
+      g.fillStyle = DL.fade(pla, 0.1);
+      g.fillRect(p.X(0), p.Y(s.fill), p.X(TSTOP) - p.X(0), p.Y(MID) - p.Y(s.fill));
+      g.restore();
+    }
+    var cT = on ? ins : faint, cS = on ? pla : faint, cE = on ? ink : faint;
+    p.seg(0, s.measured, XMAX, s.measured, { color: cT, width: 1.4, dash: on ? null : [3, 3] });
+    p.seg(0, s.twoR, XMAX, s.twoR, { color: cT, width: 1, dash: [4, 3] });
+    p.seg(0, s.fill, XMAX, s.fill, { color: cE, width: 1, dash: [2, 2] });
+    p.seg(0, MID, XMAX, MID, { color: cS, width: 1.4, dash: on ? null : [3, 3] });
+    p.seg(TSTOP, 578, TSTOP, 618, { color: faint, width: 1, dash: [3, 3] });
+    p.text(TSTOP, 578, 'time stop', { align: 'right', dx: -4, dy: -1, color: soft,
+                                      font: font() });
+    /* the verdict or the exit, written above the plan where no candle reaches */
+    if (!on) p.text(0, 619.5, 'no trade', { baseline: 'middle', dx: 4, color: pla, font: font() });
+
+    /* the names of the plan's lines, in the right margin */
+    var mx = p.X(XMAX) + 5;
+    g.save();
+    g.font = font();
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
+    g.fillStyle = cT;
+    g.fillText(s.measured <= s.twoR ? 'target' : 'measured', mx, p.Y(s.measured) + 1);
+    g.textBaseline = 'bottom';
+    g.fillText(s.twoR < s.measured ? 'target' : '2R', mx, p.Y(s.twoR) - 1);
+    g.fillStyle = on ? soft : faint;
+    g.fillText('entry', mx, p.Y(s.fill) - 1);
+    g.textBaseline = 'top';
+    g.fillStyle = cS;
+    g.fillText('stop', mx, p.Y(MID) + 1);
+    g.restore();
+
+    /* the tape, the breakout bar, what followed, the fill and the exit */
+    candles(p, TAPE.slice(0, TAPE.length - 1), soft);
+    candles(p, [TAPE[TAPE.length - 1]], acc);
+    if (s.v !== 'plan') candles(p, PATHS[s.v], soft, on ? s.exit.d : null);
+    p.dot(0, s.fill, { r: 3.5, color: on ? ink : pla, ring: true });
+    if (on && s.exit) {
+      var e = s.exit, col = e.r >= 0 ? ins : pla;
+      p.dot(e.d, e.px, { r: 4, color: col, ring: true });
+      p.text(0, 619.5, 'day ' + e.d + ': ' + DL.signed(e.r, 2) + 'R', { baseline: 'middle', dx: 4,
+                                                                     color: col, font: font() });
+    }
+  });
+
+  var drawV = DL.figure(U + '-v', function (c) {
+    var s = st;
+    var p = new NMT.Plot(c, { xmin: XMIN, xmax: XMAX, ymin: 0, ymax: 230,
+                              pad: { l: PAD.l, r: PAD.r, t: 8, b: 22 } });
+    DL.axes(p, { grid: false, xs: [-20, -10, 0, TSTOP], ys: [0, 100, 200],
+                 x: function (v) { return v < 0 ? DL.MINUS + (-v) : String(v); },
+                 y: function (v) { return v + '%'; } });
+    var ins = DL.color('insight'), bcol = s.vol >= 130 ? ins :
+              s.vol >= 100 ? DL.color('warn') : DL.color('plain');
+    DL.hline(p, 100, { color: DL.color('rule') });
+    DL.hline(p, 130, { color: ins, dash: [4, 3] });
+    var xs = [], ys = [];
+    VR.forEach(function (v, i) { xs.push(-30 + i); ys.push(v); });
+    DL.bars(p, xs, ys, { w: 0.6, color: DL.fade(DL.color('ink-soft'), 0.4) });
+    DL.bars(p, [0], [s.vol], { w: 0.6, color: bcol });
+    p.text(0, s.vol, DL.num(s.vol, 0) + '%', { align: 'center', dy: -3, color: bcol,
+                                               font: font() });
+    var g = p.g;
+    g.save();
+    g.font = font();
+    g.fillStyle = ins;
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.fillText('130%', p.X(XMAX) + 5, p.Y(130));
+    g.restore();
+  });
+
+  function update() {
+    st = plan();
+    var s = st;
+    DL.out(U + '-vol-o', DL.num(s.vol, 0) + '%');
+    DL.out(U + '-fill-o', px(s.fill));
+    DL.out(U + '-stop', 'stop ' + px(MID) + ', R = ' + px(s.R));
+    DL.out(U + '-size', DL.num(s.n, 0) + ' shares, ' + DL.usd(s.notional, 0) + ' (' +
+           DL.pct(s.notional / PORT, 0) + ')');
+    DL.out(U + '-tgt', s.measured <= s.twoR
+           ? 'target ' + px(s.measured) + ' (2R ' + px(s.twoR) + ')'
+           : 'target ' + px(s.twoR) + ' (move ' + px(s.measured) + ')');
+    DL.out(U + '-time', 'time stop: day ' + TSTOP);
+
+    var head, text;
+    if (s.trade) {
+      head = 'Take the breakout.';
+      text = 'Volume is ' + DL.num(s.vol, 0) + '% of its 20-day average, and the fill, ' +
+             px(s.fill) + ', is within 0.1% of the pivot.';
+    } else {
+      head = 'No trade.';
+      if (s.vol < 100) text = 'Volume is ' + DL.num(s.vol, 0) + '% of its 20-day average; ' +
+        'below 100%, a breakout is more often a fakeout than a continuation.';
+      else if (!s.volOk) text = 'Volume is ' + DL.num(s.vol, 0) + '% of its 20-day average, ' +
+        'short of the 130% the trigger needs.';
+      else text = 'The fill, ' + px(s.fill) + ', is more than 0.1% above the pivot: the ' +
+        'highest acceptable entry is ' + px(CAP) + '.';
+    }
+    var e = s.exit;
+    if (e && s.trade) {
+      var res = DL.signed(e.r, 2) + 'R, or ' + money(e.usd) + '.';
+      if (e.why === 'target') text += ' The price reaches the ' + px(e.px) + ' target on day ' +
+        e.d + ': ' + res;
+      else if (e.why === 'back') text += ' Day ' + e.d + ' closes at ' + px(e.px) +
+        ', back inside the range, and the invalidation closes the trade: ' + res;
+      else if (e.why === 'mid') text += ' Day ' + e.d + ' closes at ' + px(e.px) +
+        ', below the midpoint, and the invalidation closes the trade: ' + res;
+      else if (e.why === 'stop') text += ' The stop is hit on day ' + e.d + ': ' + res;
+      else text += ' Neither the target nor the invalidation comes, so the time stop closes ' +
+        'the trade on day ' + e.d + ' at ' + px(e.px) + ': ' + res;
+    } else if (e) {
+      text += ' What the price does next neither pays nor costs anything: no position is open.';
+    }
+    DL.out(U + '-vk', head);
+    DL.out(U + '-vt', text);
+    drawP();
+    drawV();
+  }
+  update();
+  DL.bind([U + '-vol', U + '-fill'], update);
+})();
+</script>

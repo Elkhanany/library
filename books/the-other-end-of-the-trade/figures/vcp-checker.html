@@ -1,0 +1,232 @@
+<!--
+name: VCP checker
+source: new for this book: chapter 11D, "A pattern checker"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <canvas id="{{uid}}-v" data-h="104"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-l1">pullback 1 low</label>
+      <input type="range" id="{{uid}}-l1" min="80" max="118" step="0.1" value="98.4">
+      <output id="{{uid}}-l1-o" for="{{uid}}-l1"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-l2">pullback 2 low</label>
+      <input type="range" id="{{uid}}-l2" min="85" max="117" step="0.1" value="106.2">
+      <output id="{{uid}}-l2-o" for="{{uid}}-l2"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-l3">pullback 3 low</label>
+      <input type="range" id="{{uid}}-l3" min="90" max="116" step="0.1" value="110">
+      <output id="{{uid}}-l3-o" for="{{uid}}-l3"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pl">pivot low</label>
+      <input type="range" id="{{uid}}-pl" min="105" max="116" step="0.1" value="112.8">
+      <output id="{{uid}}-pl-o" for="{{uid}}-pl"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pv">pivot volume</label>
+      <input type="range" id="{{uid}}-pv" min="0.3" max="2.5" step="0.1" value="0.7">
+      <output id="{{uid}}-pv-o" for="{{uid}}-pv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-dep"></output></div>
+    <div class="ctrl"><output id="{{uid}}-seq"></output></div>
+    <div class="ctrl"><output id="{{uid}}-rng"></output></div>
+    <div class="ctrl"><output id="{{uid}}-vol"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A base passes or fails on its measurements.</b> A made-up rising stock with
+  the worked example's highs of 120, 118 and 117 and a pivot that tops at 116.50, over the
+  average daily volume of each pullback and of the pivot. Drag the lows and the pivot's volume:
+  each depth is the fall over the high it fell from, and the pivot's range is its height over
+  116.50. The buy point appears only when each pullback is shallower than the last, the pivot's
+  range is under 5% and volume falls into the pivot. Stage 2 and positive Mansfield relative
+  strength are taken as met, as in the worked example.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IDS = ['l1', 'l2', 'l3', 'pl', 'pv'];
+
+  /* the worked example's fixed points: the three highs the pullbacks fall from, the
+     pivot's high, and the average daily volume of the three pullbacks, in millions */
+  var H = [120, 118, 117], PH = 116.5, V = [2.0, 1.4, 0.9];
+  /* the trading days on which the swing points fall, and the pivot's first and last day */
+  var XH = [22, 46, 63], XL = [34, 55, 70], P0 = 74, P1 = 88, XMAX = 97;
+
+  /* a fixed wobble for each day, so the made-up closes look traded; it is scaled on each
+     leg so that it never carries a close past the swing points the depths are read from */
+  var Z = (function () {
+    var r = DL.rng(5), z = [];
+    for (var i = 0; i <= P1; i++) z.push(Math.max(-1.5, Math.min(1.5, DL.gauss(r))));
+    return z;
+  })();
+
+  function state() {
+    var v = IDS.map(function (id) { return parseFloat(DL.$(U + '-' + id).value); });
+    var s = { L: [v[0], v[1], v[2]], pl: v[3], pv: v[4] };
+    /* a pullback's depth is its fall as a fraction of the high it fell from; the pivot's
+       range is its high minus its low, over its high, as the worked example divides */
+    s.d = s.L.map(function (L, k) { return (H[k] - L) / H[k]; });
+    s.rng = (PH - s.pl) / PH;
+    s.ok = [s.d[1] < s.d[0], s.d[2] < s.d[1], s.rng < 0.05, s.pv < V[2]];
+    s.fails = s.ok.filter(function (o) { return !o; }).length;
+    return s;
+  }
+
+  /* the swing points: a rise from 100 into the first high, three pullbacks and their
+     rallies, then the pivot touching its high twice and its low once */
+  function knots(s) {
+    var r = PH - s.pl;
+    return [[0, 100], [XH[0], H[0]], [XL[0], s.L[0]], [XH[1], H[1]], [XL[1], s.L[1]],
+            [XH[2], H[2]], [XL[2], s.L[2]], [P0, PH], [78, s.pl], [82, PH - 0.2 * r],
+            [85, s.pl + 0.4 * r], [P1, PH - 0.1 * r]];
+  }
+  function closes(s) {
+    var K = knots(s), out = [];
+    for (var k = 0; k < K.length - 1; k++) {
+      var x0 = K[k][0], y0 = K[k][1], x1 = K[k + 1][0], y1 = K[k + 1][1];
+      var a = Math.min(0.5, Math.abs(y1 - y0) / 7);
+      for (var d = x0; d < x1; d++) {
+        var t = (d - x0) / (x1 - x0), sn = Math.sin(Math.PI * t);
+        out.push([d, y0 + (y1 - y0) * (1 - Math.cos(Math.PI * t)) / 2 + a * sn * sn * Z[d]]);
+      }
+    }
+    out.push(K[K.length - 1].slice());
+    return out;
+  }
+
+  function pc(x, d) { return DL.num(x * 100, d == null ? 1 : d) + '%'; }
+  /* the three depths to one decimal, or to two when one decimal would show two
+     neighbours as equal that the rule tells apart */
+  function depths(d) {
+    var one = d.map(function (x) { return pc(x); });
+    var tie = (one[0] === one[1] && d[0] !== d[1]) || (one[1] === one[2] && d[1] !== d[2]);
+    return tie ? d.map(function (x) { return pc(x, 2); }) : one;
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  var WORDS = ['', 'One', 'Two', 'Three'];
+
+  var st = state();
+  var PAD = { l: 40, r: 12 };
+
+  var drawP = DL.figure(U + '-c', function (c) {
+    var s = st, pts = closes(s);
+    var lo = Math.min(100, s.L[0], s.L[1], s.L[2], s.pl);
+    var ymin = Math.floor((lo - 3) / 5) * 5, ymax = 125;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: XMAX, ymin: ymin, ymax: ymax,
+                              pad: { l: PAD.l, r: PAD.r, t: 10, b: 8 } });
+    DL.axes(p, { xs: [], x: false, ny: 4, y: function (v) { return DL.num(v, 0); } });
+    var ins = DL.color('insight'), pla = DL.color('plain'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), acc = DL.color('accent');
+    var pass = s.fails === 0;
+
+    /* the pivot: a box from its low to its high, green when its range is under 5% */
+    var pcol = s.ok[2] ? ins : pla, g = p.g;
+    DL.clip(p);
+    g.fillStyle = DL.fade(pcol, 0.14);
+    g.fillRect(p.X(P0), p.Y(PH), p.X(P1) - p.X(P0), p.Y(s.pl) - p.Y(PH));
+    g.restore();
+
+    p.path(pts, { color: acc, width: 1.8 });
+
+    /* each pullback measured: a dotted line out from the high it fell from, then a bracket
+       down to its low; the second and third are green when shallower than the one before */
+    var ds = depths(s.d);
+    for (var k = 0; k < 3; k++) {
+      var col = k === 0 ? soft : (s.ok[k - 1] ? ins : pla);
+      p.seg(XH[k], H[k], XL[k], H[k], { color: faint, width: 1, dash: [2, 3] });
+      p.seg(XL[k], H[k], XL[k], s.L[k], { color: col, width: 1.5 });
+      p.seg(XL[k] - 0.9, H[k], XL[k] + 0.9, H[k], { color: col, width: 1.5 });
+      p.text(XH[k], H[k], DL.num(H[k], 0), { align: 'right', dx: -4, dy: -3, color: faint,
+                                           font: font() });
+      p.text(XL[k], s.L[k], ds[k], { align: 'center', baseline: 'top', dy: 5,
+                                        color: col, font: font() });
+    }
+    p.text(P1, s.pl, pc(s.rng), { align: 'right', baseline: 'top', dy: 4, color: pcol,
+                                  font: font() });
+
+    /* the buy point, a move above the pivot's high, only when every rule passes */
+    if (pass) {
+      p.seg(P0, PH, XMAX, PH, { color: ins, width: 1.4, dash: [5, 3] });
+      p.text(XMAX, PH, DL.num(PH, 2), { align: 'right', dx: -2, dy: -4, color: ins, font: font() });
+      p.text(XMAX, PH, 'buy above', { align: 'right', dx: -2, dy: -17, color: ins, font: font() });
+    } else {
+      p.text(XMAX, PH, 'no buy point', { align: 'right', dx: -2, dy: -4, color: pla,
+                                         font: font() });
+    }
+  });
+
+  var drawV = DL.figure(U + '-v', function (c) {
+    var s = st;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: XMAX, ymin: 0, ymax: 2.9,
+                              pad: { l: PAD.l, r: PAD.r, t: 24, b: 8 } });
+    DL.axes(p, { xs: [], x: false, ys: [0, 1, 2], y: function (v) { return String(v); } });
+    var g = p.g, ins = DL.color('insight'), pla = DL.color('plain'),
+        soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var spans = [[XH[0], XL[0], V[0]], [XH[1], XL[1], V[1]], [XH[2], XL[2], V[2]],
+                 [P0, P1, s.pv]];
+    spans.forEach(function (b, i) {
+      var last = i === 3, col = last ? (s.ok[3] ? ins : pla) : DL.color('accent');
+      DL.clip(p);
+      g.fillStyle = DL.fade(col, last ? 0.7 : 0.45);
+      g.fillRect(p.X(b[0]) + 1, p.Y(b[2]), p.X(b[1]) - p.X(b[0]) - 2, p.Y(0) - p.Y(b[2]));
+      g.restore();
+      p.text((b[0] + b[1]) / 2, b[2], DL.num(b[2], 1), { align: 'center', dy: -3,
+                                                       color: last ? col : soft, font: font() });
+    });
+    g.save();
+    g.font = font();
+    g.fillStyle = faint;
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
+    g.fillText('average daily volume, millions of shares', PAD.l, 4);
+    g.restore();
+  });
+
+  function update() {
+    st = state();
+    var s = st;
+    DL.out(U + '-l1-o', DL.num(s.L[0], 2));
+    DL.out(U + '-l2-o', DL.num(s.L[1], 2));
+    DL.out(U + '-l3-o', DL.num(s.L[2], 2));
+    DL.out(U + '-pl-o', DL.num(s.pl, 2));
+    DL.out(U + '-pv-o', DL.num(s.pv, 1) + 'M');
+    var ds = depths(s.d);
+    DL.out(U + '-dep', 'depths = ' + ds.join(', '));
+    DL.out(U + '-seq', 'each shallower: ' + (s.ok[0] && s.ok[1] ? 'yes' : 'no'));
+    DL.out(U + '-rng', 'pivot range = ' + pc(s.rng) + (s.ok[2] ? ', under 5%' : ', over 5%'));
+    DL.out(U + '-vol', 'volume 2.0 → 1.4 → 0.9 → ' + DL.num(s.pv, 1) + 'M');
+
+    var why;
+    if (!s.ok[0]) {
+      why = 'The second pullback, ' + ds[1] + ', is no shallower than the first, ' + ds[0] + '.';
+    } else if (!s.ok[1]) {
+      why = 'The third pullback, ' + ds[2] + ', is ' +
+            (s.d[2] > s.d[1] ? 'deeper than' : 'as deep as') + ' the second, ' + ds[1] + '.';
+    } else if (!s.ok[2]) {
+      why = 'The pivot\'s range, ' + pc(s.rng) + ', is over the 5% limit.';
+    } else if (!s.ok[3]) {
+      why = 'Volume does not fall into the pivot: ' + DL.num(s.pv, 1) +
+            ' million shares a day against 0.9 million in the third pullback.';
+    }
+    if (s.fails === 0) {
+      DL.out(U + '-vk', 'A VCP.');
+      DL.out(U + '-vt', 'Every threshold passes, so the buy point is a move above ' +
+             DL.num(PH, 2) + '.');
+    } else {
+      DL.out(U + '-vk', 'Not a VCP.');
+      DL.out(U + '-vt', why + (s.fails > 1 ? ' ' + WORDS[s.fails - 1] + ' other rule' +
+             (s.fails > 2 ? 's fail' : ' fails') + ' as well.' : ''));
+    }
+    drawP();
+    drawV();
+  }
+  update();
+  DL.bind(IDS.map(function (id) { return U + '-' + id; }), update);
+})();
+</script>

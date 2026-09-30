@@ -1,0 +1,230 @@
+<!--
+name: setup card checks
+source: new for this book: chapter 13F, "A card with live checks"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="264"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-comp">composite</label>
+      <input type="range" id="{{uid}}-comp" min="-100" max="100" step="1" value="42">
+      <output id="{{uid}}-comp-o" for="{{uid}}-comp"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-vix">VIX</label>
+      <input type="range" id="{{uid}}-vix" min="10" max="45" step="0.5" value="16">
+      <output id="{{uid}}-vix-o" for="{{uid}}-vix"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-ratio">VIX/VIX3M</label>
+      <input type="range" id="{{uid}}-ratio" min="0.8" max="1.25" step="0.01" value="0.85">
+      <output id="{{uid}}-ratio-o" for="{{uid}}-ratio"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-adx">ADX</label>
+      <input type="range" id="{{uid}}-adx" min="5" max="50" step="1" value="24">
+      <output id="{{uid}}-adx-o" for="{{uid}}-adx"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Sign of GEX" id="{{uid}}-gex">
+      <label>GEX</label>
+      <button type="button" data-v="pos" class="on" aria-pressed="true">positive</button>
+      <button type="button" data-v="neg" aria-pressed="false">negative</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-open"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><span id="{{uid}}-say"></span></p>
+  <figcaption><b>One change in the regime switches several cards off at once.</b> Each column
+  is a card: the four swing setups, read the stricter way where the card and Chapter 11H
+  differ, and Card 02, the VRP harvest, under filters F1 and F4. Each cell is the card's
+  condition on one of today's readings, green where it holds, rose where it fails and amber
+  where it only trims the size. Stage 2 is taken as confirmed and each reading as held for 3
+  closes, and the rows the figure cannot see, such as each setup's entry trigger, still apply.
+  Drag the VIX past 22 and all four swing cards close together.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var CO = DL.$(U + '-comp'), VX = DL.$(U + '-vix'), RA = DL.$(U + '-ratio'), AD = DL.$(U + '-adx');
+  var gex = DL.seg(U + '-gex', update);
+  var ROWS = ['comp', 'vix', 'ratio', 'adx', 'gex'];
+
+  /* each card's condition on each reading: the text shown and the test. The swing cards
+     take the stricter of the card and Chapter 11H: the Trend Pullback's VIX below 22 and
+     contango, the Compression Breakout's VIX below 18 and ADX at 18 or below, the IBS and
+     RSI setup's VIX below 22. Card 02's term-structure row is Card F1's phased rule, and its
+     GEX row is Card F4's trim, which cuts the size without closing the card. */
+  var CARDS = [
+    { title: 'Trend Pullback', name: ['Trend', 'pullback'], short: 'Pullback', rows: {
+      comp: ['≥ +30', function (r) { return r.comp >= 30; }],
+      vix: ['< 22', function (r) { return r.vix < 22; }],
+      ratio: ['< 1.00', function (r) { return r.ratio < 1; }],
+      adx: ['20 to 30', function (r) { return r.adx >= 20 && r.adx <= 30; }],
+      gex: ['positive', function (r) { return r.gex === 'pos'; }] } },
+    { title: 'Compression Breakout', name: ['Compression', 'breakout'], short: 'Breakout', rows: {
+      comp: ['≥ +30', function (r) { return r.comp >= 30; }],
+      vix: ['< 18', function (r) { return r.vix < 18; }],
+      adx: ['≤ 18', function (r) { return r.adx <= 18; }],
+      gex: ['positive', function (r) { return r.gex === 'pos'; }] } },
+    { title: 'Undercut and Reclaim', name: ['Undercut', 'and reclaim'], short: 'Undercut', rows: {
+      comp: ['≥ +10', function (r) { return r.comp >= 10; }],
+      vix: ['≤ 22', function (r) { return r.vix <= 22; }] } },
+    { title: 'IBS and RSI', name: ['IBS and', 'RSI(2)'], short: 'IBS/RSI', rows: {
+      comp: ['≥ +20', function (r) { return r.comp >= 20; }],
+      vix: ['< 22', function (r) { return r.vix < 22; }],
+      adx: ['≤ 30', function (r) { return r.adx <= 30; }],
+      gex: ['positive', function (r) { return r.gex === 'pos'; }] } },
+    { title: 'Card 02', name: ['Card 02', 'VRP harvest'], short: 'VRP 02', vrp: true, rows: {
+      ratio: ['< 1.00', function (r) { return r.ratio < 1; }],
+      gex: ['positive', function (r) { return r.gex === 'pos'; }, 'soft'] } }
+  ];
+
+  /* Card 02's verdict from the phased filter: halt new sales from 1.00, halt all and cut the
+     sleeve by half above 1.05, close non-essential short volatility above 1.15 */
+  function vrp(r) {
+    if (r.ratio > 1.15) return { word: 'close', sub: 'non-essential', tone: 'plain', open: false,
+      say: 'close non-essential short volatility' };
+    if (r.ratio > 1.05) return { word: 'cut 50%', sub: 'no new sales', tone: 'plain', open: false,
+      say: 'halt all put sales and cut the sleeve by 50%' };
+    if (r.ratio >= 1) return { word: 'halt', sub: 'new sales', tone: 'warn', open: false,
+      say: 'halt new sales and keep the puts already sold' };
+    if (r.gex === 'neg') return { word: 'trim', sub: '10–15%', tone: 'warn', open: true,
+      say: 'sell, trimmed by 10% to 15% for negative GEX' };
+    return { word: 'sell', sub: 'full size', tone: 'insight', open: true, say: 'sell at full size' };
+  }
+
+  var st;
+  function compute() {
+    var r = { comp: +CO.value, vix: +VX.value, ratio: +RA.value, adx: +AD.value, gex: gex() };
+    var out = CARDS.map(function (cd) {
+      var cells = {}, fails = [];
+      ROWS.forEach(function (k) {
+        var row = cd.rows[k];
+        if (!row) { cells[k] = null; return; }
+        var ok = row[1](r);
+        cells[k] = { txt: row[0], ok: ok, soft: row[2] === 'soft' };
+        if (!ok && row[2] !== 'soft') fails.push(k);
+      });
+      var v = cd.vrp ? vrp(r) : fails.length ? { word: 'skip', sub: '', tone: 'plain', open: false }
+                                             : { word: 'trade', sub: 'on its trigger', tone: 'insight', open: true };
+      return { card: cd, cells: cells, fails: fails, v: v };
+    });
+    st = { r: r, cards: out };
+  }
+
+  function sign(x) { return x > 0 ? '+' + x : x < 0 ? DL.MINUS + (-x) : '0'; }
+  var LABEL = { comp: 'composite', vix: 'VIX', ratio: 'VIX/VIX3M', adx: 'ADX', gex: 'GEX' };
+  function reading(k) {
+    var r = st.r;
+    return k === 'comp' ? sign(r.comp) : k === 'vix' ? DL.num(r.vix, 1).replace(/\.0$/, '')
+         : k === 'ratio' ? DL.num(r.ratio, 2) : k === 'adx' ? String(r.adx)
+         : r.gex === 'pos' ? 'positive' : 'negative';
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), acc = DL.color('accent');
+    var tone = { insight: DL.color('insight'), plain: DL.color('plain'), warn: DL.color('warn') };
+    var LB = Math.round(Math.min(120, Math.max(82, W * 0.19))), HH = 38;
+    var cw = (W - LB) / CARDS.length, rh = (H - HH) / (ROWS.length + 1);
+    var wide = cw >= 88;
+    function font(b) { return (b ? 'bold ' : '') + '11px ' + DL.color('sans'); }
+
+    g.save();
+    g.textBaseline = 'middle';
+    /* the card names across the top */
+    g.font = font(false);
+    g.textAlign = 'center';
+    st.cards.forEach(function (c, j) {
+      var x = LB + (j + 0.5) * cw;
+      g.fillStyle = soft;
+      if (wide) { g.fillText(c.card.name[0], x, 12); g.fillText(c.card.name[1], x, 26); }
+      else g.fillText(c.card.short, x, 19);
+    });
+    /* the readings down the side: the name, and today's value beneath it */
+    g.textAlign = 'left';
+    ROWS.forEach(function (k, i) {
+      var y = HH + (i + 0.5) * rh;
+      g.fillStyle = soft;
+      g.fillText(LABEL[k], 4, y - 7);
+      g.fillStyle = acc;
+      g.fillText(reading(k), 4, y + 7);
+    });
+    g.fillStyle = soft;
+    g.fillText('verdict', 4, HH + (ROWS.length + 0.5) * rh);
+
+    /* the cells: the card's condition on each reading, shaded by whether it holds */
+    g.textAlign = 'center';
+    st.cards.forEach(function (c, j) {
+      var x0 = LB + j * cw;
+      ROWS.forEach(function (k, i) {
+        var cell = c.cells[k], y0 = HH + i * rh, xm = x0 + cw / 2, ym = y0 + rh / 2;
+        if (!cell) {
+          g.fillStyle = faint;
+          g.fillText('—', xm, ym);
+          return;
+        }
+        var col = cell.ok ? tone.insight : cell.soft ? tone.warn : tone.plain;
+        g.fillStyle = DL.fade(col, 0.16);
+        g.fillRect(x0 + 2, y0 + 2, cw - 4, rh - 4);
+        g.fillStyle = col;
+        g.fillText(cell.txt, xm, ym);
+      });
+      /* the verdict, under a rule */
+      var yv = HH + ROWS.length * rh, col2 = tone[c.v.tone];
+      g.fillStyle = DL.fade(col2, 0.28);
+      g.fillRect(x0 + 2, yv + 3, cw - 4, rh - 5);
+      g.fillStyle = col2;
+      g.font = font(true);
+      g.fillText(c.v.word, x0 + cw / 2, yv + rh / 2 - (c.v.sub ? 6 : 0) + 1);
+      if (c.v.sub) {
+        g.font = font(false);
+        g.fillStyle = soft;
+        g.fillText(wide || c.v.sub.length < 9 ? c.v.sub : '', x0 + cw / 2, yv + rh / 2 + 8);
+      }
+      g.font = font(false);
+    });
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(0, HH - 0.5);
+    g.lineTo(W, HH - 0.5);
+    g.moveTo(0, HH + ROWS.length * rh + 0.5);
+    g.lineTo(W, HH + ROWS.length * rh + 0.5);
+    g.stroke();
+    g.restore();
+  });
+
+  function list(a) {
+    return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  }
+  function update() {
+    compute();
+    var r = st.r;
+    DL.out(U + '-comp-o', sign(r.comp));
+    DL.out(U + '-vix-o', DL.num(r.vix, 1));
+    DL.out(U + '-ratio-o', DL.num(r.ratio, 2));
+    DL.out(U + '-adx-o', String(r.adx));
+    var open = st.cards.filter(function (c) { return c.v.open; }).length;
+    DL.out(U + '-open', 'cards open: ' + open + ' of ' + st.cards.length);
+    var swings = st.cards.slice(0, 4), on = [], off = [];
+    swings.forEach(function (c) {
+      if (c.v.open) on.push(c.card.title);
+      else off.push(c.card.title + ' (' + c.fails.map(function (k) { return LABEL[k]; }).join(', ') + ')');
+    });
+    var say = (on.length ? 'Open: ' + list(on) + '. ' : 'No swing card is open. ') +
+              (off.length ? 'Skipped: ' + list(off) + '. ' : '') +
+              'Card 02: ' + st.cards[4].v.say + '.';
+    DL.out(U + '-say', say);
+    draw();
+  }
+  update();
+  DL.bind([U + '-comp', U + '-vix', U + '-ratio', U + '-adx'], update);
+})();
+</script>

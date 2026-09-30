@@ -1,0 +1,107 @@
+<!--
+name: VRP premium calculator
+source: new for this book: chapter 10C, "A premium calculator for one option"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-iv">implied vol</label>
+      <input type="range" id="{{uid}}-iv" min="5" max="60" step="0.1" value="19.3">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-rv">realized vol</label>
+      <input type="range" id="{{uid}}-rv" min="5" max="60" step="0.1" value="15.1">
+      <output id="{{uid}}-rv-o" for="{{uid}}-rv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-days">days to expiry</label>
+      <input type="range" id="{{uid}}-days" min="1" max="126" step="1" value="21">
+      <output id="{{uid}}-days-o" for="{{uid}}-days"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-prem"></output></div>
+    <div class="ctrl"><output id="{{uid}}-worth"></output></div>
+    <div class="ctrl"><output id="{{uid}}-edge"></output></div>
+    <div class="ctrl"><output id="{{uid}}-var"></output></div>
+    <div class="ctrl"><output id="{{uid}}-rt"></output></div>
+  </div>
+  <figcaption><b>What the gap between implied and realized volatility is worth.</b> The price of
+  an at-the-money option on the index, 0.4 S σ √T, against trading days to expiry: once at the
+  implied volatility sold and once at the realized volatility that follows. The band between
+  the two is roughly what a delta-hedged seller keeps, and the readouts give it in dollars on
+  one XSP contract with the index at a hypothetical 6,000, a notional of $60,000. Widen the
+  gap and the band widens with it. Lengthen the expiry and it grows only as the square root of
+  time.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IV = DL.$(U + '-iv'), RV = DL.$(U + '-rv'), DAYS = DL.$(U + '-days');
+  var S = 6000, NOTIONAL = 10 * S;     /* XSP is a tenth of the index, 100 to a contract */
+  var DMAX = 126;
+
+  /* the chapter's at-the-money price, 0.4 S sigma sqrt(T), with T in years of 252 trading
+     days, as a fraction of the index */
+  function atm(sigma, d) { return 0.4 * sigma * Math.sqrt(d / 252); }
+  function state() { return { iv: +IV.value / 100, rv: +RV.value / 100, d: +DAYS.value }; }
+  function pc(x, n) { return DL.num(x * 100, n) + '%'; }
+  function vol(x) { return DL.num(x * 100, 1) + '%'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = state();
+    var top = atm(Math.max(s.iv, s.rv), DMAX) * 100 * 1.14;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: DMAX, ymin: 0, ymax: top,
+                              pad: { l: 44, r: 14, t: 24, b: 30 } });
+    DL.axes(p, { xs: [21, 42, 63, 84, 105, 126],
+                 x: function (v) { return v + 'd'; },
+                 y: function (v, st) { return DL.num(v, st < 1 ? 1 : 0) + '%'; } });
+    var xs = [], yi = [], yr = [];
+    for (var d = 0; d <= DMAX; d += 0.5) {
+      xs.push(d); yi.push(atm(s.iv, d) * 100); yr.push(atm(s.rv, d) * 100);
+    }
+    var up = s.iv >= s.rv, col = DL.color(up ? 'insight' : 'plain');
+    DL.band(p, xs, yi, yr, DL.fade(col, 0.22));
+    DL.line(p, xs, yr, { color: DL.color('familiar'), width: 2 });
+    DL.line(p, xs, yi, { color: DL.color('accent'), width: 2 });
+    var a = atm(s.iv, s.d) * 100, b = atm(s.rv, s.d) * 100;
+    p.seg(s.d, 0, s.d, Math.max(a, b), { color: DL.color('ink-faint'), dash: [3, 3], width: 1 });
+    p.dot(s.d, a, { r: 4, color: DL.color('accent'), ring: true });
+    p.dot(s.d, b, { r: 4, color: DL.color('familiar'), ring: true });
+    /* the edge's label sits off the band: below the lower curve to the right of the
+       expiry, or above the upper curve to its left when the expiry is near the end */
+    var right = s.d > DMAX * 0.72, lab = 'edge ' + (a - b >= 0 ? '' : DL.MINUS) +
+        DL.num(Math.abs(a - b), 3) + '%';
+    p.text(s.d, right ? Math.max(a, b) : Math.min(a, b), lab,
+           { dx: right ? -8 : 8, dy: right ? -6 : 6, align: right ? 'right' : 'left',
+             baseline: right ? 'bottom' : 'top', color: col, font: '11px ' + DL.color('sans') });
+    p.g.save();
+    p.g.font = '11px ' + DL.color('sans');
+    p.g.fillStyle = DL.color('ink-soft');
+    p.g.textAlign = 'left';
+    p.g.textBaseline = 'bottom';
+    p.g.fillText('at-the-money premium, % of the index', 4, 14);
+    p.g.restore();
+    DL.legend(p, [{ label: 'implied ' + vol(s.iv), color: DL.color('accent') },
+                  { label: 'realized ' + vol(s.rv), color: DL.color('familiar') }]);
+  });
+
+  function update() {
+    var s = state(), a = atm(s.iv, s.d), b = atm(s.rv, s.d), e = a - b;
+    DL.out(U + '-iv-o', vol(s.iv));
+    DL.out(U + '-rv-o', vol(s.rv));
+    DL.out(U + '-days-o', String(s.d));
+    DL.out(U + '-prem', 'premium at implied = ' + pc(a, 2) + ' (' + DL.usd(a * NOTIONAL, 0) + ')');
+    DL.out(U + '-worth', 'worth at realized = ' + pc(b, 2) + ' (' + DL.usd(b * NOTIONAL, 0) + ')');
+    DL.out(U + '-edge', "seller's edge = " + (e < 0 ? DL.MINUS : '') + DL.num(Math.abs(e) * 100, 3) +
+           '% (' + DL.usd(e * NOTIONAL, 0) + ')');
+    DL.out(U + '-var', 'variance gap = ' + DL.num(s.iv * s.iv - s.rv * s.rv, 4));
+    DL.out(U + '-rt', '√T = √(' + s.d + '/252) = ' + DL.num(Math.sqrt(s.d / 252), 3));
+    draw();
+  }
+  update();
+  DL.bind([U + '-iv', U + '-rv', U + '-days'], update);
+})();
+</script>

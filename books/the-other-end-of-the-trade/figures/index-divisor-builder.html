@@ -1,0 +1,207 @@
+<!--
+name: index divisor builder
+source: new for this book: chapter 2A, "An index builder"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="196"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Event: a price move, a dividend or a split" id="{{uid}}-eva">
+      <label>event</label>
+      <button type="button" data-v="move" class="on" aria-pressed="true">price move</button>
+      <button type="button" data-v="div" aria-pressed="false">dividend</button>
+      <button type="button" data-v="split" aria-pressed="false">split</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Event: an addition, a deletion or a spin-off" id="{{uid}}-evb">
+      <button type="button" data-v="add" aria-pressed="false">addition</button>
+      <button type="button" data-v="del" aria-pressed="false">deletion</button>
+      <button type="button" data-v="spin" aria-pressed="false">spin-off</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-lvl"></output></div>
+    <div class="ctrl"><output id="{{uid}}-div"></output></div>
+    <div class="ctrl"><output id="{{uid}}-tw"></output></div>
+    <div class="ctrl"><output id="{{uid}}-twd"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">After the event</th><th>Price</th><th>Float shares</th><th>Float value</th><th>Weight</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial">A</td><td data-label="Price" id="{{uid}}-p0"></td><td data-label="Float shares" id="{{uid}}-n0"></td><td data-label="Float value" id="{{uid}}-v0"></td><td data-label="Weight" id="{{uid}}-w0"></td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial">B</td><td data-label="Price" id="{{uid}}-p1"></td><td data-label="Float shares" id="{{uid}}-n1"></td><td data-label="Float value" id="{{uid}}-v1"></td><td data-label="Weight" id="{{uid}}-w1"></td></tr>
+      <tr id="{{uid}}-r2"><td class="c-trial">C</td><td data-label="Price" id="{{uid}}-p2"></td><td data-label="Float shares" id="{{uid}}-n2"></td><td data-label="Float value" id="{{uid}}-v2"></td><td data-label="Weight" id="{{uid}}-w2"></td></tr>
+      <tr id="{{uid}}-r3" hidden><td class="c-trial">E</td><td data-label="Price" id="{{uid}}-p3"></td><td data-label="Float shares" id="{{uid}}-n3"></td><td data-label="Float value" id="{{uid}}-v3"></td><td data-label="Weight" id="{{uid}}-w3"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>What moves the divisor, and what only moves the level.</b> The chapter's toy
+  index of three made-up stocks, at 1,000 with a divisor of 500, beside a price-weighted twin that
+  adds up their prices and starts at 1,000 with a divisor of 0.17. Each bar is what an index adds
+  up, before and after one event applied to the starting index, and a dashed box is value paid out
+  to holders. A price move and an ordinary dividend move the levels and leave both divisors alone,
+  while an addition, a deletion and a spin-off move both divisors so that neither level gaps. A
+  2-for-1 split moves only the price-weighted divisor.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  /* one choice laid out as two rows of buttons, so that each row fits a phone: a press in
+     one row clears the other */
+  var cur = 'move';
+  function clear(id) {
+    [].forEach.call(DL.$(id).querySelectorAll('button'), function (b) {
+      if (b.classList.contains('on')) b.classList.remove('on');
+      if (b.getAttribute('aria-pressed') !== 'false') b.setAttribute('aria-pressed', 'false');
+    });
+  }
+  DL.seg(U + '-eva', function (v) { cur = v; clear(U + '-evb'); draw(); });
+  DL.seg(U + '-evb', function (v) { cur = v; clear(U + '-eva'); draw(); });
+  function ev() { return cur; }
+
+  /* the toy index of the worked examples: float value $500,000 over a divisor of 500. The added
+     stock E is given a price of $75 on 2,000 float shares, its $150,000 of float value. */
+  var KEYS = ['A', 'B', 'C', 'E'], ROLE = ['familiar', 'accent', 'insight', 'plain'];
+  var BASE = [{ p: 100, n: 2000 }, { p: 50, n: 4000 }, { p: 20, n: 5000 }, null];
+  var E = { p: 75, n: 2000 };
+  var D0 = 500, T0 = 0.17;
+
+  /* one event applied to the starting index: the stocks after it, what left the index as cash
+     or as spun-off shares (per share), and whether the committee adjusts the divisor */
+  function apply(e) {
+    var s = BASE.map(function (x) { return x ? { p: x.p, n: x.n } : null; });
+    var r = { s: s, gone: null, i: null, adjust: true };
+    if (e === 'move') { s[0].p = 110; r.i = 0; r.adjust = false; }
+    if (e === 'div') { s[2].p = 19; r.i = 2; r.gone = { i: 2, per: 1, what: 'cash' }; r.adjust = false; }
+    if (e === 'split') { s[0].p = 50; s[0].n = 4000; r.i = 0; }
+    if (e === 'add') { s[3] = { p: E.p, n: E.n }; r.i = 3; }
+    if (e === 'del') { s[2] = null; r.i = 2; }
+    if (e === 'spin') { s[0].p = 80; r.i = 0; r.gone = { i: 0, per: 20, what: 'spun off' }; }
+    return r;
+  }
+  function total(s, cap) {
+    var t = 0;
+    s.forEach(function (x) { if (x) t += cap ? x.p * x.n : x.p; });
+    return t;
+  }
+  /* [eq:spx] for both indices, and [eq:divisor] when the event is structural: the new divisor
+     is the old one times the total after over the total before, at unchanged prices */
+  function levels(r, cap) {
+    var before = total(BASE, cap), after = total(r.s, cap), d0 = cap ? D0 : T0;
+    var d1 = r.adjust ? d0 * after / before : d0;
+    return { before: before, after: after, d0: d0, d1: d1, l0: before / d0, l1: after / d1,
+             stay: after / d0 };
+  }
+  function lvl(x) { return DL.num(x, Math.abs(x - Math.round(x)) < 1e-9 ? 0 : 1); }
+  function dv(x, cap) { return cap ? DL.num(x, 0) : String(Math.round(x * 1000) / 1000); }
+  function kusd(x) { return '$' + DL.num(x / 1000, 0) + 'K'; }
+
+  var SAY = {
+    move: ['A rises 10%.', 'Its float value becomes $220,000, so the level rises 4%, A\'s 10% ' +
+           'times its 40% weight. The twin rises more, because A\'s $100 is 59% of its 170 ' +
+           'dollars of price.'],
+    div: ['C pays a $1 dividend.', 'Its price falls from $20 to $19, and the level from 1,000 to ' +
+          '990. The $5,000 arrives as cash, so holders lose nothing, but a price-return index ' +
+          'records the fall.'],
+    split: ['A splits 2-for-1.', 'It trades at $50 on 4,000 float shares, still $200,000 of ' +
+            'value, so the divisor stays at 500. The twin\'s sum of prices falls from 170 to 120, ' +
+            'and its divisor must shrink by 120/170.'],
+    add: ['The committee adds E.', 'Its $150,000 of float value raises the divisor from 500 to ' +
+          '650, and the level stays at 1,000 instead of gapping up to 1,300.'],
+    del: ['The committee deletes C.', 'The total falls to $400,000 and the divisor to 400, so the ' +
+          'level stays at 1,000 instead of gapping down to 800.'],
+    spin: ['A spins off a subsidiary.', 'It is worth $20 a share, so A falls to $80 and the ' +
+           'total to $460,000. The divisor drops to 460, and the level stays at 1,000.']
+  };
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var e = ev(), r = apply(e), cap = levels(r, true), tw = levels(r, false);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, i;
+    g.clearRect(0, 0, W, p.h);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, p.h);
+    var sans = DL.color('sans'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var acc = DL.color('accent'), paper = DL.color('paper');
+    g.font = '11px ' + sans;
+
+    /* the room on the right for "÷ divisor = level", measured on the widest it can be */
+    var TXT = Math.ceil(g.measureText('÷ 0.245 = 1,058.8').width) + 12;
+    var L = 44, BW = Math.max(60, W - L - TXT - 6);
+
+    function group(y, title, lv, cap, scale) {
+      g.textAlign = 'left';
+      g.textBaseline = 'alphabetic';
+      g.fillStyle = soft;
+      g.fillText(title, 0, y);
+      [0, 1].forEach(function (row) {
+        var yb = y + 8 + row * 30, h = 22, x = L, stocks = row ? r.s : BASE;
+        g.fillStyle = faint;
+        g.textAlign = 'left';
+        g.textBaseline = 'middle';
+        g.fillText(row ? 'after' : 'before', 0, yb + h / 2);
+        stocks.forEach(function (st, k) {
+          if (!st) return;
+          var v = cap ? st.p * st.n : st.p, w = v / scale * BW;
+          g.fillStyle = DL.fade(DL.color(ROLE[k]), row && k === r.i ? 0.85 : 0.55);
+          g.fillRect(x, yb, Math.max(1, w - 1.5), h);
+          var lab = KEYS[k] + ' ' + (cap ? kusd(v) : '$' + v);
+          g.textAlign = 'center';
+          g.fillStyle = DL.color('ink');
+          if (g.measureText(lab).width + 8 < w) g.fillText(lab, x + w / 2, yb + h / 2 + 0.5);
+          else if (g.measureText(KEYS[k]).width + 6 < w) g.fillText(KEYS[k], x + w / 2, yb + h / 2 + 0.5);
+          x += w;
+        });
+        /* what left the index but not the holders: the dividend's cash, the spun-off shares */
+        if (row && r.gone) {
+          var gv = cap ? r.gone.per * r.s[r.gone.i].n : r.gone.per, gw = gv / scale * BW;
+          g.save();
+          g.setLineDash([3, 3]);
+          g.strokeStyle = faint;
+          g.lineWidth = 1;
+          g.strokeRect(x + 1.5, yb + 0.5, Math.max(2, gw - 2), h - 1);
+          g.restore();
+          g.fillStyle = faint;
+          g.textAlign = 'left';
+          if (x + gw + 4 + g.measureText(r.gone.what).width + 12 < W - TXT + 8)
+            g.fillText(r.gone.what, x + gw + 4, yb + h / 2 + 0.5);
+        }
+        /* ÷ divisor = level, with a divisor that moved in the accent */
+        var d = row ? lv.d1 : lv.d0, l = row ? lv.l1 : lv.l0, moved = row && Math.abs(lv.d1 - lv.d0) > 1e-12;
+        var tx = W - TXT + 8, s1 = '÷ ', s2 = dv(d, cap), s3 = ' = ' + lvl(l);
+        g.textAlign = 'left';
+        g.fillStyle = soft;
+        g.fillText(s1, tx, yb + h / 2 + 0.5);
+        tx += g.measureText(s1).width;
+        g.fillStyle = moved ? acc : soft;
+        g.font = (moved ? 'bold ' : '') + '11px ' + sans;
+        g.fillText(s2, tx, yb + h / 2 + 0.5);
+        tx += g.measureText(s2).width;
+        g.font = '11px ' + sans;
+        g.fillStyle = soft;
+        g.fillText(s3, tx, yb + h / 2 + 0.5);
+      });
+    }
+    group(14, 'cap-weighted, like SPX: float value ÷ divisor', cap, true, 650000);
+    group(112, 'price-weighted twin: sum of prices ÷ divisor', tw, false, 245);
+
+    /* the table: the stocks after the event, the one it touched marked */
+    var tot = cap.after;
+    for (i = 0; i < 4; i++) {
+      var st = r.s[i], row = DL.$(U + '-r' + i), show = !!st;
+      if (row.hidden === show) row.hidden = !show;
+      var on = i === r.i && show;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+      if (!st) continue;
+      DL.out(U + '-p' + i, '$' + st.p);
+      DL.out(U + '-n' + i, DL.num(st.n, 0));
+      DL.out(U + '-v' + i, '$' + DL.num(st.p * st.n, 0));
+      DL.out(U + '-w' + i, DL.pct(st.p * st.n / tot, 1));
+    }
+    DL.out(U + '-lvl', 'level: 1,000 → ' + lvl(cap.l1));
+    DL.out(U + '-div', 'divisor: ' + dv(cap.d0, true) + ' → ' + dv(cap.d1, true));
+    DL.out(U + '-tw', 'twin: 1,000 → ' + lvl(tw.l1));
+    DL.out(U + '-twd', 'twin\'s divisor: ' + dv(tw.d0, false) + ' → ' + dv(tw.d1, false));
+    DL.out(U + '-vk', SAY[e][0]);
+    DL.out(U + '-vt', SAY[e][1]);
+  });
+})();
+</script>

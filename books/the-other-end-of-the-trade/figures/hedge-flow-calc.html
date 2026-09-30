@@ -1,0 +1,205 @@
+<!--
+name: hedge-flow calculator
+source: new for this book: chapter 8A, "A hedge-flow calculator"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-gex">GEX per 1%</label>
+      <input type="range" id="{{uid}}-gex" min="-10" max="10" step="0.5" value="3">
+      <output id="{{uid}}-gex-o" for="{{uid}}-gex"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mv">index move</label>
+      <input type="range" id="{{uid}}-mv" min="-3" max="3" step="0.1" value="1">
+      <output id="{{uid}}-mv-o" for="{{uid}}-mv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot</label>
+      <input type="range" id="{{uid}}-s" min="4000" max="7000" step="50" value="6000">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-dh"></output></div>
+    <div class="ctrl"><output id="{{uid}}-es"></output></div>
+    <div class="ctrl"><output id="{{uid}}-one"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>One sign decides which way the dealers trade.</b> The line is the dealers'
+  hedge trade, ΔH ≈ −GEX × (ΔS/S)/0.01, at every index move from −3% to +3%, for the GEX the
+  slider sets in billions of dollars per 1% move. The arrow is the trade at the chosen move,
+  green when it opposes the move and rose when it joins it. Past $10 billion it runs off the
+  chart. The readouts give the same trade in E-mini S&amp;P 500 futures, each contract $50
+  times the index at the chosen spot. Drag GEX through zero: the line leaves the green
+  quadrants for the rose ones, and the same rally meets a purchase instead of a
+  sale.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var GX = DL.$(U + '-gex'), MV = DL.$(U + '-mv'), SP = DL.$(U + '-s');
+  /* the chart spans the moves the slider allows, 3% either way, and trades of $10 billion
+     either way; a larger trade runs off the chart, and its arrow says so with a break */
+  var XR = 3.25, YM = 10, ES = 50;
+
+  /* [eq:flow]: the dealers' hedge trade, dH = -GEX x (dS/S) / 0.01. With GEX in billions
+     of dollars per 1% move and the move in percent, it is -GEX x move, in billions:
+     positive is buying, negative selling */
+  function flow(gex, mv) { return -gex * mv; }
+
+  /* dollars given in billions: $3.00B, or $750M below a billion */
+  function size(b) {
+    var a = Math.abs(b);
+    if (a >= 0.9995) return '$' + DL.num(a, 2) + 'B';
+    if (a > 0) return '$' + DL.num(a * 1000, 0) + 'M';
+    return '$0';
+  }
+  function signed(b) { return (b > 0 ? '+' : b < 0 ? DL.MINUS : '') + size(b); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  /* an arrow in canvas pixels from (x0, y0) to (x1, y1), the head at (x1, y1) */
+  function arrow(g, x0, y0, x1, y1, col) {
+    var dy = y1 - y0, dir = dy < 0 ? -1 : 1, head = Math.min(10, Math.abs(dy));
+    g.save();
+    g.strokeStyle = col;
+    g.fillStyle = col;
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(x0, y0);
+    g.lineTo(x1, y1 - dir * head * 0.8);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(x1, y1);
+    g.lineTo(x1 - 6, y1 - dir * head);
+    g.lineTo(x1 + 6, y1 - dir * head);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
+  /* a label on a paper ground, so a line passing under it stays readable */
+  function note(p, x, y, s, col, align, dx, base) {
+    var g = p.g, dy = base === 'top' ? 5 : base === 'bottom' ? -5 : 0;
+    g.save();
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x) + dx, py = p.Y(y) + dy;
+    var x0 = align === 'right' ? px - w : px;
+    var y0 = base === 'top' ? py : base === 'bottom' ? py - 13 : py - 7;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.9);
+    g.fillRect(x0 - 3, y0 - 1, w + 6, 15);
+    g.restore();
+    p.text(x, y, s, { dx: dx, dy: dy, align: align, baseline: base, font: font(), color: col });
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var gex = +GX.value, mv = +MV.value, dh = flow(gex, mv);
+    var p = new NMT.Plot(c, { xmin: -XR, xmax: XR, ymin: -YM, ymax: YM,
+                              pad: { l: 50, r: 16, t: 42, b: 26 } });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], ys: [-10, -5, 0, 5, 10],
+                 x: function (v) { return v === 0 ? '0' : (v > 0 ? '+' : DL.MINUS) + Math.abs(v) + '%'; },
+                 y: function (v) { return v === 0 ? '$0' : (v > 0 ? '+' : DL.MINUS) + '$' + Math.abs(v) + 'B'; } });
+    var g = p.g, ok = DL.color('insight'), bad = DL.color('plain'), soft = DL.color('ink-soft');
+
+    /* the four quadrants: a purchase in a fall or a sale in a rally opposes the move,
+       a purchase in a rally or a sale in a fall joins it */
+    function quad(x0, y0, x1, y1, col) {
+      g.fillStyle = DL.fade(col, 0.07);
+      g.fillRect(p.X(x0), p.Y(y1), p.X(x1) - p.X(x0), p.Y(y0) - p.Y(y1));
+    }
+    quad(-XR, 0, 0, YM, ok);
+    quad(0, -YM, XR, 0, ok);
+    quad(0, 0, XR, YM, bad);
+    quad(-XR, -YM, 0, 0, bad);
+
+    /* the title, and a key to the two colors, above the plot */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' trade ΔH against the index move", 6, 11);
+    var kx = 6;
+    [[ok, 'against the move'], [bad, 'with the move']].forEach(function (k) {
+      g.fillStyle = k[0];
+      g.fillRect(kx, 25, 12, 8);
+      g.fillStyle = soft;
+      g.fillText(k[1], kx + 17, 29);
+      kx += 17 + g.measureText(k[1]).width + 16;
+    });
+    g.restore();
+
+    /* the trade at every move, for this GEX */
+    var col = gex > 0 ? ok : gex < 0 ? bad : DL.color('ink-faint');
+    DL.line(p, [-XR, XR], [flow(gex, -XR), flow(gex, XR)], { color: col, width: 2 });
+
+    /* the trade at the chosen move: an arrow from zero, broken where it leaves the chart.
+       Its label sits at its foot, on the side of the axis the arrow does not take, and
+       reaches away from zero where there is room */
+    var x = p.X(mv), y0 = p.Y(0), clip = Math.abs(dh) > YM;
+    var tip = clip ? (dh > 0 ? YM : -YM) : dh;
+    var text = dh > 0 ? 'buys ' + size(dh) : dh < 0 ? 'sells ' + size(dh) : 'no trade';
+    g.save();
+    g.font = font();
+    var w = g.measureText(text).width;
+    g.restore();
+    var out = mv >= 0 ? (x + 10 + w < p.X(XR) - 2) : !(x - 10 - w > p.X(-XR) + 2);
+    var al = out ? 'left' : 'right', dx = out ? 10 : -10;
+    if (dh !== 0) {
+      arrow(g, x, y0, x, p.Y(tip), col);
+      if (clip) {
+        /* the break: a gap across the shaft, edged by two slanted strokes */
+        var yb = p.Y(tip) + (dh > 0 ? 24 : -24);
+        g.save();
+        g.fillStyle = DL.color('paper');
+        g.beginPath();
+        g.moveTo(x - 8, yb + 1); g.lineTo(x + 8, yb - 5); g.lineTo(x + 8, yb - 1); g.lineTo(x - 8, yb + 5);
+        g.closePath();
+        g.fill();
+        g.strokeStyle = col;
+        g.lineWidth = 1.2;
+        g.beginPath();
+        g.moveTo(x - 8, yb + 1); g.lineTo(x + 8, yb - 5);
+        g.moveTo(x - 8, yb + 5); g.lineTo(x + 8, yb - 1);
+        g.stroke();
+        g.restore();
+      }
+      note(p, mv, 0, text, col, al, dx, dh < 0 ? 'bottom' : 'top');
+    } else {
+      p.dot(mv, 0, { r: 4.5, color: DL.color('ink-faint'), ring: true });
+      note(p, mv, 0, text, soft, al, dx, 'bottom');
+    }
+  });
+
+  function update() {
+    var gex = +GX.value, mv = +MV.value, S = +SP.value, dh = flow(gex, mv);
+    var n = Math.round(Math.abs(dh) * 1e9 / (ES * S));
+    DL.out(U + '-gex-o', (gex > 0 ? '+' : gex < 0 ? DL.MINUS : '') + '$' + DL.num(Math.abs(gex), 1) + 'B');
+    DL.out(U + '-mv-o', DL.signed(mv, 1) + '%');
+    DL.out(U + '-s-o', DL.num(S, 0));
+    DL.out(U + '-dh', 'trade ΔH = ' + signed(dh));
+    DL.out(U + '-es', n === 0 ? 'E-mini: no trade'
+                              : 'E-mini: ' + (dh > 0 ? 'buy ' : 'sell ') + DL.num(n, 0) + ' contracts');
+    DL.out(U + '-one', 'one E-mini = ' + DL.usd(ES * S, 0));
+    var move = DL.num(Math.abs(mv), 1) + '% ' + (mv > 0 ? 'rally' : 'fall');
+    if (mv === 0) {
+      DL.out(U + '-vk', 'No move.');
+      DL.out(U + '-vt', 'With the index unchanged, the dealers have nothing to hedge.');
+    } else if (gex === 0) {
+      DL.out(U + '-vk', 'No trade.');
+      DL.out(U + '-vt', "At zero GEX the dealers' hedge trades cancel, whatever the move.");
+    } else if (gex > 0) {
+      DL.out(U + '-vk', 'Stabilizing.');
+      DL.out(U + '-vt', 'Dealers ' + (dh > 0 ? 'buy ' : 'sell ') + size(dh) + ' into a ' + move +
+                        ', against the move.');
+    } else {
+      DL.out(U + '-vk', 'Destabilizing.');
+      DL.out(U + '-vt', 'Dealers ' + (dh > 0 ? 'buy ' : 'sell ') + size(dh) + ' into a ' + move +
+                        ', with the move.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-gex', U + '-mv', U + '-s'], update);
+})();
+</script>

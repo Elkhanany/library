@@ -1,0 +1,111 @@
+<!--
+name: the unhedged dealer
+source: new for this book: chapter 6A, "The unhedged dealer"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-vol">day's volatility</label>
+      <input type="range" id="{{uid}}-vol" min="0.25" max="3" step="0.05" value="1">
+      <output id="{{uid}}-vol-o" for="{{uid}}-vol"></output>
+    </div>
+    <div class="ctrl">
+      <button type="button" id="{{uid}}-new">new days</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-sp"></output></div>
+    <div class="ctrl"><output id="{{uid}}-un"></output></div>
+    <div class="ctrl"><output id="{{uid}}-he"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A sliver of spread beside a day of direction.</b> A dealer sells 100 of
+  Chapter 6C's SPY $600 calls (30 days, 18% implied volatility, a delta of 0.54) for $10 a
+  contract of spread, then lives through 400 simulated days of normal moves at the volatility
+  the slider sets. The histograms give the day's P&amp;L without and with the delta hedge, each
+  scaled to its tallest bar, and a typical swing is one standard deviation. Unhedged, the
+  typical swing is about 32 times the spread. Hedged, the days gather near the spread, and what
+  is left is the short gamma of Chapter 6D: a little theta on quiet days and a loss on large
+  moves.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var VOL = DL.$(U + '-vol');
+
+  /* the dealer's book: short N calls on SPY at $600, struck at $600 with 30 days to run,
+     priced at 18% implied volatility (Black-Scholes, r = 4%), sold with $10 a contract of
+     spread; one day later the calls are repriced at the new spot with 29 days to run */
+  var S = 600, K = 600, T = 30 / 365, T1 = 29 / 365, IV = 0.18, N = 100, SPREAD = 10, DAYS = 400;
+  var C0 = DL.bsPrice(S, K, T, IV, 'call'), D0 = DL.bsDelta(S, K, T, IV, 'call');
+  function pnl(dS, hedged) {
+    var c1 = DL.bsPrice(S + dS, K, T1, IV, 'call');
+    return N * (SPREAD - 100 * (c1 - C0) + (hedged ? 100 * D0 * dS : 0));
+  }
+  var seed = 26, memo = { key: null };
+  function days(sd) {
+    var key = sd + '|' + seed;
+    if (memo.key === key) return memo;
+    var r = DL.rng(seed), un = [], he = [];
+    for (var i = 0; i < DAYS; i++) {
+      var dS = S * sd * DL.gauss(r);
+      un.push(pnl(dS, false));
+      he.push(pnl(dS, true));
+    }
+    memo = { key: key, un: un, he: he };
+    return memo;
+  }
+  function spread(a) {
+    var m = 0, v = 0;
+    a.forEach(function (x) { m += x; });
+    m /= a.length;
+    a.forEach(function (x) { v += (x - m) * (x - m); });
+    return Math.sqrt(v / a.length);
+  }
+  function k(v) {
+    if (Math.abs(v) < 1) return '$0';
+    return (v < 0 ? DL.MINUS : '') + '$' + DL.num(Math.abs(v) / 1000, 0) + 'k';
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sd = +VOL.value / 100, d = days(sd);
+    /* one dollar axis for both histograms: 3.6 unhedged standard deviations each side */
+    var X = 3.6 * N * 100 * D0 * S * sd, BINS = 49, bw = 2 * X / BINS;
+    function hist(a) {
+      var h = [];
+      for (var b = 0; b < BINS; b++) h.push(0);
+      a.forEach(function (x) { h[Math.max(0, Math.min(BINS - 1, Math.floor((x + X) / bw)))]++; });
+      return h;
+    }
+    var hu = hist(d.un), hh = hist(d.he), mu = Math.max.apply(null, hu), mh = Math.max.apply(null, hh);
+    var xs = hu.map(function (_, b) { return -X + (b + 0.5) * bw; });
+    var TOP = 1.2, p = new NMT.Plot(c, { xmin: -X, xmax: X, ymin: 0, ymax: 2.25,
+                                         pad: { l: 14, r: 14, t: 8, b: 30 } });
+    DL.axes(p, { nx: p.w < 520 ? 3 : 5, ys: [], yAxis: false, y: false, x: k });
+    p.seg(-X, TOP, X, TOP, { color: DL.color('rule'), width: 1.4 });
+    var un = DL.fade(DL.color('plain'), 0.7), he = DL.fade(DL.color('insight'), 0.8),
+        acc = DL.color('accent'), soft = DL.color('ink-soft'), font = '11px ' + DL.color('sans');
+    DL.bars(p, xs, hu.map(function (n) { return TOP + 0.82 * n / mu; }),
+            { base: TOP, w: bw * 0.86, color: un });
+    DL.bars(p, xs, hh.map(function (n) { return 0.82 * n / mh; }), { w: bw * 0.86, color: he });
+    p.seg(N * SPREAD, 0, N * SPREAD, 2.1, { color: acc, width: 1.6 });
+    p.text(-X, 2.25, 'no hedge', { dx: 2, dy: 13, color: soft, font: font });
+    p.text(-X, TOP, 'delta hedged', { dx: 2, dy: 5, baseline: 'top', color: soft, font: font });
+    p.text(N * SPREAD, 2.25, 'spread kept', { dx: 5, dy: 13, color: acc, font: font });
+
+    var rally = S * sd, lossU = -(pnl(rally, false) - N * SPREAD), resH = pnl(rally, true);
+    DL.out(U + '-vol-o', DL.num(sd * 100, 2) + '% a day');
+    DL.out(U + '-sp', 'spread kept = ' + DL.usd(N * SPREAD, 0));
+    DL.out(U + '-un', 'no hedge: typical swing ' + DL.usd(spread(d.un), 0));
+    DL.out(U + '-he', 'hedged: typical swing ' + DL.usd(spread(d.he), 0));
+    DL.out(U + '-vk', 'A ' + DL.num(sd * 100, 2) + '% rally');
+    DL.out(U + '-vt', 'costs the unhedged book ' + DL.usd(lossU, 0) + ', ' +
+           DL.num(lossU / (N * SPREAD), 0) + ' times the spread. Hedged, it ' +
+           (resH >= 0 ? 'leaves the book ' + DL.usd(resH, 0) + ' ahead, spread included.'
+                      : 'costs the book ' + DL.usd(-resH, 0) + ', spread included.'));
+  });
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; draw(); });
+  DL.bind([U + '-vol'], draw);
+})();
+</script>

@@ -1,0 +1,107 @@
+<!--
+name: jade lizard check
+source: new for this book: chapter 12D, "Checking a jade lizard"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-put">put premium</label>
+      <input type="range" id="{{uid}}-put" min="0" max="80" step="1" value="42">
+      <output id="{{uid}}-put-o" for="{{uid}}-put"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cs">call spread credit</label>
+      <input type="range" id="{{uid}}-cs" min="0" max="20" step="1" value="9">
+      <output id="{{uid}}-cs-o" for="{{uid}}-cs"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-w">call spread width</label>
+      <input type="range" id="{{uid}}-w" min="20" max="60" step="5" value="30">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-cr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ks"></output></div>
+    <div class="ctrl"><output id="{{uid}}-up"></output></div>
+    <div class="ctrl"><output id="{{uid}}-be"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Credit at least the width, or risk on both sides.</b> The P&amp;L at expiry, in
+  SPX points, of the chapter's jade lizard: a short 5,950 put, a short 6,080 call and a long call
+  further out, with SPX at 6,000. Set the put's premium, the call spread's own credit (the short
+  call's premium less the long call's) and the call spread's width. Green is profit and rose is
+  loss: while the total credit is at least the width, the right side stays green, and the moment
+  it falls short the right side turns rose. The figure opens on the worked example, whose
+  premiums are illustrative.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var PUT = DL.$(U + '-put'), CS = DL.$(U + '-cs'), WD = DL.$(U + '-w');
+
+  /* the worked example's strikes: the 5,950 put and the 6,080 call are fixed, and the
+     long call sits the chosen width above the short one */
+  var K1 = 5950, K2 = 6080, XMIN = 5820, XMAX = 6200;
+  function pnl(S, C, K3) {
+    return C - Math.max(K1 - S, 0) - Math.max(S - K2, 0) + Math.max(S - K3, 0);
+  }
+  function pts(x) { return DL.signed(x, 0); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var pp = +PUT.value, cs = +CS.value, W = +WD.value, K3 = K2 + W, C = pp + cs;
+    var ok = C >= W, up = C - W;
+    var ymin = Math.min(-80, pnl(XMIN, C, K3) - 10), ymax = Math.max(60, C + 12);
+    var p = new NMT.Plot(c, { xmin: XMIN, xmax: XMAX, ymin: ymin, ymax: ymax,
+                              pad: { l: 40, r: 14, t: 22, b: 30 } });
+    DL.axes(p, { xs: [5850, 5950, 6050, 6150], ny: 5, yAt: XMIN,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return DL.signed(v, 0); } });
+
+    /* profit and loss as two fills between the curve and zero */
+    var xs = [], ys = [], pos = [], neg = [];
+    for (var s = XMIN; s <= XMAX; s += 1) {
+      var v = pnl(s, C, K3);
+      xs.push(s); ys.push(v); pos.push(Math.max(v, 0)); neg.push(Math.min(v, 0));
+    }
+    DL.band(p, xs, pos, 0, DL.fade(DL.color('insight'), 0.32));
+    DL.band(p, xs, neg, 0, DL.fade(DL.color('plain'), 0.32));
+    DL.hline(p, 0, { color: DL.color('ink-faint') });
+
+    /* the three strikes, with their names set off either side of the two close ones */
+    var faint = DL.color('ink-faint'), soft = DL.color('ink-soft');
+    [K1, K2, K3].forEach(function (k) { DL.vline(p, k, { color: faint, dash: [3, 3] }); });
+    var font = '11px ' + DL.color('sans');
+    p.text(K1, ymax, 'K₁', { dx: 4, dy: -6, color: soft, font: font });
+    p.text(K2, ymax, 'K₂', { dx: -4, dy: -6, align: 'right', color: soft, font: font });
+    p.text(K3, ymax, 'K₃', { dx: 4, dy: -6, color: soft, font: font });
+
+    DL.line(p, xs, ys, { color: DL.color('ink'), width: 2 });
+    /* what the right side keeps or loses, printed beside it */
+    p.text(XMAX, up, pts(up), { dx: -2, dy: up >= 0 ? -5 : 15, align: 'right',
+                                 color: DL.color(ok ? 'insight' : 'plain'), font: font });
+
+    DL.out(U + '-put-o', String(pp));
+    DL.out(U + '-cs-o', String(cs));
+    DL.out(U + '-w-o', String(W));
+    DL.out(U + '-cr', 'credit C = ' + pp + ' + ' + cs + ' = ' + C + ' (' + DL.usd(C * 100, 0) + ')');
+    DL.out(U + '-ks', 'strikes ' + DL.num(K1, 0) + ' / ' + DL.num(K2, 0) + ' / ' + DL.num(K3, 0));
+    DL.out(U + '-up', 'above ' + DL.num(K3, 0) + ': ' + pts(up) + ' points');
+    /* short of the width, the P&L also crosses zero between the call strikes, at K₂ + C */
+    DL.out(U + '-be', ok ? 'breakeven K₁ − C = ' + DL.num(K1 - C, 0)
+                         : 'breakevens ' + DL.num(K1 - C, 0) + ' and ' + DL.num(K2 + C, 0));
+    if (ok) {
+      DL.out(U + '-vk', 'A jade lizard.');
+      DL.out(U + '-vt', 'The credit of ' + C + ' covers the ' + W + '-point width, so above ' +
+             DL.num(K3, 0) + ' the position keeps ' + up + ' points: no upside risk.');
+    } else {
+      DL.out(U + '-vk', 'Not a jade lizard.');
+      DL.out(U + '-vt', 'The credit of ' + C + ' is short of the ' + W + '-point width, so above ' +
+             DL.num(K3, 0) + ' the position loses ' + (-up) +
+             ' points: a short put plus a call spread, with risk on both sides.');
+    }
+  });
+  DL.bind([U + '-put', U + '-cs', U + '-w'], draw);
+})();
+</script>

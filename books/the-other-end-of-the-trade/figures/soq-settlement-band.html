@@ -1,0 +1,195 @@
+<!--
+name: SOQ settlement band
+source: new for this book: chapter 12H, "Thursday's close against Friday's SOQ"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Short option" id="{{uid}}-type">
+      <label>short</label>
+      <button type="button" data-v="call" class="on" aria-pressed="true">call</button>
+      <button type="button" data-v="put" aria-pressed="false">put</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-thu">Thursday's close</label>
+      <input type="range" id="{{uid}}-thu" min="5975" max="6025" step="1" value="5998">
+      <output id="{{uid}}-thu-o" for="{{uid}}-thu"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-soq">SOQ print</label>
+      <input type="range" id="{{uid}}-soq" min="5960" max="6040" step="1" value="6005">
+      <output id="{{uid}}-soq-o" for="{{uid}}-soq"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-wid">SOQ band</label>
+      <input type="range" id="{{uid}}-wid" min="0" max="25" step="1" value="10">
+      <output id="{{uid}}-wid-o" for="{{uid}}-wid"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-at-thu"></output></div>
+    <div class="ctrl"><output id="{{uid}}-at-soq"></output></div>
+    <div class="ctrl"><output id="{{uid}}-itm"></output></div>
+    <div class="ctrl"><output id="{{uid}}-worst"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><span id="{{uid}}-say"></span></p>
+  <figcaption><b>Two points out on Thursday, five points in on Friday.</b> The line is what a
+  short SPX monthly option owes when it settles: the settlement level's distance past the
+  6,000 strike, times $100 a contract. The shaded band is the range of SOQ prints around
+  Thursday's close that you allow for, narrow for a calm night and wide for a volatile one,
+  and its darker part is where the option settles in the money. The call opens at the worked
+  example and the put at the chapter's self-check. Closing on Thursday afternoon takes the
+  position out before any print in the band can settle it.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 6000, X0 = 5960, X1 = 6040;
+  var THU = DL.$(U + '-thu'), SOQ = DL.$(U + '-soq'), BAND = DL.$(U + '-wid');
+  /* each option opens at the chapter's own numbers: the worked example's call and the
+     self-check's put */
+  var CASES = { call: [5998, 6005], put: [6003, 5991] };
+  var type = DL.seg(U + '-type', function (v) {
+    THU.value = CASES[v][0];
+    SOQ.value = CASES[v][1];
+    update();
+  });
+
+  /* points in the money at a settlement level S (negative: out of the money), and what
+     the short owes: the intrinsic value times the $100 multiplier */
+  function past(S, t) { return t === 'call' ? S - K : K - S; }
+  function owed(S, t) { return Math.max(past(S, t), 0) * 100; }
+  function lvl(x) { return DL.num(x, 0); }
+  function pts(n) { return n === 1 ? '1 point' : DL.num(n, 0) + ' points'; }
+
+  var st;
+  function compute() {
+    var t = type(), thu = +THU.value, soq = +SOQ.value, w = +BAND.value;
+    var lo = thu - w, hi = thu + w;
+    /* the part of the band that settles in the money, and the band's worst print */
+    var a = t === 'call' ? Math.max(lo, K) : lo, b = t === 'call' ? hi : Math.min(hi, K);
+    var itm = Math.max(0, b - a), worst = t === 'call' ? hi : lo;
+    st = { t: t, thu: thu, soq: soq, w: w, lo: lo, hi: hi, a: a, b: b, itm: itm,
+           anyItm: t === 'call' ? hi > K : lo < K, worst: worst };
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var t = st.t;
+    var top = Math.max(owed(st.worst, t), owed(st.soq, t), 500) * 1.25;
+    var tk = DL.ticks(0, top, 4), ymax = tk.vals[tk.vals.length - 1];
+    if (ymax < top) { ymax += tk.step; tk.vals.push(ymax); }
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: 0, ymax: ymax,
+                              pad: { l: 50, r: 22, t: 26, b: 30 } });
+    DL.axes(p, { xs: [5960, 5980, 6000, 6020, 6040], ys: tk.vals, yAt: X0,
+                 x: function (v) { return lvl(v); },
+                 y: function (v) { return '$' + DL.num(v, 0); } });
+    var g = p.g, fam = DL.color('familiar'), plain = DL.color('plain'),
+        soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), acc = DL.color('accent');
+    var yT = p.Y(ymax), yB = p.Y(0);
+
+    /* the band of possible prints, and its part in the money */
+    DL.clip(p);
+    var bx0 = p.X(Math.max(st.lo, X0)), bx1 = p.X(Math.min(st.hi, X1));
+    g.fillStyle = DL.fade(fam, 0.12);
+    g.fillRect(bx0, yT, Math.max(1, bx1 - bx0), yB - yT);
+    if (st.itm > 0) {
+      var ix0 = p.X(Math.max(st.a, X0)), ix1 = p.X(Math.min(st.b, X1));
+      g.fillStyle = DL.fade(plain, 0.2);
+      g.fillRect(ix0, yT, Math.max(1, ix1 - ix0), yB - yT);
+    }
+    g.restore();
+
+    /* what the short owes at each settlement level: faint outside the band */
+    var xs = [], ys = [];
+    for (var s = X0; s <= X1; s += 1) { xs.push(s); ys.push(owed(s, t)); }
+    DL.line(p, xs, ys, { color: DL.fade(plain, 0.45), width: 1.6 });
+    var bxs = [], bys = [];
+    for (s = Math.max(st.lo, X0); s <= Math.min(st.hi, X1); s += 0.5) { bxs.push(s); bys.push(owed(s, t)); }
+    if (bxs.length > 1) DL.line(p, bxs, bys, { color: plain, width: 2.6 });
+
+    /* the strike and Thursday's close, labeled above the plot. Thursday's label sits on
+       the side away from the strike if it fits there; the strike's takes whichever side
+       stays clear of it, or drops inside the plot's top edge on the flat side */
+    DL.vline(p, K, { color: faint, dash: [4, 3] });
+    DL.vline(p, st.thu, { color: fam, width: 1.5 });
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    var L = p.X(X0), R = p.X(X1), xT = p.X(st.thu), xK = p.X(K);
+    var tl = 'Thursday ' + lvl(st.thu), wT = g.measureText(tl).width, wK = g.measureText('strike').width;
+    var tRight = st.thu > K || (st.thu === K && t === 'put');
+    if (tRight && xT + 4 + wT > R) tRight = false;
+    if (!tRight && xT - 4 - wT < L) tRight = true;
+    var t0 = tRight ? xT + 4 : xT - 4 - wT, t1 = t0 + wT;
+    var kx = null;
+    [xK + 4, xK - 4 - wK].forEach(function (x) {
+      if (kx === null && x >= L && x + wK <= R && (x + wK < t0 - 6 || x > t1 + 6)) kx = x;
+    });
+    g.textAlign = 'left';
+    g.textBaseline = 'bottom';
+    g.fillStyle = fam;
+    g.fillText(tl, t0, yT - 4);
+    g.fillStyle = soft;
+    if (kx !== null) g.fillText('strike', kx, yT - 4);
+    else {
+      g.textBaseline = 'top';
+      g.fillText('strike', t === 'call' ? xK - 4 - wK : xK + 4, yT + 3);
+    }
+    g.restore();
+
+    /* the SOQ print on the line. In the money, its label sits under the rising line, on
+       the side it rises toward; on the flat part, or too near the axis for that, it sits
+       above the dot on the flat side */
+    var cost = owed(st.soq, t), px = p.X(st.soq), py = p.Y(cost);
+    p.dot(st.soq, cost, { r: 5, color: acc, ring: true });
+    var label = 'SOQ ' + lvl(st.soq) + ': $' + DL.num(cost, 0);
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    var wtxt = g.measureText(label).width, rises = t === 'call' ? 'right' : 'left';
+    var flat = rises === 'right' ? 'left' : 'right', opts = [];
+    if (cost > 0 && yB - py >= 20) opts.push({ side: rises, under: true });
+    opts.push({ side: flat, under: false }, { side: rises, under: false });
+    var pick = opts[opts.length - 1];
+    for (var i = 0; i < opts.length; i++) {
+      var lx = opts[i].side === 'right' ? px + 9 : px - 9 - wtxt;
+      if (lx >= p.X(X0) + 2 && lx + wtxt <= p.X(X1) - 2) { pick = opts[i]; break; }
+    }
+    g.fillStyle = acc;
+    g.textAlign = pick.side === 'right' ? 'left' : 'right';
+    g.textBaseline = pick.under ? 'top' : 'bottom';
+    g.fillText(label, px + (pick.side === 'right' ? 9 : -9),
+               pick.under ? py + 3 : Math.max(yT + 13, py - 7));
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var t = st.t, name = t === 'call' ? 'call' : 'put';
+    DL.out(U + '-thu-o', lvl(st.thu));
+    DL.out(U + '-soq-o', lvl(st.soq));
+    DL.out(U + '-wid-o', '±' + st.w);
+    DL.out(U + '-at-thu', "settled at Thursday's close: $" + DL.num(owed(st.thu, t), 0));
+    DL.out(U + '-at-soq', 'settled at the SOQ: $' + DL.num(owed(st.soq, t), 0));
+    DL.out(U + '-itm', st.w === 0 ? 'band: one print, ' + lvl(st.thu)
+      : 'band in the money: ' + DL.num(st.itm, 0) + ' of ' + DL.num(2 * st.w, 0) + ' points');
+    DL.out(U + '-worst', 'worst print in band: $' + DL.num(owed(st.worst, t), 0));
+
+    var dT = past(st.thu, t), dS = past(st.soq, t), say;
+    say = dT > 0 ? "At Thursday's close the " + name + ' is already ' + pts(dT) + ' in the money. '
+        : dT < 0 ? "At Thursday's close the " + name + ' is ' + pts(-dT) + ' out of the money. '
+        : "At Thursday's close the " + name + ' is at the money. ';
+    if (dS > 0) {
+      say += 'The SOQ settles it ' + pts(dS) + ' in, so you pay $' + DL.num(dS * 100, 0) + ' a contract';
+      say += dT <= 0 ? ", a loss that did not exist at Thursday's close." : '.';
+    } else if (dS < 0) {
+      say += 'The SOQ settles it ' + pts(-dS) + ' out of the money, and it expires worthless.';
+    } else {
+      say += 'The SOQ prints at the strike, and it expires worthless.';
+    }
+    DL.out(U + '-say', say);
+    draw();
+  }
+  update();
+  DL.bind([U + '-thu', U + '-soq', U + '-wid'], update);
+})();
+</script>

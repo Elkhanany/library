@@ -1,0 +1,126 @@
+<!--
+name: bilateral against cleared
+source: new for this book: chapter 4A, "Bilateral against cleared"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="236"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">firms n</label>
+      <input type="range" id="{{uid}}-n" min="3" max="30" step="1" value="20">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <input type="checkbox" id="{{uid}}-fail">
+      <label for="{{uid}}-fail">one firm fails</label>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-bi"></output></div>
+    <div class="ctrl"><output id="{{uid}}-cl"></output></div>
+    <div class="ctrl"><output id="{{uid}}-br"></output></div>
+  </div>
+  <figcaption><b>A line for every pair, or one spoke each.</b> A ring of n firms that all
+  trade with one another, drawn with a line for every bilateral exposure, n(n − 1)/2 of them,
+  and again with one spoke from each firm to a clearinghouse at the center. At 20 firms that
+  is 190 lines against 20 spokes, and at 30 firms 435 lines against 30. Select "one firm fails"
+  to light every exposure the failure breaks: a line to each of the other firms in the
+  bilateral ring, and a single spoke in the cleared one, where the clearinghouse spreads the
+  loss across its members.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var NS = DL.$(U + '-n'), FAIL = DL.$(U + '-fail');
+
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (cv) {
+    var n = +NS.value, fail = FAIL.checked, i, j;
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1,
+                               pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+
+    /* two panels side by side; each ring as large as its panel allows, below a title
+       row, with room above the top firm for its tag */
+    var GAP = 18, wp = (W - GAP) / 2, TITLE = 18, TAG = 16;
+    var R = Math.max(24, Math.min(wp / 2 - 12, (H - TITLE - TAG - 8) / 2));
+    /* the title, the tag row and the ring, as one block centered in the canvas */
+    var top = Math.max(0, (H - TITLE - TAG - 2 * R) / 2), cy = top + TITLE + TAG + R;
+    var cxs = [wp / 2, wp + GAP + wp / 2];
+    function at(cx, k) {
+      var a = -Math.PI / 2 + 2 * Math.PI * k / n;
+      return [cx + R * Math.cos(a), cy + R * Math.sin(a)];
+    }
+    var faint = DL.color('ink-faint'), soft = DL.color('ink-soft'), firm = DL.color('familiar'),
+        bad = DL.color('plain'), hub = DL.color('accent'), paper = DL.color('paper');
+    /* the more lines, the lighter each one, so a full ring of 30 still reads */
+    var alpha = Math.max(0.22, Math.min(0.85, 1.05 - 0.028 * n));
+    function stroke(a, b, color, width) {
+      g.strokeStyle = color;
+      g.lineWidth = width;
+      g.beginPath();
+      g.moveTo(a[0], a[1]);
+      g.lineTo(b[0], b[1]);
+      g.stroke();
+    }
+    function node(q, color, r) {
+      g.beginPath();
+      g.arc(q[0], q[1], r, 0, 2 * Math.PI);
+      g.fillStyle = color;
+      g.fill();
+      g.strokeStyle = paper;
+      g.lineWidth = 1.6;
+      g.stroke();
+    }
+
+    /* left: every pair trades, one line per bilateral exposure */
+    var L = cxs[0];
+    for (i = 0; i < n; i++)
+      for (j = i + 1; j < n; j++)
+        if (!(fail && i === 0))
+          stroke(at(L, i), at(L, j), DL.fade(faint, fail ? alpha * 0.55 : alpha), 1);
+    if (fail) for (j = 1; j < n; j++) stroke(at(L, 0), at(L, j), bad, 1.6);
+
+    /* right: one spoke from each firm to the clearinghouse */
+    var C = cxs[1], hubAt = [C, cy];
+    for (i = 0; i < n; i++)
+      stroke(at(C, i), hubAt, fail && i === 0 ? bad : DL.fade(faint, 0.75), fail && i === 0 ? 2.4 : 1.2);
+
+    for (var s = 0; s < 2; s++)
+      for (i = 0; i < n; i++)
+        node(at(cxs[s], i), fail && i === 0 ? bad : firm, fail && i === 0 ? 5.5 : 4.5);
+    node(hubAt, hub, Math.max(6, Math.min(10, R * 0.09)));
+
+    g.save();
+    g.font = font(11);
+    g.textBaseline = 'middle';
+    /* the clearinghouse's name on a patch of paper, just under the hub */
+    var label = 'clearinghouse', lw = g.measureText(label).width, ly = cy + Math.max(15, R * 0.2);
+    g.fillStyle = DL.fade(paper, 0.9);
+    g.fillRect(C - lw / 2 - 4, ly - 8, lw + 8, 16);
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.fillText(label, C, ly);
+    /* panel titles centered over the rings, and the failed firm's tag above it */
+    g.fillText('bilateral', cxs[0], top + 8);
+    g.fillText('cleared', cxs[1], top + 8);
+    if (fail) {
+      g.fillStyle = bad;
+      g.textAlign = 'center';
+      for (s = 0; s < 2; s++) g.fillText('fails', cxs[s], cy - R - 11);
+    }
+    g.restore();
+
+    var lines = n * (n - 1) / 2;
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-bi', 'bilateral: n(n − 1)/2 = ' + DL.num(lines, 0) + ' lines');
+    DL.out(U + '-cl', 'cleared: n = ' + n + ' spokes');
+    DL.out(U + '-br', 'a failure breaks ' + (n - 1) + ' line' + (n - 1 === 1 ? '' : 's') + ', 1 spoke');
+  });
+  DL.bind([U + '-n', U + '-fail'], draw);
+})();
+</script>

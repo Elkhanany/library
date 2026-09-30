@@ -1,0 +1,165 @@
+<!--
+name: spread decomposition
+source: new for this book: chapter 2B, "The spread decomposition"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-q" data-h="112"></canvas>
+  <canvas id="{{uid}}-c" data-h="132"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Side of the order" id="{{uid}}-side">
+      <label>order</label>
+      <button type="button" data-v="buy" class="on" aria-pressed="true">buy</button>
+      <button type="button" data-v="sell" aria-pressed="false">sell</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-fill">fill P</label>
+      <input type="range" id="{{uid}}-fill" min="100" max="100.06" step="0.001" value="100.035">
+      <output id="{{uid}}-fill-o" for="{{uid}}-fill"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-m1">later mid M₁</label>
+      <input type="range" id="{{uid}}-m1" min="99.99" max="100.07" step="0.005" value="100.04">
+      <output id="{{uid}}-m1-o" for="{{uid}}-m1"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-eff"></output></div>
+    <div class="ctrl"><output id="{{uid}}-real"></output></div>
+    <div class="ctrl"><output id="{{uid}}-imp"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pi"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>What you paid, what they kept, and how far the price moved.</b> The chapter's
+  NBBO of $100.02 by $100.04, with its mid M₀ at $100.03 when the order arrives, a fill at P, and
+  the mid M₁ a short while later. Below, in cents a share and signed by the side d, the realized
+  spread 2d(P − M₁) and the price impact 2d(M₁ − M₀) add up to the effective spread 2d(P − M₀).
+  Drag the later mid: what you paid stays put, and only the split between the firm's profit and
+  the impact changes. A fill outside the quote is flagged as trading through the NBBO.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var FILL = DL.$(U + '-fill'), M1 = DL.$(U + '-m1');
+  /* prices in tenths of a cent, so that the arithmetic is exact */
+  var BID = 100020, ASK = 100040, MID = 100030;
+  var was = 'buy';
+  var side = DL.seg(U + '-side', function (v) {
+    /* the same trade seen from the other side: the fill and the later mid mirror about M₀ */
+    if (v !== was) {
+      FILL.value = ((2 * MID - Math.round(+FILL.value * 1000)) / 1000).toFixed(3);
+      M1.value = ((2 * MID - Math.round(+M1.value * 1000)) / 1000).toFixed(3);
+      was = v;
+    }
+    update();
+  });
+
+  function state() {
+    var d = side() === 'sell' ? -1 : 1, P = Math.round(+FILL.value * 1000), M = Math.round(+M1.value * 1000);
+    /* [eq:eff] and [eq:real], in cents a share; the impact is their difference */
+    var eff = 2 * d * (P - MID) / 10, real = 2 * d * (P - M) / 10, imp = 2 * d * (M - MID) / 10;
+    var pi = (d > 0 ? ASK - P : P - BID) / 10;
+    var through = d > 0 ? P > ASK : P < BID;
+    return { d: d, P: P, M: M, eff: eff, real: real, imp: imp, pi: pi, through: through };
+  }
+  function usd3(m) { return '$' + (m / 1000).toFixed(3); }
+  function usd2(m) { return '$' + (m / 1000).toFixed(m % 10 ? 3 : 2); }
+  function ct(x) { return DL.signed(x, 1) + '¢'; }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  /* the quote at arrival, the fill and the later mid on one price axis */
+  var drawQ = DL.figure(U + '-q', function (c) {
+    var st = state();
+    var p = new NMT.Plot(c, { xmin: 99.99, xmax: 100.07, ymin: 0, ymax: 1,
+                              pad: { l: 16, r: 16, t: 8, b: 26 } });
+    var narrow = p.w < 520, xs = [];
+    for (var k = 99990; k <= 100070; k += narrow ? 20 : 10) xs.push(k / 1000);
+    DL.axes(p, { xs: xs, y: false, yAxis: false, grid: false,
+                 x: function (v) { return '$' + v.toFixed(2); } });
+    var fam = DL.color('familiar'), acc = DL.color('accent'), ins = DL.color('insight');
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    p.path([[BID / 1000, 0.22], [ASK / 1000, 0.22], [ASK / 1000, 0.62], [BID / 1000, 0.62]],
+           { close: true, fill: DL.fade(fam, 0.14), color: DL.fade(fam, 0.5), width: 1 });
+    p.seg(MID / 1000, 0.1, MID / 1000, 0.74, { color: soft, width: 1.2, dash: [4, 3] });
+    p.text(BID / 1000, 0.62, 'bid', { dy: -3, align: 'center', font: font(), color: fam });
+    p.text(ASK / 1000, 0.62, 'ask', { dy: -3, align: 'center', font: font(), color: fam });
+    p.text(MID / 1000, 0.74, 'M₀', { dy: -3, align: 'center', font: font(), color: soft });
+    /* the fill and the later mid, their labels pushed apart when they sit close */
+    var P = st.P / 1000, M = st.M / 1000, pLeft = st.P <= st.M;
+    p.seg(M, 0.08, M, 0.9, { color: ins, width: 2 });
+    p.text(M, 0.9, 'M₁ later', { dx: pLeft ? 3 : -3, dy: -1, align: pLeft ? 'left' : 'right',
+           font: font(), color: ins });
+    p.dot(P, 0.42, { r: 5, color: st.through ? DL.color('plain') : acc, ring: true });
+    p.text(P, 0.42, 'P', { dx: pLeft ? -8 : 8, dy: 4, align: pLeft ? 'right' : 'left',
+           font: 'bold ' + font(), color: st.through ? DL.color('plain') : acc });
+  });
+
+  /* the three metrics as a waterfall: realized, then the impact on top of it, equal the effective */
+  var drawC = DL.figure(U + '-c', function (c) {
+    var st = state();
+    var span = Math.max(3, Math.ceil(Math.max(Math.abs(st.eff), Math.abs(st.real), Math.abs(st.imp),
+                                              Math.abs(st.real + st.imp)) + 0.5));
+    var labW = c.clientWidth < 520 ? 70 : 128;
+    var p = new NMT.Plot(c, { xmin: -span, xmax: span, ymin: 0, ymax: 3.3,
+                              pad: { l: labW, r: 40, t: 6, b: 26 } });
+    DL.axes(p, { nx: 6, y: false, yAxis: false, grid: false,
+                 x: function (v) { return DL.num(v, 0) + '¢'; } });
+    DL.vline(p, 0, { color: DL.color('rule') });
+    var ins = DL.color('insight'), fam = DL.color('familiar'), acc = DL.color('accent');
+    var soft = DL.color('ink-soft'), rows = [
+      { y: 2.6, a: 0, b: st.real, col: ins, name: narrowName('realized', '2d(P − M₁)') },
+      { y: 1.65, a: st.real, b: st.real + st.imp, col: fam, name: narrowName('impact', '2d(M₁ − M₀)') },
+      { y: 0.7, a: 0, b: st.eff, col: acc, name: narrowName('effective', '2d(P − M₀)') }
+    ];
+    function narrowName(n, f) { return labW < 100 ? n : n + ' ' + f; }
+    var g = p.g;
+    rows.forEach(function (r, i) {
+      var x0 = p.X(Math.min(r.a, r.b)), x1 = p.X(Math.max(r.a, r.b));
+      var y0 = p.Y(r.y + 0.3), y1 = p.Y(r.y - 0.3);
+      g.fillStyle = DL.fade(r.col, 0.8);
+      g.fillRect(x0, y0, Math.max(1.5, x1 - x0), y1 - y0);
+      g.save();
+      g.font = font();
+      g.textBaseline = 'middle';
+      g.textAlign = 'right';
+      g.fillStyle = soft;
+      g.fillText(r.name, labW - 8, p.Y(r.y));
+      var v = r.b - r.a, right = r.b >= r.a;
+      g.textAlign = right ? 'left' : 'right';
+      g.fillStyle = r.col;
+      g.fillText(ct(v), right ? x1 + 5 : x0 - 5, p.Y(r.y));
+      g.restore();
+    });
+    /* the connector: where the realized bar ends, the impact begins; where it ends, the effective */
+    p.seg(st.real, 2.3, st.real, 1.95, { color: DL.color('ink-faint'), width: 1, dash: [2, 2] });
+    p.seg(st.real + st.imp, 1.35, st.real + st.imp, 1.0, { color: DL.color('ink-faint'), width: 1, dash: [2, 2] });
+  });
+
+  function update() {
+    var st = state();
+    drawQ();
+    drawC();
+    var buy = st.d > 0;
+    DL.out(U + '-fill-o', usd3(st.P));
+    DL.out(U + '-m1-o', usd3(st.M));
+    DL.out(U + '-eff', 'effective = ' + ct(st.eff));
+    DL.out(U + '-real', 'realized = ' + ct(st.real));
+    DL.out(U + '-imp', 'impact = ' + ct(st.imp));
+    DL.out(U + '-pi', 'improvement = ' + ct(st.pi) + ' a share');
+    if (st.through) {
+      DL.out(U + '-vk', 'Trades through the NBBO.');
+      DL.out(U + '-vt', 'A market ' + (buy ? 'buy must fill at the ask, $100.04, or lower.'
+                                            : 'sell must fill at the bid, $100.02, or higher.'));
+      return;
+    }
+    DL.out(U + '-vk', (buy ? 'A buy at ' : 'A sell at ') + usd2(st.P) + '.');
+    DL.out(U + '-vt', 'Price improvement is ' + DL.num(st.pi, 1) + '¢ a share, ' +
+           DL.usd(st.pi, 2) + ' on 100 shares. The effective spread is ' + ct(st.eff) +
+           ', the realized spread ' + ct(st.real) + ' and the impact ' + ct(st.imp) +
+           ': the firm that filled you ' + (st.real >= 0 ? 'kept ' + DL.num(st.real, 1) + '¢'
+                                                        : 'lost ' + DL.num(-st.real, 1) + '¢') +
+           ' a share against the later mid.');
+  }
+  update();
+  DL.bind([U + '-fill', U + '-m1'], update);
+})();
+</script>
