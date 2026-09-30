@@ -1,296 +1,465 @@
 <p class="eyebrow">Part VIII · The whole market · Chapter 8B</p>
 
-<h1>Two regimes</h1>
+<h1>Who holds what</h1>
 
-<p class="subtitle">When hedging calms the market and when it pushes it</p>
+<p class="subtitle">The sign problem, and how positions are estimated</p>
 
 <div class="callout where">
 <span class="ct">Where we are</span>
-<p><a class="xref" href="8a.html">Chapter 8A</a> added every dealer's gamma into one number, gamma exposure, whose sign says whether dealers as a group are long or short gamma. This chapter shows what each sign does to prices: calm, mean-reverting markets on one side, trending and volatile ones on the other. It gives a simple model of the feedback, the measured effect sizes, and the decision rule each source draws from them.</p>
+<p><a class="xref" href="8a.html">Chapter 8A</a> added every dealer's gamma into gamma exposure and turned it into the trade dealers make when the market moves, with a sign it had to assume. This chapter asks who actually holds what. It traces the two sign conventions to their origins and sets them against the position data. Then it shows how vendors estimate positions, where their methods err, and what no public data can show.</p>
 </div>
 
 <div class="tools"><b>What you need first</b>
 <ul>
-<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX), its sign, and the two sign conventions that make the sign an assumption (<a class="xref" href="8a.html">Chapter 8A</a>).</li>
-<li>Why a long-gamma hedge trades against a move and a short-gamma hedge trades with it (<a class="xref" href="6d.html">Chapter 6D</a>).</li>
-<li>The AR(1) model, in which each return carries a fixed fraction, the weight \(w\), of the one before (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
-<li><span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">Realized volatility</span> against <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> (<a class="xref" href="5e.html">Chapter 5E</a>).</li>
+<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX), one line's dollar gamma, the hedge flow and the sign chain from customer to market (<a class="xref" href="8a.html">Chapter 8A</a>).</li>
+<li>Gamma is the same, and positive, for a bought call and a bought put at one strike (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li><span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">Open interest</span> (<a class="xref" href="5b.html">Chapter 5B</a>), the <span class="gloss" title="The central clearinghouse for all US-listed options. Once a trade clears, it is the counterparty to both sides. Abbreviated OCC.">Options Clearing Corporation</span> and <span class="gloss" title="An option listed on Cboe whose strike, expiration, exercise style and settlement the parties choose, cleared through the OCC like a standard listed option.">FLEX options</span> (<a class="xref" href="4a.html">Chapter 4A</a>).</li>
+<li>How <span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">wholesalers</span> internalize retail SPY orders, and why SPX has no wholesaler (<a class="xref" href="2b.html">Chapter 2B</a>).</li>
+<li><span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">Implied volatility</span> and the <span class="gloss" title="The pattern of implied volatility across strikes at one expiry. In equity index options, out-of-the-money puts carry higher implied volatility than out-of-the-money calls.">volatility skew</span> (<a class="xref" href="5e.html">Chapter 5E</a>); <span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">vanna</span> (<a class="xref" href="5d.html">Chapter 5D</a>).</li>
 </ul>
 </div>
-
-<p>Everything in Parts I to VII compresses to a single regime question: <strong>is the dealer book net long gamma or net short gamma?</strong> The answer sets the sign of the feedback loop between hedging and prices, and with it the whole character of intraday price action.</p>
 
 <div class="callout plain">
 <span class="ct">In plain terms</span>
-<p>A dealer who is long gamma behaves like a thermostat, cooling the room when it warms and heating it when it cools. A dealer who is short gamma behaves like a microphone held too close to its speaker, so that every sound comes back louder. The news that moves prices is the same in both cases. What differs is whether the dealers' hedging pushes back against each move or joins it.</p>
+<p>Open interest tells you how many contracts of each option exist, not who owns them. A GEX model needs to know whether dealers are long or short each one, so it guesses, by rule or by model. Two rules are common, and they give opposite answers from the same data. Studies that can see actual positions find a pattern neither rule describes. In SPX, dealers are short a large number of far <span class="gloss" title="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it.">out-of-the-money</span> puts. In same-day options, their net gamma is positive on average. Everything a heatmap shows inherits the guess.</p>
 </div>
 
-<h2 id="two-regimes-one-mechanism">1 · Two regimes, one mechanism</h2>
+<h2 id="why-the-sign-is-an-assumption">1 · Why the sign is an assumption</h2>
 
-<p>The two regimes are mirror images of each other, row by row:</p>
+<p>Gamma is identical, and positive, for a call and a put at the same strike and expiry (<a class="xref" href="5c.html">Chapter 5C</a>). So an option's type, strike and expiry say nothing about which way its line counts in GEX. Only the side the dealer holds does, and that side is not in the public data. A working paper by Chilingarian (2026) puts it in one sentence:</p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial"></th><th class="c-endpoint">Dealers long gamma: positive GEX</th><th class="c-endpoint">Dealers short gamma: negative GEX</th></tr></thead><tbody><tr><td class="c-trial" data-label="">Hedging</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Sells strength, buys weakness</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Buys strength, sells weakness</td></tr><tr><td class="c-trial" data-label="">Intraday behavior</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX"><strong><span class="gloss" title="The tendency of a move to be followed by a move in the opposite direction, so that prices drift back toward where they were. In a return series it shows as negative autocorrelation.">Mean reversion</span></strong></td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><strong><span class="gloss" title="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past.">Momentum</span></strong></td></tr><tr><td class="c-trial" data-label="">Volatility</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX"><strong>Compressed</strong> relative to its unhedged level</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><strong>Expanded</strong> relative to its unhedged level</td></tr><tr><td class="c-trial" data-label="">Favored style</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Range trading</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><span class="gloss" title="A strategy that buys assets whose own prices have been rising and sells those whose prices have been falling. Also called time-series momentum.">Trend following</span></td></tr><tr><td class="c-trial" data-label="">Premium</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Selling it is favored, because dealer hedging suppresses the realized volatility you are betting against</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Buying it is favored, because realized volatility is amplified</td></tr><tr><td class="c-trial" data-label="">What fails</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Breakouts often fail, because the dealer flow fades them</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Mean reversion is dangerous: fades against the move get crushed</td></tr></tbody></table></div></div>
+<div class="callout brick">
+<p>Because Black-Scholes gamma is identical and positive for calls and puts at the same strike, the sign in any GEX aggregate is an inventory assumption, and when left implicit, a mislabeled term can silently invert the entire regime. Chilingarian (2026)</p>
+</div>
 
-<p>A toy example shows the mechanism. Suppose GEX is +$5 billion per 1% move. By <a class="xref" href="8a.html">Chapter 8A</a>'s hedge-flow formula, a 1% rally then has dealers selling about $5 billion of index exposure and a 1% fall has them buying about $5 billion, so each move meets a flow against it. If GEX is −$5 billion instead, the same rally has dealers buying about $5 billion and the same fall has them selling about $5 billion. The news, and the first 1% move it caused, are identical in both cases. Only the sign of the response differs.</p>
+<p>Open interest is the public count, and it is built to be sideless. The OCC computes it once a day, overnight, from end-of-day records that its clearing members submit and that it then reconciles. It shows the count on its own site the next morning and distributes it to the industry the next business day. Open interest rises by one when a trade opens a new contract and falls by one when a trade closes one. It does not change when a contract passes from one holder to another. Nothing in it says whether a dealer, a customer or neither holds either side.</p>
 
-<h2 id="same-shocks-opposite-character">2 · Same shocks, opposite character</h2>
+<p>So every GEX model fills in the sign \(s_i\) of <a class="xref xeq" href="8a.html#e-line">(8A.1)</a> with a <strong><span class="gloss" title="The rule a gamma exposure model uses to decide whether dealers are long or short each option, since open interest counts contracts but not who holds them. The two best known give calls and puts opposite signs, and differ from each other in every sign.">sign convention</span></strong>. That is a rule, or a model, that decides for each line whether dealers are long or short. The rest of this chapter is about how good those rules are.</p>
 
-<p>The figure below draws six price paths from 100 over 60 steps. Each step's return is a random shock, with a standard deviation of 0.08%, plus a feedback term equal to 0.45 times the previous step's return. The feedback is subtracted when dealers are long gamma (positive GEX) and added when they are short it (negative GEX). Both regimes use the same six runs of random shocks, so the sign of the feedback is the only difference. Switch between the two regimes and compare how far the paths wander.</p>
+<h2 id="the-vendor-formula-and-its-two-conventions">2 · The vendor formula and its two conventions</h2>
 
-<figure class="fig" id="fig-regime-path-sim">
-  <canvas id="regime-path-sim-c" data-h="260"></canvas>
+<p>The public formula for GEX came from a vendor. SqueezeMetrics first published its "Gamma Exposure (GEX)" white paper in March 2016 and revised it in December 2017. Its per-line formula is \(\Gamma \cdot \text{OI} \cdot 100\) for calls and \(\Gamma \cdot \text{OI} \cdot (-100)\) for puts, in shares per $1 of index move. Multiplying by \(S^2 \times 0.01\) gives the per-1% form most vendors quote. SpotGamma calls the 0.01 scaling "the industry convention":</p>
+
+<div class="eq" id="e-vendor">
+\[ \begin{aligned} \text{GEX} &amp;= \textstyle\sum_i \Gamma_i\,\text{OI}_i \times 100 \\ &amp;\quad \times S^2 \times 0.01 \times \text{sign}_i \end{aligned} \]
+</div>
+
+<p>Here \(\text{sign}_i = +1\) for calls and −1 for puts. It is <a class="xref xeq" href="8a.html#e-gex">(8A.2)</a> written out, with \(\text{OI}_i = N_i\), \(M = 100\), and one sign convention built in. Each term is the dollar gamma per 1% move of the open interest on one line. The sign is the whole game, because it encodes the assumption about which side of each option type the dealer holds. The white paper's own claim was that high GEX goes with low volatility the next day. <a class="xref" href="8g.html">Chapter 8G</a> sets that claim against later tests, including a vendor's test of its own product that finds most of the signal already in the VIX and at-the-money implied volatility.</p>
+
+<p>The Dealer Mechanics Lab says that every later vendor adopted this formula in some form, and names SpotGamma, Tier1Alpha and Cboe's own derivative dashboards. Of the three, only SpotGamma documents a formula of this form, and it applies its own sign rules. Tier1 Alpha's method is unpublished. Cboe's published research does not assume a sign at all: it measures positions from its own trade records, as the sections below describe.</p>
+
+<p>Two conventions are in wide use, and both are assumptions about who holds what, not observations:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Convention</th><th>\(s_i\) for calls</th><th>\(s_i\) for puts</th><th class="c-result">Assumed positioning</th></tr></thead><tbody><tr><td class="c-trial" data-label="Convention">JPM-era (pre-2022)</td><td data-label="\(s_i\) for calls">+1</td><td data-label="\(s_i\) for puts">−1</td><td class="c-result" data-label="Assumed positioning">Dealers long calls, bought from asset managers who sell them; short puts, sold to hedgers who buy them</td></tr><tr><td class="c-trial" data-label="Convention">0DTE-era (post-2022)</td><td data-label="\(s_i\) for calls">−1</td><td data-label="\(s_i\) for puts">+1</td><td class="c-result" data-label="Assumed positioning">Dealers short calls, sold to customers who buy them; long puts, bought from retail premium sellers who write them</td></tr></tbody></table></div></div>
+
+<p>The 0DTE-era row needs customers to be net sellers of puts, as in <span class="gloss" title="A sold put option backed by enough cash to buy the underlying at the strike if it is assigned. Nothing is borrowed, so it cannot receive a margin call.">cash-secured puts</span> and <span class="gloss" title="A position that sells a put and buys a put with a lower strike on the same underlying and expiry, for a net credit. It profits if the underlying stays above the sold strike, and its loss is capped by the bought put. Also called a bull put spread.">put credit spreads</span>. At the same time it needs them to be net buyers of calls. A customer who sells a call, in a <span class="gloss" title="A position that sells a call and buys a call with a higher strike on the same underlying and expiry, for a net credit. It profits if the underlying stays below the sold strike, and its loss is capped by the bought call. Also called a bear call spread.">call credit spread</span> or an <span class="gloss" title="A four-option position that sells a put spread below the price and a call spread above it. The short version profits if the underlying stays between the short strikes, and its loss is capped.">iron condor</span>, leaves the dealer long that call, which pushes the call sign back toward +1. Which of those flows dominates is exactly what the convention assumes.</p>
+
+<p>The figure computes <a class="eqref" href="#e-vendor"></a> for a made-up book around a spot of $100. The book holds puts at strikes 88, 92, 95, 98 and 100 and calls at 100, 102, 105, 108 and 112, all with 30 days to expiry at 18% volatility. The upper chart draws total GEX at every spot from 85 to 115, with the spot where the total crosses zero dashed and the current spot solid. The lower chart splits the total at the current spot by strike. The spot shift slider moves spot from −12 to +12 around $100, and two buttons switch between the conventions. Slide spot down to 94 and read the total, then switch the convention.</p>
+
+<figure class="fig" id="fig-gex-profile-builder">
+  <canvas id="gex-profile-builder-c" data-h="240"></canvas>
+  <canvas id="gex-profile-builder-k" data-h="130"></canvas>
   <div class="ctrls">
-    <div class="ctrl" role="group" aria-label="Dealer gamma regime" id="regime-path-sim-reg">
-      <label>regime</label>
-      <button type="button" data-v="pos" class="on" aria-pressed="true">positive GEX</button>
-      <button type="button" data-v="neg" aria-pressed="false">negative GEX</button>
+    <div class="ctrl">
+      <label for="gex-profile-builder-shift">spot shift from $100</label>
+      <input type="range" id="gex-profile-builder-shift" min="-12" max="12" step="0.5" value="0">
+      <output id="gex-profile-builder-shift-o" for="gex-profile-builder-shift"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Sign convention" id="gex-profile-builder-conv">
+      <label>sign convention</label>
+      <button type="button" data-v="standard" class="on" aria-pressed="true">JPM-era</button>
+      <button type="button" data-v="zeroDTE" aria-pressed="false">0DTE-era</button>
     </div>
   </div>
-  <figcaption><b>The same shocks, opposite character.</b> Six simulated price paths from 100
-  over 60 steps, each driven by its own seeded run of random returns (0.08% standard deviation
-  a step), the same six runs in both regimes. Each step also carries a feedback term, 0.45
-  times the previous step's return: subtracted when dealers are long gamma (positive GEX),
-  added when they are short it (negative GEX). Switch the regime: under positive GEX the paths
-  cluster around 100, under negative GEX the same shocks fan out.</figcaption>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gex-profile-builder-spot"></output></div>
+    <div class="ctrl"><output id="gex-profile-builder-gex"></output></div>
+    <div class="ctrl"><output id="gex-profile-builder-flip"></output></div>
+  </div>
+  <figcaption><b>One book of open interest, two opposite readings.</b> Dealer GEX,
+  Σ Γ·OI·100·S²·0.01·sign, for a made-up book of puts and calls at nine strikes around 100
+  (30 days to expiry, 18% vol), at every spot from 85 to 115; below, each strike's part at the
+  current spot, which the spot shift moves. The JPM-era convention signs calls +1 and puts −1
+  (dealers long calls, short puts); the 0DTE-era convention, which assumes customers sell
+  premium, reverses both. Switch between them and the profile turns upside down: the gamma flip stays
+  put, but the side of it where hedging dampens moves becomes the side where it amplifies
+  them.</figcaption>
 </figure>
 
-<p>Under positive GEX the six paths stay between about 99.5 and 101. Under negative GEX the same shocks spread them from about 98.9 to 102.5, more than twice as wide. In the language of <a class="xref" href="3b.html">Chapter 3B</a>, each regime makes returns an AR(1) process, with weight \(w = -0.45\) (mean reversion) when dealers are long gamma and \(w = +0.45\) (momentum) when they are short gamma. One mechanism produces both behaviors.</p>
+<p>It opens at spot $100.0 under the JPM-era convention, with total GEX at +$0.014B and the zero crossing, which the readout calls the <span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing.">gamma flip</span>, at $99.5. Under this convention the profile is negative below the flip, lowest near 92 to 94 at about −$0.07B. Above the flip it is positive, highest near 106 at about +$0.08B. At spot 94 the readout shows −$0.070B: dealers are assumed short the put gamma around them, so their hedging amplifies moves.</p>
 
-<p>The same fundamentals can therefore produce qualitatively different price behavior, depending on the dealer-positioning regime. That is why regime-conditional strategy selection, the subject of <a class="xref" href="11a.html">Part XI</a>, matters.</p>
+<p>Switch to the 0DTE-era convention and the whole profile turns upside down. Spot 94 now reads +$0.070B and spot 106 reads −$0.080B, and the side below the flip becomes the side where hedging damps moves. The flip itself stays at $99.5, because reversing every sign moves no zero. <a class="xref" href="8c.html">Chapter 8C</a> reads the gamma flip as a level, and notes that it is not the same thing as SpotGamma's <span class="gloss" title="SpotGamma's proprietary level marking where, by its model, dealers' last major concentration of positive gamma sits. SpotGamma defines it as a different level from the one where total gamma exposure crosses zero.">Volatility Trigger</span>. The caption gives the 0DTE-era convention's usual rationale, retail selling premium. The section on the 0DTE era below shows that the rationale does not survive the data.</p>
 
-<h2 id="the-mathematics-of-feedback">3 · The mathematics of feedback</h2>
+<p>This is not a minor calibration issue but the dominant source of model risk in every public GEX product. Model risk is the risk of being wrong because a model's assumption is wrong. Receive a claim that "GEX flipped negative today" with skepticism. Ask first which convention the publisher uses, and whether it matches the actual flow in the product you trade.</p>
 
-<p>Published GEX is positive when hedging is stabilizing, but the feedback maths reads more naturally with the opposite sign. So define the <strong><span class="gloss" title="The negation of published gamma exposure, used in the effective-volatility formula: positive when dealers are net short gamma and their hedging amplifies moves, negative when they are net long gamma and it damps them.">destabilizing gamma</span></strong> \(G\) as the negation of published GEX, in whatever units the model uses. It is positive when dealers are net short gamma, so that their pro-trend hedging amplifies moves. It is negative when they are net long gamma, so that their contra-trend hedging damps moves. With that sign convention, the Dealer Mechanics Lab writes</p>
+<h2 id="the-jpm-era-where-the-first-sign-came-from">3 · The JPM era: where the first sign came from</h2>
 
-<div class="eq" id="e-eff">
-\[ \sigma_\text{eff}^2 = \frac{\sigma^2}{(1 - \kappa G)^2} \]
+<p>SqueezeMetrics built its method on the assumption that <strong>dealers are net long calls and net short puts</strong>. The reasoning came from the dominant flow at the time. Institutional asset managers were the main sellers of calls, through <span class="gloss" title="A sold call option backed by owning the shares it may require you to deliver.">covered calls</span> and the famous "<span class="gloss" title="The quarterly index-option position of JPMorgan's Hedged Equity Fund, which holds stocks, buys a put spread below the market and sells calls above it. It is one of the few large index-option positions whose holder is public.">JPM collar</span>" rolled by JPMorgan's Hedged Equity Fund. Institutional hedgers such as pension funds and endowments were the main buyers of puts. Dealers stood on the other side of both: long the calls they bought from yield-hunting asset managers, and short the puts they sold to hedgers. The white paper gives the reasoning in its own words. Calls are "sold by investors and bought by market makers (reflecting covered call strategies)". Puts "are mostly purchased by investors for downside protection and sold by market makers."</p>
+
+<p>Under that assumption, a rise in SPX makes the dealers' long calls gain delta, so dealers sell stock to stay flat, which damps the rally. A fall makes the puts' deltas more negative. That leaves the dealers who are short them longer in delta, so dealers sell stock again, which amplifies the fall. The result is the familiar pattern of slow grinds up and fast crashes down. The Dealer Mechanics Lab attributes the asymmetric character of equity volatility cycles directly to this asymmetric dealer positioning.</p>
+
+<h3 id="what-position-data-say-about-that-era">What position data say about that era</h3>
+
+<p>The put half of the assumption has the strongest support of anything in this chapter, because several studies could see who held the puts:</p>
+
+<ul>
+<li><strong>Garleanu, Pedersen and Poteshman (2009)</strong> used CBOE data that identify the aggregate long and short open interest of public customers and of firms' own traders, from before weekly options existed. End users were net long index options, most of all out-of-the-money puts, and net short single-stock options. So dealers were net short index puts.</li>
+<li><strong>Chen, Joslin and Ni (2019)</strong> measured public investors' net buying of deep out-of-the-money SPX puts, January 1991 to December 2012. On average the public bought this crash insurance from intermediaries, so dealers were net short it. When the public's net buying fell, which the authors read as intermediaries' constraints tightening, options grew more expensive. Risk premia rose across many assets, funding liquidity deteriorated and broker-dealers deleveraged.</li>
+<li><strong>Constantinides and Lian (2021)</strong> model and test the same market: <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market makers</span> are net sellers and customers net buyers of index puts. As disaster risk rises, customers want more puts while market makers grow more credit-constrained in writing them, so the net amount bought falls just as prices rise.</li>
+</ul>
+
+<p>The last two carry a warning for every convention. The dealers' short put position is not fixed. It is a quantity they choose, and it shrinks exactly when their constraints bind, which is when stress arrives.</p>
+
+<p>The call half has weaker support. Covered-call writing and collars do leave dealers long calls, when dealers take the other side. By Cboe's count, assets in derivative-income funds, which sell options, grew about sixfold from 2019, from about $20 billion to over $120 billion. Yet Cboe's own note on those funds found that buying of upside calls for leverage, not call selling, dominated the flows it examined. The position study in the next section finds dealers' net call position near zero.</p>
+
+<h3 id="the-one-position-whose-holder-is-known">The one position whose holder is known</h3>
+
+<p>One large index-option position is public by construction. The JPM collar of JPMorgan's Hedged Equity Fund is reset every quarter, with about 35,000 SPX contracts per leg by vendors' counts. The fund holds stocks and, as vendor commentary describes it, "buys a put spread below the market for downside protection and sells calls above the market to finance those puts". The fund is long the upper put of the spread, so whoever sold that put, typically dealers, is short it. At that one strike the short side is short gamma by construction, not by assumption. Its hedging joins a move through the strike instead of opposing it. <a class="xref" href="8c.html">Chapter 8C</a> returns to what that strike looks like on a map.</p>
+
+<h2 id="the-0dte-era-a-story-and-the-data">4 · The 0DTE era: a story and the data</h2>
+
+<p>SqueezeMetrics' assumption dates from 2016 and 2017. After Cboe added Tuesday and Thursday expirations to SPX weekly options in 2022, every weekday had an expiry, and same-day options took over the volume. Cboe's figures put <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options at 5% of SPX volume in 2016, over 40% after the new expirations, about 50% in August 2023, and a record 62% in August 2025. Cboe also estimates that retail makes up about 50% to 60% of SPX 0DTE trading.</p>
+
+<p>The Dealer Mechanics Lab's account of this era runs as follows. Retail and small institutional accounts sell premium, through credit spreads, iron condors and cash-secured puts, with dealers buying from them. So the new net positioning is plausibly the opposite of the JPM-era assumption: dealers net long puts, bought from customers who write them, and net short calls, sold to customers who buy them. That is the 0DTE-era convention.</p>
+
+<p>The flow data do not support its premise that customers overwhelmingly sell premium:</p>
+
+<ul>
+<li><strong>Cboe's own data</strong> describe customer 0DTE activity as "very balanced" in 2023, spread across hedging, yield harvesting, tactical leverage and systematic trading. The 2025 update calls it "extremely balanced", and adds that "over 95% of all 0DTE trades are done in a limited risk format (either long options outright or short via spreads)".</li>
+<li><strong>A tabulation of uncertain attribution</strong>, for January 2020 to June 2023, puts customers' 0DTE purchases from market makers at 14.95% of all SPX and <span class="gloss" title="The symbol of the S&amp;P 500 index options with weekly and daily expirations, which settle on the closing price rather than on the morning's opening quotation used by the monthly SPX options. Tuesday and Thursday expirations began in April and May 2022.">SPXW</span> volume, and their sales to market makers at 14.06%.</li>
+<li><strong>Beckmeyer, Branger and Gayda (2023)</strong>, an SSRN working paper, identified retail SPX trades through Cboe's price-improvement auctions, February 2021 to September 2023. More than 75% of those retail trades were in 0DTE contracts. That retail slice <em>bought</em> more 0DTE options than it sold, leaving market makers net short. The paper also reports the market makers' aggregate net short 0DTE position growing. It is a narrow slice, about 6% of 0DTE trading by the paper's identification, against Cboe's estimate of 50% to 60% retail.</li>
+</ul>
+
+<p>Studies that measure market makers' positions rather than assume them find something more specific:</p>
+
+<ul>
+<li><strong>Dim, Eraker and Vilkov (2023)</strong>, "0DTEs: Trading, Gamma Risk and Volatility Propagation", is an SSRN working paper (SSRN 4692190), first posted in November 2023 and circulated in 2024. It rebuilt market makers' inventory from Cboe's records of end users' buying and selling. They found that "Market Makers' inventory, as measured by the net gamma of their positions, is on average positive and negatively related to future intraday volatility". The paper infers positions from flow; it does not attribute them to retail premium selling, which is the Lab's gloss.</li>
+<li><strong>Adams, Fontaine and Ornthanalai (2024)</strong>, an SSRN working paper, found that "Market makers match most 0DTE order flows, but absorb end-users' trades in long-dated options that eventually become 0DTE positions."</li>
+<li><strong>Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025)</strong>, "Do S&amp;P500 Options Increase Market Volatility? Evidence from 0DTEs" (SSRN 5641974), answer the question in their title with "On the contrary", and continue:</li>
+</ul>
+
+<div class="callout brick">
+<p>... the presence of 0DTEs dampens market volatility through a shift in market makers' hedging needs. Importantly, this shift occurs not due to trading 0DTEs on their expiration day but due to positions in longer-dated options accumulated earlier and becoming 0DTEs. Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025)</p>
 </div>
 
-<p>in which each symbol has a plain meaning, and the feedback coefficient \(\kappa\) carries the state of the market:</p>
+<ul>
+<li><strong>Amaya, Garcia-Ares, Pearson and Vasquez (2025)</strong>, a working paper, used proprietary records of every SPX and SPXW trade from January 2020 to June 2023. They found that the gamma of the aggregate market-maker position, "while typically positive, is often negative".</li>
+<li><strong>Cboe's own measurement</strong> (Xu, 2023) put market makers' net 0DTE gamma at about $170 million to $670 million through the day. At 3:30 PM its median was +$173 million, with a typical range reaching down to −$1.1 billion.</li>
+</ul>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">symbol</th><th class="c-result">meaning</th></tr></thead><tbody><tr><td class="c-trial">\(\sigma\)</td><td class="c-result">the information volatility: how volatile prices would be from news alone, with no hedging feedback</td></tr><tr><td class="c-trial">\(\sigma_\text{eff}\)</td><td class="c-result">the <strong><span class="gloss" title="The volatility prices show once dealer hedging feeds back into them, as opposed to the volatility news alone would cause. Feedback from short-gamma hedging raises it and feedback from long-gamma hedging lowers it.">effective volatility</span></strong>: the volatility prices show once dealer hedging feeds back into them</td></tr><tr><td class="c-trial">\(G\)</td><td class="c-result">the destabilizing gamma, the negation of published GEX</td></tr><tr><td class="c-trial">\(\kappa\)</td><td class="c-result">the feedback coefficient: how far prices move per unit of hedging flow, larger when market depth is thin and when dealers hedge aggressively</td></tr></tbody></table></div></div>
+<p>Put together, the measured sign of dealer gamma in SPX same-day options is positive on average, and not always. It comes mostly from positions in longer-dated options that age into expiry, not from same-day premium selling, which market makers largely pass through. The 0DTE-era convention can land on the right average sign for a put-heavy book, but for a reason the data contradict. <a class="xref" href="8g.html">Chapter 8G</a> gives the effect sizes these studies report.</p>
 
-<p>Only the product \(\kappa G\) matters, so the units of \(G\) and \(\kappa\) can be anything that makes it a pure number. Taking square roots, and keeping \(\kappa G\) below 1, gives \(\sigma_\text{eff} = \sigma / (1 - \kappa G)\), and the denominator sorts the regimes:</p>
+<h2 id="what-position-data-show">5 · What position data show</h2>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">\(G\)</th><th>Published GEX</th><th class="c-other">Dealers</th><th>\(1 - \kappa G\)</th><th class="c-other">Effective volatility</th><th class="c-other">Regime</th></tr></thead><tbody><tr><td class="c-trial" data-label="\(G\)">below 0</td><td data-label="Published GEX">positive</td><td class="c-other" data-label="Dealers">long gamma</td><td data-label="\(1 - \kappa G\)">above 1</td><td class="c-other" data-label="Effective volatility">below \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Stabilized</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">0</td><td data-label="Published GEX">zero</td><td class="c-other" data-label="Dealers">flat</td><td data-label="\(1 - \kappa G\)">1</td><td class="c-other" data-label="Effective volatility">equal to \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Neutral</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">above 0</td><td data-label="Published GEX">negative</td><td class="c-other" data-label="Dealers">short gamma</td><td data-label="\(1 - \kappa G\)">below 1</td><td class="c-other" data-label="Effective volatility">above \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Amplified</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">toward \(+1/\kappa\)</td><td data-label="Published GEX">strongly negative</td><td class="c-other" data-label="Dealers">deeply short gamma, in extreme stress</td><td data-label="\(1 - \kappa G\)">toward 0</td><td class="c-other" data-label="Effective volatility">toward infinity</td><td class="c-other" data-label="Regime"><strong>Edge of feedback explosion</strong></td></tr></tbody></table></div></div>
+<p>The most direct evidence on the sign for all SPX options, 2011 to 2023, is a working paper by Terstegge (2025). It builds intermediaries' aggregate positions from Cboe's daily open and close volume files:</p>
 
-<p>That divergence is, mathematically, what February 5, 2018 (Volmageddon), March 16, 2020 (the Great Liquidity Crisis) and August 5, 2024 (the yen carry unwind) looked like, the cases <a class="xref" href="8c.html">Chapter 8C</a> takes in detail.</p>
+<ul>
+<li><strong>Calls:</strong> intermediaries' buy and sell volumes are roughly balanced, and their net call position hovers near zero.</li>
+<li><strong>Puts:</strong> sell volumes consistently exceed buy volumes, leaving a persistent net short put position of about 19 million contracts, concentrated in deep out-of-the-money puts.</li>
+<li><strong>Risk:</strong> without hedge adjustments, a 10% fall in the S&amp;P 500 would cost roughly 200% of the dealers' option inventory value. Even a dealer perfectly hedged at the close cannot re-hedge a large overnight or weekend move, because equity liquidity is thin then.</li>
+</ul>
 
-<details class="grind"><summary>Where the formula comes from: a feedback multiplier</summary><div class="grind-body">
-<p>One simple model produces <a class="eqref" href="#e-eff"></a> exactly. It is a toy rather than the Dealer Mechanics Lab's derivation, but it shows what \(\kappa\) and \(G\) do.</p>
+<p>By contracts, then, dealers look like the put half of the JPM-era convention with flat calls, and nothing like the 0DTE-era convention's "dealers long puts". Two cautions apply. Cboe's files miss hedges done off the exchange or in futures options. And contracts are not gamma: a deep out-of-the-money put carries little gamma until a crash brings spot toward it.</p>
 
-<p><strong>Step 1: the first round.</strong> News moves the price by a return \(\varepsilon\), with standard deviation \(\sigma\). Dealers hedge that move, and their trade moves the price by a further \(\kappa G\,\varepsilon\), with the first move if \(G &gt; 0\) and against it if \(G &lt; 0\).</p>
-
-<p><strong>Step 2: the rounds that follow.</strong> The extra move needs hedging too, which adds \(\kappa G\) times it, \((\kappa G)^2 \varepsilon\), and that needs hedging in turn. When \(\kappa G\) lies between −1 and 1, the rounds shrink and the total is a geometric series:</p>
-
-<div class="eq">
-\[ \begin{aligned} \text{move} &amp;= \varepsilon\,\big(1 + \kappa G + (\kappa G)^2 + \cdots\big) \\ &amp;= \frac{\varepsilon}{1 - \kappa G} \end{aligned} \]
-</div>
-
-<p><strong>Step 3: the volatility.</strong> Dividing a random quantity by a constant divides its standard deviation by the same constant. The total move therefore has standard deviation \(\sigma/(1 - \kappa G)\), and squaring it gives <a class="eqref" href="#e-eff"></a>.</p>
-
-<p><strong>Step 4: over time.</strong> The regime figure spreads the same feedback over successive steps, \(r_t = w\,r_{t-1} + \varepsilon_t\). A shock then reaches the price as \(\varepsilon_t\) in its own step, \(w\,\varepsilon_t\) in the next and \(w^2\varepsilon_t\) in the one after, for a total of \(\varepsilon_t/(1 - w)\) once the echoes die out. The paths' volatility over many steps follows the same formula, with \(w = \kappa G\).</p>
-</div></details>
+<p>The second caution is how "dealers short puts" and "dealers long gamma on average" can both be true. The worked example shows one way, with a made-up book.</p>
 
 <div class="worked">
-<span class="ct">Worked example: The regime figure, in the formula</span>
-<p><strong>Step 1: the weights.</strong> The regime figure's feedback of 0.45 is \(\kappa G = -0.45\) under positive GEX and \(\kappa G = +0.45\) under negative GEX.</p>
+<span class="ct">Worked example: Contracts against gamma</span>
+<p><strong>Step 1: the book.</strong> SPX is at 6,000. Dealers are long 100,000 contracts at the 6,000 strike with 7 days to expiry, options their customers sold them, at 15% implied volatility. They are short 1,000,000 puts at 4,800, 20% below spot, with 90 days to expiry. Those carry 28% implied volatility, the higher level a skewed smile gives far out-of-the-money puts (<a class="xref" href="5e.html">Chapter 5E</a>). By count, dealers are net short 900,000 contracts.</p>
 
-<p><strong>Step 2: the multipliers.</strong> Under positive GEX the multiplier is \(1/(1 + 0.45) = 0.69\), so hedging removes about 31% of the volatility. Under negative GEX it is \(1/(1 - 0.45) = 1.82\), so hedging adds about 82%.</p>
+<p><strong>Step 2: dollar gamma per contract.</strong> By <a class="xref xeq" href="8a.html#e-line">(8A.1)</a>, with <span class="gloss" title="The option pricing model, also called Black-Scholes-Merton, that values an option by assuming the underlying follows geometric Brownian motion and can be traded continuously to hedge it.">Black-Scholes</span> gamma at a 4% rate, one near-the-money contract carries about $115,100 per 1% move and one far put about $3,750. The near contract carries about 31 times as much.</p>
 
-<p><strong>Step 3: the comparison.</strong> The ratio of the two multipliers is \(1.82/0.69 = 2.64\). The figure's six paths span about 3.6 points under negative GEX against 1.5 under positive, a ratio of about 2.4. Six paths over 60 steps are too small a sample for a closer match.</p>
+<p><strong>Step 3: GEX at 6,000.</strong> The long block gives \(100{,}000 \times \$115{,}100 \approx +\$11.51\) billion and the short puts \(1{,}000{,}000 \times \$3{,}750 \approx -\$3.75\) billion. The total is about +$7.76 billion per 1%: dealers are long gamma and their hedging damps moves.</p>
+
+<p><strong>Step 4: after a fall.</strong> Hold the volatilities fixed and move spot. At 5,800 the long block gives +$3.17 billion and the short puts −$5.39 billion, a total of −$2.22 billion. At 5,400, 10% down, the 7-day options carry almost no gamma and the puts give −$9.51 billion. The book turned from damping to amplifying on the way down, between 5,850 and 5,800.</p>
 </div>
+
+<p>That pattern, damping on normal days and amplifying in a sell-off, is what Chapters 8D and 8H describe. It also means that a single sign per option type is wrong for SPX. The JPM-era convention gets the puts' direction right by count but misses the long gamma near the money. The 0DTE-era convention can match the average gamma sign but signs the puts the wrong way, and it would miss the turn in Step 4.</p>
+
+<h3 id="single-stocks-follow-different-rules">Single stocks follow different rules</h3>
+
+<p>Positions in single-stock options look different again. Lakonishok and co-authors (2004, published in 2007) used CBOE open interest split by investor type, 1990 through 2001. Investors other than market makers held about four times more long call than long put open interest, and more short than long open interest in both calls and puts. Market makers were therefore net long both. Christoffersen and co-authors (2018) find illiquidity premia in equity options consistent with evidence that market makers there "hold large and risky net long positions", which the premia compensate. Kanne, Korn and Uhrig-Homburg (2023) find market makers net long options on some underlyings and net short on others.</p>
+
+<p>Vendors disagree with those data and with each other. SpotGamma states that its "working assumption" for equities "is that dealers are short options for both puts and calls". It also models market makers "to be short puts and long calls on index products, due to the prevalence of option strategies like collars and covered calls". Barchart's free pages sign calls positive and puts negative for every ticker. Episodes of heavy retail call buying can leave dealers short gamma in a single name, the setting of <a class="xref" href="8i.html">Chapter 8I</a>. Lipson, Tomio and Zhang (2023), a working paper, find that retail option trading after commissions fell to zero raised the volatility of the underlying stocks. The channel was dealers hedging higher-gamma contracts in the direction of price moves.</p>
+
+<p>So no single convention fits every underlying. The Dealer Mechanics Lab says that for SPY and individual stocks the appropriate convention may be regime-dependent, and the single-stock evidence supports that.</p>
+
+<h2 id="every-guess-at-once-the-sign-map">6 · Every guess at once: the sign map</h2>
+
+<p>Neither convention is observed, so the honest check is to try every positioning in between. The figure colors each one by the GEX it gives, for the made-up book of the profile builder above. Across is the share of call open interest that dealers are short, and up the share of put open interest they are long. Dealers hold the rest the other way. The JPM-era convention is the bottom-left corner and the 0DTE-era convention the top-right one. One slider moves spot from 88 to 112, and another scales all the put open interest from a quarter to four times its size. Move spot and watch the zero line turn, while the two conventions stay on opposite sides of it.</p>
+
+<figure class="fig" id="fig-gex-sign-map">
+  <canvas id="gex-sign-map-c" data-h="330"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="gex-sign-map-spot">spot</label>
+      <input type="range" id="gex-sign-map-spot" min="88" max="112" step="0.5" value="100">
+      <output id="gex-sign-map-spot-o" for="gex-sign-map-spot"></output>
+    </div>
+    <div class="ctrl">
+      <label for="gex-sign-map-pk">put OI scale</label>
+      <input type="range" id="gex-sign-map-pk" min="-2" max="2" step="0.1" value="0">
+      <output id="gex-sign-map-pk-o" for="gex-sign-map-pk"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gex-sign-map-jpm"></output></div>
+    <div class="ctrl"><output id="gex-sign-map-odte"></output></div>
+    <div class="ctrl"><output id="gex-sign-map-pos"></output></div>
+    <div class="ctrl"><output id="gex-sign-map-ps"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="gex-sign-map-vk"></b> <span id="gex-sign-map-vt"></span></p>
+  <figcaption><b>Every guess at who holds the book gives its own GEX.</b> Across is the share of
+  call open interest that dealers are short, and up the share of put open interest they are
+  long. Dealers hold the rest the other way. Each point is the GEX that guess gives for the
+  made-up book of the GEX profile builder, at the chosen spot: green where positive and rose
+  where negative, deeper the larger, with zero dashed. The JPM-era convention is the bottom-left
+  corner and the 0DTE-era convention the top-right one. The zero line always crosses the middle,
+  where dealers are as long as they are short, so exactly half the square is positive for any
+  book at any spot. Moving spot or scaling the puts turns the line: the more of the gamma one
+  type carries, the more the sign depends on who holds that type.</figcaption>
+</figure>
+
+<p>At spot $100.0 the corners read +$0.014B (JPM-era) and −$0.014B (0DTE-era), the profile builder's totals at 100, and the puts carry 47% of the book's gamma. The whole square runs from −$0.224B, with dealers short every option, to +$0.224B, with dealers long every option. So both conventions sit close to the zero line: a modest error in the assumed shares flips the sign.</p>
+
+<p>The readout says that GEX is positive on 50% of the square, and it says so at every spot and every put scale. That is a property of the model, not of the book: swapping every share for its opposite reverses GEX, so the zero line always passes through the middle. What moves is the line's tilt. At spot 94 the puts carry 73% of the gamma, the line is shallow, and the sign depends mostly on who holds the puts. At 106 they carry 24%, the line is steep, and the calls decide. Scale the puts by four at spot 100 and they carry 78%. The corners then read −$0.301B and +$0.301B.</p>
+
+<p>The position data put SPX near the bottom edge, midway across: calls flat and puts short. On this book that point is negative at every spot. But the square gives every strike the same shares, and real books do not, as the worked example above shows. The square answers "how sensitive is the sign?", not "what is the sign?".</p>
 
 <div class="callout familiar">
 <span class="ct">Familiar ground</span>
-<p>The feedback multiplier works like the design effect of a cluster-randomized trial. When outcomes within a cluster are positively correlated, the variance of an estimate is inflated by a factor that grows with the correlation, while a negative correlation would deflate it. Returns work the same way: positive feedback correlates each step with the one before and inflates the variance of the cumulative move, while negative feedback deflates it. The variance ratio test of <a class="xref" href="3b.html">Chapter 3B</a> measures exactly this inflation.</p>
+<p>A sign convention is an imputation. In a trial with missing outcomes, the result depends on what you assume about the patients you cannot see. A best-case and a worst-case imputation can point in opposite directions. Open interest is the observed data, and who holds each side is the missing variable. The honest report is a sensitivity analysis: the answer under each assumption, and a statement of which assumption you believe and why. The sign map is that analysis drawn as a picture.</p>
 </div>
 
-<h3 id="the-divergence-is-nonlinear">The divergence is nonlinear</h3>
+<h2 id="demand-based-option-pricing">7 · Demand-based option pricing</h2>
 
-<p>A linear reading, that at \(G = 0\) effective volatility equals \(\sigma\), understates what makes the formula matter in practice. Fix \(\sigma = 0.15\), a baseline information volatility of 15%, and a small illustrative feedback coefficient \(\kappa = 0.0010\), then sweep \(G\) across the regimes:</p>
+<p>A foundational paper sits under all of this: Garleanu, Pedersen and Poteshman (2009), "Demand-Based Option Pricing", <em>Review of Financial Studies</em>, Vol. 22, No. 10, pages 4259 to 4299. In their model, dealers who cannot hedge perfectly charge for the risk left in the positions they absorb. <strong><span class="gloss" title="The theory that end users' net demand for options moves their prices, because dealers who cannot hedge perfectly charge for the risk left in the positions they absorb. It helps explain why index puts are expensive and the skew is steep.">Demand-based option pricing</span></strong> follows: demand pressure raises an option's price in proportion to the variance of its unhedgeable part, and raises other options' prices in proportion to covariances. The Dealer Mechanics Lab summarizes the paper as showing that net end-user demand for index options is the primary driver of the deviation of option prices from no-arbitrage benchmarks. The deeper the dealers' positioning imbalance, the larger the deviation, and the larger the hedging activity needed to manage it.</p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">G (positioning regime)</th><th style="text-align:right">\(1 - \kappa G\)</th><th style="text-align:right">\(\sigma_\text{eff}\)</th></tr></thead><tbody><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−800 (deeply stabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.80</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">8.3%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−400 (mildly stabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.40</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">10.7%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">0 (neutral)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.00</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">15.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+400 (mildly destabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.60</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">25.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+600 (moderate stress)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.40</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">37.5%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+800 (acute stress)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.20</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right"><strong>75%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+900 (near-critical)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.10</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right"><strong>150%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+950</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.05</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">300%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+990 (edge of explosion)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.01</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">1,500%</td></tr></tbody></table></div></div>
+<p>The Garleanu-Pedersen-Poteshman framework establishes that option prices are not pure forecasts of future variance plus a risk-free rate. They also depend on <em>who is buying and who is selling</em>, beyond the model fundamentals. The Dealer Mechanics Lab takes this as the structural justification for the <span class="gloss" title="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average.">variance risk premium</span> (<a class="xref" href="10c.html">Chapter 10C</a>) and as the academic foundation for the GEX framework as a whole.</p>
 
-<p>From \(G = +800\) to \(G = +900\), a roughly 12% increase in destabilizing positioning, \(\sigma_\text{eff}\) doubles from 75% to 150%. <strong>That is the operational signal: small changes in aggregate positioning produce outsized realized-volatility consequences in the stress regime.</strong> It is also why the <span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Also called the volatility trigger.">gamma flip</span> matters as a level even though no single trade is responsible for it.</p>
+<p>The Edge Book reads the same paper more narrowly (<a class="xref" href="10i.html">Chapter 10I</a>). In its reading, demand pressure affects option prices at the level of option pricing, not the price of the underlying, and its effect per unit of demand is small. Nor does the paper validate specific level-trading rules. Both readings are defensible, because the paper tests prices, not what dealer gamma does to the index.</p>
 
-<p>The slope of the curve makes this exact: differentiating \(\sigma / (1 - \kappa G)\) with respect to \(G\) gives</p>
+<p>Later work fills in the mechanism. Bollen and Whaley (2004) found that net buying pressure for index puts moves the implied volatility of S&amp;P 500 options most strongly. For stock options, call demand dominates. This is the causation <a class="xref" href="8a.html">Chapter 8A</a> mentioned: heavy demand for index puts steepens the skew. Muravyev (2016) split the price impact of option trades into an inventory-risk part and an information part, and found the inventory part larger. Fournier and Jacobs (2020) model an index-option market maker who demands a larger variance risk premium after it incurs losses. The inventory GEX tries to measure is the same inventory that sets option prices, and dealers are paid to carry it.</p>
 
-<div class="eq" id="e-slope">
-\[ \frac{d\sigma_\text{eff}}{dG} = \frac{\kappa\,\sigma}{(1 - \kappa G)^2} \]
-</div>
+<h2 id="how-positions-are-estimated">8 · How positions are estimated</h2>
 
-<div class="worked">
-<span class="ct">Worked example: How steep the curve gets</span>
-<p><strong>Step 1: at neutral.</strong> At \(G = 0\), <a class="eqref" href="#e-slope"></a> gives \(0.0010 \times 0.15 = 0.00015\) per unit of \(G\), so a hundred more units of \(G\) add about \(100 \times 0.00015 = 0.015\), or 1.5 points of volatility.</p>
+<p>Between two of OCC's daily counts, every intraday GEX number is imputed from the trade tape rather than observed. Vendors do this with varying sophistication, and the imputation errors can be substantial intraday, especially in high-volume sessions. Four sources feed the estimates:</p>
 
-<p><strong>Step 2: in acute stress.</strong> At \(G = +800\) the denominator is \(0.2^2 = 0.04\), so the slope is \(0.00015/0.04 = 0.00375\), which is 25 times as steep. A straight line from there predicts 37.5 more points for the next 100 units of \(G\).</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Source</th><th class="c-result">What it records</th><th class="c-result">Coverage and timing</th></tr></thead><tbody><tr><td class="c-trial" data-label="Source">OCC open interest</td><td class="c-result" data-label="What it records">Contracts outstanding per series, with no sides</td><td class="c-result" data-label="Coverage and timing">All U.S. listed options; once a day, the next morning</td></tr><tr><td class="c-trial" data-label="Source">Cboe <span class="gloss" title="Cboe's files of option volume split by the type of trader (customer, professional customer, broker-dealer or market maker), by buy or sell, and by whether each trade opened or closed a position. It is the main source on sale that shows who holds SPX options.">Open-Close data</span></td><td class="c-result" data-label="What it records">Volume by origin (customer, professional customer, broker-dealer, market maker), by buy or sell, and by open or close</td><td class="c-result" data-label="Coverage and timing">Cboe's exchanges: all SPX, but only Cboe's share of multi-listed products; end of day, or intraday in 10-minute snapshots delivered within five minutes</td></tr><tr><td class="c-trial" data-label="Source">ISE Trade Outline</td><td class="c-result" data-label="What it records">Opening and closing volume by origin, with market makers added as an origin in a later update</td><td class="c-result" data-label="Coverage and timing">ISE and GEMX, which do not list SPX</td></tr><tr><td class="c-trial" data-label="Source">Signed volume (for example OptionMetrics)</td><td class="c-result" data-label="What it records">Buyer- or seller-initiated volume, inferred with the Lee-Ready algorithm</td><td class="c-result" data-label="Coverage and timing">Over 10,000 underlyings from 2016; nightly, with 5- and 30-minute snapshots</td></tr></tbody></table></div></div>
 
-<p><strong>Step 3: the curve.</strong> The table's actual rise from \(G = +800\) to \(+900\) is 75 points, double even that, because the slope keeps growing along the way. The local sensitivity of \(\sigma_\text{eff}\) to \(G\) is unbounded as \(G\) approaches \(1/\kappa\).</p>
-</div>
+<p>Cboe's end-of-day Open-Close subscription is listed at $500 a month, the 10-minute intraday product at $1,000 and a one-minute product at $5,000, with history from January 2018. So the side of an SPX trade is observable within minutes for a few thousand dollars a month. The side of an SPY trade is split across exchanges and, for retail orders that wholesalers internalize, partly off the exchanges altogether (<a class="xref" href="2b.html">Chapter 2B</a>). That is why the one vendor method that claims to make no assumptions covers SPX only, and why most retail maps assume a sign.</p>
 
-<p>The value \(\kappa = 0.0010\) is only illustrative, since in practice \(\kappa\) is fitted to the regime and varies with depth, with dealer aggressiveness and with how concentrated positioning is. The qualitative shape, slow at the wings and explosive near the critical point, is the universal feature.</p>
+<h3 id="volume-is-not-position">Volume is not position</h3>
 
-<p><strong>A note on signs.</strong> \(G\) is the <em>negation</em> of standard published GEX. Suppose a vendor reports "GEX = +$2.3B" under the JPM-era convention, where positive means stabilizing; the corresponding \(G\) in <a class="eqref" href="#e-eff"></a> is −$2.3B. Both ways of signing the number coexist in practice, so check which one your model or vendor uses before you read the sign.</p>
+<p>Trading volume says little about who is left holding what. Cboe's 2023 note gives an example from August 15 of that year. Over 100,000 contracts of a 4440-strike put traded in the day. Yet market makers "were left short only about 3,000 contracts by the end of the day, or just 3% of the gross volume". Its 2025 update states the principle: "what matters for determining the potential impact of market maker gamma hedging activity is the balance of the volume between buys vs. sells, not the notional size".</p>
 
-<h3 id="explore-the-curve">Explore the curve</h3>
+<h3 id="trade-classification-and-its-errors">Trade classification and its errors</h3>
 
-<p>The figure below draws \(\sigma_\text{eff} = \sigma/(1 - \kappa G)\) against \(G\) from −1 to +1. Its variable is labeled "destabilizing gamma G": the negation of published GEX, positive when dealers are net short gamma. Sliders set the underlying \(\sigma\) from 10% to 50%, starting at 20%, and the feedback strength \(\kappa\) from 0 to 2, starting at 0.5. Dashed lines mark \(\sigma\) and the current \(G\), while readouts give \(\kappa G\), the effective volatility and the amplification, with a verdict that runs from strongly damped to explosive.</p>
+<p>Where the data do not record sides, vendors infer them. Three rules are common. The quote rule calls a trade above the <span class="gloss" title="The price halfway between the bid and the ask, and the price at which academic backtests assume trades are filled.">mid-quote</span> a buy and one below it a sell, and cannot classify one at the midpoint. The tick rule compares the price with the previous trade's. The Lee-Ready algorithm combines the two. This is <strong><span class="gloss" title="Inferring whether a trade was a purchase or a sale by the party that started it, from its price against the quotes, against the previous trade, or both, when the data do not record the side. Standard rules get a sizable share of option trades wrong.">trade classification</span></strong>, and its accuracy has been measured. Savickas and Wilson (2003) tested the rules against a proprietary CBOE data set that records the true direction of each option trade. The quote rule, Lee-Ready, the Ellis-Michaely-O'Hara rule and the tick rule signed correctly 83%, 80%, 77% and 59% of the trades each could classify. That is an error rate of 17% to 41%.</p>
 
-<p>The <strong>trigger stress</strong> button walks \(G\) from −0.6 to +0.6 over five days, which is published GEX flipping from positive to negative. Press it at the defaults, then raise \(\kappa\) to 1.5 and press it again.</p>
+<p>The errors are not spread evenly. Trades outside the quotes and trades against reversed quotes were highly misclassified by all four rules. Components of index-option complex trades, executed away from the retail automatic system, were misclassified almost 50% of the time by any method. Dropping them, 15% of the sample, raised the quote rule's success to over 87%. A second problem is who the "customer" is. A study led by Muravyev (2020) found that most option trades originate from investors who time their executions, such as proprietary traders and institutions with execution algorithms. So the liquidity taker is often not a customer facing a hedging dealer. And the midpoint can be a poor guide to value at the moment of a trade.</p>
 
-<figure class="fig" id="fig-effective-vol-explorer">
-  <canvas id="effective-vol-explorer-c" data-h="240"></canvas>
+<p>The figure shows what wrong sides do to a map. A made-up day has 240 same-day trades at nine strikes around 6,000, each with a true side. The outlines are the dealers' true net position at each strike, positive where they are long. The filled bars are the position estimated when each trade's side is misclassified with probability e, which the slider sets from 0% to 45%, starting at 20%. Rings mark the largest node in each, and "new draw" misclassifies the same trades afresh. Set e inside the published range and press new draw a few times.</p>
+
+<figure class="fig" id="fig-classification-error">
+  <canvas id="classification-error-c" data-h="290"></canvas>
   <div class="ctrls">
     <div class="ctrl">
-      <label for="effective-vol-explorer-sigma">underlying σ</label>
-      <input type="range" id="effective-vol-explorer-sigma" min="0.1" max="0.5" step="0.01" value="0.2">
-      <output id="effective-vol-explorer-sigma-o" for="effective-vol-explorer-sigma"></output>
+      <label for="classification-error-e">misclassified, e</label>
+      <input type="range" id="classification-error-e" min="0" max="45" step="1" value="20">
+      <output id="classification-error-e-o" for="classification-error-e"></output>
     </div>
-    <div class="ctrl">
-      <label for="effective-vol-explorer-kappa">feedback strength κ</label>
-      <input type="range" id="effective-vol-explorer-kappa" min="0" max="2" step="0.05" value="0.5">
-      <output id="effective-vol-explorer-kappa-o" for="effective-vol-explorer-kappa"></output>
-    </div>
-    <div class="ctrl">
-      <label for="effective-vol-explorer-g">destabilizing gamma G</label>
-      <input type="range" id="effective-vol-explorer-g" min="-1" max="1" step="0.02" value="0">
-      <output id="effective-vol-explorer-g-o" for="effective-vol-explorer-g"></output>
-    </div>
-    <div class="ctrl">
-      <button type="button" id="effective-vol-explorer-stress">trigger stress</button>
-      <output id="effective-vol-explorer-day"></output>
-    </div>
+    <div class="ctrl"><button type="button" id="classification-error-new">new draw</button></div>
   </div>
   <div class="ctrls">
-    <div class="ctrl"><output id="effective-vol-explorer-su"></output></div>
-    <div class="ctrl"><output id="effective-vol-explorer-kg"></output></div>
-    <div class="ctrl"><output id="effective-vol-explorer-se"></output></div>
-    <div class="ctrl"><output id="effective-vol-explorer-amp"></output></div>
+    <div class="ctrl"><output id="classification-error-flip"></output></div>
+    <div class="ctrl"><output id="classification-error-node"></output></div>
+    <div class="ctrl"><output id="classification-error-err"></output></div>
   </div>
-  <p class="readout" aria-live="polite"><b id="effective-vol-explorer-vk"></b> <span id="effective-vol-explorer-vt"></span></p>
-  <figcaption><b>The same information vol, damped or amplified by feedback.</b> The curve is
-  σ<sub>eff</sub> = σ / (1 − κ·G) across the destabilizing gamma G, the negation of published
-  GEX (positive when dealers are net short gamma), for the underlying σ and feedback strength κ
-  set by the sliders; the dashed lines mark σ and the current G. Trigger stress to walk G from
-  −0.6 to +0.6 over five days, published GEX flipping from positive to negative, and watch
-  effective vol climb. Raise κ and the curve bends up toward the singularity at G = 1/κ, where
-  the denominator vanishes; the curve is cut at 200%, and past that point the readouts hold at
-  100 times σ.</figcaption>
+  <p class="readout" aria-live="polite"><b id="classification-error-vk"></b> <span id="classification-error-vt"></span></p>
+  <figcaption><b>A map built on guessed sides.</b> A vendor that updates its map during the day
+  has to infer which side of each trade the customer took. Here a made-up day's 240 same-day
+  trades at nine strikes around 6,000 each carry a true side. The outlines are the dealers'
+  true net position at each strike, positive where they are long, and the filled bars the
+  position estimated when each trade's side is misclassified with probability e. Rings mark the
+  largest node in each. On average the errors shrink every strike toward zero by the factor
+  1&nbsp;−&nbsp;2e. Each draw scatters the strikes around that, and new draw misclassifies the same
+  trades afresh. In one study of CBOE option trades from the 1990s (Savickas and Wilson,
+  2003), the four standard rules signed 17% to 41% of classifiable trades wrongly, depending on
+  the rule, and the legs of complex index orders almost half the time: a range, not a
+  constant.</figcaption>
 </figure>
 
-<p>At the defaults, the stress run lifts effective volatility from 15%, strongly damped at \(\kappa G = -0.30\), to 29%, amplifying at \(\kappa G = +0.30\): less than double. With \(\kappa = 1.5\), the same run reads 24% on day 3 and 43% on day 4, and ends on day 5 at \(\kappa G = +0.90\). Effective volatility there is 200%, ten times the underlying, and the verdict reads explosive. The positioning moved the same distance both times, and only the feedback strength differed.</p>
+<p>At 20%, the first draw misclassifies 43 of the 240 trades. Two of the nine strikes, 5,990 and 6,010, flip sign, and the largest node stays at 6,000 but shrinks from a true +1,058 contracts to an estimated +504. The total is the most fragile number: an estimated −665 contracts against a true +155, an error of −820. On average the errors leave each strike at \(1 - 2e\) of its true net, 0.66 at 17%, 0.60 at 20% and 0.18 at 41%. Raise e toward 41% and press new draw: the largest node starts to wander from one strike to another.</p>
 
-<p>Past \(G = 1/\kappa\) the formula has no meaning, so the figure cuts its curve at 200% and holds its readouts at 100 times \(\sigma\). To connect the two figures, set \(\kappa\) to 0.45 and \(G\) to +1 and then to −1. The amplification readout shows 1.82× and 0.69×, the regime figure's two multipliers.</p>
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>This is non-differential misclassification, and it behaves as it does in a trial. If a binary outcome is recorded with sensitivity \(Se\) and specificity \(Sp\), the same in both arms, the observed risk difference is the true one times \(Se + Sp - 1\). With both equal to \(1 - e\), that factor is \(1 - 2e\), the figure's shrinkage. The bias runs toward the null on average. But any single study, like any single draw, can land far from it, and a small true effect can change sign.</p>
+</div>
 
-<h2 id="empirical-effect-sizes">4 · Empirical effect sizes</h2>
+<p>Two findings bound how well any of this can work. Ardia and Vaudescal (2026), an SSRN working paper, built net gamma from public open interest over five years of half-hour SPX data. It tracked a dealer-inventory benchmark at a correlation of 0.99 for options other than 0DTE, but only 0.53 for 0DTE. The benchmark shares its open-interest starting point with the proxy, so 0.99 is an upper bound on agreement. And market makers match most 0DTE flow, as Adams, Fontaine and Ornthanalai found, so their same-day gamma comes mostly from older positions that sit in yesterday's open interest. For longer expiries, yesterday's open interest is most of the story. For same-day options, the flow intraday maps chase is mostly offset, and the part that is not is the part public data measure worst.</p>
 
-<p>The dealer-feedback story is real and quantifiable, but its practical effect is modest on a typical day. Several academic papers, some peer-reviewed and some working papers, have measured it:</p>
+<h2 id="vendors-methods-side-by-side">9 · Vendors' methods side by side</h2>
 
-<ul>
-<li><strong>Barbon and Buraschi (2021)</strong>, in "Gamma Fragility" (SSRN 3725454, revised March 18, 2021), document a link between large aggregate dealer gamma imbalances and intraday momentum and reversal in stock returns. They find supporting evidence that intraday momentum is explained by the interaction of negative ex-ante gamma imbalance with illiquidity, and reversal by the interaction of positive imbalance with illiquidity. The effect is stronger for the least liquid underlying securities. That finding matters, because it suggests that SPX itself, which is highly liquid, has smaller gamma-feedback effects than less liquid single stocks.</li>
-<li><strong>Ni, Pearson, Poteshman and White (2021)</strong> extend the original 2005 pinning paper. They find that hedge rebalancing alters the probability of large daily moves, over 300 bps, by 5% to 14% historically, rising to 13% to 40% in their later sample.</li>
-<li><strong>Dim, Eraker and Vilkov (2024)</strong> find, for the 0DTE regime, that net market-maker gamma is <strong>on average positive</strong> and <strong>negatively related to future intraday volatility</strong>. The hedging pattern they find is consistent with delta hedging but inconsistent with information-based trading. It is the academic foundation for the claim that 0DTE options have, on net, <em>reduced</em> intraday volatility in SPX.</li>
-<li><strong>Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025)</strong>, the successor paper, establish causally that the presence of 0DTE options dampens market volatility. The dampening works through longer-dated positions becoming 0DTEs over time, not through trading on the expiration day itself.</li>
-</ul>
+<p>Every vendor answers the sign question somehow, and the answers range from a fixed rule to measured positions. As their own documentation describes them:</p>
 
-<p>The episodes that everyone remembers are February 2018, March 2020, the GME squeeze and the August 5, 2024 unwind. They are the <strong>right tail</strong> of this distribution, where feedback briefly approached the unstable threshold. On most days, GEX is a probabilistic prior you can use to bias your strategy selection, not a deterministic forecast.</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Vendor</th><th class="c-endpoint">Input</th><th class="c-endpoint">How the sign is set</th><th class="c-other">Intraday</th></tr></thead><tbody><tr><td class="c-trial" data-label="Vendor">SqueezeMetrics</td><td class="c-endpoint" data-label="Input">Open interest</td><td class="c-endpoint" data-label="How the sign is set">Calls +, puts −</td><td class="c-other" data-label="Intraday">End of day</td></tr><tr><td class="c-trial" data-label="Vendor">Barchart</td><td class="c-endpoint" data-label="Input">Open interest, four nearby expiries</td><td class="c-endpoint" data-label="How the sign is set">Calls +, puts −, for every ticker</td><td class="c-other" data-label="Intraday">Not stated</td></tr><tr><td class="c-trial" data-label="Vendor">SpotGamma</td><td class="c-endpoint" data-label="Input">Open interest, adjusted for volume on the four nearest expiries</td><td class="c-endpoint" data-label="How the sign is set">Index: dealers short puts, long calls; equities: dealers short both</td><td class="c-other" data-label="Intraday">A proprietary inventory model updated every minute</td></tr><tr><td class="c-trial" data-label="Vendor">MenthorQ</td><td class="c-endpoint" data-label="Input">Open interest across expiries</td><td class="c-endpoint" data-label="How the sign is set">Not published</td><td class="c-other" data-label="Intraday">Not found</td></tr><tr><td class="c-trial" data-label="Vendor">Unusual Whales</td><td class="c-endpoint" data-label="Input">Four methods, ranked by the vendor</td><td class="c-endpoint" data-label="How the sign is set">From Cboe market-maker data ("no assumptions") down to dealers long all calls and short all puts</td><td class="c-other" data-label="Intraday">1- or 10-minute refresh, by plan</td></tr><tr><td class="c-trial" data-label="Vendor">Volland</td><td class="c-endpoint" data-label="Input">Every trade on the options feed</td><td class="c-endpoint" data-label="How the sign is set">Each trade classified as a dealer buy or write</td><td class="c-other" data-label="Intraday">Order by order</td></tr><tr><td class="c-trial" data-label="Vendor">GEXBot</td><td class="c-endpoint" data-label="Input">Open interest and volume; classified taker flow</td><td class="c-endpoint" data-label="How the sign is set">Convention unstated; "net taker imbalances"</td><td class="c-other" data-label="Intraday">Look-backs of 1 to 30 minutes</td></tr><tr><td class="c-trial" data-label="Vendor">Skylit</td><td class="c-endpoint" data-label="Input">Market data "licensed directly from OPRA, NASDAQ and CBOE"</td><td class="c-endpoint" data-label="How the sign is set">Not published</td><td class="c-other" data-label="Intraday">Live updates; method not published</td></tr><tr><td class="c-trial" data-label="Vendor">Cboe research</td><td class="c-endpoint" data-label="Input">Cboe's own customer and market-maker flags</td><td class="c-endpoint" data-label="How the sign is set">Measured</td><td class="c-other" data-label="Intraday">Intraday</td></tr></tbody></table></div></div>
 
-<h2 id="regime-as-a-decision-boundary">5 · Regime as a decision boundary</h2>
+<p>A few statements in that material deserve their labels. The "no assumptions" of the Unusual Whales method holds only as far as Cboe's own flags are complete: a dealer trading as a broker-dealer, or hedging in SPY or futures options, falls outside them. Volland claims "over 90% accuracy over all expirations, with 99% accuracy in 0DTE options" for its classification, without a disclosed benchmark. Its creator, a competitor of the others, says the open-interest convention is "right maybe ±75% of the time", a figure with no support offered. Skylit says only that its positioning is "derived by Skylit from that data, not reported by the exchanges". Its calculations run on "custom inference models and proprietary intelligence built from years of research into dealer microstructure" (<a class="xref" href="8c.html">Chapter 8C</a>). A working paper by Sen (2026) sums up the market: commercial services "cost roughly US$99 to US$1,999 per month, cover mainly U.S. equity indices, and disclose little of their methodology".</p>
 
-<p>For practical trading, the regime works as a decision boundary on strategy selection, and the shape of the VIX term structure joins the GEX sign in drawing it. The <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> term structure is in <span class="gloss" title="A term structure in which longer-dated prices or implied volatilities sit above shorter-dated ones. It is the usual shape for equity implied volatility.">contango</span> when longer-dated implied volatility sits above shorter-dated, the usual calm shape. It is in <span class="gloss" title="A term structure in which shorter-dated prices or implied volatilities sit above longer-dated ones. For equity implied volatility it is a mark of stress.">backwardation</span> when that order inverts under stress (<a class="xref" href="5e.html">Chapter 5E</a>).</p>
+<p>SpotGamma, to its credit, published a sensitivity test of its own model. On data from February 7, 2020, it assumed the model "is only 50% correct and the remaining 50% open interest is randomized to be long or short", and repeated the run at higher shares. The total moved with the share it got right, which is the sign map's lesson in a vendor's hands.</p>
 
-<ul>
-<li><strong>Positive GEX, VIX in contango, no event imminent:</strong> premium-selling and mean-reversion strategies are favored. Realized volatility is likely to undershoot implied, range bets pay, and tight stops work.</li>
-<li><strong>Negative GEX, VIX in backwardation, an event imminent or just past:</strong> directional and long-volatility strategies are favored. Realized volatility is likely to exceed implied, trend bets pay, and wider stops are needed.</li>
-<li><strong>Transition regimes, with GEX near zero and the VIX term structure in transition:</strong> reduce size, take only the highest-conviction setups, and expect choppy intraday action.</li>
-</ul>
+<h2 id="what-no-public-data-show">10 · What no public data show</h2>
 
-<p><a class="xref" href="11g.html">Chapter 11G</a> formalizes this into the composite regime scorecard. For now, the principle is: <strong>strategy selection should be conditioned on regime, and regime is most concisely characterized by the sign of net dealer gamma combined with the shape of the VIX term structure.</strong></p>
+<p>Every public GEX model sees mainly the standard listed chains: contracts that trade on Cboe and the other exchanges, cleared through the OCC, with strikes on a fixed grid. That dataset is comprehensive, but it captures only one side of the market, the listed side. The Dealer Mechanics Lab calls the rest the <strong>invisible book</strong>, and of all the limits it names this as the one that bites hardest in practice. "Absent from the chains most vendors use" is the more accurate phrase, because some of it does reach OCC.</p>
 
-<h3 id="how-the-edge-book-weighs-the-regime">How the Edge Book weighs the regime</h3>
+<p><strong>FLEX options</strong> sit alongside the listed market, trading on Cboe but with a customizable strike, expiration, exercise style and settlement (Chapters 2B and 4A). OCC clears them and publishes FLEX open interest reports, but they sit outside the standard chains vendors ingest. The Dealer Mechanics Lab cites Cboe's figures: FLEX volume averaging 1.3 to 1.4 million contracts a day in 2025, more than ten times the 2019 level. Total FLEX open interest is 35 million contracts, up from 2 million in 2019, a 17.5× increase. Buffer ETFs, the <span class="gloss" title="An exchange-traded fund that uses FLEX options to give its holders capped upside and partial protection against losses over a fixed period.">defined-outcome ETF</span> products built from FLEX, held more than $70 billion by mid-2025. Issuer literature says that their market makers "hedge through the broader listed options complex". So part of the FLEX book's gamma reappears in listed open interest, with a sign no convention assigns correctly.</p>
 
-<p>The Edge Book agrees on the direction of the effect: negative-GEX days tend to have higher realized volatility, and positive-GEX days compressed realized volatility (<a class="xref" href="10h.html">Chapter 10H</a>). It gives the sign far less weight, treating GEX as a low-confidence filter: a soft input worth 10% to 15% of one filter's weight. If GEX disagrees with the VIX term structure or with the realized-volatility filters, the Edge Book ignores it, and if it agrees, it adds slight confidence.</p>
+<p><strong>Over-the-counter (OTC) books</strong> are harder still. OCC has cleared some <span class="gloss" title="Said of a contract negotiated directly between two parties rather than traded on an exchange, with terms they set and credit risk each bears to the other. Abbreviated OTC.">over-the-counter</span> S&amp;P 500 index options since 2014, but bilateral books leave no public record. Foreign exchange shows what records make possible. Anderegg, Ulmann and Sornette (2022) rebuilt aggregate dealer gamma in EURUSD and USDJPY options from trade-repository data, October 2017 to June 2018, and found it negative. No equivalent exists for U.S. equity-index options traded off the exchange.</p>
 
-<p>In the Edge Book's use, the sign adjusts the size of other strategies, for example by trimming put-writing modestly when GEX is negative. It never sizes from the magnitude of GEX, which it calls too model-dependent. It also rejects trading at specific GEX levels for retail accounts (Chapters 1G and 10I). Its reasons are the model risk of <a class="xref" href="8a.html">Chapter 8A</a>, the change in structure as 0DTE options grew after 2022, and a Cboe study from 2025. That study put 0DTE market-maker hedging at about 0.2% of SPX daily liquidity. The two sources agree that the sign is regime context and differ on how much it should move a decision.</p>
+<p><strong><span class="gloss" title="An investment product issued by a bank that combines a bond or note with derivatives to give a tailored payoff, such as an autocallable note or a principal-protected note.">Structured products</span></strong> are the largest unseen layer: autocallables, principal-protected notes and range accruals, which retail and private-wealth channels sell to clients around the world. An <strong><span class="gloss" title="A structured note that pays a coupon and is redeemed early if the index is above a set level on a check date, and exposes its holder to losses if the index falls through a lower barrier. The issuing bank hedges it by trading the index and its options.">autocallable</span></strong> pays a coupon and can be redeemed early when the index is above a set level. It exposes its holder to losses if the index falls through a lower barrier. The issuing bank's hedge replicates the structure's option exposure dynamically. The Dealer Mechanics Lab says the autocallable book alone is measured globally in hundreds of billions of <span class="gloss" title="The face amount on which a derivative's payments are computed. It measures the size of a contract, not the money that changes hands or could be lost.">notional</span>, dominated by retail flow in Europe and Asia. The evidence on these hedges comes from other markets. In Korea, issuers of step-down autocallables are long vega, and their hedging went with lower implied volatility (Yoon 2014; Ji and co-authors 2015). In January 2024 China's CSI 500 and CSI 1000 indexes fell through the knock-in levels of "snowball" autocallables, set at 70% to 80% of initial levels, and a case study (Yin, 2026) lists institutional hedging pressure among the effects. For the S&amp;P 500, a BIS box by Todorov and Vilkov (2024) proposed that option dealers "effectively dampen volatility when they hedge structured products", without measuring it.</p>
+
+<p>The Lab's central claim is that <strong>the invisible book matters most precisely when GEX matters most</strong>. On a quiet day, FLEX and over-the-counter hedging is small and self-cancelling. On a stress day it can dominate everything the listed GEX number shows. That happens when a barrier is approached, when an autocallable book nears a knock-in level, or when an institutional buyer suddenly rolls a multi-billion-dollar collar. The claim is plausible, and nothing public quantifies it. The Lab adds that Volmageddon's VIX call wing was in FLEX, and that the March 2020 vanna cascade ran through structured-product hedges as much as through listed puts. Those are its interpretations. The documented accounts of February 2018 attribute the amplification to the rebalancing of leveraged and inverse VIX products (<a class="xref" href="8h.html">Chapter 8H</a>), and no published estimate tests the March 2020 claim. The Lab expects the next stress event to feature a flow that surprises every published GEX model, and calls that almost certain.</p>
+
+<p>Theory supports the worry, if not its size. Gennotte and Leland (1990) built a model in which hedging demand is not fully observed, and found that crashes "can occur even with relatively little hedging". The usual reading is that unseen hedging sales are mistaken for informed selling. Grossman (1988) argued that a traded put reveals the hedging demand behind it and a replicated one does not. Read together, they give listed open interest its value, since it is visible, and they make the unseen hedges the dangerous part.</p>
+
+<div class="callout insight">
+<span class="ct">Key idea</span>
+<p>Published GEX is a useful prior on typical days. On atypical days, treat it as one of several inputs, not a forecast.</p>
+</div>
+
+<h2 id="units">11 · Units</h2>
+
+<p>Four units are in use, and vendors often do not say which. For one line with gamma \(\Gamma\), open interest OI and spot \(S\):</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Unit</th><th class="c-endpoint">Per line</th><th class="c-other">To dollars per 1%, multiply by</th><th class="c-endpoint">Used by</th></tr></thead><tbody><tr><td class="c-trial" data-label="Unit">Index units (shares) per $1</td><td class="c-endpoint" data-label="Per line">\(\Gamma \cdot \text{OI} \cdot 100\)</td><td class="c-other" data-label="To dollars per 1%, multiply by">\(S^2 \times 0.01\)</td><td class="c-endpoint" data-label="Used by">SqueezeMetrics' white paper</td></tr><tr><td class="c-trial" data-label="Unit">Dollars per index point</td><td class="c-endpoint" data-label="Per line">\(\Gamma \cdot \text{OI} \cdot 100 \cdot S\)</td><td class="c-other" data-label="To dollars per 1%, multiply by">\(0.01\,S\)</td><td class="c-endpoint" data-label="Used by">SqueezeMetrics' index monitor; Tier1 Alpha</td></tr><tr><td class="c-trial" data-label="Unit">Dollars per 1% move</td><td class="c-endpoint" data-label="Per line">\(\Gamma \cdot \text{OI} \cdot 100 \cdot S^2 \cdot 0.01\)</td><td class="c-other" data-label="To dollars per 1%, multiply by">1</td><td class="c-endpoint" data-label="Used by">SpotGamma, Barchart, this book</td></tr><tr><td class="c-trial" data-label="Unit">ES contracts per 1%</td><td class="c-endpoint" data-label="Per line">dollars per 1%, divided by \(50\,S\)</td><td class="c-other" data-label="To dollars per 1%, multiply by">\(50\,S\)</td><td class="c-endpoint" data-label="Used by">Desk usage</td></tr></tbody></table></div></div>
+
+<p>Skylit and GEXBot state no unit for their values, so their numbers cannot be converted at all.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One number in four units</span>
+<p><strong>Step 1: per point.</strong> A GEX of $10 billion per 1% at SPX 6,000 is \(10{,}000{,}000{,}000/60 \approx \$167\) million per index point, since a 1% move is 60 points.</p>
+
+<p><strong>Step 2: index units and contracts.</strong> It is \(10{,}000{,}000{,}000/6{,}000 \approx 1.67\) million index units, or about \(10{,}000{,}000{,}000/300{,}000 \approx 33{,}000\) ES contracts per 1% move.</p>
+
+<p><strong>Step 3: a vendor's example.</strong> SqueezeMetrics' monitor material explains a reading of 64,521,235: for every point the S&amp;P 500 moves, dealers would need to trade "$64,521,235 worth of S&amp;P 500 index exposure". If SPX stood at 3,000, that would be \(64.5 \text{ million} \times 30 \approx \$1.9\) billion per 1%. Another summary of the same material speaks of thousands of dollars per point, so even this unit needs checking.</p>
+
+<p><strong>Step 4: a unit to check.</strong> A Tier1 Alpha thread of October 2023, as a search summary shows it, had dealers "excessively short-gamma with around $1.7 billion to hedge per index point". At about 4,100 that would be \(1.7 \times 41 \approx \$70\) billion per 1%, far above SqueezeMetrics' example. Either the summary garbled the unit or the measure is defined differently, and a number like that should not be compared until the unit is known.</p>
+</div>
+
+<p>An SPY or XSP contract carries about one tenth of an SPX contract's dollar gamma at the same moneyness, because its underlying is about one tenth the size (<a class="xref" href="6d.html">Chapter 6D</a>).</p>
+
+<h2 id="six-limits-of-the-framework">12 · Six limits of the framework</h2>
+
+<p>The model has serious limits, and you should know them before you read any GEX chart with conviction. The first four are the subject of the sections above.</p>
+
+<ol>
+<li><strong>The counterparty assumption:</strong> as the profile builder's toggle made plain, the sign is fragile. The standard SqueezeMetrics convention assumes dealers are long calls and short puts, and the position data fit neither that nor its opposite for SPX. The right convention depends on which counterparty actually holds each option in aggregate, which is hard to observe.</li>
+<li><strong>Open interest publishes with a lag:</strong> the OCC publishes open interest T+1, that is, on the next business day. Intraday GEX is imputed by inference from the trade tape, with the classification errors described above.</li>
+<li><strong>FLEX, over-the-counter and structured-product books are outside the chains:</strong> their hedges are real, and public models cannot size them.</li>
+<li><strong>Black-Scholes gamma is wrong under skew:</strong> GEX uses Black-Scholes gamma at one volatility, as if the volatility surface were flat. The Dealer Mechanics Lab says that real put-wing gammas under steep skew can be several times the Black-Scholes number. It adds that the error does not reverse: it consistently understates put-side gamma in equity markets. Measured convexity departs from it in another way. Willeboordse (2026), across five underlyings from 2020 to 2025, found the correlation between empirically measured and Black-Scholes gamma significantly negative at a daily horizon, −0.25 to −0.47. The author attributes it to implied volatility moving against spot. Hull and White (2017) showed that the delta minimizing a hedge's variance folds in the expected change in volatility. A dealer using it trades differently from the Black-Scholes hedge GEX assumes.</li>
+<li><strong>GEX is positioning, not outcome:</strong> it tells you what dealers would do <em>given</em> a move, not whether a move happens. The effect sizes in the academic literature are real but modest. Ni, Pearson and Poteshman (2005) find that on expiration dates the returns of optionable single stocks are altered by an average of at least 16.5 basis points, 1996 to 2002. The paper does not study the index. At the index level, Golez and Jackwerth (2012) find S&amp;P 500 futures pulled toward the at-the-money strike when options on the futures expire. Just before SPX options expire, the futures are pushed away from it. The notional shift is at least $115 million per expiration day. Barbon and Buraschi (2021), first posted in 2020, measure dealers' gamma imbalance. In one version of the paper, one standard deviation of it goes with a fall of about 12 basis points in a stock's absolute daily return, against an average of about 109. Another version gives 5 to 25 basis points for stocks, against an average of 180. For the indexes tested, one standard deviation goes with a fall of more than 20 basis points in the absolute daily return. Chapters 8E and 8G give these results in full.</li>
+<li><strong>Dealers may not hedge the way the formula assumes:</strong> Hu, Kirilova, Muravyev and Ryu (2023), an SSRN working paper, studied account-level data for Korean index options. Market makers reduced risk mainly by rebalancing their inventory within minutes, trading the options back out, rather than by delta hedging. Only a minority consistently delta hedged. In S&amp;P 500 options, daily trading volume exceeds net position changes by a factor of 32. The authors conclude that "delta hedging is less universal than commonly assumed". Dong (2025) found that an option trade moves the underlying stock by 0.56 basis points over five minutes, about one sixth of a stock trade's effect. Multi-leg trades had negligible effects. Open-interest gamma can therefore overstate the hedge flow of <a class="xref xeq" href="8a.html#e-flow">(8A.3)</a>.</li>
+</ol>
+
+<h2 id="an-auditable-recipe">13 · An auditable recipe</h2>
+
+<p>Two working papers show what a disclosed method looks like. Chilingarian (2026) sets out "a three-model taxonomy" and ratifies one model, the SqueezeMetrics open-interest proxy, "as a written contract". It fixes the aggregation formula and "its unit scale", gives "a correctness rule" for the gamma flip, and shows on "a real 10,223-contract SPX snapshot" how switching conventions changes GEX. Sen (2026) publishes a complete engine for S&amp;P 500 and gold futures options. It prices with Black-76 at each strike's own implied volatility and uses the standard dealer-sign convention. It solves for the zero-gamma level numerically and adds walls, pinning strikes, and vanna and charm overlays, and it runs for US$42.80 a month.</p>
+
+<p>Neither paper makes the sign right. What they make is the sign visible, so that a reader can see the assumption, change it and watch the answer move. That is the standard to hold any GEX number to.</p>
 
 <div class="callout practice">
 <span class="ct">In practice</span>
-<p>In an account, the regime changes size and stops before it changes which trades you take. A stop set at two standard deviations of a day's move sits at about 1.9% when effective volatility is 15%, because a day's standard deviation is then \(15\%/\sqrt{252} = 0.94\%\) (<a class="xref" href="5e.html">Chapter 5E</a>). At 29%, the top of the figure's default stress run, the same rule puts the stop at about 3.7%, and a stop left at 1.9% is hit by ordinary noise. Size falls for the same reason: with the stop nearly twice as far away, the same dollar risk buys about half the position.</p>
+<p>Before you use a vendor's GEX number, find six things in its method:</p>
+
+<ul>
+<li>the sign rule, and whether the vendor has tested it;</li>
+<li>the data, and how old they are;</li>
+<li>whether intraday values are imputed from the tape, and how;</li>
+<li>which expiries are included;</li>
+<li>the volatility input, one flat number or each strike's own;</li>
+<li>the unit.</li>
+</ul>
+
+<p>A number built from SPY open interest is not the same as one built from SPX, because wholesalers internalize much of the SPY flow (<a class="xref" href="2b.html">Chapter 2B</a>). Then run the check this chapter's figures run: flip the convention, or shift the assumed shares, and see whether the sign survives. If it does not, the sign carries no information for you.</p>
 </div>
+
+<p>The two traditions this book draws on agree on the method and differ on the weight. The Dealer Mechanics Lab reads the 0DTE-era evidence as putting SPX dealers net long gamma on most days. It makes the sign of GEX a central input to the regime (<a class="xref" href="8d.html">Chapter 8D</a>). The Edge Book gives three reasons for caution: vendor models disagree, the 0DTE era changed who holds what, and a Cboe study of 2025 put 0DTE market-maker hedging at about 0.2% of SPX daily liquidity. It keeps only the sign, as low-confidence regime context worth 10% to 15% of one filter's weight, and never sizes from the magnitude (<a class="xref" href="10h.html">Chapter 10H</a>). This chapter's evidence cuts both ways. The measured average sign for SPX same-day options is positive, as the Lab says. Yet the conventions behind most public numbers do not describe the positions, which supports the Edge Book's low confidence in any vendor's reading.</p>
 
 <div class="callout warn">
 <span class="ct">When it fails</span>
-<p>The regime read fails in two ways. The sign itself can be wrong, since it rests on a convention about who holds what (<a class="xref" href="8a.html">Chapter 8A</a>). And \(\kappa\) is not a constant: when depth vanishes, the same destabilizing gamma that meant mild amplification can approach the singular point, where a linear intuition badly understates the move (<a class="xref" href="8c.html">Chapter 8C</a>).</p>
+<p>GEX fails when it is most wanted. On a stress day the books outside the chains can dominate the listed number, the intraday figure is an imputation, and Black-Scholes misstates the put-wing gamma. The dealers' short put position itself shrinks when their constraints bind, which is when stress arrives. And a convention that fitted one period's flows can go stale when the dominant flow changes, as it did between 2017 and the 0DTE era.</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">Decision rule</span>
-<p>Condition size and style on the regime, and let the sign of GEX nudge rather than decide:</p>
+<p>Before you act on any GEX reading:</p>
 
 <ul>
-<li><strong>Positive GEX, contango, no event near:</strong> premium selling and mean reversion may run at normal size, with tight stops.</li>
-<li><strong>Negative GEX with backwardation or an event:</strong> favor directional and long-volatility trades, widen stops, and cut short-premium size.</li>
-<li><strong>GEX near zero or the term structure in transition:</strong> reduce size and take only the highest-conviction setups.</li>
-<li><strong>Always:</strong> use the sign, never the magnitude, and give it less weight than the term structure (<a class="xref" href="10h.html">Chapter 10H</a>).</li>
+<li><strong>Name the convention.</strong> If you cannot find the vendor's sign rule, do not use the sign.</li>
+<li><strong>Run the sensitivity.</strong> Flip the convention, or read the sign map. If the sign flips under a modest change in who holds what, treat it as unknown.</li>
+<li><strong>Prefer measured signs.</strong> For SPX, a sign built from exchange data on who traded with whom outranks one assumed by option type.</li>
+<li><strong>Use the sign, not the size or the levels.</strong> Treat positive or negative GEX as regime context for sizing other trades (Chapters 8D and 10H). Never size from the magnitude, and read <a class="xref" href="8c.html">Chapter 8C</a> before trading any level a map draws.</li>
+<li><strong>Discount the atypical day.</strong> On a stress day, treat published GEX as one input among several, never as a forecast.</li>
 </ul>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: reading the regime as a forecast</span>
-<p>Positive GEX does not mean the market cannot move: on most days the regime is only a probabilistic prior. The episodes that did damage were the right tail, when the feedback briefly approached its unstable threshold. A sizing rule has to survive those episodes, not only the typical day.</p>
+<span class="ct">Common mistake: "GEX flipped negative today"</span>
+<p>The claim is read as news about dealers, but it may be news about a vendor's convention. The same open interest gives opposite signs under the two conventions, and the flip stays where it is while the side that amplifies changes. Ask which convention before you ask what the number means.</p>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: mixing up G and GEX</span>
-<p>The feedback formula uses \(G\), the negation of published GEX. Put a vendor's "+$2.3B" into it unconverted, and a stabilizing regime reads as an amplifying one. Convert the sign first, and then check the vendor's convention from <a class="xref" href="8a.html">Chapter 8A</a> as well.</p>
+<span class="ct">Common mistake: one convention for every product</span>
+<p>A rule that signs calls positive and puts negative for every ticker treats SPX, SPY and single stocks alike. The position data do not: SPX dealers are short far puts and near-flat in calls, single-stock market makers have historically been long both, and SPY's flow is shaped by internalization. Check that the convention was built for the product you trade.</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">What to carry forward</span>
 <ul>
-<li>Long dealer gamma (positive GEX) makes hedging trade against moves: mean reversion and compressed volatility. Short dealer gamma (negative GEX) makes it trade with them: momentum and expanded volatility.</li>
-<li>With destabilizing gamma \(G = -\text{GEX}\), effective volatility is \(\sigma/(1 - \kappa G)\): damped for \(G &lt; 0\), amplified for \(G &gt; 0\), and unbounded as \(G\) nears \(1/\kappa\). Its slope grows as \(1/(1 - \kappa G)^2\), so small changes in positioning matter most in stress.</li>
-<li>Measured effects are modest on typical days and large only in the right tail.</li>
-<li>Both sources condition strategy on the regime. The Dealer Mechanics Lab gives the GEX sign a central place beside the VIX term structure, while the Edge Book gives it a low-confidence one.</li>
+<li>Gamma is positive for calls and puts alike, so the sign of GEX is an assumption about inventory. Open interest, counted once a day without sides, cannot settle it.</li>
+<li>The JPM-era convention (calls +1, puts −1) and the 0DTE-era convention (the reverse) give opposite signs from the same book. Position data support the JPM era's short puts, not its long calls, and contradict the 0DTE era's premise that customers overwhelmingly sell premium.</li>
+<li>Measured SPX positions show dealers short about 19 million puts, mostly far out of the money, with calls near flat. Near the money, their same-day gamma is positive on average. Books like that damp on normal days and amplify in a sell-off, so no per-type convention fits.</li>
+<li>Intraday maps rest on inferred trade sides, which standard rules get wrong 17% to 41% of the time; errors shrink each strike toward zero and can flip small ones.</li>
+<li>FLEX, over-the-counter and structured-product books lie outside the standard chains, Black-Scholes gamma misstates the put wing, and dealers often trade options back out instead of hedging. Published GEX is a prior on typical days, not a forecast.</li>
 </ul>
 </div>
 
-<h2 id="check-yourself">6 · Check yourself</h2>
+<h2 id="check-yourself">14 · Check yourself</h2>
 <div class="problems">
 <div class="prob">
 <p class="pnum">Question 1</p>
-<p>With \(\sigma = 20\%\) and \(\kappa = 0.5\), what is effective volatility at \(G = +0.8\), and what does that \(G\) say about dealers?</p>
+<p>The same open interest gives GEX of +$7.5 billion under one convention and −$7.5 billion under the other. What information would settle which is right?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Since \(1 - 0.5 \times 0.8 = 0.6\), effective volatility is \(0.20/0.6 = 33\%\). A positive \(G\) is negative published GEX: dealers are net short gamma, and their hedging amplifies moves.</p>
+<p>Who holds each side: whether dealers are long or short each line in aggregate. Open interest counts contracts but not their holders. Without position data the sign is an assumption. That is why direct measurements of market-maker positions carry weight, such as those rebuilt from Cboe's Open-Close data by Dim, Eraker and Vilkov and by Terstegge.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 2</p>
-<p>With \(\sigma = 0.15\) and \(\kappa = 0.0010\), how much does effective volatility rise when \(G\) moves from +400 to +600, and when it moves from −600 to −400?</p>
+<p>Terstegge finds SPX dealers net short about 19 million puts, while Dim, Eraker and Vilkov find market makers' same-day gamma positive on average. How can both hold?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>From +400 to +600 it rises from 25% to 37.5%, which is 12.5 points. From −600 to −400 it rises from \(0.15/1.6 = 9.4\%\) to \(0.15/1.4 = 10.7\%\), about 1.3 points. The same 200 units of positioning do about ten times as much on the destabilizing side.</p>
+<p>Contracts are not gamma. Far out-of-the-money puts carry little gamma at the current spot, while near-the-money short-dated options carry a great deal. A dealer long a modest block near the money and short a large block of far puts is net short by count and long by gamma. The worked example's book is +$7.76 billion by gamma. In a sell-off the far puts' gamma grows and the near block's fades, and the total turns negative.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 3</p>
-<p>Why do the regime figure's negative-GEX paths trend, although the random shocks have no drift?</p>
+<p>A vendor's intraday map signs trades with a rule that misclassifies 20% of them, without bias. On average, how large does a strike with a true net of +1,000 contracts look, and what happens to a strike with a true net of +50?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Each return carries +0.45 times the one before, so a move tends to be followed by another in the same direction, which is positive autocorrelation, or momentum. Over many steps each shock's effect on the price is multiplied by \(1/(1 - 0.45) = 1.82\).</p>
+<p>On average each strike appears at \(1 - 2e = 0.6\) of its true net, so +1,000 looks like about +600. The +50 strike averages +30, but single draws scatter around that. A small net can easily come out negative, as the two flipped strikes in the figure's first draw did.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 4</p>
-<p>Barbon and Buraschi find the effect stronger for less liquid securities. What does that imply for SPX against a single stock?</p>
+<p>Why does the invisible book make published GEX less reliable on stress days than on quiet ones?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>SPX is highly liquid, so its gamma-feedback effects should be smaller than those of less liquid single stocks. In the terms of <a class="eqref" href="#e-eff"></a>, a deeper market means a smaller \(\kappa\) and so a smaller amplification for the same positioning.</p>
+<p>Public models see FLEX outside the standard chains and bilateral over-the-counter books not at all. On quiet days those hedges are small and, in the Dealer Mechanics Lab's account, self-cancelling. On stress days barrier levels, knock-in levels and large collar rolls can make them dominate the listed number. Theory adds that hedging the market cannot see is the kind that moves prices most.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 5</p>
-<p>A vendor reports GEX of −$3 billion, the VIX term structure is in contango, and no event is near. How does each source treat this?</p>
+<p>One vendor quotes dealer gamma of $1.2 billion per index point and another $55 billion per 1% move, both with SPX at 5,000. Which is larger?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>The signals disagree, so the Dealer Mechanics Lab's boundary fits neither clean case and its transition rule applies: reduce size and take only the highest-conviction setups. The Edge Book ignores GEX when it disagrees with the term structure, so it sizes as contango suggests (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+<p>Convert the first: a 1% move at 5,000 is 50 points, so $1.2 billion per point is \(1.2 \times 50 = \$60\) billion per 1%, slightly larger than $55 billion. Only after converting, and after checking that both use the same sign rule and expiries, can the two be compared at all.</p>
 </div></details>
 </div>
 </div>
@@ -908,163 +1077,456 @@ var DL = (function () {
   };
 })();
 
-/* ---------- regime-path-sim ---------- */
+/* ---------- gex-profile-builder ---------- */
 (function () {
-  var U = 'regime-path-sim';
-  var regime = DL.seg(U + '-reg', function () { draw(); });
+  var U = 'gex-profile-builder';
+  var SH = DL.$(U + '-shift');
+  var conv = DL.seg(U + '-conv', update);
+  var S0 = 100, SIGMA = 0.18, T = 30 / 365, PAD_L = 52, PAD_R = 14, st;
 
-  /* the app's paths: from 100, each step's return is 0.08%·z plus the feedback
-     −sign·0.45·(previous return), sign +1 for positive GEX and −1 for negative;
-     six paths from the seeds 0, 7, ..., 35, the same six for both regimes */
-  function generate(gexSign, seed) {
-    var rng = DL.rng(seed), out = [100], S = 100, k = 0.45;
-    for (var i = 1; i <= 60; i++) {
-      var baseRet = 0.0008 * DL.gauss(rng);
-      var prev = out[out.length - 1] / (out.length > 1 ? out[out.length - 2] : 100) - 1;
-      var feedback = -gexSign * k * prev;
-      S *= 1 + baseRet + feedback;
-      out.push(S);
+  /* the app's illustrative open interest: puts below and at 100, calls at and above */
+  var OI = [
+    { K: 88, type: 'put', oi: 18000 }, { K: 92, type: 'put', oi: 32000 },
+    { K: 95, type: 'put', oi: 55000 }, { K: 98, type: 'put', oi: 42000 },
+    { K: 100, type: 'put', oi: 60000 }, { K: 100, type: 'call', oi: 70000 },
+    { K: 102, type: 'call', oi: 38000 }, { K: 105, type: 'call', oi: 55000 },
+    { K: 108, type: 'call', oi: 22000 }, { K: 112, type: 'call', oi: 14000 }
+  ];
+  function sign(type, c) {
+    return c === 'standard' ? (type === 'call' ? 1 : -1) : (type === 'call' ? -1 : 1);
+  }
+  /* one line of open interest in dollars of dealer gamma per 1% move */
+  function gex(S, o, c) {
+    return DL.bsGamma(S, o.K, T, SIGMA) * S * S * 0.01 * o.oi * 100 * sign(o.type, c);
+  }
+
+  /* the app's profile on spot 85 to 115 in steps of 0.5; the flip is the first
+     grid spot whose sign differs from the one before it */
+  function compute() {
+    var c = conv(), shift = parseFloat(SH.value), curS = S0 + shift;
+    var xs = [], ys = [], flip = null, cur = null, i;
+    for (var S = 85; S <= 115; S += 0.5) {
+      var tot = 0;
+      OI.forEach(function (o) { tot += gex(S, o, c); });
+      xs.push(S); ys.push(tot);
     }
-    return out;
-  }
-  var PATHS = { pos: [], neg: [] };
-  for (var i = 0; i < 6; i++) {
-    PATHS.pos.push(generate(1, i * 7));
-    PATHS.neg.push(generate(-1, i * 7));
-  }
-  /* one frame for both regimes, fitted to all twelve paths, so that switching
-     compares like with like (the app's frame is never narrower than 92 to 108) */
-  var all = [].concat.apply([], PATHS.pos.concat(PATHS.neg));
-  var LO = Math.min.apply(null, all), HI = Math.max.apply(null, all), PY = (HI - LO) * 0.08;
-  var steps = [];
-  for (var t = 0; t <= 60; t++) steps.push(t);
-
-  var draw = DL.figure(U + '-c', function (c) {
-    var sc = regime(), col = DL.color(sc === 'pos' ? 'insight' : 'plain');
-    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: LO - PY, ymax: HI + PY, xlabel: 'step',
-                              pad: { l: 40, r: 14, t: 22, b: 34 } });
-    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ny: 5, y: function (v) { return DL.num(v, 0); } });
-    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
-    PATHS[sc].forEach(function (path, j) {
-      DL.line(p, steps, path, { color: DL.fade(col, 0.45 + j * 0.1), width: 1.3 });
+    for (i = 1; i < ys.length; i++) {
+      if (Math.sign(ys[i]) !== Math.sign(ys[i - 1])) { flip = xs[i]; break; }
+    }
+    for (i = 0; i < xs.length; i++) if (Math.abs(xs[i] - curS) < 0.3) { cur = ys[i]; break; }
+    var by = {}, ks = [];
+    OI.forEach(function (o) {
+      if (!(o.K in by)) { by[o.K] = 0; ks.push(o.K); }
+      by[o.K] += gex(curS, o, c);
     });
-    p.text(0, HI + PY, sc === 'pos' ? 'positive GEX · paths cluster' : 'negative GEX · paths fan out',
-           { dy: -6, font: '11px ' + DL.color('sans'), color: col });
-  });
-})();
-
-/* ---------- effective-vol-explorer ---------- */
-(function () {
-  var U = 'effective-vol-explorer';
-  var SIG = DL.$(U + '-sigma'), KAP = DL.$(U + '-kappa'), GG = DL.$(U + '-g');
-  /* the stress run: G from −0.6 to +0.6 in five daily steps, 600 ms apart;
-     the day stays on show for two seconds after the last one, as in the app */
-  var DAYS = 5, STEP = 600, HOLD = 2000, G0 = -0.6, G1 = 0.6, anim = null;
-
-  /* the app's σ_eff = σ / (1 − κ·G), held at 100·σ once the denominator is
-     below 0.001 */
-  function effectiveVol(sigma, kappa, g) {
-    var denom = 1 - kappa * g;
-    if (denom <= 0.001) return sigma * 100;
-    return sigma / denom;
+    ks.sort(function (a, b) { return a - b; });
+    st = { shift: shift, curS: curS, xs: xs, ys: ys, flip: flip, cur: cur, ks: ks,
+           kg: ks.map(function (k) { return by[k]; }) };
   }
-  /* the app's thresholds on κ·G (0.7 and −0.3), with its middle band, which it
-     called damped and roughly equal to the underlying for κ·G up to 0.4 (an
-     amplification of up to 1.67 times), split at zero so that each name is true */
-  function regime(d) {
-    if (d > 0.7) return ['Explosive.', 'Feedback is approaching the singular limit.'];
-    if (d > 0) return ['Amplifying.', 'Effective vol is above the underlying.'];
-    if (d === 0) return ['Neutral.', 'Effective vol equals the underlying.'];
-    if (d > -0.3) return ['Damped.', 'Effective vol is below the underlying.'];
-    return ['Strongly damped.', 'Dealer hedging compresses vol.'];
+  compute();
+
+  /* dollars in billions, a true minus, no sign on a zero */
+  function bn(x, d) {
+    var s = DL.num(Math.abs(x) / 1e9, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
   }
-  function sgn(x, d) { return (x >= 0 ? '+' : DL.MINUS) + Math.abs(x).toFixed(d); }
+  function yfmt(v, step) {
+    return Math.abs(v) < step * 1e-6 ? '$0' : bn(v, Math.max(0, -Math.floor(Math.log10(step / 1e9) + 1e-9)));
+  }
   function font() { return '11px ' + DL.color('sans'); }
+  function title(p, s) {
+    p.text(p.o.xmin, p.o.ymax, s, { dx: 4 - PAD_L, dy: -6, font: font(), color: DL.color('ink-soft') });
+  }
+  /* tick labels along the bottom, leaving out any that would touch the named mark */
+  function bottom(p, xs, fmt, x, text, color) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(text).width, px = Math.max(2 + w / 2, Math.min(p.w - 2 - w / 2, p.X(x)));
+    var shown = xs.filter(function (v) {
+      return Math.abs(p.X(v) - px) > (g.measureText(fmt(v)).width + w) / 2 + 10;
+    });
+    g.restore();
+    DL.xticks(p, shown, fmt);
+    p.text(p.invX(px), p.o.ymin, text, { dy: 6, align: 'center', baseline: 'top', font: font(), color: color });
+  }
 
-  var draw = DL.figure(U + '-c', function (c) {
-    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
-    /* the app's sweep: G from −1 in float steps of 0.02 (its last point is 0.98),
-       σ_eff cut at 200%; its axis runs to 150% or to the top of the curve */
-    var xs = [], ys = [];
-    for (var x = -1; x <= 1; x += 0.02) { xs.push(x); ys.push(Math.min(effectiveVol(sigma, kappa, x), 2)); }
-    var ymax = Math.max(1.5, Math.max.apply(null, ys));
-    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: ymax, xlabel: 'destabilizing gamma G',
-                              pad: { l: 44, r: 14, t: 22, b: 34 } });
-    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ny: 4,
-                 x: function (v) { return DL.num(v, 1); },
-                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
-    var fam = DL.color('familiar'), acc = DL.color('accent');
-    DL.hline(p, sigma, { color: fam, dash: [3, 3], width: 1.2 });
-    p.text(-1, sigma, 'σ underlying', { dx: 4, dy: -4, font: font(), color: fam });
-    DL.vline(p, g, { color: acc, dash: [2, 2], width: 1.2 });
-    DL.line(p, xs, ys, { color: acc, width: 2 });
-    p.dot(g, Math.min(effectiveVol(sigma, kappa, g), ymax), { r: 4, color: acc, ring: true });
-    p.text(-1, ymax, 'σ_eff² = σ² / (1 − κ·G)²', { dy: -7, font: font(), color: DL.color('ink-soft') });
+  /* a label on a paper ground, so a vertical line passing under it stays readable */
+  function note(p, x, y, s, o) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x) + (o.dx || 0), py = p.Y(y) + (o.dy || 0);
+    var x0 = o.align === 'right' ? px - w : px, y0 = o.baseline === 'top' ? py : py - 13;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.88);
+    g.fillRect(x0 - 3, y0 - 1, w + 6, 15);
+    g.restore();
+    o.font = font();
+    p.text(x, y, s, o);
+  }
+
+  var drawProfile = DL.figure(U + '-c', function (c) {
+    /* the app's scale leaves a tenth over the largest value; a little more here
+       keeps the two regime labels clear of the curve on a phone */
+    var yMax = Math.max.apply(null, st.ys.map(Math.abs)) * 1.2;
+    var p = new NMT.Plot(c, { xmin: 85, xmax: 115, ymin: -yMax, ymax: yMax,
+                              pad: { l: PAD_L, r: PAD_R, t: 20, b: 24 } });
+    var xs = [85, 90, 95, 100, 105, 110, 115], ty = DL.ticks(-yMax, yMax, 4);
+    DL.axes(p, { xs: xs, ys: ty.vals, x: false, y: function (v) { return yfmt(v, ty.step); } });
+    DL.band(p, st.xs, st.ys.map(function (v) { return Math.max(v, 0); }), 0,
+            DL.fade(DL.color('insight'), 0.15));
+    DL.band(p, st.xs, st.ys.map(function (v) { return Math.min(v, 0); }), 0,
+            DL.fade(DL.color('plain'), 0.15));
+    DL.line(p, st.xs, st.ys, { color: DL.color('accent'), width: 1.8 });
+    var fam = DL.color('familiar');
+    if (st.flip != null) {
+      DL.vline(p, st.flip, { color: fam, dash: [4, 3], width: 1.2 });
+      p.text(st.flip, yMax, 'flip $' + st.flip.toFixed(1),
+             { dx: 4, dy: -6, font: font(), color: fam });
+    }
+    DL.vline(p, st.curS, { color: fam, width: 1.4 });
+    bottom(p, xs, String, st.curS, 'S = $' + st.curS.toFixed(1), fam);
+    /* each regime's name goes on the side where the curve has the other sign */
+    var negLeft = st.ys[0] < 0;
+    note(p, negLeft ? 85 : 115, yMax, '↑ positive GEX · dampening',
+         { dx: negLeft ? 6 : -6, dy: 5, align: negLeft ? 'left' : 'right', baseline: 'top',
+           color: DL.color('insight') });
+    note(p, negLeft ? 115 : 85, -yMax, '↓ negative GEX · amplifying',
+         { dx: negLeft ? -6 : 6, dy: -5, align: negLeft ? 'right' : 'left', baseline: 'bottom',
+           color: DL.color('plain') });
+  });
+
+  var drawStrikes = DL.figure(U + '-k', function (c) {
+    var n = st.ks.length, m = Math.max.apply(null, st.kg.map(Math.abs)) * 1.1;
+    var idx = st.ks.map(function (k, i) { return i; });
+    var p = new NMT.Plot(c, { xmin: -0.6, xmax: n - 0.4, ymin: -m, ymax: m,
+                              pad: { l: PAD_L, r: PAD_R, t: 20, b: 22 } });
+    var ty = DL.ticks(-m, m, 3);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.6,
+                 y: function (v) { return yfmt(v, ty.step); } });
+    var up = DL.fade(DL.color('insight'), 0.65), dn = DL.fade(DL.color('plain'), 0.65);
+    DL.bars(p, idx, st.kg, { w: 0.62, color: function (v) { return v >= 0 ? up : dn; } });
+    DL.xticks(p, idx, function (x, i) { return String(st.ks[i]); });
+    title(p, 'per-strike contribution at current spot');
   });
 
   function update() {
-    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
-    var eff = effectiveVol(sigma, kappa, g), d = kappa * g, v = regime(d);
-    DL.out(U + '-sigma-o', (sigma * 100).toFixed(0) + '%');
-    DL.out(U + '-kappa-o', kappa.toFixed(2));
-    DL.out(U + '-g-o', sgn(g, 2));
-    DL.out(U + '-su', 'underlying σ = ' + (sigma * 100).toFixed(0) + '%');
-    DL.out(U + '-kg', 'κ·G = ' + sgn(d, 2));
-    DL.out(U + '-se', 'effective σ = ' + (eff * 100).toFixed(0) + '%');
-    DL.out(U + '-amp', 'amplification = ' + (eff / sigma).toFixed(2) + '×');
-    DL.out(U + '-vk', v[0]);
-    DL.out(U + '-vt', v[1]);
+    compute();
+    DL.out(U + '-shift-o', (st.shift >= 0 ? '+' : DL.MINUS) + Math.abs(st.shift).toFixed(1));
+    DL.out(U + '-spot', 'spot = $' + st.curS.toFixed(1));
+    DL.out(U + '-gex', 'total GEX = ' + (st.cur == null ? '—' : bn(st.cur, 3)));
+    DL.out(U + '-flip', 'gamma flip = ' + (st.flip ? '$' + st.flip.toFixed(1) : 'n/a'));
+    drawProfile();
+    drawStrikes();
+  }
+  update();
+  DL.bind([U + '-shift'], update);
+})();
+
+/* ---------- gex-sign-map ---------- */
+(function () {
+  var U = 'gex-sign-map';
+  var SP = DL.$(U + '-spot'), PK = DL.$(U + '-pk');
+  var SIGMA = 0.18, T = 30 / 365, NG = 50, st;
+
+  /* the GEX profile builder's made-up book: puts below and at 100, calls at and above */
+  var OI = [
+    { K: 88, type: 'put', oi: 18000 }, { K: 92, type: 'put', oi: 32000 },
+    { K: 95, type: 'put', oi: 55000 }, { K: 98, type: 'put', oi: 42000 },
+    { K: 100, type: 'put', oi: 60000 }, { K: 100, type: 'call', oi: 70000 },
+    { K: 102, type: 'call', oi: 38000 }, { K: 105, type: 'call', oi: 55000 },
+    { K: 108, type: 'call', oi: 22000 }, { K: 112, type: 'call', oi: 14000 }
+  ];
+  /* one line's dollar gamma per 1% move before any sign: Γ · OI · 100 · S² · 0.01 */
+  function dg(S, o) { return DL.bsGamma(S, o.K, T, SIGMA) * S * S * 0.01 * o.oi * 100; }
+  /* GEX when dealers are short a share a of the call open interest and long the rest, and
+     long a share b of the put open interest and short the rest. Each line then carries a
+     net sign of 1 - 2a (calls) or 2b - 1 (puts), so
+         GEX = C (1 - 2a) + P (2b - 1),
+     with C and P the calls' and the puts' dollar gamma. (0, 0) signs every call +1 and every
+     put -1, the JPM-era convention; (1, 1) signs them -1 and +1, the 0DTE-era one */
+  function gex(a, b) { return st.C * (1 - 2 * a) + st.P * (2 * b - 1); }
+
+  function compute() {
+    var S = +SP.value, k = Math.pow(2, +PK.value), C = 0, P = 0;
+    OI.forEach(function (o) { if (o.type === 'call') C += dg(S, o); else P += k * dg(S, o); });
+    st = { S: S, k: k, C: C, P: P };
+    /* the share of the square's cells where GEX is positive */
+    var pos = 0;
+    for (var i = 0; i < NG; i++)
+      for (var j = 0; j < NG; j++) if (gex((i + 0.5) / NG, (j + 0.5) / NG) > 0) pos++;
+    st.pos = pos / (NG * NG);
+  }
+
+  /* dollars in billions, a true minus, no sign on a zero */
+  function bn(x, d) {
+    var s = DL.num(Math.abs(x) / 1e9, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  /* a label on a paper ground, so the colors under it leave it readable */
+  function note(p, x, y, s, o) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x) + (o.dx || 0), py = p.Y(y) + (o.dy || 0);
+    var x0 = o.align === 'right' ? px - w : px, y0 = o.baseline === 'top' ? py : py - 13;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(x0 - 3, y0 - 1, w + 6, 15);
+    g.restore();
+    o.font = font();
+    p.text(x, y, s, o);
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var M = 0.035;
+    var p = new NMT.Plot(cv, { xmin: -M, xmax: 1 + M, ymin: -M, ymax: 1 + M,
+                               pad: { l: 44, r: 14, t: 26, b: 40 } });
+    var pc = function (v) { return Math.round(v * 100) + '%'; };
+    DL.axes(p, { xs: [0, 0.25, 0.5, 0.75, 1], ys: [0, 0.25, 0.5, 0.75, 1], grid: false,
+                 x: pc, y: pc });
+    var g = p.g, pos = DL.color('insight'), neg = DL.color('plain'), soft = DL.color('ink-soft'),
+        ink = DL.color('ink');
+
+    /* the cells: the sign picks the hue and the size, against the largest in the square
+       (a corner where dealers hold every option on one side), sets the depth */
+    /* cell edges on whole pixels, so neighboring cells neither overlap nor gap */
+    var m = st.C + st.P, xe = [], ye = [], i, j;
+    for (i = 0; i <= NG; i++) {
+      xe.push(Math.round(p.X(i / NG)));
+      ye.push(Math.round(p.Y(i / NG)));
+    }
+    for (i = 0; i < NG; i++) {
+      for (j = 0; j < NG; j++) {
+        var v = gex((i + 0.5) / NG, (j + 0.5) / NG), a = Math.pow(Math.min(1, Math.abs(v) / m), 0.6);
+        g.fillStyle = DL.fade(v >= 0 ? pos : neg, 0.05 + 0.9 * a);
+        g.fillRect(xe[i], ye[j + 1], xe[i + 1] - xe[i], ye[j] - ye[j + 1]);
+      }
+    }
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1;
+    g.strokeRect(p.X(0) + 0.5, p.Y(1) + 0.5, p.X(1) - p.X(0) - 1, p.Y(0) - p.Y(1) - 1);
+    g.restore();
+
+    /* the zero line: through the middle, rising C for every P along it */
+    var h = 0.5 / Math.max(st.C, st.P);
+    var x0 = 0.5 - h * st.P, y0 = 0.5 - h * st.C, x1 = 0.5 + h * st.P, y1 = 0.5 + h * st.C;
+    p.seg(x0, y0, x1, y1, { color: ink, width: 1.5, dash: [5, 4] });
+
+    /* the two conventions, ringed, and the other two corners named */
+    [[0, 0], [1, 1]].forEach(function (q) {
+      g.save();
+      g.beginPath();
+      g.arc(p.X(q[0]), p.Y(q[1]), 6, 0, 2 * Math.PI);
+      g.strokeStyle = ink;
+      g.lineWidth = 2;
+      g.stroke();
+      g.restore();
+    });
+    note(p, 0, 0, 'JPM-era', { dx: 11, dy: -9, color: ink });
+    note(p, 1, 1, '0DTE-era', { dx: -11, dy: 9, align: 'right', baseline: 'top', color: ink });
+    note(p, 0, 1, 'dealers long every option', { dx: 6, dy: 6, baseline: 'top', color: soft });
+    note(p, 1, 0, 'dealers short every option', { dx: -6, dy: -6, align: 'right', color: soft });
+    /* the zero line's name, beside it a little below the middle */
+    var f = 0.35;
+    note(p, 0.5 - f * h * st.P, 0.5 - f * h * st.C, 'GEX = 0',
+         { dx: 8, dy: 2, baseline: 'top', color: ink });
+
+    /* the axes' names */
+    g.save();
+    g.font = font();
+    g.fillStyle = soft;
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillText('↑ share of put OI dealers are long', 6, 12);
+    g.textAlign = 'right';
+    g.textBaseline = 'bottom';
+    g.fillText('share of call OI dealers are short →', p.w - 14, p.h - 3);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-spot-o', '$' + st.S.toFixed(1));
+    DL.out(U + '-pk-o', '×' + DL.num(st.k, 2));
+    DL.out(U + '-jpm', 'JPM-era corner: ' + bn(gex(0, 0), 3));
+    DL.out(U + '-odte', '0DTE-era corner: ' + bn(gex(1, 1), 3));
+    DL.out(U + '-pos', 'GEX > 0 on ' + DL.pct(st.pos, 0) + ' of the square');
+    DL.out(U + '-ps', 'puts carry ' + DL.pct(st.P / (st.C + st.P), 0) + ' of the gamma');
+    DL.out(U + '-vk', 'The whole square:');
+    DL.out(U + '-vt', 'from ' + bn(gex(1, 0), 3) + ', dealers short every option, to ' +
+                      bn(gex(0, 1), 3) + ', dealers long every option.');
     draw();
   }
-
-  function setG(x) { GG.value = x.toFixed(2); }
-  function stop() {
-    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
-  }
-  function stress() {
-    stop();
-    if (DL.still()) {
-      setG(G1);
-      DL.out(U + '-day', 'day ' + DAYS + '/' + DAYS);
-      update();
-      return;
-    }
-    setG(G0);
-    DL.out(U + '-day', '');
-    update();
-    anim = { start: null, day: 0, id: 0 };
-    function frame(ts) {
-      if (!anim) return;
-      if (anim.start == null) anim.start = ts;
-      var el = ts - anim.start, day = Math.min(DAYS, Math.floor(el / STEP));
-      if (day !== anim.day) {
-        anim.day = day;
-        setG(G0 + (G1 - G0) * day / DAYS);
-        DL.out(U + '-day', 'day ' + day + '/' + DAYS);
-        update();
-      }
-      if (el >= DAYS * STEP + HOLD) {
-        DL.out(U + '-day', '');
-        anim = null;
-        return;
-      }
-      anim.id = requestAnimationFrame(frame);
-    }
-    anim.id = requestAnimationFrame(frame);
-  }
-  /* the saved page is the first state: no stress run, G at its default */
-  function reset() {
-    stop();
-    GG.value = GG.defaultValue;
-    DL.out(U + '-day', '');
-    update();
-  }
-  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
-
   update();
-  DL.$(U + '-stress').addEventListener('click', stress);
-  DL.bind([U + '-sigma', U + '-kappa'], update);
-  /* moving G by hand ends a stress run, as it clears the app's day counter */
-  DL.bind([U + '-g'], function () { stop(); DL.out(U + '-day', ''); update(); });
+  DL.bind([U + '-spot', U + '-pk'], update);
+})();
+
+/* ---------- classification-error ---------- */
+(function () {
+  var U = 'classification-error';
+  var EE = DL.$(U + '-e');
+  var KS = [5980, 5985, 5990, 5995, 6000, 6005, 6010, 6015, 6020];
+  var seed = 4, st;
+
+  /* The made-up day: 240 same-day trades from a fixed seed, each a strike (more of them near
+     6,000), a size in contracts (heavy-tailed, median about 20) and the side the customer
+     took. Within 10 points of 6,000 customers sell more often than they buy (62% of trades),
+     beyond it they buy more often (62%). */
+  var TRADES = (function () {
+    var W = [0.6, 0.8, 1.0, 1.3, 1.6, 1.3, 1.0, 0.8, 0.6], tw = 0, r = DL.rng(12), out = [];
+    W.forEach(function (w) { tw += w; });
+    for (var i = 0; i < 240; i++) {
+      var u = r() * tw, k = 0;
+      while (u > W[k]) { u -= W[k]; k++; }
+      var n = Math.max(1, Math.round(Math.exp(3.2 + DL.gauss(r))));
+      var pSell = Math.abs(KS[k] - 6000) <= 10 ? 0.62 : 0.38;
+      out.push({ k: k, n: n, sell: r() < pSell });
+    }
+    return out;
+  })();
+
+  /* the dealers' net position at each strike, in contracts, + where they are long: a trade
+     the customer sold leaves the dealer long. A trade is misclassified when its draw falls
+     below e, so a larger e keeps every trade it had and adds more */
+  function nets(e, draws) {
+    var net = KS.map(function () { return 0; }), mis = 0;
+    TRADES.forEach(function (t, i) {
+      var wrong = draws[i] < e;
+      if (wrong) mis++;
+      net[t.k] += (t.sell ? 1 : -1) * (wrong ? -1 : 1) * t.n;
+    });
+    return { net: net, mis: mis };
+  }
+  function largest(net) {
+    var b = 0;
+    net.forEach(function (v, i) { if (Math.abs(v) > Math.abs(net[b])) b = i; });
+    return b;
+  }
+  function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+
+  var draws = null, drawSeed = null, lo = 0, hi = 0;
+  function compute() {
+    if (drawSeed !== seed) {
+      /* this draw's numbers, and one scale for every e, so the slider moves the bars and
+         not the axis */
+      var r = DL.rng(seed);
+      draws = TRADES.map(function () { return r(); });
+      drawSeed = seed;
+      lo = 0; hi = 0;
+      for (var p = 0; p <= 45; p++) {
+        nets(p / 100, draws).net.forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+      }
+    }
+    var e = +EE.value / 100, truth = nets(0, draws).net, est = nets(e, draws);
+    st = { e: e, truth: truth, est: est.net, mis: est.mis, lo: lo, hi: hi,
+           bigT: largest(truth), bigE: largest(est.net) };
+  }
+
+  function strike(K) { return DL.num(K, 0); }
+  function contracts(x) { return (x > 0 ? '+' : '') + DL.num(x, 0); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var span = st.hi - st.lo, ymax = st.hi + span * 0.16, ymin = st.lo - span * 0.04;
+    var p = new NMT.Plot(c, { xmin: -0.6, xmax: 8.6, ymin: ymin, ymax: ymax,
+                              pad: { l: 52, r: 12, t: 40, b: 24 } });
+    var ty = DL.ticks(ymin, ymax, 5);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.6,
+                 y: function (v) { return Math.abs(v) < ty.step * 1e-6 ? '0' : contracts(v); } });
+    var g = p.g, pos = DL.color('insight'), neg = DL.color('plain'), ink = DL.color('ink'),
+        soft = DL.color('ink-soft'), acc = DL.color('accent'), warn = DL.color('warn');
+    var idx = KS.map(function (K, i) { return i; });
+
+    /* the estimate, filled and narrow; the truth, outlined and wide around it */
+    DL.bars(p, idx, st.est, { w: 0.44, color: function (v) { return DL.fade(v >= 0 ? pos : neg, 0.8); } });
+    g.save();
+    g.strokeStyle = ink;
+    g.lineWidth = 1.4;
+    st.truth.forEach(function (v, i) {
+      var x0 = p.X(i - 0.36), x1 = p.X(i + 0.36), y0 = p.Y(0), y1 = p.Y(v);
+      g.strokeRect(x0 + 0.5, Math.min(y0, y1) + 0.5, x1 - x0 - 1, Math.abs(y1 - y0));
+    });
+    g.restore();
+
+    /* the largest node, true (ink) and estimated (accent), ringed at the end of its bar */
+    function ring(x, y, col) {
+      g.save();
+      g.beginPath();
+      g.arc(p.X(x), p.Y(y), 7, 0, 2 * Math.PI);
+      g.strokeStyle = col;
+      g.lineWidth = 2;
+      g.stroke();
+      g.restore();
+    }
+    ring(st.bigT, st.truth[st.bigT], ink);
+    ring(st.bigE, st.est[st.bigE], acc);
+
+    /* strikes whose sign the estimate gets wrong */
+    st.truth.forEach(function (v, i) {
+      if (v !== 0 && (st.est[i] > 0) !== (v > 0)) {
+        p.text(i, ymax, 'flip', { dy: 13, align: 'center', font: font(), color: warn });
+      }
+    });
+
+    /* the strikes, every other one where they would crowd */
+    var every = p.X(1) - p.X(0) >= 38;
+    DL.xticks(p, idx.filter(function (i) { return every || i % 2 === 0; }),
+              function (i) { return strike(KS[i]); });
+
+    /* the title and a key */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' net position by strike, contracts: + long, − short", 6, 10);
+    var kx = 6, ky = 27;
+    g.strokeStyle = ink;
+    g.lineWidth = 1.4;
+    g.strokeRect(kx + 0.5, ky - 4.5, 11, 9);
+    g.fillText('true', kx + 17, ky);
+    kx += 17 + g.measureText('true').width + 14;
+    g.fillStyle = DL.fade(pos, 0.8);
+    g.fillRect(kx, ky - 4, 6, 8);
+    g.fillStyle = DL.fade(neg, 0.8);
+    g.fillRect(kx + 6, ky - 4, 6, 8);
+    g.fillStyle = soft;
+    g.fillText('estimated', kx + 17, ky);
+    kx += 17 + g.measureText('estimated').width + 14;
+    [[ink, 6], [acc, 19]].forEach(function (q) {
+      g.beginPath();
+      g.arc(kx + q[1], ky, 5, 0, 2 * Math.PI);
+      g.strokeStyle = q[0];
+      g.lineWidth = 1.6;
+      g.stroke();
+    });
+    g.fillText('largest node', kx + 30, ky);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var flips = 0;
+    st.truth.forEach(function (v, i) { if (v !== 0 && (st.est[i] > 0) !== (v > 0)) flips++; });
+    var tT = sum(st.truth), tE = sum(st.est);
+    DL.out(U + '-e-o', Math.round(st.e * 100) + '%');
+    DL.out(U + '-flip', 'signs flipped: ' + flips + ' of 9 strikes');
+    DL.out(U + '-node', 'largest node: ' + strike(KS[st.bigT]) +
+                        (st.bigE === st.bigT ? ', unchanged' : ' → ' + strike(KS[st.bigE])));
+    DL.out(U + '-err', 'total net error: ' + contracts(tE - tT) + ' contracts');
+    DL.out(U + '-vk', 'This draw:');
+    DL.out(U + '-vt', st.mis + ' of ' + TRADES.length + ' trades misclassified, and a total of ' +
+                      contracts(tE) + ' contracts against a true ' + contracts(tT) +
+                      '. On average the errors leave each strike at 1\u00a0−\u00a02e\u00a0=\u00a0' +
+                      DL.num(1 - 2 * st.e, 2) + ' of its true net.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-e'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
 })();
 <!--/SCRIPT-->

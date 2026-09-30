@@ -1,292 +1,1524 @@
 <p class="eyebrow">Part VIII · The whole market · Chapter 8C</p>
 
-<h1>When the framework breaks</h1>
+<h1>The map</h1>
 
-<p class="subtitle">Stress episodes</p>
+<p class="subtitle">Gamma exposure by strike and expiry</p>
 
 <div class="callout where">
 <span class="ct">Where we are</span>
-<p><a class="xref" href="8b.html">Chapter 8B</a>'s effective-volatility formula has a singular point, where the feedback between hedging and prices explodes. This chapter visits it through four episodes: Volmageddon in February 2018, the Great Liquidity Crisis of March 2020, the yen carry unwind of August 2024 and the GME squeeze of January 2021. The aim is to learn which conditions had to coexist before the linear GEX framework stopped being a useful guide.</p>
+<p>Chapters 8A and 8B added every dealer's gamma into one number and showed that its sign rests on an assumption about who holds what. This chapter spreads that number back out, strike by strike and expiry by expiry, into the map that vendors sell. It teaches you to read such a map, and then walks through one vendor's vocabulary, Skylit's Heatseeker, against the book's mechanics and the evidence.</p>
 </div>
 
 <div class="tools"><b>What you need first</b>
 <ul>
-<li>Effective volatility, \(\sigma/(1 - \kappa G)\), and its singular point at \(G = 1/\kappa\) (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
-<li><span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">Vanna</span> and <span class="gloss" title="The rate at which an option's vega changes as implied volatility changes, also called vomma. It is positive for options away from the strike, so a long option gains faster than vega alone predicts when volatility rises.">volga</span>, also called vomma: how an option's delta and vega move when implied volatility moves (<a class="xref" href="5d.html">Chapter 5D</a>).</li>
-<li><span class="gloss" title="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress.">Portfolio margin</span>, and how it expands in stress (Chapters 1E and 2E).</li>
-<li>The <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> and its <span class="gloss" title="How implied volatility varies with time to expiry for the same underlying. It is in contango when longer-dated volatility is higher, and in backwardation when shorter-dated volatility is higher.">term structure</span> (Chapters 5E and 9A).</li>
+<li>Dollar gamma per 1% move for one line of the option chain, <span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">gamma exposure</span> (GEX) as their sum, and the <span class="gloss" title="The trades in the underlying that dealers must make, summed across all of them, to keep their books neutral to direction as the price moves. It opposes a move when dealers are net long gamma and joins it when they are net short.">hedge flow</span> \(\Delta H \approx -\text{GEX} \times (\Delta S/S)/0.01\) (<a class="xref" href="8a.html">Chapter 8A</a>).</li>
+<li>Why the sign of GEX is an assumption, and the JPM-era and 0DTE-era <span class="gloss" title="The rule a gamma exposure model uses to decide whether dealers are long or short each option, since open interest counts contracts but not who holds them. The two best known give calls and puts opposite signs, and differ from each other in every sign.">sign conventions</span> (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li>Gamma is proportional to \(1/\sqrt{T}\) at the money, so it grows without limit as expiry nears (<a class="xref" href="5c.html">Chapter 5C</a>).</li>
+<li><span class="gloss" title="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts.">Vanna</span> and <span class="gloss" title="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included.">charm</span>, the Greeks that move delta when volatility or time changes (<a class="xref" href="5d.html">Chapter 5D</a>).</li>
 </ul>
 </div>
 
-<p>Everything built so far assumes a functioning market: finite spreads, available depth, and dealers who can rebalance in size without moving the book against themselves. Two episodes show what the system looks like when those assumptions break: <strong>Volmageddon (February 5, 2018)</strong> and the <strong>Great Liquidity Crisis (March 16, 2020)</strong>. Both are textbook cases of dealer feedback running away from the standard model.</p>
+<h2 id="from-one-number-to-a-map">1 · From one number to a map</h2>
 
-<p>The point of these case studies is not to predict the next one. It is to <strong>calibrate your sense of when the linear GEX framework stops being a useful guide</strong>, and to see which structural conditions had to coexist for the feedback to become explosive.</p>
+<p><a class="xref" href="8a.html">Chapter 8A</a> added every line of the option chain into one number. A single number answers one question: are dealers, as a group, long or short gamma? It hides where their gamma sits. Two books with the same total behave differently if one holds its gamma at the strike next to spot and the other spreads it over strikes 200 points away.</p>
+
+<p>Vendors therefore spread the total back out. There are three levels of aggregation, and every display shows one or more of them:</p>
+
+<ul>
+<li><strong>A cell:</strong> one strike and one expiry, the dealers' GEX from the calls and puts at that strike and date.</li>
+<li><strong>A strike profile:</strong> one strike summed across all expiries, usually drawn as bars against strike.</li>
+<li><strong>A total:</strong> every strike and every expiry, the GEX of <a class="xref" href="8a.html">Chapter 8A</a>.</li>
+</ul>
+
+<p>A <strong><span class="gloss" title="A grid of estimated dealer gamma exposure with strikes as rows and expiries as columns, each cell colored by its sign and size. The sign in each cell rests on the vendor's assumption about who holds the options.">GEX heatmap</span></strong> draws the cells as a grid, with strikes as rows and expiries as columns, and colors each cell by its value. Vendors call a cell a <strong><span class="gloss" title="A cell of a gamma exposure heatmap: the estimated dealer gamma exposure at one strike and one expiry. Vendors use the word mostly for the large cells.">node</span></strong>, and most keep the word for the large ones.</p>
 
 <div class="callout plain">
 <span class="ct">In plain terms</span>
-<p>In a calm market, dealer hedging is one flow among many, and the market's depth absorbs it. In each episode below, three things lined up: dealers short gamma somewhere, a mechanical buyer or seller forced to trade whatever the price, and a market too thin to absorb the flow. As <a class="xref" href="8d.html">Chapter 8D</a> puts it, any one of these alone is insufficient. Together they drive the feedback toward the singular point of <a class="xref" href="8b.html">Chapter 8B</a>.</p>
+<p>A heatmap is a picture of where dealers' hedging is heavy and where it is light. Each square says how many dollars of the index dealers would trade, for a 1% move from here, to hedge the options at one strike and one expiry, and in which direction. The direction comes from an assumption about who holds each option, so the colors are only as right as that assumption.</p>
 </div>
 
-<h2 id="february-5-2018-volmageddon">1 · February 5, 2018: Volmageddon</h2>
-
-<p><strong>Before the event</strong>, an eight-month low-volatility regime had compressed the VIX to multi-year lows. Inverse-VIX <span class="gloss" title="A security that trades on an exchange like a stock and tracks an index or a strategy. Exchange-traded funds and exchange-traded notes are both kinds. Abbreviated ETP.">exchange-traded products</span> (ETPs), XIV by Credit Suisse and SVXY by ProShares, had grown to a combined approximately $3.5 billion in assets under management (AUM). These products were structurally short the front VIX future, with a rebalancing rule that required them to buy <span class="gloss" title="Monthly futures contracts on the VIX, each expiring on a Wednesday 30 days before the monthly SPX options expiration. They are how the VIX is traded, and they can sit far from the index itself.">VIX futures</span> at the close in proportion to the day's VIX move.</p>
+<p>One cell is <a class="xref" href="8a.html">Chapter 8A</a>'s formula applied to one strike and one expiry. The worked example takes the largest cell of this chapter's first figure: the 6,000 strike, expiring the same day, with spot at 6,000.</p>
 
 <div class="worked">
-<span class="ct">Worked example: Why an inverse product buys into a rise</span>
-<p><strong>Step 1: the target.</strong> Suppose a product aims each day for −1 times the daily change in the VIX futures it holds. It starts the day with $100 million of assets and is short $100 million of futures.</p>
+<span class="ct">Worked example: One cell of the map</span>
+<p><strong>Step 1: the time.</strong> With 6.5 hours to the close, the option has \(T = 6.5/(24 \times 365) = 0.000742\) of a year left, so \(\sqrt{T} = 0.0272\). At 16% <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span>, \(\sigma\sqrt{T} = 0.16 \times 0.0272 = 0.00436\).</p>
 
-<p><strong>Step 2: a 10% rise.</strong> When the futures rise 10%, the short loses $10 million, so the assets fall to $90 million while the short position grows to $110 million of futures.</p>
+<p><strong>Step 2: the gamma.</strong> At the money \(\varphi(d_1)\) is about 0.399, so by the gamma formula of <a class="xref" href="5c.html">Chapter 5C</a>, \(\Gamma = 0.399/(6{,}000 \times 0.00436) = 0.0153\) per index point.</p>
 
-<p><strong>Step 3: the rebalance.</strong> To be short exactly its $90 million of assets, the product must cut the short from $110 million to $90 million, so it <em>buys</em> $20 million of VIX futures at the close. That is \(2 \times 10\% \times \$100\) million: the purchase grows with the day's rise.</p>
+<p><strong>Step 3: one contract.</strong> By <a class="xref" href="8a.html">Chapter 8A</a>'s formula, one contract's dollar gamma is \(0.0153 \times 6{,}000^2 \times 100 \times 0.01 \approx \$549{,}000\) per 1% move. A 30-day <span class="gloss" title="Said of an option whose strike is at, or very close to, the underlying's current price.">at-the-money</span> contract at the same volatility carries about $52,000, less than a tenth as much.</p>
 
-<p><strong>Step 4: the limit.</strong> On the same arithmetic, a rise of 80% in a day would cut the product's assets by 80%, and a rise of 100% would erase them.</p>
+<p><strong>Step 4: the dealers' side.</strong> The figure's made-up chain has 8,687 calls and 4,350 puts at this strike and expiry. A call and a put at one strike and expiry have the same gamma, so only the dealers' net position matters. Under the JPM-era convention dealers are long the calls and short the puts: \(8{,}687 - 4{,}350 = +4{,}337\) contracts.</p>
+
+<p><strong>Step 5: the cell.</strong> \(4{,}337 \times \$549{,}000 \approx +\$2.38\) billion per 1% move. By the hedge-flow formula, a 1% rally has dealers selling about $2.4 billion of index exposure to hedge this one cell. Under the 0DTE-era convention the cell reads −$2.38 billion, and the same rally has them buying.</p>
 </div>
 
-<details class="grind"><summary>The rebalancing rule for any leverage</summary><div class="grind-body">
-<p>Let a product with assets \(A\) target an exposure of \(L \times A\), where \(L = -1\) for an inverse product and \(L = 2\) or 3 for a leveraged one, such as a <span class="gloss" title="An exchange-traded fund that aims to return a fixed multiple of an index's daily return, such as two times, or minus one times for an inverse fund. To hold the multiple it must trade near each close in the direction of that day's move.">leveraged ETF</span>. After the underlying returns \(x\), the exposure has become \(LA(1 + x)\) and the assets \(A(1 + Lx)\). The new target is \(LA(1 + Lx)\), so the trade the product must make is</p>
+<h2 id="how-to-read-a-map">2 · How to read a map</h2>
 
-<div class="eq">
-\[ \begin{aligned} &amp;LA(1 + Lx) - LA(1 + x) \\ &amp;\quad = L(L - 1)\,x\,A \end{aligned} \]
+<p>Every heatmap has the same few elements, and each hides a choice the vendor made:</p>
+
+<ul>
+<li><strong>Rows are strikes,</strong> usually with high strikes at the top, so up on the page is up in price.</li>
+<li><strong>Columns are expiries,</strong> near to far, often with the same-day column first.</li>
+<li><strong>The hue of a cell is its sign:</strong> whether hedging there trades against a move (dealers long gamma) or with it (dealers short gamma). The sign comes from the vendor's convention, not from data (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li><strong>The depth of a cell is its size relative to the largest cell on the chosen scale.</strong> A "big node" is big against the biggest cell displayed, not against the market's liquidity.</li>
+<li><strong>Lines mark spot and the gamma flip,</strong> where total GEX changes sign, as the next section explains.</li>
+</ul>
+
+<p>Units come first. This book states GEX in dollars of delta per 1% move. Vendors use at least four units: shares per $1 of spot, dollars per index point, dollars per 1% move, and share or futures equivalents. Some state none. A figure in dollars per point converts to dollars per 1% by multiplying by \(0.01\,S\), so at SPX 6,000, $10 billion per 1% is about $167 million per point. Divided by one E-mini contract, $50 times the index, it is about 33,000 contracts per 1% move. A number without its unit cannot be set against anything.</p>
+
+<p>The figure below draws a made-up SPX chain this way: strikes every 25 points from 5,700 to 6,300, against ten expiries from the same day to 45 days. Each cell is \(\Gamma \cdot \text{OI} \cdot 100 \cdot S^2 \cdot 0.01\), signed by the chosen convention. Green marks a cell where hedging opposes a move and rose one where it joins a move. The right panel adds each strike across all expiries, rings number the three largest cells, and the dashed line is the flip. The open interest is fixed at a spot of 6,000 and never changes, whatever you do.</p>
+
+<p>Three sliders set spot (5,850 to 6,150), implied volatility (8% to 40%) and the hours to the close (0.25 to 6.5). Three switches set the sign convention, what the cells show (GEX, size only or VEX), and whether colors scale to the whole map or to each expiry. Read the first state first. Then run the hours to the close down to 0.25, and move spot to 6,010 and on to 6,015. Put spot back and switch the convention. Last, try size only, VEX and each expiry.</p>
+
+<figure class="fig" id="fig-gex-heatmap">
+  <canvas id="gex-heatmap-c" data-h="470"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="gex-heatmap-spot">spot</label>
+      <input type="range" id="gex-heatmap-spot" min="5850" max="6150" step="5" value="6000">
+      <output id="gex-heatmap-spot-o" for="gex-heatmap-spot"></output>
+    </div>
+    <div class="ctrl">
+      <label for="gex-heatmap-iv">IV</label>
+      <input type="range" id="gex-heatmap-iv" min="8" max="40" step="1" value="16">
+      <output id="gex-heatmap-iv-o" for="gex-heatmap-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="gex-heatmap-hrs">hours to the close</label>
+      <input type="range" id="gex-heatmap-hrs" min="0.25" max="6.5" step="0.25" value="6.5">
+      <output id="gex-heatmap-hrs-o" for="gex-heatmap-hrs"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Sign convention" id="gex-heatmap-conv">
+      <label>sign convention</label>
+      <button type="button" data-v="jpm" class="on" aria-pressed="true">JPM-era</button>
+      <button type="button" data-v="odte" aria-pressed="false">0DTE-era</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="What each cell shows" id="gex-heatmap-view">
+      <label>cells</label>
+      <button type="button" data-v="gex" class="on" aria-pressed="true">GEX</button>
+      <button type="button" data-v="abs" aria-pressed="false">size only</button>
+      <button type="button" data-v="vex" aria-pressed="false">VEX</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Color scale" id="gex-heatmap-scale">
+      <label>color scale</label>
+      <button type="button" data-v="map" class="on" aria-pressed="true">whole map</button>
+      <button type="button" data-v="col" aria-pressed="false">each expiry</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gex-heatmap-tot"></output></div>
+    <div class="ctrl"><output id="gex-heatmap-king"></output></div>
+    <div class="ctrl"><output id="gex-heatmap-zero"></output></div>
+    <div class="ctrl"><output id="gex-heatmap-flip"></output></div>
+  </div>
+  <figcaption><b>Dealer gamma at every strike and every expiry.</b> Each cell is the dealers'
+  GEX at one strike and one expiry, Γ · OI · 100 · S² · 0.01 signed by the chosen convention, in
+  dollars of delta per 1% move: green where hedging opposes a move, rose where it joins one. The
+  right panel adds each strike across all ten expiries, and the rings mark the three largest
+  cells. The open interest is made up, built at a spot of 6,000 and held fixed while spot moves.
+  Run the hours toward the close and the same-day cell at spot outgrows everything else, then
+  move spot to 6,015 and it all but vanishes; switch the convention and every color flips while
+  the rings stay where they are, so a map read by size alone cannot say which way the dealers
+  will trade.</figcaption>
+</figure>
+
+<p>At the start the readouts give total GEX of +$5.0 billion per 1%, the largest cell at 6,000 on the same-day column, a same-day share of size of 10%, and the flip at 5,980. Ring 1 is the cell of the worked example. Rings 2 and 3 are the 5,800 and 5,900 strikes of the 30-day column, where this chain's monthly expiry holds heavy put open interest. Each is about −$0.97 billion. Under the JPM-era convention the puts below spot are rose and the calls above green. The strike profile on the right is rose up to 5,950 and green from 5,975.</p>
+
+<p>Run the hours down and nothing trades, yet the map changes. With 15 minutes left the same-day cell reads +$12.15 billion, 5.1 times its size at the open, and the total climbs to +$14 billion. The same-day share of size rises to 28%. Move spot 10 points to 6,010 and that cell falls to +$1.82 billion, and at 6,015 to +$0.17 billion. The largest cell is then 6,100 on the 30-day column.</p>
+
+<p>Switch the convention and every color flips. The total reads −$5.0 billion, while the rings stay on the same three cells and the flip stays at 5,980. Size only shows what the rings were already ranking: $35 billion of hedging per 1% in total, in one hue, with nothing to say which way any of it trades. The VEX view moves the largest cell to 5,800 on the 30-day column and drops the same-day share of size to 1%. Each expiry recolors every column against its own largest cell. The 1-day column's largest cell, +$0.23 billion, then looks as deep as the same-day cell's +$2.38 billion.</p>
+
+<h2 id="the-gamma-flip-and-what-it-is-not">3 · The gamma flip, and what it is not</h2>
+
+<p>The level of spot at which total dealer GEX crosses zero is the <strong><span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing.">gamma flip</span></strong>. To find it, a vendor recomputes every cell at a range of hypothetical spot levels, with open interest held fixed, and looks for where the total changes sign. On one side of the flip, dealer hedging amplifies moves, because dealers are short gamma in aggregate. On the other side it damps them, because they are long gamma.</p>
+
+<p>Which side is which depends on the convention. With the JPM-era convention and a book like the figure's, puts below spot and calls above, the amplifying side is below the flip and the damping side above it. The 0DTE-era convention swaps the two sides. The flip itself stays put, because reversing every sign moves no zero.</p>
+
+<p>The flip moves as spot moves, because each strike's gamma depends on how far spot is from it. It also moves with implied volatility and time when nothing trades. Raise the figure's IV from 16% to 35%, and the total turns from +$5.0 billion to −$0.57 billion while the flip climbs from 5,980 to 6,006, above spot. At 40% the flip reaches 6,014. Higher volatility shrinks the gamma at the money, where this book is long calls, and swells it on the wings, where its puts outnumber its calls. The same open interest now reads short gamma.</p>
+
+<p><strong>The flip is not SpotGamma's Volatility Trigger.</strong> The Dealer Mechanics Lab also calls the flip the volatility trigger, taking SpotGamma's name for it. SpotGamma itself defines two different levels. Its Zero Gamma is "the modeled spot price where aggregate GEX crosses zero", which is the flip. Its <strong><span class="gloss" title="SpotGamma's proprietary level marking where, by its model, dealers' last major concentration of positive gamma sits. SpotGamma defines it as a different level from the one where total gamma exposure crosses zero.">Volatility Trigger</span></strong> is a level that "identifies where dealers have their last major concentration of positive gamma support, which is different from Zero Gamma". SpotGamma calls it "a proprietary SpotGamma level derived from its estimated distribution of gamma rather than a generic zero crossover", which "often sits several points above Zero Gamma".</p>
+
+<p>Other vendors draw their own regime lines. MenthorQ's High Volatility Level "Marks the price where the cumulative gamma curve reverses slope, separating positive from negative gamma regimes". The description does not say whether that is the same calculation as the flip. Nomura's strategy notes, as others quote them, speak of a "Gamma Neutral" line. Before you compare two vendors' regime lines, check that they compute the same thing.</p>
+
+<p>What does theory say happens at the flip? Nothing sudden. In the effective-volatility formula of <a class="xref" href="8d.html">Chapter 8D</a>, damping turns smoothly into amplification as dealer gamma passes through zero. The formula's special point is where the feedback reaches its critical value, which depends on market depth, not on the zero of gamma. The research this book draws on found no test of the flip as a price level.</p>
+
+<p>So the flip is a regime boundary, not a hard mechanical barrier. Crossing it slowly during a calm session is uneventful. Crossing it during stress, when dealers themselves are under-positioned to absorb flow, is where the destabilization shows up, as the case studies of <a class="xref" href="8h.html">Chapter 8H</a> show.</p>
+
+<h2 id="the-walls">4 · The walls</h2>
+
+<p>Vendors also mark the strikes where dealer gamma is most concentrated. The <strong><span class="gloss" title="The strike at which a gamma exposure model places the largest concentration of call gamma. Some traders read one above the price as resistance.">call wall</span></strong> is the strike with the largest call gamma, and the <strong><span class="gloss" title="The strike at which a gamma exposure model places the largest concentration of put gamma. Some traders read one below the price as support.">put wall</span></strong> the strike with the largest put gamma. SpotGamma, which says it "originated and popularized" the term, defines the call wall as "the strike with the largest net call gamma" and "the upper bound of the expected range". Its put wall is "the strike with the largest net put gamma" and "the lower bound". MenthorQ gives the same definitions the names Call Resistance and Put Support.</p>
+
+<p>The Dealer Mechanics Lab reads a call wall above spot as potential resistance and a put wall below spot as potential support. The market dashboard of <a class="xref" href="11a.html">Chapter 11A</a> uses them that way.</p>
+
+<p>The mechanics add a condition. A wall slows a move toward it only if dealers are long gamma there, which means long those options. If they are short them, their hedging runs with the move, and a break through the wall accelerates. The sign at a strike is exactly what open interest does not show (<a class="xref" href="8b.html">Chapter 8B</a>).</p>
+
+<p>SpotGamma's own explainers state the hedge backwards. Its call-wall page says "dealers who sold calls at that strike must sell shares as price approaches". It then says the same dealer is "short gamma" and must "buy shares as the underlying rises toward the strike". Its put-wall page says dealers "who sold puts at that strike must buy shares as price falls toward it". By the sign chain of <a class="xref" href="8a.html">Chapter 8A</a>, a dealer short a call buys as price rises, and a dealer short a put sells as price falls. Resistance at a call wall needs dealers long those calls, and support at a put wall needs dealers long those puts.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The one strike whose holder is known</span>
+<p><strong>Step 1: the position.</strong> JPMorgan's Hedged Equity Fund rolls a collar every quarter, known as the <span class="gloss" title="The quarterly index-option position of JPMorgan's Hedged Equity Fund, which holds stocks, buys a put spread below the market and sells calls above it. It is one of the few large index-option positions whose holder is public.">JPM collar</span>. Practitioner accounts say it "buys a put spread below the market for downside protection and sells calls above the market to finance those puts". A vendor puts each part at "about 35,000 SPX contracts and around $22 billion in value". Because the fund's holdings are public, this is the one large position whose holder is known rather than assumed.</p>
+
+<p><strong>Step 2: the sign.</strong> The fund is long the upper put of its spread, so whoever sold it, typically dealers, is short it. At that strike dealers are short gamma. By the sign chain their hedging sells into a fall through it: the behavior of an accelerator, not a floor.</p>
+
+<p><strong>Step 3: the vendor's reading.</strong> Vendors report that "The JPM put strike consistently registers as the largest single-strike GEX concentration in the SPX options market". They claim that "the market holds near the JP Morgan put strike through expiration" and then "sells off meaningfully after the quarterly roll". Nothing in the research tests that pattern.</p>
+
+<p><strong>Step 4: one quarter.</strong> A practitioner account of the first quarter of 2026 has dealers "short the 6475 put", so that "Dealers consume liquidity instead of providing it", with "±200-point bursts within 30-minute windows". SPX "closed Friday at 6,368", leaving the put "107 points ITM". One quarter is an anecdote, not a test.</p>
+
+<p><strong>Step 5: two stories.</strong> Above the strike the put is out of the money, and its delta decays with time and with falling volatility. The short dealers then buy back their hedge, which can support price. Below it, their short gamma sells into the fall. One strike tells two opposite stories, depending on which side of it spot is and which Greek dominates.</p>
 </div>
 
-<p>For \(L = -1\) the factor \(L(L - 1)\) is 2, which gives the worked example's \(2xA\), and it is also 2 for \(L = 2\) and 6 for \(L = 3\). The factor \(L(L - 1)\) is positive for every inverse or leveraged product, so each of them buys after a rise and sells after a fall. That is the same pro-trend flow as a short-gamma dealer's, which is why <a class="xref" href="8d.html">Chapter 8D</a> counts leveraged-ETF rebalancing as a source of mechanical buying.</p>
-</div></details>
+<p>The Edge Book disagrees about trading these levels. It rejects scalping around them, selling at the call wall and buying at the put wall, for retail accounts (Chapters 1G and 10I). It gives three reasons. Vendor models disagree, because each assumes different positioning. The rise of <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options since 2022 changed who holds what. And a Cboe study from 2025 estimated 0DTE market-maker gamma hedging at only about 0.2% of SPX daily liquidity.</p>
 
-<p><strong>The Dealer Mechanics Lab replays the session from the open to just after the close:</strong></p>
+<p>That study is Xu's "0DTEs Decoded" (Cboe, May 2, 2025), whose words are "at best, just 0.2% of the SPX daily liquidity". Cboe's 2023 note by the same author put net market-maker 0DTE gamma at $170 million to $670 million through the day, 0.04% to 0.17% of S&amp;P 500 futures liquidity. Both concern 0DTE market-maker hedging only. The walls most maps draw come mostly from longer-dated open interest, so extending the figure to every wall is an inference, one the Edge Book makes.</p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Time (ET)</th><th class="c-result">What happened</th></tr></thead><tbody><tr><td class="c-trial">9:30 AM, open</td><td class="c-result">SPX up modestly; VIX at 17.31, in contango</td></tr><tr><td class="c-trial">Through midday</td><td class="c-result">A slow grind down on no particular news</td></tr><tr><td class="c-trial">1:30 PM</td><td class="c-result">SPX down 1%; some moderate bid for VIX</td></tr><tr><td class="c-trial">3:30 PM</td><td class="c-result">Acceleration: SPX down 2.2%, VIX through 25 and rising</td></tr><tr><td class="c-trial">3:50 PM</td><td class="c-result">Imbalance disclosure for the closing auction: a massive sell</td></tr><tr><td class="c-trial">4:00 PM, close</td><td class="c-result">SPX −4.10% on the day; VIX at 37.32, up 115% in one session</td></tr><tr><td class="c-trial">4:08 PM</td><td class="c-result">Transaction data show a spike to 115,862 VIX futures contracts, roughly one quarter of the entire market, within one minute (BIS Quarterly Review, March 2018)</td></tr></tbody></table></div></div>
+<p>The Edge Book keeps only the sign of GEX, as low-confidence regime context for sizing other trades (<a class="xref" href="10h.html">Chapter 10H</a>). Both sources agree that the sign is regime context, not a trade by itself. No academic test of trading a wall was found in this book's research. The only published wall statistics are a vendor's own, and they lack a base rate. <a class="xref" href="8j.html">Chapter 8J</a> shows what a base rate does to them.</p>
 
-<p>After the close, Credit Suisse's XIV acceleration clause triggered, with the product's net asset value (NAV) down more than 80% intraday. An acceleration clause lets the issuer end a product early once its value falls past a stated threshold. The ETP was liquidated, and its AUM went from $1.9 billion to effectively zero in one session.</p>
+<h2 id="how-the-map-moves-when-nothing-trades">5 · How the map moves when nothing trades</h2>
 
-<p><strong>The mechanism ran step by step, each step feeding the next:</strong></p>
+<p>A live map combines three inputs, and only one of them is exact:</p>
 
 <ol>
-<li>Inverse-VIX ETPs (XIV, SVXY) were structurally short the front VIX future. Their rebalance rule required buying VIX futures into the close in proportion to that day's VIX move.</li>
-<li>Each VIX uptick demanded more buying, which lifted VIX futures, which lifted spot VIX, which triggered more buying: <strong>the canonical positive feedback loop</strong>.</li>
-<li>Dealers on the other side of VIX call wings were short gamma in volatility of volatility, with negative vomma. As the VIX broke through 25, their hedges flipped from passive to forced. Vanna kicked in across SPX puts at the same time, forcing index-level selling on top of the VIX move.</li>
-<li>Credit Suisse's XIV acceleration clause, triggered by NAV down more than 80% intraday, fired after the close, and the ETP was liquidated.</li>
-<li>The combined flow into the <span class="gloss" title="The process in the last minutes of the American trading day in which the exchanges gather orders and fill them all at one price, the official close.">closing auction</span> created the 115,862-contract one-minute spike the BIS documented. It came from inverse-VIX rebalancing, dealer hedging of volatility of volatility, and panicked retail liquidations.</li>
+<li><strong>Yesterday's open interest,</strong> with an assumed or estimated sign. The <span class="gloss" title="The central clearinghouse for all US-listed options. Once a trade clears, it is the counterparty to both sides. Abbreviated OCC.">Options Clearing Corporation</span> counts <span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">open interest</span> once a day, overnight, and shows it on its site the next morning. The industry-wide file arrives the next business day. It counts contracts, not sides.</li>
+<li><strong>Today's trades,</strong> whose side, and whether they open or close a position, must be inferred by <span class="gloss" title="Inferring whether a trade was a purchase or a sale by the party that started it, from its price against the quotes, against the previous trade, or both, when the data do not record the side. Standard rules get a sizable share of option trades wrong.">trade classification</span>.</li>
+<li><strong>Today's Greeks,</strong> recomputed from spot, implied volatility and time. Only these are exact.</li>
 </ol>
 
-<p><strong>Three preconditions had to coexist for the linear framework to fail:</strong></p>
+<p>The third input moves the map on its own. At the money, gamma is proportional to \(1/\sqrt{T}\) (<a class="xref" href="5c.html">Chapter 5C</a>). From 6.5 hours to 1 hour before the close, \(\sqrt{6.5/1} = 2.55\), so the same-day cell of the worked example grows from +$2.38 billion to +$6.07 billion with no contract changing hands. Away from the money the opposite happens: as expiry nears, the gamma of a strike 25 points from spot collapses toward zero.</p>
 
-<ul>
-<li><strong>Dealers were deeply short gamma in the VIX wings</strong>, that is, in volatility of volatility. When the VIX broke through threshold levels, the wing hedging was no longer linear.</li>
-<li><strong>Mechanical, rule-based rebalancing demand</strong> from inverse-VIX ETPs supplied unbounded one-sided flow.</li>
-<li><strong>Market depth had degraded structurally:</strong> the calm regime had pushed market makers to thin their quotes, and there was no real depth to absorb the closing-auction sell.</li>
-</ul>
+<p>The second figure draws that change for one expiry through one session. Each column is a quarter hour from the open to 3:45 PM and each row a strike, 5 points apart. A cell is the dealers' GEX at that strike and time, green where hedging opposes a move and rose where it joins one, and the black line is spot. The made-up book is long the round strikes near 6,000 and short a few strikes on the wings.</p>
 
-<p>When all three conditions are present, the effective-volatility equation of <a class="xref" href="8b.html">Chapter 8B</a>, \(\sigma_\text{eff}^2 = \sigma^2/(1 - \kappa G)^2\), approaches its singular limit. There \(G\) is the destabilizing gamma, positive when published GEX is negative. Short dealer gamma pushes \(G\) up, and thin depth pushes \(\kappa\) up, so both push their product up toward 1. The system is then no longer described by a probabilistic prior; it is governed by a literal forcing function. This is the right tail of the dealer-hedging distribution, and it does not respond to mean-reversion bets at any size.</p>
+<p>Its time slider picks a quarter hour, marked by a solid box, with a dashed box half an hour earlier. The book is either fixed at the open or changed by the day's trades. In the second case customers buy options at the strike nearest spot after a move of more than 3 points in a quarter hour, and sell them after a quiet one. The readouts split the change in the largest node over the last half hour into what spot and the clock did and what new trades did. Start with the book fixed, drag the time to 3:30 and then 3:45, and then switch on the day's trades.</p>
 
-<h2 id="march-16-2020-the-liquidity-crisis">2 · March 16, 2020: the liquidity crisis</h2>
+<figure class="fig" id="fig-gex-intraday-map">
+  <canvas id="gex-intraday-map-c" data-h="380"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="gex-intraday-map-t">time</label>
+      <input type="range" id="gex-intraday-map-t" min="2" max="25" step="1" value="20">
+      <output id="gex-intraday-map-t-o" for="gex-intraday-map-t"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="gex-intraday-map-new">new day</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer book" id="gex-intraday-map-book">
+      <label>book</label>
+      <button type="button" data-v="fixed" class="on" aria-pressed="true">fixed at the open</button>
+      <button type="button" data-v="trades" aria-pressed="false">with the day's trades</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Color scale" id="gex-intraday-map-scale">
+      <label>color scale</label>
+      <button type="button" data-v="day" class="on" aria-pressed="true">whole day</button>
+      <button type="button" data-v="col" aria-pressed="false">each time</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gex-intraday-map-node"></output></div>
+    <div class="ctrl"><output id="gex-intraday-map-chg"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="gex-intraday-map-vk"></b> <span id="gex-intraday-map-vt"></span></p>
+  <figcaption><b>The same-day expiry through one session.</b> Each column is one quarter hour
+  from the open to 3:45 PM and each row one strike, 5 points apart; a cell is the dealers' GEX
+  at that strike and time, in dollars of delta per 1% move, green where hedging opposes a move
+  and rose where it joins one, and the line is spot. The dealers' book is made up. Fixed at the
+  open, every change in the map comes from spot and the clock alone; with the day's trades,
+  customers buy options at the strike nearest spot after a move of more than 3 points in a
+  quarter hour and sell them after a quiet one. The readouts split the change in the largest
+  node over the last half hour into the two parts.</figcaption>
+</figure>
 
-<p><strong>Before the event</strong>, COVID-19 had spread globally over February and early March 2020. The VIX rose from 14 in late January to 53 by Friday, March 13, which the Dealer Mechanics Lab calls the largest two-week VIX increase in history at that point. The term structure had inverted, into <span class="gloss" title="A term structure in which shorter-dated prices or implied volatilities sit above longer-dated ones. For equity implied volatility it is a mark of stress.">backwardation</span>, on March 9. <span class="gloss" title="An allocation that gives each asset class an equal share of the portfolio's risk rather than of its capital, which usually requires leverage on the less volatile assets.">Risk-parity</span> funds began publicly de-grossing, cutting their gross positions, in the same week.</p>
+<p>At the start the time is 2:30 with spot at 5,992. The largest node is 6,000 at +$0.88 billion, down $0.09 billion since 2:00, all of it from spot and the clock. At 3:30 the same node reads +$1.0 billion, about twice its size at 10:00. At 3:45 the largest node jumps to 5,990 at +$0.93 billion. With the book fixed, every change on the map is Greek arithmetic: no position moved.</p>
 
-<p><strong>On Monday, March 16, 2020, the stress peaked:</strong></p>
+<p>Switch on the day's trades and the 3:45 reading becomes +$0.49 billion, down $0.46 billion since 3:15. That is +$0.69 billion from spot and the clock and −$1.2 billion from new trades. Vendors' displays show only the net. It cannot tell you that the clock added more than half a billion dollars of gamma while customers took away more than a billion.</p>
 
-<ul>
-<li>Before the open, ES futures, the S&amp;P 500 futures of <a class="xref" href="2a.html">Chapter 2A</a>, locked limit-down: the 5% rule triggered, and they could not trade lower.</li>
-<li>At the 9:30 AM open SPX gapped down massively, and intraday it traded as low as 2,280, down approximately 12% from the prior close.</li>
-<li>The VIX printed 82.69, its all-time intraday high.</li>
-<li>Level 1 <span class="gloss" title="A rule that halts trading, across the whole market or in a single stock, after a large and fast price move.">circuit breakers</span>, the first tier of market-wide trading halts, triggered on several days around it: March 9, 12, 16 and 18.</li>
-</ul>
+<p>A change in a node between two refreshes therefore has three sources: Greek drift at fixed positions, estimated new positions, and, overnight, the reset to the clearinghouse's reconciled count. They call for different readings. None of the vendors in this book's research separates them in its display. The inputs that get the most attention are the least reliable: <a class="xref" href="8b.html">Chapter 8B</a> gives the evidence, and two findings set the scale. Ardia and Vaudescal (2026), a working paper, find that gamma rebuilt from public open interest correlates at 0.99 with a dealer-inventory benchmark for longer-dated options, but at 0.53 for same-day options. The 0.99 is an upper bound, since the two share a starting point. And Adams, Fontaine and Ornthanalai (2024) find that <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market makers</span> "match most 0DTE order flows", so their same-day gamma comes mostly from older positions that have aged into expiry.</p>
 
-<p><strong>The mechanism was layered across several feedback loops at once:</strong></p>
+<h2 id="vex-and-charm-views">6 · VEX and charm views</h2>
 
-<ol>
-<li><strong>Vol-targeting funds were de-grossing:</strong> risk-parity and volatility-targeting strategies, which size their positions to a target portfolio volatility, were forced to sell equities and bonds together as realized volatility exploded.</li>
-<li><strong>Portfolio-margin requirements expanded:</strong> as <a class="xref" href="2e.html">Chapter 2E</a> discusses, they expanded violently in the first two weeks of March. Many accounts were forced into liquidation as their stress-tested requirements doubled or tripled (<a class="xref" href="1e.html">Chapter 1E</a>).</li>
-<li><strong>Dealer vanna ran in reverse:</strong> with the VIX rising from 30 to 80 in a week, the deltas of out-of-the-money puts became dramatically more negative. Dealers short these puts had to sell increasing amounts of SPX equivalents to stay delta-neutral, and the hedging flow was overwhelmingly one-sided selling.</li>
-<li><strong><span class="gloss" title="A bond issued by the US government through the Treasury.">Treasury bonds</span> and gold sold off too</strong>, a sign that participants were raising cash through any channel that still had liquidity. The cross-asset correlation collapsed, and nothing was diversifying.</li>
-<li><strong>The Federal Reserve intervened</strong> with several emergency announcements between March 15 and March 23. They eventually included unlimited quantitative easing (QE), which is open-ended central-bank buying of bonds, expanded repo facilities for short-term lending against collateral, and dollar swap lines with foreign central banks. This stopped the cascade, but only after market structure had been visibly damaged.</li>
-</ol>
+<p>The same grid can show other Greeks. <strong><span class="gloss" title="The sum, across strikes and expiries, of the vanna of dealers' estimated positions: how much their delta changes when implied volatility rises one point. Abbreviated VEX.">Vanna exposure</span></strong>, or VEX, puts each cell's vanna in place of its gamma: how many dollars of delta dealers gain or lose when implied volatility rises one point. The first figure's VEX view gives it in dollars of dealer delta per volatility point. It looks nothing like the GEX view. Vanna is zero at the money and peaks about one standard deviation of the remaining move away from it, and unlike gamma it does not grow as expiry nears. So the largest cell moves to 5,800 on the 30-day column. The same-day column falls to 1% of the total size.</p>
 
-<div class="worked">
-<span class="ct">Worked example: How a volatility target forces selling</span>
-<p><strong>Step 1: the rule.</strong> Take a volatility-targeting fund whose exposure is its target volatility, 10%, divided by the realized volatility it measures.</p>
+<p>Vendors say the two views answer different questions. Skylit tells users: "You can choose GEX for today's levels, or VEX for a multi-day view and days when volatility spikes". It states a tenor rule: "For options 0–5 DTE, gamma is dominant; for 7–180 DTE, vanna is dominant". Its slogan is "GEX governs the range; VEX governs the drift". It also warns that a map of the front expiry can hide back-month vanna: "When vol spikes, back-end +VEX creates significant sell flow that's entirely invisible in a front-month gamma map". <a class="xref" href="8f.html">Chapter 8F</a> checks these rules against Black-Scholes and builds the market-wide vanna and charm this section only names.</p>
 
-<p><strong>Step 2: calm.</strong> With realized volatility at 10%, it holds \(10/10 = 100\%\) of its capital in the market.</p>
+<p>One test sets a limit on what the VEX view adds. FlashAlpha, a vendor testing its own product over 1,972 <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> days from 2018 to 2026, found VEX correlated +0.72 with the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> and +0.76 with at-the-money implied volatility. Once those were controlled for, VEX's correlation with next-day realized volatility was −0.01 (p = 0.77). The vendor calls the test pre-registered. Charm views, the drift of dealers' delta with time alone, come from vendors such as OptionsDepth and Volland. <a class="xref" href="8f.html">Chapter 8F</a> draws charm into expiry.</p>
 
-<p><strong>Step 3: stress.</strong> When realized volatility climbs to 40%, the rule gives \(10/40 = 25\%\). The fund must sell three quarters of its holdings, whatever it thinks of prices, and it sells into the fall that raised the volatility.</p>
-</div>
+<h2 id="skylits-heatseeker-a-worked-example">7 · Skylit's Heatseeker, a worked example</h2>
 
-<div class="worked">
-<span class="ct">Worked example: Vanna: selling with no move in price</span>
-<p><strong>Step 1: the put.</strong> Take an index at 100 and a put struck at 90 with 30 days to expiry, and hold the index still.</p>
+<p>Skylit sells a heatmap called Heatseeker. Its published vocabulary turns a GEX map into a full set of trading rules, which makes it a good worked example. This book uses it to show theory applied in practice. It is an example, not an endorsement. The sections below describe what the product shows and translate each of its terms into the book's mechanics. They credit what the theory supports, and say what is untested, inconsistent in Skylit's own material, or contradicted by evidence.</p>
 
-<p><strong>Step 2: two volatilities.</strong> By Black-Scholes with a zero interest rate (<a class="xref" href="5c.html">Chapter 5C</a>), the put's delta is −0.10 at 30% implied volatility and −0.28 at 80%.</p>
+<p>Skylit publishes its vocabulary on undated documentation and education pages. The quotations below are its words as those pages give them. Third-party review pages add that it has "over 2,300 members since launching in 2025" and plans at $99.99, $299 and $699 a month. None of that was checked on Skylit's own site.</p>
 
-<p><strong>Step 3: the dealer.</strong> A dealer short 1,000 of these puts, each on 100 units, is long \(0.10 \times 100{,}000 = 10{,}000\) units of delta at 30% volatility and about 28,000 units at 80%. To stay neutral, it must sell about 18,000 more units of the index, roughly $1.8 million, although the index has not moved. In March 2020 the fall and the volatility spike came together, and both pushed dealers to sell.</p>
-</div>
+<h3 id="what-the-map-plots">What the map plots</h3>
 
-<p><strong>The same three preconditions were present, in a different form:</strong></p>
+<p>The layout is the book's: "Rows are strikes, columns are expirations, and each cell is a node". Each column is one expiration, "such as the current expiration, next week, two weeks out, or later periods". Skylit warns that "A major node several expirations out may not be a major node for the current expiration". Each cell carries "a value (positive or negative)", with "positive exposure shown in green to yellow and negative exposure shown in blue to purple".</p>
 
-<ul>
-<li>Dealers were short gamma in the wings, in the put protection that institutions had bought as COVID-19 escalated.</li>
-<li>Mechanical de-grossing from vol-targeting funds and forced portfolio-margin liquidations supplied unbounded one-sided flow.</li>
-<li>Market depth had degraded acutely, as every intermediary tried to raise cash at the same time.</li>
-</ul>
+<p>Around the grid sit a GEX and VEX switch, a star on the largest cell, "the King", and a highlight on "the strike nearest price". Filters set "the number of expirations shown, the number of nodes shown, the selected exposure type, and current versus expanded expiration views". The map "updates live through the session". A Velocity Mode shows node changes over "1 min to 1 day". A Trinity Mode shows SPX, SPY and <span class="gloss" title="An exchange-traded fund that tracks the Nasdaq-100 index of the largest non-financial companies listed on the Nasdaq, and the ticker of the options written on it.">QQQ</span> side by side.</p>
 
-<h2 id="what-both-cases-share">3 · What both cases share</h2>
+<h3 id="what-skylit-discloses-and-what-it-does-not">What Skylit discloses, and what it does not</h3>
 
-<p>When the three preconditions coexist, the effective-volatility equation approaches its singular limit. <strong>The linear GEX framework is then no longer a useful guide. It still gives a direction, but in a regime where the magnitude of the move it predicts is grossly understated.</strong> Position sizes calibrated to normal-regime volatility are catastrophically large in this regime.</p>
+<p>Skylit's one statement of method is this: "Market data is licensed directly from OPRA, NASDAQ and CBOE. Dealer positioning is derived by Skylit from that data, not reported by the exchanges". The calculations, it says, "run on custom inference models and proprietary intelligence built from years of research into dealer microstructure".</p>
 
-<p>The actionable lesson is asymmetric: <strong>when the three conditions coexist, your size goes down and your stops widen, regardless of whether the catalyst ever arrives.</strong> Most weeks, nothing happens. In the weeks when something does happen, the framework built across Parts II to VIII stops describing the market. The cost of being wrong then scales non-linearly with the gamma you do not see.</p>
+<p>No page found gives the formula, the unit of a cell, the sign rule for calls and puts, the implied volatility surface, or how trades are classified. Its examples are in dollars ("$2 billion", "$200 million") with no unit of move. Its sister product, Flowseeker, "streams options flow with the side it filled on", so the platform does classify trades, but Skylit does not say whether Heatseeker's nodes use that classification. The silence is typical of the trade: a 2026 working paper by Sen finds that commercial GEX services "disclose little of their methodology".</p>
+
+<p>This matters for everything that follows. Every term below depends on a cell's sign and size, and a reader can check neither.</p>
+
+<h3 id="size-and-sign-nodes-the-king-floors-and-ceilings">Size and sign: nodes, the King, floors and ceilings</h3>
+
+<p><strong>Nodes.</strong> Skylit says every node "acts like a magnet in the market, where price is attracted to these zones due to dealer positioning". Yet "these same areas can also act as walls that repel price and create reversals". In the book's terms a node is a cell: dollars of hedging per 1% move at one strike and expiry.</p>
+
+<p>Theory supports a narrow version of magnets and walls. Near expiry, a large position held long by hedgers at one strike pulls price toward it and damps moves around it. The same position held short pushes price away and amplifies moves (<a class="xref" href="8e.html">Chapter 8E</a>). Away from expiry only a volatility effect remains: price lingers where hedgers are long gamma and moves fast where they are short. Theory does not support nodes as barriers that price bounces off, effects that ignore the sign, or a fixed effect per node. The same node matters more on a thin day than on a deep one. A claim that a node may attract or repel, with no rule for which, fits every outcome and cannot be tested as stated.</p>
+
+<p><strong>The King Node.</strong> Skylit defines it plainly: "The King Node is the strike carrying the largest absolute exposure value on the board. Not the largest positive, not the largest negative. The largest absolute". It is "the most influential node on the map", where market makers "typically prefer to settle price by the end of day (EOD) or end of week (EOW)". The rule is to "Treat it as your primary destination target for the session", and "King Nodes are not defined by color. They can appear as yellow or purple".</p>
+
+<p>On the first figure the <strong><span class="gloss" title="Skylit's name for the cell with the largest absolute exposure on its heatmap, which it treats as the day's or week's price target. One of its own pages defines it instead as the largest positive cell.">King Node</span></strong> is ring 1, the same-day 6,000 cell, which sits at spot: the destination is where price already is. With 15 minutes left and spot at 6,015 it jumps to 6,100 on the 30-day column, and at 6,020 to the same-day 6,025 cell. Move spot to 5,950 at the open and the King becomes 5,800 on the 30-day column, 150 points below spot and short gamma under the JPM-era convention.</p>
+
+<p>"Settle price" is <span class="gloss" title="The pull of a strike with heavy open interest on the price of the underlying near expiry, as the hedging of dealers who are long options at that strike sells above it and buys below it. The measured effects are small: at least 16.5 basis points of return distortion per expiration for optionable single stocks, and at least 115 million dollars of S&amp;P 500 futures notional shifted per expiration day for the index.">pinning</span>. Pinning needs three things: hedgers long gamma at the strike, a position large against the market's depth, and expiry close (<a class="xref" href="8e.html">Chapter 8E</a>). A purple King, short gamma, should repel. The measured effects are real and small. Closing prices of optionable stocks cluster at strikes on expiration days, altering returns by at least 16.5 basis points per expiry (Ni, Pearson and Poteshman, 2005). S&amp;P 500 futures are pulled to the at-the-money strike on some expiries and pushed away from it on others, at least $115 million of notional per expiry (Golez and Jackwerth, 2012). No test of the largest absolute node as a daily or weekly target was found. SpotGamma's nearest equivalent, Absolute Gamma, "the strike with the largest total gamma", is likewise called "a strong support/resistance level and a magnet" without a test.</p>
+
+<p><strong>Floors and ceilings.</strong> In Skylit's words, "A floor is a large node sitting beneath current price. As price declines toward it, dealer hedging from that level becomes active. The larger the node, the more mechanical buying gets activated on approach". And "The strongest floor is always the largest exposure node below spot, not the nearest node, the biggest one". A ceiling is "a large node above spot, and dealers at that level are positioned to sell as price rises into them". Skylit calls "the relationship between spot and its nearest floor and ceiling" "the single most useful piece of context you can have for any intraday trade".</p>
+
+<p>Mechanical buying on approach is what dealers long gamma do below spot. A floor defined by size alone may be purple. Then hedging sells into the fall toward it. On the first figure the strongest floor by Skylit's definition is 5,800 on the 30-day column, −$0.97 billion under the JPM-era convention: an accelerator. Switch the convention and the same cell is +$0.97 billion, a cushion. Its size, and so its rank as a floor, never changed.</p>
+
+<p><strong>Pika and Barney nodes.</strong> Here Skylit's words match the book's mechanics exactly: "When dealers are net long gamma, shown as yellow Pika nodes on Heatseeker, their hedging works against the market's direction". And "When dealers are net short gamma, shown as purple Barney nodes on Heatseeker, their hedging runs with the market's direction". In its own phrase, "Positive gamma creates friction, while negative gamma creates fuel". The evidence of <a class="xref" href="8g.html">Chapter 8G</a> agrees on direction: negative gamma goes with intraday momentum and positive gamma with reversal. Two cautions remain. The color rests on Skylit's unpublished sign rule. And vendors do not share colors: SpotGamma's TRACE map uses purple for positive gamma, the opposite of Skylit's purple.</p>
+
+<p><strong>The Absolute Value Rule.</strong> Skylit's central rule is that "size determines influence, regardless of sign". Its example: "A yellow Pika node with $2 billion in exposure has more structural weight than a purple Barney node with $200 million, and the larger node is going to dominate". Its advice is "don't filter by color first" but to "look at the largest nodes across the whole structure, then assess whether they're positive or negative".</p>
+
+<p>The rule is half right. Size sets how much hedging a node generates for each 1% move. Sign sets which way it trades: a $2 billion long-gamma node damps a move, and a $2 billion short-gamma node amplifies the same move. In every model with price impact, the sign decides attraction against repulsion. Size matters only relative to liquidity (<a class="xref" href="8d.html">Chapter 8D</a>). The measured effects depend on sign: momentum with negative gamma and reversal with positive (Barbon and Buraschi, 2021; Baltussen, Da, Lammers and Martens, 2021). Bitcoin's expiry reversals are strongest when estimated dealer gamma is negative (Weiss and co-authors, 2026). The first figure's size-only view is the map the rule asks you to read. It ranks the same three cells as the GEX view and cannot say which way any of them trades.</p>
+
+<p>A charitable reading exists. Size is the better-measured half of a cell, because open interest is counted while the sign is assumed (<a class="xref" href="8b.html">Chapter 8B</a>). That is a reason to distrust a map's colors. It is not a reason to expect a node to act the same whatever its sign. No test of the rule was found.</p>
 
 <div class="callout familiar">
 <span class="ct">Familiar ground</span>
-<p>A cytokine release syndrome after CAR-T therapy has the same shape. Activated immune cells release cytokines that activate more immune cells, and the loop feeds itself once it starts. Tocilizumab blocks the IL-6 receptor and breaks one link of the loop without removing the cells that started it. In markets the brakes also came from outside: the Federal Reserve's emergency announcements in March 2020, and a broker's restriction on purchases in the GME squeeze below. In both cases the loop stopped only after damage was done.</p>
+<p>A node's size without its sign is an effect size without its direction. A hazard ratio of 2.0 and one of 0.5 sit equally far from 1 on the log scale. A forest plot that drew only that distance would rank a harmful drug and a helpful one together. The Absolute Value Rule reads the distance and sets aside the direction, which is the half that says whether a node damps a move or feeds it.</p>
 </div>
 
-<h2 id="reading-the-warning-signs">4 · Reading the warning signs</h2>
+<h3 id="shape-gatekeepers-pika-clouds-and-air-pockets">Shape: Gatekeepers, Pika clouds and air pockets</h3>
 
-<p>Both episodes had observable precursors, days or weeks before the explosion. In late January 2018, the VVIX, the VIX of the VIX, had been elevated for weeks while the VIX itself slept. That was a tell that positioning in volatility of volatility was deteriorating beneath the surface.</p>
+<p><strong>Gatekeepers</strong> are "defensive levels that often block price from reaching the King Node", which "act like bouncers at the door of a nightclub". Skylit explains: "A Gatekeeper sits between two larger structural nodes. Its job is not to be the target. Its job is to determine whether price can reach the target cleanly or gets stopped in transit". One that holds means price "stalls in the region it's already in", and a broken one means price "typically accelerates into the cleared zone".</p>
 
-<p>Before March 16, 2020, the VIX term structure inverted, and the Dealer Mechanics Lab dates the inversion in two ways: to late February, seven trading days before March 16, and to March 9. Either way the inversion came before the crash, as did the public de-grossing of risk-parity funds from March 9.</p>
+<p>In the book's terms a Gatekeeper is a node between spot and a larger one. If dealers are long gamma there, hedging slows the approach; if short, it speeds a break. Both outcomes are named in advance, so the rule describes what happened rather than predicting it. No test was found.</p>
 
-<p>Neither reading required forecasting the catalyst. Both required noticing that the conditions for feedback were quietly being installed. The composite regime scorecard of <a class="xref" href="11g.html">Chapter 11G</a> includes both the VVIX-VIX divergence and the term-structure signals as components.</p>
+<p><strong>Pika clouds</strong> are "a dense cluster of multiple positive gamma nodes sitting in close proximity on the map". Inside one, Skylit says, "the trend halts, movement becomes inefficient, and price sticks, rotates, and struggles to move cleanly in either direction". A band of strikes where dealers are long gamma is the damping zone of the book's mechanics. There effective volatility is lowest, so price moves least and lingers longest (<a class="xref" href="8d.html">Chapter 8D</a>). Skylit adds that "A large Pika Cloud below spot is a strong mechanical floor". The barrier half of that sentence goes beyond what theory supports, and no test was found.</p>
 
-<h2 id="august-5-2024-the-yen-carry-unwind">5 · August 5, 2024: the yen carry unwind</h2>
+<p><strong>Air pockets and liquidity vacuums.</strong> An <strong><span class="gloss" title="A vendor's name for a band of strikes where estimated dealer gamma is small, so that dealer hedging there neither damps nor amplifies moves much.">air pocket</span></strong> is "a zone with low or weak GEX exposure. Minimal structural resistance. Minimal structural support. When price enters an air pocket, movement becomes faster with no mechanical drag". A liquidity vacuum is "an extended air pocket. Multiple consecutive zones of low GEX exposure stacked together. In a liquidity vacuum, price doesn't just speed up. It can gap. Levels don't work".</p>
 
-<p>A more recent example is the unwind of the yen <span class="gloss" title="A position that earns the gap in yield between two assets, such as borrowing in a low-interest currency to lend in a high-interest one.">carry trade</span> on August 5, 2024. In a yen carry trade, a position borrows in yen, at low interest, to hold higher-yielding assets elsewhere (<a class="xref" href="10e.html">Chapter 10E</a>). After the Bank of Japan unexpectedly raised rates the week before and Friday's US jobs report came in weak, leveraged yen-carry positions around the world were forced to unwind.</p>
+<p>Low local gamma means little hedging per point: less damping where dealers are long, less amplifying where they are short. In the book's feedback formula, gamma near zero leaves volatility near what news alone produces (<a class="xref" href="8d.html">Chapter 8D</a>). Price moves faster there than in a long-gamma zone and slower than in a short-gamma one. A gap needs something else, thin order books, which the name "liquidity vacuum" borrows but the map does not measure. "Low GEX" is not quantified. On the first figure the thinnest strikes near spot are 5,950 and 5,975, with $0.68 billion and $0.44 billion of size across all expiries. They sit around the flip at 5,980, where the chain's open interest changes from mostly puts to mostly calls.</p>
 
-<p>The Nikkei fell 12% on Monday, August 5, its largest daily decline in percentage terms since Black Monday in 1987. SPX gapped down approximately 3%. The VIX printed above 65 intraday, the third-highest reading in its history at that point. It briefly traded at levels seen only in March 2020 and in the 2008 financial crisis.</p>
+<h3 id="time-velocity-lifecycle-and-reshuffles">Time: velocity, lifecycle and reshuffles</h3>
 
-<p>The unwind featured a similar mechanism: leveraged carry positions, which are essentially short volatility on the yen, required forced selling of yen-funded assets all at once, with no time for an orderly unwinding. SPX dealer gamma was short going into the event, and cross-asset correlations spiked toward 1. The episode resolved relatively quickly, with the VIX back to 20 within a week. It confirmed that the three-precondition framework continues to describe the right-tail behavior of modern markets.</p>
+<p><strong>Velocity Mode</strong> "tracks the rate of change in dealer positioning, measuring how quickly nodes are growing, shrinking, appearing, or disappearing across recent updates". Skylit's formula for a move is "Space (an air pocket) plus fuel (high rate of change) equals acceleration". Its rule: "When Velocity Mode shows a rapidly growing node adjacent to an air pocket, that combination is one of the highest-conviction setups in the framework".</p>
 
-<h2 id="january-2021-the-gme-single-stock-gamma-squeeze">6 · January 2021: the GME single-stock gamma squeeze</h2>
+<p>As the second figure showed, node change mixes Greek drift, estimated flow and the overnight reset. Near spot on the same-day column, drift alone makes nodes grow all afternoon. The part that is flow rests on classifying trades, the least reliable input on the map (<a class="xref" href="8b.html">Chapter 8B</a>). Nothing in Skylit's material separates drift from flow. No test of the setup was found.</p>
 
-<p>The Volmageddon, March 2020 and August 2024 cases were macro, index-level events. The 2021 episode in GME (GameStop) is the canonical <strong>single-name <span class="gloss" title="A rally driven by dealers buying the underlying to hedge calls they have sold, whose deltas rise as the price rises, so that each purchase lifts the price and forces the next.">gamma squeeze</span></strong>, a rally driven by dealers buying the stock to hedge the calls that customers bought. It is the most operationally relevant case study for understanding retail-driven dealer feedback in individual stocks.</p>
+<p><strong>The node lifecycle</strong> has four stages. A fresh node is "untested and at full strength", and fresh nodes "produce the strongest reactions (~80% probability when spot approaches)". A tested node has had "one price interaction and a portion of its positioning has been absorbed". A delivered node has "already produced a reaction and its mechanical obligation is partially or fully satisfied". A decaying node's "Influence weakens over time with no further price interaction". The summary: "Growth equals intent. Decay equals protection".</p>
 
-<p><strong>Before the event, the setup had four parts:</strong></p>
+<p>The 80% comes with no method, sample, or definition of a reaction. A hit rate without a base rate cannot be read, and <a class="xref" href="8j.html">Chapter 8J</a> shows how much chance alone produces. Size changes from day to day come from spot, implied volatility and time as well as from positions. A node at the money grows toward expiry and one away from it shrinks, with no new intent at all. Nor is hedging used up by a touch. A long-gamma dealer re-hedges at every pass until the position is closed or expires.</p>
 
-<ul>
-<li>GME traded at about $20 in early January 2021.</li>
-<li>Short interest was approximately 140% of the float: the stock was heavily shorted through stock loans.</li>
-<li>An active retail community, WallStreetBets, coordinated a call-buying campaign.</li>
-<li>The options chain showed heavy retail call buying at strikes of $20, $30, $40 and $50, with very low premiums of under $0.10.</li>
-</ul>
+<p><strong>Reshuffles</strong> "happen when dealer exposure shifts quickly, often without warning". One "often follows large volatility events like CPI, FOMC, or Power Hour when market makers rebalance risk". A review adds that "power hour liquidation can reshuffle maps entirely". All three have mechanical causes. An event that moves implied volatility moves every cell and the flip, as the first figure's IV slider showed. The last hour is where at-the-money gamma grows most. And each morning the estimate built from yesterday's flow is replaced by the clearinghouse's count.</p>
 
-<p><strong><span class="gloss" title="The number of a company's shares that have been sold short and not yet bought back, often quoted as a percentage of the public float. It can exceed 100% because a borrowed share, once sold, can be lent and shorted again.">Short interest</span></strong> is the number of shares sold short and not yet bought back, often quoted as a percentage of the <span class="gloss" title="The shares of a company that are available to trade, leaving out those held by insiders, governments and other restricted holders.">public float</span>. It can exceed 100%, because a borrowed share, once sold, can be lent again by its buyer and sold short again.</p>
+<p>The late-day window is also where hedging shows in prices. Baltussen, Da, Lammers and Martens (2021) find, across more than 60 futures markets from 1974 to 2020, that the return of the last 30 minutes is predicted by the rest of the day's. They link it to gamma hedging demand. The effect reverts over the following days. So a map at the close need not describe the next session.</p>
 
-<p><strong>The mechanism ran in six stages:</strong></p>
+<h3 id="regimes-and-patterns">Regimes and patterns</h3>
+
+<p><strong>Range, trend and whipsaw days.</strong> "Positive gamma creates range days, negative gamma creates trend days, and mixed signals create whipsaw days". These are the two regimes of <a class="xref" href="8d.html">Chapter 8D</a> in vendor language, and the direction is supported. The size on a typical day is modest (<a class="xref" href="8g.html">Chapter 8G</a>). Much of what the sign says about tomorrow's volatility is already in the VIX (<a class="xref" href="8j.html">Chapter 8J</a>). For whipsaw days Skylit says "The only edge in a Whipsaw environment comes from fading the extreme ends of ranges rather than chasing directional momentum", a claim nothing tests.</p>
+
+<p><strong>Rug and Reverse Rug.</strong> A Rug is "a bearish configuration with positive gamma stacked above spot and negative gamma sitting below spot, with spot positioned below the positive node". Skylit calls it "a ceiling that not only blocks price but pushes it down faster once rejected". The Reverse Rug is "the exact mirror, with negative gamma above spot and positive gamma below spot", which Skylit calls "one of the higher-conviction bullish setups on the map".</p>
+
+<p>Mechanically a Rug damps rallies and amplifies falls, the slow-grind-up, fast-crash-down asymmetry of the JPM-era book in <a class="xref" href="8b.html">Chapter 8B</a>. The positive node above does not push price down. The short gamma below amplifies whatever fall occurs. The Reverse Rug's short gamma above spot amplifies a rally. Skylit publishes no frequency, hit rate or sample for either.</p>
+
+<p><strong>The Beach Ball</strong> is "when price overshoots a node, punches through it, and then reacts. Like pushing a beach ball underwater: the deeper it goes, the stronger the release". Skylit adds: "The overshoot is not the trade. The reaction that follows the overshoot is the trade". You identify it by "the failure to follow through", when "The tape stalls".</p>
+
+<p>Nothing in hedging stores energy that grows with depth. Near expiry, a long-gamma strike pulls price back toward it from either side (<a class="xref" href="8e.html">Chapter 8E</a>). That pull fades with distance rather than growing. A pattern recognized by a failure to follow through is recognized after the fact. No test was found.</p>
+
+<p><strong>The negative GEX pit</strong> is "a price zone where dealer positioning turns fully pro-cyclical, displayed in purple on the heatmap, where the crowd holds a heavy concentration of puts and dealers are net short gamma". It ends in "hedge exhaustion": "When the ball hits the bottom of the pool (ITM saturation), there's nothing left to push against". Its entry rule pairs "a failed continuation attempt into the pit" with "a VIX curl down from its peak".</p>
+
+<p>The mechanism it gestures at is real. Deep in the money a put's gamma is small, so dealers' selling slows. Customers closing puts also make dealers buy back hedges. Neither is shown to release "all at once". The VIX half of the rule is a vanna argument, as is Skylit's "squeeze setup", "when GEX and VEX are pointing in opposing directions". <a class="xref" href="8f.html">Chapter 8F</a> takes both up, and no test was found.</p>
+
+<p><strong>Trinity Mode</strong> is "a combined heatmap view of SPX, SPY, and QQQ displayed simultaneously". Skylit's rule: "A node that stands alone on one instrument is a signal worth noting, not a setup worth sizing into. Full alignment (all three agree) represents high-probability conditions". The three books share many holders, so agreement is partly the same fact seen three times, the trap <a class="xref" href="11c.html">Chapter 11C</a> calls <span class="gloss" title="Strong correlation among the inputs to a model or a decision rule, so that they carry largely the same information. Counting such inputs as separate confirmations overstates the evidence.">multicollinearity</span>. SPY's flow is also shaped by <span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">wholesalers</span> who internalize retail orders (<a class="xref" href="2b.html">Chapter 2B</a>), a caveat Skylit does not raise. No test was found.</p>
+
+<h3 id="where-skylits-own-material-disagrees-with-itself">Where Skylit's own material disagrees with itself</h3>
+
+<p>Five inconsistencies appear in Skylit's pages:</p>
 
 <ol>
-<li><strong>Retail call buying created dealer short-call inventory:</strong> Citadel Securities, Susquehanna and other <span class="gloss" title="A trading firm that pays brokers for their retail orders and fills them from its own inventory, off the exchanges, at or inside the National Best Bid and Offer.">wholesalers</span> absorbed the retail call flow as its natural counterparty (<a class="xref" href="2b.html">Chapter 2B</a>). The resulting dealer position was short calls with growing notional exposure.</li>
-<li><strong>Dealers hedged by buying GME shares:</strong> each short call requires a long stock hedge equal to delta × open interest × multiplier. As GME rose, the deltas of out-of-the-money calls rose toward 1.0, so dealers had to buy progressively more shares.</li>
-<li><strong>The feedback loop ran:</strong> rising GME moved the calls toward the money, which raised dealer deltas, which meant more share buying and more upward pressure, over and over. It was classic short-gamma feedback in single-name form.</li>
-<li><strong>Short sellers covered:</strong> hedge funds buying back shares at progressively higher prices, which is <strong><span class="gloss" title="Buying back shares previously sold short, to close the position. When many short sellers cover at once, their buying adds to a rally.">short covering</span></strong>, added to the buying pressure.</li>
-<li><strong>The run accelerated to its peak:</strong> GME hit $483 intraday on January 28, 2021, about 24 times its early-January level. Implied volatility on GME options exceeded 1,000% on a one-day basis.</li>
-<li><strong>A brokerage liquidity crisis followed:</strong> on January 28, Robinhood restricted purchases of GME. The reason, according to later congressional testimony, was its clearing deposits at the DTCC (Depository Trust &amp; Clearing Corporation), which clears US stock trades. They had ballooned from about $700 million to more than $3 billion because of the volatility, and Robinhood could not post enough capital to keep accepting buy orders at scale.</li>
+<li><strong>Two Kings.</strong> Skylit's reading guide, documentation and product page define the King Node by "largest absolute exposure value". Two other pages say "The strongest +GEX node across the heatmap is called the King Node, it acts as the primary structural gravity center for price". On the first figure under the JPM-era convention both definitions pick the same-day 6,000 cell. Under the 0DTE-era convention the largest absolute cell is still 6,000, at −$2.38 billion, while the strongest positive cell is 5,800 on the 30-day column: two Kings 200 points apart.</li>
+<li><strong>Negative gamma above spot.</strong> One page says "In a low-VIX environment, the most common configuration is positive GEX sitting below spot as a mechanical floor, with negative GEX above acting as a ceiling". The Reverse Rug page says negative gamma above spot "amplifies any bounce". Short gamma cannot both cap a rally and amplify it. The mechanics side with the second page.</li>
+<li><strong>Floors by size, mechanics by sign.</strong> A floor is the "largest exposure node below spot", which may be purple, yet "mechanical buying gets activated on approach", which only a positive node implies.</li>
+<li><strong>Vanna's sign.</strong> One page states "A dealer who is short options carries positive vanna". Black-Scholes vanna is positive for out-of-the-money calls and negative for out-of-the-money puts, so a dealer short options has positive vanna only on the put wing. The page's own example, short puts and falling implied volatility, is the put case.</li>
+<li><strong>Refresh and coverage.</strong> The product page claims "a one-second refresh", while a third-party listing says its chat bot "streams SPXW, SPY, QQQ, IWM, and VIX maps every 15 seconds". The top plan covers "300+", "3,500+" or "5,000+" tickers, depending on the page.</li>
 </ol>
 
-<div class="worked">
-<span class="ct">Worked example: A dealer's hedge as the price climbs</span>
-<p><strong>Step 1: the position and its hedge.</strong> Suppose a dealer is short 1,000 GME calls struck well above the price, each on 100 shares, with a delta of 0.10, so it holds \(0.10 \times 1{,}000 \times 100 = 10{,}000\) shares as its hedge.</p>
+<h3 id="the-claims-against-the-evidence">The claims against the evidence</h3>
 
-<p><strong>Step 2: the rally.</strong> The price climbs to the strike and then past it. As the calls' delta rises to 0.50 and then to 0.90, the hedge grows to 50,000 shares and then to 90,000. Every one of the 80,000 extra shares is bought <em>after</em> the price has risen, which is what pushes it higher still.</p>
-</div>
+<p>Skylit states few numbers about performance. One is the ~80% for fresh nodes. The other is an FAQ figure, reported by third-party pages, of 85% to 90% accuracy "during the creator's personal usage", with "your results may vary". Neither comes with a definition of success, a sample or a base rate. Third-party reviews are mixed. One reports the tool "wrong as much as it is right" and blames "treating Heatseeker as a directional signal service". Another claims "~50% win rates" for users who treat large nodes as "buy signals", with no data. Star ratings of 4.8 to 4.9 on a review site measure satisfaction, not performance.</p>
 
-<p>The Robinhood restrictions broke the feedback loop: GME closed on January 28 down 44% from its intraday high. Over the following week, retail buying faded, dealer hedges unwound, and GME normalized to about $50.</p>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Skylit's claim</th><th class="c-result">What bears on it</th><th class="c-result">Where it stands</th></tr></thead><tbody><tr><td class="c-trial" data-label="Skylit's claim">The King is where market makers "prefer to settle price"</td><td class="c-result" data-label="What bears on it">Pinning is real, small and sign-dependent: at least 16.5 bp per expiry in single stocks; at least $115 million of futures notional per expiry, toward or away from the strike (<a class="xref" href="8e.html">Chapter 8E</a>)</td><td class="c-result" data-label="Where it stands">A weak, sign-dependent version holds at expiry; the largest absolute node as a daily or weekly target is untested</td></tr><tr><td class="c-trial" data-label="Skylit's claim">Size matters regardless of sign</td><td class="c-result" data-label="What bears on it">Hedging per 1% scales with size, but its direction flips with sign; measured effects depend on sign</td><td class="c-result" data-label="Where it stands">Half right; untested as stated</td></tr><tr><td class="c-trial" data-label="Skylit's claim">Fresh nodes react about 80% of the time</td><td class="c-result" data-label="What bears on it">Nothing published</td><td class="c-result" data-label="Where it stands">Untested, with no base rate</td></tr><tr><td class="c-trial" data-label="Skylit's claim">Velocity plus an air pocket is a top setup</td><td class="c-result" data-label="What bears on it">Node changes mix Greek drift with inferred flow; standard rules sign 17% to 41% of classifiable option trades wrongly (Savickas and Wilson, 2003); public open interest tracks 0DTE inventory at a correlation of 0.53</td><td class="c-result" data-label="Where it stands">Untested, and built on the noisiest data</td></tr><tr><td class="c-trial" data-label="Skylit's claim">Same-day nodes drive the day</td><td class="c-result" data-label="What bears on it">Cboe: 0DTE market-maker hedging "at best, just 0.2%" of SPX daily liquidity</td><td class="c-result" data-label="Where it stands">Contradicted in size, if Cboe's customer-side data are right</td></tr><tr><td class="c-trial" data-label="Skylit's claim">GEX and VEX add information</td><td class="c-result" data-label="What bears on it">In one vendor's test, GEX's correlation with next-day realized volatility falls from −0.36 to −0.03 after VIX and at-the-money IV controls, and VEX's to −0.01; public open-interest gamma does predict next-half-hour variance</td><td class="c-result" data-label="Where it stands">Mixed: some intraday information, little beyond implied volatility at a daily horizon</td></tr><tr><td class="c-trial" data-label="Skylit's claim">Trinity agreement raises the odds</td><td class="c-result" data-label="What bears on it">The three books overlap in holders</td><td class="c-result" data-label="Where it stands">Untested</td></tr></tbody></table></div></div>
 
-<p><strong>The case demonstrates four things:</strong></p>
+<p><a class="xref" href="8g.html">Chapter 8G</a> gives the full review of this evidence, and <a class="xref" href="8j.html">Chapter 8J</a> turns each rule into a hypothesis you can test.</p>
 
-<ul>
-<li><strong>Single-name gamma squeezes require specific structural conditions:</strong> very high short interest, coordinated retail call buying, and enough dealer absorption to create meaningful delta-hedge inventory.</li>
-<li><strong>Liquidity constraints can break feedback loops:</strong> brokerage capital limits and DTCC margin act as natural shock absorbers, though the same constraints can amplify later stress.</li>
-<li><strong>The mechanism is the same as in the index cases:</strong> rising spot raises dealer delta and forces buying. It runs at single-name scale, with higher per-share gamma because of the lower notional base.</li>
-<li><strong>Implied-volatility readings during the squeeze were misleading:</strong> with spot moving 20% to 50% a day, Black-Scholes-Merton (BSM) implied volatility breaks down. The model's assumptions of lognormal returns and continuous hedging are violated, so practitioners use realized-volatility measures during such episodes.</li>
-</ul>
+<h3 id="what-skylit-gets-right">What Skylit gets right</h3>
 
-<p><strong>Three preconditions present in GME</strong>, mirroring the index cases:</p>
+<p>Much of Skylit's framing matches this book's. Its Pika and Barney language states the sign rule correctly. Its limitations page lists "Not 100% Accurate", "Low volume periods can skew heatmap efficacy", "Map Reshuffles" and "Context Matters", which it glosses as "Don't trade off a single node or isolated event". It says "Heatseeker is contextual intelligence, not a trading signal", and tells readers to "Treat these as zones of interest, not precise levels, and use price confirmation before entering". Its best-practice page asks for three confirmations before acting: a nearby King or Gatekeeper, a "confirmation or rejection wick", and SPX, SPY and QQQ "in agreement".</p>
 
-<ul>
-<li>Dealers were short gamma in the call wings, from retail buying.</li>
-<li>Mechanical buying pressure came from retail fear of missing out (FOMO) and from short covering.</li>
-<li>Liquidity was constrained at the brokerage level, through DTCC margin.</li>
-</ul>
+<p>Its "Charts First" rule, "the workflow rule that chart structure must precede exposure data in every trade decision", is the book's own. "You form the thesis from the chart, then you check Heatseeker to see if the structure underneath supports it or kills it": positioning confirms a thesis and never writes one (<a class="xref" href="11a.html">Chapter 11A</a>). The tension is inside Skylit's material. Its pattern pages hand out entries, targets and "highest-conviction" setups, while its documentation calls the map context, not a signal.</p>
 
-<p>Structurally, this is the same three-precondition framework as Volmageddon and March 2020, at single-name scale. The single-name version differs in two ways: its "stress" is asymmetric, on the long side rather than both sides, and its liquidity constraint works through brokerage capital rather than market depth.</p>
+<h2 id="other-maps-other-names">8 · Other maps, other names</h2>
 
-<div class="callout insight">
-<span class="ct">Key idea</span>
-<p>The GME case is sometimes dismissed as a one-off retail phenomenon, but the mechanism is generic. Any single stock with high short interest, retail call-buying interest and an absorbing dealer counterparty is theoretically vulnerable. Citadel Securities' testimony after GME is one of the few public dealer-side disclosures during a gamma squeeze, and it is worth reading for operational detail.</p>
-</div>
+<p>Vendors draw the same quantity with different designs, names and colors:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Vendor</th><th class="c-other">Regime line</th><th class="c-endpoint">Level names</th><th class="c-result">Design</th></tr></thead><tbody><tr><td class="c-trial" data-label="Vendor">Skylit Heatseeker</td><td class="c-other" data-label="Regime line">Not published</td><td class="c-endpoint" data-label="Level names">King Node, Gatekeepers, floors, ceilings</td><td class="c-result" data-label="Design">Strike by expiry; nodes move all day</td></tr><tr><td class="c-trial" data-label="Vendor">SpotGamma</td><td class="c-other" data-label="Regime line">Zero Gamma, and a separate Volatility Trigger</td><td class="c-endpoint" data-label="Level names">Call Wall, Put Wall, Absolute Gamma</td><td class="c-result" data-label="Design">Levels fixed for the session; TRACE, a strike-by-time map updated every minute, purple for positive gamma and red for negative</td></tr><tr><td class="c-trial" data-label="Vendor">MenthorQ</td><td class="c-other" data-label="Regime line">High Volatility Level</td><td class="c-endpoint" data-label="Level names">Call Resistance, Put Support</td><td class="c-result" data-label="Design">Levels drawn inside charting platforms</td></tr><tr><td class="c-trial" data-label="Vendor">GEXBot</td><td class="c-other" data-label="Regime line">Zero gamma</td><td class="c-endpoint" data-label="Level names">"Major" positive and negative strikes, by open interest and by volume</td><td class="c-result" data-label="Design">A data feed with 1- to 30-minute look-backs</td></tr><tr><td class="c-trial" data-label="Vendor">Unusual Whales</td><td class="c-other" data-label="Regime line">Not found</td><td class="c-endpoint" data-label="Level names">None found</td><td class="c-result" data-label="Design">Exposure pages per ticker; for SPX, a view built from Cboe's market-maker data that "makes no assumptions about dealer positioning"</td></tr><tr><td class="c-trial" data-label="Vendor">Barchart</td><td class="c-other" data-label="Regime line">Not found</td><td class="c-endpoint" data-label="Level names">None</td><td class="c-result" data-label="Design">Free pages; calls positive and puts negative for every ticker</td></tr></tbody></table></div></div>
+
+<p>The deepest split is between fixed levels and moving nodes. SpotGamma sets its levels each morning, and "they hold for the trading session", while its other tools show the day's flow against them. Skylit's nodes move all day. Fixed levels can be logged and tested. Moving nodes answer "what now?" but leave no record of what you saw when you acted, the testing problem of <a class="xref" href="8j.html">Chapter 8J</a>. Even one vendor's two methods disagree: GEXBot's own example response puts its major positive strike by volume and by open interest at two different strikes, 7,135 and 7,200, at the same moment.</p>
 
 <div class="callout practice">
 <span class="ct">In practice</span>
-<p>In practice the three preconditions become a weekly check, run before any news. Is dealer gamma short in some wing? Is there a mechanical flow that must trade whatever the price, such as inverse or leveraged products, volatility-targeting funds or margin calls? Is depth thin, with wide spreads and small quotes? When all three answers are yes, cut size and widen stops before any catalyst appears. Keep the positions that lose in a feedback regime, short options above all, small enough to survive a margin requirement that doubles or triples, as portfolio-margin requirements did in March 2020 (<a class="xref" href="1e.html">Chapter 1E</a>).</p>
+<p>A map costs money, and it produces context, not trades. Third-party pages put Skylit's plans at $99.99 to $699 a month, SpotGamma's own comparison page says it "starts at $299/mo", and a 2026 working paper puts commercial services at roughly $99 to $1,999 a month. At $699 a month, $8,388 a year is 16.8% of a $50,000 account, a hurdle the map's context must clear before it adds anything.</p>
+
+<p>If you use a map, record what it showed when you acted: a screenshot with its time, the convention if the vendor states one, and the nodes you relied on. A map whose nodes move all day leaves no other record. Without one you can never test whether the nodes helped.</p>
 </div>
 
 <div class="callout warn">
 <span class="ct">When it fails</span>
-<p>The three-precondition framework is drawn from a handful of episodes, read after the fact. The conditions can coexist for weeks with nothing happening, and the next episode may run through a flow no public model sees (<a class="xref" href="8a.html">Chapter 8A</a>). Liquidity constraints cut both ways, too: the brokerage limits that broke the GME loop can amplify later stress.</p>
+<p>A map fails when its sign is wrong. Nothing on the screen warns you: a green floor that is really short gamma turns a cushion into an accelerator. It fails when implied volatility jumps, since every cell and the flip move with it. It fails in the last hour of an expiry, when the largest nodes jump from strike to strike. And it may fail on stress days, when books that most maps leave out, such as FLEX and over-the-counter options, can matter more than the listed open interest they draw. Nothing measures how much (Chapters 8B and 8H).</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">Decision rule</span>
+<p>Before you use any GEX map:</p>
+
 <ul>
-<li><strong>All three preconditions present:</strong> cut size and widen stops now, whether or not a catalyst arrives. Do not fade the move, because a feedback regime does not respond to mean-reversion bets at any size.</li>
-<li><strong>One or two present:</strong> watch them, and decide the size cut in advance, so that it does not have to be decided in the stress.</li>
-<li><strong>None present:</strong> the linear framework of Chapters 8A and 8B is a reasonable prior, with the limits <a class="xref" href="8a.html">Chapter 8A</a> lists.</li>
+<li><strong>Name its sign convention, units, expiries and data time.</strong> If you cannot, read only where it puts the large cells, not their colors.</li>
+<li><strong>Read the sign before the size.</strong> A large node damps moves only if dealers are long gamma there; if they are short, it feeds them.</li>
+<li><strong>Treat the King, floors, ceilings and walls as descriptions</strong> of where hedging is heavy, not as targets or barriers.</li>
+<li><strong>Take no trade from a node alone.</strong> A level earns a place in a plan only after a test with a base rate (<a class="xref" href="8j.html">Chapter 8J</a>).</li>
+<li><strong>Use spot against the flip as context for size,</strong> at the weight <a class="xref" href="8j.html">Chapter 8J</a> gives the regime, and never as a trigger.</li>
 </ul>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: fading a feedback move</span>
-<p>The move looks overdone, so you bet on a reversal. In a feedback regime the forced flows keep coming until the structure changes: the rebalancing is done, the margin calls are met, or an outside brake arrives. A mean-reversion bet placed before then is on the wrong side of a forcing function.</p>
+<span class="ct">Common mistake: "the biggest node is where price is going"</span>
+<p>The King Node rule reads size as destination. Size says how much hedging a node generates, not where price goes next. A short-gamma King repels rather than attracts. Even a long-gamma one pins measurably only near expiry, and by basis points.</p>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: trusting implied volatility in a squeeze</span>
-<p>With a stock moving 20% to 50% a day, Black-Scholes-Merton implied volatility no longer measures what it claims to, because its assumptions of lognormal returns and continuous hedging have failed. Use realized-volatility measures to size, as practitioners do in such episodes.</p>
+<span class="ct">Common mistake: "the node grew, so dealers added positions"</span>
+<p>At the money, gamma grows as expiry nears with no trade at all: about 2.5 times from the open to the last hour. A growing same-day node near spot is the clock before it is anyone's intent.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: treating the flip as a wall</span>
+<p>The gamma flip is a regime boundary, not a barrier that prices bounce off. Crossing it on a calm day usually changes little. Its effect shows under stress, when dealers cannot absorb the flow.</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">What to carry forward</span>
 <ul>
-<li>Four episodes, in 2018, 2020, 2021 and 2024, share three preconditions: short dealer gamma, mechanical one-sided flow and constrained liquidity.</li>
-<li>Short gamma pushes the destabilizing gamma up and thin depth pushes \(\kappa\) up, so effective volatility nears its singular limit, where mean-reversion bets fail at any size.</li>
-<li>Inverse and leveraged products rebalance by \(L(L - 1)\,xA\), always with the move; volatility targets and vanna force selling as volatility rises.</li>
-<li>Warning signs came days or weeks early: an elevated VVIX in 2018 and an inverted term structure in 2020. When all three preconditions are present, cut size and widen stops before any catalyst.</li>
+<li>A heatmap spreads GEX into cells, one strike and one expiry each. Hue is the sign, which comes from an assumed convention. Depth is size relative to the largest cell shown. Check the units and the scale.</li>
+<li>The gamma flip is where total GEX crosses zero. It moves with spot, implied volatility and time. It is not SpotGamma's Volatility Trigger, which is a separate level.</li>
+<li>Walls and floors hold only where dealers are long gamma. The one strike with a known holder, the JPM collar's upper put, is short gamma for the dealers who sold it.</li>
+<li>Nodes grow and shrink with the clock and spot even when nothing trades, so velocity and lifecycle mix Greek drift with inferred flow.</li>
+<li>Skylit's vocabulary gets the sign rule right and then sets it aside. The Absolute Value Rule, the King as target and size-defined floors are untested or contradicted in mechanism. Its own pages disagree on five points.</li>
 </ul>
 </div>
 
-<h2 id="check-yourself">7 · Check yourself</h2>
+<h2 id="check-yourself">9 · Check yourself</h2>
 <div class="problems">
 <div class="prob">
 <p class="pnum">Question 1</p>
-<p>An inverse product with $50 million of assets targets −1 times the daily move of its futures. If the futures rise 20%, what must it trade at the close?</p>
+<p>A same-day at-the-money SPX contract carries $549,000 of dollar gamma per 1% move, and dealers are net short 3,000 contracts at that strike and expiry. What is the cell's GEX, and what do dealers trade if the index falls 0.5%?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>The short loses $10 million, so the assets fall to $40 million while the short grows to $60 million. Getting back to −1 times its assets means buying $20 million of futures, which is \(2 \times 20\% \times \$50\) million.</p>
+<p>The cell is \(-3{,}000 \times \$549{,}000 \approx -\$1.65\) billion per 1%. By the hedge-flow formula, \(\Delta H \approx -(-1.65) \times (-0.5) = -\$0.82\) billion: dealers sell about $0.8 billion into the fall. Short gamma trades with the move.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 2</p>
-<p>Name the three preconditions, and say how each showed up in March 2020.</p>
+<p>A same-day node at the money grows from $1.0 billion at 9:30 to $2.5 billion at 3:30, with spot at the strike both times. Did dealers add positions?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Short dealer gamma: dealers were short the put protection institutions had bought. Mechanical one-sided flow: vol-targeting funds de-grossed and portfolio-margin accounts were forced to liquidate. Degraded depth: every intermediary tried to raise cash at the same time, and even Treasury bonds and gold were sold.</p>
+<p>Not necessarily. They may even have cut them. From 6.5 hours to 0.5 hours before the close, at-the-money gamma grows by \(\sqrt{6.5/0.5} = 3.6\) times. Drift alone would take the node to about $3.6 billion, so a reading of $2.5 billion suggests that positions at the strike fell.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 3</p>
-<p>Why does a jump in implied volatility make a dealer who is short out-of-the-money puts sell the index, even with no move in price?</p>
+<p>Skylit defines the strongest floor as the largest node below spot. When does its "mechanical buying on approach" follow from the mechanics?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Higher implied volatility makes those puts more likely to finish in the money, so their deltas grow more negative, which is vanna. The dealer, short the puts, becomes longer in delta and sells the index to get back to neutral.</p>
+<p>Only when dealers are long gamma at that strike, a positive (yellow) node. Then their delta falls as price approaches from above, and they buy. At a negative (purple) node they are short gamma, and hedging sells into the fall. The first figure's strongest floor, 5,800 on the 30-day column, is an accelerator under the JPM-era convention and a cushion under the 0DTE-era one.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 4</p>
-<p>A fund targets 12% volatility, and realized volatility rises from 12% to 36%. What fraction of its holdings must it sell?</p>
+<p>A vendor's newsletter says spot crossed the "volatility trigger". Is that the gamma flip?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Its exposure falls from \(12/12 = 100\%\) to \(12/36 = 33\%\), so it sells two thirds of its holdings, into the fall that raised the volatility.</p>
+<p>Not by SpotGamma's definitions. Its Zero Gamma is the modeled spot where aggregate GEX crosses zero, the flip. Its Volatility Trigger is a separate proprietary level, where it places dealers' last major concentration of positive gamma. It "often sits several points above Zero Gamma". Ask which level the newsletter means, and how it is computed.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 5</p>
-<p>What broke the GME loop, and how does that differ from the way the index episodes ended?</p>
+<p>Price enters an air pocket, a band of strikes where dealer gamma is near zero. By the book's mechanics, does it move faster than usual?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>A brokerage restriction: Robinhood restricted purchases when its clearing deposits ballooned, which removed the buyers. In the index episodes the constraint ran through market-maker capital and market depth. They resolved as volatility faded once dealers could rebalance again, helped in March 2020 by the Federal Reserve's intervention.</p>
+<p>It moves at roughly the volatility news alone produces, because hedging there neither damps nor amplifies much. That is faster than in a long-gamma zone and slower than in a short-gamma one. A gap needs thin order books, which a gamma map does not measure.</p>
 </div></details>
 </div>
 </div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- gex-heatmap ---------- */
+(function () {
+  var U = 'gex-heatmap';
+  var SP = DL.$(U + '-spot'), IV = DL.$(U + '-iv'), HR = DL.$(U + '-hrs');
+  var conv = DL.seg(U + '-conv', update), view = DL.seg(U + '-view', update),
+      scale = DL.seg(U + '-scale', update);
+
+  /* the made-up chain: ten expiries (a week of dailies, three weeklies, the monthly at
+     30 days and one beyond it) and strikes every 25 points from 5,700 to 6,300 */
+  var S0 = 6000;
+  var DAYS = [0, 1, 2, 3, 4, 7, 14, 21, 30, 45];
+  var WEIGHT = [1.2, 0.5, 0.5, 0.5, 0.6, 1.0, 1.0, 0.9, 3.0, 1.6];
+  var KS = [];
+  for (var k = 5700; k <= 6300; k += 25) KS.push(k);
+
+  /* open interest in contracts, fixed at the morning's spot: puts gathered below spot and
+     calls at and above it (the same-day calls centered on the money), spread wider the
+     longer the expiry, heavier at round strikes, and puts more numerous than calls, with a
+     seeded roughness so no two strikes are alike */
+  function round(K) { return K % 100 === 0 ? 2.4 : K % 50 === 0 ? 1.5 : 1; }
+  var OI = (function () {
+    var r = DL.rng(11), out = [];
+    DAYS.forEach(function (d, j) {
+      var w = 60 + 55 * Math.sqrt(d + 1), col = [];
+      var pc = j === 0 ? 1.1 : 1.0, cc = j === 0 ? 0 : 0.25;
+      KS.forEach(function (K) {
+        var x = K - S0;
+        var put = x <= 50 ? Math.exp(-Math.pow((x + pc * w) / (1.3 * w), 2)) : 0;
+        var call = x >= -50 ? Math.exp(-Math.pow((x - cc * w) / w, 2)) : 0;
+        var base = 2500 * WEIGHT[j] * round(K);
+        col.push({ put: Math.round(1.3 * base * put * (0.7 + 0.6 * r())),
+                   call: Math.round(base * call * (0.7 + 0.6 * r())) });
+      });
+      out.push(col);
+    });
+    return out;
+  })();
+
+  /* the dealers' net contracts at one line: calls and puts at one strike and expiry have
+     the same gamma and the same vanna, so only the net position matters */
+  function net(o, c) { return c === 'jpm' ? o.call - o.put : o.put - o.call; }
+  function years(j, hrs) { return (DAYS[j] * 24 + hrs) / (24 * 365); }
+  /* GEX: dollars of dealer delta per 1% move; VEX: dollars of dealer delta per vol point */
+  function cell(S, j, i, sigma, hrs, c, what) {
+    var K = KS[i], T = years(j, hrs), n = net(OI[j][i], c);
+    if (what === 'vex') return n * DL.bsVanna(S, K, T, sigma) * 0.01 * S * 100;
+    return n * DL.bsGamma(S, K, T, sigma) * S * S * 0.01 * 100;
+  }
+
+  /* total GEX against spot, kept until the volatility, the hour or the convention changes;
+     the flip is the zero crossing nearest to spot, found by straight-line interpolation */
+  var cache = { key: null };
+  function flipNear(S, sigma, hrs, c) {
+    var key = [sigma, hrs, c].join('|');
+    if (cache.key !== key) {
+      var xs = [], ys = [];
+      for (var s = 5700; s <= 6300; s += 5) {
+        var t = 0;
+        for (var j = 0; j < DAYS.length; j++)
+          for (var i = 0; i < KS.length; i++) t += cell(s, j, i, sigma, hrs, c, 'gex');
+        xs.push(s); ys.push(t);
+      }
+      cache = { key: key, xs: xs, ys: ys };
+    }
+    var best = null, xs2 = cache.xs, ys2 = cache.ys;
+    for (var n = 1; n < xs2.length; n++) {
+      var a = ys2[n - 1], b = ys2[n];
+      if ((a < 0) !== (b < 0)) {
+        var z = xs2[n - 1] + (xs2[n] - xs2[n - 1]) * a / (a - b);
+        if (best == null || Math.abs(z - S) < Math.abs(best - S)) best = z;
+      }
+    }
+    return best;
+  }
+
+  var st;
+  function compute() {
+    var S = +SP.value, sigma = +IV.value / 100, hrs = +HR.value, c = conv(), v = view();
+    var what = v === 'vex' ? 'vex' : 'gex';
+    var M = [], tot = 0, sizeAll = 0, size0 = 0, nodes = [], i, j;
+    for (j = 0; j < DAYS.length; j++) {
+      var col = [];
+      for (i = 0; i < KS.length; i++) {
+        var x = cell(S, j, i, sigma, hrs, c, what);
+        col.push(x);
+        tot += x;
+        sizeAll += Math.abs(x);
+        if (j === 0) size0 += Math.abs(x);
+        nodes.push({ j: j, i: i, a: Math.abs(x) });
+      }
+      M.push(col);
+    }
+    nodes.sort(function (p, q) { return q.a - p.a || p.j - q.j || p.i - q.i; });
+    var prof = KS.map(function (K, i2) {
+      var s = 0;
+      for (var j2 = 0; j2 < DAYS.length; j2++) s += v === 'abs' ? Math.abs(M[j2][i2]) : M[j2][i2];
+      return s;
+    });
+    st = { S: S, sigma: sigma, hrs: hrs, c: c, v: v, M: M, tot: tot, sizeAll: sizeAll,
+           size0: size0, top: nodes.slice(0, 3), prof: prof, flip: flipNear(S, sigma, hrs, c) };
+  }
+
+  /* billions of dollars, with a sign unless the view is size only */
+  function bn(x, signed) {
+    var a = Math.abs(x) / 1e9, d = a >= 10 ? 0 : a >= 1 ? 1 : 2, s = '$' + DL.num(a, d) + 'B';
+    if (!signed || Number(a.toFixed(d)) === 0) return s;
+    return (x > 0 ? '+' : DL.MINUS) + s;
+  }
+  function strike(K) { return DL.num(K, 0); }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1,
+                               pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+
+    var L = 42, R = Math.max(70, Math.min(130, Math.round(W * 0.2))), TOP = 36, BOT = 24, GAP = 12;
+    var gw = W - L - R - GAP, gh = H - TOP - BOT;
+    var nc = DAYS.length, nr = KS.length, cw = gw / nc, rh = gh / nr;
+    var hi = KS[nr - 1];
+    function yc(K) { return TOP + ((hi - K) / 25 + 0.5) * rh; }
+    function xc(j) { return L + (j + 0.5) * cw; }
+
+    var pos = DL.color('insight'), neg = DL.color('plain'), acc = DL.color('accent');
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint'),
+        fam = DL.color('familiar'), paper = DL.color('paper');
+    var i, j;
+
+    /* the color of a cell: its sign picks the hue (one hue when the view is size only) and
+       its size against the largest cell on the scale sets the depth */
+    var colMax = st.M.map(function (col) {
+      return Math.max.apply(null, col.map(Math.abs));
+    });
+    var mapMax = Math.max.apply(null, colMax);
+    function shade(x, m) {
+      if (!(m > 0)) return DL.fade(DL.color('rule-soft'), 0.6);
+      var a = Math.pow(Math.min(1, Math.abs(x) / m), 0.6);
+      var base = st.v === 'abs' ? acc : (x >= 0 ? pos : neg);
+      return DL.fade(base, 0.05 + 0.9 * a);
+    }
+    for (j = 0; j < nc; j++) {
+      var m = scale() === 'col' ? colMax[j] : mapMax;
+      for (i = 0; i < nr; i++) {
+        g.fillStyle = shade(st.M[j][i], m);
+        g.fillRect(L + j * cw + 0.5, yc(KS[i]) - rh / 2 + 0.5, Math.max(1, cw - 1), Math.max(1, rh - 1));
+      }
+    }
+
+    /* the expiries along the top and the strikes down the side, every 100 points */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    /* on a narrow column the unit goes: the heading above already names it */
+    var unit = cw >= 30 ? 'd' : '';
+    for (j = 0; j < nc; j++) g.fillText(DAYS[j] + unit, xc(j), TOP - 5);
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText('days to expiry', L, 13);
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    g.fillStyle = faint;
+    KS.forEach(function (K) { if (K % 100 === 0) g.fillText(strike(K), L - 6, yc(K)); });
+    g.restore();
+
+    /* the right panel: each strike added across all expiries */
+    var x0 = L + gw + GAP, x1 = W - 4, mid = (x0 + x1) / 2;
+    var pm = Math.max.apply(null, st.prof.map(Math.abs)) || 1;
+    var half = (x1 - x0) / 2;
+    var base = st.v === 'abs' ? x0 : mid, span = st.v === 'abs' ? x1 - x0 : half;
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(base + 0.5, TOP);
+    g.lineTo(base + 0.5, TOP + gh);
+    g.stroke();
+    for (i = 0; i < nr; i++) {
+      var v = st.prof[i], len = v / pm * span;
+      g.fillStyle = DL.fade(st.v === 'abs' ? acc : v >= 0 ? pos : neg, 0.75);
+      g.fillRect(Math.min(base, base + len), yc(KS[i]) - rh * 0.36, Math.abs(len), rh * 0.72);
+    }
+    g.font = font(11);
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillText('all expiries', (x0 + x1) / 2, TOP - 5);
+    g.restore();
+
+    /* the gamma flip, where total GEX changes sign, as a dashed line on the GEX views */
+    if (st.flip != null && st.v !== 'vex') {
+      var yf = yc(st.flip);
+      g.save();
+      g.setLineDash([4, 3]);
+      g.strokeStyle = soft;
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.moveTo(L, yf);
+      g.lineTo(x1, yf);
+      g.stroke();
+      g.restore();
+    }
+
+    /* spot, a solid line across both panels, labeled below the map */
+    var ys = yc(st.S);
+    g.save();
+    g.strokeStyle = fam;
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(L - 3, ys);
+    g.lineTo(x1, ys);
+    g.stroke();
+    g.font = font(11);
+    g.textBaseline = 'top';
+    var label = 'spot ' + strike(st.S);
+    g.textAlign = 'left';
+    g.fillStyle = fam;
+    g.fillText(label, L, TOP + gh + 6);
+    if (st.flip != null && st.v !== 'vex') {
+      g.textAlign = 'right';
+      g.fillStyle = soft;
+      g.fillText('- - flip ' + strike(Math.round(st.flip)), x1, TOP + gh + 6);
+    }
+    g.restore();
+
+    /* rings on the three largest cells, numbered by size */
+    st.top.forEach(function (n, r) {
+      var x = xc(n.j), y = yc(KS[n.i]), rad = Math.max(5, Math.min(cw, rh) * 0.62);
+      g.save();
+      g.beginPath();
+      g.arc(x, y, rad, 0, 2 * Math.PI);
+      g.fillStyle = DL.fade(paper, 0.72);
+      g.fill();
+      g.strokeStyle = ink;
+      g.lineWidth = r === 0 ? 2 : 1.2;
+      g.stroke();
+      g.font = 'bold ' + font(10);
+      g.fillStyle = ink;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(String(r + 1), x, y + 0.5);
+      g.restore();
+    });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-spot-o', strike(st.S));
+    DL.out(U + '-iv-o', st.sigma * 100 + '%');
+    DL.out(U + '-hrs-o', DL.num(st.hrs, 2) + ' h');
+    var what = st.v === 'vex' ? 'VEX' : st.v === 'abs' ? 'size' : 'GEX';
+    var per = st.v === 'vex' ? ' per vol pt' : ' per 1%';
+    DL.out(U + '-tot', 'total ' + what + ' = ' + bn(st.v === 'abs' ? st.sizeAll : st.tot, st.v !== 'abs') + per);
+    var n = st.top[0];
+    DL.out(U + '-king', 'largest cell: ' + strike(KS[n.i]) + ' · ' + DAYS[n.j] + 'd');
+    DL.out(U + '-zero', 'same-day share of size = ' + DL.pct(st.size0 / st.sizeAll, 0));
+    DL.out(U + '-flip', st.flip == null ? 'flip: none in range' : 'flip = ' + strike(Math.round(st.flip)));
+    draw();
+  }
+  update();
+  DL.bind([U + '-spot', U + '-iv', U + '-hrs'], update);
+})();
+
+/* ---------- gex-intraday-map ---------- */
+(function () {
+  var U = 'gex-intraday-map';
+  var TT = DL.$(U + '-t');
+  var book = DL.seg(U + '-book', update), scale = DL.seg(U + '-scale', update);
+  var SIGMA = 0.15, S0 = 6003, NC = 26, STEP = 15, MIN = 1 / (365 * 24 * 60);
+  var KS = [];
+  for (var k = 5950; k <= 6050; k += 5) KS.push(k);
+  var seed = 5, st;
+
+  /* the dealers' same-day book at the open, in net contracts (positive: dealers long):
+     long the round strikes near spot, short a few strikes on the wings, with a seeded
+     roughness; zero beyond the strikes listed */
+  function openBook(r) {
+    var b = {};
+    KS.forEach(function (K) {
+      var x = K - 6000, base = K % 25 === 0 ? 700 : K % 10 === 0 ? 300 : 150;
+      var shape = Math.abs(x) <= 15 ? 1 : Math.abs(x) <= 30 ? -0.6 : 0.4;
+      b[K] = Math.round(base * shape * (0.6 + 0.8 * r()));
+    });
+    return b;
+  }
+  function nearest(S) {
+    var best = KS[0];
+    KS.forEach(function (K) { if (Math.abs(K - S) < Math.abs(best - S)) best = K; });
+    return best;
+  }
+  function clock(j) {
+    var m = 9 * 60 + 30 + j * STEP, h = Math.floor(m / 60), mm = m % 60;
+    return ((h - 1) % 12 + 1) + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+  /* GEX of one strike at one time: net contracts x gamma x S^2 x 0.01 x 100 */
+  function gex(n, S, K, j) {
+    var T = (390 - j * STEP) * MIN;
+    return n * DL.bsGamma(S, K, T, SIGMA) * S * S * 0.01 * 100;
+  }
+
+  /* one session: the path minute by minute, then the book at the start of each quarter
+     hour, before (fixed) or after (trades) that quarter hour's customer trades */
+  function compute() {
+    var r = DL.rng(seed), path = [S0];
+    for (var t = 0; t < 390; t++) path.push(path[t] + SIGMA * path[t] * Math.sqrt(MIN) * DL.gauss(r));
+    var b0 = openBook(DL.rng(seed + 100)), cur = {}, books = [];
+    KS.forEach(function (K) { cur[K] = b0[K]; });
+    for (var j = 0; j < NC; j++) {
+      if (j > 0 && book() === 'trades') {
+        var move = path[j * STEP] - path[(j - 1) * STEP], K2 = nearest(path[j * STEP]);
+        cur[K2] += Math.abs(move) > 3 ? -200 : 150;
+      }
+      var snap = {};
+      KS.forEach(function (K) { snap[K] = cur[K]; });
+      books.push(snap);
+    }
+    var M = [];
+    for (j = 0; j < NC; j++) {
+      var S = path[j * STEP];
+      M.push(KS.map(function (K) { return gex(books[j][K], S, K, j); }));
+    }
+    st = { path: path, books: books, M: M, j: +TT.value };
+  }
+
+  function bn(x) {
+    var a = Math.abs(x) / 1e9, d = a >= 10 ? 0 : a >= 1 ? 1 : 2, s = DL.num(a, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var L = 42, R = Math.max(64, Math.min(120, Math.round(W * 0.18))), TOP = 30, BOT = 24, GAP = 12;
+    var gw = W - L - R - GAP, gh = H - TOP - BOT, nr = KS.length, cw = gw / NC, rh = gh / nr;
+    var hi = KS[nr - 1];
+    function yv(S) { return TOP + ((hi - S) / 5 + 0.5) * rh; }
+    var pos = DL.color('insight'), neg = DL.color('plain'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), ink = DL.color('ink'), fam = DL.color('familiar');
+    var i, j;
+    var colMax = st.M.map(function (c) { return Math.max.apply(null, c.map(Math.abs)); });
+    var dayMax = Math.max.apply(null, colMax);
+    for (j = 0; j < NC; j++) {
+      var m = scale() === 'col' ? colMax[j] : dayMax;
+      for (i = 0; i < nr; i++) {
+        var v = st.M[j][i], a = m > 0 ? Math.pow(Math.min(1, Math.abs(v) / m), 0.6) : 0;
+        g.fillStyle = DL.fade(v >= 0 ? pos : neg, 0.05 + 0.9 * a);
+        g.fillRect(L + j * cw + 0.5, yv(KS[i]) - rh / 2 + 0.5, Math.max(1, cw - 1), Math.max(1, rh - 1));
+      }
+    }
+    /* strikes every 25 points, the clock every hour */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    KS.forEach(function (K) { if (K % 25 === 0) g.fillText(DL.num(K, 0), L - 6, yv(K)); });
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    for (j = 2; j < NC; j += 4) g.fillText(clock(j), L + (j + 0.5) * cw, TOP + gh + 6);
+    g.textAlign = 'left';
+    g.textBaseline = 'bottom';
+    g.fillStyle = soft;
+    g.fillText('same-day expiry, strike by quarter hour', L, TOP - 8);
+    g.restore();
+
+    /* spot through the day, clipped to the map */
+    g.save();
+    g.beginPath();
+    g.rect(L, TOP, gw, gh);
+    g.clip();
+    g.beginPath();
+    for (var t = 0; t <= 390; t++) {
+      var x = L + t / STEP * cw, y = yv(st.path[t]);
+      if (t === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.strokeStyle = ink;
+    g.lineWidth = 1.5;
+    g.stroke();
+    g.restore();
+
+    /* the chosen time, and half an hour before it */
+    var jx = L + (st.j + 0.5) * cw, jb = L + (st.j - 2 + 0.5) * cw;
+    g.save();
+    g.strokeStyle = fam;
+    g.lineWidth = 1.6;
+    g.strokeRect(L + st.j * cw + 0.5, TOP + 0.5, cw - 1, gh - 1);
+    g.setLineDash([3, 3]);
+    g.lineWidth = 1;
+    g.strokeRect(L + (st.j - 2) * cw + 0.5, TOP + 0.5, cw - 1, gh - 1);
+    g.restore();
+    void jx; void jb;
+
+    /* the right panel: the chosen column as bars */
+    var x0 = L + gw + GAP, x1 = W - 4, mid = (x0 + x1) / 2, half = (x1 - x0) / 2;
+    var col = st.M[st.j], cm = Math.max.apply(null, col.map(Math.abs)) || 1;
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.beginPath();
+    g.moveTo(mid + 0.5, TOP);
+    g.lineTo(mid + 0.5, TOP + gh);
+    g.stroke();
+    for (i = 0; i < nr; i++) {
+      var len = col[i] / cm * half;
+      g.fillStyle = DL.fade(col[i] >= 0 ? pos : neg, 0.75);
+      g.fillRect(Math.min(mid, mid + len), yv(KS[i]) - rh * 0.36, Math.abs(len), rh * 0.72);
+    }
+    g.strokeStyle = ink;
+    g.lineWidth = 1.2;
+    var ys = yv(st.path[st.j * STEP]);
+    g.beginPath();
+    g.moveTo(x0, ys);
+    g.lineTo(x1, ys);
+    g.stroke();
+    g.font = font(11);
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillText('at ' + clock(st.j), mid, TOP - 8);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var j = st.j, col = st.M[j], big = 0;
+    for (var i = 1; i < col.length; i++) if (Math.abs(col[i]) > Math.abs(col[big])) big = i;
+    var K = KS[big], S = st.path[j * STEP], Sb = st.path[(j - 2) * STEP];
+    var now = col[big], before = gex(st.books[j - 2][K], Sb, K, j - 2);
+    var drift = gex(st.books[j - 2][K], S, K, j) - before, trades = now - gex(st.books[j - 2][K], S, K, j);
+    DL.out(U + '-t-o', clock(j) + ' · spot ' + DL.num(S, 0));
+    DL.out(U + '-node', 'largest node: ' + DL.num(K, 0) + ' at ' + bn(now));
+    DL.out(U + '-chg', 'since ' + clock(j - 2) + ': ' + bn(now - before));
+    DL.out(U + '-vk', 'Where the change came from:');
+    DL.out(U + '-vt', bn(drift) + ' from spot and the clock, ' + bn(trades) + ' from new trades.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-t'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+<!--/SCRIPT-->

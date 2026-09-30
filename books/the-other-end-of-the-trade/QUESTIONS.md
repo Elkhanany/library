@@ -1,6 +1,6 @@
 # Questions for the author
 
-339 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
+382 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
 
 ## 1A · What a return is
 
@@ -48,7 +48,6 @@
 - "This single classification step eliminates 80% of the noise in retail trading content": is 80% a measured figure or a manner of speaking? As it stands it is an unverifiable claim.
 - "ERP is paid for in 30-50% drawdowns", "Momentum lost -73% from March-May 2009" and "Value's 2010-2020 drawdown was the worst in modern history": which series (index, long-short factor) and which sources?
 - The ~7% S&P 500 inclusion effect "in the 1990s": is it from Greenwood and Sammon (2024) too, or from another study?
-- The Cboe 2025 study has no title or link in the sources. The reading list (R3) will need one.
 
 ## 2A · What the S&P 500 is
 
@@ -193,6 +192,7 @@
 
 - "Sharpe ratios in the 0.5-1.0 range ... strong by intraday standards, though insufficient to support strategy deployment after transaction costs": is the second half the authors' finding or the Lab's judgment? The chapter keeps it unattributed.
 - Sources for the practitioner thresholds (a residual delta of 5% to 10% of the position; a spot move of 0.25% to 0.50%; hourly or slower for structured-product desks) and for "moves into 4 pm ET frequently extend rather than reverse"?
+- The Sharpe ratios: the Dealer Mechanics Lab's 0.5 to 1.0 against 0.87 to 1.73 (annualized, asset-class level, before costs) in search summaries of Baltussen, Da, Lammers and Martens (2021). Neither was checked against the paper's tables. Which figure, for which strategy and sample, should the book give?
 
 ## 6D · Gamma
 
@@ -200,6 +200,7 @@
 - "Modern SPX intraday character has compressed measurably since 0DTE growth": which measure, and which study?
 - Should the long-gamma example use the figure library's settings (delta 0.536, trades of about 7,700), so that a reader who checks with the units lab gets the same numbers?
 - One clock for the book? Chapter 5C's breakeven move uses a calendar day (0.25/√365 = 1.31%), while 6D's rule cites 5C for "IV ÷ √252" and 7A also uses √252; for the same option 6D uses about $240 a contract a day of theta (the full theta) and 6E about $200 (its gamma part). Each is right on its own clock. Should the book pick one, or name the clock each time? (Raised by the second check of the maths.)
+- "Practitioner experience and the academic literature both confirm the change" at the gamma flip (dl:6E, the fourth prediction): the literature search found the difference between long- and short-gamma regimes well supported (for example Dim, Eraker and Vilkov; Baltussen, Da, Lammers and Martens), but no academic test of the flip as a price level (evidence.md, "What is untested or only claimed"). This pass did not change the sentence, which is outside the corrections it was given. Should it say that the academic support is for the regimes, not for the level?
 
 ## 6E · How often to hedge
 
@@ -228,34 +229,92 @@
 
 ## 8A · Gamma exposure
 
-- "Hundreds of trillions of dollars of open interest" (the part's opening). For listed SPX this seems far too large; is it meant as the notional of all derivatives worldwide? Kept as written.
-- "Scaling the aggregate by a factor of 3-15× — which a real strip-vs-toy ratio supports": is there a source for the ratio? Kept as the source's claim.
-- "Barbon and Buraschi (2021) find gamma imbalance effects of around 16 bps per standard deviation": 16 bps of what (an intraday return?) per standard deviation of what (the gamma imbalance measure?). Kept as written.
-- "Real-world put-wing gammas under steep skew can be several times the BS-implied number ... consistently understates put-side gamma": is there a source? Kept with its hedge ("can be").
-- "Volmageddon's VIX call wing was in FLEX" and "The March 2020 vanna cascade ran through structured-product hedges as much as through listed puts": sources? Kept as written.
-- The stylized gamma profile (0.0013, 0.0010, 0.0006 at 0, 100 and 200 points) is narrower than Black-Scholes gives at 18% and 30 days (about 0.00129, 0.00121 and 0.00102). The text calls it stylized, as the source does. Should the toy use the Black-Scholes values? The total would rise to about +$8.1B with the same open interest.
+- "Hundreds of trillions of dollars of open interest" (the part's opening). For listed SPX this seems far too large; is it meant as the notional of all derivatives worldwide? Kept as the Lab's phrase.
+- "Scaling the aggregate by a factor of 3-15×, which a real strip-vs-toy ratio supports": is there a source for the ratio? Kept as the Lab's claim.
+- The stylized gamma profile is narrower than Black-Scholes. With exact Black-Scholes gammas (18%, 30 days, r = 4%) and the same open interest, the puts give $24.96 billion, the calls $18.57 billion and the net about +$6.38 billion (the old notes' +$8.1 billion came from symmetric rounded gammas). Should the toy use them?
+- Cboe's $170 million to $670 million: is it per 1% move? The research could not see the unit.
+- Nomura's "10-15% of total daily volumes on index futures" is known only from SpotGamma's page, through a search summary. Check it against the note before publication.
 
-## 8B · Two regimes
+## 8B · Who holds what
 
-- Ni, Pearson, Poteshman and White (2021): "alters the probability of large daily moves (over 300 bps) by 5-14% historically, rising to 13-40%": relative changes in the probability, or percentage points? Kept as "by 5% to 14%".
-- The illustrative κ = 0.0010 with G in the hundreds: what units does the Dealer Mechanics Lab have in mind for G (billions of dollars per 1%)? The text says only the product κG matters.
-- Barbon and Buraschi: the source's "intraday momentum (reversal) is explained by the interaction of negative (positive) ex-ante gamma imbalance and illiquidity" is written out as two clauses. Please confirm the pairing (momentum with negative imbalance, reversal with positive).
+- "Real-world put-wing gammas under steep skew can be several times the BS-implied number ... consistently understates put-side gamma": is there a source? Kept as the Lab's claim.
+- "Volmageddon's VIX call wing was in FLEX" and "The March 2020 vanna cascade ran through structured-product hedges as much as through listed puts": sources? Kept as the Lab's interpretations.
+- "The autocallable book alone is measured in hundreds of billions of notional": source? Kept as the Lab's claim.
+- The tabulation of customer 0DTE buys (14.95%) against sells (14.06%): the research could not tie it to the Amaya study with certainty. Which source is it?
+- Does Cboe's measure of market makers' 0DTE gamma include positions opened on earlier days that became 0DTE? Its notes do not say, and Adams, Fontaine and Ornthanalai locate most of the dealers' same-day gamma there.
+- SqueezeMetrics' formula, its reasoning about calls and puts, the monitor's $64,521,235 example, SpotGamma's statements and Tier1 Alpha's "$1.7 billion to hedge per index point" were seen only in search summaries. Check them against the pages before publication, especially Tier1 Alpha's unit and SqueezeMetrics' monitor unit (one summary says "thousands of dollars per SPX point").
+- The classification-error caption calls Savickas and Wilson "one study of equity options". The research describes a CBOE data set that includes index-option complex trades. Should the caption say "option trades on the CBOE"?
+- The JPM collar's 35,000 contracts per leg and its description come from vendor commentary, not a JPMorgan document. Is there a primary source?
 
-## 8C · When the framework breaks
+## 8C · The map
 
-- "VIX had risen from 14 in late January to 53 by Friday March 13 — the largest two-week VIX increase in history at that point": is the two-week claim about the final two weeks of that rise? Which dates and levels?
-- The inversion date: late February, seven trading days before March 16 (which would be March 5), or March 9?
-- "Dealers were short gamma in the wings (the put protection that institutions had bought as COVID escalated)" and "SPX dealer gamma was short going into the event" (August 2024): what source shows the dealer positioning in each case?
-- "Volmageddon's VIX call wing was in FLEX" (8A) and "Dealers sitting on the other side of VIX call wings were short gamma in vol-of-vol" (here): is there a source that names the dealers or the size of the wing?
-- Robinhood's deposits "from ~$700M to >$3B": the source does not name the testimony. Which hearing and witness? The text says only "later congressional testimony".
+- Every Skylit quotation comes from search-result summaries of Skylit's pages, which the research could not open (practice.md, "How this file was built"); they may carry light paraphrase. Check each against the live pages before publication.
+- The third-party figures (members, plan prices, star ratings, the FAQ's 85% to 90%, "~50% win rates", the chat bot's 15-second refresh) come from review and affiliate pages of unknown independence. Keep them, as now labeled, or cut them?
+- MenthorQ's High Volatility Level "reverses slope" on "the cumulative gamma curve". If that curve is cumulative GEX by strike, the level is where the strike profile changes sign, which differs from the flip. The text says only that the description does not settle it. Is there a MenthorQ page that does?
+- gex-heatmap's caption says that at spot 6,010 the same-day cell "all but vanishes". With 15 minutes left it falls from +$12.15 billion to +$1.82 billion, and remains the largest cell (ring 1 stays); only at 6,015 does it fall to +$0.17 billion and the largest cell move to 6,100 on the 30-day column. The text gives both; the caption might say 6,015.
+- The chapter uses three Skylit "ring" roles computed on the book's own made-up chain (King, floor, two Kings). They are the vendor's definitions applied to the book's figure, not Skylit's output. Is that framing clear enough?
 
-## 8D · Gamma squeezes
+## 8D · Two regimes
 
-- D, the dark ratio: the source says that D rising while P rises is "hidden accumulation". The text explains why short volume can mean buying (market makers selling short to fill purchases). Please confirm that this is the reading intended, or give the one you want.
-- "mad − MA(mad)": is mad the mean absolute daily move, and over what window? The text says "a recent window" and does not give a length. What window does the moving average of mad use?
-- tanh normalization "on a rolling window": is each indicator standardized (for example as a z-score over the window) before tanh? The text says only that tanh is applied over a rolling window.
-- "Critical — typically > 20% of float, often > 50%" (single-name short interest): is there a source for these thresholds?
-- Rule 2 assumes an exit at 50% of the intraday peak. For a position bought far below the peak, that exit may still be a profit; for one bought near the peak, it is a loss of about half. Should the text say which case the rule is aimed at? The worked example (entry $120, peak $200) and the check question (entry $80, peak $150) both show entries above half the peak, where the exit is a loss.
+- The κ = 0.0010 table: does the Dealer Mechanics Lab mean G in billions of dollars per 1% move? The text reads it that way to restate the rows in dollars, and says the stress rows then sit far above any published total. If the Lab meant another unit, the restatement changes.
+- The Brady Report's numbers came from search summaries of the report, not the report itself; page numbers were not verified. Please check them against the report.
+- Kyle and Obizhaeva's "Large Bets and Stock Market Crashes" and Sornette, Ulmann and Wehrli's working paper: the research could not verify their years, so the text gives none.
+- The E-mini depth figure (80% from 2012 to 2022) comes from a thesis abstract; the paper's definition of depth is unknown. Keep it with its hedge, or drop it?
+- Should the effective-vol-explorer, whose G runs from −1 to +1 without units, gain a readout in dollars per 1% at a stated impact? The text bridges the gap with [eq:units].
+
+## 8E · Pinning
+
+- Golez and Jackwerth (2012): does the body of the paper support the reading that the time decay of hedges alone produced anti-pinning? The text relies on a summary of the results for it.
+- Cboe's 2023 note gives market makers' net same-day gamma as "$170mm to $670mm throughout the day". practice.md marks its per-1% unit as implied but unverified; the text quotes the figure without a unit beside the figure's $11.7 billion per 1% move. Please confirm the unit.
+- The 0DTE paper's author order (Amaya, Garcia-Ares, Pearson and Vasquez in theory.md and practice.md; Vasquez first in evidence.md): the text uses the first.
+- Should the chapter give Skylit's King Node more space, or leave it to Chapter 8C and keep only the test against the theory here?
+
+## 8F · Beyond gamma
+
+- Skylit's "IV drops push dealer delta long, triggering buying": is that the page's wording? If so, the text could add it to Skylit's list of inconsistencies (Chapter 8C).
+- Buffer and defined-outcome ETF assets: Chapter 4A gives "over $50 billion ... by 2024, and ... over $100 billion in 2025" for defined-outcome ETFs; research/practice.md gives "more than $70 billion" by mid-2025 for buffer ETFs. The text cites neither number. Which should the book use?
+- Stivers and Sun (2013): the research did not see the size of the expiration-week effect. If the paper gives it, the text could quote it beside "tend to be high" and "underperform modestly".
+- Is the VIX expiration's own effect worth a source search? No source was found on "OPEX and VOLEX" effects.
+
+## 8G · The evidence
+
+- The Cboe-hosted paper (SSRN 5113405): is the author order Amaya, Garcia-Ares, Pearson and Vasquez, or Vasquez, Amaya, Pearson and Garcia-Ares? The research files disagree, and the text (with Chapter 8B) and the figure's labels differ.
+- Adams and co-authors (SSRN 5641974): which SSRN date should the book give (October 17 or December 3, 2025), and does the paper use the 2022 Tuesday and Thursday additions as its variation?
+- Barbon and Buraschi: which version's effect sizes should the book cite, and how does the paper sign clients' positions?
+- Ni, Pearson, Poteshman and White: if the book wants their result on large moves, the paper's table gives it in units the research did not see.
+- FlashAlpha: which statistic does each reported p-value (0.25 and 0.18) belong to?
+- Soebhag (2023): how is net gamma exposure signed, and is the abstract's wording on volatility as the chapter reads it?
+
+## 8H · When the framework breaks
+
+- "VIX had risen from 14 in late January to 53 by Friday March 13, the largest two-week VIX increase in history at that point": is the two-week claim about the final two weeks of that rise? Which dates and levels? (Still open.)
+- The inversion date: late February, seven trading days before March 16 (which would be March 5), or March 9? (Still open.)
+- Dealer positioning in March 2020 and August 2024: partly answered. For March 2020 the research supports the direction (Jackwerth 2020; the historical short-put book) but finds no estimate of its size; for August 2024 it finds no source, and the BIS found no role for hedging in the VIX spike. Is there a source the Lab relied on?
+- "Volmageddon's VIX call wing was in FLEX" and dealers "short gamma in vol-of-vol": no study found supports either; the text labels them the Lab's interpretation. Is there a source?
+- The Lab's $3.5 billion (XIV and SVXY combined) and $1.9 billion (XIV's AUM): sources? Neither was found.
+- The Lab's intraday low of 2,280 on March 16, 2020: source? It cannot fit "down approximately 12%". Chapter 2E carries the same "intraday low about 2280"; it may need the same correction.
+- The SEC staff report's short-interest peak: the research saw about 122.97% in a search summary, with the exact figure and date unverified. Please check the report before publication; the text says "about 123%".
+- The $483 intraday high and the $193.60 close: the research verified the close and the 44.3% fall from a search summary of the House committee's memorandum, but not the $483 high. Please check.
+- Chapters 5D, 7B and 9A state the dealers' negative vomma in Volmageddon as fact. Should they carry the same label as here (the Lab's interpretation)?
+- Robinhood's deposits: answered. The testimony was before the House Financial Services Committee (Tenev's, per the research), and the committee's staff memorandum gives the figures the text now quotes.
+
+## 8I · Gamma squeezes
+
+- The P, V, G and D indicators: the Lab calls them "the SqueezeMetrics framework", but the research found SqueezeMetrics' GEX (2016, revised 2017) and DIX (2018) only, no source for P, V, G and D as a set. Where do they come from?
+- D, the dark ratio: the text now attributes the reading of short volume as buying to SqueezeMetrics' "Short is Long" (2018). Please confirm that this is the reading intended.
+- "mad − MA(mad)": is mad the mean absolute daily move, and over what window? The text says "a recent window" and does not give a length. What window does the moving average of mad use? (Still open.)
+- tanh normalization "on a rolling window": is each indicator standardized (for example as a z-score over the window) before tanh? (Still open.)
+- "Critical — typically > 20% of float, often > 50%" (single-name short interest): is there a source for these thresholds? (Still open.)
+- Rule 2's exit at 50% of the intraday peak: GME closed at about 40% of its peak on the day of the restrictions. Should the rule give a range, or a lower number? The text now says "or lower".
+- "Symmetric: positive or negative GEX can blow out": what does the Lab mean? Theory allows only short gamma to run away; the text glosses the row.
+- Baig, Zaynutdinova and Strong (2025) count 669 potential gamma squeezes in US stocks, 2019 to 2023. The research recommends reading the paper for this checklist; its findings were not verified, so the text uses only the count.
+
+## 8J · From map to trade
+
+- How far below spot did SpotGamma's put walls sit, on average, over 2019 to 2024? The research does not say, so the base-rate table uses hypothetical distances. With the distance, the chapter could compute the base rate the report omits.
+- The count of breaches behind SpotGamma's forward returns is not given; the standard-error example assumes one. Keep the example as a labeled illustration, or cut it?
+- The Lab's transition rule ("reduce size") gives no number. Does Chapter 11G's scorecard, or any Lab source, give one? The worked example uses 0.5 as the reader's choice.
+- For the facts checker: the dl:8B text of "Regime as a decision boundary" now lives in 8J, which has no source in outline.json, so `--facts 8d` cannot credit 8J with it. The section holds no numbers, and its names (GEX, VIX) remain in Chapter 8D. If the checker should see it, 8J needs dl:8B among its sources, or notes/8d.md should record the move.
 
 ## 9A · The VIX
 
@@ -272,17 +331,19 @@
 
 ## 9B · Same-day options
 
-- How is the upper end of "0.04% to 0.17%" derived? The median of $173 million per point against $400 billion gives 0.043% for a 1% move; 0.17% would need a move of about 4%, or another gamma figure.
-- "Dealer gamma in 0DTE was likely net short" on the April 2025 and October 10, 2025 days: is there a source for the estimate? Kept with "likely".
-- The 110 million contract record: is that all US listed options? The chapter says "the single-day options volume record", as the source does.
-- The source cites Brogaard, Han and Won (2024) as a University of Utah working paper; is there a title to give?
+- "Dealer gamma in 0DTE was likely net short" on the April 2025 and October 10, 2025 days: is there a source for the estimate? The literature search found none; the chapter keeps it as the Lab's reading, with "likely", and says it has no source. If there is none, consider dropping the example.
+- The 110 million contract record: is that all US listed options? The chapter says "the single-day options volume record", as the source does, and attributes it.
+- Brogaard, Han and Won: the paper is "Does 0DTE Options Trading Increase Volatility?" (earlier "How Does Zero-Day-To-Expiry Options Trading Affect the Volatility of Underlying Assets?"), SSRN 4426358, first posted April 22, 2023 and revised to January 2026. Which version and year should the book cite? The chapter keeps the source's 2024.
+- Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025), "posted December 3, 2025": search results give an SSRN date of October 17, 2025 (SSRN shows a written and a posted date). Please check; the chapter keeps the source's date.
+- The customer shares of 0DTE volume (14.95% buying from market makers, 14.06% selling to them, January 2020 to June 2023) come from a search summary whose sample matches Vasquez, Amaya, Pearson and Garcia-Ares (2025); the attribution to that paper is not certain. Please check against the paper before print.
+- Cboe's typical range at 3:30 PM: the upper end, +$2.4 billion, was cut off in the search summary. Please confirm against the note.
 
 ## 9C · Reading the tape
 
 - The classifier's GEX scale runs from −$10 billion to +$10 billion per 1% move, with every reading above +$4 billion scoring the same. Chapter 6D (dl:6E) puts aggregate dealer dollar gamma across the listed SPX book at $20 billion to $100 billion per 1% move on a normal day, while Cboe's 0DTE figures (−$1.1 billion to +$2.4 billion) fit the slider. Is the classifier meant for 0DTE GEX, or for whole-book GEX from a vendor? The chapter describes the slider as "net dealer GEX", as the figure labels it.
-- "Ni, Pearson, and Poteshman document 16.5 bps return alteration on equity expiration days": which measure is this (an average absolute return shift for stocks near high-open-interest strikes)? The reading list dates the paper 2005, as Chapter 8A does.
 - "Tens of basis points per standard deviation": the standard deviation of what? The worked example reads it as the standard deviation of dealer gamma imbalance, following Chapter 8A's Barbon and Buraschi figure.
 - The claim that a regime-aware backtest "persists out-of-sample more reliably than most other technical signals" has no cited study. Is there one?
+- The glossary entry "pinning" (glossary/IX.json) ends "The measured effect is small, about 16.5 basis points on equity expiration days." The study behind the figure measures optionable single stocks, 1996 to 2002, and 16.5 basis points is a lower bound on the average return distortion per expiration date. This pass edits only chapters and notes, so the entry is unchanged; a suggested ending is "The measured effect is small: at least 16.5 basis points of return distortion per expiration date for single stocks, in a study of 1996 to 2002."
 
 ## 10A · Five kinds of edge
 
@@ -292,7 +353,6 @@
 - "ERP has been positive in 35 of 35 markets in the Dimson-Marsh-Staunton database": over each market's full history, real or nominal, and over bills or over bonds? Chapter 10B's source says 23 of the 35 markets have the full 1900 to 2024 history.
 - "Tracking error to academic factor > 4% annualized → switch vehicle": is the benchmark the academic long-short factor or a long-only factor index? A long-only ETF's tracking error to a long-short factor is usually large, which would trip the rule at once.
 - "The Cieslak FOMC even-week cycle": the chapter glosses it as the equity premium concentrated "in the even weeks of the cycle between meetings of the Federal Open Market Committee". Please confirm the gloss; Chapter 10G gives the detail.
-- The Cboe 2025 figure ("~0.2% of liquidity"): of SPX daily liquidity (spx:1.5, Chapter 1G) or of futures liquidity (dl:12E)? Chapter 1G's notes raise the same question.
 
 ## 10B · The equity risk premium
 
@@ -364,6 +424,7 @@
 - "With 40%+ of SPX volume now in 0DTE": as of which year?
 - "VXX has lost 99.84% from 2009 inception through 2024": VXX was relaunched as a new note in 2019; is the figure for the combined series?
 - SSO's "expense ratio 0.85%" and SVXY "now de-leveraged": as of which date?
+- "Gamma effects of about 16 bps per standard deviation" (from dl:8A, Barbon and Buraschi): the literature search did not find this figure in any version of the paper. It found about 12 bps less absolute daily return per standard deviation of dealer gamma imbalance for stocks (average 109 bps) in one version, 5 to 25 bps for stocks (average 180 bps) in another, and more than 20 bps for the indexes tested (evidence.md item 2). The chapter keeps the sentence as Chapter 8A's report, since Part VIII is being rewritten; please align it with whatever figure the new Part VIII settles on.
 
 ## 11A · The market dashboard
 
@@ -527,7 +588,7 @@
 
 ## 13B · The conviction score
 
-- "the discipline that prevents 80% of bad trades" (spx:4.6) and "Cboe 2025 study found 0DTE MM hedging is ~0.2% of liquidity" (spx:4.4) carry no citation beyond the text. Kept at their strength.
+- "the discipline that prevents 80% of bad trades" (spx:4.6) carries no citation beyond the text. Kept at its strength. (The Cboe study of spx:4.4 is now identified: Xu, "0DTEs Decoded", May 2, 2025; see Changed.)
 - Should the Real Value threshold be 0.4 (as stated) with the table's 0.3 to 0.5 band reading "half size from 0.4", or is a half-size trade from 0.3 intended?
 - The regime bands leave a composite of 0 to +10 unscored. Is a band intended there?
 - Scenario C: were the 50% puts meant to be on margin? If they are cash-secured, the forced-liquidation reason for S = 0.20 needs restating (for example, as a behavioral capitulation risk).

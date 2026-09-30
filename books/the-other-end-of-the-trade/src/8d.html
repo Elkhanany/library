@@ -1,177 +1,1391 @@
 <p class="eyebrow">Part VIII · The whole market · Chapter 8D</p>
 
-<h1>Gamma squeezes</h1>
+<h1>Two regimes</h1>
 
-<p class="subtitle">How to recognize one</p>
+<p class="subtitle">When hedging calms the market and when it pushes it</p>
 
 <div class="callout where">
 <span class="ct">Where we are</span>
-<p><a class="xref" href="8c.html">Chapter 8C</a> described four episodes after they ignited, and this chapter is its operational counterpart. It shows how to spot a <span class="gloss" title="A rally driven by dealers buying the underlying to hedge calls they have sold, whose deltas rise as the price rises, so that each purchase lifts the price and forces the next.">gamma squeeze</span> setup before the feedback runs, which live indicators separate a real squeeze from a noisy uptrend, and when not to chase one despite the headline pattern.</p>
+<p>Chapters 8A to 8C added every dealer's gamma into one number, gamma exposure, showed that its sign rests on an assumption about who holds what, and drew it strike by strike. This chapter shows what each sign does to prices: calm, mean-reverting markets on one side, trending and volatile ones on the other. It gives a simple model of the feedback and traces the model to the theory it comes from, from the portfolio insurance of 1987 to modern models of market impact. It also says what the model's feedback coefficient means in dollars and index points.</p>
 </div>
 
 <div class="tools"><b>What you need first</b>
 <ul>
-<li>The three preconditions and the four episodes behind them (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
-<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> and its sign conventions (<a class="xref" href="8a.html">Chapter 8A</a>).</li>
-<li><span class="gloss" title="The number of a company's shares that have been sold short and not yet bought back, often quoted as a percentage of the public float. It can exceed 100% because a borrowed share, once sold, can be lent and shorted again.">Short interest</span> and <span class="gloss" title="Buying back shares previously sold short, to close the position. When many short sellers cover at once, their buying adds to a rally.">short covering</span> (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
-<li>A moving average: the average of the last \(n\) values of a series, recomputed each day as the window moves forward.</li>
+<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX), and the dealers' hedge trade for a given move (<a class="xref" href="8a.html">Chapter 8A</a>).</li>
+<li>Why the sign of GEX is an assumption, and the two conventions that fill it in (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li>Why a long-gamma hedge trades against a move and a short-gamma hedge trades with it (<a class="xref" href="6d.html">Chapter 6D</a>).</li>
+<li>The <span class="gloss" title="An autoregressive model of order one: it predicts each period's value, such as a return, as a weight times the previous period's value plus a constant. The sign of the weight separates mean reversion from momentum.">AR(1) model</span>, in which each return carries a fixed fraction, the weight \(w\), of the one before (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+<li><span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">Realized volatility</span> against <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> (<a class="xref" href="5e.html">Chapter 5E</a>), and the square-root law of <span class="gloss" title="The move in price that your own order causes, paid as a worse fill that grows with the size of the order.">market impact</span> (<a class="xref" href="2d.html">Chapter 2D</a>).</li>
 </ul>
 </div>
 
-<h2 id="the-three-preconditions-as-a-checklist">1 · The three preconditions, as a checklist</h2>
+<p>Everything in Parts I to VII compresses to a single regime question: <strong>is the dealer book net long <span class="gloss" title="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry.">gamma</span> or net short gamma?</strong> The answer sets the sign of the feedback loop between hedging and prices, and with it the whole character of intraday price action.</p>
 
-<p>From the case studies of <a class="xref" href="8c.html">Chapter 8C</a>, three preconditions consistently co-occur: Volmageddon in 2018, March 2020, GME in 2021 and August 2024 all had them. Any one alone is insufficient.</p>
-
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Precondition</th><th class="c-result">What it means</th><th class="c-result">How to measure</th></tr></thead><tbody><tr><td class="c-trial" data-label="Precondition"><strong>Structural concentration</strong></td><td class="c-result" data-label="What it means">Either the dealer book is heavily short gamma in one direction, <em>or</em> a meaningful share of the float is shorted (single names)</td><td class="c-result" data-label="How to measure">Net dealer GEX sign and magnitude; FINRA short-interest reports for single names</td></tr><tr><td class="c-trial" data-label="Precondition"><strong>Mechanical buying pressure</strong></td><td class="c-result" data-label="What it means">A flow source that <em>requires</em> purchases at progressively higher prices: short covering, dealer delta hedging, <span class="gloss" title="An exchange-traded fund that aims to return a fixed multiple of an index's daily return, such as two times, or minus one times for an inverse fund. To hold the multiple it must trade near each close in the direction of that day's move.">leveraged-ETF</span> rebalancing</td><td class="c-result" data-label="How to measure">Volume composition, dealer-side flow inference, and the size of leveraged ETFs in the name</td></tr><tr><td class="c-trial" data-label="Precondition"><strong>Liquidity constraint</strong></td><td class="c-result" data-label="What it means">Counterparty inventory or capital cannot expand to absorb the flow: wide bid-ask spreads, broker margin calls, exchange circuit logic</td><td class="c-result" data-label="How to measure">Bid-ask spread widening; broker outage signals; price paths that gap up rather than expand continuously</td></tr></tbody></table></div></div>
-
-<p>When all three are present, squeeze conditions exist. Whether the squeeze <em>triggers</em> is a question of catalyst: news, positioning around options expiry, or retail coordination. FINRA, the Financial Industry Regulatory Authority, publishes the short-interest figures the first row uses.</p>
-
-<p>The first row also measures GEX by its magnitude, and there the Edge Book disagrees. It keeps only the sign of GEX, as low-confidence regime context, and calls the magnitude too model-dependent to size on (<a class="xref" href="10h.html">Chapter 10H</a>). It files dealer gamma effects under microstructure edges, which it considers institutional-only (<a class="xref" href="1g.html">Chapter 1G</a>), and it rejects trading GEX levels for retail accounts (<a class="xref" href="10i.html">Chapter 10I</a>). Read the row's GEX entry as a sign, checked against the conventions of <a class="xref" href="8a.html">Chapter 8A</a>, and not as a number to size from.</p>
-
-<h2 id="four-live-indicators-p-v-g-and-d">2 · Four live indicators: P, V, G and D</h2>
-
-<p>The four univariate indicators of the SqueezeMetrics framework, P, V, G and D, map onto the preconditions as live, computable signals. The letters are the framework's own names: this G is a ratio of call gamma to total gamma, between 0 and 1, not the destabilizing gamma of <a class="xref" href="8b.html">Chapter 8B</a>.</p>
-
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Indicator</th><th class="c-result">Computation</th><th class="c-result">Squeeze interpretation</th><th class="c-endpoint">Maps to</th></tr></thead><tbody><tr><td class="c-trial" data-label="Indicator"><strong>P</strong> (price trend)</td><td class="c-result" data-label="Computation">\(\text{MA}(r)/\text{MA}(|r|)\) over 21 days, range −1 to +1</td><td class="c-result" data-label="Squeeze interpretation">P above +0.4 is a strong directional bias upward, so a mechanical-buying story is plausible</td><td class="c-endpoint" data-label="Maps to">Mechanical buying pressure</td></tr><tr><td class="c-trial" data-label="Indicator"><strong>V</strong> (volatility trend)</td><td class="c-result" data-label="Computation">mad − MA(mad): recent absolute moves against their own moving average</td><td class="c-result" data-label="Squeeze interpretation">V above 0 while P is strongly positive means volatility is <em>rising into</em> the trend, the rare pattern that separates a squeeze from a quiet uptrend</td><td class="c-endpoint" data-label="Maps to">Liquidity constraint: expanding volatility means absorption is breaking down</td></tr><tr><td class="c-trial" data-label="Indicator"><strong>G</strong> (gamma ratio)</td><td class="c-result" data-label="Computation">call gamma ÷ (call gamma + put gamma), at a constant 20% volatility, weighted by open interest</td><td class="c-result" data-label="Squeeze interpretation">G above 0.6 is a call-heavy book; with spot rising, dealers absorb more and more upside delta, and short-gamma feedback is live</td><td class="c-endpoint" data-label="Maps to">Structural concentration</td></tr><tr><td class="c-trial" data-label="Indicator"><strong>D</strong> (dark ratio)</td><td class="c-result" data-label="Computation">FINRA dark-pool short volume ÷ total dark-pool volume, as a 5-day moving average</td><td class="c-result" data-label="Squeeze interpretation">D rising while P also rises is hidden accumulation under a visible uptrend, so the squeeze is fueled <em>and</em> obscured</td><td class="c-endpoint" data-label="Maps to">Hidden order flow and mechanical buying</td></tr></tbody></table></div></div>
-
-<p><strong>P, the price trend</strong>, divides the average daily return \(r\) over 21 days by the average size of a return, \(|r|\), over the same days:</p>
-
-<div class="eq" id="e-p">
-\[ P = \frac{\text{MA}_{21}(r)}{\text{MA}_{21}(|r|)} \]
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A dealer who is long gamma behaves like a thermostat, cooling the room when it warms and heating it when it cools. A dealer who is short gamma behaves like a microphone held too close to its speaker, so that every sound comes back louder. The news that moves prices is the same in both cases. What differs is whether the dealers' hedging pushes back against each move or joins it.</p>
 </div>
 
-<p>An average of returns can never be larger in size than the average of their sizes, so \(P\) always lies between −1 and +1. It is +1 when every day in the window rose, −1 when every day fell, and near 0 when the ups and downs cancel.</p>
+<h2 id="two-regimes-one-mechanism">1 · Two regimes, one mechanism</h2>
+
+<p>The two regimes are mirror images of each other, row by row:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial"></th><th class="c-endpoint">Dealers long gamma: positive GEX</th><th class="c-endpoint">Dealers short gamma: negative GEX</th></tr></thead><tbody><tr><td class="c-trial" data-label="">Hedging</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Sells strength, buys weakness</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Buys strength, sells weakness</td></tr><tr><td class="c-trial" data-label="">Intraday behavior</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX"><strong><span class="gloss" title="The tendency of a move to be followed by a move in the opposite direction, so that prices drift back toward where they were. In a return series it shows as negative autocorrelation.">Mean reversion</span></strong></td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><strong><span class="gloss" title="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past.">Momentum</span></strong></td></tr><tr><td class="c-trial" data-label="">Volatility</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX"><strong>Compressed</strong> relative to its unhedged level</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><strong>Expanded</strong> relative to its unhedged level</td></tr><tr><td class="c-trial" data-label="">Favored style</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Range trading</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX"><span class="gloss" title="A strategy that buys assets whose own prices have been rising and sells those whose prices have been falling. Also called time-series momentum.">Trend following</span></td></tr><tr><td class="c-trial" data-label="">Premium</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Selling it is favored, because dealer hedging suppresses the realized volatility you are betting against</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Buying it is favored, because realized volatility is amplified</td></tr><tr><td class="c-trial" data-label="">What fails</td><td class="c-endpoint" data-label="Dealers long gamma: positive GEX">Breakouts often fail, because the dealer flow fades them</td><td class="c-endpoint" data-label="Dealers short gamma: negative GEX">Mean reversion is dangerous: fades against the move get crushed</td></tr></tbody></table></div></div>
+
+<p>A toy example shows the mechanism. Suppose GEX is +$5 billion per 1% move. By <a class="xref" href="8a.html">Chapter 8A</a>'s hedge-flow formula, a 1% rally then has dealers selling about $5 billion of index exposure and a 1% fall has them buying about $5 billion, so each move meets a flow against it. If GEX is −$5 billion instead, the same rally has dealers buying about $5 billion and the same fall has them selling about $5 billion. The news, and the first 1% move it caused, are identical in both cases. Only the sign of the response differs.</p>
+
+<p>The table is the Dealer Mechanics Lab's, and the theory later in this chapter adds two rows to it. The sign of dealer gamma changes liquidity as well as volatility, and neither sign makes prices better informed.</p>
+
+<h2 id="same-shocks-opposite-character">2 · Same shocks, opposite character</h2>
+
+<p>The figure below draws six price paths from 100 over 60 steps. Each step's return is a random shock, with a standard deviation of 0.08%, plus a feedback term equal to 0.45 times the previous step's return. The feedback is subtracted when dealers are long gamma (positive GEX) and added when they are short it (negative GEX). Both regimes use the same six runs of random shocks, so the sign of the feedback is the only difference. Switch between the two regimes and compare how far the paths wander.</p>
+
+<figure class="fig" id="fig-regime-path-sim">
+  <canvas id="regime-path-sim-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer gamma regime" id="regime-path-sim-reg">
+      <label>regime</label>
+      <button type="button" data-v="pos" class="on" aria-pressed="true">positive GEX</button>
+      <button type="button" data-v="neg" aria-pressed="false">negative GEX</button>
+    </div>
+  </div>
+  <figcaption><b>The same shocks, opposite character.</b> Six simulated price paths from 100
+  over 60 steps, each driven by its own seeded run of random returns (0.08% standard deviation
+  a step), the same six runs in both regimes. Each step also carries a feedback term, 0.45
+  times the previous step's return: subtracted when dealers are long gamma (positive GEX),
+  added when they are short it (negative GEX). Switch the regime: under positive GEX the paths
+  cluster around 100, under negative GEX the same shocks fan out.</figcaption>
+</figure>
+
+<p>Under positive GEX the six paths stay between about 99.5 and 101. Under negative GEX the same shocks spread them from about 98.9 to 102.5, more than twice as wide. In the language of <a class="xref" href="3b.html">Chapter 3B</a>, each regime makes returns an AR(1) process, with weight \(w = -0.45\) (mean reversion) when dealers are long gamma and \(w = +0.45\) (momentum) when they are short gamma. One mechanism produces both behaviors.</p>
+
+<p>The same fundamentals can therefore produce qualitatively different price behavior, depending on the dealer-positioning regime. That is why regime-conditional strategy selection, the subject of <a class="xref" href="11a.html">Part XI</a>, matters. The weight of 0.45 is chosen so the difference shows in six paths. It is an illustration, not a measurement, and the measured effects are far smaller, as a later section shows.</p>
+
+<h2 id="the-mathematics-of-feedback">3 · The mathematics of feedback</h2>
+
+<p>Published GEX is positive when hedging is stabilizing, but the feedback maths reads more naturally with the opposite sign. So define the <strong><span class="gloss" title="The negation of published gamma exposure, used in the effective-volatility formula: positive when dealers are net short gamma and their hedging amplifies moves, negative when they are net long gamma and it damps them.">destabilizing gamma</span></strong> \(G\) as the negation of published GEX, in whatever units the model uses. It is positive when dealers are net short gamma, so that their pro-trend hedging amplifies moves. It is negative when they are net long gamma, so that their contra-trend hedging damps moves. With that <span class="gloss" title="The rule a gamma exposure model uses to decide whether dealers are long or short each option, since open interest counts contracts but not who holds them. The two best known give calls and puts opposite signs, and differ from each other in every sign.">sign convention</span>, the Dealer Mechanics Lab writes</p>
+
+<div class="eq" id="e-eff">
+\[ \sigma_\text{eff}^2 = \frac{\sigma^2}{(1 - \kappa G)^2} \]
+</div>
+
+<p>in which each symbol has a plain meaning, and the feedback coefficient \(\kappa\) carries the state of the market:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">symbol</th><th class="c-result">meaning</th></tr></thead><tbody><tr><td class="c-trial">\(\sigma\)</td><td class="c-result">the information volatility: how volatile prices would be from news alone, with no hedging feedback</td></tr><tr><td class="c-trial">\(\sigma_\text{eff}\)</td><td class="c-result">the <strong><span class="gloss" title="The volatility prices show once dealer hedging feeds back into them, as opposed to the volatility news alone would cause. Feedback from short-gamma hedging raises it and feedback from long-gamma hedging lowers it.">effective volatility</span></strong>: the volatility prices show once dealer hedging feeds back into them</td></tr><tr><td class="c-trial">\(G\)</td><td class="c-result">the destabilizing gamma, the negation of published GEX</td></tr><tr><td class="c-trial">\(\kappa\)</td><td class="c-result">the feedback coefficient: how far prices move per unit of hedging flow, larger when market depth is thin and when dealers hedge aggressively</td></tr></tbody></table></div></div>
+
+<p>Only the product \(\kappa G\) matters, so the units of \(G\) and \(\kappa\) can be anything that makes it a pure number. Taking square roots, and keeping \(\kappa G\) below 1, gives \(\sigma_\text{eff} = \sigma / (1 - \kappa G)\), and the denominator sorts the regimes:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">\(G\)</th><th>Published GEX</th><th class="c-other">Dealers</th><th>\(1 - \kappa G\)</th><th class="c-other">Effective volatility</th><th class="c-other">Regime</th></tr></thead><tbody><tr><td class="c-trial" data-label="\(G\)">below 0</td><td data-label="Published GEX">positive</td><td class="c-other" data-label="Dealers">long gamma</td><td data-label="\(1 - \kappa G\)">above 1</td><td class="c-other" data-label="Effective volatility">below \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Stabilized</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">0</td><td data-label="Published GEX">zero</td><td class="c-other" data-label="Dealers">flat</td><td data-label="\(1 - \kappa G\)">1</td><td class="c-other" data-label="Effective volatility">equal to \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Neutral</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">above 0</td><td data-label="Published GEX">negative</td><td class="c-other" data-label="Dealers">short gamma</td><td data-label="\(1 - \kappa G\)">below 1</td><td class="c-other" data-label="Effective volatility">above \(\sigma\)</td><td class="c-other" data-label="Regime"><strong>Amplified</strong></td></tr><tr><td class="c-trial" data-label="\(G\)">toward \(+1/\kappa\)</td><td data-label="Published GEX">strongly negative</td><td class="c-other" data-label="Dealers">deeply short gamma, in extreme stress</td><td data-label="\(1 - \kappa G\)">toward 0</td><td class="c-other" data-label="Effective volatility">toward infinity</td><td class="c-other" data-label="Regime"><strong>Edge of feedback explosion</strong></td></tr></tbody></table></div></div>
+
+<p>In the Dealer Mechanics Lab's reading, that divergence is, mathematically, what February 5, 2018 (Volmageddon), March 16, 2020 (the Great Liquidity Crisis) and August 5, 2024 (the yen carry unwind) looked like. <a class="xref" href="8h.html">Chapter 8H</a> takes the cases in detail and weighs that reading against what regulators and researchers later found.</p>
+
+<details class="grind"><summary>Where the formula comes from: a feedback multiplier</summary><div class="grind-body">
+<p>One simple model produces <a class="eqref" href="#e-eff"></a> exactly. It is a toy rather than the Dealer Mechanics Lab's derivation, but it shows what \(\kappa\) and \(G\) do.</p>
+
+<p><strong>Step 1: the first round.</strong> News moves the price by a return \(\varepsilon\), with standard deviation \(\sigma\). Dealers hedge that move, and their trade moves the price by a further \(\kappa G\,\varepsilon\), with the first move if \(G &gt; 0\) and against it if \(G &lt; 0\).</p>
+
+<p><strong>Step 2: the rounds that follow.</strong> The extra move needs hedging too, which adds \(\kappa G\) times it, \((\kappa G)^2 \varepsilon\), and that needs hedging in turn. When \(\kappa G\) lies between −1 and 1, the rounds shrink and the total is a geometric series:</p>
+
+<div class="eq">
+\[ \begin{aligned} \text{move} &amp;= \varepsilon\,\big(1 + \kappa G + (\kappa G)^2 + \cdots\big) \\ &amp;= \frac{\varepsilon}{1 - \kappa G} \end{aligned} \]
+</div>
+
+<p><strong>Step 3: the volatility.</strong> Dividing a random quantity by a constant divides its standard deviation by the same constant. The total move therefore has standard deviation \(\sigma/(1 - \kappa G)\), and squaring it gives <a class="eqref" href="#e-eff"></a>.</p>
+
+<p><strong>Step 4: over time.</strong> The regime figure spreads the same feedback over successive steps, \(r_t = w\,r_{t-1} + \varepsilon_t\). A shock then reaches the price as \(\varepsilon_t\) in its own step, \(w\,\varepsilon_t\) in the next and \(w^2\varepsilon_t\) in the one after, for a total of \(\varepsilon_t/(1 - w)\) once the echoes die out. The paths' volatility over many steps follows the same formula, with \(w = \kappa G\).</p>
+</div></details>
+
+<p>The next figure draws the grind box's rounds one at a time, in units of the news shock \(\varepsilon\). The first bar is the news, and each bar after it is one round of hedging, \(\kappa G\) times the round before, drawn from where the running total stood. The two sliders set \(\kappa G\), from −0.9 to +0.95 and starting at +0.45, and the number of rounds shown, from 0 to 12. Watch the running total approach \(\varepsilon/(1 - \kappa G)\), then push \(\kappa G\) toward 0.95 and count how many rounds are still large.</p>
+
+<figure class="fig" id="fig-feedback-cascade">
+  <canvas id="feedback-cascade-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="feedback-cascade-kg">feedback κG</label>
+      <input type="range" id="feedback-cascade-kg" min="-0.9" max="0.95" step="0.05" value="0.45">
+      <output id="feedback-cascade-kg-o" for="feedback-cascade-kg"></output>
+    </div>
+    <div class="ctrl">
+      <label for="feedback-cascade-n">rounds of hedging</label>
+      <input type="range" id="feedback-cascade-n" min="0" max="12" step="1" value="12">
+      <output id="feedback-cascade-n-o" for="feedback-cascade-n"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="feedback-cascade-tot"></output></div>
+    <div class="ctrl"><output id="feedback-cascade-run"></output></div>
+    <div class="ctrl"><output id="feedback-cascade-last"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="feedback-cascade-vk"></b> <span id="feedback-cascade-vt"></span></p>
+  <figcaption><b>One shock, and the hedging it sets off.</b> The first bar is a news shock,
+  ε. Each bar after it is one round of dealer hedging, κG times the round before, drawn from
+  where the last one ended, so the bars add up to the running total. The rounds slider adds
+  them one at a time. κG is positive when dealers are net short gamma, which is negative
+  published GEX. Every round then joins the move before it (rose), and the total climbs toward
+  ε/(1 − κG), the dashed line and the last bar. With κG negative every round opposes the move
+  before it (green), and the total zigzags down to a level below the shock. Drag κG toward 0.95
+  and the rounds stop dying out: 12 of them leave the total far short of its limit.</figcaption>
+</figure>
+
+<p>At the starting \(\kappa G\) of +0.45, every round joins the move before it, and the total reaches 1.82ε, which 12 rounds match to within 0.01ε. At −0.45 the rounds alternate and the total settles at 0.69ε, below the shock itself. At +0.95 the limit is 20ε, but 12 rounds reach only 9.73ε, 49% of it, and the twelfth still adds 0.54ε. At −0.9 the total zigzags, 0.66ε after 12 rounds against a limit of 0.53ε. Near \(\kappa G = 1\) the rounds stop dying out: that is the singular point of <a class="eqref" href="#e-eff"></a>, seen as a process.</p>
 
 <div class="worked">
-<span class="ct">Worked example: Two 21-day windows</span>
-<p><strong>Step 1: a steady climb.</strong> Suppose that in the window 15 days rise 1% and 6 days fall 0.5%. The average return is \((15 \times 1\% - 6 \times 0.5\%)/21 = 0.571\%\), and the average size is \((15 \times 1\% + 6 \times 0.5\%)/21 = 0.857\%\). By <a class="eqref" href="#e-p"></a>, \(P = 0.571/0.857 = 0.67\), above the 0.4 line.</p>
+<span class="ct">Worked example: The regime figure, in the formula</span>
+<p><strong>Step 1: the weights.</strong> The regime figure's feedback of 0.45 is \(\kappa G = -0.45\) under positive GEX and \(\kappa G = +0.45\) under negative GEX.</p>
 
-<p><strong>Step 2: a noisy drift.</strong> Now suppose 11 days rise 1% and 10 days fall 1%, so the average return is \(1\%/21 = 0.048\%\), the average size is 1%, and \(P = 0.048\). The window ended higher, but nothing in it looks like mechanical buying.</p>
+<p><strong>Step 2: the multipliers.</strong> Under positive GEX the multiplier is \(1/(1 + 0.45) = 0.69\), so hedging removes about 31% of the volatility. Under negative GEX it is \(1/(1 - 0.45) = 1.82\), so hedging adds about 82%. These are the cascade figure's two totals.</p>
+
+<p><strong>Step 3: the comparison.</strong> The ratio of the two multipliers is \(1.82/0.69 = 2.64\). The regime figure's six paths span about 3.6 points under negative GEX against 1.5 under positive, a ratio of about 2.4. Six paths over 60 steps are too small a sample for a closer match.</p>
 </div>
-
-<p><strong>V, the volatility trend</strong>, takes mad, the average absolute daily move over a recent window, and subtracts its own moving average. If recent moves average 1.5% a day against a moving average of 1.0%, V is +0.5 points: volatility is expanding. A quiet uptrend has P high and V near zero or below. A squeeze has both high, because the price is rising <em>and</em> the market is struggling to absorb the flow.</p>
-
-<p><strong>G, the gamma ratio</strong>, computes each strike's gamma at one constant volatility, 20%, so that the skew does not distort the comparison, and weights it by open interest. It then divides the calls' total by the total of calls and puts. A book with 3.0 units of call gamma and 1.5 of put gamma gives \(3.0/4.5 = 0.67\), a call-heavy book past the 0.6 line.</p>
-
-<p><strong>D, the dark ratio</strong>, is the share of <span class="gloss" title="A trading venue that does not display its orders, run by a bank or broker. Its trades fill at or inside the public best bid and offer, often at the midpoint.">dark pool</span> volume reported as short sales, averaged over five days. The usual reading rests on how off-exchange trades are reported. A market maker who fills a customer's purchase by selling short reports short volume, so a rising short share can mean rising buying underneath the visible price.</p>
-
-<p>All four are normalized to roughly −1 to +1 with the hyperbolic tangent, applied over a rolling window, so that they can be plotted on one axis:</p>
-
-<div class="eq" id="e-tanh">
-\[ \tanh(x) = \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}} \]
-</div>
-
-<p>Near zero, tanh passes a value through almost unchanged; far from zero, it flattens toward ±1. By <a class="eqref" href="#e-tanh"></a>, \(\tanh(0.5) = 0.46\), \(\tanh(1) = 0.76\) and \(\tanh(2) = 0.96\), so large readings are squeezed together while small ones keep their differences.</p>
-
-<p>The interesting joint signals are rare, because on most days the four diverge. When they align, with P, V, G and D all high, the structural setup for a squeeze is in place. That is the moment to <em>check the catalyst</em>, not to bet ahead of it.</p>
 
 <div class="callout familiar">
 <span class="ct">Familiar ground</span>
-<p>An alignment of all four indicators is a positive screen, not a diagnosis. When a condition is rare, even a specific screening test produces positives that are mostly false, which is why a positive screen leads to a confirmatory workup rather than to treatment. Here the workup is the catalyst check: news, expiry positioning or retail coordination. Until one of those appears, the alignment has raised the probability of a squeeze, not established it.</p>
+<p>The feedback multiplier works like the design effect of a cluster-randomized trial. When outcomes within a cluster are positively correlated, the variance of an estimate is inflated by a factor that grows with the correlation, while a negative correlation would deflate it. Returns work the same way: positive feedback correlates each step with the one before and inflates the variance of the cumulative move, while negative feedback deflates it. The <span class="gloss" title="A test of the random-walk hypothesis from Lo and MacKinlay (1988) that compares the variance of multi-period returns with the one-period variance times the number of periods. A ratio above 1 indicates momentum, and below 1 mean reversion.">variance ratio test</span> of <a class="xref" href="3b.html">Chapter 3B</a> measures exactly this inflation.</p>
 </div>
 
-<h2 id="single-name-squeezes-against-index-squeezes">3 · Single-name squeezes against index squeezes</h2>
+<h3 id="instant-or-lagged-what-the-regimes-do-to-autocorrelation">Instant or lagged: what the regimes do to autocorrelation</h3>
 
-<p>The mechanism is identical in the two kinds of squeeze, but the structural conditions differ in kind.</p>
+<p>The grind box summed its rounds within one instant, and the regime figure spread them over successive steps. Both give the same multiplier for the volatility of the cumulative move, \(\sigma/(1 - w)\). They differ on <span class="gloss" title="The correlation of a series with its own earlier values. The lag-1 autocorrelation of returns is the correlation between each period's return and the one before.">autocorrelation</span>. If dealers hedge within the instant, each return is larger or smaller than the news, but it carries nothing of the return before: volatility changes and autocorrelation does not. If they hedge one step late, as in the figure, each return carries \(w\) times the one before, and the lag-1 autocorrelation is \(w\) itself.</p>
 
-<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Aspect</th><th class="c-endpoint">Index gamma squeeze (Volmageddon, March 2020, August 2024)</th><th class="c-result">Single-name gamma squeeze (GME)</th></tr></thead><tbody><tr><td class="c-trial" data-label="Aspect">Required short-interest concentration</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">None: the mechanism runs through dealer hedging alone</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Critical: typically above 20% of float, often above 50%</td></tr><tr><td class="c-trial" data-label="Aspect">Required catalyst</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">A volatility shock, idiosyncratic or macro</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Coordinated retail call buying, plus a narrative</td></tr><tr><td class="c-trial" data-label="Aspect">Speed</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">Hours to days</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Days to weeks</td></tr><tr><td class="c-trial" data-label="Aspect">Asymmetry</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">Symmetric: positive <em>or</em> negative GEX can blow out</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Strongly asymmetric: the long side, with short-side squeezes rare</td></tr><tr><td class="c-trial" data-label="Aspect">Liquidity constraint works through</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">Market-maker capital and market depth</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Brokerage capital and DTCC margin</td></tr><tr><td class="c-trial" data-label="Aspect">Resolution</td><td class="c-endpoint" data-label="Index gamma squeeze (Volmageddon, March 2020, August 2024)">Volatility fades once dealers' capacity to rebalance is restored</td><td class="c-result" data-label="Single-name gamma squeeze (GME)">Retail attention fades, short covering completes, and broker restrictions break the loop</td></tr></tbody></table></div></div>
+<p>The table's rows on mean reversion and momentum are therefore the lagged reading, and two lines of research bear on it. Baltussen, Da, Lammers and Martens (2021) study intraday returns on over 60 futures markets from 1974 to 2020. They find that "the return during the last 30 minutes before the market close is positively predicted by the return during the rest of the day". They link that <span class="gloss" title="The tendency for the return over the last 30 minutes of the trading day to go the same way as the return over the rest of the day. Baltussen, Da, Lammers and Martens (2021) document it across more than 60 futures markets and attribute it to hedging that trades with the move.">intraday momentum</span> to the gamma hedging demand of option <span class="gloss" title="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer.">market makers</span> and <span class="gloss" title="An exchange-traded fund that aims to return a fixed multiple of an index's daily return, such as two times, or minus one times for an inverse fund. To hold the multiple it must trade near each close in the direction of that day's move.">leveraged ETFs</span>. The predictive power "reverts over the next days".</p>
 
-<p>Most published "gamma squeeze" commentary conflates the two. The trades are different, the risk profiles are different, and the resolution paths are different. Tag every squeeze read explicitly as <strong>single-name</strong> or <strong>index</strong> before you size it.</p>
+<p>Grossman and Zhou (1996) model portfolio insurers in general equilibrium. Like a dealer short gamma, an insurer sells as prices fall and buys as they rise, and a later section returns to the insurers of 1987. Insurers sell to other investors in bad states, and to induce those investors to buy, the risk premium must rise. The authors show that portfolio insurance "increases price volatility, causes mean reversion in asset returns". So the price overshoots within the move and partly comes back afterward. Short gamma means momentum within the move, not necessarily over the days that follow.</p>
 
-<h2 id="when-to-chase-when-to-fade-when-to-step-aside">4 · When to chase, when to fade, when to step aside</h2>
+<p>The measured sizes are small beside the figure's 0.45. In single stocks, Yang (2015), a job-market paper that was not published, finds that moving from the lowest to the highest quintile of option writers' hedging demand raises daily return autocorrelation from −5.0% to −1.6%. That is a change of 3.4 percentage points of autocorrelation, where the figure's weight of 0.45 is an autocorrelation of 45%. <a class="xref" href="8g.html">Chapter 8G</a> gives the rest of the measured effects.</p>
 
-<p>Three rules follow from the case studies of <a class="xref" href="8c.html">Chapter 8C</a>:</p>
+<h3 id="the-divergence-is-nonlinear">The divergence is nonlinear</h3>
 
-<ol>
-<li><strong>Do not chase what is already running.</strong> Once GME hit $200, the squeeze was visible. The dealer hedging that drove it from $20 to $200 had largely completed. The path from $200 to $483 was retail fear of missing out (FOMO) and short covering, not gamma, and its risk-reward was much worse.</li>
-<li><strong>Liquidity constraints break loops abruptly.</strong> Broker restrictions, exchange halts and clearinghouse margin all act as discrete shock absorbers that can collapse the feedback in minutes. Size any squeeze trade on the explicit assumption that <em>50% of the intraday peak is the realistic exit price under broker-restriction scenarios</em>.</li>
-<li><strong>Cover before the catalyst clears.</strong> Squeezes resolve when the structural condition resolves: short interest covered, dealer hedge inventory normalized, or retail attention faded. Whichever resolves first defines the exit. Wait for the one you can actually observe, such as broker restrictions, dealer-side rebalancing footprints in the tape or short-interest reports. Do not wait for the one you would prefer, price exhaustion, which you cannot predict ahead of time.</li>
-</ol>
+<p>A linear reading, that at \(G = 0\) effective volatility equals \(\sigma\), understates what makes the formula matter in practice. Fix \(\sigma = 0.15\), a baseline information volatility of 15%, and a small illustrative feedback coefficient \(\kappa = 0.0010\), then sweep \(G\) across the regimes:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">G (positioning regime)</th><th style="text-align:right">\(1 - \kappa G\)</th><th style="text-align:right">\(\sigma_\text{eff}\)</th></tr></thead><tbody><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−800 (deeply stabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.80</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">8.3%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">−400 (mildly stabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.40</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">10.7%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">0 (neutral)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">1.00</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">15.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+400 (mildly destabilizing)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.60</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">25.0%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+600 (moderate stress)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.40</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">37.5%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+800 (acute stress)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.20</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right"><strong>75%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+900 (near-critical)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.10</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right"><strong>150%</strong></td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+950</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.05</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">300%</td></tr><tr><td class="c-trial" data-label="G (positioning regime)" style="text-align:right">+990 (edge of explosion)</td><td data-label="\(1 - \kappa G\)" style="text-align:right">0.01</td><td data-label="\(\sigma_\text{eff}\)" style="text-align:right">1,500%</td></tr></tbody></table></div></div>
+
+<p>From \(G = +800\) to \(G = +900\), a roughly 12% increase in destabilizing positioning, \(\sigma_\text{eff}\) doubles from 75% to 150%. <strong>That is the operational signal: small changes in aggregate positioning produce outsized realized-volatility consequences in the stress regime.</strong> The slope of the curve makes this exact: differentiating \(\sigma / (1 - \kappa G)\) with respect to \(G\) gives</p>
+
+<div class="eq" id="e-slope">
+\[ \frac{d\sigma_\text{eff}}{dG} = \frac{\kappa\,\sigma}{(1 - \kappa G)^2} \]
+</div>
 
 <div class="worked">
-<span class="ct">Worked example: Sizing for an exit at half the peak</span>
-<p><strong>Step 1: the scenario.</strong> Suppose you buy a squeezing stock at $120 and it runs to an intraday peak of $200. The second rule says to plan for an exit at half the peak, $100.</p>
+<span class="ct">Worked example: How steep the curve gets</span>
+<p><strong>Step 1: at neutral.</strong> At \(G = 0\), <a class="eqref" href="#e-slope"></a> gives \(0.0010 \times 0.15 = 0.00015\) per unit of \(G\), so a hundred more units of \(G\) add about \(100 \times 0.00015 = 0.015\), or 1.5 points of volatility.</p>
 
-<p><strong>Step 2: the loss to size for.</strong> From $120, an exit at $100 loses $20 a share, about 17%, even though the stock traded far above your entry.</p>
+<p><strong>Step 2: in acute stress.</strong> At \(G = +800\) the denominator is \(0.2^2 = 0.04\), so the slope is \(0.00015/0.04 = 0.00375\), which is 25 times as steep. A straight line from there predicts 37.5 more points for the next 100 units of \(G\).</p>
 
-<p><strong>Step 3: the size.</strong> If you can accept a loss of $2,000 on the trade, you can hold \(2{,}000/20 = 100\) shares. A stop 10% below entry, $12 a share, would have allowed 166 shares, and in the restriction scenario those shares would lose about \(166 \times 20 = \$3{,}320\).</p>
+<p><strong>Step 3: the curve.</strong> The table's actual rise from \(G = +800\) to \(+900\) is 75 points, double even that, because the slope keeps growing along the way. The local sensitivity of \(\sigma_\text{eff}\) to \(G\) is unbounded as \(G\) approaches \(1/\kappa\).</p>
 </div>
+
+<p>The Dealer Mechanics Lab draws a lesson for the <span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing.">gamma flip</span>, the level at which estimated dealer gamma crosses zero. It reads the curve as the reason the flip matters as a level, even though no single trade is responsible for it. Read the formula closely and it adds a qualification. At \(G = 0\) damping turns into amplification smoothly, and nothing in <a class="eqref" href="#e-eff"></a> jumps there. The point where the curve turns violent is \(\kappa G = 1\), and it depends on \(\kappa\), which is liquidity, as much as on positioning. No study found tests the flip as a price level (<a class="xref" href="8g.html">Chapter 8G</a>).</p>
+
+<p>The value \(\kappa = 0.0010\) is only illustrative, since in practice \(\kappa\) is fitted to the regime and varies with depth, with dealer aggressiveness and with how concentrated positioning is. The qualitative shape, slow at the wings and explosive near the critical point, is the universal feature. A later section says what \(\kappa = 0.0010\) and \(G = +800\) mean in dollars.</p>
+
+<p><strong>A note on signs.</strong> \(G\) is the <em>negation</em> of standard published GEX. Suppose a vendor reports "GEX = +$2.3B" under the JPM-era convention, where positive means stabilizing. The corresponding \(G\) in <a class="eqref" href="#e-eff"></a> is −$2.3B. Both ways of signing the number coexist in practice, so check which one your model or vendor uses before you read the sign.</p>
+
+<h3 id="explore-the-curve">Explore the curve</h3>
+
+<p>The figure below draws \(\sigma_\text{eff} = \sigma/(1 - \kappa G)\) against \(G\) from −1 to +1. Its variable is labeled "destabilizing gamma G": the negation of published GEX, positive when dealers are net short gamma. Sliders set the underlying \(\sigma\) from 10% to 50%, starting at 20%, and the feedback strength \(\kappa\) from 0 to 2, starting at 0.5. Dashed lines mark \(\sigma\) and the current \(G\), while readouts give \(\kappa G\), the effective volatility and the amplification, with a verdict that runs from strongly damped to explosive.</p>
+
+<p>The <strong>trigger stress</strong> button walks \(G\) from −0.6 to +0.6 over five days, which is published GEX flipping from positive to negative. Press it at the defaults, then raise \(\kappa\) to 1.5 and press it again.</p>
+
+<figure class="fig" id="fig-effective-vol-explorer">
+  <canvas id="effective-vol-explorer-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="effective-vol-explorer-sigma">underlying σ</label>
+      <input type="range" id="effective-vol-explorer-sigma" min="0.1" max="0.5" step="0.01" value="0.2">
+      <output id="effective-vol-explorer-sigma-o" for="effective-vol-explorer-sigma"></output>
+    </div>
+    <div class="ctrl">
+      <label for="effective-vol-explorer-kappa">feedback strength κ</label>
+      <input type="range" id="effective-vol-explorer-kappa" min="0" max="2" step="0.05" value="0.5">
+      <output id="effective-vol-explorer-kappa-o" for="effective-vol-explorer-kappa"></output>
+    </div>
+    <div class="ctrl">
+      <label for="effective-vol-explorer-g">destabilizing gamma G</label>
+      <input type="range" id="effective-vol-explorer-g" min="-1" max="1" step="0.02" value="0">
+      <output id="effective-vol-explorer-g-o" for="effective-vol-explorer-g"></output>
+    </div>
+    <div class="ctrl">
+      <button type="button" id="effective-vol-explorer-stress">trigger stress</button>
+      <output id="effective-vol-explorer-day"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="effective-vol-explorer-su"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-kg"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-se"></output></div>
+    <div class="ctrl"><output id="effective-vol-explorer-amp"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="effective-vol-explorer-vk"></b> <span id="effective-vol-explorer-vt"></span></p>
+  <figcaption><b>The same information vol, damped or amplified by feedback.</b> The curve is
+  σ<sub>eff</sub> = σ / (1 − κ·G) across the destabilizing gamma G, the negation of published
+  GEX (positive when dealers are net short gamma), for the underlying σ and feedback strength κ
+  set by the sliders; the dashed lines mark σ and the current G. Trigger stress to walk G from
+  −0.6 to +0.6 over five days, published GEX flipping from positive to negative, and watch
+  effective vol climb. Raise κ and the curve bends up toward the singularity at G = 1/κ, where
+  the denominator vanishes; the curve is cut at 200%, and past that point the readouts hold at
+  100 times σ.</figcaption>
+</figure>
+
+<p>At the defaults, the stress run lifts effective volatility from 15%, strongly damped at \(\kappa G = -0.30\), to 29%, amplifying at \(\kappa G = +0.30\): less than double. With \(\kappa = 1.5\), the same run reads 24% on day 3 and 43% on day 4, and ends on day 5 at \(\kappa G = +0.90\). Effective volatility there is 200%, ten times the underlying, and the verdict reads explosive. The positioning moved the same distance both times, and only the feedback strength differed.</p>
+
+<p>Past \(G = 1/\kappa\) the formula has no meaning, so the figure cuts its curve at 200% and holds its readouts at 100 times \(\sigma\). To connect the figures, set \(\kappa\) to 0.45 and \(G\) to +1 and then to −1. The amplification readout shows 1.82× and 0.69×, the regime figure's two multipliers and the cascade's two totals.</p>
+
+<h2 id="the-theory-behind-the-formula">4 · The theory behind the formula</h2>
+
+<p>The formula is older than the Dealer Mechanics Lab. A line of papers from the 1990s derived it, or close relatives of it, from explicit models of hedgers whose trades move prices. Knowing that literature tells you what the formula assumes and where it stops being true.</p>
+
+<h3 id="frey-and-stremme-and-frey">Frey and Stremme, and Frey</h3>
+
+<p>Frey and Stremme (1997), in <em>Mathematical Finance</em>, split a market into two groups. "Reference traders" are price takers with an ordinary demand for the stock. "Program traders" follow a hedging rule for a book of options they have written, and so must trade whenever the price moves. Setting supply equal to demand gives the price process, and the abstract reports "an explicit expression for the transformation of market volatility" under the hedgers' impact:</p>
+
+<div class="callout brick">
+<p>It turns out that volatility increases and becomes time and price dependent. The strength of these effects however depends not only on the share of total demand that is due to hedging, but also significantly on the heterogeneity of the distribution of hedged payoffs. Frey and Stremme (1997)</p>
+</div>
+
+<p>In their logarithmic-demand case, as later papers restate it, the volatility becomes \(\sigma/(1 - \rho S \phi_S)\). Here \(\rho\) measures how much the hedgers' trading moves the price, and \(\phi_S\) is how fast their holding changes with the price. That is the book's \(\sigma/(1 - \kappa G)\), with \(\kappa = \rho\) and \(G = S\phi_S\). The last clause of the abstract matters for the rest of this part. A hedged book spread evenly over many strikes changes volatility everywhere a little, while a book concentrated at one strike changes it a lot near that strike and little elsewhere. That is the theoretical root of strike-local effects, <span class="gloss" title="The pull of a strike with heavy open interest on the price of the underlying near expiry, as the hedging of dealers who are long options at that strike sells above it and buys below it. The measured effects are small: at least 16.5 basis points of return distortion per expiration for optionable single stocks, and at least 115 million dollars of S&amp;P 500 futures notional shifted per expiration day for the index.">pinning</span> among them (<a class="xref" href="8e.html">Chapter 8E</a>).</p>
+
+<p>Frey (1998), in <em>Finance and Stochastics</em>, gives the cleanest version. One large trader's holding moves the price directly, and the trader replicates a claim by holding its <span class="gloss" title="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves.">delta</span>. The attempt produces a nonlinear version of the Black-Scholes equation, whose solution Frey proves exists and is unique.</p>
+
+<details class="grind"><summary>Frey's model in one step</summary><div class="grind-body">
+<p><strong>Step 1: the price.</strong> Write \(\alpha_t\) for the large trader's holding of the stock. Frey's price follows</p>
+
+<div class="eq">
+\[ \begin{aligned} dS_t ={}&amp; \mu S_t\,dt + \sigma S_t\,dW_t \\ &amp;+ \rho S_t\,d\alpha_t \end{aligned} \]
+</div>
+
+<p>where \(dW_t\) is the random news of <a class="xref" href="7a.html">Chapter 7A</a> and \(\rho\) is the "market liquidity parameter": each share the trader buys lifts the price by the fraction \(\rho\).</p>
+
+<p><strong>Step 2: the hedge.</strong> A trader who replicates a claim worth \(V(t, S)\) holds \(\alpha_t = V_S\), the claim's delta. When the price moves by \(dS\), the holding changes by \(V_{SS}\,dS\), plus terms in \(dt\) that do not affect volatility.</p>
+
+<p><strong>Step 3: substitute.</strong> The random part of the price move becomes \(dS = \sigma S\,dW + \rho S V_{SS}\,dS\). Collecting the \(dS\) terms gives \(dS\,(1 - \rho S V_{SS}) = \sigma S\,dW\).</p>
+
+<p><strong>Step 4: the volatility.</strong> Dividing through, the price's volatility is \(\sigma/(1 - \rho S V_{SS})\). A claim with a convex payoff has \(V_{SS} &gt; 0\), so its replicator buys after rises and sells after falls, and volatility goes up. That is a dealer who has sold the claim, or a portfolio insurer who promised it: short gamma, \(G = S V_{SS} &gt; 0\). The equation is singular where \(\rho S V_{SS}\) reaches 1.</p>
+</div></details>
+
+<p>State Frey's assumptions whenever you quote the formula: impact is linear and permanent, the hedger rebalances continuously to the delta of a known book, and the feedback stays below its critical value. A later section says how each assumption fails.</p>
+
+<h3 id="other-derivations-and-a-counter-result">Other derivations, and a counter-result</h3>
+
+<p>Three more papers of the 1990s reach the same shape from different starting points.</p>
+
+<ul>
+<li><strong>Platen and Schweizer (1998)</strong> add hedgers' demand to noise and speculative demand in an equilibrium model. Hedging makes volatility "endogenously determined by agents' trading behavior", and their simulations "quantitatively substantiate the idea that option price distortions can be induced by feedback effects from hedging strategies". The feedback bends the implied volatility smile and skew of Chapters 5E and 5G, not only realized volatility.</li>
+<li><strong>Sircar and Papanicolaou (1998)</strong> use reference traders and "programme traders" who hedge by Black-Scholes, and derive a nonlinear pricing equation. Their models "do predict increased implied volatilities with minimal assumptions beyond those of the Black-Scholes theory", and reduce to Black-Scholes when the feedback is removed. When hedgers are a small share of the market, the correction to \(\sigma\) is small, which fits a modest effect on typical days.</li>
+<li><strong>Schönbucher and Wilmott (2000)</strong> derive the modified price process for an illiquid market and simulate the replication of a put, which is portfolio insurance. The family of models they belong to gives volatility of the form \(\sigma/(1 - \rho\lambda(S) S u_{SS})\), rising as the replicating strategy's convexity grows.</li>
+</ul>
+
+<p>Loeper (2018), in <em>The Annals of Applied Probability</em>, gives the rigorous modern version for a hedger whose every trade moves the price linearly. The resulting Black-Scholes equation "is fully non-linear and singular". Loeper shows that it is nonetheless "well posed", and proves the "existence of smooth solutions for a large class of final payoffs". The qualifier "a large class" matters: the equation is still singular, and the results cover payoffs that keep the hedge clear of the singular point.</p>
+
+<p>The sign rule is not a theorem of every model. Basak (1995) models portfolio insurers as optimizing investors in a frictionless general equilibrium. He finds that "the market volatility and risk premium are decreased, and the asset and market price levels increased, by the presence of portfolio insurance". The rule of this chapter comes from models with price impact and limited liquidity. Take those away and the result can reverse.</p>
+
+<p>A newer <span class="gloss" title="A research paper circulated before peer review, often on the SSRN preprint server, and often revised, with different numbers, between versions.">working paper</span> by Sornette, Ulmann and Wehrli, posted on SSRN, adds the asymmetry the nonlinear table shows. It finds that option hedging creates short-lived directional instabilities. The effect is "strongly asymmetric, with a significantly more pronounced effect on the spot price when the option market maker is short compared to long the option". The damping side is bounded, and the amplifying side is not.</p>
+
+<h2 id="portfolio-insurance-and-october-1987">5 · Portfolio insurance and October 1987</h2>
+
+<p><strong><span class="gloss" title="A strategy of the 1980s that gave a stock portfolio a floor by trading stock or index futures to copy a put: selling as prices fell and buying as they rose. Its trades went with the market's moves, like the hedging of a dealer short gamma.">Portfolio insurance</span></strong> was a strategy of the 1980s that gave a stock portfolio a floor without buying listed puts. The insurer replicated a put by trading, selling stock or index futures as prices fell and buying as they rose. That is a synthetic long put, and its hedging is a short-gamma program: it trades with every move, like a dealer short gamma. It is the historical case of the formula's amplifying side.</p>
+
+<p>The Presidential Task Force on Market Mechanisms, known as the Brady Commission, reconstructed the market of October 14 to 20, 1987, from trade records. Its report of January 1988 put the assets under portfolio insurance at about $60 billion to $90 billion, "only 2-3% of equity assets outstanding". On October 19, as summaries of the report give it:</p>
+
+<ul>
+<li>Sell programs by three portfolio insurers made up just under $2 billion of the New York Stock Exchange's sales of just under $21 billion.</li>
+<li>In futures, three portfolio insurers sold the equivalent of $2.8 billion of stock, and portfolio-insurance sales totaled about $6 billion: $4 billion in futures and $2 billion in stock.</li>
+<li>In the first half hour a few insurers sold futures equivalent to just under $400 million of stock, 28% of public volume. Between 11:40 AM and 2:00 PM they sold about 10,000 <span class="gloss" title="An agreement to buy or sell an asset at a set price on a future date. Only a deposit is paid up front, so a future gives exposure with leverage built in.">futures contracts</span>.</li>
+<li>Roughly 40% of futures sales by traders other than market makers came from portfolio insurers.</li>
+</ul>
+
+<p>The Commission concluded that futures-based strategies were not the "sole cause" of the fall but "a significant factor in accelerating and exacerbating the declines". One account of the report puts insurance selling at "roughly 15% of total stock and futures sold that day". Rubinstein (1988), a co-founder of a portfolio-insurance firm and so an interested party, estimated "perhaps 12 per cent of the dollar change in net sold positions on October 19". He judged a large causal role unlikely. He also noted that the crash undermined two preconditions of every portfolio-insurance program: low transaction costs and price continuity. Replication fails exactly when prices gap, the same weakness a short-gamma dealer has.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A small share of assets, a large share of a day</span>
+<p><strong>Step 1: the stock.</strong> At $60 billion to $90 billion, insured assets were 2% to 3% of equities.</p>
+
+<p><strong>Step 2: the flow.</strong> On October 19 insurers sold about $6 billion. In the first half hour, their futures sales were 28% of public volume.</p>
+
+<p><strong>Step 3: the lesson.</strong> A flow that is small against what exists can be large against what trades in a given hour. <span class="gloss" title="The trades in the underlying that dealers must make, summed across all of them, to keep their books neutral to direction as the price moves. It opposes a move when dealers are net long gamma and joins it when they are net short.">Hedge flow</span> per 1% move, the unit of GEX, is a flow, and it has to be set against the market's depth at that moment, which is what \(\kappa\) does.</p>
+</div>
+
+<p>Why so large a fall from so small a share? Gennotte and Leland (1990) put the question in their abstract: "traditional models cannot explain how a relatively small amount of selling could cause so large a price drop". In their model some traders are informed, others infer information from prices, and hedging demand is not fully observed. Markets are then "much less liquid in their model than in traditional models". In the authors' words, "Discontinuities (or 'crashes') can occur even with relatively little hedging". The crash needs the hedging to be unobserved or underestimated. If hedging demand is known, its price impact is much smaller.</p>
+
+<p>Two papers of the same period make the information point from other angles. Grossman (1988) argues that without a traded put there is "less information about the future price volatility associated with current dynamic hedging strategies". As a result, "the stocks' future price volatility can rise because of a current lack of information about the extent to which dynamic hedging strategies are in place". Jacklin, Kleidon and Pfleiderer (1992) show that if the market underestimates dynamic hedging, prices first run above fundamentals, and "the price falls when the amount of portfolio insurance is revealed". Black (1988), in an essay on the crash, noted that futures prices went far below their theoretical values just when portfolio insurers wanted to sell.</p>
+
+<p>The lesson for a GEX reader is double-edged. Listed <span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">open interest</span> is visible, so the hedging it implies can be anticipated, which is Grossman's case for traded options. The hedging a public map cannot see, in FLEX, <span class="gloss" title="Said of a contract negotiated directly between two parties rather than traded on an exchange, with terms they set and credit risk each bears to the other. Abbreviated OTC.">over-the-counter</span> and structured-product books, is the kind that did the damage in these models (<a class="xref" href="8b.html">Chapter 8B</a>).</p>
+
+<p>Kyle and Obizhaeva, in a paper on large bets and stock market crashes in the <em>Review of Finance</em>, measured how badly a linear intuition failed in 1987. Portfolio insurers sold $10.48 billion of index futures and $3.27 billion of NYSE stocks from October 15 to 20, $13.75 billion gross. "Conventional wisdom" predicted declines of 0.51% net and 0.63% gross. Their invariance model, calibrated on over 400,000 portfolio transition orders, predicted 16.77%. The actual decline was 32%.</p>
+
+<h2 id="two-tests-of-the-sign-rule">6 · Two tests of the sign rule</h2>
+
+<h3 id="a-measured-market-currency-options">A measured market: currency options</h3>
+
+<p>Anderegg, Ulmann and Sornette (2022), in the <em>Journal of International Money and Finance</em>, fit a model of this family to real positions. An earlier version was a Swiss National Bank working paper of 2019. Their model has two aggregate traders, an option market maker and an option market taker, "whose exposures reflect the total outstanding positions of all option traders in the market". The net hedge flow moves the spot rate through "a simple linear permanent impact model". Foreign exchange options trade over the counter, with no public open interest, so the authors rebuilt the market maker's gamma from trade-repository records. Their sample runs from October 21, 2017 to June 30, 2018, in EURUSD and USDJPY.</p>
+
+<p>Spot volatility "is increased (decreased) by a negative (positive) gamma exposure" of the market maker. The rebuilt gamma was negative, because option takers were net long options. In size, "a negative gamma exposure of the OMM of approximately -1000 billion USD" leads "to an absolute increase in volatility of 0.7% in EURUSD and 0.9% in USDJPY". Here OMM is the option market maker, and about −1,000 billion dollars is roughly what the authors' reconstruction shows. The gamma is in the authors' own measure, whose unit the abstract does not state. The increases are absolute: 0.7 and 0.9 points of annualized volatility, under one point in the two largest currency pairs. The 2019 version explains the larger USDJPY effect by "the higher market impact of a transaction in the USDJPY spot market", EURUSD being the more liquid. Impact is the book's \(\kappa\): the same dealer gamma does more in the thinner market.</p>
+
+<h3 id="a-simulated-market-liquidity-and-price-discovery">A simulated market: liquidity and price discovery</h3>
+
+<p>Buis, Pieterse-Bloem, Verschoor and Zwinkels (2024), in the <em>Journal of Economic Dynamics and Control</em>, simulate an order book with an <strong><span class="gloss" title="A simulation in which many traders follow simple rules and prices emerge from their orders, used to study what a type of trader does to a market when real data cannot isolate it.">agent-based model</span></strong>. That is a simulation in which many traders follow simple rules and prices emerge from their orders. The authors add delta hedgers with a positive or negative net gamma, and compare normal and stressed conditions. Their findings, in the abstract's words:</p>
+
+<ul>
+<li>"the presence of dynamic hedgers enhances market liquidity under normal conditions";</li>
+<li>"positive gamma helps sustain liquidity in stressed scenarios, while negative gamma depletes it";</li>
+<li>"an increase in the net gamma positioning of dynamic hedgers reduces volatility and increases market stability, whereas a negative gamma positioning increases volatility and makes the market more prone to failure";</li>
+<li>"Price discovery typically worsens when dynamic hedgers become more prevalent, regardless of the sign of their positioning."</li>
+</ul>
+
+<p>These are the two rows the regime table lacked. Negative gamma drains liquidity in stress, which is how \(\kappa\) rises in the same step as \(G\). Because the two move together, the explosive corner of <a class="eqref" href="#e-eff"></a> is reached faster than either alone suggests. And hedging of either sign worsens <strong><span class="gloss" title="The process by which trading moves prices to the level that the available information justifies. A market can be calm without being well informed.">price discovery</span></strong>, the process by which trading moves prices to what the available information justifies. A damped, pinned market is not a better-informed one. The authors suggest steering hedgers' net gamma as a policy tool, most useful for illiquid instruments. The simulation's background traders place orders by simple random rules, a "zero-intelligence" order book, so the result is a model's, not an estimate.</p>
+
+<p>A market where the dealer's gamma is measured rather than assumed points the same way. Atanasova and co-authors (2025) study the bitcoin options venue Deribit from January 2021 to December 2024. When market makers' aggregate gamma inventory is negative, they "trade in the same direction as BTC price momentum", and option spreads widen. A one-standard-deviation fall in the measure goes with effective spreads 0.12% wider for <span class="gloss" title="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it.">out-of-the-money</span> calls and 0.19% for puts.</p>
+
+<h2 id="what-sets-impact-in-dollars-and-points">7 · What sets κ: impact, in dollars and points</h2>
+
+<h3 id="the-units">The units</h3>
+
+<p>Only \(\kappa G\) matters, but a reader holding a GEX number in dollars needs \(\kappa\) in matching units. Take \(G\) in billions of dollars per 1% move, the negation of published GEX. Write \(\lambda\) for the impact of hedge flow: the index points that $1 billion of buying or selling moves the index.</p>
+
+<p>A 1% move is \(0.01S\) points. By <a class="xref" href="8a.html">Chapter 8A</a>'s hedge-flow formula it makes the dealers trade \(G\) billion dollars with the move, and that flow moves the index a further \(\lambda G\) points. The feedback per unit of move is the second move over the first:</p>
+
+<div class="eq" id="e-units">
+\[ \kappa G = \frac{\lambda\,G}{0.01\,S} \]
+</div>
+
+<p>so \(\kappa = \lambda/(0.01S)\) per billion dollars. At \(S = 6{,}000\), a 1% move is 60 points.</p>
+
+<div class="worked">
+<span class="ct">Worked example: The table in dollars and points</span>
+<p><strong>Step 1: the table's κ.</strong> With \(G\) in billions of dollars per 1% move, \(\kappa = 0.0010\) at <span class="gloss" title="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it.">SPX</span> 6,000 means \(\lambda = 0.0010 \times 60 = 0.06\) points per $1 billion.</p>
+
+<p><strong>Step 2: the table's G.</strong> The acute-stress row, \(G = +800\), is then $800 billion of dealer short gamma per 1% move, and the last row $990 billion. The Dealer Mechanics Lab puts aggregate dealer GEX in the range of $20 billion to $100 billion per 1% move (<a class="xref" href="8a.html">Chapter 8A</a>), so the table's stress rows sit far above any total it quotes.</p>
+
+<p><strong>Step 3: a larger impact.</strong> Take instead \(\lambda = 1\) point per $1 billion, the starting impact of the pinning figure in <a class="xref" href="8e.html">Chapter 8E</a>. Then \(\kappa = 1/60\) per billion, and the acute-stress \(\kappa G = 0.8\) needs only \(0.8 \times 60 = \$48\) billion of dealer short gamma per 1% move.</p>
+</div>
+
+<p>The same rows, restated at the two impacts. \(G\) is in billions of dollars per 1% move, so a negative \(G\) is a positive published GEX.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">\(\kappa G\)</th><th style="text-align:right">\(\sigma_\text{eff}\) at \(\sigma = 15\%\)</th><th style="text-align:right">\(G\) at 0.06 points per $1B</th><th style="text-align:right">\(G\) at 1 point per $1B</th></tr></thead><tbody><tr><td class="c-trial" data-label="\(\kappa G\)" style="text-align:right">−0.4</td><td data-label="\(\sigma_\text{eff}\) at \(\sigma = 15\%\)" style="text-align:right">10.7%</td><td data-label="\(G\) at 0.06 points per $1B" style="text-align:right">−$400B</td><td data-label="\(G\) at 1 point per $1B" style="text-align:right">−$24B</td></tr><tr><td class="c-trial" data-label="\(\kappa G\)" style="text-align:right">+0.4</td><td data-label="\(\sigma_\text{eff}\) at \(\sigma = 15\%\)" style="text-align:right">25.0%</td><td data-label="\(G\) at 0.06 points per $1B" style="text-align:right">+$400B</td><td data-label="\(G\) at 1 point per $1B" style="text-align:right">+$24B</td></tr><tr><td class="c-trial" data-label="\(\kappa G\)" style="text-align:right">+0.8</td><td data-label="\(\sigma_\text{eff}\) at \(\sigma = 15\%\)" style="text-align:right">75%</td><td data-label="\(G\) at 0.06 points per $1B" style="text-align:right">+$800B</td><td data-label="\(G\) at 1 point per $1B" style="text-align:right">+$48B</td></tr><tr><td class="c-trial" data-label="\(\kappa G\)" style="text-align:right">+0.9</td><td data-label="\(\sigma_\text{eff}\) at \(\sigma = 15\%\)" style="text-align:right">150%</td><td data-label="\(G\) at 0.06 points per $1B" style="text-align:right">+$900B</td><td data-label="\(G\) at 1 point per $1B" style="text-align:right">+$54B</td></tr></tbody></table></div></div>
+
+<p>Now run the check the other way. Take a constant \(\lambda\) of 1 point per $1 billion, and dealers short $20 billion to $100 billion of gamma per 1% move. That gives \(\kappa G\) from 0.33 to 1.67: amplifying at the bottom of the range and past the explosion point at the top. Nothing in the evidence shows the index behaving that way on ordinary days (<a class="xref" href="8g.html">Chapter 8G</a>). Either impact per dollar of hedge flow is smaller and more curved than a constant \(\lambda\), or the flow actually hedged is much smaller than gross GEX, or both. What impact research says about \(\lambda\) decides which.</p>
+
+<h3 id="what-impact-research-says">What impact research says</h3>
+
+<p>The idea of one number for impact per unit of flow goes back to Kyle (1985). In his model of an informed trader, the market makers' price rises in proportion to net <span class="gloss" title="The stream of buy and sell orders arriving at a market, and the imbalance between them.">order flow</span>. The slope, known as Kyle's lambda, is the price move per unit of flow, and market depth is its inverse. In that model the slope is set by how much information the flow might carry. Hedge flow is mechanical, and a market that can recognize it has less reason to move far on it, so its impact tends to be smaller and to fade.</p>
+
+<p>Measured impact is not linear in size. The price impact of a metaorder, a large order worked in pieces, grows roughly as the square root of its size, the law of <a class="xref" href="2d.html">Chapter 2D</a>, <a class="xref xeq" href="2d.html#e-sqrt">(2D.5)</a>. In the form the research uses,</p>
+
+<div class="eq" id="e-sqrtimpact">
+\[ I \approx Y\,\sigma_D\sqrt{\frac{Q}{V_D}} \]
+</div>
+
+<p>where \(I\) is the move, \(Q\) the size of the order, \(V_D\) the daily volume and \(\sigma_D\) the daily volatility, with \(Y\) a constant of order one. Sato and a co-author survey all liquid Tokyo Stock Exchange stocks over eight years. They find the exponent "equal to 1/2 within statistical errors at both the individual stock level and the individual trader level". Bucci and co-authors (2019) find "a clear crossover between a linear market impact regime and a square-root regime" in 8 million US institutional trades. Zarinelli and co-authors (2015) find that the square root fits "only across about two orders of magnitude in order size", a logarithm fitting better across five. They also find that impact relaxes on average to "approximately 2/3 of the peak impact". Tóth and co-authors (2011) trace the law to a latent order book that "vanishes around the current price".</p>
+
+<div class="worked">
+<span class="ct">Worked example: A day's hedge flow under the square root</span>
+<p><strong>Step 1: the assumptions.</strong> These inputs are assumptions for illustration, not measurements: a daily volatility of 1%, about 16% a year; $500 billion of S&amp;P 500 exposure traded a day; and \(Y\) between 0.5 and 1.</p>
+
+<p><strong>Step 2: $1 billion.</strong> By <a class="eqref" href="#e-sqrtimpact"></a>, \(\sqrt{1/500} = 0.045\), so a $1 billion flow over a day moves the index by \(Y \times 1\% \times 0.045\). For \(Y\) from 0.5 to 1 that is 2.2 to 4.5 bps, or 1.3 to 2.7 points at 6,000.</p>
+
+<p><strong>Step 3: $10 billion.</strong> Now \(\sqrt{10/500} = 0.14\), a move of 7 to 14 bps, or 4 to 8.5 points. Ten times the flow moves the index about three times as far.</p>
+
+<p><strong>Step 4: the loop gain.</strong> Dealers short $20 billion to $100 billion per 1% move would, on these assumptions, add 0.10 to 0.45 of each 1% move. That is a gain of 0.10 to 0.45, against 0.33 to 1.67 with a constant 1 point per $1 billion.</p>
+</div>
+
+<p>Four more findings bracket \(\lambda\) for the index:</p>
+
+<ul>
+<li><strong>The permanent anchor.</strong> Gabaix and Koijen (2021), in an NBER working paper, estimate that "investing $1 in the stock market increases the market's aggregate value by about $5", a price elasticity of demand of 0.2. It is an estimate for persistent flows over a quarter, and it is contested. At an assumed US market value of $55 trillion, $1 billion of persistent flow would add about $5 billion, roughly 1 bp or half an index point at 6,000. Hedge flow that later reverses leaves less than that behind, while its transient impact is larger.</li>
+<li><strong>Predictable flows.</strong> Brøgger (2021) finds that the daily rebalancing of leveraged volatility products is predictable in size, sign and timing. Yet "larger and more predictable flows have smaller price impact coefficients, and ... there are no excess profits from trading ahead of rebalancing flows". A flow everyone can see coming is partly absorbed in advance, which is Gennotte and Leland's point from the other side.</li>
+<li><strong>Stress.</strong> Kyle and Obizhaeva's crash comparisons show how far impact can rise. On May 6, 2010, a seller's program of 75,000 E-mini contracts, about $4.1 billion, coincided with a 5.12% drop in five minutes, from 1,113 to 1,056, against an invariance prediction of 0.61%. In 1987 the actual fall was about twice the prediction, and in 2010 about eight times. The authors read the larger-than-predicted drops as a sign that "rapid selling exacerbates transitory price impact".</li>
+<li><strong>Depth over time.</strong> A working paper by Boyarchenko, Larsen, Venter and Whelan is described in Larsen's 2024 doctoral thesis. It finds that "the depth and dealer number of the S&amp;P 500 futures contract have decreased by 80% over a ten-year period from 2012 to 2022". It is unpublished, and the figure depends on how it defines depth. If it holds, the same GEX moves the index more than it did a decade before, so GEX numbers from different years are not comparable without a depth adjustment.</li>
+</ul>
+
+<p>No published estimate gives the impact of dealer hedge flow in SPX in points per $1 billion. The pinning figure's range of 0 to 3 points per $1 billion spans the calm-day bracket for flows worked over a day. Stress would need values several times higher.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Measured effects, read as loop gains</span>
+<p><strong>Step 1: <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options.</strong> Amaya, Garcia-Ares, Pearson and Vasquez (2025), a working paper distributed by Cboe, bound the effect of market makers' 0DTE gamma on S&amp;P 500 volatility (<a class="xref" href="8g.html">Chapter 8G</a> gives the study). It adds at most 3.3 points of annualized daily volatility, and 6.4 points over 30-minute periods. Assume an information volatility of 15%. Then \(\sigma_\text{eff}/\sigma\) is at most \(18.3/15 = 1.22\), which is \(1/(1 - \kappa G)\) for \(\kappa G = 1 - 15/18.3 = 0.18\). Over 30 minutes, \(1 - 15/21.4 = 0.30\).</p>
+
+<p><strong>Step 2: a leveraged-ETF episode.</strong> Zhao (2026), an arXiv preprint, estimates that in Korea in 2026, self-reinforcing leveraged-ETF rebalancing "raised SK Hynix's annualized volatility from 100.0% to 136.7% over nine weeks". That is a multiplier of 1.367, a gain of \(1 - 1/1.367 = 0.27\).</p>
+
+<p><strong>Step 3: the comparison.</strong> Both gains are far below 1, and far below the table's stress rows. No study found estimates an SPX feedback gain near the singular point.</p>
+</div>
+
+<h2 id="what-the-formula-leaves-out">8 · What the formula leaves out</h2>
+
+<p>Each of the formula's assumptions fails in a known way, and each failure has a literature:</p>
+
+<ol>
+<li><strong>Linear, permanent impact.</strong> Impact is concave and partly transient, as above.</li>
+<li><strong>Continuous hedging of a known book.</strong> Almgren and Li (2016) find that an optimal hedger "trades smoothly towards the classical Black-Scholes delta, with trading intensity proportional to instantaneous mishedge and inversely proportional to illiquidity". Aubert, Chevalier and Ly Vath (2025) model a market maker whose hedging has transient as well as permanent impact, and who hedges in discrete bursts rather than continuously. Either way the flow is spread out and lumpy, not delivered at each tick.</li>
+<li><strong>Everyone else's demand is unchanged.</strong> Other traders anticipate predictable flow and trade against it, as Brøgger's result shows, so gross mechanical flow is not net price pressure.</li>
+<li><strong>Feedback below its critical value.</strong> Near \(\kappa G = 1\) the smooth model gives way to gaps and crashes, as in Gennotte and Leland's model and Kyle and Obizhaeva's comparisons.</li>
+</ol>
+
+<p>Two further omissions matter for anyone reading a map of open-interest gamma. The first is new trades. Egebjerg and Kokholm (2024), in an SSRN working paper, split the impact of market makers' hedging in two. The "gamma effect" is rebalancing an unchanged book as spot moves, and the "inventory effect" is hedging new option trades. Studying the gamma effect alone "can underestimate the total effect when the OMM's inventory adjustments reinforce the gamma impact and overestimate it when the adjustments move in the opposite direction". In SPX data, both components "are significant and with impact in line with the model predictions". A burst of customer call buying is hedged at once and moves the index even when the stock of gamma has not changed. A map of yesterday's open interest shows only the first effect.</p>
+
+<p>The second omission is other hedgers. \(G\) in the formula is everyone who trades with the move, not only option dealers. A leveraged or inverse ETF with assets \(A\) and multiple \(L\) trades \(L(L-1)xA\) after a day's return \(x\), always with the move (<a class="xref" href="8h.html">Chapter 8H</a>). Tuzun (2013), in a Federal Reserve working paper, estimated for the fund assets of that time that "A 1% increase in broad stock-market indexes induces LETFs to originate rebalancing flows equivalent to $1.04 billion worth of stock". Volatility-targeting funds and trend followers also trade with moves, on longer lags. Target-date funds trade against them: Parker, Schoar and Sun (2023) find that they move retirement investors into "macrocontrarian strategies that sell stocks after relatively good stock market performance". Dealer GEX is one term in the market's net \(G\), and a map of option gamma shows none of the others.</p>
+
+<h2 id="how-large-the-feedback-is-in-practice">9 · How large the feedback is in practice</h2>
+
+<p>The dealer-feedback story is real and quantifiable, but its practical effect is modest on a typical day. <a class="xref" href="8g.html">Chapter 8G</a> reviews the studies that measure it and sets them side by side in their own units. They run from Barbon and Buraschi's intraday momentum and reversal in stocks to the 0DTE studies of Dim, Eraker and Vilkov and of Adams and co-authors.</p>
+
+<p>In the Dealer Mechanics Lab's reading, the episodes that everyone remembers are February 2018, March 2020, the GME squeeze and the August 5, 2024 unwind. They are the <strong>right tail</strong> of this distribution, where feedback briefly approached the unstable threshold (Chapters 8H and 8I). On most days, GEX is a probabilistic prior you can use to bias your strategy selection, not a deterministic forecast.</p>
+
+<p>What to do with a regime reading is <a class="xref" href="8j.html">Chapter 8J</a>'s subject, and the book's two sources weigh it differently. The Dealer Mechanics Lab pairs the sign of GEX with the shape of the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> <span class="gloss" title="How implied volatility varies with time to expiry for the same underlying. It is in contango when longer-dated volatility is higher, and in backwardation when shorter-dated volatility is higher.">term structure</span> as a decision boundary for choosing strategies. The Edge Book keeps the sign as a low-confidence filter, worth 10% to 15% of one filter's weight, and ignores it when it disagrees with the term structure (<a class="xref" href="10h.html">Chapter 10H</a>). <a class="xref" href="8j.html">Chapter 8J</a> sets out both, and turns the regime into a multiplier on size rather than a trigger for trades.</p>
 
 <div class="callout practice">
 <span class="ct">In practice</span>
-<p>Keep the checklist as a small table and update it as data arrive. Tag each precondition <strong>MET</strong> when it is measured and present, <strong>WATCH</strong> when it is building, <strong>NO</strong> when it is absent, and <strong>NEEDS DATA</strong> when you cannot measure it. P and V need only daily prices. G needs the option chain with its open interest, and D needs FINRA's dark-pool short volume. A NEEDS DATA tag is not a NO: it means the checklist is incomplete, and an incomplete checklist does not support a trade.</p>
+<p>In an account, the regime changes size and stops before it changes which trades you take. A stop set at two standard deviations of a day's move sits at about 1.9% when effective volatility is 15%, because a day's standard deviation is then \(15\%/\sqrt{252} = 0.94\%\) (<a class="xref" href="5e.html">Chapter 5E</a>). At 29%, the top of the explorer's default stress run, the same rule puts the stop at about 3.7%, and a stop left at 1.9% is hit by ordinary noise. Size falls for the same reason: with the stop nearly twice as far away, the same dollar risk buys about half the position.</p>
 </div>
 
 <div class="callout warn">
 <span class="ct">When it fails</span>
-<p>The checklist is built from four episodes, read after the fact, and the joint signal is rare. Loops also break abruptly, often in minutes, when a broker restricts buying or an exchange halts trading, and the price can gap through any stop. That is why rule 2 sizes for an exit at half the peak rather than at a stop price.</p>
+<p>The regime read fails in three ways. The sign itself can be wrong, since it rests on a convention about who holds what (<a class="xref" href="8b.html">Chapter 8B</a>). \(\kappa\) is not a constant: when depth vanishes, the same destabilizing gamma that meant mild amplification can approach the singular point, where a linear intuition badly understates the move (<a class="xref" href="8h.html">Chapter 8H</a>). And the formula's own assumptions, linear permanent impact and continuous hedging of a known book, fail most in the episodes where it predicts the most.</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">Decision rule</span>
+<p>Read the regime as a statement about volatility, and convert before you compute:</p>
+
 <ul>
-<li><strong>All three preconditions met, no catalyst yet:</strong> check the catalyst; do not bet ahead of it.</li>
-<li><strong>Squeeze already visible and running:</strong> do not chase it; the gamma part of the move is largely done.</li>
-<li><strong>In a squeeze trade:</strong> size for an exit at half the intraday peak, and exit when the first observable structural condition resolves.</li>
-<li><strong>Before any of this:</strong> tag the setup as single-name or index, and read any GEX input as a sign, not a size (<a class="xref" href="10h.html">Chapter 10H</a>).</li>
+<li><strong>Convert the sign first.</strong> \(G\) is minus published GEX, and published GEX carries a vendor's convention (<a class="xref" href="8b.html">Chapter 8B</a>). Check both before you read either.</li>
+<li><strong>Use the formula for direction and shape, not for a number.</strong> No published estimate gives \(\kappa\) for SPX hedge flow, so do not turn a GEX number into a volatility forecast.</li>
+<li><strong>Watch depth as closely as positioning.</strong> The same \(G\) matters more on a thin day, when \(\kappa\) is high, and thin depth and short gamma tend to arrive together.</li>
+<li><strong>Size stops from effective volatility</strong>, as in the practice callout, and cut size when dealers are short gamma and the market is thin at the same time.</li>
+<li><strong>Leave the choice of strategy to <a class="xref" href="8j.html">Chapter 8J</a></strong>, where the sign is a size multiplier, not a trigger.</li>
 </ul>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: chasing a visible squeeze</span>
-<p>The headline pattern, a stock up several times in days, looks like the setup. By then the dealer hedging that drove it has largely completed, and what remains is attention and short covering, which can stop in minutes. The GME path from $200 to $483 was that phase, with much worse risk-reward than the move before it.</p>
+<span class="ct">Common mistake: reading the regime as a forecast</span>
+<p>Positive GEX does not mean the market cannot move: on most days the regime is only a probabilistic prior. The episodes that did damage were the right tail, when the feedback briefly approached its unstable threshold. A sizing rule has to survive those episodes, not only the typical day.</p>
 </div>
 
 <div class="callout warn">
-<span class="ct">Common mistake: treating an index squeeze like a single-name one</span>
-<p>Commentary often uses one word for both kinds of squeeze. An index squeeze needs no short interest, can blow out in either direction and resolves as dealers' capacity to rebalance returns. A single-name squeeze needs heavy short interest and retail call buying, runs on the long side and ends with attention, covering or a broker's restriction. Tag the setup before you size it.</p>
+<span class="ct">Common mistake: mixing up G and GEX</span>
+<p>The feedback formula uses \(G\), the negation of published GEX. Put a vendor's "+$2.3B" into it unconverted, and a stabilizing regime reads as an amplifying one. Convert the sign first, and then check the vendor's convention from <a class="xref" href="8b.html">Chapter 8B</a> as well. A dollar GEX also needs an impact in points per dollar before it means anything in <a class="eqref" href="#e-eff"></a>, by <a class="eqref" href="#e-units"></a>.</p>
 </div>
 
 <div class="callout brick">
 <span class="ct">What to carry forward</span>
 <ul>
-<li>A squeeze needs structural concentration, mechanical buying and a liquidity constraint together, plus a catalyst to trigger it. Any one alone is insufficient.</li>
-<li>P, V, G and D turn the preconditions into live signals; their alignment is rare and calls for a catalyst check, not a bet.</li>
-<li>Single-name and index squeezes share a mechanism but differ in short interest, catalyst, speed, asymmetry and resolution.</li>
-<li>Do not chase what is running, size for an exit at half the intraday peak, and exit on the first structural condition you can observe.</li>
+<li>Long dealer gamma (positive GEX) makes hedging trade against moves: mean reversion and compressed volatility. Short dealer gamma (negative GEX) makes it trade with them: momentum and expanded volatility.</li>
+<li>With destabilizing gamma \(G = -\text{GEX}\), effective volatility is \(\sigma/(1 - \kappa G)\): damped for \(G &lt; 0\), amplified for \(G &gt; 0\), and unbounded as \(G\) nears \(1/\kappa\). Its slope grows as \(1/(1 - \kappa G)^2\), so small changes in positioning matter most in stress.</li>
+<li>The formula is Frey and Stremme's (1997) and Frey's (1998), from models with linear, permanent impact and continuous hedging of a known book. The sign rule holds in models with impact and limited liquidity, not in every equilibrium model.</li>
+<li>In dollars, \(\kappa G = \lambda G/(0.01S)\). The illustrative \(\kappa = 0.001\) is 0.06 points per $1 billion, and its stress rows are hundreds of billions per 1%. Measured impact is concave, lower for predictable flow and several times higher in fast one-sided selling.</li>
+<li>Measured effects are modest on typical days and large only in the right tail. What to do with the regime is <a class="xref" href="8j.html">Chapter 8J</a>'s subject.</li>
 </ul>
 </div>
 
-<h2 id="check-yourself">5 · Check yourself</h2>
+<h2 id="check-yourself">10 · Check yourself</h2>
 <div class="problems">
 <div class="prob">
 <p class="pnum">Question 1</p>
-<p>Over 21 days a stock rises 0.8% on 14 days and falls 0.4% on 7. What is P, and does it pass the 0.4 line?</p>
+<p>With \(\sigma = 20\%\) and \(\kappa = 0.5\), what is effective volatility at \(G = +0.8\), and what does that \(G\) say about dealers?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>The average return is \((14 \times 0.8\% - 7 \times 0.4\%)/21 = 8.4\%/21 = 0.4\%\) and the average size is \((11.2\% + 2.8\%)/21 = 0.667\%\). So \(P = 0.4/0.667 = 0.6\), which passes the line.</p>
+<p>Since \(1 - 0.5 \times 0.8 = 0.6\), effective volatility is \(0.20/0.6 = 33\%\). A positive \(G\) is negative published GEX: dealers are net short gamma, and their hedging amplifies moves.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 2</p>
-<p>A stock has short interest of 60% of its float and a gamma ratio of 0.7. Its spreads are normal and its price rises steadily without gaps. Do squeeze conditions exist?</p>
+<p>With \(\sigma = 0.15\) and \(\kappa = 0.0010\), how much does effective volatility rise when \(G\) moves from +400 to +600, and when it moves from −600 to −400?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Not yet. Structural concentration is met, and mechanical buying may be building, but there is no sign of a liquidity constraint. Tag that row NO, or WATCH if spreads start to widen, and wait.</p>
+<p>From +400 to +600 it rises from 25% to 37.5%, which is 12.5 points. From −600 to −400 it rises from \(0.15/1.6 = 9.4\%\) to \(0.15/1.4 = 10.7\%\), about 1.3 points. The same 200 units of positioning do about ten times as much on the destabilizing side.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 3</p>
-<p>You bought shares at $80 in a squeezing stock, and the intraday peak is $150. What exit price does the second rule tell you to plan for, and what does it cost you?</p>
+<p>Why do the regime figure's negative-GEX paths trend, although the random shocks have no drift?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Half the peak, $75, a loss of $5 a share against your entry, although the stock traded almost twice as high. Size the position so that this loss fits your budget.</p>
+<p>Each return carries +0.45 times the one before, so a move tends to be followed by another in the same direction, which is positive autocorrelation, or momentum. Over many steps each shock's effect on the price is multiplied by \(1/(1 - 0.45) = 1.82\).</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 4</p>
-<p>All four indicators are high on the same day. What do you do next, and why?</p>
+<p>A vendor shows GEX of −$15 billion per 1% move with SPX at 6,000. If each $1 billion of hedge flow moves the index 2 points, what is \(\kappa G\), and what does <a class="eqref" href="#e-eff"></a> give for an information volatility of 16%? Why should you not trust the answer?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>Check the catalyst: news, positioning around options expiry or retail coordination. The alignment is a positive screen that raises the probability of a squeeze, not a reason to bet ahead of one.</p>
+<p>\(G = +15\), so by <a class="eqref" href="#e-units"></a> \(\kappa G = 2 \times 15/60 = 0.5\), and effective volatility is \(16\%/0.5 = 32\%\). The answer rests on a constant impact of 2 points per $1 billion, which no study measures for SPX. Real impact is concave and partly transient, the flow actually hedged can be smaller than gross GEX, and the sign itself rests on the vendor's convention.</p>
 </div></details>
 </div>
 <div class="prob">
 <p class="pnum">Question 5</p>
-<p>Why tag a squeeze as single-name or index before sizing it?</p>
+<p>Portfolio insurance covered only 2% to 3% of equity assets in 1987. How could it matter so much?</p>
 <details><summary>Answer</summary><div class="sol">
-<p>The two differ in what they require, how fast they run, which way they can break and how they end. An exit plan that suits one can be wrong for the other: a single-name squeeze can run for days to weeks, while an index squeeze can run its course in hours.</p>
+<p>What matters is the flow against what trades at the moment, not the stock against what exists. On October 19 insurers sold about $6 billion, and in the first half hour their futures sales were 28% of public volume. Gennotte and Leland add that when the market cannot see the hedging, it is far less liquid than traditional models assume, so relatively little hedging can cause a crash.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>In Frey's model, where does the formula break, and what does the break mean?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Where \(\rho S V_{SS}\), the book's \(\kappa G\), reaches 1. There the nonlinear Black-Scholes equation is singular: the hedger's own trades would move the price as much as the move they respond to, and the smooth price process no longer exists. Models that go past that point, such as Gennotte and Leland's, produce gaps and crashes rather than a very high but finite volatility.</p>
 </div></details>
 </div>
 </div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- regime-path-sim ---------- */
+(function () {
+  var U = 'regime-path-sim';
+  var regime = DL.seg(U + '-reg', function () { draw(); });
+
+  /* the app's paths: from 100, each step's return is 0.08%·z plus the feedback
+     −sign·0.45·(previous return), sign +1 for positive GEX and −1 for negative;
+     six paths from the seeds 0, 7, ..., 35, the same six for both regimes */
+  function generate(gexSign, seed) {
+    var rng = DL.rng(seed), out = [100], S = 100, k = 0.45;
+    for (var i = 1; i <= 60; i++) {
+      var baseRet = 0.0008 * DL.gauss(rng);
+      var prev = out[out.length - 1] / (out.length > 1 ? out[out.length - 2] : 100) - 1;
+      var feedback = -gexSign * k * prev;
+      S *= 1 + baseRet + feedback;
+      out.push(S);
+    }
+    return out;
+  }
+  var PATHS = { pos: [], neg: [] };
+  for (var i = 0; i < 6; i++) {
+    PATHS.pos.push(generate(1, i * 7));
+    PATHS.neg.push(generate(-1, i * 7));
+  }
+  /* one frame for both regimes, fitted to all twelve paths, so that switching
+     compares like with like (the app's frame is never narrower than 92 to 108) */
+  var all = [].concat.apply([], PATHS.pos.concat(PATHS.neg));
+  var LO = Math.min.apply(null, all), HI = Math.max.apply(null, all), PY = (HI - LO) * 0.08;
+  var steps = [];
+  for (var t = 0; t <= 60; t++) steps.push(t);
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sc = regime(), col = DL.color(sc === 'pos' ? 'insight' : 'plain');
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 60, ymin: LO - PY, ymax: HI + PY, xlabel: 'step',
+                              pad: { l: 40, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [0, 10, 20, 30, 40, 50, 60], ny: 5, y: function (v) { return DL.num(v, 0); } });
+    DL.hline(p, 100, { color: DL.color('ink-faint'), dash: [3, 3] });
+    PATHS[sc].forEach(function (path, j) {
+      DL.line(p, steps, path, { color: DL.fade(col, 0.45 + j * 0.1), width: 1.3 });
+    });
+    p.text(0, HI + PY, sc === 'pos' ? 'positive GEX · paths cluster' : 'negative GEX · paths fan out',
+           { dy: -6, font: '11px ' + DL.color('sans'), color: col });
+  });
+})();
+
+/* ---------- feedback-cascade ---------- */
+(function () {
+  var U = 'feedback-cascade';
+  var KG = DL.$(U + '-kg'), NN = DL.$(U + '-n');
+  var ROUNDS = 12, XT = ROUNDS + 2, st;
+
+  /* The cascade of the chapter's feedback multiplier, in units of the shock: the news moves
+     the price by 1, and round n of hedging adds (kG)^n, so after n rounds the total is
+     (1 - (kG)^(n+1)) / (1 - kG), which tends to 1 / (1 - kG) while |kG| < 1 */
+  function compute() {
+    var kg = +KG.value, n = +NN.value, steps = [], tot = [], t = 0;
+    for (var i = 0; i <= ROUNDS; i++) {
+      var s = Math.pow(kg, i);
+      steps.push(s);
+      t += s;
+      tot.push(t);
+    }
+    st = { kg: kg, n: n, steps: steps, tot: tot, lim: 1 / (1 - kg) };
+  }
+
+  /* the effective vol explorer's names for the regimes, on kG */
+  function regime(d) {
+    if (d > 0.7) return 'Explosive.';
+    if (d > 0) return 'Amplifying.';
+    if (d === 0) return 'Neutral.';
+    if (d > -0.3) return 'Damped.';
+    return 'Strongly damped.';
+  }
+  function eps(x, d) { return DL.num(x, d == null ? 2 : d) + 'ε'; }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var hi = Math.max(st.lim, Math.max.apply(null, st.tot)) * 1.14;
+    var p = new NMT.Plot(c, { xmin: -0.7, xmax: XT + 0.7, ymin: 0, ymax: hi,
+                              pad: { l: 40, r: 12, t: 24, b: 26 } });
+    var ty = DL.ticks(0, hi, 4), dp = ty.step >= 1 ? 0 : ty.step >= 0.1 ? 1 : 2;
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.7,
+                 y: function (v) { return v === 0 ? '0' : DL.num(v, dp); } });
+    var news = DL.color('accent'), col = st.kg > 0 ? DL.color('plain') : DL.color('insight');
+    var faint = DL.color('ink-faint'), soft = DL.color('ink-soft');
+
+    /* the limit, dashed across, and as the last bar */
+    DL.hline(p, st.lim, { color: soft, dash: [5, 4], width: 1.2 });
+    DL.bars(p, [XT], [st.lim], { w: 0.72, color: DL.fade(DL.color('ink'), 0.28) });
+    p.text(XT, st.lim, eps(st.lim), { dy: -5, align: 'center', font: font(), color: DL.color('ink') });
+
+    /* the shock, and each round of hedging from where the last one ended */
+    for (var i = 0; i <= st.n; i++) {
+      var from = i === 0 ? 0 : st.tot[i - 1];
+      DL.bars(p, [i], [st.tot[i]], { base: from, w: 0.72, color: i === 0 ? news : DL.fade(col, 0.85) });
+      if (i < st.n) p.seg(i + 0.36, st.tot[i], i + 0.64, st.tot[i], { color: faint, width: 1 });
+    }
+
+    /* rounds along the bottom: every one when there is room, every other one when not */
+    var room = p.X(1) - p.X(0) > 22, xs = [0];
+    for (var r = 1; r <= ROUNDS; r++) if (room || r % 2 === 0) xs.push(r);
+    xs.push(XT);
+    DL.xticks(p, xs, function (x) { return x === 0 ? 'news' : x === XT ? 'total' : String(x); });
+    p.text(-0.7, hi, 'running total, in units of the news shock ε',
+           { dx: -34, dy: -8, font: font(), color: soft });
+  });
+
+  function update() {
+    compute();
+    var n = st.n, run = st.tot[n], share = run / st.lim, last = st.steps[n];
+    DL.out(U + '-kg-o', DL.signed(st.kg, 2));
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-tot', 'total ε/(1 − κG) = ' + eps(st.lim));
+    DL.out(U + '-run', 'after ' + n + (n === 1 ? ' round: ' : ' rounds: ') + eps(run) +
+                       ' (' + DL.pct(share, 0) + ')');
+    DL.out(U + '-last', n === 0 ? 'no hedging yet'
+                                : 'round ' + n + ' adds ' + (last === 0 ? 'nothing' : Math.abs(last) < 0.005 ? 'under 0.01ε'
+                                                                               : DL.signed(last, 2) + 'ε'));
+    DL.out(U + '-vk', regime(st.kg));
+    var times = DL.num(st.lim, 2) + ' times the news';
+    if (st.kg === 0) {
+      DL.out(U + '-vt', 'With no feedback the dealers add nothing, and the total is the news itself.');
+    } else if (st.kg < -0.7) {
+      DL.out(U + '-vt', 'Each round opposes the move before it and shrinks only slowly, so the total zigzags toward ' +
+                        times + '.');
+    } else if (st.kg < 0) {
+      DL.out(U + '-vt', 'Each round opposes the move before it, so the rounds alternate and the total settles at ' +
+                        times + '.');
+    } else if (st.kg <= 0.7) {
+      DL.out(U + '-vt', 'Each round joins the move before it, so the total grows to ' + times + '.');
+    } else {
+      DL.out(U + '-vt', 'Each round joins the move before it and shrinks only slowly: the total heads for ' +
+                        times + '.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-kg', U + '-n'], update);
+})();
+
+/* ---------- effective-vol-explorer ---------- */
+(function () {
+  var U = 'effective-vol-explorer';
+  var SIG = DL.$(U + '-sigma'), KAP = DL.$(U + '-kappa'), GG = DL.$(U + '-g');
+  /* the stress run: G from −0.6 to +0.6 in five daily steps, 600 ms apart;
+     the day stays on show for two seconds after the last one, as in the app */
+  var DAYS = 5, STEP = 600, HOLD = 2000, G0 = -0.6, G1 = 0.6, anim = null;
+
+  /* the app's σ_eff = σ / (1 − κ·G), held at 100·σ once the denominator is
+     below 0.001 */
+  function effectiveVol(sigma, kappa, g) {
+    var denom = 1 - kappa * g;
+    if (denom <= 0.001) return sigma * 100;
+    return sigma / denom;
+  }
+  /* the app's thresholds on κ·G (0.7 and −0.3), with its middle band, which it
+     called damped and roughly equal to the underlying for κ·G up to 0.4 (an
+     amplification of up to 1.67 times), split at zero so that each name is true */
+  function regime(d) {
+    if (d > 0.7) return ['Explosive.', 'Feedback is approaching the singular limit.'];
+    if (d > 0) return ['Amplifying.', 'Effective vol is above the underlying.'];
+    if (d === 0) return ['Neutral.', 'Effective vol equals the underlying.'];
+    if (d > -0.3) return ['Damped.', 'Effective vol is below the underlying.'];
+    return ['Strongly damped.', 'Dealer hedging compresses vol.'];
+  }
+  function sgn(x, d) { return (x >= 0 ? '+' : DL.MINUS) + Math.abs(x).toFixed(d); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    /* the app's sweep: G from −1 in float steps of 0.02 (its last point is 0.98),
+       σ_eff cut at 200%; its axis runs to 150% or to the top of the curve */
+    var xs = [], ys = [];
+    for (var x = -1; x <= 1; x += 0.02) { xs.push(x); ys.push(Math.min(effectiveVol(sigma, kappa, x), 2)); }
+    var ymax = Math.max(1.5, Math.max.apply(null, ys));
+    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: ymax, xlabel: 'destabilizing gamma G',
+                              pad: { l: 44, r: 14, t: 22, b: 34 } });
+    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ny: 4,
+                 x: function (v) { return DL.num(v, 1); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    var fam = DL.color('familiar'), acc = DL.color('accent');
+    DL.hline(p, sigma, { color: fam, dash: [3, 3], width: 1.2 });
+    p.text(-1, sigma, 'σ underlying', { dx: 4, dy: -4, font: font(), color: fam });
+    DL.vline(p, g, { color: acc, dash: [2, 2], width: 1.2 });
+    DL.line(p, xs, ys, { color: acc, width: 2 });
+    p.dot(g, Math.min(effectiveVol(sigma, kappa, g), ymax), { r: 4, color: acc, ring: true });
+    p.text(-1, ymax, 'σ_eff² = σ² / (1 − κ·G)²', { dy: -7, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    var sigma = parseFloat(SIG.value), kappa = parseFloat(KAP.value), g = parseFloat(GG.value);
+    var eff = effectiveVol(sigma, kappa, g), d = kappa * g, v = regime(d);
+    DL.out(U + '-sigma-o', (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kappa-o', kappa.toFixed(2));
+    DL.out(U + '-g-o', sgn(g, 2));
+    DL.out(U + '-su', 'underlying σ = ' + (sigma * 100).toFixed(0) + '%');
+    DL.out(U + '-kg', 'κ·G = ' + sgn(d, 2));
+    DL.out(U + '-se', 'effective σ = ' + (eff * 100).toFixed(0) + '%');
+    DL.out(U + '-amp', 'amplification = ' + (eff / sigma).toFixed(2) + '×');
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    draw();
+  }
+
+  function setG(x) { GG.value = x.toFixed(2); }
+  function stop() {
+    if (anim) { cancelAnimationFrame(anim.id); anim = null; }
+  }
+  function stress() {
+    stop();
+    if (DL.still()) {
+      setG(G1);
+      DL.out(U + '-day', 'day ' + DAYS + '/' + DAYS);
+      update();
+      return;
+    }
+    setG(G0);
+    DL.out(U + '-day', '');
+    update();
+    anim = { start: null, day: 0, id: 0 };
+    function frame(ts) {
+      if (!anim) return;
+      if (anim.start == null) anim.start = ts;
+      var el = ts - anim.start, day = Math.min(DAYS, Math.floor(el / STEP));
+      if (day !== anim.day) {
+        anim.day = day;
+        setG(G0 + (G1 - G0) * day / DAYS);
+        DL.out(U + '-day', 'day ' + day + '/' + DAYS);
+        update();
+      }
+      if (el >= DAYS * STEP + HOLD) {
+        DL.out(U + '-day', '');
+        anim = null;
+        return;
+      }
+      anim.id = requestAnimationFrame(frame);
+    }
+    anim.id = requestAnimationFrame(frame);
+  }
+  /* the saved page is the first state: no stress run, G at its default */
+  function reset() {
+    stop();
+    GG.value = GG.defaultValue;
+    DL.out(U + '-day', '');
+    update();
+  }
+  if (window.NMT && NMT.onSnapshot) NMT.onSnapshot(reset);
+
+  update();
+  DL.$(U + '-stress').addEventListener('click', stress);
+  DL.bind([U + '-sigma', U + '-kappa'], update);
+  /* moving G by hand ends a stress run, as it clears the app's day counter */
+  DL.bind([U + '-g'], function () { stop(); DL.out(U + '-day', ''); update(); });
+})();
+<!--/SCRIPT-->

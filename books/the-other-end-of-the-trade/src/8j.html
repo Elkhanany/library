@@ -1,0 +1,1169 @@
+<p class="eyebrow">Part VIII · The whole market · Chapter 8J</p>
+
+<h1>From map to trade</h1>
+
+<p class="subtitle">A practical workflow, and how to test a level yourself</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 8A to 8I built the map of dealer gamma, set it against theory and evidence, and followed it through the episodes where it broke. This chapter turns all of that into a routine for a real account. It shows how to read a map honestly each morning and how much the regime should change your size. It then shows how to test a level yourself before you trust it, and when to leave the map alone.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li><span class="gloss" title="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX.">Gamma exposure</span> (GEX), its <span class="gloss" title="The rule a gamma exposure model uses to decide whether dealers are long or short each option, since open interest counts contracts but not who holds them. The two best known give calls and puts opposite signs, and differ from each other in every sign.">sign convention</span> and the data behind it (Chapters 8A and 8B).</li>
+<li>How to read a heatmap, the <span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing.">gamma flip</span>, walls and Skylit's vocabulary (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
+<li>The two regimes, damping and amplifying, and the effective-volatility formula (<a class="xref" href="8d.html">Chapter 8D</a>).</li>
+<li>How large the measured effects are (<a class="xref" href="8g.html">Chapter 8G</a>).</li>
+<li><span class="gloss" title="The error of letting a backtest use information that was not available at the moment of the decision, such as a figure before its publication date. It makes a backtest look better than any real trader could have done.">Lookahead bias</span>, <span class="gloss" title="Measured on the same data a model was fitted to. In-sample performance is optimistic, because the fit has partly adapted to that data's noise.">in-sample</span> against <span class="gloss" title="Measured on data a model was not fitted to, such as a later period. It is the honest estimate of how the model would have performed in real time.">out-of-sample</span> testing, and <span class="gloss" title="Testing a model on time series by training it only on data before each test period and scoring it on that period, then moving forward and repeating.">walk-forward analysis</span> (<a class="xref" href="3a.html">Chapter 3A</a>); the <span class="gloss" title="The probabilistic Sharpe ratio tested against the best Sharpe ratio that luck alone would produce across all the strategies tried, which corrects a backtest for selection.">deflated Sharpe ratio</span> for many tries (<a class="xref" href="1d.html">Chapter 1D</a>).</li>
+<li>The Edge Book's stack of <span class="gloss" title="A variable, such as the shape of the VIX term structure, used to size other strategies up or down. It is not a trade in itself: its value is the losses it avoids.">regime filters</span> (<a class="xref" href="10h.html">Chapter 10H</a>).</li>
+</ul>
+</div>
+
+<p>Everything in this part points to a modest conclusion. A GEX map describes where dealers' hedging is likely to be heavy or light, under an assumption about who holds what. The sign of its total carries some information about the day's volatility, most of which the <span class="gloss" title="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days.">VIX</span> and <span class="gloss" title="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage.">implied volatility</span> already hold. No study found in this book's research shows that trading at the map's levels pays. A workflow should be built on that conclusion, not on the stronger claims vendors make.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Use the map as a weather report, not as a road map. It tells you whether the day is more likely calm or rough, which should change how much you carry and how far away you set your stops. It does not tell you where to turn. If you want a level to tell you where to turn, test it first, the way you would test a biomarker before letting it change a treatment.</p>
+</div>
+
+<h2 id="what-the-evidence-leaves-you">1 · What the evidence leaves you</h2>
+
+<p>The chapters before this one sort a map's contents into three kinds, each deserving a different weight:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">What the map shows</th><th class="c-result">What bears on it</th><th class="c-endpoint">How to use it</th></tr></thead><tbody><tr><td class="c-trial" data-label="What the map shows">The sign of total GEX: spot against the flip</td><td class="c-result" data-label="What bears on it">Direction supported: negative gamma goes with momentum and higher volatility, positive with reversal and lower (<a class="xref" href="8g.html">Chapter 8G</a>). At a daily horizon most of its information is already in the VIX and implied volatility; some survives at half-hour horizons</td><td class="c-endpoint" data-label="How to use it">Low-weight context for size</td></tr><tr><td class="c-trial" data-label="What the map shows">Where hedging is heavy or light: large nodes and gaps</td><td class="c-result" data-label="What bears on it">Local damping or amplifying, if the sign is right; pinning near expiry is measurable and small (<a class="xref" href="8e.html">Chapter 8E</a>)</td><td class="c-endpoint" data-label="How to use it">Context for where moves may slow or speed, not targets</td></tr><tr><td class="c-trial" data-label="What the map shows">Named levels as targets or barriers: walls, the King Node, floors</td><td class="c-result" data-label="What bears on it">No academic test found; vendor statistics without base rates (<a class="xref" href="8c.html">Chapter 8C</a>)</td><td class="c-endpoint" data-label="How to use it">Nothing, until you test one yourself</td></tr></tbody></table></div></div>
+
+<p>The rest of the chapter works through that table. It gives a routine for reading the first two rows, a rule for turning the first row into size, and a method for testing the third.</p>
+
+<h2 id="a-workflow-for-each-session">2 · A workflow for each session</h2>
+
+<p>Seven steps, most before the open, keep the map in its place:</p>
+
+<ol>
+<li><strong>Check the data.</strong> Name the sign convention, the units, the expiries included and the time of the data. <span class="gloss" title="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one.">Open interest</span> is one count a day, published the morning after, so anything drawn during the session is Greek drift plus an estimate of flow (<a class="xref" href="8c.html">Chapter 8C</a>). If the vendor states none of this, read only where the large cells are, not their colors.</li>
+<li><strong>Find spot against the flip, and treat the flip as a band.</strong> It moves with spot, implied volatility and time; vendors compute it differently; and SpotGamma's <span class="gloss" title="SpotGamma's proprietary level marking where, by its model, dealers' last major concentration of positive gamma sits. SpotGamma defines it as a different level from the one where total gamma exposure crosses zero.">Volatility Trigger</span> is a separate level (<a class="xref" href="8c.html">Chapter 8C</a>). Inside the band the sign of the regime is uncertain.</li>
+<li><strong>Note the large nodes, their signs, and the gaps.</strong> They describe where moves are more likely to be damped or fed, if the sign is right. They are not destinations.</li>
+<li><strong>Check vanna and the calendar.</strong> Events that move implied volatility, such as CPI releases and FOMC meetings, move every cell and the flip. So do expiries, the quarterly roll of the <span class="gloss" title="The quarterly index-option position of JPMorgan's Hedged Equity Fund, which holds stocks, buys a put spread below the market and sells calls above it. It is one of the few large index-option positions whose holder is public.">JPM collar</span>, and the last hour of a same-day expiry (Chapters 8C and 8F).</li>
+<li><strong>Let the regime set a size multiplier, not a trade.</strong> The next section gives the weights.</li>
+<li><strong>Form the thesis elsewhere.</strong> The trade comes from the book's other tools (Parts X to XIII). The map can trim it or veto it, but not start it. Skylit's own "Charts First" rule says the same.</li>
+<li><strong>Log what you saw.</strong> Save the map as it stood when you acted: its time, its convention and the nodes you relied on. That log is the raw material for the test in the second half of this chapter.</li>
+</ol>
+
+<div class="worked">
+<span class="ct">Worked example: One morning's read</span>
+<p><strong>Step 1: the data.</strong> Suppose a vendor states the JPM-era convention and dollars per 1% move, and its map rests on last night's open interest plus estimated flow. It shows total GEX of +$3 billion, the flip at 5,960 and spot at 6,000. The largest cell is the same-day 6,000 strike, green, and a large rose cell sits at 5,900 on the monthly column. The VIX is 15, in <span class="gloss" title="A term structure in which longer-dated prices or implied volatilities sit above shorter-dated ones. It is the usual shape for equity implied volatility.">contango</span>, and a CPI release is due tomorrow morning.</p>
+
+<p><strong>Step 2: the flip.</strong> Spot sits \(40/6{,}000 = 0.67\%\) above the flip, outside the 0.5% band that <a class="xref" href="11a.html">Chapter 11A</a>'s dashboard calls transitional. But tomorrow's release may lift implied volatility, and in <a class="xref" href="8c.html">Chapter 8C</a>'s figure a rise from 16% to 35% moved the flip 26 points higher. The margin is thinner than it looks.</p>
+
+<p><strong>Step 3: the nodes.</strong> Under this convention the same-day node at spot is long gamma, so hedging should damp moves near 6,000 today. A vendor using the 0DTE-era convention would color that cell rose. The rose cell at 5,900 marks a zone where a fall could be fed rather than cushioned.</p>
+
+<p><strong>Step 4: the calendar and the size.</strong> An event tomorrow means today is not the clean "positive GEX, contango, no event" case of the next section. Any short-premium position that would be held through the release starts smaller, whatever the map says.</p>
+
+<p><strong>Step 5: what the map did not do.</strong> It supplied no trade and no target. It supplied a reason to hold less into the release, and a note of where a fall might speed up.</p>
+</div>
+
+<h2 id="regime-as-a-size-multiplier-not-a-trigger">3 · Regime as a size multiplier, not a trigger</h2>
+
+<h3 id="regime-as-a-decision-boundary">Regime as a decision boundary</h3>
+
+<p>For practical trading the Dealer Mechanics Lab treats the regime as a decision boundary on strategy selection, and the shape of the VIX <span class="gloss" title="How implied volatility varies with time to expiry for the same underlying. It is in contango when longer-dated volatility is higher, and in backwardation when shorter-dated volatility is higher.">term structure</span> joins the GEX sign in drawing it. The term structure is in contango when longer-dated implied volatility sits above shorter-dated, the usual calm shape. It is in <span class="gloss" title="A term structure in which shorter-dated prices or implied volatilities sit above longer-dated ones. For equity implied volatility it is a mark of stress.">backwardation</span> when that order inverts under stress (<a class="xref" href="5e.html">Chapter 5E</a>).</p>
+
+<ul>
+<li><strong>Positive GEX, VIX in contango, no event imminent:</strong> premium-selling and mean-reversion strategies are favored. <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">Realized volatility</span> is likely to undershoot implied, range bets pay, and tight stops work.</li>
+<li><strong>Negative GEX, VIX in backwardation, an event imminent or just past:</strong> directional and long-volatility strategies are favored. Realized volatility is likely to exceed implied, trend bets pay, and wider stops are needed.</li>
+<li><strong>Transition regimes, with GEX near zero and the VIX term structure in transition:</strong> reduce size, take only the highest-conviction setups, and expect choppy intraday action.</li>
+</ul>
+
+<p><a class="xref" href="11g.html">Chapter 11G</a> formalizes this into the composite regime scorecard. The principle is that <strong>strategy selection should be conditioned on regime, and regime is most concisely characterized by the sign of net dealer gamma combined with the shape of the VIX term structure.</strong></p>
+
+<h3 id="how-the-edge-book-weighs-the-regime">How the Edge Book weighs the regime</h3>
+
+<p>The Edge Book agrees on the direction of the effect: negative-GEX days tend to have higher realized volatility, and positive-GEX days compressed realized volatility (<a class="xref" href="10h.html">Chapter 10H</a>). It gives the sign far less weight, treating GEX as a low-confidence filter: a soft input worth 10% to 15% of one filter's weight. If GEX disagrees with the VIX term structure or with the realized-volatility filters, the Edge Book ignores it. If it agrees, it adds slight confidence.</p>
+
+<p>In the Edge Book's use the sign adjusts the size of other strategies, for example by trimming put-writing modestly when GEX is negative. <a class="xref" href="13f.html">Chapter 13F</a>'s filter card puts the trim at 10% to 15%. It never sizes from the magnitude of GEX, which it calls too model-dependent. It also rejects trading at specific GEX levels for retail accounts (Chapters 1G and 10I).</p>
+
+<p>Its reasons are the model risk of <a class="xref" href="8b.html">Chapter 8B</a>, the change in structure as <span class="gloss" title="Options with zero days to expiry: options traded on the day they expire.">0DTE</span> options grew after 2022, and a Cboe study from 2025. That study, Xu's "0DTEs Decoded" (May 2, 2025), put 0DTE market-maker hedging "at best, just 0.2% of the SPX daily liquidity". It measures 0DTE hedging only, so applying it to levels built from longer-dated open interest is an inference (<a class="xref" href="8c.html">Chapter 8C</a>). The two sources agree that the sign is regime context. They differ on how much it should move a decision.</p>
+
+<h3 id="what-the-evidence-says-about-the-weight">What the evidence says about the weight</h3>
+
+<p>One test bears directly on the weight. FlashAlpha, a vendor of dealer-exposure data, tested its own product on 1,972 <span class="gloss" title="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it.">SPY</span> days from 2018 to 2026, in a study it describes as pre-registered. The rank correlation of GEX with next-day realized volatility was −0.36 raw. It fell to −0.14 after controlling for the VIX, and to −0.03 (p = 0.18) after controlling for the VIX and at-the-money implied volatility. The gap in next-day realized volatility between the top and bottom groups of GEX days shrank from 10.63 volatility points to 3.15, and then to 0.99 (p = 0.25). The vendor's own conclusion: "GEX should be used as a regime label, not a standalone forecast".</p>
+
+<p>That is one vendor's test of its own product, on SPY, at a daily horizon. At shorter horizons the picture changes. Ardia and Vaudescal (2026), a working paper on five years of half-hour SPX data, find that a one-standard-deviation increase in net gamma from longer-dated options predicts next-half-hour realized variance about 36% lower. The link survives their forecasting controls. One master's thesis finds that changes in GEX help forecast S&amp;P 500 returns, without an implied-volatility control (Jonsson and Nyberg, 2025).</p>
+
+<p>Read together, the evidence supports a small weight at the daily horizon, which is the Edge Book's position. It also suggests that pairing GEX with the volatility market, as the Lab does, adds less than it seems: much of what GEX says about tomorrow the volatility market already says.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>GEX and tomorrow's volatility behave like a biomarker whose link to survival vanishes once you adjust for stage. The unadjusted association is real, but the marker was mostly a proxy for the stage you already knew. Here the stage is the VIX and implied volatility. Once they are in the model, GEX adds almost nothing about the next day.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Two sources, one morning</span>
+<p><strong>Step 1: the readings.</strong> Suppose, hypothetically, a vendor reports GEX of −$3 billion, the VIX term structure is in contango, realized volatility sits below implied, and no event is near. You run a put-writing sleeve with a target of $100,000.</p>
+
+<p><strong>Step 2: the Lab.</strong> The signals disagree, so the Lab's boundary fits neither clean case, and its transition rule applies: reduce size and take only the highest-conviction setups. The Lab does not say by how much. Suppose you set the transition multiplier at 0.5, for $50,000.</p>
+
+<p><strong>Step 3: the Edge Book.</strong> GEX disagrees with the term structure and the realized-volatility filter, so by its rule the Edge Book ignores it and sizes as the other filters say: $100,000 if all of them are green. Had GEX agreed with a negative reading elsewhere, the most it could do is a trim of 10% to 15%.</p>
+
+<p><strong>Step 4: the gap.</strong> The two sources size the same morning at $50,000 and $100,000. The difference is entirely the weight given to one sign whose information, at a daily horizon, is mostly the VIX's.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>In an account, the regime changes size and stops before it changes which trades you take. A stop set at two standard deviations of a day's move sits at about 1.9% when effective volatility is 15%, because a day's standard deviation is then \(15\%/\sqrt{252} = 0.94\%\) (<a class="xref" href="5e.html">Chapter 5E</a>). At 29%, the top of the default stress run in <a class="xref" href="8d.html">Chapter 8D</a>'s figure, the same rule puts the stop at about 3.7%, and a stop left at 1.9% is hit by ordinary noise. Size falls for the same reason: with the stop nearly twice as far away, the same dollar risk buys about half the position.</p>
+</div>
+
+<h2 id="how-to-test-a-level-yourself">4 · How to test a level yourself</h2>
+
+<p>Vendors publish hit rates. SpotGamma's own statistics for its SPX levels cover May 10, 2019 to May 28, 2024. They report that the <span class="gloss" title="The strike at which a gamma exposure model places the largest concentration of put gamma. Some traders read one below the price as support.">put wall</span> "held" in 89% of daily sessions, meaning the intraday low did not fall below it, and that SPX closed above it in 93%. After a put-wall breach, average forward returns were +14 basis points over one day, +7 over five days and +39 over ten. After a <span class="gloss" title="The strike at which a gamma exposure model places the largest concentration of call gamma. Some traders read one above the price as resistance.">call wall</span> breach they were −7 basis points over one day and +5 over five. Skylit says fresh nodes react "~80%" of the time. None of these numbers can be read as it stands.</p>
+
+<h3 id="a-hit-rate-needs-a-base-rate">A hit rate needs a base rate</h3>
+
+<p>A <strong><span class="gloss" title="How often an outcome happens with nothing special going on, such as how often a level at the same distance from the price holds when it is not a wall. A hit rate means something only against its base rate.">base rate</span></strong> is how often the outcome happens with nothing special at the level: the same hold, measured at levels that are not walls. A put wall that sits well below spot is "held" on most days whatever its gamma, simply because most days do not fall that far. SpotGamma's report gives no base rate, no comparison with arbitrary strikes at the same distance, and no standard errors.</p>
+
+<p>How much does distance alone give? For a price that wanders at random with no drift, the chance that the day's low stays above a level \(d\) daily standard deviations below the open is \(2N(d) - 1\). The chance that the close ends above it is \(N(d)\), where \(N\) is the <span class="gloss" title="The normal distribution with a mean of 0 and a standard deviation of 1. Its distribution function gives the probability of a value below a point: the area under the bell curve to the left of it.">standard normal distribution</span> function.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Distance below the open, in daily standard deviations</th><th>Low stays above</th><th>Close ends above</th></tr></thead><tbody><tr><td class="c-trial" data-label="Distance below the open, in daily standard deviations">1.0</td><td data-label="Low stays above">68%</td><td data-label="Close ends above">84%</td></tr><tr><td class="c-trial" data-label="Distance below the open, in daily standard deviations">1.5</td><td data-label="Low stays above">87%</td><td data-label="Close ends above">93%</td></tr><tr><td class="c-trial" data-label="Distance below the open, in daily standard deviations">1.6</td><td data-label="Low stays above">89%</td><td data-label="Close ends above">95%</td></tr><tr><td class="c-trial" data-label="Distance below the open, in daily standard deviations">2.0</td><td data-label="Low stays above">95%</td><td data-label="Close ends above">98%</td></tr></tbody></table></div></div>
+
+<p>A level 1.5 to 1.6 daily standard deviations below the open "holds" about as often as SpotGamma reports for its put wall, whether or not dealers hold anything there. With a VIX of 16 the <span class="gloss" title="A shortcut that divides an annualized volatility by 16, close to the square root of 252 trading days, to give the one-standard-deviation daily move it implies. A VIX of 16 prices a 1% day.">rule of 16</span> puts a day's standard deviation near 1% (<a class="xref" href="5e.html">Chapter 5E</a>), so 1.5 standard deviations is about 90 points at SPX 6,000. The report does not say how far below spot its walls sat, so its 89% cannot be read either way. Real returns have drift and fat tails, so this table, built on a <span class="gloss" title="A series whose changes are independent of one another, so that the last move carries no information about the next.">random walk</span>, is a teaching baseline. The honest base rate comes from the data, as the controls below describe.</p>
+
+<details class="grind"><summary>Where 2N(d) − 1 comes from: the reflection principle</summary><div class="grind-body">
+<p><strong>Step 1: the question.</strong> A price starts at 0 and wanders at random with no drift over one day, ending with standard deviation 1 in these units. What is the chance that its path touches \(-d\) at some point during the day?</p>
+
+<p><strong>Step 2: the mirror.</strong> Take any path that touches \(-d\) and ends above it. Reflect the part after the first touch in the line \(-d\). The reflected path is just as likely, because up and down steps are equally likely, and it ends below \(-d\). Every path that touches and ends above has exactly one partner that ends below.</p>
+
+<p><strong>Step 3: count.</strong> Every path that ends below \(-d\) must have touched it. So the paths that touch are those ending below, plus their mirror partners ending above: twice the paths ending below. The chance of a touch is \(2\Pr(\text{end} &lt; -d) = 2N(-d)\).</p>
+
+<p><strong>Step 4: the hold.</strong> The low stays above \(-d\) with probability \(1 - 2N(-d) = 2N(d) - 1\), since \(N(-d) = 1 - N(d)\). At \(d = 1.5\): \(2 \times 0.9332 - 1 = 0.866\), the 87% of the table.</p>
+</div></details>
+
+<p>The forward returns need the same care. A +14 basis point average after a breach means little without its standard error. The report gives no count; suppose the breaches are the 11% of about 1,270 trading days in the sample, about 140, and a day's standard deviation is 1%. The standard error of a one-day average is then about \(100/\sqrt{140} = 8.5\) basis points, and +14 is about 1.7 standard errors from zero: not distinguishable from nothing at the usual 5% level.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A hold rate without a base rate is a single-arm trial. "89% of patients on the new drug were alive at one year" says nothing until you know that 87% of similar patients on standard care were too. The put wall's 89% needs its control arm: the same definition of "held", applied to levels at the same distance that are not walls.</p>
+</div>
+
+<h3 id="how-often-a-level-holds-by-chance">How often a level holds by chance</h3>
+
+<p>The figure below measures holds in made-up sessions where the answer is known. Levels sit every 25 points. A <strong>touch</strong> is price reaching a level from at least 3 points away. The touch <strong>holds</strong> if price then moves the bounce target back from the touch before it moves the break point through it.</p>
+
+<p>Two sliders set the bounce target and the break point, each from 2 to 20 points; they start at 5 and 20. A switch chooses the market: a pure random walk, where nothing happens at the levels, or one with dealers long gamma at every level. In the second, hedging damps moves within 6 points of a level and adds a small pull toward it, <a class="xref" href="8e.html">Chapter 8E</a>'s pinning in miniature. New sessions draws another 200. The upper panel shows one session with its holds (circles) and breaks (crosses). The lower panel plots the hold rate over 200 sessions against the ratio of break point to bounce target, with the curve a random walk gives.</p>
+
+<p>Read the first state. Then set the bounce target to 2 with the break point at 20. Set both to 10. Then switch on dealers long gamma and try 5 and 20, 10 and 10, and 20 and 5, watching both the hold rate and the minutes near a level.</p>
+
+<figure class="fig" id="fig-level-test-sim">
+  <canvas id="level-test-sim-c" data-h="220"></canvas>
+  <canvas id="level-test-sim-k" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="level-test-sim-x">bounce target</label>
+      <input type="range" id="level-test-sim-x" min="2" max="20" step="1" value="5">
+      <output id="level-test-sim-x-o" for="level-test-sim-x"></output>
+    </div>
+    <div class="ctrl">
+      <label for="level-test-sim-y">break point</label>
+      <input type="range" id="level-test-sim-y" min="2" max="20" step="1" value="20">
+      <output id="level-test-sim-y-o" for="level-test-sim-y"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Market" id="level-test-sim-mkt">
+      <label>market</label>
+      <button type="button" data-v="walk" class="on" aria-pressed="true">random walk</button>
+      <button type="button" data-v="pin" aria-pressed="false">dealers long gamma at the levels</button>
+    </div>
+    <div class="ctrl"><button type="button" id="level-test-sim-new">new sessions</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="level-test-sim-rate"></output></div>
+    <div class="ctrl"><output id="level-test-sim-base"></output></div>
+    <div class="ctrl"><output id="level-test-sim-near"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="level-test-sim-vk"></b> <span id="level-test-sim-vt"></span></p>
+  <figcaption><b>How often a level holds by chance.</b> Levels sit every 25 points. A touch
+  is price reaching a level from at least 3 points away; it holds if price then moves the
+  bounce target back from the touch before it moves the break point through it. Above, one
+  made-up session with its holds (circles) and breaks (crosses); below, the hold rate over 200
+  sessions against the ratio of the two distances, with the curve a random walk gives,
+  break ÷ (bounce + break). With a small target and a wide break point most touches hold when
+  nothing happens at the levels. Put dealers long gamma at the levels and the hold rate moves a
+  few points one way or the other, while the time price spends near them jumps: their
+  hedging makes price stick, not bounce.</figcaption>
+</figure>
+
+<p>In the random walk the default reads "holds: 80% of 1,069 touches" against "chance alone: 80%": nothing happens at the levels, and four touches in five hold. The chance of rising \(X\) points before falling \(Y\) is \(Y/(X+Y)\), here \(20/25\). A bounce target of 2 with a break point of 20 gives 89% of 1,183 touches against 91% by the formula, the same 89% SpotGamma reports for its put wall. Equal distances of 10 give 49% of 1,063 touches.</p>
+
+<p>Put dealers long gamma at the levels and the answer depends on the definition. At 5 and 20 the hold rate rises to 87% of 444 touches, 7 points above chance. At 10 and 10 it falls to 46%, 4 points below, and at 20 and 5 to 12%, 8 below. Touches fall to 444 because price that sticks near a level rarely backs 3 points away to approach it again. What changes for certain is the time near a level: 69% of minutes within 3 points of one, against 24% in the random walk. Long-gamma hedging makes price stick near a level, not bounce off it. A test of "bounces" can miss a real effect or invent one, depending on distances you choose.</p>
+
+<p>The \(Y/(X+Y)\) formula follows from one idea. A fair game's expected position never changes, so starting at 0, the chance \(p\) of reaching \(+X\) first satisfies \(pX - (1-p)Y = 0\), which gives \(p = Y/(X+Y)\). Any definition of "hold" has such a base rate built in. Unless your test compares with it, the number you report is mostly your choice of \(X\) and \(Y\).</p>
+
+<h3 id="write-the-test-down-first">Write the test down first</h3>
+
+<p>A level test should be registered before you look, as a trial registers its primary endpoint. <strong><span class="gloss" title="Writing down a test's hypothesis, definitions, data and analysis before seeing any result, so that the test cannot be tuned to the data it is judged on.">Pre-registration</span></strong> means writing down the hypothesis, the definitions, the data and the analysis before seeing any result, so the test cannot be tuned to the data. For a level, write down seven things:</p>
+
+<ol>
+<li><strong>The level:</strong> which map, which vendor, which convention, and the time at which you read it, for example the map as it stood at 10:00 ET.</li>
+<li><strong>The touch:</strong> how far away price must be first, and whether a gap through the level counts.</li>
+<li><strong>The outcome:</strong> the bounce target, the break point and the time limit, for example the close.</li>
+<li><strong>The comparison:</strong> the base rate at matched control levels, described below.</li>
+<li><strong>The sample:</strong> the dates, starting after the day you freeze the rule, and the number of touches you need.</li>
+<li><strong>The analysis:</strong> one primary outcome, the difference in hold rate from the controls, with standard errors that allow for touches in one session being alike. Name the controls for the VIX and implied volatility too.</li>
+<li><strong>The decision:</strong> the result that would make you use the level, and the result that would make you drop it.</li>
+</ol>
+
+<h3 id="controls-matched-levels-the-vix-and-implied-volatility">Controls: matched levels, the VIX and implied volatility</h3>
+
+<p>The control arm is a set of levels that differ from the tested level only in not being nodes. Match three things:</p>
+
+<ul>
+<li><strong>Distance from spot,</strong> because distance alone sets most of a hold rate, as the table above showed.</li>
+<li><strong>Roundness.</strong> Listed strikes sit on round numbers, and round numbers may attract orders for reasons that have nothing to do with gamma. A control at 5,900 is fairer than one at 5,912.</li>
+<li><strong>The day.</strong> Compare the node with controls on the same session, or on sessions of the same volatility.</li>
+</ul>
+
+<p>Volatility is the confounder to fear most. Nodes and holds can both be more common on calm days, and the FlashAlpha test above showed how much of GEX's information is the VIX's.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A hold edge that is only the VIX</span>
+<p><strong>Step 1: two kinds of day.</strong> Suppose, hypothetically, that on calm days touches of any level hold 85% of the time, and on rough days 65%, whatever sits at the level.</p>
+
+<p><strong>Step 2: where the walls fall.</strong> Suppose a vendor's walls are touched mostly on calm days: 80% of wall touches come on calm days, against 50% of control touches.</p>
+
+<p><strong>Step 3: the pooled rates.</strong> Walls hold \(0.8 \times 85\% + 0.2 \times 65\% = 81\%\) of the time. Controls hold \(0.5 \times 85\% + 0.5 \times 65\% = 75\%\). The walls seem to add 6 points.</p>
+
+<p><strong>Step 4: within each kind of day.</strong> On calm days walls and controls both hold 85%, and on rough days both hold 65%. The 6-point edge is the VIX. Compare within strata of the VIX and implied volatility, or include both as controls in a regression, before crediting the level.</p>
+</div>
+
+<h3 id="no-look-ahead-from-intraday-open-interest">No look-ahead from intraday open interest</h3>
+
+<p>Open interest is counted once a day, overnight, and published the next morning. A map drawn at 2 PM is an estimate, and a map drawn tomorrow morning knows what today's traders did. A <span class="gloss" title="A test of a trading rule on historical data, showing what the rule would have earned had it been followed.">backtest</span> that defines today's levels from the day's final map, or from the next morning's open interest, uses information nobody had when the trade was made. That is lookahead bias (<a class="xref" href="3a.html">Chapter 3A</a>), the market's version of immortal time bias.</p>
+
+<p>LuxAlgo, a charting-indicator vendor, puts the rule plainly: "Do not backtest today's gamma levels across earlier dates as though they were known then. A valid historical gamma study needs timestamped historical levels, their update times, and a supported way to align that data with the price series". Fixed levels help here. SpotGamma publishes its levels each morning, and they "hold for the trading session", so a log of them can be tested. Skylit's nodes move all day, so the level a trader acted on may no longer be on the map. Unless you saved it, you cannot test it.</p>
+
+<h3 id="out-of-sample-and-how-many-tries">Out of sample, and how many tries</h3>
+
+<p>Every choice you try is a trial: another bounce target, another break point, another expiry, another kind of node. Try twenty definitions and keep the best, and the best beats chance by luck, as the deflated Sharpe ratio of <a class="xref" href="1d.html">Chapter 1D</a> corrects for strategies. Freeze one definition, then test it on data that comes after the freeze. If you must use history, split it by time and use walk-forward testing, never a random split (<a class="xref" href="3a.html">Chapter 3A</a>).</p>
+
+<p>Then count how many touches you need. The arithmetic is a trial's sample-size calculation.</p>
+
+<div class="worked">
+<span class="ct">Worked example: How many touches a test needs</span>
+<p><strong>Step 1: the question.</strong> Suppose the base rate for your definition is 80%, and you want to detect a level that holds 85% of the time, at the 5% significance level with 80% power.</p>
+
+<p><strong>Step 2: the formula.</strong> Against a known base rate \(p_0\), the number of touches needed to detect a true rate \(p_1\) is</p>
+
+<div class="eq">
+\[ n = \frac{\big(z_{\alpha/2}\sqrt{p_0 q_0} + z_\beta \sqrt{p_1 q_1}\big)^2}{(p_1 - p_0)^2} \]
+</div>
+
+<p>where \(q = 1 - p\), \(z_{\alpha/2} = 1.96\) for 5% two-sided and \(z_\beta = 0.84\) for 80% power.</p>
+
+<p><strong>Step 3: the numbers.</strong> \(\sqrt{0.80 \times 0.20} = 0.400\) and \(\sqrt{0.85 \times 0.15} = 0.357\), so the top is \((1.96 \times 0.400 + 0.84 \times 0.357)^2 = 1.084^2 = 1.176\). Divided by \(0.05^2 = 0.0025\), that is about 470 touches. If the base rate must be estimated from control levels too, the requirement roughly doubles, to about 900 of each.</p>
+
+<p><strong>Step 4: clustering.</strong> Touches in one session are alike, so they count for less than independent touches. With 3 touches a session and a correlation of 0.2 between them, the design effect of a cluster trial is \(1 + (3 - 1) \times 0.2 = 1.4\), and 470 becomes about 660.</p>
+
+<p><strong>Step 5: the calendar.</strong> If the wall you are testing is touched on one session in five, 470 touches take about 2,350 sessions, over nine years of trading days.</p>
+</div>
+
+<p>A test that needs nine years is a reason for patience, not for skipping the test. It also explains why no vendor statistic in this book's research comes with the counts, controls and errors that would make it readable.</p>
+
+<h2 id="skylits-rules-as-hypotheses-you-can-test">5 · Skylit's rules as hypotheses you can test</h2>
+
+<p><a class="xref" href="8c.html">Chapter 8C</a> found Skylit's trading rules untested. Each can be restated so that a trader with a log of the map can test it. The last column says what the book's mechanics predict, so a test can also check the theory.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Skylit's rule</th><th class="c-result">A testable hypothesis</th><th class="c-result">Control</th><th class="c-result">What the mechanics predict</th></tr></thead><tbody><tr><td class="c-trial" data-label="Skylit's rule">Target the King: "your primary destination target for the session"</td><td class="c-result" data-label="A testable hypothesis">The close ends nearer the King, as of 10:00, than a matched strike does</td><td class="c-result" data-label="Control">A strike at the same distance and roundness that is not the King</td><td class="c-result" data-label="What the mechanics predict">Attraction only for a long-gamma King near expiry; none, or repulsion, for a short-gamma one</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Floors and ceilings frame the day</td><td class="c-result" data-label="A testable hypothesis">The day's range stays inside the nearest floor and ceiling more often than inside matched levels</td><td class="c-result" data-label="Control">Levels at the same distances</td><td class="c-result" data-label="What the mechanics predict">Holds better only where the node is long gamma; test positive and negative floors separately</td></tr><tr><td class="c-trial" data-label="Skylit's rule">The Absolute Value Rule: "size determines influence, regardless of sign"</td><td class="c-result" data-label="A testable hypothesis">Realized volatility near a node depends on its size and not on its sign</td><td class="c-result" data-label="Control">Nodes of equal size and opposite sign</td><td class="c-result" data-label="What the mechanics predict">The opposite: long-gamma nodes lower local volatility and short-gamma nodes raise it</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Fresh nodes react "~80%" of the time</td><td class="c-result" data-label="A testable hypothesis">First touches in a session hold more often than later touches and than first touches of matched levels</td><td class="c-result" data-label="Control">The base rate of your hold definition</td><td class="c-result" data-label="What the mechanics predict">Holds move little either way; time near the level rises where dealers are long gamma</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Gatekeepers stop price short of the King</td><td class="c-result" data-label="A testable hypothesis">Price reaches the King less often when a node sits between</td><td class="c-result" data-label="Control">Days with the King at the same distance and nothing between</td><td class="c-result" data-label="What the mechanics predict">Slowing only where the node between is long gamma</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Velocity plus an air pocket is "one of the highest-conviction setups"</td><td class="c-result" data-label="A testable hypothesis">Realized volatility over the next 30 minutes is higher when spot sits in an air pocket beside a growing node</td><td class="c-result" data-label="Control">The same, with node growth split into Greek drift and estimated flow</td><td class="c-result" data-label="What the mechanics predict">Growth near spot late in the day is mostly drift, which predicts nothing new</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Rug and Reverse Rug</td><td class="c-result" data-label="A testable hypothesis">Returns over the next hour after a Rug are lower than after matched configurations</td><td class="c-result" data-label="Control">Matched days by VIX and time of day</td><td class="c-result" data-label="What the mechanics predict">A Rug damps rallies and feeds falls; it shapes volatility, not direction</td></tr><tr><td class="c-trial" data-label="Skylit's rule">The Beach Ball: "the deeper it goes, the stronger the release"</td><td class="c-result" data-label="A testable hypothesis">After an overshoot of a stated size and a stall of a stated length, price returns to a node more often than to a matched level</td><td class="c-result" data-label="Control">Overshoots through levels that are not nodes</td><td class="c-result" data-label="What the mechanics predict">Any pull fades with distance; none grows with depth</td></tr><tr><td class="c-trial" data-label="Skylit's rule">Trinity: "Full alignment ... represents high-probability conditions"</td><td class="c-result" data-label="A testable hypothesis">Hold rates rise when SPX, SPY and QQQ agree, beyond SPX alone</td><td class="c-result" data-label="Control">Agreement expected from the three books' overlap</td><td class="c-result" data-label="What the mechanics predict">Agreement is partly one fact seen three times</td></tr></tbody></table></div></div>
+
+<p>Each row needs the discipline of the previous section: definitions frozen in advance, controls matched on distance, roundness and volatility, maps as they stood at the time, and enough touches.</p>
+
+<h2 id="a-checklist">6 · A checklist</h2>
+
+<p>Before any trade the map touches, run down the list:</p>
+
+<ul>
+<li><strong>Data:</strong> convention, units, expiries and data time named; intraday parts understood as drift plus estimated flow.</li>
+<li><strong>Regime:</strong> spot against the flip, with the flip read as a band; the VIX term structure and realized against implied volatility read first.</li>
+<li><strong>Weight:</strong> the GEX sign used as a size multiplier within the range your framework allows, never from its magnitude.</li>
+<li><strong>Calendar:</strong> events, expiries and the last hour of the same-day expiry checked.</li>
+<li><strong>Thesis:</strong> the trade formed from something other than the map.</li>
+<li><strong>Levels:</strong> any level in the plan has passed a registered test with a base rate, or is treated as context only.</li>
+<li><strong>Log:</strong> the map saved as it stood, for the next test.</li>
+</ul>
+
+<h2 id="when-to-step-aside">7 · When to step aside</h2>
+
+<p>Some days the map is least reliable when it looks most useful. Step aside from trades that lean on the map when:</p>
+
+<ul>
+<li><strong>The inputs are unknown.</strong> The vendor states no convention, or intraday nodes rest on a classification it does not describe.</li>
+<li><strong>Implied volatility is about to jump.</strong> CPI and FOMC days move every cell and the flip at once (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
+<li><strong>The same-day expiry is in its last hour.</strong> At-the-money gamma grows most there, and the largest nodes jump from strike to strike.</li>
+<li><strong>Spot sits inside the flip's band,</strong> where the sign of the regime is a coin toss.</li>
+<li><strong>Vendors disagree on the sign.</strong> Two conventions, two opposite readings: the disagreement is the information.</li>
+<li><strong>The three preconditions of <a class="xref" href="8h.html">Chapter 8H</a> coexist:</strong> short dealer gamma, mechanical one-sided flow and degraded depth. Then size goes down and stops widen, whether or not a catalyst arrives.</li>
+<li><strong>Your level has not passed a registered test,</strong> or has failed one.</li>
+<li><strong>The tool costs more than it can add.</strong> At $699 a month, a map is a 16.8% yearly hurdle on a $50,000 account (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
+</ul>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>The workflow fails when the regime turns faster than a morning read can follow. The flip moves with implied volatility during the session, and a day that opened calm can be amplifying by the afternoon. It may fail when the stress sits in books that most maps leave out, such as FLEX and over-the-counter options (Chapters 8B and 8H). And a level test fails quietly when the market changes between the test and the trade: a result from before 2022 describes a market with little same-day trading.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Use the sign, never the size, and at low weight.</strong> Let the GEX sign move size within the range your framework allows: the Edge Book's trim of 10% to 15%, or the Lab's reduced size in transition regimes. Read the term structure and realized volatility first.</li>
+<li><strong>Take no trade from a level alone.</strong> A level enters a plan only after a registered test against matched controls, with the VIX and implied volatility controlled, on maps as they stood at the time, and on enough touches.</li>
+<li><strong>Step aside</strong> when the inputs are unknown, volatility is about to jump, spot is inside the flip's band, or the three preconditions of <a class="xref" href="8h.html">Chapter 8H</a> coexist.</li>
+<li><strong>Log every map you act on.</strong> Without the log, nothing you learn from the map can be tested.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "it held 89% of the time"</span>
+<p>A hold rate is mostly the distance you chose. With a bounce target of 2 points and a break point of 20, a random walk with nothing at the levels "holds" 89% of the time in this chapter's figure. Ask for the base rate at matched levels before you ask for the hold rate.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: testing today's map on last year's prices</span>
+<p>A map drawn from today's open interest, or from the day's final nodes, was not available when last year's trades were made. Test only maps saved as they stood, with their time stamps.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading the regime as a forecast</span>
+<p>Positive GEX does not mean the market cannot move: on most days the regime is only a probabilistic prior. The episodes that did damage were the right tail, when the feedback briefly approached its unstable threshold (Chapters 8D and 8H). A sizing rule has to survive those episodes, not only the typical day.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A map supports three uses at three weights. The sign of total GEX is low-weight context for size, large nodes and gaps are context for where moves may slow or speed, and named levels count for nothing until tested.</li>
+<li>The Lab conditions strategy on the GEX sign and the VIX term structure. The Edge Book gives the sign 10% to 15% of one filter's weight and ignores it when the term structure disagrees. At a daily horizon, most of GEX's information is already in the VIX and implied volatility.</li>
+<li>A hit rate means nothing without a base rate. For a random walk a level 1.6 daily standard deviations below the open "holds" 89% of days, and a bounce-before-break test has the base rate Y/(X + Y).</li>
+<li>A fair level test is registered in advance, compared with matched levels and controlled for the VIX and implied volatility. It runs on maps as they stood, and it is large enough: about 470 touches to tell 85% from 80%.</li>
+<li>Step aside when the inputs are unknown, volatility is about to jump, spot is near the flip, or <a class="xref" href="8h.html">Chapter 8H</a>'s three preconditions coexist.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A vendor reports GEX of −$3 billion, the VIX term structure is in contango, and no event is near. How does each source treat this?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The signals disagree, so the Dealer Mechanics Lab's boundary fits neither clean case and its transition rule applies: reduce size and take only the highest-conviction setups. The Edge Book ignores GEX when it disagrees with the term structure, so it sizes as contango suggests (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>A newsletter says a level "held 92% of the time" over three years. What do you need before you believe it matters?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>You need the definition of "held" and the level's distance from spot when it was touched. You need the hold rate of matched levels at the same distance, with the same roundness, on days of similar volatility. You also need the number of touches and a standard error, and the maps as they stood at the time, not recomputed later. A level 1.6 daily standard deviations below the open holds about 89% of days by chance alone.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>In the level-test figure, why does switching on dealers long gamma sometimes lower the hold rate?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Their hedging holds price near the level rather than pushing it back, and a bounce test measures pushing back. Whether sticking counts as more holds or more breaks depends on the distances: at a 20-point bounce target and a 5-point break point the hold rate falls from about 20% to 12%. The effect the hedging reliably has is on time near the level, 69% of minutes against 24%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>You test twenty definitions of a bounce at the put wall and the best beats its base rate by 4 points. What should you do next?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Treat the 4 points as the best of twenty draws, which luck alone can produce, as the deflated Sharpe ratio warns for strategies. Freeze that one definition and test it again on data after the freeze, against matched controls, with enough touches: about 470 to tell 85% from 80%, more if touches cluster within sessions.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>A study finds that walls hold more often than controls, but walls appear mostly on calm days. What analysis separates the wall from the calm?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Compare walls and controls within strata of the VIX and implied volatility, or include both as covariates in a regression. In the chapter's example, a 6-point pooled edge disappears within each kind of day, because it came entirely from where the walls fell.</p>
+</div></details>
+</div>
+</div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- level-test-sim ---------- */
+(function () {
+  var U = 'level-test-sim';
+  var XX = DL.$(U + '-x'), YY = DL.$(U + '-y');
+  var mkt = DL.seg(U + '-mkt', update);
+  var SESS = 200, STEPS = 390, VOL = 1.4, GRID = 25, APPROACH = 3;
+  var seed = 7, st;
+
+  /* One session, minute by minute, starting at 6,000 plus a random offset. In the random
+     walk each minute's move is VOL points times a standard normal draw. With dealers long
+     gamma at the levels, a move within 6 points of a level is damped by 1 / (1 + w), with w
+     rising to 1.5 at the level itself, and a small pull toward the level is added: the
+     pinning of Chapter 8E in miniature. Both markets are built from the same draws, so each
+     session has a random-walk twin with the same news. */
+  function sessions(r, n) {
+    var out = [];
+    for (var k = 0; k < n; k++) {
+      var s0 = 6000 + (r() - 0.5) * GRID, e = [];
+      for (var t = 0; t < STEPS; t++) e.push(VOL * DL.gauss(r));
+      out.push({ s0: s0, e: e });
+    }
+    return out;
+  }
+  function build(sess, pin) {
+    var S = sess.s0, path = [S];
+    for (var t = 0; t < STEPS; t++) {
+      var e = sess.e[t];
+      if (pin) {
+        var L = Math.round(S / GRID) * GRID, d = S - L;
+        var w = Math.abs(d) < 6 ? 1.5 * (1 - Math.abs(d) / 6) : 0;
+        e = (e - 0.08 * w * d) / (1 + w);
+      }
+      S += e;
+      path.push(S);
+    }
+    return path;
+  }
+  /* the share of minutes a path spends within 3 points of a level */
+  function near(paths) {
+    var n = 0, m = 0;
+    paths.forEach(function (p) {
+      p.forEach(function (S) { m++; if (Math.abs(S - Math.round(S / GRID) * GRID) < 3) n++; });
+    });
+    return n / m;
+  }
+  /* every touch in a path and its outcome: +1 a hold, -1 a break, 0 undecided at the close */
+  function touches(path, X, Y) {
+    var out = [], armed = {}, i, L;
+    for (i = 1; i < path.length; i++) {
+      var S = path[i];
+      L = Math.round(S / GRID) * GRID;
+      /* a level is armed once price is at least APPROACH points from it */
+      [L - GRID, L, L + GRID].forEach(function (lv) {
+        if (Math.abs(path[i] - lv) >= APPROACH && armed[lv] == null) armed[lv] = path[i] > lv ? 1 : -1;
+      });
+      var side = armed[L];
+      if (side != null && (side > 0 ? S <= L : S >= L)) {
+        var res = 0;
+        for (var j = i + 1; j < path.length; j++) {
+          var m = (path[j] - path[i]) * side;
+          if (m >= X) { res = 1; break; }
+          if (m <= -Y) { res = -1; break; }
+        }
+        out.push({ i: i, L: L, res: res });
+        armed[L] = null;
+      }
+    }
+    return out;
+  }
+
+  function compute() {
+    var X = +XX.value, Y = +YY.value, pin = mkt() === 'pin';
+    var ss = sessions(DL.rng(seed), SESS);
+    var walks = ss.map(function (x) { return build(x, false); });
+    var paths = pin ? ss.map(function (x) { return build(x, true); }) : walks;
+    /* the hold rate at the chosen distances, and at a sweep of ratios for the chart */
+    function rate(X2, Y2) {
+      var h = 0, n = 0;
+      paths.forEach(function (p) {
+        touches(p, X2, Y2).forEach(function (t) { if (t.res !== 0) { n++; if (t.res > 0) h++; } });
+      });
+      return { h: h, n: n, r: n ? h / n : null };
+    }
+    var cur = rate(X, Y);
+    var sweep = [[20, 2], [15, 3], [12, 4], [10, 5], [8, 8], [5, 10], [4, 12], [3, 15], [2, 20]].map(function (q) {
+      var rr = rate(q[0], q[1]);
+      return { ratio: q[1] / q[0], r: rr.r };
+    });
+    st = { X: X, Y: Y, pin: pin, first: paths[0], firstT: touches(paths[0], X, Y), cur: cur,
+           sweep: sweep, near: near(paths), nearWalk: near(walks) };
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  compute();
+
+  var drawPath = DL.figure(U + '-c', function (c) {
+    var ys = st.first, lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    var ymin = Math.floor((lo - 6) / GRID) * GRID, ymax = Math.ceil((hi + 6) / GRID) * GRID;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: ymin, ymax: ymax,
+                              pad: { l: 46, r: 14, t: 16, b: 24 } });
+    var lv = [];
+    for (var v = ymin; v <= ymax; v += GRID) lv.push(v);
+    DL.axes(p, { xs: [0, 90, 180, 270, 360], ys: lv, grid: false,
+                 x: function (x) { return ['9:30', '11:00', '12:30', '2:00', '3:30'][x / 90]; },
+                 y: function (y) { return DL.num(y, 0); } });
+    lv.forEach(function (y) { DL.hline(p, y, { color: DL.color('familiar'), dash: [5, 3] }); });
+    var xs = [];
+    for (var t = 0; t <= STEPS; t++) xs.push(t);
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 1.4 });
+    var g = p.g, ok = DL.color('insight'), bad = DL.color('plain');
+    st.firstT.forEach(function (tc) {
+      var x = p.X(tc.i), y = p.Y(tc.L);
+      g.save();
+      g.lineWidth = 2;
+      if (tc.res > 0) {
+        g.strokeStyle = ok;
+        g.beginPath();
+        g.arc(x, y, 5, 0, 2 * Math.PI);
+        g.stroke();
+      } else if (tc.res < 0) {
+        g.strokeStyle = bad;
+        g.beginPath();
+        g.moveTo(x - 4, y - 4); g.lineTo(x + 4, y + 4);
+        g.moveTo(x + 4, y - 4); g.lineTo(x - 4, y + 4);
+        g.stroke();
+      }
+      g.restore();
+    });
+    p.text(0, ymax, 'one session: holds and breaks', { dx: 4, dy: 12, font: font(), color: DL.color('ink-soft') });
+  });
+
+  var drawRate = DL.figure(U + '-k', function (c) {
+    /* the ratio break / bounce on a log axis, from 0.1 to 10 */
+    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: 1, pad: { l: 46, r: 14, t: 16, b: 24 } });
+    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ys: [0, 0.25, 0.5, 0.75, 1],
+                 x: function (x) { var v = Math.pow(10, x); return (v < 1 ? DL.num(v, 1) : DL.num(v, 0)) + '×'; },
+                 y: function (y) { return DL.pct(y, 0); } });
+    p.fn(function (x) { var q = Math.pow(10, x); return q / (1 + q); },
+         { color: DL.color('ink-faint'), width: 1.6 });
+    var col = st.pin ? DL.color('insight') : DL.color('accent');
+    st.sweep.forEach(function (s) {
+      if (s.r != null) p.dot(Math.log10(s.ratio), s.r, { r: 3.5, color: DL.fade(col, 0.8) });
+    });
+    if (st.cur.r != null) p.dot(Math.log10(st.Y / st.X), st.cur.r, { r: 6, color: col, ring: true });
+    p.text(-1, 1, 'hold rate against break ÷ bounce', { dx: 4, dy: 12, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    compute();
+    var base = st.Y / (st.X + st.Y);
+    DL.out(U + '-x-o', st.X + ' pts');
+    DL.out(U + '-y-o', st.Y + ' pts');
+    DL.out(U + '-rate', 'holds: ' + (st.cur.r == null ? '—' : DL.pct(st.cur.r, 0)) +
+                        ' of ' + DL.num(st.cur.n, 0) + ' touches');
+    DL.out(U + '-base', 'chance alone: ' + DL.pct(base, 0));
+    DL.out(U + '-near', 'minutes near a level: ' + DL.pct(st.near, 0) + ' (walk ' + DL.pct(st.nearWalk, 0) + ')');
+    var gap = st.cur.r == null ? 0 : st.cur.r - base;
+    DL.out(U + '-vk', st.pin ? 'With dealers long gamma at the levels:' : 'In a random walk:');
+    DL.out(U + '-vt', 'the hold rate differs from chance by ' + DL.signed(gap * 100, 0) +
+                      ' points, and the time spent near a level by ' +
+                      DL.signed((st.near - st.nearWalk) * 100, 0) + ' points.');
+    drawPath();
+    drawRate();
+  }
+  update();
+  DL.bind([U + '-x', U + '-y'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+<!--/SCRIPT-->
