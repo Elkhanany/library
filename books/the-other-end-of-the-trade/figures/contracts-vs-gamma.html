@@ -1,0 +1,173 @@
+<!--
+name: contracts against gamma
+source: new for this book: chapter 8B, "Contracts against gamma"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s">spot</label>
+      <input type="range" id="{{uid}}-s" min="5000" max="6200" step="10" value="6000">
+      <output id="{{uid}}-s-o" for="{{uid}}-s"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-near">at 6,000, 7 days</label>
+      <input type="range" id="{{uid}}-near" min="-200000" max="200000" step="10000" value="100000">
+      <output id="{{uid}}-near-o" for="{{uid}}-near"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-far">puts at 4,800</label>
+      <input type="range" id="{{uid}}-far" min="0" max="5000000" step="250000" value="1000000">
+      <output id="{{uid}}-far-o" for="{{uid}}-far"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-count"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gex"></output></div>
+    <div class="ctrl"><output id="{{uid}}-flip"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Short by count, long by gamma, until a fall.</b> A made-up dealer book: a
+  block of options struck at 6,000 with 7 days to expiry at 15% implied volatility, long when
+  the slider is positive, and short puts struck at 4,800, 20% below 6,000, with 90 days to
+  expiry at 28%. The curves give each block's gamma exposure and their total, in billions of
+  dollars per 1% move, as spot moves with both volatilities held fixed; Black-Scholes gamma at
+  a 4% rate. The ring marks the chosen spot. At the start the book reproduces the chapter's
+  worked example: net short 900,000 contracts, yet long about $7.76 billion of gamma at
+  6,000, a total that turns negative between 5,850 and 5,800.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SP = DL.$(U + '-s'), NE = DL.$(U + '-near'), FA = DL.$(U + '-far');
+  var X0 = 5000, X1 = 6200, M = 100;
+  /* the two blocks: strike, days to expiry and implied volatility */
+  var NEAR = { K: 6000, T: 7 / 365, iv: 0.15 }, FAR = { K: 4800, T: 90 / 365, iv: 0.28 };
+
+  /* [eq:8a/line] per contract, in dollars per 1% move, then a block's total in billions:
+     positive where the dealers are long */
+  function perContract(b, S) { return DL.bsGamma(S, b.K, b.T, b.iv) * S * S * M * 0.01; }
+  function blocks(S, near, far) {
+    var a = near * perContract(NEAR, S) / 1e9, b = -far * perContract(FAR, S) / 1e9;
+    return { near: a, far: b, total: a + b };
+  }
+  /* the highest spot below 6,000 where the total changes sign, to the nearest point */
+  function flip(near, far) {
+    var prev = blocks(6000, near, far).total;
+    for (var S = 5999; S >= X0; S--) {
+      var cur = blocks(S, near, far).total;
+      if ((cur < 0) !== (prev < 0) && cur !== 0) return S;
+      prev = cur;
+    }
+    return null;
+  }
+
+  var st, scale = { near: null, far: null, top: 1 };
+  function compute() {
+    var S = +SP.value, near = +NE.value, far = +FA.value;
+    /* one scale per book, so the spot slider moves the ring and not the axis */
+    if (scale.near !== near || scale.far !== far) {
+      var top = 1;
+      for (var x = X0; x <= X1; x += 10) {
+        var q = blocks(x, near, far);
+        top = Math.max(top, Math.abs(q.near), Math.abs(q.far), Math.abs(q.total));
+      }
+      scale = { near: near, far: far, top: top };
+    }
+    var xs = [], a = [], b = [], t = [];
+    for (var s = X0; s <= X1; s += 5) {
+      var r = blocks(s, near, far);
+      xs.push(s); a.push(r.near); b.push(r.far); t.push(r.total);
+    }
+    st = { S: S, near: near, far: far, xs: xs, a: a, b: b, t: t, now: blocks(S, near, far),
+           flip: flip(near, far), top: scale.top };
+  }
+
+  function bil(x) {
+    if (Math.abs(x) < 0.005) return '$0.00B';
+    return (x > 0 ? '+' : DL.MINUS) + '$' + DL.num(Math.abs(x), 2) + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var ty = DL.ticks(-st.top, st.top, 4), YM = Math.max(Math.abs(ty.vals[0]), ty.vals[ty.vals.length - 1]);
+    if (YM < st.top) YM += ty.step;
+    var ys = [];
+    for (var v = -YM; v <= YM + 1e-9; v += ty.step) ys.push(Math.abs(v) < 1e-9 ? 0 : v);
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: -YM, ymax: YM,
+                              pad: { l: 50, r: 24, t: 42, b: 26 } });
+    DL.axes(p, { xs: [5000, 5400, 5800, 6200], ys: ys, yAt: X0,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return v === 0 ? '$0' : (v > 0 ? '+' : DL.MINUS) + '$' + DL.num(Math.abs(v), 0) + 'B'; } });
+    var g = p.g, soft = DL.color('ink-soft'), fam = DL.color('familiar'), plain = DL.color('plain');
+    var ink = DL.color('ink');
+
+    DL.vline(p, 6000, { color: DL.color('ink-faint'), dash: [3, 3] });
+    DL.line(p, st.xs, st.a, { color: fam, width: 1.6 });
+    DL.line(p, st.xs, st.b, { color: plain, width: 1.6, dash: [5, 3] });
+    /* the total, green where it damps and rose where it amplifies */
+    var pos = st.t.map(function (v) { return v >= 0 ? v : null; });
+    var neg = st.t.map(function (v, i) {
+      var n = v < 0 || (st.t[i - 1] != null && st.t[i - 1] < 0) || (st.t[i + 1] != null && st.t[i + 1] < 0);
+      return n ? v : null;
+    });
+    DL.line(p, st.xs, pos, { color: DL.color('insight'), width: 2.8 });
+    DL.line(p, st.xs, neg, { color: plain, width: 2.8 });
+    if (st.flip != null) p.dot(st.flip, 0, { r: 4, color: ink });
+    p.dot(st.S, st.now.total, { r: 6, color: st.now.total >= 0 ? DL.color('insight') : plain, ring: true });
+
+    /* the title and a key, above the plot */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' gamma exposure against spot, $B per 1% move", 6, 11);
+    var kx = 6, ky = 29;
+    [[DL.color('insight'), 'total', null, 2.8], [fam, 'near block', null, 1.6], [plain, 'far puts', [5, 3], 1.6]]
+      .forEach(function (k) {
+        g.strokeStyle = k[0];
+        g.lineWidth = k[3];
+        g.setLineDash(k[2] || []);
+        g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 16, ky); g.stroke();
+        g.setLineDash([]);
+        g.fillText(k[1], kx + 21, ky);
+        kx += 21 + g.measureText(k[1]).width + 14;
+      });
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var net = st.near - st.far;
+    DL.out(U + '-s-o', DL.num(st.S, 0));
+    DL.out(U + '-near-o', st.near === 0 ? 'none' : (st.near > 0 ? 'long ' : 'short ') + DL.num(Math.abs(st.near), 0));
+    DL.out(U + '-far-o', st.far === 0 ? 'none' : 'short ' + DL.num(st.far, 0));
+    DL.out(U + '-count', 'by count: net ' + (net > 0 ? 'long ' : net < 0 ? 'short ' : 'flat ') +
+                         DL.num(Math.abs(net), 0) + ' contracts');
+    DL.out(U + '-gex', 'GEX at ' + DL.num(st.S, 0) + ': ' + bil(st.now.total));
+    DL.out(U + '-flip', st.flip == null ? 'no sign change below 6,000' : 'sign changes at about ' + DL.num(st.flip, 0));
+    var at = 'At ' + DL.num(st.S, 0) + ' the near block gives ' + bil(st.now.near) + ' and the far puts ' +
+             bil(st.now.far) + '.';
+    if (st.now.total > 0) {
+      DL.out(U + '-vk', 'Long gamma: damping.');
+      DL.out(U + '-vt', at + (net < 0 ? ' Short by count, the dealers are long by gamma, because the gamma sits near the money.'
+                                      : ''));
+    } else if (st.now.total < 0) {
+      DL.out(U + '-vk', 'Short gamma: amplifying.');
+      DL.out(U + '-vt', at + (st.S < 6000 && st.near > 0
+                              ? ' The fall has moved the far puts toward the money and the near block away from it.'
+                              : ''));
+    } else {
+      DL.out(U + '-vk', 'No net gamma.');
+      DL.out(U + '-vt', at);
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-s', U + '-near', U + '-far'], update);
+})();
+</script>

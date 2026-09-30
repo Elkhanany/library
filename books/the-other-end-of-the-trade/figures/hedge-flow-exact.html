@@ -1,0 +1,155 @@
+<!--
+name: hedge flow for a large move
+source: new for this book: chapter 8A, "The hedge flow for a large move"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-mv">index move</label>
+      <input type="range" id="{{uid}}-mv" min="-5" max="5" step="0.1" value="1">
+      <output id="{{uid}}-mv-o" for="{{uid}}-mv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-dte">days to expiry</label>
+      <input type="range" id="{{uid}}-dte" min="1" max="60" step="1" value="30">
+      <output id="{{uid}}-dte-o" for="{{uid}}-dte"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">implied vol</label>
+      <input type="range" id="{{uid}}-iv" min="10" max="40" step="1" value="18">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-lin"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ex"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gap"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Where the straight line stops being good enough.</b> Dealers are short 1,000
+  at-the-money SPX contracts, struck at 6,000 with spot at 6,000, and the index jumps at once
+  by the move on the horizontal axis. The dashed line is the hedge-flow formula, the gamma at
+  6,000 times the move. The solid curve is the exact trade, found by repricing the option's
+  delta at the new spot. Both are drawn in E-mini S&amp;P 500 futures, each on $50 times the
+  index, so that no price conversion separates them. The rate is 4% and time counts calendar
+  days. For small moves the two agree. For large ones the formula overstates the trade, most of
+  all close to expiry, where gamma itself changes fastest.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var MV = DL.$(U + '-mv'), DT = DL.$(U + '-dte'), IV = DL.$(U + '-iv');
+  /* one line: dealers short N contracts on M units of the index each, struck at spot; an
+     E-mini covers ES units of the index */
+  var S0 = 6000, K = 6000, N = 1000, M = 100, ES = 50, XR = 5;
+
+  /* The dealers are short, so they buy what the options' delta gains: N x M x (change in
+     delta) units of the index, or that over ES in E-mini contracts. The formula uses the
+     gamma at the start, [eq:8a/flow] in units: N x M x gamma x (S1 - S0). The exact trade
+     reprices the delta at S1 with nothing else changed. Positive is buying. */
+  function lin(g, mv) { return N * M * g * S0 * mv / 100 / ES; }
+  function exact(T, sig, mv) {
+    var S1 = S0 * (1 + mv / 100);
+    return N * M * (DL.bsDelta(S1, K, T, sig, 'call') - DL.bsDelta(S0, K, T, sig, 'call')) / ES;
+  }
+
+  var st;
+  function compute() {
+    var mv = +MV.value, dte = +DT.value, sig = +IV.value / 100, T = dte / 365;
+    var g = DL.bsGamma(S0, K, T, sig);
+    var xs = [], ex = [], li = [];
+    for (var i = 0; i <= 200; i++) {
+      var m = -XR + 2 * XR * i / 200;
+      xs.push(m);
+      ex.push(exact(T, sig, m));
+      li.push(lin(g, m));
+    }
+    st = { mv: mv, dte: dte, sig: sig, T: T, g: g, xs: xs, ex: ex, li: li,
+           l: lin(g, mv), e: exact(T, sig, mv), dg: g * S0 * S0 * M * 0.01 };
+  }
+
+  function contracts(x) { return DL.num(Math.abs(x), 0); }
+  function trade(x) {
+    var n = Math.round(Math.abs(x));
+    return n === 0 ? 'no trade' : (x > 0 ? 'buy ' : 'sell ') + DL.num(n, 0);
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    /* the scale fits the formula's line at 5%, the larger of the two, rounded up */
+    var top = Math.abs(st.li[st.li.length - 1]), ty = DL.ticks(0, top * 1.08, 3);
+    var YM = ty.vals[ty.vals.length - 1] < top * 1.02 ? ty.vals[ty.vals.length - 1] + ty.step
+                                                      : ty.vals[ty.vals.length - 1];
+    var ys = [];
+    for (var v = -YM; v <= YM + 1e-9; v += ty.step) ys.push(Math.abs(v) < 1e-9 ? 0 : v);
+    var p = new NMT.Plot(c, { xmin: -XR - 0.25, xmax: XR + 0.25, ymin: -YM, ymax: YM,
+                              pad: { l: 52, r: 14, t: 42, b: 26 } });
+    DL.axes(p, { xs: [-5, -2.5, 0, 2.5, 5], ys: ys,
+                 x: function (v) { return v === 0 ? '0' : (v > 0 ? '+' : DL.MINUS) + Math.abs(v) + '%'; },
+                 y: function (v) { return v === 0 ? '0' : (v > 0 ? '+' : DL.MINUS) + DL.num(Math.abs(v), 0); } });
+    var g = p.g, soft = DL.color('ink-soft'), acc = DL.color('accent'), fam = DL.color('familiar');
+
+    /* the gap between the two, shaded */
+    DL.band(p, st.xs, st.li, st.ex, DL.fade(DL.color('warn'), 0.16));
+    DL.line(p, st.xs, st.li, { color: fam, width: 2, dash: [6, 4] });
+    DL.line(p, st.xs, st.ex, { color: acc, width: 2.4 });
+
+    /* the chosen move: both trades, joined */
+    p.seg(st.mv, st.l, st.mv, st.e, { color: DL.color('warn'), width: 2 });
+    p.dot(st.mv, st.l, { r: 4.5, color: fam, ring: true });
+    p.dot(st.mv, st.e, { r: 4.5, color: acc });
+
+    /* the title and a key, above the plot */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' hedge trade, E-mini contracts: + buy, − sell", 6, 11);
+    var kx = 6, ky = 29;
+    g.strokeStyle = fam;
+    g.lineWidth = 2;
+    g.setLineDash([6, 4]);
+    g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 16, ky); g.stroke();
+    g.setLineDash([]);
+    g.fillText('formula', kx + 21, ky);
+    kx += 21 + g.measureText('formula').width + 14;
+    g.strokeStyle = acc;
+    g.lineWidth = 2.4;
+    g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 16, ky); g.stroke();
+    g.fillText('repriced', kx + 21, ky);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var gap = st.l - st.e, rel = st.e !== 0 ? st.l / st.e - 1 : 0;
+    DL.out(U + '-mv-o', DL.signed(st.mv, 1) + '%');
+    DL.out(U + '-dte-o', st.dte + (st.dte === 1 ? ' day' : ' days'));
+    DL.out(U + '-iv-o', Math.round(st.sig * 100) + '%');
+    DL.out(U + '-lin', 'formula: ' + trade(st.l));
+    DL.out(U + '-ex', 'repriced: ' + trade(st.e));
+    DL.out(U + '-gap', st.mv === 0 ? 'gap: none'
+                                   : 'formula overstates by ' + DL.num(Math.max(0, rel) * 100, 0) + '%');
+    var line = 'One contract carries ' + DL.usd(st.dg, 0) + ' of dollar gamma per 1% move here, so the line ' +
+               'totals ' + DL.usd(st.dg * N / 1e6, 1) + ' million.';
+    if (st.mv === 0) {
+      DL.out(U + '-vk', 'No move.');
+      DL.out(U + '-vt', line);
+    } else if (Math.abs(rel) < 0.05) {
+      DL.out(U + '-vk', 'Good enough.');
+      DL.out(U + '-vt', 'At this move the formula is within 5% of repricing: ' + trade(st.l) + ' against ' +
+                        trade(st.e) + ' contracts. ' + line);
+    } else {
+      DL.out(U + '-vk', 'Reprice.');
+      DL.out(U + '-vt', 'At this move the formula says ' + trade(st.l) + ' contracts and repricing ' +
+                        trade(st.e) + ': ' + contracts(gap) + ' too many. ' + line);
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-mv', U + '-dte', U + '-iv'], update);
+})();
+</script>

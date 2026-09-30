@@ -88,7 +88,7 @@
 
 <p>It opens at spot $100.0 under the JPM-era convention, with total GEX at +$0.014B and the zero crossing, which the readout calls the <span class="gloss" title="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing.">gamma flip</span>, at $99.5. Under this convention the profile is negative below the flip, lowest near 92 to 94 at about −$0.07B. Above the flip it is positive, highest near 106 at about +$0.08B. At spot 94 the readout shows −$0.070B: dealers are assumed short the put gamma around them, so their hedging amplifies moves.</p>
 
-<p>Switch to the 0DTE-era convention and the whole profile turns upside down. Spot 94 now reads +$0.070B and spot 106 reads −$0.080B, and the side below the flip becomes the side where hedging damps moves. The flip itself stays at $99.5, because reversing every sign moves no zero. <a class="xref" href="8c.html">Chapter 8C</a> reads the gamma flip as a level, and notes that it is not the same thing as SpotGamma's <span class="gloss" title="SpotGamma's proprietary level marking where, by its model, dealers' last major concentration of positive gamma sits. SpotGamma defines it as a different level from the one where total gamma exposure crosses zero.">Volatility Trigger</span>. The caption gives the 0DTE-era convention's usual rationale, retail selling premium. The section on the 0DTE era below shows that the rationale does not survive the data.</p>
+<p>Switch to the 0DTE-era convention and the whole profile turns upside down. Spot 94 now reads +$0.070B and spot 106 reads −$0.080B, and the side below the flip becomes the side where hedging damps moves. The flip itself stays at $99.5, because reversing every sign moves no zero. <a class="xref" href="8c.html">Chapter 8C</a> reads the gamma flip as a level, and notes that it is not the same thing as SpotGamma's <span class="gloss" title="SpotGamma's proprietary level marking where, by its model, dealers' last major concentration of positive gamma sits. SpotGamma defines it as a different level from the one where total gamma exposure crosses zero.">Volatility Trigger</span>. The caption gives the 0DTE-era convention's usual rationale, that customers sell premium. The section on the 0DTE era below shows that the rationale does not survive the data.</p>
 
 <p>This is not a minor calibration issue but the dominant source of model risk in every public GEX product. Model risk is the risk of being wrong because a model's assumption is wrong. Receive a claim that "GEX flipped negative today" with skepticism. Ask first which convention the publisher uses, and whether it matches the actual flow in the product you trade.</p>
 
@@ -175,6 +175,47 @@
 </div>
 
 <p>That pattern, damping on normal days and amplifying in a sell-off, is what Chapters 8D and 8H describe. It also means that a single sign per option type is wrong for SPX. The JPM-era convention gets the puts' direction right by count but misses the long gamma near the money. The 0DTE-era convention can match the average gamma sign but signs the puts the wrong way, and it would miss the turn in Step 4.</p>
+
+<p>The figure below draws the worked example's book against spot. One slider moves spot from 5,000 to 6,200, starting at 6,000. Two set the book: the block at 6,000 with 7 days left, from short 200,000 to long 200,000 contracts and starting long 100,000, and the short puts at 4,800, from none to 5 million and starting at 1 million. The curves give each block's gamma exposure and their total, in billions of dollars per 1% move, and a ring marks spot.</p>
+
+<figure class="fig" id="fig-contracts-vs-gamma">
+  <canvas id="contracts-vs-gamma-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="contracts-vs-gamma-s">spot</label>
+      <input type="range" id="contracts-vs-gamma-s" min="5000" max="6200" step="10" value="6000">
+      <output id="contracts-vs-gamma-s-o" for="contracts-vs-gamma-s"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="contracts-vs-gamma-near">at 6,000, 7 days</label>
+      <input type="range" id="contracts-vs-gamma-near" min="-200000" max="200000" step="10000" value="100000">
+      <output id="contracts-vs-gamma-near-o" for="contracts-vs-gamma-near"></output>
+    </div>
+    <div class="ctrl">
+      <label for="contracts-vs-gamma-far">puts at 4,800</label>
+      <input type="range" id="contracts-vs-gamma-far" min="0" max="5000000" step="250000" value="1000000">
+      <output id="contracts-vs-gamma-far-o" for="contracts-vs-gamma-far"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="contracts-vs-gamma-count"></output></div>
+    <div class="ctrl"><output id="contracts-vs-gamma-gex"></output></div>
+    <div class="ctrl"><output id="contracts-vs-gamma-flip"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="contracts-vs-gamma-vk"></b> <span id="contracts-vs-gamma-vt"></span></p>
+  <figcaption><b>Short by count, long by gamma, until a fall.</b> A made-up dealer book: a
+  block of options struck at 6,000 with 7 days to expiry at 15% implied volatility, long when
+  the slider is positive, and short puts struck at 4,800, 20% below 6,000, with 90 days to
+  expiry at 28%. The curves give each block's gamma exposure and their total, in billions of
+  dollars per 1% move, as spot moves with both volatilities held fixed; Black-Scholes gamma at
+  a 4% rate. The ring marks the chosen spot. At the start the book reproduces the chapter's
+  worked example: net short 900,000 contracts, yet long about $7.76 billion of gamma at
+  6,000, a total that turns negative between 5,850 and 5,800.</figcaption>
+</figure>
+
+<p>It opens on the example: net short 900,000 contracts, yet +$7.76 billion of GEX at 6,000, with the sign changing at about 5,838. Drag spot to 5,800 and the readout gives Step 4's −$2.22 billion. At 5,400 it is −$9.51 billion, all of it from the far puts. Return spot to 6,000 and raise the short puts to 5 million: the total is −$7.26 billion even at 6,000. The count of contracts never changes as spot moves. Only the gamma does, and the gamma decides the hedge.</p>
 
 <h3 id="single-stocks-follow-different-rules">Single stocks follow different rules</h3>
 
@@ -299,6 +340,51 @@
 
 <p>Two findings bound how well any of this can work. Ardia and Vaudescal (2026), an SSRN working paper, built net gamma from public open interest over five years of half-hour SPX data. It tracked a dealer-inventory benchmark at a correlation of 0.99 for options other than 0DTE, but only 0.53 for 0DTE. The benchmark shares its open-interest starting point with the proxy, so 0.99 is an upper bound on agreement. And market makers match most 0DTE flow, as Adams, Fontaine and Ornthanalai found, so their same-day gamma comes mostly from older positions that sit in yesterday's open interest. For longer expiries, yesterday's open interest is most of the story. For same-day options, the flow intraday maps chase is mostly offset, and the part that is not is the part public data measure worst.</p>
 
+<p>The figure below makes Cboe's point with a made-up session in one same-day put: 2,000 trades, 100,000 contracts in all. Customers buy a share of the volume you set, starting at 51.5%, and market makers take the other side of every trade. A flow-based map signs each trade with a rule that errs with probability e, starting at 13%, about the quote rule's error once complex trades are set aside. It signs the legs of spreads, 15% of trades to start, by a coin toss, as with the complex-order legs misclassified almost half the time. New day draws another session.</p>
+
+<figure class="fig" id="fig-volume-vs-position">
+  <canvas id="volume-vs-position-b" data-h="120"></canvas>
+  <canvas id="volume-vs-position-c" data-h="220"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="volume-vs-position-p">customers buying</label>
+      <input type="range" id="volume-vs-position-p" min="45" max="55" step="0.5" value="51.5">
+      <output id="volume-vs-position-p-o" for="volume-vs-position-p"></output>
+    </div>
+    <div class="ctrl">
+      <label for="volume-vs-position-e">misclassified, e</label>
+      <input type="range" id="volume-vs-position-e" min="0" max="45" step="1" value="13">
+      <output id="volume-vs-position-e-o" for="volume-vs-position-e"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="volume-vs-position-sp">spread legs</label>
+      <input type="range" id="volume-vs-position-sp" min="0" max="50" step="5" value="15">
+      <output id="volume-vs-position-sp-o" for="volume-vs-position-sp"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="volume-vs-position-new">new day</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="volume-vs-position-held"></output></div>
+    <div class="ctrl"><output id="volume-vs-position-map"></output></div>
+    <div class="ctrl"><output id="volume-vs-position-all"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="volume-vs-position-vk"></b> <span id="volume-vs-position-vt"></span></p>
+  <figcaption><b>Volume is not position.</b> A made-up session in one same-day put: 2,000
+  trades, 100,000 contracts in all, and each trade's true side. Customers buy the chosen share
+  of the volume over the day, and market makers take the other side of every trade, so they
+  end short what customers net bought. Above, on one scale, the day's gross volume, the market
+  makers' true net position at the close, and the position a flow-based map infers. Below, the
+  true position and the inferred one through the day. The map signs each trade with a rule
+  that errs with probability e, and signs the legs of spreads at random, the near-50% error
+  Savickas and Wilson found for the legs of complex index orders. At the start the session
+  echoes Cboe's example of August 15, 2023: about 100,000 contracts traded, and market makers
+  left short about 3,000.</figcaption>
+</figure>
+
+<p>At the start, market makers end short 3,024 contracts, 3.0% of the volume, close to Cboe's example. The map signs 17% of the volume wrongly and infers short 1,742: the right sign, 1,282 contracts off. Set the buying share to 50% and the true position shrinks to long 112, while the map infers long 1,366. Its errors stay as large, because they scale with the 100,000 contracts traded. Press new day a few times at the start's settings: on some days the map gets the sign wrong. Balance decides the hedge, and balance is what a classified tape measures worst.</p>
+
 <h2 id="vendors-methods-side-by-side">9 · Vendors' methods side by side</h2>
 
 <p>Every vendor answers the sign question somehow, and the answers range from a fixed rule to measured positions. As their own documentation describes them:</p>
@@ -340,7 +426,7 @@
 <span class="ct">Worked example: One number in four units</span>
 <p><strong>Step 1: per point.</strong> A GEX of $10 billion per 1% at SPX 6,000 is \(10{,}000{,}000{,}000/60 \approx \$167\) million per index point, since a 1% move is 60 points.</p>
 
-<p><strong>Step 2: index units and contracts.</strong> It is \(10{,}000{,}000{,}000/6{,}000 \approx 1.67\) million index units, or about \(10{,}000{,}000{,}000/300{,}000 \approx 33{,}000\) ES contracts per 1% move.</p>
+<p><strong>Step 2: index units and contracts.</strong> In the white paper's unit it is \(10{,}000{,}000{,}000/(6{,}000^2 \times 0.01) \approx 27{,}800\) index units per $1 of index move. Per 1% move it is \(10{,}000{,}000{,}000/6{,}000 \approx 1.67\) million index units, or about \(10{,}000{,}000{,}000/300{,}000 \approx 33{,}000\) ES contracts.</p>
 
 <p><strong>Step 3: a vendor's example.</strong> SqueezeMetrics' monitor material explains a reading of 64,521,235: for every point the S&amp;P 500 moves, dealers would need to trade "$64,521,235 worth of S&amp;P 500 index exposure". If SPX stood at 3,000, that would be \(64.5 \text{ million} \times 30 \approx \$1.9\) billion per 1%. Another summary of the same material speaks of thousands of dollars per point, so even this unit needs checking.</p>
 
@@ -1223,6 +1309,139 @@ var DL = (function () {
   DL.bind([U + '-shift'], update);
 })();
 
+/* ---------- contracts-vs-gamma ---------- */
+(function () {
+  var U = 'contracts-vs-gamma';
+  var SP = DL.$(U + '-s'), NE = DL.$(U + '-near'), FA = DL.$(U + '-far');
+  var X0 = 5000, X1 = 6200, M = 100;
+  /* the two blocks: strike, days to expiry and implied volatility */
+  var NEAR = { K: 6000, T: 7 / 365, iv: 0.15 }, FAR = { K: 4800, T: 90 / 365, iv: 0.28 };
+
+  /* [eq:8a/line] per contract, in dollars per 1% move, then a block's total in billions:
+     positive where the dealers are long */
+  function perContract(b, S) { return DL.bsGamma(S, b.K, b.T, b.iv) * S * S * M * 0.01; }
+  function blocks(S, near, far) {
+    var a = near * perContract(NEAR, S) / 1e9, b = -far * perContract(FAR, S) / 1e9;
+    return { near: a, far: b, total: a + b };
+  }
+  /* the highest spot below 6,000 where the total changes sign, to the nearest point */
+  function flip(near, far) {
+    var prev = blocks(6000, near, far).total;
+    for (var S = 5999; S >= X0; S--) {
+      var cur = blocks(S, near, far).total;
+      if ((cur < 0) !== (prev < 0) && cur !== 0) return S;
+      prev = cur;
+    }
+    return null;
+  }
+
+  var st, scale = { near: null, far: null, top: 1 };
+  function compute() {
+    var S = +SP.value, near = +NE.value, far = +FA.value;
+    /* one scale per book, so the spot slider moves the ring and not the axis */
+    if (scale.near !== near || scale.far !== far) {
+      var top = 1;
+      for (var x = X0; x <= X1; x += 10) {
+        var q = blocks(x, near, far);
+        top = Math.max(top, Math.abs(q.near), Math.abs(q.far), Math.abs(q.total));
+      }
+      scale = { near: near, far: far, top: top };
+    }
+    var xs = [], a = [], b = [], t = [];
+    for (var s = X0; s <= X1; s += 5) {
+      var r = blocks(s, near, far);
+      xs.push(s); a.push(r.near); b.push(r.far); t.push(r.total);
+    }
+    st = { S: S, near: near, far: far, xs: xs, a: a, b: b, t: t, now: blocks(S, near, far),
+           flip: flip(near, far), top: scale.top };
+  }
+
+  function bil(x) {
+    if (Math.abs(x) < 0.005) return '$0.00B';
+    return (x > 0 ? '+' : DL.MINUS) + '$' + DL.num(Math.abs(x), 2) + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var ty = DL.ticks(-st.top, st.top, 4), YM = Math.max(Math.abs(ty.vals[0]), ty.vals[ty.vals.length - 1]);
+    if (YM < st.top) YM += ty.step;
+    var ys = [];
+    for (var v = -YM; v <= YM + 1e-9; v += ty.step) ys.push(Math.abs(v) < 1e-9 ? 0 : v);
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: -YM, ymax: YM,
+                              pad: { l: 50, r: 24, t: 42, b: 26 } });
+    DL.axes(p, { xs: [5000, 5400, 5800, 6200], ys: ys, yAt: X0,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return v === 0 ? '$0' : (v > 0 ? '+' : DL.MINUS) + '$' + DL.num(Math.abs(v), 0) + 'B'; } });
+    var g = p.g, soft = DL.color('ink-soft'), fam = DL.color('familiar'), plain = DL.color('plain');
+    var ink = DL.color('ink');
+
+    DL.vline(p, 6000, { color: DL.color('ink-faint'), dash: [3, 3] });
+    DL.line(p, st.xs, st.a, { color: fam, width: 1.6 });
+    DL.line(p, st.xs, st.b, { color: plain, width: 1.6, dash: [5, 3] });
+    /* the total, green where it damps and rose where it amplifies */
+    var pos = st.t.map(function (v) { return v >= 0 ? v : null; });
+    var neg = st.t.map(function (v, i) {
+      var n = v < 0 || (st.t[i - 1] != null && st.t[i - 1] < 0) || (st.t[i + 1] != null && st.t[i + 1] < 0);
+      return n ? v : null;
+    });
+    DL.line(p, st.xs, pos, { color: DL.color('insight'), width: 2.8 });
+    DL.line(p, st.xs, neg, { color: plain, width: 2.8 });
+    if (st.flip != null) p.dot(st.flip, 0, { r: 4, color: ink });
+    p.dot(st.S, st.now.total, { r: 6, color: st.now.total >= 0 ? DL.color('insight') : plain, ring: true });
+
+    /* the title and a key, above the plot */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' gamma exposure against spot, $B per 1% move", 6, 11);
+    var kx = 6, ky = 29;
+    [[DL.color('insight'), 'total', null, 2.8], [fam, 'near block', null, 1.6], [plain, 'far puts', [5, 3], 1.6]]
+      .forEach(function (k) {
+        g.strokeStyle = k[0];
+        g.lineWidth = k[3];
+        g.setLineDash(k[2] || []);
+        g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 16, ky); g.stroke();
+        g.setLineDash([]);
+        g.fillText(k[1], kx + 21, ky);
+        kx += 21 + g.measureText(k[1]).width + 14;
+      });
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var net = st.near - st.far;
+    DL.out(U + '-s-o', DL.num(st.S, 0));
+    DL.out(U + '-near-o', st.near === 0 ? 'none' : (st.near > 0 ? 'long ' : 'short ') + DL.num(Math.abs(st.near), 0));
+    DL.out(U + '-far-o', st.far === 0 ? 'none' : 'short ' + DL.num(st.far, 0));
+    DL.out(U + '-count', 'by count: net ' + (net > 0 ? 'long ' : net < 0 ? 'short ' : 'flat ') +
+                         DL.num(Math.abs(net), 0) + ' contracts');
+    DL.out(U + '-gex', 'GEX at ' + DL.num(st.S, 0) + ': ' + bil(st.now.total));
+    DL.out(U + '-flip', st.flip == null ? 'no sign change below 6,000' : 'sign changes at about ' + DL.num(st.flip, 0));
+    var at = 'At ' + DL.num(st.S, 0) + ' the near block gives ' + bil(st.now.near) + ' and the far puts ' +
+             bil(st.now.far) + '.';
+    if (st.now.total > 0) {
+      DL.out(U + '-vk', 'Long gamma: damping.');
+      DL.out(U + '-vt', at + (net < 0 ? ' Short by count, the dealers are long by gamma, because the gamma sits near the money.'
+                                      : ''));
+    } else if (st.now.total < 0) {
+      DL.out(U + '-vk', 'Short gamma: amplifying.');
+      DL.out(U + '-vt', at + (st.S < 6000 && st.near > 0
+                              ? ' The fall has moved the far puts toward the money and the near block away from it.'
+                              : ''));
+    } else {
+      DL.out(U + '-vk', 'No net gamma.');
+      DL.out(U + '-vt', at);
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-s', U + '-near', U + '-far'], update);
+})();
+
 /* ---------- gex-sign-map ---------- */
 (function () {
   var U = 'gex-sign-map';
@@ -1527,6 +1746,142 @@ var DL = (function () {
   }
   update();
   DL.bind([U + '-e'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+
+/* ---------- volume-vs-position ---------- */
+(function () {
+  var U = 'volume-vs-position';
+  var PP = DL.$(U + '-p'), EE = DL.$(U + '-e'), SPR = DL.$(U + '-sp');
+  var NT = 2000, GROSS = 100000, STEPS = 390;
+  var seed = 2, st;
+
+  /* The session: each trade has a minute, a size and draws for its side, its spread status
+     and its classification, all from one seed, so the controls change the rules and not the
+     trades. Sizes are heavy-tailed and scaled so the day adds up to 100,000 contracts. */
+  function day(sd) {
+    var r = DL.rng(sd), raw = [], tot = 0, out = [];
+    for (var i = 0; i < NT; i++) {
+      var s = Math.exp(DL.gauss(r) * 0.9);
+      raw.push(s);
+      tot += s;
+    }
+    var sum = 0;
+    for (var j = 0; j < NT; j++) {
+      var n = Math.max(1, Math.round(raw[j] * GROSS / tot));
+      sum += n;
+      out.push({ t: (j + r()) * STEPS / NT, n: n, u: r(), sp: r(), cl: r(), coin: r() });
+    }
+    out[NT - 1].n += GROSS - sum;
+    return out;
+  }
+  var trades = day(seed), tradesSeed = seed;
+
+  /* Sides: a customer buys with a probability that leans toward the chosen share, so the
+     running balance wanders but ends near it. Market makers hold minus the customers' net.
+     The map signs a simple trade wrongly when its draw falls below e, and a spread leg by a
+     coin toss. */
+  function compute() {
+    if (tradesSeed !== seed) { trades = day(seed); tradesSeed = seed; }
+    var p = +PP.value / 100, e = +EE.value / 100, sp = +SPR.value / 100;
+    var V = 0, B = 0, mm = 0, map = 0, wrong = 0, wrongN = 0;
+    var ts = [0], tru = [0], inf = [0];
+    trades.forEach(function (tr) {
+      var lean = p + (p * V - B) / 2000;
+      var buy = tr.u < Math.max(0.05, Math.min(0.95, lean));
+      V += tr.n;
+      if (buy) B += tr.n;
+      mm += buy ? -tr.n : tr.n;
+      var isSpread = tr.sp < sp;
+      var wrongSide = isSpread ? tr.coin < 0.5 : tr.cl < e;
+      if (wrongSide) { wrong++; wrongN += tr.n; }
+      var seenBuy = wrongSide ? !buy : buy;
+      map += seenBuy ? -tr.n : tr.n;
+      ts.push(tr.t); tru.push(mm); inf.push(map);
+    });
+    st = { p: p, e: e, sp: sp, V: V, mm: mm, map: map, wrong: wrong, wrongN: wrongN,
+           ts: ts, tru: tru, inf: inf };
+  }
+
+  function pos(x) { return x === 0 ? 'flat' : (x > 0 ? 'long ' : 'short ') + DL.num(Math.abs(x), 0); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var drawBars = DL.figure(U + '-b', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: GROSS * 1.02, ymin: 0, ymax: 3.4,
+                              pad: { l: 12, r: 12, t: 8, b: 20 } });
+    var g = p.g;
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, p.w, p.h);
+    var rows = [[st.V, 'gross volume: ' + DL.num(st.V, 0), DL.color('ink-faint')],
+                [Math.abs(st.mm), 'market makers hold: ' + pos(st.mm), DL.color('accent')],
+                [Math.abs(st.map), 'the map infers: ' + pos(st.map), DL.color('familiar')]];
+    rows.forEach(function (rw, i) {
+      var y = 2.9 - i * 1.05;
+      g.fillStyle = DL.fade(rw[2], 0.85);
+      g.fillRect(p.X(0), p.Y(y + 0.18), Math.max(2, p.X(rw[0]) - p.X(0)), p.Y(y - 0.18) - p.Y(y + 0.18));
+      p.text(0, y + 0.18, rw[1], { dy: -8, font: font(), color: DL.color('ink-soft') });
+    });
+    g.save();
+    g.font = font();
+    g.fillStyle = DL.color('ink-faint');
+    g.textAlign = 'right';
+    g.textBaseline = 'bottom';
+    g.fillText('contracts, one scale', p.w - 12, p.h - 3);
+    g.restore();
+  });
+
+  var drawPath = DL.figure(U + '-c', function (c) {
+    var top = 8000;
+    st.tru.concat(st.inf).forEach(function (v) { top = Math.max(top, Math.abs(v)); });
+    var ty = DL.ticks(-top, top, 4), YM = Math.max(Math.abs(ty.vals[0]), ty.vals[ty.vals.length - 1]);
+    if (YM < top) YM += ty.step;
+    var ys = [];
+    for (var v = -YM; v <= YM + 1e-9; v += ty.step) ys.push(Math.abs(v) < 1e-9 ? 0 : v);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: -YM, ymax: YM,
+                              pad: { l: 52, r: 14, t: 24, b: 24 } });
+    DL.axes(p, { xs: [0, 90, 180, 270, 360], ys: ys,
+                 x: function (x) { return ['9:30', '11:00', '12:30', '2:00', '3:30'][x / 90]; },
+                 y: function (v) { return v === 0 ? '0' : (v > 0 ? '+' : DL.MINUS) + DL.num(Math.abs(v), 0); } });
+    DL.line(p, st.ts, st.inf, { color: DL.color('familiar'), width: 1.4 });
+    DL.line(p, st.ts, st.tru, { color: DL.color('accent'), width: 2.2 });
+    var g = p.g;
+    g.save();
+    g.font = font();
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.fillStyle = DL.color('ink-soft');
+    g.fillText("market makers' net position:", 6, 11);
+    var kx = 6 + g.measureText("market makers' net position:").width + 10;
+    [[DL.color('accent'), 'true'], [DL.color('familiar'), 'inferred']].forEach(function (k) {
+      g.strokeStyle = k[0];
+      g.lineWidth = 2.2;
+      g.beginPath(); g.moveTo(kx, 11); g.lineTo(kx + 14, 11); g.stroke();
+      g.fillText(k[1], kx + 19, 11);
+      kx += 19 + g.measureText(k[1]).width + 12;
+    });
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-p-o', DL.num(st.p * 100, 1) + '%');
+    DL.out(U + '-e-o', Math.round(st.e * 100) + '%');
+    DL.out(U + '-sp-o', Math.round(st.sp * 100) + '%');
+    DL.out(U + '-held', 'held: ' + pos(st.mm) + ' (' + DL.num(Math.abs(st.mm) / st.V * 100, 1) + '% of volume)');
+    DL.out(U + '-map', 'inferred: ' + pos(st.map));
+    DL.out(U + '-all', 'volume signed wrongly: ' + DL.num(st.wrongN / st.V * 100, 0) + '%');
+    var err = st.map - st.mm, flip = st.mm !== 0 && (st.map > 0) !== (st.mm > 0);
+    DL.out(U + '-vk', flip ? 'Wrong sign.' : Math.abs(err) >= 0.5 * Math.abs(st.mm) ? 'Far off.' : 'Close.');
+    DL.out(U + '-vt', 'The map is off by ' + DL.num(Math.abs(err), 0) + ' contracts, against a true position of ' +
+                      DL.num(Math.abs(st.mm), 0) + '. Its errors scale with the ' + DL.num(st.V, 0) +
+                      ' contracts traded, the true position with the balance between buys and sells.');
+    drawBars();
+    drawPath();
+  }
+  update();
+  DL.bind([U + '-p', U + '-e', U + '-sp'], update);
   DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
 })();
 <!--/SCRIPT-->

@@ -1,0 +1,189 @@
+<!--
+name: a strike's feedback through expiration day
+source: new for this book: chapter 8E, "A strike's feedback through expiration day"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="230"></canvas>
+  <canvas id="{{uid}}-f" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">dealers at the strike</label>
+      <input type="range" id="{{uid}}-n" min="-30000" max="30000" step="1000" value="20000">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-d">spot − strike</label>
+      <input type="range" id="{{uid}}-d" min="-40" max="40" step="1" value="0">
+      <output id="{{uid}}-d-o" for="{{uid}}-d"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-lam">impact</label>
+      <input type="range" id="{{uid}}-lam" min="0" max="3" step="0.1" value="1">
+      <output id="{{uid}}-lam-o" for="{{uid}}-lam"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV</label>
+      <input type="range" id="{{uid}}-iv" min="10" max="30" step="1" value="15">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-open"></output></div>
+    <div class="ctrl"><output id="{{uid}}-half"></output></div>
+    <div class="ctrl"><output id="{{uid}}-one"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>How late a same-day strike takes over.</b> Dealers hold a net position in
+  same-day SPX options struck at 6,000, positive when they are long them, and spot sits still
+  at a set distance from the strike all day. Above, the feedback w of the pinning equation,
+  dS = (news − c)/(1 + w), from the open to the close, with w = λ × N × 100 × gamma × S / $1
+  billion, λ the impact in index points per $1 billion and time in calendar minutes. Rings
+  mark where w first passes 0.5 and 1, or −0.5 and −1 for a short position. Below, on a
+  logarithmic scale, the factor 1/(1 + w) that multiplies every news move: under 1 the strike
+  damps it, over 1 it amplifies it, and at w = −1 the factor has no finite value, Frey's
+  singular point. The position is made up and deliberately large.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var NN = DL.$(U + '-n'), DD = DL.$(U + '-d'), LAM = DL.$(U + '-lam'), IV = DL.$(U + '-iv');
+  var K = 6000, STEPS = 390, MIN = 1 / (365 * 24 * 60), YW = 2.5;
+
+  /* the feedback at minute t of the session, with spot held at K + d: the gamma of one
+     option at the time left, floored at half a minute as in the pinning figure */
+  function wAt(t, n, d, lam, sig) {
+    var T = Math.max(STEPS - t, 0.5) * MIN, S = K + d;
+    return lam * n * 100 * DL.bsGamma(S, K, T, sig) * S / 1e9;
+  }
+  /* the first minute at which |w| reaches a level, on the side of the position's sign */
+  function first(ws, lev) {
+    for (var i = 0; i < ws.length; i++) if (Math.abs(ws[i]) >= lev) return i;
+    return -1;
+  }
+  /* a crossing is reported at the first whole minute at or after it */
+  function clock(t) {
+    var m = 9 * 60 + 30 + Math.ceil(t), h = Math.floor(m / 60), mm = m % 60;
+    return (h > 12 ? h - 12 : h) + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+  function left(t) { var l = STEPS - Math.ceil(t); return l + (l === 1 ? ' minute' : ' minutes') + ' left'; }
+
+  var st;
+  function compute() {
+    var n = +NN.value, d = +DD.value, lam = +LAM.value, sig = +IV.value / 100;
+    var ts = [], ws = [];
+    for (var i = 0; i <= 2 * STEPS - 1; i++) {
+      var t = i / 2;
+      ts.push(t);
+      ws.push(wAt(t, n, d, lam, sig));
+    }
+    var sgn = n > 0 ? 1 : n < 0 ? -1 : 0;
+    st = { n: n, d: d, lam: lam, sig: sig, ts: ts, ws: ws, sgn: sgn,
+           w0: ws[0], w30: wAt(STEPS - 30, n, d, lam, sig),
+           h: sgn ? first(ws, 0.5) : -1, o: sgn ? first(ws, 1) : -1 };
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  /* a panel's title, top left, across the canvas's whole width */
+  function title(g, s) {
+    g.save();
+    g.font = font();
+    g.fillStyle = DL.color('ink-soft');
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.fillText(s, 6, 11);
+    g.restore();
+  }
+  var XT = [0, 90, 180, 270, 360];
+  function xlab(x) { return ['9:30', '11:00', '12:30', '2:00', '3:30'][XT.indexOf(x)]; }
+
+  compute();
+  var drawW = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: -YW, ymax: YW,
+                              pad: { l: 40, r: 14, t: 24, b: 24 } });
+    DL.axes(p, { xs: XT, ys: [-2, -1, 0, 1, 2], x: xlab,
+                 y: function (v) { return v === 0 ? '0' : DL.signed(v, 0); } });
+    var g = p.g, soft = DL.color('ink-soft'), col = st.sgn >= 0 ? DL.color('insight') : DL.color('plain');
+    /* the levels: 0.5 and 1 on the position's side, and the singular point at -1 */
+    [0.5, 1, -0.5, -1].forEach(function (v) {
+      DL.hline(p, v, { color: v === -1 ? DL.color('plain') : DL.color('ink-faint'), dash: [4, 3],
+                       width: v === -1 ? 1.4 : 1 });
+    });
+    p.text(0, -1, 'w = −1', { dx: 6, dy: 11, align: 'left', font: font(), color: DL.color('plain') });
+    DL.clip(p);
+    DL.line(p, st.ts, st.ws.map(function (w) { return Math.max(-YW - 1, Math.min(YW + 1, w)); }),
+            { color: col, width: 2.2 });
+    g.restore();
+    [[st.h, 0.5], [st.o, 1]].forEach(function (q) {
+      if (q[0] < 0) return;
+      var t = st.ts[q[0]], y = st.sgn * q[1];
+      p.dot(t, y, { r: 5, color: col, ring: true });
+    });
+    title(g, 'feedback w at the strike, through the day');
+  });
+
+  var drawF = DL.figure(U + '-f', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: -1, ymax: 1,
+                              pad: { l: 40, r: 14, t: 24, b: 24 } });
+    var L = Math.log(3) / Math.LN10;
+    DL.axes(p, { xs: XT, ys: [-1, -L, 0, L, 1], x: xlab,
+                 y: function (v) { return ['0.1×', '0.3×', '1×', '3×', '10×'][[-1, -L, 0, L, 1].indexOf(v)]; } });
+    var g = p.g, soft = DL.color('ink-soft');
+    /* past w = -1 the factor has no finite value: shade what remains of the session */
+    var brk = -1;
+    for (var i = 0; i < st.ws.length; i++) if (st.ws[i] <= -1) { brk = i; break; }
+    if (brk >= 0) {
+      g.fillStyle = DL.fade(DL.color('plain'), 0.14);
+      g.fillRect(p.X(st.ts[brk]), p.Y(1), p.X(STEPS) - p.X(st.ts[brk]), p.Y(-1) - p.Y(1));
+      p.text(STEPS, 1, 'no finite factor', { dx: -4, dy: 12, align: 'right', font: font(), color: DL.color('plain') });
+    }
+    var ys = st.ws.map(function (w, j) {
+      if (brk >= 0 && j >= brk) return null;
+      return Math.max(-1.2, Math.min(1.2, -Math.log(1 + w) / Math.LN10));
+    });
+    DL.clip(p);
+    DL.line(p, st.ts, ys, { color: DL.color('accent'), width: 2.2 });
+    g.restore();
+    title(g, 'each news move is multiplied by 1/(1 + w)');
+  });
+
+  function update() {
+    compute();
+    var pos = DL.num(Math.abs(st.n), 0);
+    DL.out(U + '-n-o', st.n === 0 ? 'none' : (st.n > 0 ? 'long ' : 'short ') + pos);
+    DL.out(U + '-d-o', st.d === 0 ? 'at the strike' : DL.signed(st.d, 0) + ' pts');
+    DL.out(U + '-lam-o', DL.num(st.lam, 1) + ' pt per $1B');
+    DL.out(U + '-iv-o', Math.round(st.sig * 100) + '%');
+    DL.out(U + '-open', 'w at the open: ' + DL.signed(st.w0, 2));
+    DL.out(U + '-half', 'with 30 min left: ' + DL.signed(st.w30, 2));
+    var lev = st.sgn < 0 ? '−1' : '1';
+    DL.out(U + '-one', st.o < 0 ? '|w| never reaches 1'
+                                : 'w passes ' + lev + ' at ' + clock(st.ts[st.o]) + ', ' + left(st.ts[st.o]));
+    var f0 = 1 / (1 + st.w0);
+    if (st.n === 0 || st.lam === 0) {
+      DL.out(U + '-vk', 'No feedback.');
+      DL.out(U + '-vt', 'With no position or no impact, the strike leaves every news move as it is.');
+    } else if (st.sgn > 0) {
+      DL.out(U + '-vk', 'Damping.');
+      DL.out(U + '-vt', 'News moves are multiplied by ' + DL.num(f0, 2) + ' at the open and ' +
+                        DL.num(1 / (1 + st.w30), 2) + ' with 30 minutes left.' +
+                        (st.o < 0 ? ' Away from the strike, its gamma never grows enough to halve them.'
+                                  : ' From ' + clock(st.ts[st.o]) + ' the dealers\' own trades offset more than half ' +
+                                    'of every news move.'));
+    } else {
+      DL.out(U + '-vk', 'Amplifying.');
+      DL.out(U + '-vt', 'News moves are multiplied by ' + DL.num(f0, 2) + ' at the open' +
+                        (st.w30 > -1 ? ' and ' + DL.num(1 / (1 + st.w30), 2) + ' with 30 minutes left.'
+                                     : ', and with 30 minutes left the factor has no finite value.') +
+                        (st.o < 0 ? ' Here the feedback never reaches the singular point.'
+                                  : ' At ' + clock(st.ts[st.o]) + ' the feedback reaches w = −1, the singular point, ' +
+                                    'and the linear model stops describing the market.'));
+    }
+    drawW();
+    drawF();
+  }
+  update();
+  DL.bind([U + '-n', U + '-d', U + '-lam', U + '-iv'], update);
+})();
+</script>

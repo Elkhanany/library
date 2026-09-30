@@ -1,6 +1,6 @@
 # Questions for the author
 
-382 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
+384 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
 
 ## 1A · What a return is
 
@@ -275,6 +275,7 @@
 - Buffer and defined-outcome ETF assets: Chapter 4A gives "over $50 billion ... by 2024, and ... over $100 billion in 2025" for defined-outcome ETFs; research/practice.md gives "more than $70 billion" by mid-2025 for buffer ETFs. The text cites neither number. Which should the book use?
 - Stivers and Sun (2013): the research did not see the size of the expiration-week effect. If the paper gives it, the text could quote it beside "tend to be high" and "underperform modestly".
 - Is the VIX expiration's own effect worth a source search? No source was found on "OPEX and VOLEX" effects.
+- Baltussen, Terstegge and Whelan's later version: "$230 million a month" times 12 is $2.76 billion, against "about $2.5 billion a year" for the same version. The two come from separate search summaries. Which figure does the paper give, and on what basis? (From the Part VIII maths check.)
 
 ## 8G · The evidence
 
@@ -297,6 +298,7 @@
 - The $483 intraday high and the $193.60 close: the research verified the close and the 44.3% fall from a search summary of the House committee's memorandum, but not the $483 high. Please check.
 - Chapters 5D, 7B and 9A state the dealers' negative vomma in Volmageddon as fact. Should they carry the same label as here (the Lab's interpretation)?
 - Robinhood's deposits: answered. The testimony was before the House Financial Services Committee (Tenev's, per the research), and the committee's staff memorandum gives the figures the text now quotes.
+- August 5, 2024: Li and Askanazi's starting VIX of 23.9 and the BIS's "up 180% to almost 66" do not share a base. From 23.9, 66 is a rise of 176%; 180% implies a base near 23.5. Is 23.9 a slip for 23.39, or do the two measure from different prints? (From the Part VIII maths check.)
 
 ## 8I · Gamma squeezes
 
@@ -573,7 +575,7 @@
 
 ## 12H · Exercise and assignment
 
-- "SPX/XSP weekly options settle to the 4:15 PM PM-settled close" and "Weekly SPX (PM-settled to the Friday 4:15 PM close)": PM-settled SPX options are generally described as trading until 4:15 PM ET but settling to the index's official closing value, computed from the 4:00 PM closes of its stocks. The text keeps the source's wording; please check it.
+- The "4:15 PM close" for PM-settled SPX and XSP weeklies is now the official 4:00 PM close (see Changed), which Chapter 2A already gave. Please confirm it against Cboe's contract specifications.
 - "any long option that closes more than $0.01 in-the-money": the OCC's exercise-by-exception threshold is usually described as $0.01 or more in the money. Which is right? The text keeps "more than".
 - "Pin risk peaks for short options near strikes" is placed at Thursday's close (T − 1). For equity options and PM-settled index options the risk is usually described as peaking at Friday's close. Is Thursday meant for the AM-settled SPX monthlies, whose last trading day is Thursday? The text keeps the source's placement.
 - The timeline is headed "monthly equity options, third Friday" but also covers SPX weeklies and monthlies. Should it be split by product?

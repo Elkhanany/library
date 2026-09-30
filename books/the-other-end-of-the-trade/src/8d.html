@@ -407,6 +407,46 @@
 <p><strong>Step 3: the comparison.</strong> Both gains are far below 1, and far below the table's stress rows. No study found estimates an SPX feedback gain near the singular point.</p>
 </div>
 
+<p>The figure below puts the three views of \(\lambda\) on one chart. The horizontal axis is \(G\), dealers' short gamma in billions of dollars per 1% move, the negative of published GEX, from −$100 billion to +$100 billion and starting at +$20 billion. The vertical axis is the loop gain \(\kappa G\) for a 1% move. The straight line is constant impact at the \(\lambda\) you set, from 0 to 3 points per $1 billion and starting at 1, by <a class="eqref" href="#e-units"></a>, with spot starting at 6,000. The band is square-root impact on the worked example's assumptions, with \(Y\) from 0.5 to 1. A green strip marks the gains of 0.18 to 0.30 read from the studies, and a dashed line the explosive gain of 1.</p>
+
+<figure class="fig" id="fig-loop-gain-calc">
+  <canvas id="loop-gain-calc-c" data-h="300"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="loop-gain-calc-g">dealers short, G</label>
+      <input type="range" id="loop-gain-calc-g" min="-100" max="100" step="5" value="20">
+      <output id="loop-gain-calc-g-o" for="loop-gain-calc-g"></output>
+    </div>
+    <div class="ctrl">
+      <label for="loop-gain-calc-lam">impact λ</label>
+      <input type="range" id="loop-gain-calc-lam" min="0" max="3" step="0.1" value="1">
+      <output id="loop-gain-calc-lam-o" for="loop-gain-calc-lam"></output>
+    </div>
+    <div class="ctrl">
+      <label for="loop-gain-calc-s">spot</label>
+      <input type="range" id="loop-gain-calc-s" min="4000" max="7000" step="100" value="6000">
+      <output id="loop-gain-calc-s-o" for="loop-gain-calc-s"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="loop-gain-calc-lin"></output></div>
+    <div class="ctrl"><output id="loop-gain-calc-sq"></output></div>
+    <div class="ctrl"><output id="loop-gain-calc-crit"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="loop-gain-calc-vk"></b> <span id="loop-gain-calc-vt"></span></p>
+  <figcaption><b>The same dealers, two laws of impact.</b> The horizontal axis is G, the
+  dealers' short gamma in billions of dollars per 1% move, the negative of published GEX. The
+  vertical axis is the loop gain κG, the share of each 1% move that the dealers' own hedging
+  adds, and the amplification 1/(1 − κG) is in the readouts. The straight line is a constant
+  impact of λ index points per $1 billion, κG = λG/(0.01S). The band is square-root impact
+  for a 1% move, Y × σ<sub>D</sub> × √(G/V<sub>D</sub>) ÷ 1%, on the chapter's illustrative
+  assumptions: daily volatility σ<sub>D</sub> of 1%, $500 billion traded a day and Y from 0.5
+  to 1. The shaded strip is the gains the chapter reads from two studies, 0.18 to 0.30. At a
+  gain of 1 the loop is explosive, and the formula has no finite answer.</figcaption>
+</figure>
+
+<p>At the start, constant impact gives \(\kappa G = 0.33\) and multiplies every move by 1.50, while square-root impact gives 0.10 to 0.20, a multiplier of 1.11 to 1.25. Drag \(G\) to +$100 billion: the straight line crosses the explosive gain at $60 billion and reads 1.67, while the band stays between 0.22 and 0.45. Across the Lab's range of $20 billion to $100 billion the band stays within reach of the studies' strip, and the straight line has left it before $20 billion. Drag \(G\) below zero and long gamma damps, with the two laws apart in the same way: at −$50 billion, constant impact shrinks each move to ×0.55 and square-root impact to ×0.76 to ×0.86.</p>
+
 <h2 id="what-the-formula-leaves-out">8 · What the formula leaves out</h2>
 
 <p>Each of the formula's assumptions fails in a known way, and each failure has a literature:</p>
@@ -1387,5 +1427,119 @@ var DL = (function () {
   DL.bind([U + '-sigma', U + '-kappa'], update);
   /* moving G by hand ends a stress run, as it clears the app's day counter */
   DL.bind([U + '-g'], function () { stop(); DL.out(U + '-day', ''); update(); });
+})();
+
+/* ---------- loop-gain-calc ---------- */
+(function () {
+  var U = 'loop-gain-calc';
+  var GG = DL.$(U + '-g'), LAM = DL.$(U + '-lam'), SP = DL.$(U + '-s');
+  /* the chapter's assumptions for square-root impact: daily volatility, dollars traded a
+     day (billions) and the constant Y's range */
+  var SD = 0.01, VD = 500, Y0 = 0.5, Y1 = 1, GR = 100, YR = 2;
+
+  /* the loop gain for a 1% move: a constant impact moves the index lam x G points on a
+     move of 0.01 S points; square-root impact moves it Y x SD x sqrt(|G| / VD) of its
+     level, against the move's 1%. Long gamma (G < 0) gives a negative gain: damping */
+  function linGain(g, lam, S) { return lam * g / (0.01 * S); }
+  function sqGain(g, y) { return (g < 0 ? -1 : 1) * y * SD * Math.sqrt(Math.abs(g) / VD) / 0.01; }
+  function amp(k) { return k < 1 ? 1 / (1 - k) : Infinity; }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  function times(k) { return k < 1 ? '×' + DL.num(amp(k), 2) : 'explosive'; }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var g0 = +GG.value, lam = +LAM.value, S = +SP.value;
+    var p = new NMT.Plot(c, { xmin: -GR, xmax: GR, ymin: -YR, ymax: YR,
+                              pad: { l: 40, r: 14, t: 42, b: 26 } });
+    DL.axes(p, { xs: [-100, -50, 0, 50, 100], ys: [-2, -1, 0, 1, 2],
+                 x: function (v) { return v === 0 ? '0' : (v > 0 ? '+' : DL.MINUS) + Math.abs(v); },
+                 y: function (v) { return v === 0 ? '0' : DL.signed(v, 0); } });
+    var g = p.g, soft = DL.color('ink-soft'), acc = DL.color('accent'), fam = DL.color('familiar');
+
+    /* the studies' gains, and the explosive line */
+    g.fillStyle = DL.fade(DL.color('insight'), 0.16);
+    g.fillRect(p.X(-GR), p.Y(0.30), p.X(GR) - p.X(-GR), p.Y(0.18) - p.Y(0.30));
+    DL.hline(p, 1, { color: DL.color('plain'), dash: [5, 3], width: 1.4 });
+    p.text(-GR, 1, 'gain 1: explosive', { dx: 6, dy: -8, font: font(), color: DL.color('plain') });
+    p.text(-GR, 0.30, 'studies: 0.18 to 0.30', { dx: 6, dy: -8, font: font(), color: DL.color('insight') });
+
+    /* square-root impact as a band from Y = 0.5 to Y = 1, and the constant line */
+    var xs = [], lo = [], hi = [], li = [];
+    for (var i = 0; i <= 200; i++) {
+      var x = -GR + 2 * GR * i / 200;
+      xs.push(x);
+      lo.push(sqGain(x, Y0));
+      hi.push(sqGain(x, Y1));
+      li.push(Math.max(-YR - 1, Math.min(YR + 1, linGain(x, lam, S))));
+    }
+    DL.band(p, xs, hi, lo, DL.fade(fam, 0.35));
+    DL.line(p, xs, lo, { color: fam, width: 1.2 });
+    DL.line(p, xs, hi, { color: fam, width: 1.2 });
+    DL.clip(p);
+    DL.line(p, xs, li, { color: acc, width: 2.4 });
+    g.restore();
+
+    /* the chosen G on both */
+    var k = linGain(g0, lam, S);
+    DL.vline(p, g0, { color: DL.color('ink-faint'), dash: [3, 3] });
+    if (Math.abs(k) <= YR) p.dot(g0, k, { r: 5, color: acc });
+    p.dot(g0, sqGain(g0, Y0), { r: 4, color: fam, ring: true });
+    p.dot(g0, sqGain(g0, Y1), { r: 4, color: fam, ring: true });
+
+    /* the title and a key, above the plot */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText('loop gain κG for a 1% move, against G in $B per 1%', 6, 11);
+    var kx = 6, ky = 29;
+    g.strokeStyle = acc;
+    g.lineWidth = 2.4;
+    g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 16, ky); g.stroke();
+    g.fillText('constant λ', kx + 21, ky);
+    kx += 21 + g.measureText('constant λ').width + 14;
+    g.fillStyle = DL.fade(fam, 0.5);
+    g.fillRect(kx, ky - 5, 16, 10);
+    g.fillStyle = soft;
+    g.fillText('square root', kx + 21, ky);
+    g.restore();
+  });
+
+  function update() {
+    var g0 = +GG.value, lam = +LAM.value, S = +SP.value;
+    var k = linGain(g0, lam, S), a = sqGain(g0, Y0), b = sqGain(g0, Y1);
+    var side = g0 > 0 ? 'short ' : g0 < 0 ? 'long ' : '';
+    DL.out(U + '-g-o', g0 === 0 ? '$0' : side + '$' + Math.abs(g0) + 'B');
+    DL.out(U + '-lam-o', DL.num(lam, 1) + ' pt per $1B');
+    DL.out(U + '-s-o', DL.num(S, 0));
+    DL.out(U + '-lin', 'constant: κG = ' + DL.signed(k, 2) + ', ' + times(k));
+    DL.out(U + '-sq', 'square root: ' + DL.signed(a, 2) + ' to ' + DL.signed(b, 2));
+    DL.out(U + '-crit', lam > 0 ? 'constant λ explodes at G = $' + DL.num(0.01 * S / lam, 0) + 'B'
+                                : 'no impact, no loop');
+    if (g0 === 0) {
+      DL.out(U + '-vk', 'No position.');
+      DL.out(U + '-vt', 'With no net dealer gamma, hedging adds nothing to a move.');
+    } else if (g0 < 0) {
+      DL.out(U + '-vk', 'Damping.');
+      DL.out(U + '-vt', 'Dealers long $' + Math.abs(g0) + ' billion per 1% move shrink each move to ' +
+                        times(k) + ' with constant impact, and to ×' + DL.num(amp(b), 2) + ' to ×' +
+                        DL.num(amp(a), 2) + ' with square-root impact.');
+    } else if (k >= 1) {
+      DL.out(U + '-vk', 'Explosive under constant impact.');
+      DL.out(U + '-vt', 'Dealers short $' + g0 + ' billion per 1% move: a constant ' + DL.num(lam, 1) +
+                        (lam === 1 ? ' point' : ' points') + ' per $1 billion gives a gain of ' + DL.num(k, 2) + ', past the explosive point, ' +
+                        'while square-root impact multiplies each move by ' + DL.num(amp(a), 2) + ' to ' +
+                        DL.num(amp(b), 2) + '.');
+    } else {
+      DL.out(U + '-vk', 'Amplifying.');
+      DL.out(U + '-vt', 'Dealers short $' + g0 + ' billion per 1% move multiply each move by ' +
+                        DL.num(amp(k), 2) + ' with constant impact, and by ' + DL.num(amp(a), 2) + ' to ' +
+                        DL.num(amp(b), 2) + ' with square-root impact.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-g', U + '-lam', U + '-s'], update);
 })();
 <!--/SCRIPT-->
