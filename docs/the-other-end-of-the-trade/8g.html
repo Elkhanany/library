@@ -328,6 +328,40 @@ M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlis
 <p>GEX behaved like a biomarker whose raw association with survival vanishes once stage is in the model. It is prognostic on its own, and adds nothing to what stage already says. Here stage is implied volatility. High GEX and a calm tomorrow share a cause, a calm today, which the VIX already prices. The test that counts is incremental value, not raw association.</p>
 </div>
 
+<p>The figure below rebuilds that test on 1,972 made-up days, the published count. They are built so that the VIX and at-the-money implied volatility drive both GEX and the next day's volatility, while GEX has only a small effect of its own. Each dot is a day, colored by the VIX's thirds. A three-way choice adjusts for nothing, for the VIX, or for the VIX and at-the-money implied volatility. A table sets these days' numbers beside the published ones, as a paper sets crude estimates beside adjusted ones, and new sample draws another 1,972 days.</p>
+
+<figure class="fig" id="fig-gex-vix-confound">
+  <canvas id="gex-vix-confound-c" data-h="340" width="631" height="340" style="height: 340px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Adjust for" id="gex-vix-confound-adj">
+      <label>adjust for</label>
+      <button type="button" data-v="none" class="on" aria-pressed="true">none</button>
+      <button type="button" data-v="vix" aria-pressed="false">VIX</button>
+      <button type="button" data-v="both" aria-pressed="false">VIX, ATM IV</button>
+    </div>
+    <div class="ctrl"><button type="button" id="gex-vix-confound-new">new sample</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Adjusted for</th><th>Rank correlation, these days / published</th><th>Gap in pts, these days / published</th></tr></thead>
+    <tbody>
+      <tr id="gex-vix-confound-r0" class="on"><td class="c-trial">none</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p0">−0.36</span> / −0.36</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g0">10.45</span> / 10.63</td></tr>
+      <tr id="gex-vix-confound-r1"><td class="c-trial">the VIX</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p1">−0.14</span> / −0.14</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g1">3.09</span> / 3.15</td></tr>
+      <tr id="gex-vix-confound-r2"><td class="c-trial">the VIX and ATM IV</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p2">−0.03</span> / −0.03</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g2">1.03</span> / 0.99 (p = 0.25)</td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="gex-vix-confound-vk">Unadjusted.</b> <span id="gex-vix-confound-vt">Low-GEX days are mostly high-VIX days, and those are the volatile ones.</span></p>
+  <figcaption><b>What GEX knows that the VIX already knows.</b> Each dot is one made-up day:
+  its GEX against the next day's realized volatility (RV), colored by the day's VIX. The 1,972
+  days are built so that the VIX and at-the-money implied volatility (ATM IV) drive both, with
+  only a small effect of GEX itself, and come close to the published results of Dobrowolski's
+  test on 1,972 SPY days. Adjusting plots the residuals, what is left of each after a
+  straight-line fit on the controls, as a study adjusts a biomarker for stage. Adjust for the
+  VIX, then for ATM IV too, and watch the colors mix and the gap between the bottom and top
+  fifths of days by GEX (the bands) close.</figcaption>
+</figure>
+
+<p>Unadjusted, the made-up days give a rank correlation of −0.36 and a gap of 10.45 points between the bottom and top fifths of days by GEX, against the published −0.36 and 10.63. Adjust for the VIX and they fall to −0.14 and 3.09. Adjust for implied volatility too and they are −0.03 and 1.03, against the published −0.03 and 0.99. Before adjustment, watch the colors: the high-GEX days are mostly low-VIX days. Draw a few new samples, and the fully adjusted gap wanders between about −0.2 and +1.3 points while the raw one stays near 10 or more.</p>
+
 <p><strong>The counterweights.</strong> Not every test finds nothing. At the half-hour horizon, public open-interest gamma keeps predictive information about variance (Ardia and Vaudescal, above). A master's thesis finds that changes in aggregate GEX predict S&amp;P 500 returns and improve out-of-sample forecasts, more weakly after 2020 (Jonsson and Nyberg 2025). It has no control for implied volatility. Both concern the aggregate, not any named strike.</p>
 
 <p><strong>Levels.</strong> No academic test of trading a named GEX level, a wall, a flip or a King Node, was found. The only published statistics come from a vendor. SpotGamma reports that from May 10, 2019 to May 28, 2024, SPX's intraday low held above its Put Wall in 89% of sessions and closed above it in 93%. After a Put Wall breach, average forward returns were +14 basis points over 1 day, +7 over 5 days and +39 over 10 days; after a Call Wall breach, −7 over 1 day and +5 over 5 days. None of these has a base rate. A strike chosen well below spot is "held" on most days whatever its gamma. The returns come with no standard errors, and no arbitrary strikes at the same distance were compared. <a class="xref" href="8j.html">Chapter 8J</a> shows how to run that comparison yourself. A widely read practitioner test of SqueezeMetrics' GEX and dark-pool index, a blog post of 2021 with positive results, was retracted by its author after a data error.</p>
@@ -1129,6 +1163,244 @@ var DL = (function () {
     bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
     candles: candles, legend: legend, xticks: xticks
   };
+})();
+
+/* ---------- gex-vix-confound ---------- */
+(function () {
+  var U = 'gex-vix-confound';
+  var view = DL.seg(U + '-adj', update);
+  var N = 1972, SEED = 91784, seed = SEED;
+
+  /* The made-up days. Each day draws four standard normals: the VIX is 9 plus a lognormal;
+     ATM IV is 0.9 times the VIX with a spread of its own; GEX ($B per 1%) falls as ATM IV
+     rises, plus noise; next-day RV is proportional to ATM IV (with a little of the VIX),
+     times lognormal noise, times a small effect of GEX itself. The constants were fitted so
+     that the rank correlations and gaps, over many samples, come close to the published
+     ones, and the first seed is one whose numbers round to them. */
+  function days(sd) {
+    var r = DL.rng(sd), V = [], A = [], G = [], R = [];
+    for (var i = 0; i < N; i++) {
+      var z1 = DL.gauss(r), z2 = DL.gauss(r), e = DL.gauss(r), u = DL.gauss(r);
+      var vix = 9 + 8 * Math.exp(0.6127 * z1);
+      var atm = 0.9 * vix * Math.exp(0.1501 * z2 - 0.1501 * 0.1501 / 2);
+      var gex = 3 - 0.3890 * (0.9879 * atm / 0.9 + 0.0121 * vix - 17) + 2.5341 * u;
+      var rv = 0.6850 * (0.9511 * atm / 0.9 + 0.0489 * vix) *
+               Math.exp(0.5794 * e - 0.5794 * 0.5794 / 2) * Math.exp(-0.0100 * (gex - 3));
+      V.push(vix); A.push(atm); G.push(gex); R.push(rv);
+    }
+    return { V: V, A: A, G: G, R: R };
+  }
+
+  /* residuals of y after a straight-line (least-squares) fit on the controls */
+  function resid(y, cols) {
+    var n = y.length, k = cols.length + 1, a, c, i;
+    function X(i2, j) { return j === 0 ? 1 : cols[j - 1][i2]; }
+    var M = [], b = [];
+    for (a = 0; a < k; a++) { M.push([]); b.push(0); for (c = 0; c < k; c++) M[a].push(0); }
+    for (i = 0; i < n; i++)
+      for (a = 0; a < k; a++) {
+        b[a] += X(i, a) * y[i];
+        for (c = 0; c < k; c++) M[a][c] += X(i, a) * X(i, c);
+      }
+    for (var p = 0; p < k; p++) {
+      var m = p;
+      for (a = p + 1; a < k; a++) if (Math.abs(M[a][p]) > Math.abs(M[m][p])) m = a;
+      var t = M[p]; M[p] = M[m]; M[m] = t; t = b[p]; b[p] = b[m]; b[m] = t;
+      for (a = p + 1; a < k; a++) {
+        var f = M[a][p] / M[p][p];
+        for (c = p; c < k; c++) M[a][c] -= f * M[p][c];
+        b[a] -= f * b[p];
+      }
+    }
+    var beta = [];
+    for (a = 0; a < k; a++) beta.push(0);
+    for (p = k - 1; p >= 0; p--) {
+      var s = b[p];
+      for (c = p + 1; c < k; c++) s -= M[p][c] * beta[c];
+      beta[p] = s / M[p][p];
+    }
+    return y.map(function (v, i2) {
+      var fit = 0;
+      for (var j = 0; j < k; j++) fit += beta[j] * X(i2, j);
+      return v - fit;
+    });
+  }
+  function order(x) {
+    return x.map(function (v, i) { return i; }).sort(function (i, j) { return x[i] - x[j]; });
+  }
+  function ranks(x) {
+    var r = [];
+    order(x).forEach(function (i, k) { r[i] = k; });
+    return r;
+  }
+  function pearson(x, y) {
+    var n = x.length, mx = 0, my = 0, sxy = 0, sxx = 0, syy = 0, i;
+    for (i = 0; i < n; i++) { mx += x[i]; my += y[i]; }
+    mx /= n; my /= n;
+    for (i = 0; i < n; i++) {
+      var a = x[i] - mx, b = y[i] - my;
+      sxy += a * b; sxx += a * a; syy += b * b;
+    }
+    return sxy / Math.sqrt(sxx * syy);
+  }
+  /* the rank correlation, and the gap: the mean y of the bottom fifth of days by x less the
+     mean y of the top fifth, with the two fifths' edges for the bands */
+  function summary(x, y) {
+    var o = order(x), m = Math.round(N / 5), lo = 0, hi = 0;
+    for (var k = 0; k < m; k++) { lo += y[o[k]]; hi += y[o[N - 1 - k]]; }
+    return { x: x, y: y, rho: pearson(ranks(x), ranks(y)), lo: lo / m, hi: hi / m,
+             gap: lo / m - hi / m, q20: x[o[m - 1]], q80: x[o[N - m]] };
+  }
+
+  var st;
+  function compute() {
+    var D = days(seed), sv = D.V.slice().sort(function (a, b) { return a - b; });
+    st = {
+      V: D.V, t1: sv[Math.round(N / 3) - 1], t2: sv[Math.round(2 * N / 3) - 1],
+      none: summary(D.G, D.R),
+      vix: summary(resid(D.G, [D.V]), resid(D.R, [D.V])),
+      both: summary(resid(D.G, [D.V, D.A]), resid(D.R, [D.V, D.A]))
+    };
+  }
+
+  /* the gap as the reader can check it: the difference of the two means as written */
+  function gapOf(S) { return Number(S.lo.toFixed(2)) - Number(S.hi.toFixed(2)); }
+  function font() { return '11px ' + DL.color('sans'); }
+  /* text with a halo of the page's color, so it reads over the dots */
+  function label(g, s, x, y, color, align, base) {
+    g.save();
+    g.font = font();
+    g.textAlign = align || 'left';
+    g.textBaseline = base || 'middle';
+    g.lineJoin = 'round';
+    g.lineWidth = 3;
+    g.strokeStyle = DL.color('paper');
+    g.strokeText(s, x, y);
+    g.fillStyle = color;
+    g.fillText(s, x, y);
+    g.restore();
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var v = view(), S = st[v], raw = v === 'none';
+    var p = new NMT.Plot(cv, { xmin: raw ? -8 : -10, xmax: raw ? 12 : 10,
+                               ymin: raw ? 0 : -30, ymax: raw ? 60 : 30,
+                               pad: { l: 40, r: 12, t: 24, b: 40 } });
+    var P = p.o, g = p.g;
+    DL.axes(p, { xs: raw ? [-8, -4, 0, 4, 8, 12] : [-10, -5, 0, 5, 10],
+                 ys: raw ? [0, 10, 20, 30, 40, 50, 60] : [-30, -20, -10, 0, 10, 20, 30],
+                 x: function (t) { return DL.num(t, 0); }, y: function (t) { return DL.num(t, 0); } });
+    var roles = ['insight', 'accent', 'plain'];
+    var cols = roles.map(function (r) { return DL.fade(DL.color(r), 0.55); });
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+
+    /* the bottom and top fifths of days by x, as bands */
+    var band = DL.fade(faint, 0.1);
+    g.fillStyle = band;
+    g.fillRect(p.X(P.xmin), p.Y(P.ymax), p.X(Math.max(P.xmin, S.q20)) - p.X(P.xmin), p.Y(P.ymin) - p.Y(P.ymax));
+    g.fillRect(p.X(Math.min(P.xmax, S.q80)), p.Y(P.ymax), p.X(P.xmax) - p.X(Math.min(P.xmax, S.q80)),
+               p.Y(P.ymin) - p.Y(P.ymax));
+
+    /* the days, colored by the VIX's thirds; a day beyond the axes sits on the edge as a
+       small triangle pointing out */
+    var rad = p.w < 500 ? 1.7 : 2.1;
+    for (var i = 0; i < N; i++) {
+      var x = S.x[i], y = S.y[i];
+      g.fillStyle = cols[st.V[i] <= st.t1 ? 0 : st.V[i] <= st.t2 ? 1 : 2];
+      var cx = Math.min(P.xmax, Math.max(P.xmin, x)), cy = Math.min(P.ymax, Math.max(P.ymin, y));
+      var px = p.X(cx), py = p.Y(cy);
+      g.beginPath();
+      if (cx === x && cy === y) g.arc(px, py, rad, 0, 2 * Math.PI);
+      else if (cy !== y) { var up = y > P.ymax ? -1 : 1;
+        g.moveTo(px - 3, py); g.lineTo(px + 3, py); g.lineTo(px, py + 4 * up); }
+      else { var lf = x < P.xmin ? -1 : 1;
+        g.moveTo(px, py - 3); g.lineTo(px, py + 3); g.lineTo(px + 4 * lf, py); }
+      g.fill();
+    }
+
+    /* each fifth's mean next-day RV, and the gap between them */
+    var yl = p.Y(S.lo), yh = p.Y(S.hi), xl = p.X(Math.max(P.xmin, S.q20)), xh = p.X(Math.min(P.xmax, S.q80));
+    g.save();
+    g.strokeStyle = ink;
+    g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(p.X(P.xmin), yl); g.lineTo(xl, yl); g.stroke();
+    g.beginPath(); g.moveTo(xh, yh); g.lineTo(p.X(P.xmax), yh); g.stroke();
+    g.lineWidth = 1;
+    g.setLineDash([3, 3]);
+    var xm = (xl + xh) / 2;
+    g.beginPath(); g.moveTo(xl, yl); g.lineTo(xm, yl); g.moveTo(xm, yh); g.lineTo(xh, yh); g.stroke();
+    g.setLineDash([]);
+    g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(xm, yl); g.lineTo(xm, yh); g.stroke();
+    g.restore();
+    var sl = 'bottom fifth ' + DL.num(S.lo, 2), sh = 'top fifth ' + DL.num(S.hi, 2),
+        sg = 'gap ' + DL.num(gapOf(S), 2);
+    label(g, sl, p.X(P.xmin) + 4, yl - 9, ink, 'left');
+    label(g, sh, p.X(P.xmax) - 4, yh - 9, ink, 'right');
+    /* the gap's label beside the bracket, on the first side where it clears the other two */
+    g.font = font();
+    var wl = g.measureText(sl).width, wh = g.measureText(sh).width, wg = g.measureText(sg).width;
+    var taken = [[p.X(P.xmin) + 4, yl - 9, wl], [p.X(P.xmax) - 4 - wh, yh - 9, wh]];
+    var ym = (yl + yh) / 2, top = Math.min(yl, yh), bot = Math.max(yl, yh);
+    var tries = [[xm + 5, ym], [xm - 5 - wg, ym], [xm + 5, top - 10], [xm - 5 - wg, top - 10],
+                 [xm + 5, bot + 10], [xm - 5 - wg, bot + 10]];
+    var spot = tries[0];
+    for (var t = 0; t < tries.length; t++) {
+      var tx = tries[t][0], ty = tries[t][1];
+      var clear = taken.every(function (b) {
+        return tx + wg + 3 < b[0] || b[0] + b[2] + 3 < tx || Math.abs(ty - b[1]) > 13;
+      });
+      if (clear) { spot = tries[t]; break; }
+    }
+    label(g, sg, spot[0], spot[1], ink, 'left');
+
+    /* the key, top right, and the axes' names */
+    var keys = ['VIX under ' + DL.num(st.t1, 1), 'VIX ' + DL.num(st.t1, 1) + ' to ' + DL.num(st.t2, 1),
+                'VIX over ' + DL.num(st.t2, 1)];
+    g.save();
+    g.font = font();
+    var kw = Math.max.apply(null, keys.map(function (k) { return g.measureText(k).width; })) + 18;
+    var kx = p.X(P.xmax) - kw - 4, ky = p.Y(P.ymax) + 4;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(kx - 4, ky - 2, kw + 6, 3 * 15 + 4);
+    g.restore();
+    [2, 1, 0].forEach(function (k, row) {
+      g.fillStyle = DL.color(roles[k]);
+      g.beginPath();
+      g.arc(kx + 5, ky + 8 + row * 15, 3.5, 0, 2 * Math.PI);
+      g.fill();
+      label(g, keys[k], kx + 14, ky + 8 + row * 15, soft);
+    });
+    p.text(P.xmin, P.ymax, raw ? 'next-day RV, annualized pts' : 'next-day RV, residual pts',
+           { dx: -34, dy: -8, color: soft, font: font() });
+    p.text(P.xmax, P.ymin, raw ? 'GEX, $B per 1%' : 'GEX, residual $B', { dx: -2, dy: 22,
+           align: 'right', baseline: 'top', color: soft, font: font() });
+  });
+
+  var TEXT = {
+    none: ['Unadjusted.', 'Low-GEX days are mostly high-VIX days, and those are the volatile ones.'],
+    vix: ['Adjusted for the VIX.', 'Most of the association goes with it. What is left travels with ATM IV.'],
+    both: ['Adjusted for the VIX and ATM IV.', 'GEX adds almost nothing about tomorrow, like a biomarker once stage is in the model.']
+  };
+  function update() {
+    var v = view(), names = ['none', 'vix', 'both'];
+    names.forEach(function (k, i) {
+      DL.out(U + '-p' + i, DL.num(st[k].rho, 2));
+      DL.out(U + '-g' + i, DL.num(gapOf(st[k]), 2));
+      var row = DL.$(U + '-r' + i), on = k === v;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+    DL.out(U + '-vk', TEXT[v][0]);
+    DL.out(U + '-vt', TEXT[v][1]);
+    draw();
+  }
+  DL.$(U + '-new').addEventListener('click', function () {
+    seed += 1;
+    compute();
+    update();
+  });
+  update();
 })();
 
 /* ---------- gamma-evidence-forest ---------- */

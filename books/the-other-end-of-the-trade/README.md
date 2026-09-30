@@ -10,8 +10,8 @@ book is the library's rewrite of two texts by the same author:
 It is written for a reader who is new to markets and knows algebra and introductory
 statistics. It teaches everything else where it is first needed, keeps the maths exact, ends
 each idea in what it means for a real account, and follows the Google developer documentation
-style guide. Every interactive widget of the app is a library figure, 54 in all, and 45 more
-figures are new for this book.
+style guide. Every interactive widget of the app is a library figure, 54 in all, and 56 more
+figures are new for this book, built from the chapters' own figure ideas.
 
 ## What is here
 
@@ -166,6 +166,9 @@ their units and sample, and its limits.
 - **8I Gamma squeezes:** the three preconditions as a checklist, and four live indicators.
 - **8J From map to trade:** a session workflow, the regime as a size multiplier, and how to
   test a level against its base rate before you trade it.
+
+The part places 25 figures, among them a heatmap of GEX by strike and expiry, a pinning simulator,
+a forest plot of the evidence and a planner for testing a level.
 
 Skylit is an example, not an endorsement. The chapters give every vendor's statements as its
 claims and say what is untested, or inconsistent in the vendor's own material.
