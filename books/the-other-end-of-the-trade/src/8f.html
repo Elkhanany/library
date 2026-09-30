@@ -105,6 +105,39 @@
 
 <p>Two consequences follow for dealers short out-of-the-money puts. A vol crush and the passage of time push their hedges the same way, toward buying. And over a window that ends at expiry, the two decide only the timing. At expiry every out-of-the-money delta is zero, whatever path volatility took, so the day-by-day trades add up to the hedge held at the start. Volland's user guide says, in a vendor's words, that charm "is the opposite sign of vanna on each strike", because it is computed for "+1 day passing". The identity <a class="eqref" href="#e-charmvanna"></a> is the reason, exactly with no rate and nearly with one.</p>
 
+<p>The figure below draws a put's delta against \(\sigma\sqrt{T}\) for a strike 3% below spot, with no rate, so that the identity is exact. Two sliders set the days to expiry, from 1 to 45 and starting at 28, and the implied volatility, from 5% to 40% and starting at 18%. Both move one dot along the same curve. The lower panel draws \(\sigma/(2T)\), the volatility points one calendar day is worth, against the days left.</p>
+
+<figure class="fig" id="fig-sigma-root-t">
+  <canvas id="sigma-root-t-c" data-h="260"></canvas>
+  <canvas id="sigma-root-t-d" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="sigma-root-t-days">days to expiry T</label>
+      <input type="range" id="sigma-root-t-days" min="1" max="45" step="1" value="28">
+      <output id="sigma-root-t-days-o" for="sigma-root-t-days"></output>
+    </div>
+    <div class="ctrl">
+      <label for="sigma-root-t-iv">implied volatility σ</label>
+      <input type="range" id="sigma-root-t-iv" min="5" max="40" step="1" value="18">
+      <output id="sigma-root-t-iv-o" for="sigma-root-t-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="sigma-root-t-srt"></output></div>
+    <div class="ctrl"><output id="sigma-root-t-delta"></output></div>
+    <div class="ctrl"><output id="sigma-root-t-day"></output></div>
+  </div>
+  <figcaption><b>A day is a fall in volatility.</b> The upper panel is the delta of a put
+  struck 3% below spot against σ√T, with no interest rate and no dividends. Drag either slider
+  and the dot moves along the same curve, because delta depends on time and volatility only
+  through σ√T. The lower panel is the fall in implied volatility, in points, that does to delta
+  what one calendar day does, σ/(2T) with T in days: at 18%, 0.32 points with 28 days left, 1.8
+  with 5 and 9 with 1. Run the days down and the dot climbs: the nearer expiry, the more
+  volatility points a day is worth.</figcaption>
+</figure>
+
+<p>At the start, \(\sigma\sqrt{T} = 0.0499\), the put's delta is −0.262, and one day is worth a fall of 0.32 volatility points, Step 1 of the worked example. Drag the days down and the dot slides toward zero delta. Drag the volatility down instead and it slides the same way, along the same curve: 28 days at 18% and 7 days at 36% give the same delta. The lower panel reads 1.8 points with 5 days left and 9.0 with 1, Step 2's numbers. Near expiry each day is worth whole volatility points.</p>
+
 <h2 id="charm-into-expiration-week">2 · Charm into expiration week</h2>
 
 <p>The figure follows the made-up book of the worked example through the last 20 trading days before a monthly SPX expiration. That is four Monday-to-Friday weeks, with the options expiring at the close of week 4. Spot stays at 6,000 and time runs on the calendar, so each Monday's bar carries a weekend of decay. Each bar is one day's change in the dealers' futures hedge, in billions of dollars, up for buying. A toggle adds out-of-the-money calls that customers are long (6,100, 6,200 and 6,300; 15,000, 10,000 and 5,000 contracts), drawn as a second leg with the net as a tick. The second control lowers implied volatility by 0 to 5 points in equal daily steps, with outlines for the same book with volatility unchanged. Start with puts only, then add the IV fall, then add the calls.</p>
@@ -964,6 +997,120 @@ var DL = (function () {
     bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
     candles: candles, legend: legend, xticks: xticks
   };
+})();
+
+/* ---------- sigma-root-t ---------- */
+(function () {
+  var U = 'sigma-root-t';
+  var DAYS = DL.$(U + '-days'), IV = DL.$(U + '-iv');
+
+  /* a put struck 3% below spot, with r = q = 0 as the chapter's identity needs: its delta
+     is N(d1) - 1 with d1 = ln(S/K)/(σ√T) + σ√T/2, a function of v = σ√T alone */
+  var LNSK = Math.log(1 / 0.97);
+  function delta(v) {
+    if (v <= 0) return 0;
+    return DL.N(LNSK / v + v / 2) - 1;
+  }
+  /* the volatility fall, in points, that equals one calendar day: σ/(2T), T in days
+     (charm = -vanna x σ/(2T), [eq:charmvanna]) */
+  function perDay(sig, t) { return sig / (2 * t); }
+  function pts(x) { return DL.num(x, x < 1 ? 2 : x < 10 ? 1 : 0); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var st;
+  function compute() {
+    var t = +DAYS.value, sig = +IV.value, v = sig / 100 * Math.sqrt(t / 365);
+    st = { t: t, sig: sig, v: v, d: delta(v), day: perDay(sig, t) };
+  }
+
+  /* A label beside a dot, above and to the right where it fits. Where it does not, on the
+     delta curve it goes below and to the left, the side of the curve with room; on the
+     day curve, which is nearly flat out there, it stays above the dot and ends at the
+     plot's edge. A label that would overlap one already drawn is left out. */
+  function tag(p, x, y, s, color, mode, boxes) {
+    var g = p.g;
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x), py = p.Y(y), edge = p.w - p.o.pad.r;
+    var x0, top;
+    if (px + 9 + w <= edge) { x0 = px + 9; top = py - 7 - 12; }
+    else if (mode === 'curve') { x0 = px - 9 - w; top = py + 8; }
+    else { x0 = edge - w; top = py - 7 - 12; }
+    var box = { l: x0 - 2, r: x0 + w + 2, t: top - 1, b: top + 13 };
+    for (var i = 0; boxes && i < boxes.length; i++) {
+      var o = boxes[i];
+      if (box.l < o.r && o.l < box.r && box.t < o.b && o.t < box.b) return;
+    }
+    if (boxes) boxes.push(box);
+    g.fillStyle = color;
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
+    g.fillText(s, x0, top);
+  }
+  function days(t) { return t + (t === 1 ? ' day' : ' days'); }
+
+  compute();
+  var drawCurve = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 0.145, ymin: -0.42, ymax: 0.03,
+                              pad: { l: 44, r: 14, t: 22, b: 40 } });
+    DL.axes(p, { xs: [0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.14], ys: [-0.4, -0.3, -0.2, -0.1, 0],
+                 x: function (v) { return v === 0 ? '0' : DL.num(v, 2); },
+                 y: function (v) { return v === 0 ? '0' : DL.num(v, 1); } });
+    var acc = DL.color('accent'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    p.fn(delta, { color: acc, width: 2 });
+    /* guides from the dot to both axes */
+    p.seg(st.v, p.o.ymin, st.v, st.d, { color: faint, dash: [3, 3], width: 1 });
+    p.seg(0, st.d, st.v, st.d, { color: faint, dash: [3, 3], width: 1 });
+    p.dot(st.v, st.d, { r: 5.5, color: acc, ring: true });
+    tag(p, st.v, st.d, days(st.t) + ' at ' + st.sig + '%', acc, 'curve');
+    p.text(0.145, 0.03, 'put delta Δ, strike 3% below spot', { dx: -2, dy: -6, align: 'right',
+           baseline: 'bottom', color: soft, font: font() });
+    p.text(0.145, -0.42, 'σ√T', { dx: -2, dy: 22, align: 'right', baseline: 'top',
+           color: soft, font: font() });
+  });
+
+  var drawDay = DL.figure(U + '-d', function (c) {
+    var top = st.sig / 2 * 1.3;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 45, ymin: 0, ymax: top,
+                              pad: { l: 44, r: 14, t: 22, b: 40 } });
+    DL.axes(p, { xs: [0, 7, 14, 21, 28, 35, 42], ny: 4,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v, s) { return DL.num(v, s < 1 ? 1 : 0); } });
+    var acc = DL.color('accent'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint'),
+        paper = DL.color('paper');
+    p.fn(function (t) { return t < 1 ? NaN : perDay(st.sig, t); }, { color: acc, width: 2 });
+    /* the dot, then the chapter's three days at the current volatility, each labeled
+       where its label does not run into one already there */
+    var y0 = perDay(st.sig, st.t), boxes = [];
+    [28, 5, 1].forEach(function (t) {
+      if (t === st.t) return;
+      var y = perDay(st.sig, t);
+      p.dot(t, y, { r: 3.5, color: faint });
+      p.dot(t, y, { r: 2, color: paper });
+    });
+    p.dot(st.t, y0, { r: 5.5, color: acc, ring: true });
+    tag(p, st.t, y0, days(st.t) + ': ' + pts(y0) + ' pts', acc, 'edge', boxes);
+    [28, 5, 1].forEach(function (t) {
+      if (t !== st.t) tag(p, t, perDay(st.sig, t), days(t) + ': ' + pts(perDay(st.sig, t)) + ' pts',
+                          soft, 'edge', boxes);
+    });
+    p.text(0, top, 'IV points one day is worth, σ/(2T)', { dx: 2, dy: -6, baseline: 'bottom',
+           color: soft, font: font() });
+    p.text(45, 0, 'days to expiry T', { dx: -2, dy: 22, align: 'right', baseline: 'top',
+           color: soft, font: font() });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-days-o', st.t + (st.t === 1 ? ' day' : ' days'));
+    DL.out(U + '-iv-o', st.sig + '%');
+    DL.out(U + '-srt', 'σ√T = ' + DL.num(st.v, 4));
+    DL.out(U + '-delta', 'put delta Δ = ' + DL.num(st.d, 3));
+    DL.out(U + '-day', 'one day = IV fall of ' + pts(st.day) + ' pts');
+    drawCurve();
+    drawDay();
+  }
+  update();
+  DL.bind([U + '-days', U + '-iv'], update);
 })();
 
 /* ---------- charm-into-expiry ---------- */

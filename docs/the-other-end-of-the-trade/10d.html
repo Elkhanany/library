@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>10D Trend following — The Other End of the Trade</title>
+<meta name="description" content="Chapter 10D of The Other End of the Trade: Trend following.">
+<link rel="stylesheet" href="assets/katex.min.css">
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-9">← Part X · Edges, one by one</a>
+  <div class="sb-folio"><a class="sb-prev" href="10c.html" aria-label="Previous chapter: 10C · The variance risk premium" title="Previous chapter: 10C · The variance risk premium (←)">‹ 10C</a><p class="sb-title"><span class="sb-at">Chapter 10D ·</span> <span class="sb-at">50 of 89</span></p><a class="sb-next" href="10e.html" aria-label="Next chapter: 10E · Carry" title="Next chapter: 10E · Carry (→)">10E ›</a></div>
+  <div id="sb-toc"><a href="#a-century-and-a-half-of-evidence">1 · A century and a half of evidence</a><a href="#the-trend-signal">2 · The trend signal</a><a href="#the-evidence">3 · The evidence</a><a href="#why-it-exists">4 · Why it exists</a><a href="#in-practice">5 · In practice</a><a href="#when-it-fails">6 · When it fails</a><a href="#a-decision-rule">7 · A decision rule</a><a href="#portfolio-contribution-not-standalone-sharpe">8 · Portfolio contribution, not standalone Sharpe</a><a href="#check-yourself">9 · Check yourself</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part X · Edges, one by one · Chapter 10D</p>
+
+<h1>Trend following</h1>
+
+<p class="subtitle">Time-series momentum</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 10B and 10C took two foundation premia that both lose in crashes. Trend following, the third, earns a place for a different reason: its value lies less in its own Sharpe ratio than in when it pays. This chapter builds the trend signal, weighs the evidence and the vehicles, and shows why a low-Sharpe sleeve can add more to a portfolio than a high-Sharpe one.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Momentum as a positive weight on past returns, in the AR(1) model (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+<li>Volatility, and annualizing it by the square root of time (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>Correlation, tail correlation, and how correlation sets the gain from combining strategies (<a class="xref" href="1f.html">Chapter 1F</a>).</li>
+<li>Futures (<a class="xref" href="4b.html">Chapter 4B</a>), leverage (<a class="xref" href="1e.html">Chapter 1E</a>) and Section 1256 treatment (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+<li>Edges with several sources (<a class="xref" href="1g.html">Chapter 1G</a>), and the rules for a foundation premium (<a class="xref" href="10a.html">Chapter 10A</a>).</li>
+</ul>
+</div>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Across asset classes and across centuries, recent winners tend to keep winning over horizons of 1 to 12 months. The effect is most visible in trending periods, such as the commodity crash of 2008, the inflation move of 2022 and the oil collapse of 2014 to 2015. It is frustratingly absent in chop, when prices swing back and forth without direction. Its mechanism has several parts: investors under-react to news, hedgers pay to shed risk, and trend followers provide liquidity in stressed markets.</p>
+</div>
+
+<h2 id="a-century-and-a-half-of-evidence">1 · A century and a half of evidence</h2>
+
+<p>The headline study is Hurst, Ooi and Pedersen (2017), which runs from 1880 to 2016 across 67 markets. Its average net Sharpe ratio is about 0.4 after fees of "2 and 20", a management fee of 2% of assets a year plus a performance fee of 20% of profits. The strategy was <strong>positive in every decade since 1880</strong>. Its best decade was 1973 to 1982, a decade of rising interest rates, which refutes the critique that trend's record merely rode a long bull market in bonds. The Edge Book adds a record that runs past the study's end: trend was <strong>positive in 8 of the 10 largest drawdowns of a <span class="gloss" data-facts="A portfolio holding 60% of its value in stocks and 40% in bonds, rebalanced back to those weights from time to time." tabindex="0" role="button">60/40 portfolio</span></strong>, including 2008 and 2022.</p>
+
+<p>Fees of 2 and 20 are heavy. On a hypothetical gross return of 12%, the 2% management fee leaves 10%, and the performance fee takes a fifth of that, leaving 8%: a third of the gross return is gone. So a net Sharpe ratio of 0.4 stands for a noticeably higher one before fees, which is why the idealized models of <a class="xref" href="13a.html">Chapter 13A</a> start from 0.8 to 1.2.</p>
+
+<h2 id="the-trend-signal">2 · The trend signal</h2>
+
+<p><strong><span class="gloss" data-facts="A strategy that buys assets whose own prices have been rising and sells those whose prices have been falling. Also called time-series momentum." tabindex="0" role="button">Trend following</span></strong>, or time-series momentum (TSMOM), sizes each position in proportion to a recent trend signal. For asset <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></span> at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span>, the Edge Book writes the weight as</p>
+
+<div class="eq" id="e-tsmom">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi mathvariant="normal">sign</mi><mo>⁡</mo><mo stretchy="false">(</mo><msub><mi>R</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>t</mi><mo>−</mo><mn>12</mn><mo separator="true">,</mo><mi>t</mi></mrow></msub><mo stretchy="false">)</mo></mrow><msub><mi>σ</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub></mfrac></mrow><annotation encoding="application/x-tex"> w_{i,t} = \frac{\operatorname{sign}(R_{i,t-12,t})}{\sigma_{i,t}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.0269em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.3991em; vertical-align: -0.9721em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.427em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mop"><span class="mord mathrm">sign</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0077em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.0077em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span><span class="mbin mtight">−</span><span class="mord mtight">12</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.9721em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(10D.1)</span></div>
+
+<p>Here <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>R</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>t</mi><mo>−</mo><mn>12</mn><mo separator="true">,</mo><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R_{i,t-12,t}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9694em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0077em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.0077em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span><span class="mbin mtight">−</span><span class="mord mtight">12</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the asset's return over the past 12 months, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">sign</mi><mo>⁡</mo></mrow><annotation encoding="application/x-tex">\operatorname{sign}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8623em; vertical-align: -0.1944em;"></span><span class="mop"><span class="mord mathrm">sign</span></span></span></span></span></span> turns it into +1 if it is positive and −1 if it is negative. The divisor <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\sigma_{i,t}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the asset's current volatility. So the strategy is long the winners and short the losers, each scaled by its volatility. This <strong><span class="gloss" data-facts="Sizing each position in inverse proportion to its volatility, so that a calm asset gets a larger position than a volatile one and each carries a similar risk." tabindex="0" role="button">volatility scaling</span></strong> gives a calm asset a larger position than a wild one, so that each carries a similar risk. It runs diversified across equities, bonds, currencies (FX) and commodities, and in aggregate it has a positive expectation and a distinctive payoff in crashes.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Three markets, one rule</span>
+<p><strong>Step 1: the signals.</strong> Suppose, hypothetically, an equity index has returned +15% over 12 months with a volatility of 16%. A bond future has returned −8% with a volatility of 6%, and oil +30% with a volatility of 32%. The signs are +1, −1 and +1.</p>
+
+<p><strong>Step 2: the sizes.</strong> Scale each position so that it carries 10% volatility, which is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">%</mi><mi mathvariant="normal">/</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">10\%/\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">10%/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> of capital. The equity position is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">/</mi><mn>16</mn><mo>=</mo><mn>62.5</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">10/16 = 62.5\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">10/16</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">62.5%</span></span></span></span></span> of capital long, the bond position <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">/</mi><mn>6</mn><mo>=</mo><mn>167</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">10/6 = 167\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">10/6</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">167%</span></span></span></span></span> short and the oil position <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">/</mi><mn>32</mn><mo>=</mo><mn>31</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">10/32 = 31\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">10/32</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">31%</span></span></span></span></span> long.</p>
+
+<p><strong>Step 3: what the sizes mean.</strong> Each position now carries the same risk, so oil's wild swings do not swamp the others. The positions add up to about 260% of capital, which only <span class="gloss" data-facts="An agreement to buy or sell an asset at a set price on a future date. Only a deposit is paid up front, so a future gives exposure with leverage built in." tabindex="0" role="button">futures</span> make practical, so a trend sleeve is leveraged by construction (<a class="xref" href="1e.html">Chapter 1E</a>).</p>
+</div>
+
+<p>The same rule explains when trend pays and when it hurts. The signal flips only after the 12-month return has changed sign, so the speed of a fall decides everything.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A slow fall and a fast one</span>
+<p><strong>Step 1: a slow fall.</strong> Suppose an index rose steadily from 100 to 110 over a year and then falls 5% a month for 8 months. After 2 months it stands at <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>110</mn><mo>×</mo><mn>0.9</mn><msup><mn>5</mn><mn>2</mn></msup><mo>=</mo><mn>99.3</mn></mrow><annotation encoding="application/x-tex">110 \times 0.95^2 = 99.3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">110</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.9</span><span class="mord"><span class="mord">5</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">99.3</span></span></span></span></span>, below the 101.7 it stood at 12 months earlier, so the signal turns short. For the remaining 6 months the short position gains about 5% a month, while the index loses <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mn>0.9</mn><msup><mn>5</mn><mn>8</mn></msup><mo>=</mo><mn>34</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - 0.95^8 = 34\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.9</span><span class="mord"><span class="mord">5</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">8</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">34%</span></span></span></span></span> from its peak.</p>
+
+<p><strong>Step 2: a fast fall.</strong> Now suppose the index falls 30% in one month, to 77, and recovers to 110 the next. The sleeve was long during the fall. At the end of the first month the 12-month return is negative, so the signal turns short at the bottom. The short then loses about 43% of its size in the rebound.</p>
+
+<p><strong>Step 3: the lesson.</strong> A slow drawdown gives the signal time to turn, and trend profits from the rest of the fall. A V-shaped reversal catches it wrong-footed twice. Volatility scaling softens the second loss, because the fall's high volatility shrinks the new short, but it does not remove it.</p>
+</div>
+
+<h2 id="the-evidence">3 · The evidence</h2>
+
+<ul>
+<li><strong>Moskowitz, Ooi and Pedersen (2012)</strong>, in the <em>Journal of Financial Economics</em> (JFE), is the canonical paper on TSMOM, across 58 markets.</li>
+<li><strong>Hurst, Ooi and Pedersen (2017)</strong>, in the <em>Journal of Portfolio Management</em> (JPM), extend the evidence to 140 years.</li>
+<li><strong>Asness, Moskowitz and Pedersen (2013)</strong>, in the <em>Journal of Finance</em> (JF), "Value and Momentum Everywhere", document value and momentum across markets and asset classes.</li>
+<li><strong>Live indices</strong> of trend-following funds, the SG Trend Index and the BTOP50, show realized Sharpe ratios of 0.3 to 0.5 over 20 years.</li>
+</ul>
+
+<h2 id="why-it-exists">4 · Why it exists</h2>
+
+<p>Trend following combines all four sources of <a class="xref" href="1g.html">Chapter 1G</a>:</p>
+
+<ul>
+<li><strong>Risk premium:</strong> compensation for <span class="gloss" data-facts="Repeated losses from being pushed into and out of positions by a signal or a price that keeps reversing across a threshold before any trend develops." tabindex="0" role="button">whipsaw</span> risk, the losses taken when a trend reverses before it pays.</li>
+<li><strong>Behavioral:</strong> under-reaction to information that prices take in slowly.</li>
+<li><strong>Institutional:</strong> the hedging needs of commodity producers, who pay to lock in prices.</li>
+<li><strong>Microstructure:</strong> liquidity provision, the service of taking the other side when others must trade.</li>
+</ul>
+
+<p>The breadth of mechanisms is itself evidence. The effect has several independent reasons, and all of them would have to fail at once for trend to disappear. <a class="xref" href="1g.html">Chapter 1G</a> adds a caution about the parts: the behavioral part is the one exposed to decay.</p>
+
+<h2 id="in-practice">5 · In practice</h2>
+
+<p>The vehicles are <strong><span class="gloss" data-facts="Funds that trade futures across equities, bonds, currencies and commodities, most of them by following trends. Their managers are called commodity trading advisors." tabindex="0" role="button">managed futures</span></strong> funds, which trade futures across asset classes and mostly follow trends. Their managers are called <strong><span class="gloss" data-facts="The US regulatory term for a manager who trades futures for clients, including managers of trend-following funds that trade far more than commodities. Abbreviated CTA." tabindex="0" role="button">commodity trading advisors</span></strong> (CTAs), a regulatory term that covers far more than commodities. The main retail vehicles are <em>not</em> interchangeable:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Vehicle</th><th class="c-result">What it is</th><th class="c-endpoint">Trade-off</th></tr></thead><tbody><tr><td class="c-trial" data-label="Vehicle">DBMF, iMGP DBi Managed Futures</td><td class="c-result" data-label="What it is">Replication-style: infers trend funds' positions from their recent returns</td><td class="c-endpoint" data-label="Trade-off">Lower fees, but a lag of 1 to 2 months</td></tr><tr><td class="c-trial" data-label="Vehicle">KMLM, KFA Mount Lucas</td><td class="c-result" data-label="What it is">Trend rules applied to a fixed universe of markets</td><td class="c-endpoint" data-label="Trade-off">Transparent, but less diversified</td></tr><tr><td class="c-trial" data-label="Vehicle">RSST, Return Stacked US Stocks &amp; Managed Futures</td><td class="c-result" data-label="What it is">100% US equity and 100% trend in one wrapper</td><td class="c-endpoint" data-label="Trade-off">Capital-efficient, but levered</td></tr><tr><td class="c-trial" data-label="Vehicle">Self-managed</td><td class="c-result" data-label="What it is">Your own futures and signals</td><td class="c-endpoint" data-label="Trade-off">Feasible, but operationally heavy</td></tr></tbody></table></div></div>
+
+<p>RSST's structure is <strong><span class="gloss" data-facts="Holding two exposures on the same capital, such as a full equity position and a full trend position in one fund, by using futures. It is a form of leverage." tabindex="0" role="button">return stacking</span></strong>: $10,000 invested buys $10,000 of equity exposure and $10,000 of trend exposure, $20,000 in all. That is leverage of 2 times (<a class="xref" href="1e.html">Chapter 1E</a>), and it is why the fund is capital-efficient.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>The haircut:</strong> an academic Sharpe ratio of 0.8 to 1.2 on paper, 0.3 to 0.5 for a live index of trend funds, 0.25 to 0.45 for a live ETF and 0.20 to 0.40 in your account (<a class="xref" href="13a.html">Chapter 13A</a>).</li>
+<li><strong>Tax:</strong> vehicles that hold futures get <span class="gloss" data-facts="A contract, such as a broad-based index option or a regulated futures contract, taxed under Section 1256 of the Internal Revenue Code. Its gains count as 60% long-term and 40% short-term whatever the holding period, and open positions are marked to market at the end of the year." tabindex="0" role="button">Section 1256 contract</span> treatment, 60% long-term and 40% short-term (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+<li><strong>One vehicle:</strong> hold a single transparent vehicle rather than several stacked, so that you know what you own and can measure it against its benchmark.</li>
+</ul>
+</div>
+
+<h2 id="when-it-fails">6 · When it fails</h2>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<ul>
+<li><strong>Long whipsaw periods.</strong> The years from 2011 to 2018 were the worst trend drought in modern history.</li>
+<li><strong>Rapid V-shaped reversals</strong>, in which the trend forms in the wrong direction, as in March 2020.</li>
+<li><strong>Manager dispersion</strong>, which is real: the wrong vehicle can underperform the SG Trend Index by 200 to 400 bps a year.</li>
+</ul>
+</div>
+
+<h2 id="a-decision-rule">7 · A decision rule</h2>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Allocate 10% to 15% of the portfolio to a single transparent trend vehicle, DBMF or KMLM, not several stacked. Do not time entries: buy and hold across cycles. The kill criteria are three:</p>
+
+<ul>
+<li>The vehicle's drawdown exceeds 25% peak to trough (PTP).</li>
+<li>Its <span class="gloss" data-facts="The standard deviation of the difference between a strategy's returns and its benchmark's returns." tabindex="0" role="button">tracking error</span> to the BTOP50 exceeds 4% annualized.</li>
+<li>Three consecutive years of negative absolute returns: reassess, but do <em>not</em> exit automatically.</li>
+</ul>
+</div>
+
+<p>A 25% drawdown needs a gain of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.25</mn><mi mathvariant="normal">/</mi><mn>0.75</mn><mo>=</mo><mn>33</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.25/0.75 = 33\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.25/0.75</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">33%</span></span></span></span></span> to repair (<a class="xref" href="1e.html">Chapter 1E</a>). A tracking error of 4% a year is about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi mathvariant="normal">%</mi><mi mathvariant="normal">/</mi><msqrt><mn>12</mn></msqrt><mo>=</mo><mn>1.15</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">4\%/\sqrt{12} = 1.15\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1572em; vertical-align: -0.25em;"></span><span class="mord">4%/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">12</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">1.15%</span></span></span></span></span> a month. The third criterion asks for a review, not a sale, because droughts of several years are how trend's premium is paid for.</p>
+
+<p><a class="xref" href="13b.html">Chapter 13B</a> scores a 15% allocation to DBMF and finds medium conviction, held back by the regime score while trend sits in a drought. It suggests building the position over time rather than in one purchase. That staging spreads the entry; it does not replace this chapter's advice against timing trend's cycles.</p>
+
+<h2 id="portfolio-contribution-not-standalone-sharpe">8 · Portfolio contribution, not standalone Sharpe</h2>
+
+<p>The most common mistake with trend is to judge it alone. <a class="xref" href="1f.html">Chapter 1F</a> showed that correlation sets the gain from combining strategies of equal weight. A sharper question is whether adding a small amount of a new sleeve <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0502em;">B</span></span></span></span></span> to an existing portfolio <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">P</span></span></span></span></span> raises the portfolio's Sharpe ratio. The answer depends on the correlation <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi></mrow><annotation encoding="application/x-tex">\rho</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">ρ</span></span></span></span></span> between them:</p>
+
+<div class="eq" id="e-hurdle">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mtext>SR</mtext><mi>B</mi></msub><mo>&gt;</mo><mi>ρ</mi> <msub><mtext>SR</mtext><mi>P</mi></msub></mrow><annotation encoding="application/x-tex"> \text{SR}_B &gt; \rho\,\text{SR}_P </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">SR</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8778em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord text"><span class="mord">SR</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(10D.2)</span></div>
+
+<p>A sleeve helps if its own Sharpe ratio clears the portfolio's Sharpe ratio scaled by their correlation. A sleeve uncorrelated with the portfolio helps whenever its Sharpe ratio is positive, while a highly correlated sleeve must nearly match the portfolio to help at all.</p>
+
+<details class="grind"><summary>Where the hurdle comes from</summary><div class="grind-body">
+<p>Put a weight <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi></mrow><annotation encoding="application/x-tex">w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span></span></span></span></span> in sleeve <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0502em;">B</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mi>w</mi></mrow><annotation encoding="application/x-tex">1-w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span></span></span></span></span> in portfolio <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">P</span></span></span></span></span>, with expected excess returns <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mi>B</mi></msub></mrow><annotation encoding="application/x-tex">\mu_B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\mu_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and volatilities <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mi>B</mi></msub></mrow><annotation encoding="application/x-tex">\sigma_B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\sigma_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. The mix has expected excess return <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>w</mi><mo stretchy="false">)</mo><msub><mi>μ</mi><mi>P</mi></msub><mo>+</mo><mi>w</mi><msub><mi>μ</mi><mi>B</mi></msub></mrow><annotation encoding="application/x-tex">\mu = (1-w)\mu_P + w\mu_B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and variance</p>
+
+<div class="eq">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msup><mi>σ</mi><mn>2</mn></msup></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>w</mi><msup><mo stretchy="false">)</mo><mn>2</mn></msup><msubsup><mi>σ</mi><mi>P</mi><mn>2</mn></msubsup><mo>+</mo><msup><mi>w</mi><mn>2</mn></msup><msubsup><mi>σ</mi><mi>B</mi><mn>2</mn></msubsup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mspace width="1em"></mspace><mo>+</mo><mn>2</mn><mi>w</mi><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>w</mi><mo stretchy="false">)</mo><mi>ρ</mi> <msub><mi>σ</mi><mi>P</mi></msub><msub><mi>σ</mi><mi>B</mi></msub></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex"> \begin{aligned} \sigma^2 &amp;= (1-w)^2\sigma_P^2 + w^2\sigma_B^2 \\ &amp;\quad + 2w(1-w)\rho\,\sigma_P\sigma_B \end{aligned} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 3.0241em; vertical-align: -1.2621em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.7621em;"><span class="" style="top: -3.8979em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span><span class="" style="top: -2.3979em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.2621em;"><span class=""></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.7621em;"><span class="" style="top: -3.8979em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -2.453em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.247em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.8641em;"><span class="" style="top: -2.453em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.247em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -2.3979em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right: 1em;"></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mclose">)</span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.2621em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(10D.3)</span></div>
+
+<p>Ask how the Sharpe ratio <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mi mathvariant="normal">/</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">\mu/\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">μ</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> changes as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi></mrow><annotation encoding="application/x-tex">w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span></span></span></span></span> rises from zero, its derivative (<a class="xref" href="3c.html">Chapter 3C</a>). At <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">w = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0269em;">w</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0</span></span></span></span></span>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span></span> changes at the rate <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mi>B</mi></msub><mo>−</mo><msub><mi>μ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\mu_B - \mu_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7778em; vertical-align: -0.1944em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. Differentiating <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>σ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\sigma^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span> and dividing by <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><msub><mi>σ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">2\sigma_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7944em; vertical-align: -0.15em;"></span><span class="mord">2</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> shows that <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> changes at the rate <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><msub><mi>σ</mi><mi>B</mi></msub><mo>−</mo><msub><mi>σ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\rho\sigma_B - \sigma_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7778em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">ρ</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>. By the quotient rule, the Sharpe ratio changes at the rate</p>
+
+<div class="eq">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><msub><mi>μ</mi><mi>B</mi></msub> <msub><mi>σ</mi><mi>P</mi></msub><mo>−</mo><msub><mi>μ</mi><mi>P</mi></msub> <mi>ρ</mi> <msub><mi>σ</mi><mi>B</mi></msub></mrow><msubsup><mi>σ</mi><mi>P</mi><mn>2</mn></msubsup></mfrac></mrow><annotation encoding="application/x-tex"> \frac{\mu_B\,\sigma_P - \mu_P\,\rho\,\sigma_B}{\sigma_P^2} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 2.2399em; vertical-align: -0.9795em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.2603em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.7959em;"><span class="" style="top: -2.4065em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span><span class="" style="top: -3.0448em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2935em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.9795em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(10D.4)</span></div>
+
+<p>This is positive exactly when <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mi>B</mi></msub><mi mathvariant="normal">/</mi><msub><mi>σ</mi><mi>B</mi></msub><mo>&gt;</mo><mi>ρ</mi> <msub><mi>μ</mi><mi>P</mi></msub><mi mathvariant="normal">/</mi><msub><mi>σ</mi><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\mu_B/\sigma_B &gt; \rho\,\mu_P/\sigma_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, which is <a class="eqref" href="#e-hurdle">(10D.2)</a>.</p>
+</div></details>
+
+<div class="worked">
+<span class="ct">Worked example: A 0.3 sleeve against a 0.5 sleeve</span>
+<p><strong>Step 1: the portfolio.</strong> Suppose, hypothetically, a portfolio with 15% volatility and an expected excess return of 6%, a Sharpe ratio of 0.40. You can move 20% of it into one of two sleeves, each with 15% volatility.</p>
+
+<p><strong>Step 2: a trend sleeve.</strong> The first has a Sharpe ratio of 0.3, an expected excess return of 4.5%, and zero correlation with the portfolio. The mix earns <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.8</mn><mo>×</mo><mn>6</mn><mo>+</mo><mn>0.2</mn><mo>×</mo><mn>4.5</mn><mo>=</mo><mn>5.7</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.8 \times 6 + 0.2 \times 4.5 = 5.7\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.8</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">6</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">4.5</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">5.7%</span></span></span></span></span>. Its variance is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.64</mn><mo>×</mo><mn>225</mn><mo>+</mo><mn>0.04</mn><mo>×</mo><mn>225</mn><mo>=</mo><mn>153</mn></mrow><annotation encoding="application/x-tex">0.64 \times 225 + 0.04 \times 225 = 153</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.64</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">225</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.04</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">225</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">153</span></span></span></span></span>, in squared percent, so its volatility is 12.4% and its Sharpe ratio <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5.7</mn><mi mathvariant="normal">/</mi><mn>12.4</mn><mo>=</mo><mn>0.46</mn></mrow><annotation encoding="application/x-tex">5.7/12.4 = 0.46</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">5.7/12.4</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.46</span></span></span></span></span>.</p>
+
+<p><strong>Step 3: a correlated sleeve.</strong> The second has a Sharpe ratio of 0.5, an expected excess return of 7.5%, and a correlation of 0.8 with the portfolio, like premium selling beside equities. The mix earns 6.3%. The correlation adds <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>0.2</mn><mo>×</mo><mn>0.8</mn><mo>×</mo><mn>0.8</mn><mo>×</mo><mn>225</mn><mo>=</mo><mn>57.6</mn></mrow><annotation encoding="application/x-tex">2 \times 0.2 \times 0.8 \times 0.8 \times 225 = 57.6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.8</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.8</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">225</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">57.6</span></span></span></span></span> to the same 153, so the volatility is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mn>210.6</mn></msqrt><mo>=</mo><mn>14.5</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">\sqrt{210.6} = 14.5\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1328em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">210.6</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">14.5%</span></span></span></span></span> and the Sharpe ratio 0.43.</p>
+
+<p><strong>Step 4: the verdict.</strong> The weaker sleeve lifts the portfolio more. By <a class="eqref" href="#e-hurdle">(10D.2)</a>, the trend sleeve's hurdle is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>×</mo><mn>0.40</mn><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">0 \times 0.40 = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.40</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0</span></span></span></span></span>, while the correlated sleeve's is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.8</mn><mo>×</mo><mn>0.40</mn><mo>=</mo><mn>0.32</mn></mrow><annotation encoding="application/x-tex">0.8 \times 0.40 = 0.32</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.8</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.40</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.32</span></span></span></span></span>, which its 0.5 clears by far less.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "trend has a lower Sharpe ratio than the VRP, so it is worse"</span>
+<p>Trend's value is not its standalone Sharpe ratio; it is its crash complementarity. Trend was positive in 8 of the 10 largest 60/40 drawdowns, while the VRP was negative in essentially all of them. In a portfolio, a trend sleeve with a Sharpe ratio of 0.3 adds <em>more</em> to the portfolio's Sharpe ratio than a sleeve with 0.5 that is correlated with everything else that sells premium. Allocate by contribution to the portfolio, not by standalone Sharpe ratio.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Combination regimens are built on non-overlapping toxicity. A drug with modest single-agent activity can add more to a combination than a stronger drug whose toxicity overlaps with the backbone. It can be given at full dose without compounding the harm. Trend is the agent with modest activity and a different toxicity profile. Its bad years, the droughts, fall at different times from the crashes that hurt equities and the VRP.</p>
+</div>
+
+<p>The figure draws the whole curve behind the worked example's two numbers. Press each preset, then slide the correlation and watch the premium-selling sleeve's hurdle rise.</p>
+
+<figure class="fig" id="fig-sleeve-hurdle-curve">
+  <canvas id="sleeve-hurdle-curve-c" data-h="260" width="631" height="260" style="height: 260px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="sleeve-hurdle-curve-srb">sleeve Sharpe</label>
+      <input type="range" id="sleeve-hurdle-curve-srb" min="0" max="1" step="0.05" value="0.3">
+      <output id="sleeve-hurdle-curve-srb-o" for="sleeve-hurdle-curve-srb">0.30</output>
+    </div>
+    <div class="ctrl">
+      <label for="sleeve-hurdle-curve-rho">correlation ρ</label>
+      <input type="range" id="sleeve-hurdle-curve-rho" min="-0.5" max="1" step="0.05" value="0">
+      <output id="sleeve-hurdle-curve-rho-o" for="sleeve-hurdle-curve-rho">0.00</output>
+    </div>
+    <div class="ctrl">
+      <label for="sleeve-hurdle-curve-w">weight</label>
+      <input type="range" id="sleeve-hurdle-curve-w" min="0" max="50" step="1" value="20">
+      <output id="sleeve-hurdle-curve-w-o" for="sleeve-hurdle-curve-w">20%</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Presets">
+      <label>preset</label>
+      <button type="button" id="sleeve-hurdle-curve-trend">trend</button>
+      <button type="button" id="sleeve-hurdle-curve-prem">premium selling</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="sleeve-hurdle-curve-at">Sharpe at 20% = 0.46</output></div>
+    <div class="ctrl"><output id="sleeve-hurdle-curve-hur">hurdle ρ × 0.40 = 0.00</output></div>
+    <div class="ctrl"><output id="sleeve-hurdle-curve-peak">best in range: 0.50 at 43%</output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="sleeve-hurdle-curve-vk">Clears the hurdle.</b> <span id="sleeve-hurdle-curve-vt">The sleeve's 0.30 beats 0.00, so a first slice raises the portfolio's Sharpe ratio above 0.40.</span></p>
+  <figcaption><b>A weaker sleeve can lift a portfolio further.</b> A portfolio with a Sharpe
+  ratio of 0.40 and 15% volatility moves a weight from 0% to 50% into a sleeve with 15%
+  volatility and the Sharpe ratio and correlation you set. The solid curve is the mix's Sharpe
+  ratio, and the dashed curves are the worked example's two sleeves: trend at 0.3,
+  uncorrelated, and premium selling at 0.5, correlated at 0.8. A sleeve raises the portfolio
+  when its Sharpe ratio clears the hurdle ρ × 0.40, and the trend curve runs above the stronger
+  sleeve's at every weight shown.</figcaption>
+</figure>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Trend following is long recent winners and short recent losers across many markets, each scaled by its volatility: <a class="eqref" href="#e-tsmom">(10D.1)</a>.</li>
+<li>Hurst, Ooi and Pedersen (2017) find a net Sharpe ratio of about 0.4 from 1880 to 2016, positive in every decade. Trend was also positive in 8 of the 10 largest 60/40 drawdowns, and live indices show 0.3 to 0.5.</li>
+<li>It pays in slow drawdowns, loses in V-shaped reversals and chop, and can go years without paying: 2011 to 2018 was the worst drought in modern history.</li>
+<li>Hold 10% to 15% in one transparent vehicle, do not time entries, and reassess rather than exit after 3 negative years.</li>
+<li>Judge it by its contribution to the portfolio: a sleeve helps when <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>SR</mtext><mi>B</mi></msub><mo>&gt;</mo><mi>ρ</mi> <msub><mtext>SR</mtext><mi>P</mi></msub></mrow><annotation encoding="application/x-tex">\text{SR}_B &gt; \rho\,\text{SR}_P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">SR</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0502em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8778em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord text"><span class="mord">SR</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.1389em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, and trend's low correlation sets its hurdle near zero.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>What is the canonical evidence for trend following?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Moskowitz, Ooi and Pedersen (2012) established time-series momentum across 58 markets. Hurst, Ooi and Pedersen (2017) extended it to 67 markets from 1880 to 2016, with a net Sharpe ratio of about 0.4 after fees and a positive record in every decade. Asness, Moskowitz and Pedersen (2013) documented value and momentum across markets and asset classes. Live indices, the SG Trend Index and the BTOP50, show realized Sharpe ratios of 0.3 to 0.5 over 20 years.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Why is trend's contribution to a portfolio larger than its standalone Sharpe ratio suggests?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Trend is roughly uncorrelated with equities and pays in slow drawdowns, when the rest of the portfolio loses. By <a class="eqref" href="#e-hurdle">(10D.2)</a>, a sleeve raises a portfolio's Sharpe ratio when its own exceeds the correlation times the portfolio's. Trend's hurdle is near zero, while a premium-selling sleeve correlated at 0.8 with a 0.40 portfolio must clear 0.32. In the worked example, the 0.3 trend sleeve lifted the portfolio to 0.46 and the 0.5 sleeve only to 0.43.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>What is the difference between DBMF and KMLM?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>DBMF replicates trend funds: it infers their positions from their recent returns, which keeps its fees lower but leaves it 1 to 2 months behind. KMLM trades a fixed universe of markets, which makes it transparent but less diversified. Both hold futures and get Section 1256 treatment, and the rule is to hold one of them, not both stacked.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>How long can a trend drought last, and what does that imply for how you hold the sleeve?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The worst in modern history ran from 2011 to 2018, so a sleeve can go nowhere for years before a 2008 or a 2022 pays for the wait. Do not time entries, measure the vehicle against the BTOP50, and after 3 consecutive negative years reassess rather than exit automatically. Selling in a drought keeps the cost of trend and gives up its payoff.</p>
+</div></details>
+</div>
+</div>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="10c.html" rel="prev"><span>Previous</span>10C · The variance risk premium</a>
+<a class="next" href="10e.html" rel="next"><span>Next</span>10E · Carry</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- sleeve-hurdle-curve ---------- */
+(function () {
+  var U = 'sleeve-hurdle-curve';
+  var SRB = DL.$(U + '-srb'), RHO = DL.$(U + '-rho'), WW = DL.$(U + '-w');
+  /* the worked example's portfolio, and both sleeves at its volatility */
+  var SRP = 0.40, SIGP = 15, SIGB = 15;
+  var PRESETS = { trend: { sr: 0.3, rho: 0 }, prem: { sr: 0.5, rho: 0.8 } };
+
+  /* the grind box's mix: weight w in the sleeve and 1 - w in the portfolio */
+  function mix(w, srb, rho) {
+    var m = (1 - w) * SRP * SIGP + w * srb * SIGB;
+    var v = (1 - w) * (1 - w) * SIGP * SIGP + w * w * SIGB * SIGB +
+            2 * rho * w * (1 - w) * SIGP * SIGB;
+    return m / Math.sqrt(v);
+  }
+  function curve(srb, rho) {
+    var xs = [], ys = [];
+    for (var i = 0; i <= 250; i++) { var w = i / 500; xs.push(w); ys.push(mix(w, srb, rho)); }
+    return { xs: xs, ys: ys };
+  }
+  function peak(srb, rho) {
+    var best = { w: 0, s: mix(0, srb, rho) };
+    for (var i = 1; i <= 500; i++) {
+      var w = i / 1000, s = mix(w, srb, rho);
+      if (s > best.s + 1e-12) best = { w: w, s: s };
+    }
+    return best;
+  }
+  function state() { return { sr: +SRB.value, rho: +RHO.value, w: +WW.value / 100 }; }
+  function n2(x) { return DL.num(x, 2); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = state();
+    var cur = curve(s.sr, s.rho), tr = curve(PRESETS.trend.sr, PRESETS.trend.rho),
+        pr = curve(PRESETS.prem.sr, PRESETS.prem.rho);
+    var all = cur.ys.concat(tr.ys, pr.ys, [SRP]);
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), span = hi - lo;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 0.5, ymin: lo - span * 0.1, ymax: hi + span * 0.16,
+                              pad: { l: 44, r: 16, t: 26, b: 30 } });
+    DL.axes(p, { xs: [0, 0.1, 0.2, 0.3, 0.4, 0.5], ny: 5, yAt: 0,
+                 x: function (v) { return DL.num(v * 100, 0) + '%'; },
+                 y: function (v, st) { return DL.num(v, st < 0.1 ? 2 : 1); } });
+    DL.hline(p, SRP, { color: DL.color('ink-faint'), dash: [2, 3] });
+    DL.line(p, tr.xs, tr.ys, { color: DL.color('insight'), width: 1.4, dash: [5, 3] });
+    DL.line(p, pr.xs, pr.ys, { color: DL.color('plain'), width: 1.4, dash: [5, 3] });
+    DL.line(p, cur.xs, cur.ys, { color: DL.color('accent'), width: 2.4 });
+    var at = mix(s.w, s.sr, s.rho);
+    p.seg(s.w, p.o.ymin, s.w, at, { color: DL.color('ink-faint'), dash: [3, 3], width: 1 });
+    p.dot(s.w, at, { r: 4.5, color: DL.color('accent'), ring: true });
+
+    /* the key names the two dashed sleeves; the portfolio line is labeled below itself */
+    var f = '11px ' + DL.color('sans');
+    DL.legend(p, [{ label: 'trend 0.3, ρ 0', color: DL.color('insight'), dash: [5, 3] },
+                  { label: 'premium 0.5, ρ 0.8', color: DL.color('plain'), dash: [5, 3] }]);
+    p.text(0.5, SRP, 'portfolio alone 0.40', { dx: -4, dy: 5, align: 'right', baseline: 'top',
+           color: DL.color('ink-faint'), font: f });
+    p.g.save();
+    p.g.font = f;
+    p.g.fillStyle = DL.color('ink-soft');
+    p.g.textAlign = 'left';
+    p.g.textBaseline = 'bottom';
+    p.g.fillText('Sharpe ratio of the mix, against the weight in the sleeve', 4, 14);
+    p.g.restore();
+  });
+
+  function update() {
+    var s = state(), at = mix(s.w, s.sr, s.rho), hurdle = s.rho * SRP, pk = peak(s.sr, s.rho);
+    DL.out(U + '-srb-o', n2(s.sr));
+    DL.out(U + '-rho-o', n2(s.rho));
+    DL.out(U + '-w-o', DL.num(s.w * 100, 0) + '%');
+    DL.out(U + '-at', 'Sharpe at ' + DL.num(s.w * 100, 0) + '% = ' + n2(at));
+    DL.out(U + '-hur', 'hurdle ρ × 0.40 = ' + n2(hurdle));
+    DL.out(U + '-peak', 'best in range: ' + n2(pk.s) + ' at ' + DL.num(pk.w * 100, 0) + '%');
+    var d = s.sr - hurdle;
+    if (d > 1e-9) {
+      DL.out(U + '-vk', 'Clears the hurdle.');
+      DL.out(U + '-vt', 'The sleeve\'s ' + n2(s.sr) + ' beats ' + n2(hurdle) +
+             ', so a first slice raises the portfolio\'s Sharpe ratio above 0.40.');
+    } else if (d < -1e-9) {
+      DL.out(U + '-vk', 'Fails the hurdle.');
+      DL.out(U + '-vt', 'The sleeve\'s ' + n2(s.sr) + ' falls short of ' + n2(hurdle) +
+             ', so any slice lowers the portfolio\'s Sharpe ratio.');
+    } else {
+      DL.out(U + '-vk', 'On the hurdle.');
+      DL.out(U + '-vt', 'A first slice leaves the portfolio\'s Sharpe ratio at 0.40.');
+    }
+    draw();
+  }
+  function preset(k) { SRB.value = PRESETS[k].sr; RHO.value = PRESETS[k].rho; update(); }
+  DL.$(U + '-trend').addEventListener('click', function () { preset('trend'); });
+  DL.$(U + '-prem').addEventListener('click', function () { preset('prem'); });
+  update();
+  DL.bind([U + '-srb', U + '-rho', U + '-w'], update);
+})();
+
+</script>
+</body>
+</html>

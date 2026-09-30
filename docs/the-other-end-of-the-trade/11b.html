@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>11B Conditional mean reversion — The Other End of the Trade</title>
+<meta name="description" content="Chapter 11B of The Other End of the Trade: Conditional mean reversion.">
+<link rel="stylesheet" href="assets/katex.min.css">
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-10">← Part XI · Swing trading</a>
+  <div class="sb-folio"><a class="sb-prev" href="11a.html" aria-label="Previous chapter: 11A · The market dashboard" title="Previous chapter: 11A · The market dashboard (←)">‹ 11A</a><p class="sb-title"><span class="sb-at">Chapter 11B ·</span> <span class="sb-at">57 of 89</span></p><a class="sb-next" href="11c.html" aria-label="Next chapter: 11C · Indicators" title="Next chapter: 11C · Indicators (→)">11C ›</a></div>
+  <div id="sb-toc"><a href="#the-thesis-stated-with-its-conditions">1 · The thesis, stated with its conditions</a><a href="#writing-the-conditions-down">2 · Writing the conditions down</a><a href="#three-nested-horizons">3 · Three nested horizons</a><a href="#the-decision-tree">4 · The decision tree</a><a href="#where-the-edge-book-disagrees" class="lvl3">Where the Edge Book disagrees</a><a href="#grading-the-evidence">5 · Grading the evidence</a><a href="#tagging-the-horizon">6 · Tagging the horizon</a><a href="#what-the-next-chapters-build">7 · What the next chapters build</a><a href="#check-yourself">8 · Check yourself</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part XI · Swing trading · Chapter 11B</p>
+
+<h1>Conditional mean reversion</h1>
+
+<p class="subtitle">The central claim, and the conditions it needs</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p><a class="xref" href="11a.html">Chapter 11A</a> built the dashboard that reads the regime. This chapter says what to do when that read says the market is mean-reverting. It states the conditional thesis, the three layers every trade must pass, and how to grade the evidence and the horizon behind each signal.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Mean reversion, momentum and the regime problem in an AR(1) model (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+<li>The market dashboard and its four questions (<a class="xref" href="11a.html">Chapter 11A</a>).</li>
+<li>Gamma exposure, the gamma flip and the two regimes of dealer hedging (Chapters 8A, 8C and 8D).</li>
+<li>The square-root-of-time rule (<a class="xref" href="1a.html">Chapter 1A</a>).</li>
+<li>The Edge Book's evidence tiers (<a class="xref" href="10a.html">Chapter 10A</a>) and its view of microstructure edges (<a class="xref" href="1g.html">Chapter 1G</a>).</li>
+</ul>
+</div>
+
+<h2 id="the-thesis-stated-with-its-conditions">1 · The thesis, stated with its conditions</h2>
+
+<p>The dashboard of <a class="xref" href="11a.html">Chapter 11A</a> tells you <em>what regime you are in</em>. This chapter is about what to do when it says the regime is mean-reverting. That means three things hold at once: the macro layer allows <span class="gloss" data-facts="The tendency of a move to be followed by a move in the opposite direction, so that prices drift back toward where they were. In a return series it shows as negative autocorrelation." tabindex="0" role="button">mean reversion</span> as the prior, structure puts the market at a pullback level, and dealer gamma positioning makes damping intraday flow likely. The conditional thesis is not "SPY mean reverts" but "SPY mean reverts when measurable conditions hold". The dashboard's four checks are exactly those measurable conditions.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A rule like "buy SPY after it falls" is right in some markets and ruinous in others. The thesis names those markets in advance: the rule works only when the trend is up, volatility is calm, credit is quiet and dealers are hedging against moves. It tells you to stand aside whenever one of those fails.</p>
+</div>
+
+<p>As a <em>universal</em> claim about SPY, mean reversion is empirically false. <a class="xref" href="3b.html">Chapter 3B</a> showed why a pooled fit can hide it: the sign of the effect changes with the regime. The classic statistic compares the average next-bar return after an up stretch with the average after a down stretch. Write <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mtext>up</mtext></msub></mrow><annotation encoding="application/x-tex">m_{\text{up}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.1514em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">up</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span> for the mean return of the bar after a trailing <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span></span></span></span></span>-bar return above zero, and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mtext>down</mtext></msub></mrow><annotation encoding="application/x-tex">m_{\text{down}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">down</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> for the mean after one below zero. The statistic is their difference:</p>
+
+<div class="eq" id="e-d">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>D</mi><mo>=</mo><msub><mi>m</mi><mtext>up</mtext></msub><mo>−</mo><msub><mi>m</mi><mtext>down</mtext></msub></mrow><annotation encoding="application/x-tex"> D = m_{\text{up}} - m_{\text{down}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8694em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.1514em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">up</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">down</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(11B.1)</span></div>
+
+<p>A positive <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span></span></span> is <span class="gloss" data-facts="The tendency of assets that have risen recently to keep rising, and of those that have fallen to keep falling. Cross-sectional momentum compares stocks with one another; time-series momentum compares each asset with its own past." tabindex="0" role="button">momentum</span>: up stretches are followed by higher returns than down stretches. A negative <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span></span></span> is mean reversion: down stretches are followed by the higher returns. On SPY the sign of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">D</span></span></span></span></span> depends on the regime. Sort the days by VIX level, by the sign of GEX or by the direction of credit spreads, and the sign flips. A trader who claims to be "a mean-reversion guy" is making a regime assumption without realizing it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A pooled average hides the regime</span>
+<p><strong>Step 1: two regimes.</strong> Suppose, hypothetically, that 80% of days are calm and 20% stressed. After a down week, the next day's mean return is +0.10% in calm regimes and −0.15% in stressed ones. Down weeks come on 35% of calm days and 60% of stressed ones.</p>
+
+<p><strong>Step 2: which regime a down week comes from.</strong> By Bayes' theorem, the chance that a down week falls in the stressed regime is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.2</mn><mo>×</mo><mn>0.6</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>0.8</mn><mo>×</mo><mn>0.35</mn><mo>+</mo><mn>0.2</mn><mo>×</mo><mn>0.6</mn><mo stretchy="false">)</mo><mo>=</mo><mn>0.12</mn><mi mathvariant="normal">/</mi><mn>0.40</mn><mo>=</mo><mn>0.30</mn></mrow><annotation encoding="application/x-tex">0.2 \times 0.6 / (0.8 \times 0.35 + 0.2 \times 0.6) = 0.12/0.40 = 0.30</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.6/</span><span class="mopen">(</span><span class="mord">0.8</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.35</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.6</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.12/0.40</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.30</span></span></span></span></span>. Stress is 20% of days but 30% of down weeks.</p>
+
+<p><strong>Step 3: the pooled edge.</strong> Averaged over every down week, the next day returns <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.70</mn><mo>×</mo><mn>0.10</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.30</mn><mo>×</mo><mo stretchy="false">(</mo><mo>−</mo><mn>0.15</mn><mi mathvariant="normal">%</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0.070</mn><mi mathvariant="normal">%</mi><mo>−</mo><mn>0.045</mn><mi mathvariant="normal">%</mi><mo>=</mo><mn>0.025</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.70 \times 0.10\% + 0.30 \times (-0.15\%) = 0.070\% - 0.045\% = 0.025\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.70</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">0.10%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.30</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">−</span><span class="mord">0.15%</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">0.070%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">0.045%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">0.025%</span></span></span></span></span>.</p>
+
+<p><strong>Step 4: what conditioning buys.</strong> At a hypothetical round-trip cost of 0.05%, the pooled buy-the-dip rule loses money after costs. The same rule taken only in the calm regime earns 0.10% before costs and 0.05% after them. It also skips the days that lose 0.15%.</p>
+</div>
+
+<p>The figure works the example with its numbers free. Lower the calm share of days, and the pooled bar falls further below the cost line while the calm bar stays above it. Raise the cost past 0.10%, and neither rule pays.</p>
+
+<figure class="fig" id="fig-pooled-conditional-reversal">
+  <canvas id="pooled-conditional-reversal-c" data-h="240" width="631" height="240" style="height: 240px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="pooled-conditional-reversal-share">calm share of days</label>
+      <input type="range" id="pooled-conditional-reversal-share" min="50" max="95" step="1" value="80">
+      <output id="pooled-conditional-reversal-share-o" for="pooled-conditional-reversal-share">80%</output>
+    </div>
+    <div class="ctrl">
+      <label for="pooled-conditional-reversal-cost">round-trip cost</label>
+      <input type="range" id="pooled-conditional-reversal-cost" min="0" max="0.2" step="0.01" value="0.05">
+      <output id="pooled-conditional-reversal-cost-o" for="pooled-conditional-reversal-cost">0.05%</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="pooled-conditional-reversal-calm">calm effect</label>
+      <input type="range" id="pooled-conditional-reversal-calm" min="0" max="0.3" step="0.01" value="0.1">
+      <output id="pooled-conditional-reversal-calm-o" for="pooled-conditional-reversal-calm">+0.10%</output>
+    </div>
+    <div class="ctrl">
+      <label for="pooled-conditional-reversal-stress">stressed effect</label>
+      <input type="range" id="pooled-conditional-reversal-stress" min="-0.4" max="0.1" step="0.01" value="-0.15">
+      <output id="pooled-conditional-reversal-stress-o" for="pooled-conditional-reversal-stress">−0.15%</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="pooled-conditional-reversal-w">stress: 20% of days, 30% of down weeks</output></div>
+    <div class="ctrl"><output id="pooled-conditional-reversal-pool">pooled after cost = −0.025%</output></div>
+    <div class="ctrl"><output id="pooled-conditional-reversal-calmnet">calm only after cost = +0.05%</output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="pooled-conditional-reversal-vk">Conditioning pays.</b> <span id="pooled-conditional-reversal-vt">Taken after every down week, the rule does not clear its cost. Taken only in the calm regime, it clears it by 0.05% a trade.</span></p>
+  <figcaption><b>A pooled edge too small to pay, over a conditional edge that pays.</b> Two
+  made-up regimes: after a down week, the next day's mean return is the calm effect on calm
+  days and the stressed effect on stressed ones, and down weeks come on 35% of calm days and
+  60% of stressed ones, as in the chapter's example. The pooled bar weights the two regimes by
+  where down weeks fall, which Bayes' theorem gives, so stress counts for more than its share
+  of days. The dashed line is the round-trip cost, which a bar must clear to pay.</figcaption>
+</figure>
+
+<h2 id="writing-the-conditions-down">2 · Writing the conditions down</h2>
+
+<p>The conditional framing avoids the trap. You write down the conditions under which you expect the edge to be positive, and you check them. If any condition fails, you do not take the trade. Some condition fails on most days, which is the system working, not a sign that it is broken.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A trial's eligibility criteria work the same way. Most patients screened for a targeted-therapy trial fail screening, which is no flaw in the protocol. The criteria exist because the effect is expected only in the eligible population. Enrolling the ineligible to fill the trial dilutes the effect toward zero, just as taking every dip dilutes a conditional edge into a pooled one.</p>
+</div>
+
+<h2 id="three-nested-horizons">3 · Three nested horizons</h2>
+
+<p>The framework is a hierarchy in which each layer answers a different question, runs on a different clock and uses different inputs. <strong>A signal at one layer never overrides a contradicting signal at a higher layer.</strong></p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Layer</th><th class="c-other">Clock</th><th class="c-result">What it decides</th></tr></thead><tbody><tr><td class="c-trial" data-label="Layer">1. Macro regime</td><td class="c-other" data-label="Clock">Weeks to months</td><td class="c-result" data-label="What it decides">Whether the mean-reversion edge is positive, weak or negative: the prior</td></tr><tr><td class="c-trial" data-label="Layer">2. Market structure</td><td class="c-other" data-label="Clock">2 to 10 days</td><td class="c-result" data-label="What it decides">Whether this setup sits at a level where the macro edge can be expressed cleanly</td></tr><tr><td class="c-trial" data-label="Layer">3. Dealer gamma and path</td><td class="c-other" data-label="Clock">Intraday to 2 days</td><td class="c-result" data-label="What it decides">Whether today's mechanical flow supports the trade or works against it</td></tr></tbody></table></div></div>
+
+<p><strong>Layer 1, the macro regime, sets the prior.</strong> Its inputs are the equity drift, read from the slope of the 200-day SMA, the VIX level and term structure, and credit and rates stress: HY OAS, IG OAS and the MOVE index. It also reads the yield curve, as 10Y−2Y and 10Y−3M, the dollar and FX (DXY, USD/JPY) and the <span class="gloss" data-facts="A single regime score from minus 100 to plus 100, built as a weighted average of eight dimensions of market state such as volatility, credit and trend. It permits and sizes swing trades rather than triggering them." tabindex="0" role="button">composite signal</span> score of <a class="xref" href="11g.html">Chapter 11G</a>. In its default states, positive drift with contango and tight credit means mean reversion is on. An inverted curve with widening credit and backwardation means mean reversion is suspended.</p>
+
+<p><strong>Layer 2, market structure, finds the level and the pattern.</strong> Its inputs are the Weinstein stage (<a class="xref" href="11e.html">Chapter 11E</a>), the location against key moving averages (the 10-, 21-, 50- and 200-day EMAs), pattern detection (<a class="xref" href="11d.html">Chapter 11D</a>) and <span class="gloss" data-facts="The price of a stock divided by the price of a benchmark such as the S&amp;P 500, followed over time. A rising ratio means the stock is outperforming. It is unrelated to the relative strength index." tabindex="0" role="button">relative strength</span> against a benchmark. It decides whether <em>this specific setup</em> sits where the macro edge can be expressed cleanly.</p>
+
+<p><strong>Relative strength</strong> is the price of the stock or index divided by the price of a benchmark, followed over time. A stock that gains 8% while SPX gains 3% sees its relative strength rise by <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.08</mn><mi mathvariant="normal">/</mi><mn>1.03</mn><mo>−</mo><mn>1</mn><mo>=</mo><mn>4.9</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1.08/1.03 - 1 = 4.9\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1.08/1.03</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">4.9%</span></span></span></span></span>. "Relative strength positive" means the ratio is rising. <a class="xref" href="11d.html">Chapter 11D</a> gives the Mansfield version, which compares the ratio with its own average. Relative strength has nothing to do with the relative strength index of <a class="xref" href="11c.html">Chapter 11C</a>, despite the name.</p>
+
+<p><strong>Layer 3, dealer gamma and path, sets the execution context.</strong> Its inputs are net dealer GEX (<a class="xref" href="8a.html">Chapter 8A</a>), the distance to the gamma flip, how the VIX behaves intraday, options skew and the time of day. It decides whether <em>today specifically</em> supports the trade, or whether mechanical flow works against the position.</p>
+
+<h2 id="the-decision-tree">4 · The decision tree</h2>
+
+<p>The layers combine into a decision tree that you run in order:</p>
+
+<pre>1. Macro regime supportive?
+   (high composite signal, contango,
+    positive drift)
+   If NO:  no trade.
+   If YES: continue.
+
+2. Structure says BUY?
+   (Stage 2 pullback to a defined level,
+    pivot intact, relative strength positive)
+   If NO:  no trade.
+   If YES: continue.
+
+3. Gamma regime says the PATH is acceptable?
+   (positive GEX above the flip, OR a clear
+    setup for an amplification trade below it)
+   If NO:  skip.
+   If YES: take the trade.
+
+4. Size for the loss budget (Chapter 13C),
+   pre-commit the invalidation (Chapter 13C),
+   record the trade in your journal.</pre>
+
+<p>Most days you stop at step 1 or step 2, which is correct for a framework designed to filter aggressively. The Dealer Mechanics Lab adds that trades surviving all three gates should be sized larger than trades that fail any of them. Since the tree takes no trade that fails a gate, read this as: concentrate your size in the few survivors rather than spreading it across every setup you see.</p>
+
+<div class="worked">
+<span class="ct">Worked example: How often the gates open</span>
+<p><strong>Step 1: the pass rates.</strong> Suppose, hypothetically, that Layer 1 is supportive on 60% of trading days. Structure offers a Stage 2 pullback on 15% of those days, with an acceptable gamma path on 70% of those.</p>
+
+<p><strong>Step 2: the product.</strong> Each rate is a share of the days that passed the gates before it. All three therefore open on <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.60</mn><mo>×</mo><mn>0.15</mn><mo>×</mo><mn>0.70</mn><mo>=</mo><mn>0.063</mn></mrow><annotation encoding="application/x-tex">0.60 \times 0.15 \times 0.70 = 0.063</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.60</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.15</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.70</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.063</span></span></span></span></span> of days, about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.063</mn><mo>×</mo><mn>252</mn><mo>=</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">0.063 \times 252 = 16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.063</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">252</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">16</span></span></span></span></span> days in a year of 252 trading days.</p>
+
+<p><strong>Step 3: what it means for size.</strong> Sixteen trades a year cannot carry an account at a tiny size each. The capital that a pooled strategy would spread over 252 days waits for those 16, sized by the loss budget of <a class="xref" href="13c.html">Chapter 13C</a>.</p>
+</div>
+
+<p>Sizing the survivors larger has a formal reason in the <span class="gloss" data-facts="The rule for sizing a bet or position that maximizes the long-run compound growth rate of wealth, which is the same as maximizing the expected logarithm of wealth." tabindex="0" role="button">Kelly criterion</span>, whose bet grows with the edge per unit of variance (<a class="xref" href="3d.html">Chapter 3D</a>). A trade with a higher expected return earns a larger fraction of capital. A <span class="gloss" data-facts="Sizing at a fixed fraction of the Kelly bet, usually a half or a quarter. It gives up some long-run growth for much shallower drawdowns and a buffer against an overestimated edge." tabindex="0" role="button">fractional Kelly</span> bet keeps that ordering at a safer scale. The gates raise the expected return of the trades they pass, which is why the survivors deserve more.</p>
+
+<h3 id="where-the-edge-book-disagrees">Where the Edge Book disagrees</h3>
+
+<p>The Edge Book is far less confident that this edge is open to a retail account. It files <strong>short-term reversal over 1 to 5 days</strong>, liquidity provision after sharp moves, among the microstructure edges (<a class="xref" href="1g.html">Chapter 1G</a>). It calls those essentially institutional-only: the edge per trade is usually 1 to 5 bps, which retail commission and slippage alone exceed. It also treats the sign of GEX, the core input of Layer 3, as low-confidence context worth only a fraction of one filter's weight (<a class="xref" href="10h.html">Chapter 10H</a>).</p>
+
+<p>The Dealer Mechanics Lab's case rests on the conditioning itself. It points to positive-gamma dealer hedging, which sells rallies and buys falls, as the mechanism behind reversal in calm regimes (Chapters 3B and 8D). It also holds each trade for 2 to 10 days rather than minutes. Neither source reports the conditional edge per trade after retail costs. Only your own out-of-sample test can supply the number that decides the question: if the conditioned edge does not clear your round-trip cost, the Edge Book's objection stands.</p>
+
+<h2 id="grading-the-evidence">5 · Grading the evidence</h2>
+
+<p>Not every claim in this framework carries the same weight of evidence. The Dealer Mechanics Lab tags each with a tier:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Tier</th><th class="c-result">What it covers</th><th class="c-result">Examples</th></tr></thead><tbody><tr><td class="c-trial" data-label="Tier">A</td><td class="c-result" data-label="What it covers">Peer-reviewed papers, multi-decade replication, official exchange or regulatory data</td><td class="c-result" data-label="Examples">The equity risk premium (Mehra-Prescott; Dimson-Marsh-Staunton), the variance risk premium (Bondarenko; Carr-Wu), the Fed meeting week return anomaly (Cieslak-Morse-Vissing-Jorgensen 2019), <span class="gloss" data-facts="The tendency for the return over the last 30 minutes of the trading day to go the same way as the return over the rest of the day. Baltussen, Da, Lammers and Martens (2021) document it across more than 60 futures markets and attribute it to hedging that trades with the move." tabindex="0" role="button">intraday momentum</span> (Baltussen et al. 2021, JFE), the <span class="gloss" data-facts="The pull of a strike with heavy open interest on the price of the underlying near expiry, as the hedging of dealers who are long options at that strike sells above it and buys below it. The measured effects are small: at least 16.5 basis points of return distortion per expiration for optionable single stocks, and at least 115 million dollars of S&amp;P 500 futures notional shifted per expiration day for the index." tabindex="0" role="button">pinning</span> effect in single stocks (Ni-Pearson-Poteshman 2005)</td></tr><tr><td class="c-trial" data-label="Tier">B</td><td class="c-result" data-label="What it covers">Vendor statistics or backtests with credible methodology but no peer review</td><td class="c-result" data-label="Examples">SqueezeMetrics GEX models, 0DTE composition data from Cboe, VIX term-structure rules from practitioner research</td></tr><tr><td class="c-trial" data-label="Tier">C</td><td class="c-result" data-label="What it covers">Practitioner pattern language that needs operationalizing</td><td class="c-result" data-label="Examples">VCP detection (Minervini), cup-and-handle pivot rules (O'Neil), Weinstein stage analysis</td></tr></tbody></table></div></div>
+
+<p>One Tier A example needs its scope. Ni, Pearson and Poteshman studied optionable single stocks from 1996 to 2002. On each expiration date they measured at least 16.5 basis points of return distortion, on average. They did not study the index. For S&amp;P 500 futures, the evidence is Golez and Jackwerth (2012), who found a pull toward the strike worth at least $115 million of notional per expiration day.</p>
+
+<p>Tier C is real but heuristic, which leaves the rigorous formalization to you. Chapters 11D and 11E do some of it, turning pattern language into explicit thresholds. Always tag in your own notes which tier each claim sits in. The tier does not disqualify a claim, but it sets the prior for how heavily to weight it.</p>
+
+<p>The Edge Book grades evidence on a different axis. Its <span class="gloss" data-facts="A grade for the evidence behind an edge: T1 for peer-reviewed, replicated, multi-decade results, T2 for strong but methodology-sensitive results, and T3 for thin or decayed ones." tabindex="0" role="button">evidence tiers</span> T1 to T3 grade how strong and durable the evidence for an <em>edge</em> is (<a class="xref" href="10a.html">Chapter 10A</a>), while Tiers A to C grade the <em>kind of source</em>. The two can diverge: a peer-reviewed paper can document an effect that has since decayed, which <a class="xref" href="10i.html">Chapter 10I</a> shows happening more than once.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The tiers echo the levels of evidence you use every week. Tier A is the randomized trial, the meta-analysis and the registry. Tier B is the sponsor's data presented without peer review: credible, useful and not yet checked. Tier C is expert opinion, which is not wrong for being an opinion but has to be written into a protocol before it can be tested. A guideline weighs all three and weighs them differently, as the tiers ask you to.</p>
+</div>
+
+<h2 id="tagging-the-horizon">6 · Tagging the horizon</h2>
+
+<p>Every signal also gets a horizon tag: a macro regime call works over weeks to months, a structural pattern over 2 to 10 days, and a gamma-driven intraday move resolves in hours. <strong>Mixing horizons is the second-most-common failure, after mixing tiers.</strong> People see a 5-minute breakout and infer a 6-month thesis, or hold a 6-month thesis and trade it on a 5-minute chart.</p>
+
+<p>The arithmetic of <a class="xref" href="1a.html">Chapter 1A</a> shows why a thesis at one horizon says little at another. Over a horizon <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></span> in years, a drift <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span></span> moves the price by about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">\mu h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mord mathnormal">h</span></span></span></span></span>, while the noise has a standard deviation of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><msqrt><mi>h</mi></msqrt></mrow><annotation encoding="application/x-tex">\sigma\sqrt{h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1078em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9322em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -2.8922em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1078em;"><span class=""></span></span></span></span></span></span></span></span></span>. Their ratio is the signal-to-noise ratio of the thesis at that horizon:</p>
+
+<div class="eq" id="e-snr">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi>μ</mi><mi>h</mi></mrow><mrow><mi>σ</mi><msqrt><mi>h</mi></msqrt></mrow></mfrac><mo>=</mo><mfrac><mi>μ</mi><mi>σ</mi></mfrac> <msqrt><mi>h</mi></msqrt></mrow><annotation encoding="application/x-tex"> \frac{\mu h}{\sigma \sqrt{h}} = \frac{\mu}{\sigma}\,\sqrt{h} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 2.3014em; vertical-align: -0.93em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3714em;"><span class="" style="top: -2.1778em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9322em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -2.8922em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1078em;"><span class=""></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal">μ</span><span class="mord mathnormal">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.93em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.7936em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.1076em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal">μ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9811em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -2.9411em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.0589em;"><span class=""></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(11B.2)</span></div>
+
+<div class="worked">
+<span class="ct">Worked example: A thesis at the wrong horizon</span>
+<p><strong>Step 1: the thesis.</strong> You expect the index to drift up 10% a year, with a volatility of 16%, so <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mi mathvariant="normal">/</mi><mi>σ</mi><mo>=</mo><mn>0.625</mn></mrow><annotation encoding="application/x-tex">\mu/\sigma = 0.625</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">μ</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.625</span></span></span></span></span>.</p>
+
+<p><strong>Step 2: six months.</strong> With <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">h = 0.5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.5</span></span></span></span></span>, <a class="eqref" href="#e-snr">(11B.2)</a> gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.625</mn><mo>×</mo><msqrt><mn>0.5</mn></msqrt><mo>=</mo><mn>0.44</mn></mrow><annotation encoding="application/x-tex">0.625 \times \sqrt{0.5} = 0.44</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.625</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1328em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9072em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord">0.5</span></span></span><span class="" style="top: -2.8672em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1328em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.44</span></span></span></span></span>. The thesis is visible, if not certain, over its own horizon.</p>
+
+<p><strong>Step 3: five minutes.</strong> A trading year holds about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>252</mn><mo>×</mo><mn>390</mn><mo>=</mo><mn>98</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>280</mn></mrow><annotation encoding="application/x-tex">252 \times 390 = 98{,}280</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">252</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">390</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8389em; vertical-align: -0.1944em;"></span><span class="mord">98</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">280</span></span></span></span></span> minutes, so 5 minutes is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mn>5</mn><mi mathvariant="normal">/</mi><mn>98</mn><mo separator="true" lspace="0em" rspace="0em">,</mo><mn>280</mn><mo>=</mo><mn>0.0000509</mn></mrow><annotation encoding="application/x-tex">h = 5/98{,}280 = 0.0000509</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">5/98</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">280</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.0000509</span></span></span></span></span> years. Then <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>h</mi></msqrt><mo>=</mo><mn>0.00713</mn></mrow><annotation encoding="application/x-tex">\sqrt{h} = 0.00713</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1078em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9322em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -2.8922em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1078em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.00713</span></span></span></span></span>, which makes the ratio <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.625</mn><mo>×</mo><mn>0.00713</mn><mo>=</mo><mn>0.0045</mn></mrow><annotation encoding="application/x-tex">0.625 \times 0.00713 = 0.0045</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.625</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.00713</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.0045</span></span></span></span></span>, a hundred times smaller. On a 5-minute chart, a 6-month thesis is invisible in the noise.</p>
+</div>
+
+<p>The discipline is to write the horizon of every trade idea down before you enter. If the horizon you stated does not match the indicators you are using, fix one or the other before you click buy.</p>
+
+<h2 id="what-the-next-chapters-build">7 · What the next chapters build</h2>
+
+<p>The rest of the machinery comes in five chapters:</p>
+
+<ul>
+<li><strong><a class="xref" href="11c.html">Chapter 11C</a></strong> builds the indicator foundations: RSI, MACD, ATR, ADX, Bollinger Bands and Donchian Channels. It asks which feature of the data each measures, and which combinations are genuine confluence rather than reparameterization.</li>
+<li><strong><a class="xref" href="11d.html">Chapter 11D</a></strong> builds a pattern library of the volatility contraction pattern (VCP), the cup and handle and the bull flag, as detectors with explicit geometric thresholds.</li>
+<li><strong><a class="xref" href="11e.html">Chapter 11E</a></strong> gives Weinstein's four-stage classifier and its overlap with GEX regimes.</li>
+<li><strong><a class="xref" href="11f.html">Chapter 11F</a></strong> gives Elder's <span class="gloss" data-facts="Alexander Elder's rule for trading across timeframes: a higher timeframe sets the direction, an intermediate one the timing and a lower one the entry, and a trade is taken only when all three agree." tabindex="0" role="button">triple screen</span> across timeframes. The higher timeframe (HTF) sets the direction, the intermediate one (ITF) the timing and the lower one (LTF) the trigger, with confluence as a discipline against impulse.</li>
+<li><strong><a class="xref" href="11g.html">Chapter 11G</a></strong> aggregates an eight-dimensional regime scorecard into a single bias number. Its dimensions are volatility, credit, rates, the dollar, commodities, global markets, trend and sentiment.</li>
+</ul>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<ul>
+<li><strong>Keep the conditions on paper</strong>: a written checklist of the three layers, with thresholds, filled in before you look at a chart. A condition you invent after seeing a setup is a rationalization.</li>
+<li><strong>Count the failures</strong>: log which gate stopped you each day. After a few months the counts show whether your conditions are too loose, since trades should be rare, or too tight to ever pass.</li>
+<li><strong>Price the costs in</strong>: the conditional edge must clear the round trip, spread and slippage included (<a class="xref" href="2d.html">Chapter 2D</a>). A short holding period also makes gains on SPY short-term for tax, where SPX and XSP options get Section 1256 treatment (<a class="xref" href="2e.html">Chapter 2E</a>).</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>A gate that passed at entry can fail on day 3, when the regime turns, credit widens or GEX crosses the flip. A trade that was conditional is then unconditional. Re-read the dashboard every day you hold the position, letting the invalidation rules of <a class="xref" href="13c.html">Chapter 13C</a> close it. The conditions themselves can also be overfitted: a VIX threshold tuned until the backtest looks best has used the data twice.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Before any trade</strong>, run the three layers in order and stop at the first failure. A lower layer never overrides a higher one.</li>
+<li><strong>Trade only the survivors</strong>, sized from the loss budget of <a class="xref" href="13c.html">Chapter 13C</a>, with the invalidation level set before entry.</li>
+<li><strong>Tag every claim</strong> with its evidence tier and its horizon. If the horizon of the idea and the horizon of the indicators differ, fix one before entering.</li>
+<li><strong>Test the conditional edge out of sample, net of costs.</strong> If it does not clear the round trip, the Edge Book's objection holds and the trade is not worth taking.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: a lower layer overruling a higher one</span>
+<p>An indicator at a textbook oversold extreme (<a class="xref" href="11c.html">Chapter 11C</a>), on a day when the VIX curve is in backwardation, feels like a gift. It is a Layer 2 signal contradicting a Layer 1 "suspended", which the hierarchy settles in favor of the higher layer. The oversold reading in a stress regime is the momentum case of <a class="eqref" href="#e-d">(11B.1)</a>, not the reversal case.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: choosing the conditions after the fact</span>
+<p>Every extra condition you try on past data is another comparison that can look good by chance alone. Fix the conditions and their thresholds before the test. Discount a backtest that tried many, as <a class="xref" href="1d.html">Chapter 1D</a>'s deflated Sharpe ratio does.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The thesis is conditional: SPY mean-reverts over short horizons only when measurable conditions hold. Pooled across regimes, the effect can vanish or reverse.</li>
+<li>Three layers decide each trade, on three clocks: the macro regime over weeks to months, structure over 2 to 10 days, and dealer gamma and path over hours to 2 days. A lower layer never overrides a higher one.</li>
+<li>On most days some condition fails, which makes no trade the correct result. The few survivors deserve concentrated size.</li>
+<li>Tag every claim with its evidence tier (A, B or C) and its horizon. The Edge Book doubts that short-term reversal pays a retail account at all, so test the conditional edge net of costs.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">8 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Calm days are 70% of all days and stressed days 30%. After a down week the next-day mean is +0.12% in calm regimes and −0.20% in stress. Down weeks come on 40% of calm days and 60% of stressed ones. What is the pooled next-day mean after a down week?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A down week comes from stress with probability <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.3</mn><mo>×</mo><mn>0.6</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>0.7</mn><mo>×</mo><mn>0.4</mn><mo>+</mo><mn>0.3</mn><mo>×</mo><mn>0.6</mn><mo stretchy="false">)</mo><mo>=</mo><mn>0.18</mn><mi mathvariant="normal">/</mi><mn>0.46</mn><mo>=</mo><mn>0.39</mn></mrow><annotation encoding="application/x-tex">0.3 \times 0.6/(0.7 \times 0.4 + 0.3 \times 0.6) = 0.18/0.46 = 0.39</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.3</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.6/</span><span class="mopen">(</span><span class="mord">0.7</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.3</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.6</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">0.18/0.46</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.39</span></span></span></span></span>. The pooled mean is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.61</mn><mo>×</mo><mn>0.12</mn><mi mathvariant="normal">%</mi><mo>+</mo><mn>0.39</mn><mo>×</mo><mo stretchy="false">(</mo><mo>−</mo><mn>0.20</mn><mi mathvariant="normal">%</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0.073</mn><mi mathvariant="normal">%</mi><mo>−</mo><mn>0.078</mn><mi mathvariant="normal">%</mi><mo>=</mo><mo>−</mo><mn>0.005</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.61 \times 0.12\% + 0.39 \times (-0.20\%) = 0.073\% - 0.078\% = -0.005\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.61</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">0.12%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.39</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">−</span><span class="mord">0.20%</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">0.073%</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">0.078%</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord">0.005%</span></span></span></span></span>, slightly negative. Pooled, the rule looks useless, while conditioned on calm it earns 0.12%.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Layer 1 reads "suspended": the curve is inverted and credit is widening. Layer 2 shows a clean Stage 2 pullback, and Layer 3 shows GEX positive, well above the flip. What does the tree say?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No trade: the tree stops at step 1, because a signal at a lower layer never overrides a contradicting signal at a higher one.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Place each claim in a tier: a SqueezeMetrics GEX estimate, a published study of intraday momentum replicated across decades, and a rule that a cup's handle should retrace less than half its depth.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Tier B for the vendor's GEX model, credible but not peer-reviewed. Tier A for the replicated peer-reviewed study. Tier C for the handle rule, practitioner pattern language that needs operationalizing.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Your thesis is a 2-week reversal. Which of these indicators match its horizon: a 200-day moving average, a daily RSI (the oscillator of <a class="xref" href="11c.html">Chapter 11C</a>), or 1-minute order flow?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The daily RSI, which measures stretches over days. The 200-day average speaks to the macro layer, weeks to months, and 1-minute flow to intraday execution. Using either to time a 2-week trade mixes horizons.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>With a drift of 8% a year and a volatility of 20%, what is the thesis's signal-to-noise ratio over three months, and over one day?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Here <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mi mathvariant="normal">/</mi><mi>σ</mi><mo>=</mo><mn>0.4</mn></mrow><annotation encoding="application/x-tex">\mu/\sigma = 0.4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">μ</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.4</span></span></span></span></span>, so over three months, with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mn>0.25</mn></mrow><annotation encoding="application/x-tex">h = 0.25</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.25</span></span></span></span></span>, the ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.4</mn><mo>×</mo><mn>0.5</mn><mo>=</mo><mn>0.20</mn></mrow><annotation encoding="application/x-tex">0.4 \times 0.5 = 0.20</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.5</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.20</span></span></span></span></span>. Over one day, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>252</mn></mrow><annotation encoding="application/x-tex">h = 1/252</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/252</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>h</mi></msqrt><mo>=</mo><mn>0.063</mn></mrow><annotation encoding="application/x-tex">\sqrt{h} = 0.063</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1078em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9322em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal">h</span></span></span><span class="" style="top: -2.8922em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1078em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.063</span></span></span></span></span>, so the ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.4</mn><mo>×</mo><mn>0.063</mn><mo>=</mo><mn>0.025</mn></mrow><annotation encoding="application/x-tex">0.4 \times 0.063 = 0.025</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.063</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.025</span></span></span></span></span>, eight times smaller.</p>
+</div></details>
+</div>
+</div>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="11a.html" rel="prev"><span>Previous</span>11A · The market dashboard</a>
+<a class="next" href="11c.html" rel="next"><span>Next</span>11C · Indicators</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- pooled-conditional-reversal ---------- */
+(function () {
+  var U = 'pooled-conditional-reversal';
+  var SH = DL.$(U + '-share'), CO = DL.$(U + '-cost'), CA = DL.$(U + '-calm'), SS = DL.$(U + '-stress');
+  /* how often a down week comes, in each regime (the worked example's 35% and 60%) */
+  var DOWN_CALM = 0.35, DOWN_STRESS = 0.60;
+
+  /* Bayes: the chance a down week falls in the stressed regime is
+       w = (1 - c) d_s / (c d_c + (1 - c) d_s),
+     and the pooled next-day mean after a down week is (1 - w) m_c + w m_s. */
+  var st;
+  function compute() {
+    var c = +SH.value / 100, k = +CO.value, mc = +CA.value, ms = +SS.value;
+    var w = (1 - c) * DOWN_STRESS / (c * DOWN_CALM + (1 - c) * DOWN_STRESS);
+    var pooled = (1 - w) * mc + w * ms;
+    st = { c: c, k: k, mc: mc, ms: ms, w: w, pooled: pooled };
+  }
+  /* a percent with two decimals, or three where the third is not zero */
+  function pc(x, sign) {
+    var r = Math.round(x * 1000) / 1000, d = Math.round(Math.abs(r) * 1000) % 10 === 0 ? 2 : 3;
+    return (sign ? DL.signed(r, d) : DL.num(r, d)) + '%';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    /* the scale covers every bar and the cost line, in steps of 0.1%, never less than 0.2% a side */
+    var lo = Math.min(-0.2, Math.floor(Math.round((Math.min(st.ms, st.pooled) - 0.06) * 1e6) / 1e5) / 10);
+    var hi = Math.max(0.2, Math.ceil(Math.round((Math.max(st.mc, st.pooled, st.k) + 0.07) * 1e6) / 1e5) / 10);
+    var ys = [];
+    for (var y = lo; y <= hi + 1e-9; y += 0.1) ys.push(Math.round(y * 10) / 10);
+    var p = new NMT.Plot(cv, { xmin: 0.45, xmax: 3.55, ymin: lo, ymax: hi,
+                               pad: { l: 50, r: 12, t: 26, b: 38 } });
+    DL.axes(p, { xs: [], ys: ys, x: false,
+                 y: function (v) { return v === 0 ? '0%' : DL.signed(v, 1) + '%'; } });
+    var acc = DL.color('accent'), ins = DL.color('insight'), pla = DL.color('plain');
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), g = p.g;
+    var bars = [
+      { x: 1, v: st.pooled, col: acc, name: 'pooled', sub: 'all down weeks' },
+      { x: 2, v: st.mc, col: ins, name: 'calm only', sub: DL.num((1 - st.w) * 100, 0) + '% of them' },
+      { x: 3, v: st.ms, col: pla, name: 'stressed only', sub: DL.num(st.w * 100, 0) + '% of them' }
+    ];
+    bars.forEach(function (b) {
+      DL.bars(p, [b.x], [b.v], { w: 0.5, color: DL.fade(b.col, 0.8) });
+      p.text(b.x, lo, b.name, { align: 'center', baseline: 'top', dy: 6, font: font(), color: soft });
+      p.text(b.x, lo, b.sub, { align: 'center', baseline: 'top', dy: 20, font: font(), color: faint });
+    });
+    DL.hline(p, st.k, { color: soft, dash: [5, 3], width: 1.3 });
+    /* each bar's value on a paper patch, so the cost line passes behind it */
+    bars.forEach(function (b) {
+      var s = pc(b.v, true), up = b.v >= 0;
+      g.save();
+      g.font = font();
+      var w = g.measureText(s).width, x = p.X(b.x), y = p.Y(b.v) + (up ? -11 : 11);
+      g.fillStyle = DL.fade(DL.color('paper'), 0.9);
+      g.fillRect(x - w / 2 - 3, y - 7, w + 6, 14);
+      g.fillStyle = b.col;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(s, x, y);
+      g.restore();
+    });
+    DL.legend(p, [{ label: 'round-trip cost', color: soft, dash: [5, 3] }], { dy: -22 });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-share-o', DL.num(st.c * 100, 0) + '%');
+    DL.out(U + '-cost-o', pc(st.k, false));
+    DL.out(U + '-calm-o', pc(st.mc, true));
+    DL.out(U + '-stress-o', pc(st.ms, true));
+    DL.out(U + '-w', 'stress: ' + DL.num((1 - st.c) * 100, 0) + '% of days, ' +
+                     DL.num(st.w * 100, 0) + '% of down weeks');
+    var pn = st.pooled - st.k, cn = st.mc - st.k;
+    DL.out(U + '-pool', 'pooled after cost = ' + pc(pn, true));
+    DL.out(U + '-calmnet', 'calm only after cost = ' + pc(cn, true));
+    var r6 = function (x) { return Math.round(x * 1e6) / 1e6; };
+    if (r6(cn) > 0 && r6(pn) <= 0) {
+      DL.out(U + '-vk', 'Conditioning pays.');
+      DL.out(U + '-vt', 'Taken after every down week, the rule does not clear its cost. Taken ' +
+                        'only in the calm regime, it clears it by ' + pc(cn, false) + ' a trade.');
+    } else if (r6(cn) > 0) {
+      DL.out(U + '-vk', 'Both clear the cost.');
+      DL.out(U + '-vt', 'The calm-only rule still earns ' + pc(cn - pn, false) +
+                        ' a trade more, and it skips the stressed days.');
+    } else {
+      DL.out(U + '-vk', 'Nothing pays.');
+      DL.out(U + '-vt', 'Even the calm regime\'s edge does not clear the round-trip cost.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-share', U + '-cost', U + '-calm', U + '-stress'], update);
+})();
+
+</script>
+</body>
+</html>

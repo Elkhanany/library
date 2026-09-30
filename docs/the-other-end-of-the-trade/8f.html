@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>8F Beyond gamma — The Other End of the Trade</title>
+<meta name="description" content="Chapter 8F of The Other End of the Trade: Beyond gamma.">
+<link rel="stylesheet" href="assets/katex.min.css">
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-7">← Part VIII · The whole market</a>
+  <div class="sb-folio"><a class="sb-prev" href="8e.html" aria-label="Previous chapter: 8E · Pinning" title="Previous chapter: 8E · Pinning (←)">‹ 8E</a><p class="sb-title"><span class="sb-at">Chapter 8F ·</span> <span class="sb-at">39 of 89</span></p><a class="sb-next" href="8g.html" aria-label="Next chapter: 8G · The evidence" title="Next chapter: 8G · The evidence (→)">8G ›</a></div>
+  <div id="sb-toc"><a href="#vanna-and-charm-across-the-market">1 · Vanna and charm across the market</a><a href="#vanna-exposure-and-charm-exposure" class="lvl3">Vanna exposure and charm exposure</a><a href="#the-signs-wing-by-wing" class="lvl3">The signs, wing by wing</a><a href="#time-and-volatility-one-variable" class="lvl3">Time and volatility, one variable</a><a href="#charm-into-expiration-week">2 · Charm into expiration week</a><a href="#what-the-evidence-says" class="lvl3">What the evidence says</a><a href="#into-the-monthly-am-settlement" class="lvl3">Into the monthly a.m. settlement</a><a href="#after-expiration-the-window-of-weakness">3 · After expiration: the "window of weakness"</a><a href="#the-vol-crush-rally">4 · The vol-crush rally</a><a href="#vendors-rules-checked-against-black-scholes">5 · Vendors' rules, checked against Black-Scholes</a><a href="#gex-governs-the-range-vex-governs-the-drift" class="lvl3">"GEX governs the range; VEX governs the drift"</a><a href="#gamma-for-0-to-5-days-vanna-for-7-to-180" class="lvl3">"Gamma for 0 to 5 days, vanna for 7 to 180"</a><a href="#the-link-to-the-vanna-loop">6 · The link to the vanna loop</a><a href="#check-yourself">7 · Check yourself</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part VIII · The whole market · Chapter 8F</p>
+
+<h1>Beyond gamma</h1>
+
+<p class="subtitle">Vanna, charm and the expiration calendar</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 8D and 8E followed gamma: hedging that answers a move in price. This chapter adds the hedging that needs no move at all. Vanna answers a change in implied volatility, and charm answers the clock. Summed across the market, they create flows with a calendar: into expiration, at the monthly settlement, and after it. The chapter checks practitioners' rules for these flows against Black-Scholes and against the evidence, and marks what is only lore.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li><span class="gloss" data-facts="The rate at which an option's delta changes as implied volatility changes, which equals the rate at which its vega changes as the underlying's price moves. It is negative for out-of-the-money puts." tabindex="0" role="button">Vanna</span> and <span class="gloss" data-facts="The rate at which an option's delta changes as time passes, with the underlying's price and implied volatility unchanged. It runs on calendar time, weekends included." tabindex="0" role="button">charm</span>, their formulas and their signs (<a class="xref" href="5d.html">Chapter 5D</a>).</li>
+<li>The three ways a hedge goes stale, <a class="xref xeq" href="7b.html#e-ddelta">(7B.1)</a>, and the post-FOMC and weekend examples (<a class="xref" href="7b.html">Chapter 7B</a>).</li>
+<li><span class="gloss" data-facts="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX." tabindex="0" role="button">Gamma exposure</span> summed across the market (<a class="xref" href="8a.html">Chapter 8A</a>), and the heatmap's VEX view (<a class="xref" href="8c.html">Chapter 8C</a>).</li>
+<li>The <span class="gloss" data-facts="The settlement value of AM-settled index options, built from the first reported trade of each component stock on the expiry morning. It can differ from every index level quoted that morning. Abbreviated SOQ." tabindex="0" role="button">special opening quotation</span> that settles monthly <span class="gloss" data-facts="The S&amp;P 500 index of large US companies, and the ticker of the cash-settled index options written on it." tabindex="0" role="button">SPX</span> options (Chapters 2A and 12H).</li>
+<li>The vanna loop in a sell-off (<a class="xref" href="9a.html">Chapter 9A</a>).</li>
+</ul>
+</div>
+
+<p><a class="xref" href="7b.html">Chapter 7B</a> split the change in an option's <span class="gloss" data-facts="The change in an option's value for a one-dollar move in the underlying. A 30-delta option gains or loses about 30 cents for each dollar the underlying moves." tabindex="0" role="button">delta</span> into three parts, <a class="xref xeq" href="7b.html#e-ddelta">(7B.1)</a>. They are <span class="gloss" data-facts="The change in an option's delta for a one-dollar move in the underlying, which measures the curvature of the option's value. Bought options have positive gamma, largest at the money and near expiry." tabindex="0" role="button">gamma</span> times the move in spot, vanna times the change in <span class="gloss" data-facts="The volatility that, put into an option pricing model, reproduces an option's market price. It is the market's price for future movement, quoted as an annualized percentage." tabindex="0" role="button">implied volatility</span>, and charm times the time that passes. It worked the last two for one dealer's book, a post-FOMC vol crush and a weekend. This chapter adds them up across the market, as <a class="xref" href="8a.html">Chapter 8A</a> added up gamma.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Gamma is hedging that waits for the price to move. Vanna and charm do not wait. When implied volatility falls after an event, or a day passes, the deltas of the options dealers hold change, and so do their hedges, with the price standing still. These flows are predictable in their timing, because volatility tends to fall after scheduled events and the calendar never stops. Their direction is not predictable without the one fact public data lack: which side of each option the dealers hold.</p>
+</div>
+
+<h2 id="vanna-and-charm-across-the-market">1 · Vanna and charm across the market</h2>
+
+<h3 id="vanna-exposure-and-charm-exposure">Vanna exposure and charm exposure</h3>
+
+<p><a class="xref" href="8a.html">Chapter 8A</a> summed each option line's <span class="gloss" data-facts="Gamma expressed as the dollar value of the hedge trade a 1% move in the underlying forces: gamma times the price squared times 0.01, per share, then times the multiplier and the open interest. It lets positions on underlyings at different prices be compared." tabindex="0" role="button">dollar gamma</span>, signed by the dealers' side, into gamma exposure. The same sum over vanna gives <strong><span class="gloss" data-facts="The sum, across strikes and expiries, of the vanna of dealers' estimated positions: how much their delta changes when implied volatility rises one point. Abbreviated VEX." tabindex="0" role="button">vanna exposure</span></strong>, or VEX, the change in the dealers' delta, in dollars, when implied volatility rises one point:</p>
+
+<div class="eq" id="e-vex">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>VEX</mtext><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>s</mi><mi>i</mi></msub> <msub><mtext>vanna</mtext><mi>i</mi></msub><mo>×</mo><mn>0.01</mn> <mi>S</mi> <mi>M</mi><msub><mi>N</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex"> \text{VEX} = \sum_i s_i\,\text{vanna}_i \times 0.01\,S\,M N_i </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord text"><span class="mord">VEX</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.3277em; vertical-align: -1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.05em;"><span class="" style="top: -1.8723em; margin-left: 0em;"><span class="pstrut" style="height: 3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span class="" style="top: -3.05em;"><span class="pstrut" style="height: 3.05em;"></span><span class=""><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.2777em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord text"><span class="mord">vanna</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord">0.01</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">M</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(8F.1)</span></div>
+
+<p>Here the sign <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">s_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is +1 if dealers are long line <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></span> and −1 if they are short it. The line's vanna per unit of volatility is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>vanna</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\text{vanna}_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">vanna</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>, and 0.01 turns that into one <span class="gloss" data-facts="One percentage point of annualized volatility, as in a move from 20% to 21% implied volatility. Also called a vol point." tabindex="0" role="button">volatility point</span>. The product <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi>M</mi><msub><mi>N</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">S M N_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">SM</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> turns units of delta into dollars, with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">M</span></span></span></span></span> the multiplier and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">N_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> the <span class="gloss" data-facts="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one." tabindex="0" role="button">open interest</span>. The heatmap of <a class="xref" href="8c.html">Chapter 8C</a> draws VEX strike by strike in its VEX view. When implied volatility changes by <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">\Delta\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> points, dealers trade <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mtext>VEX</mtext><mo>×</mo><mi mathvariant="normal">Δ</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">-\text{VEX} \times \Delta\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7667em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord text"><span class="mord">VEX</span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> to stay flat: they sell when VEX is positive and volatility rises.</p>
+
+<p>The same sum over charm gives <strong><span class="gloss" data-facts="The sum, across strikes and expiries, of the charm of dealers' estimated positions: how much their delta changes, in dollars, as one calendar day passes with price and implied volatility unchanged. Abbreviated CHEX." tabindex="0" role="button">charm exposure</span></strong>, the change in the dealers' delta, in dollars, as one calendar day passes with spot and volatility fixed:</p>
+
+<div class="eq" id="e-chex">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>CHEX</mtext><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>s</mi><mi>i</mi></msub> <mfrac><msub><mtext>charm</mtext><mi>i</mi></msub><mn>365</mn></mfrac> <mi>S</mi> <mi>M</mi><msub><mi>N</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex"> \text{CHEX} = \sum_i s_i\,\frac{\text{charm}_i}{365}\,S\,M N_i </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord text"><span class="mord">CHEX</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.6491em; vertical-align: -1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.05em;"><span class="" style="top: -1.8723em; margin-left: 0em;"><span class="pstrut" style="height: 3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span class="" style="top: -3.05em;"><span class="pstrut" style="height: 3.05em;"></span><span class=""><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.2777em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3714em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">365</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">charm</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">M</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(8F.2)</span></div>
+
+<p>with charm measured per year, time running forward. Each day, dealers trade <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mtext>CHEX</mtext></mrow><annotation encoding="application/x-tex">-\text{CHEX}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7667em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord text"><span class="mord">CHEX</span></span></span></span></span></span>.</p>
+
+<h3 id="the-signs-wing-by-wing">The signs, wing by wing</h3>
+
+<p>Vanna changes sign at the strike (<a class="xref" href="5d.html">Chapter 5D</a>). For an <span class="gloss" data-facts="Said of an option that would pay nothing if exercised now: a call whose strike is above the underlying's price, or a put whose strike is below it." tabindex="0" role="button">out-of-the-money</span> put it is negative: a rise in volatility makes the put's delta more negative. For an out-of-the-money call it is positive: a rise makes the call's delta larger. So a dealer short options on both wings carries VEX of opposite signs on each:</p>
+
+<ul>
+<li><strong>Short out-of-the-money puts:</strong> positive VEX. A rise in volatility makes the puts' deltas more negative, so the dealer, short them, is longer and sells. A fall in volatility makes it buy.</li>
+<li><strong>Short out-of-the-money calls:</strong> negative VEX. A rise in volatility makes the dealer shorter, so it buys. A fall makes it sell.</li>
+</ul>
+
+<p>Skylit's education pages say that "A dealer who is short options carries positive vanna". That holds on the put wing only. Its own worked example, a dealer short puts who buys back stock as volatility falls, is the put case.</p>
+
+<p>Charm pulls every out-of-the-money delta toward zero as time passes. A dealer short out-of-the-money puts holds a short hedge against them and buys it back as their deltas shrink. A dealer short out-of-the-money calls holds a long hedge and sells it. The two wings trade in opposite directions again.</p>
+
+<div class="worked">
+<span class="ct">Worked example: A book a month from expiry</span>
+<p><strong>Step 1: the book.</strong> Take the made-up book of this chapter's figure. Customers are long SPX puts struck at 5,700, 5,800 and 5,900, 30,000, 30,000 and 20,000 contracts, all expiring in 28 days, so dealers are short them. Spot is 6,000, implied volatility 18% and the rate 4%.</p>
+
+<p><strong>Step 2: the hedge.</strong> The puts' deltas are −0.132, −0.222 and −0.336. The dealers' delta through them is therefore long, and their hedge is short futures worth $2.38 billion, $3.99 billion and $4.03 billion: $10.40 billion in all.</p>
+
+<p><strong>Step 3: three exposures.</strong> By the Black-Scholes <span class="gloss" data-facts="The measures of how an option's value changes with the underlying's price, with time, with volatility and with interest rates: delta, gamma, theta, vega and rho." tabindex="0" role="button">Greeks</span> of <a class="xref" href="5d.html">Chapter 5D</a>, the book's GEX is −$2.7 billion per 1% move, its VEX +$0.53 billion per volatility point, and its CHEX −$0.14 billion a day.</p>
+
+<p><strong>Step 4: three trades.</strong> A 1% fall in the index makes the dealers sell about $2.7 billion. A one-point rise in implied volatility makes them sell $0.53 billion, and a one-point fall buy as much. And each calendar day, with nothing else changing, they buy $0.14 billion.</p>
+</div>
+
+<h3 id="time-and-volatility-one-variable">Time and volatility, one variable</h3>
+
+<p>With no interest rate and no dividends, an option's delta depends on volatility and time only through their combination <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, the standard deviation of the log price to expiry. A day passing shrinks <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, and so does a fall in implied volatility. To delta they are the same thing, and charm is vanna in another guise:</p>
+
+<div class="eq" id="e-charmvanna">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>charm</mtext><mo>=</mo><mo>−</mo><mtext>vanna</mtext><mo>×</mo><mfrac><mi>σ</mi><mrow><mn>2</mn><mi>T</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex"> \text{charm} = -\text{vanna} \times \frac{\sigma}{2T} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord text"><span class="mord">charm</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6667em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord text"><span class="mord">vanna</span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1.7936em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.1076em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(8F.3)</span></div>
+
+<p>with charm per year of calendar time and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> in years. One day with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> days left does to delta what a fall in implied volatility of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\sigma/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span> does, with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> in days. With <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> in percent, the fall is in volatility points.</p>
+
+<details class="grind"><summary>Why time acts like a fall in volatility</summary><div class="grind-body">
+<p><strong>Step 1: delta's argument.</strong> With <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>q</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">r = q = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.625em; vertical-align: -0.1944em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">q</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0</span></span></span></span></span>, a call's delta is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>1</mn></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">N(d_1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span>, and</p>
+
+<div class="eq">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>d</mi><mn>1</mn></msub><mo>=</mo><mfrac><mrow><mi>ln</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>S</mi><mi mathvariant="normal">/</mi><mi>K</mi><mo stretchy="false">)</mo></mrow><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow></mfrac><mo>+</mo><mfrac><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex"> d_1 = \frac{\ln(S/K)}{\sigma\sqrt{T}} + \frac{\sigma\sqrt{T}}{2} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8444em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.357em; vertical-align: -0.93em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.427em;"><span class="" style="top: -2.1833em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mop">ln</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0715em;">K</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.93em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 2.2897em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.6037em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">2</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(8F.4)</span></div>
+
+<p>so <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> enter only through <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>. A put's delta is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>1</mn></msub><mo stretchy="false">)</mo><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N(d_1) - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.109em;">N</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span>, which changes by the same amounts.</p>
+
+<p><strong>Step 2: vanna.</strong> Differentiating with respect to <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span> gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∂</mi><msub><mi>d</mi><mn>1</mn></msub><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><mi>σ</mi><mo>=</mo><mo>−</mo><msub><mi>d</mi><mn>2</mn></msub><mi mathvariant="normal">/</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">\partial d_1/\partial\sigma = -d_2/\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord" style="margin-right: 0.0556em;">∂</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord" style="margin-right: 0.0556em;">∂</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span>, so <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>vanna</mtext><mo>=</mo><mo>−</mo><mi>φ</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>1</mn></msub><mo stretchy="false">)</mo> <msub><mi>d</mi><mn>2</mn></msub><mi mathvariant="normal">/</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">\text{vanna} = -\varphi(d_1)\,d_2/\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord text"><span class="mord">vanna</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord mathnormal">φ</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span></span></span></span></span>, the formula of <a class="xref" href="5d.html">Chapter 5D</a>.</p>
+
+<p><strong>Step 3: charm.</strong> Differentiating with respect to <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span> gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∂</mi><msub><mi>d</mi><mn>1</mn></msub><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><mi>T</mi><mo>=</mo><mo>−</mo><msub><mi>d</mi><mn>2</mn></msub><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\partial d_1/\partial T = -d_2/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord" style="margin-right: 0.0556em;">∂</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mord" style="margin-right: 0.0556em;">∂</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span>. Time running forward shortens <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span>, so <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>charm</mtext><mo>=</mo><mi>φ</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>1</mn></msub><mo stretchy="false">)</mo> <msub><mi>d</mi><mn>2</mn></msub><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{charm} = \varphi(d_1)\,d_2/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6944em;"></span><span class="mord text"><span class="mord">charm</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">φ</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span>.</p>
+
+<p><strong>Step 4: the ratio.</strong> Dividing Step 3 by Step 2 gives <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>charm</mtext><mi mathvariant="normal">/</mi><mtext>vanna</mtext><mo>=</mo><mo>−</mo><mi>σ</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{charm}/\text{vanna} = -\sigma/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord text"><span class="mord">charm</span></span><span class="mord">/</span><span class="mord text"><span class="mord">vanna</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span>, which is <a class="eqref" href="#e-charmvanna">(8F.3)</a>. With a rate, charm carries an extra term, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mi>r</mi><mi>φ</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>1</mn></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mi>σ</mi><msqrt><mi>T</mi></msqrt><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">-r\varphi(d_1)/(\sigma\sqrt{T})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">−</span><span class="mord mathnormal" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal">φ</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span><span class="mclose">)</span></span></span></span></span>, so the identity holds only nearly.</p>
+</div></details>
+
+<div class="worked">
+<span class="ct">Worked example: A day as a fall in volatility</span>
+<p><strong>Step 1: a month out.</strong> At 18% with 28 days left, a calendar day is worth <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>18</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mo>×</mo><mn>28</mn><mo stretchy="false">)</mo><mo>=</mo><mn>0.32</mn></mrow><annotation encoding="application/x-tex">18/(2 \times 28) = 0.32</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">18/</span><span class="mopen">(</span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">28</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.32</span></span></span></span></span> volatility points. The book's VEX is $0.51 billion per point at a zero rate, so a day's charm is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.32</mn><mo>×</mo><mn>0.51</mn><mo>=</mo><mi mathvariant="normal">$</mi><mn>0.16</mn></mrow><annotation encoding="application/x-tex">0.32 \times 0.51 = \$0.16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.32</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.51</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">$0.16</span></span></span></span></span> billion of buying. At a zero rate its CHEX is exactly −$0.16 billion, and dealers trade minus CHEX. With the figure's 4% rate the day's flow is $0.14 billion: the rate term trims it, and the direction is the same.</p>
+
+<p><strong>Step 2: the last week.</strong> With 5 days left a day is worth <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>18</mn><mi mathvariant="normal">/</mi><mn>10</mn><mo>=</mo><mn>1.8</mn></mrow><annotation encoding="application/x-tex">18/10 = 1.8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">18/10</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1.8</span></span></span></span></span> points, and with 1 day left, 9 points. The same calendar day moves the hedge far more as expiry nears, which is why charm grows like <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">1/T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span>.</p>
+</div>
+
+<p>Two consequences follow for dealers short out-of-the-money puts. A vol crush and the passage of time push their hedges the same way, toward buying. And over a window that ends at expiry, the two decide only the timing. At expiry every out-of-the-money delta is zero, whatever path volatility took, so the day-by-day trades add up to the hedge held at the start. Volland's user guide says, in a vendor's words, that charm "is the opposite sign of vanna on each strike", because it is computed for "+1 day passing". The identity <a class="eqref" href="#e-charmvanna">(8F.3)</a> is the reason, exactly with no rate and nearly with one.</p>
+
+<h2 id="charm-into-expiration-week">2 · Charm into expiration week</h2>
+
+<p>The figure follows the made-up book of the worked example through the last 20 trading days before a monthly SPX expiration. That is four Monday-to-Friday weeks, with the options expiring at the close of week 4. Spot stays at 6,000 and time runs on the calendar, so each Monday's bar carries a weekend of decay. Each bar is one day's change in the dealers' futures hedge, in billions of dollars, up for buying. A toggle adds out-of-the-money calls that customers are long (6,100, 6,200 and 6,300; 15,000, 10,000 and 5,000 contracts), drawn as a second leg with the net as a tick. The second control lowers implied volatility by 0 to 5 points in equal daily steps, with outlines for the same book with volatility unchanged. Start with puts only, then add the IV fall, then add the calls.</p>
+
+<figure class="fig" id="fig-charm-into-expiry">
+  <canvas id="charm-into-expiry-c" data-h="290" width="631" height="290" style="height: 290px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Customers are long" id="charm-into-expiry-book">
+      <label>customers long</label>
+      <button type="button" data-v="puts" class="on" aria-pressed="true">puts</button>
+      <button type="button" data-v="both" aria-pressed="false">puts and calls</button>
+    </div>
+    <div class="ctrl">
+      <label for="charm-into-expiry-iv">IV fall</label>
+      <input type="range" id="charm-into-expiry-iv" min="0" max="5" step="0.5" value="0">
+      <output id="charm-into-expiry-iv-o" for="charm-into-expiry-iv">0.0 pts</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="charm-into-expiry-tot">total: dealers buy $10.40B</output></div>
+    <div class="ctrl"><output id="charm-into-expiry-big">largest day: +$1.82B, Mon, week 4</output></div>
+    <div class="ctrl" id="charm-into-expiry-legs-c" hidden=""><output id="charm-into-expiry-legs">puts +$10.40B, calls $0.00B</output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="charm-into-expiry-vk">The total is the starting hedge.</b> <span id="charm-into-expiry-vt">Every option here expires out of the money with no delta, so over the 20 days dealers unwind all of the hedge they held at the start: $10.40B short in futures.</span></p>
+  <figcaption><b>The clock moves the hedge.</b> A made-up book of monthly SPX options at 18%
+  implied volatility: customers are long out-of-the-money puts, so dealers are short them, with
+  short futures as the hedge. Spot stays at 6,000 through the last 20 trading days, to
+  expiration at the close of week 4. Time runs on the calendar, so each Monday's bar carries a
+  weekend of decay. Each bar is one day's change in the dealers' hedge, minus the change in the
+  delta of the options they are short, times spot, in billions of dollars. As the puts' deltas
+  shrink toward zero, dealers buy their hedge back. With calls in the book, dealers sell the long
+  hedge they hold against them (rose), and the tick is the net. The IV fall lowers volatility in
+  equal steps over the 20 days, and the outlines are the same book with volatility
+  unchanged.</figcaption>
+</figure>
+
+<p>With puts only and no change in volatility, the dealers buy $10.40 billion over the 20 days. The bars grow into expiry: $0.17 billion to $0.20 billion a day in week 1 outside Monday, and $0.72 billion to $0.85 billion in week 4 before Friday. The Mondays stand out, at $0.46 billion, $0.66 billion, $1.04 billion and $1.82 billion, the largest day of all, in week 4. That is <a class="xref" href="7b.html">Chapter 7B</a>'s weekend effect. The final Friday falls back to $0.43 billion, because the puts are so far out of the money on their last day that little delta is left to decay.</p>
+
+<p>Now lower volatility by 5 points. The total stays at $10.40 billion. The window ends at expiration, where every out-of-the-money delta is zero, so the daily flows always add up to the starting hedge. What the fall in volatility changes is the timing: it moves $1.63 billion of the buying out of week 4 and into weeks 1 to 3, and the largest day falls to $1.38 billion. The fall in volatility adds to each day's charm in the same direction, which is <a class="eqref" href="#e-charmvanna">(8F.3)</a> at work, and so the buying arrives earlier.</p>
+
+<p>Set the IV fall back to 0 and add the calls. The dealers' long hedge against them is sold down by $5.89 billion over the same weeks. The net is $4.51 billion of buying, with the largest day $0.79 billion, again a Monday in week 4. A book with both wings short gives a smaller net flow than its larger wing alone, and its sign depends on which wing is larger.</p>
+
+<h3 id="what-the-evidence-says">What the evidence says</h3>
+
+<p>The calendar is real arithmetic, but its effect on prices is less certain. A Goldman Sachs strategist's teaching note, known through republication, describes the mechanics the figure draws: into expiration "near-the-money options' gamma rises, while far out-of-the-money options' gamma falls". The academic evidence is thin:</p>
+
+<ul>
+<li><strong>Stivers and Sun (2013)</strong>, in the <em>Journal of Banking and Finance</em>, study the weekly returns of S&amp;P 100 stocks over option-expiration weeks, the weeks ending on a month's third Friday. Those returns "tend to be high" against less option-active stocks, against the same stocks' other weeks and against risk-based alphas. The following weeks "underperform modestly". The authors suggest two partial contributors. One is "delta-hedge rebalancing by option market makers, with a reduction in short-stock hedge positions over the OE week", which is charm. The other is "declining risk perceptions over the OE week, as measured by option-derived implied volatilities", which works through vanna. The sample is single stocks, not the index.</li>
+<li><strong>Wang (2013)</strong>, a doctoral thesis, finds that "weekly return reversals are significantly stronger surrounding option expiration days". The hedging pressure "mainly comes from index options rather than individual stock options", and "index option prices tend to be high before option expiration". It is a thesis chapter, not peer-reviewed.</li>
+<li><strong>Golez and Jackwerth (2012)</strong> name the time decay of hedges as one channel of the expiration effects they find in S&amp;P 500 futures (<a class="xref" href="8e.html">Chapter 8E</a>).</li>
+</ul>
+
+<p>No study found tests charm flows into weekly or same-day SPX expirations. For the monthly expiration, one <span class="gloss" data-facts="A research paper circulated before peer review, often on the SSRN preprint server, and often revised, with different numbers, between versions." tabindex="0" role="button">working paper</span> tests exactly the channel the figure draws, at the moment the options settle.</p>
+
+<h3 id="into-the-monthly-am-settlement">Into the monthly a.m. settlement</h3>
+
+<p>Monthly SPX options settle on the Friday-morning special opening quotation, built from the first trade in each component stock, not on a closing price (Chapters 2A and 12H). Baltussen, Terstegge and Whelan, in an SSRN working paper first circulated in 2023 as "The Equity Derivative Payoff Bias", compare that settlement value with Thursday's close.</p>
+
+<p>In the 2023 version, the settlement value is close to the prior close on ordinary days, but on settlement days it "exceeds Thursdays close by a significant margin". The overnight return "raises (lowers) S&amp;P 500 call (put) option payoffs, inducing a wealth transfer of around $4 billion per year in SPX options alone". The authors find the bias "most consistent with inventory management by option market makers and/or market manipulation by sophisticated investors", both relying on an illiquid period before settlement.</p>
+
+<p>A later version, circulated as "The Derivative Payoff Bias", reports that opening prices on third Fridays "are systematically biased upward and fully reverse by midday". The transfer is put at about $2.5 billion a year. The aggregate delta of dealers' option positions "drifts down into" the third-Friday expiry, "generating an incentive to buy equities". That drift predicts overnight equity returns into third-Friday expirations, and on no other days. In summaries of that version, SPX calls paid $10.46 billion on the average third-Friday morning against $10.23 billion at Thursday's close, $230 million a month. Retail investors, net short delta, lose at least $3.8 billion. One of the authors, Julian Terstegge, summarizes the channel in his 2025 doctoral thesis. In his words, "Charm spikes immediately before derivative payoffs are calculated and thus creates a derivative payoff bias, which exceeds $3bn a year".</p>
+
+<p>Three cautions go with it. It is a working paper, and its headline numbers changed between versions, so quote the version. The a.m.-settled monthly is one contract design: PM-settled <span class="gloss" data-facts="The symbol of the S&amp;P 500 index options with weekly and daily expirations, which settle on the closing price rather than on the morning's opening quotation used by the monthly SPX options. Tuesday and Thursday expirations began in April and May 2022." tabindex="0" role="button">SPXW</span> options and same-day expiries settle differently, and the paper says nothing about them. And the effect reverses by midday, the signature of price pressure rather than information.</p>
+
+<p>Index expiration effects have a history. Stoll and Whaley (1987) studied the quarterly expirations of 1984 and 1985, when index futures and options expired together on the close, the day traders call <strong><span class="gloss" data-facts="The quarterly expiration day on which stock index futures, index options and stock options all expire, historically a day of heavy volume near the settlement." tabindex="0" role="button">triple witching</span></strong>. Last-hour volume and volatility were higher and the market tended to fall. The average price effect, measured by the next morning's reversal, was "about 0.4 per cent of the closing index value". S&amp;P index option expirations on their own produced no abnormal movements. Their 1991 follow-up found smaller effects after the move to settlement on the open in 1987. The classic expiration effect came from unwinding futures arbitrage, not from option hedging.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>The a.m. settlement is where these flows meet your account. If you hold monthly SPX options into their last day, the settlement print, not Thursday's close, decides what you are paid. <a class="xref" href="12h.html">Chapter 12H</a>'s rule stands: close SPX monthlies on Thursday afternoon, or accept a print that, on the evidence of one working paper, has leaned upward on third Fridays. Weekly and same-day SPXW options settle on the official 4:00 PM close instead, and no study found measures charm into those closes.</p>
+</div>
+
+<h2 id="after-expiration-the-window-of-weakness">3 · After expiration: the "window of weakness"</h2>
+
+<p>Practitioners have a name for the weeks after a monthly expiration. Cem Karsan of Kai Volatility Advisors describes the flows into expiration in talks and interviews. In his account, dealers "are often buying back stock as risk premia decays (charm) and buying back stock as implied volatility compresses (vanna)". After an expiration, in his words, comes "a window of non-strength some people call it a window of weakness", "a period where flows have subsided". A secondary account says that "the one to two weeks following the day of the monthly options expiration" are "a short period whereby supportive Vanna and Charm flows ... are much less prominent". Karsan also calls expiration week "the best time to sell volatility". Who coined the phrase is not established.</p>
+
+<p>The <strong><span class="gloss" data-facts="Practitioners' name for the one to two weeks after a monthly options expiration, when they argue that dealers' supportive hedging flows from charm and falling volatility are absent. It has not been tested on the S&amp;P 500." tabindex="0" role="button">window of weakness</span></strong> has a mechanical reading in this chapter's terms. After expiration the puts that were decaying are gone. The next monthly puts have about four weeks left, and by <a class="eqref" href="#e-charmvanna">(8F.3)</a> a calendar day is worth far fewer volatility points to them. In the figure, week 1's ordinary days bring $0.17 billion to $0.20 billion of buying, against $0.72 billion to $0.85 billion in week 4 before Friday. If dealers are short the puts, the supportive flow is weakest right after an expiry. Bank desks use a similar image: after one expiration, a Nomura note, as a vendor quoted it, described the aggregate "$Gamma" of <span class="gloss" data-facts="An exchange-traded fund that tracks the Nasdaq-100 index of the largest non-financial companies listed on the Nasdaq, and the ticker of the options written on it." tabindex="0" role="button">QQQ</span> dropping by over 50%, "unclenching" the index.</p>
+
+<p>Three things keep it lore rather than knowledge:</p>
+
+<ol>
+<li><strong>No test on SPX.</strong> No published test by the practitioners who use the phrase was found, and none on the S&amp;P 500 index. The closest academic result is Stivers and Sun's modest underperformance of S&amp;P 100 stocks in the week after expiration.</li>
+<li><strong>Its direction is a <span class="gloss" data-facts="The rule a gamma exposure model uses to decide whether dealers are long or short each option, since open interest counts contracts but not who holds them. The two best known give calls and puts opposite signs, and differ from each other in every sign." tabindex="0" role="button">sign convention</span>.</strong> The support into expiration needs dealers short the decaying puts. If customers are net sellers of those puts, dealers are long them, and the same decay makes dealers sell into expiration and stop selling after it.</li>
+<li><strong>Calendar effects overlap.</strong> The weeks after the monthly expiration also hold month-end flows, the <span class="gloss" data-facts="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days." tabindex="0" role="button">VIX</span> expiration, which practitioners pair with the SPX expiration as "OPEX and VOLEX", and in some months a Fed meeting. Nothing found separates them. No source on the VIX expiration's own effect was found.</li>
+</ol>
+
+<p>Some dated flows are known. The <span class="gloss" data-facts="The quarterly index-option position of JPMorgan's Hedged Equity Fund, which holds stocks, buys a put spread below the market and sells calls above it. It is one of the few large index-option positions whose holder is public." tabindex="0" role="button">JPM collar</span> resets every quarter, about 35,000 SPX contracts per leg by vendors' accounts, and its put strike is one of the few whose holder is public (Chapters 8B and 8E). Vendors claim the market "sells off meaningfully after the quarterly roll", a claim no published test supports. <span class="gloss" data-facts="An exchange-traded fund that uses FLEX options to give its holders capped upside and partial protection against losses over a fixed period." tabindex="0" role="button">Defined-outcome ETFs</span> reset their <span class="gloss" data-facts="An option listed on Cboe whose strike, expiration, exercise style and settlement the parties choose, cleared through the OCC like a standard listed option." tabindex="0" role="button">FLEX options</span> on fixed dates (<a class="xref" href="4a.html">Chapter 4A</a>), another calendar no heatmap of listed open interest shows.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>The window of weakness has the design problem of the "July effect" studies in teaching hospitals, which ask whether outcomes worsen when new residents start. July brings new residents, but also new rotations, holidays and changes in case mix, so a study must separate the residents from everything else that arrives on the same date. The week after expiration also arrives with month-end flows, the VIX expiration and the Fed calendar. A before-and-after comparison around expiry cannot tell which of them did the work.</p>
+</div>
+
+<h2 id="the-vol-crush-rally">4 · The vol-crush rally</h2>
+
+<p><a class="xref" href="7b.html">Chapter 7B</a> worked one dealer's post-FOMC unwind. Implied volatility falls 7 points after the announcement, the deltas of out-of-the-money puts shrink, and a dealer short 5,000 of them buys back tens of thousands of <span class="gloss" data-facts="A unit of exposure equal to one share of the underlying. An option position's delta times its contracts times the multiplier gives the number of shares it behaves like for small moves." tabindex="0" role="button">share-equivalents</span>. Summed across the market, that is the vol-crush rally practitioners describe, the vanna half of Karsan's account, after the <span class="gloss" data-facts="The fall in implied volatility once an awaited event, such as an earnings report, has passed. It cuts the value of options bought before the event, even when the price moves the way their buyer expected." tabindex="0" role="button">IV crush</span> that follows a scheduled event (<a class="xref" href="12a.html">Chapter 12A</a>). The Dealer Mechanics Lab puts its typical contribution after an FOMC decision at 0.3% to 0.5% of SPX at most (<a class="xref" href="7b.html">Chapter 7B</a>). By <a class="eqref" href="#e-vex">(8F.1)</a>, the flow is VEX times the fall in volatility. The figure's book, at +$0.53 billion per point, would buy about $3.7 billion on a 7-point crush, by the linear estimate that <a class="xref" href="7b.html">Chapter 7B</a> found runs low.</p>
+
+<p>What the research has tested is narrower:</p>
+
+<ul>
+<li><strong>No direct test.</strong> The practitioner claim that falling implied volatility after events forces dealer buying of the index has no direct test in what the research found.</li>
+<li><strong>A tested channel from volatility to the index.</strong> Bangsgaard and Kokholm (2025), in the <em>Journal of Banking and Finance</em>, study the end-of-day demand of VIX <span class="gloss" data-facts="A security that trades on an exchange like a stock and tracks an index or a strategy. Exchange-traded funds and exchange-traded notes are both kinds. Abbreviated ETP." tabindex="0" role="button">exchange-traded products</span> for <span class="gloss" data-facts="Monthly futures contracts on the VIX, each expiring on a Wednesday 30 days before the monthly SPX options expiration. They are how the VIX is traded, and they can sit far from the index itself." tabindex="0" role="button">VIX futures</span>. The <span class="gloss" data-facts="A firm that stands ready to buy and sell, quoting both a bid and an ask, and hedges the risk it takes on. In options it is usually called the dealer." tabindex="0" role="button">market makers</span> on the other side "can hedge their volatility exposure by trading SPX options and futures". The products' demand "is a strong predictor of the end-of-day SPX futures return in-sample and out-of-sample". The move partly reverses afterward, "suggesting that VIX futures hedging activities can move the SPX futures market for reasons unrelated to price discovery". It is a volatility-to-index hedging channel, measured, though not the option dealers' vanna itself.</li>
+<li><strong>The falling volatility of expiration week</strong>, one of Stivers and Sun's two suggested contributors.</li>
+</ul>
+
+<p>Two findings qualify every vanna number on a map. Hull and White (2017), in the <em>Journal of Banking and Finance</em>, show that "the normally calculated delta does not minimize the variance of changes in the value of a trader's position". The reason is that price and volatility move together. Their minimum-variance delta "takes account of both price changes and the expected change in volatility conditional on a price change". It reduces hedging variance by about 42% for the highest-strike calls and about 17% for <span class="gloss" data-facts="Said of an option that would pay something if exercised now: a call whose strike is below the underlying's price, or a put whose strike is above it." tabindex="0" role="button">in-the-money</span> ones, in search summaries of their S&amp;P 500 results. A dealer who hedges that way has already folded the typical vanna of a price move into its delta. Vanna then adds a separate flow only when volatility moves without the price, as after an event, or when the VIX jumps with the index still.</p>
+
+<p>Willeboordse (2026), in <em>Finance Research Letters</em>, compares Black-Scholes gamma with the convexity option positions actually show, across five underlyings from 2020 to 2025. At a daily horizon the correlation turns "significantly negative (−0.25 to −0.47 across symbols)", more so as <span class="gloss" data-facts="The change in an option's value for a rise of one percentage point in implied volatility. It is positive for bought calls and puts, and largest for long-dated options at the money." tabindex="0" role="button">vega</span> exposure grows relative to gamma exposure. The author reads it as "substantial vega contamination through negative spot–IV comovement". A map that adds a GEX flow and a VEX flow computed separately can count the same hedge twice.</p>
+
+<p>The one practitioner test of vanna exposure found points the same way. FlashAlpha, testing its own product on 1,972 <span class="gloss" data-facts="An exchange-traded fund that tracks the S&amp;P 500 index, and the ticker of the options written on it." tabindex="0" role="button">SPY</span> days from 2018 to 2026, reports that VEX correlates +0.72 with the VIX and +0.76 with <span class="gloss" data-facts="Said of an option whose strike is at, or very close to, the underlying's current price." tabindex="0" role="button">at-the-money</span> implied volatility. Once those are controlled for, its correlation with next-day <span class="gloss" data-facts="The volatility an asset actually showed over a past period, computed from its returns and annualized." tabindex="0" role="button">realized volatility</span> is −0.01 (p = 0.77): VEX "is mostly a VIX proxy". <a class="xref" href="8g.html">Chapter 8G</a> gives the study.</p>
+
+<h2 id="vendors-rules-checked-against-black-scholes">5 · Vendors' rules, checked against Black-Scholes</h2>
+
+<p>Skylit builds two rules on these Greeks. In its words, "GEX is the hand brake; VEX is the slope of the hill", and "GEX governs the range; VEX governs the drift". And on tenor: "For options 0–5 DTE, gamma is dominant; for 7–180 DTE, vanna is dominant". Both can be checked against the Black-Scholes Greeks of <a class="xref" href="5d.html">Chapter 5D</a>, though neither has been tested against prices.</p>
+
+<h3 id="gex-governs-the-range-vex-governs-the-drift">"GEX governs the range; VEX governs the drift"</h3>
+
+<p>The rule has a basis in <a class="xref xeq" href="7b.html#e-ddelta">(7B.1)</a>. The gamma term needs a move in price, so it shapes how each move develops: it damps or amplifies moves, which sets the range. The vanna and charm terms fire with the price standing still, so they can push the same way day after day, which is a drift. Three things qualify it:</p>
+
+<ul>
+<li><strong>Charm is the steadier drift.</strong> Vanna pushes only while implied volatility moves, and its direction follows the direction of the move in volatility. The calendar-driven drift is charm's.</li>
+<li><strong>Both drifts carry a sign convention.</strong> A drift upward into expiration needs dealers short the puts. Under the other sign, the drift reverses.</li>
+<li><strong>The flows are not separate.</strong> When volatility moves with the price, as it usually does in the index, a minimum-variance hedger has folded part of the vanna into the gamma hedge. And Willeboordse's result says the two are hard to separate over a day.</li>
+</ul>
+
+<h3 id="gamma-for-0-to-5-days-vanna-for-7-to-180">"Gamma for 0 to 5 days, vanna for 7 to 180"</h3>
+
+<p>Compare the two hedges per contract on a common footing: the change in the dealer's delta, in dollars, for a 1% move in spot and for a one-point rise in implied volatility. Black-Scholes gives their ratio in one line:</p>
+
+<div class="eq" id="e-vannagamma">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mtext>vanna</mtext><mrow><mi mathvariant="normal">Γ</mi> <mi>S</mi></mrow></mfrac><mo>=</mo><mo>−</mo><msub><mi>d</mi><mn>2</mn></msub><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex"> \frac{\text{vanna}}{\Gamma\,S} = -d_2\sqrt{T} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.7936em; vertical-align: -0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.1076em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord">Γ</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord text"><span class="mord">vanna</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.686em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.1255em; vertical-align: -0.15em;"></span><span class="mord">−</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9755em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.9355em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.0645em;"><span class=""></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(8F.5)</span></div>
+
+<p>so a one-point rise in volatility moves the delta as much as a spot move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><msub><mi>d</mi><mn>2</mn></msub><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">-d_2\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.0767em; vertical-align: -0.15em;"></span><span class="mord">−</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span> percent. The table takes a put with a delta of −0.25 at each expiry, SPX at 6,000, 18% implied volatility and a 4% rate. The last column is the move in implied volatility, per 1% move in spot, at which the vanna hedge would equal the gamma hedge.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial" style="text-align:right">Days to expiry</th><th style="text-align:right">Strike</th><th style="text-align:right">Hedge change, 1% move</th><th style="text-align:right">Hedge change, 1 vol point</th><th style="text-align:right">Volatility move to match</th></tr></thead><tbody><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">1</td><td data-label="Strike" style="text-align:right">5,963</td><td data-label="Hedge change, 1% move" style="text-align:right">$202,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$7,000</td><td data-label="Volatility move to match" style="text-align:right">29 points</td></tr><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">5</td><td data-label="Strike" style="text-align:right">5,920</td><td data-label="Hedge change, 1% move" style="text-align:right">$91,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$6,900</td><td data-label="Volatility move to match" style="text-align:right">13 points</td></tr><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">7</td><td data-label="Strike" style="text-align:right">5,906</td><td data-label="Hedge change, 1% move" style="text-align:right">$76,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$6,900</td><td data-label="Volatility move to match" style="text-align:right">11 points</td></tr><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">30</td><td data-label="Strike" style="text-align:right">5,822</td><td data-label="Hedge change, 1% move" style="text-align:right">$37,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$6,600</td><td data-label="Volatility move to match" style="text-align:right">5.6 points</td></tr><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">90</td><td data-label="Strike" style="text-align:right">5,728</td><td data-label="Hedge change, 1% move" style="text-align:right">$21,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$6,200</td><td data-label="Volatility move to match" style="text-align:right">3.4 points</td></tr><tr><td class="c-trial" data-label="Days to expiry" style="text-align:right">180</td><td data-label="Strike" style="text-align:right">5,664</td><td data-label="Hedge change, 1% move" style="text-align:right">$15,000</td><td data-label="Hedge change, 1 vol point" style="text-align:right">$5,800</td><td data-label="Volatility move to match" style="text-align:right">2.6 points</td></tr></tbody></table></div></div>
+
+<div class="worked">
+<span class="ct">Worked example: Reading the table at 7 days</span>
+<p><strong>Step 1: the two hedges.</strong> One contract of the 25-delta put with 7 days left has a hedge that changes by $76,000 for a 1% move in the index and by $6,900 for one point of implied volatility.</p>
+
+<p><strong>Step 2: the ratio.</strong> By <a class="eqref" href="#e-vannagamma">(8F.5)</a>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mn>2</mn></msub><mo>=</mo><mn>0.650</mn></mrow><annotation encoding="application/x-tex">d_2 = 0.650</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8444em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.650</span></span></span></span></span> and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><mn>7</mn><mi mathvariant="normal">/</mi><mn>365</mn></mrow></msqrt><mo>=</mo><mn>0.138</mn></mrow><annotation encoding="application/x-tex">\sqrt{7/365} = 0.138</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.24em; vertical-align: -0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.935em;"><span class="svg-align" style="top: -3.2em;"><span class="pstrut" style="height: 3.2em;"></span><span class="mord" style="padding-left: 1em;"><span class="mord">7/365</span></span></span><span class="" style="top: -2.895em;"><span class="pstrut" style="height: 3.2em;"></span><span class="hide-tail" style="min-width: 1.02em; height: 1.28em;"><svg width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.305em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.138</span></span></span></span></span>, so one volatility point equals a spot move of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.650</mn><mo>×</mo><mn>0.138</mn><mo>=</mo><mn>0.090</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.650 \times 0.138 = 0.090\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.650</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.138</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">0.090%</span></span></span></span></span>. Dividing, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>0.090</mn><mo>=</mo><mn>11</mn></mrow><annotation encoding="application/x-tex">1/0.090 = 11</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/0.090</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">11</span></span></span></span></span>: implied volatility would have to move 11 points for each 1% of spot for vanna's hedge to match gamma's.</p>
+
+<p><strong>Step 3: at 180 days.</strong> The same ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.548</mn><mo>×</mo><mn>0.702</mn><mo>=</mo><mn>0.385</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.548 \times 0.702 = 0.385\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">0.548</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.702</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">0.385%</span></span></span></span></span>, and the break-even falls to 2.6 points per 1% of spot.</p>
+</div>
+
+<p>Four things follow, and none of them is a threshold at 5 or 7 days:</p>
+
+<ul>
+<li><strong>For options of the same delta, vanna's weight grows smoothly with <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>.</strong> The vanna hedge per contract barely changes with expiry, while the gamma hedge falls like <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>. That is the grain of truth in the rule.</li>
+<li><strong>At a fixed strike it hardly changes.</strong> For a put struck 5% below spot, the break-even is about 3.5 points per 1% at 5 days, 3.4 at 30 and 2.9 at 180.</li>
+<li><strong>At the money, vanna is close to zero at every expiry.</strong> Same-day gamma sits almost entirely at the money, which is why gamma dominates same-day books, whatever the calendar says.</li>
+<li><strong>Dominance depends on a market fact.</strong> How far implied volatility moves for each 1% of spot is not in Black-Scholes, which holds volatility constant. On an event day, when volatility falls with the price still, vanna is the whole of the change at any expiry.</li>
+</ul>
+
+<p>Skylit also maps VEX by its position against spot, in four cells:</p>
+
+<ul>
+<li>"+VEX below spot (support in calm, rug-pull risk in stress)";</li>
+<li>"–VEX below spot (fragile floor in calm, fast bounces in stress)";</li>
+<li>"+VEX above spot (breakouts in calm, caps in rising vol)";</li>
+<li>"–VEX above spot (soft ceiling in calm, squeeze fuel during vol spike)".</li>
+</ul>
+
+<p>Read with the signs above, the matrix is consistent with the mechanics. Positive VEX below spot is dealers short puts, who buy as volatility falls in calm and sell as it rises in stress. It is untested, and it inherits the sign convention of every cell. So does Skylit's warning that when volatility spikes, back-end positive VEX "creates significant sell flow" that is "entirely invisible in a front-month gamma map". That is the vanna loop of <a class="xref" href="9a.html">Chapter 9A</a>, seen on a map.</p>
+
+<p>Volland infers each trade's dealer side from the options order feed, in a 2023 working paper by DeLorenzo for the vendor. The paper claims that "option dealers are predominantly more sensitive to changes in implied volatility than to the movement in the underlying equity". It also claims that charm "yields a significant edge when applied in the right time frame relative to expiration". Neither claim comes with a test a reader can check.</p>
+
+<h2 id="the-link-to-the-vanna-loop">6 · The link to the vanna loop</h2>
+
+<p><a class="xref" href="9a.html">Chapter 9A</a> followed the vanna loop in a sell-off: the index falls, the VIX rises, the deltas of out-of-the-money puts deepen, and dealers short them sell, which pushes the index lower. The vol-crush rally is the same loop run backward. With positive VEX from short puts, a rise in volatility makes dealers sell and a fall makes them buy. The exposure is the same, and the sign of the move in volatility decides the direction.</p>
+
+<p>The measured channel sits between the two: Bangsgaard and Kokholm's VIX-futures hedging moves S&amp;P 500 futures at the close and then partly reverses. <a class="xref" href="8h.html">Chapter 8H</a> works the same arithmetic for March 2020, with the index held still while volatility rises.</p>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Every flow in this chapter assumes that dealers are short the puts, and often the calls, that customers bought. Under the other sign each flow reverses. The flows are small beside news: the Lab's post-FOMC estimate is at most a few tenths of a percent. A vol crush is a tendency, not a law, and an event can raise volatility instead. Black-Scholes vanna and charm also misstate the hedges of dealers who use minimum-variance deltas, and over a day the Greeks computed separately overlap.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Before you lean on a calendar flow, name the sign.</strong> State which side of the puts and calls you assume dealers hold, and what the flow does under the other side.</li>
+<li><strong>Size it to its evidence.</strong> The expiration-week effect is documented for single stocks, at modest sizes, and the settlement bias in one working paper. The window of weakness and index vanna rallies are untested. None of them supports a position that needs a large move.</li>
+<li><strong>Close SPX monthlies on Thursday</strong> (<a class="xref" href="12h.html">Chapter 12H</a>), since the settlement print has leaned upward in one working paper's sample.</li>
+<li><strong>Read VEX beside the VIX,</strong> not as news of its own. In the one test found, VEX carried little beyond implied volatility itself.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "charm always buys into expiration"</span>
+<p>Charm pulls out-of-the-money deltas toward zero. That makes dealers buy only if they are short the puts. If they are short calls too, the call wing sells, and the net can be small or negative. The direction of every charm flow is a statement about who holds what.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: adding the GEX flow and the VEX flow</span>
+<p>A map's GEX and VEX are computed separately from Black-Scholes, but in the index volatility moves with price. A dealer hedging with a minimum-variance delta has already hedged part of the vanna, and daily convexity is contaminated by vega. Adding the two flows can count the same hedge twice.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>Summed across the market, vanna gives VEX, dollars of dealer delta per volatility point, and charm gives CHEX, dollars of delta per day. Dealers trade minus each. Short puts give positive VEX, short calls negative.</li>
+<li>With no rate, delta depends on <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sigma\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span> only, so a day is a vol crush of <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>T</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\sigma/(2T)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mclose">)</span></span></span></span></span> points. Over a window ending at expiry, a fall in volatility changes when dealers unwind, not how much.</li>
+<li>Into expiration, charm grows like <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">1/T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span></span></span>, with weekend-sized Mondays. Stivers and Sun find strong option-expiration weeks in S&amp;P 100 stocks, and a working paper finds an upward bias at the monthly a.m. settlement that reverses by midday.</li>
+<li>The window of weakness and index vanna rallies are practitioner lore: plausible if dealers are short the puts, and untested on SPX.</li>
+<li>Black-Scholes gives vanna more weight against gamma for longer-dated options of the same delta, smoothly as <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mi>T</mi></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{T}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.04em; vertical-align: -0.1133em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span></span></span></span></span>, with no break at 5 or 7 days.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">7 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>Dealers hold a book of short puts whose VEX is +$0.5 billion per volatility point. After an FOMC decision, implied volatility falls 4 points with the index unchanged. What do they trade?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>They trade minus VEX times the change: <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>0.5</mn><mo>×</mo><mo stretchy="false">(</mo><mo>−</mo><mn>4</mn><mo stretchy="false">)</mo><mo>=</mo><mo>+</mo><mi mathvariant="normal">$</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">-0.5 \times (-4) = +\$2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord">0.5</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">−</span><span class="mord">4</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.0833em;"></span><span class="mord">+</span><span class="mord">$2</span></span></span></span></span> billion. They buy $2 billion of index exposure, because the fall in volatility shrinks the long delta their short puts give them.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>At 20% implied volatility with 10 days to expiry, how many volatility points is one calendar day worth to delta, with no rates?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-charmvanna">(8F.3)</a>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>20</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mo>×</mo><mn>10</mn><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">20/(2 \times 10) = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">20/</span><span class="mopen">(</span><span class="mord">2</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">10</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span> point. With 2 days left it is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>20</mn><mi mathvariant="normal">/</mi><mn>4</mn><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">20/4 = 5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">20/4</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">5</span></span></span></span></span> points.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>In the charm figure, why does a 5-point fall in implied volatility leave the 20-day total at $10.40 billion?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The window ends at expiration, where every out-of-the-money delta is zero whatever volatility did on the way. The daily trades must add up to the hedge held at the start. The fall only brings the buying forward, $1.63 billion of it out of week 4.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>A vendor says vanna dominates options from 7 to 180 days. For a 25-delta put with 7 days left, how far must implied volatility move per 1% of spot for vanna's hedge to equal gamma's?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>About 11 points, from <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><msub><mi>d</mi><mn>2</mn></msub><msqrt><mi>T</mi></msqrt><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>0.090</mn></mrow><annotation encoding="application/x-tex">1/(d_2\sqrt{T}) = 1/0.090</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1.1767em; vertical-align: -0.25em;"></span><span class="mord">1/</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.9267em;"><span class="svg-align" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord" style="padding-left: 0.833em;"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span></span></span><span class="" style="top: -2.8867em;"><span class="pstrut" style="height: 3em;"></span><span class="hide-tail" style="min-width: 0.853em; height: 1.08em;"><svg width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.1133em;"><span class=""></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1/0.090</span></span></span></span></span>. At 180 days it is 2.6 points. Black-Scholes gives a smooth trend with expiry, not a threshold, and whether vanna dominates depends on how far volatility actually moves, which Black-Scholes does not say.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Why is the window of weakness a sign-convention claim?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The supportive flow into expiration is dealers buying back hedges on puts they are short, as charm and falling volatility shrink the puts' deltas. If customers sold those puts, dealers are long them, and the same decay makes dealers sell into expiration instead. The story reverses with the assumed side.</p>
+</div></details>
+</div>
+</div>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="8e.html" rel="prev"><span>Previous</span>8E · Pinning</a>
+<a class="next" href="8g.html" rel="next"><span>Next</span>8G · The evidence</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- charm-into-expiry ---------- */
+(function () {
+  var U = 'charm-into-expiry';
+  var IV = DL.$(U + '-iv');
+  var book = DL.seg(U + '-book', update);
+  var S = 6000, SIG = 0.18, T0 = 28, NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+  /* the made-up book, in contracts the customers hold long and the dealers short: puts 1.7%
+     to 5% below spot, and fewer calls 1.7% to 5% above it, all on the monthly expiration */
+  var PUTS = [{ K: 5700, n: 30000 }, { K: 5800, n: 30000 }, { K: 5900, n: 20000 }];
+  var CALLS = [{ K: 6100, n: 15000 }, { K: 6200, n: 10000 }, { K: 6300, n: 5000 }];
+
+  /* calendar days to expiration at the Friday close before the window, then at each of its
+     20 closes: a Monday's close comes three days after Friday's, every other close one day
+     after the one before, and the options expire at the close of the last Friday */
+  var DAYS = [T0];
+  for (var w = 0; w < 4; w++) for (var d = 0; d < 5; d++) DAYS.push(T0 - 7 * w - 3 - d);
+
+  /* The dealers' futures hedge against one leg at the close of day k, in index units. They
+     are short n contracts of each line, so their option delta is -n x 100 x delta and their
+     hedge is +n x 100 x delta: short against the puts (delta below zero), long against the
+     calls. Implied volatility falls by drop points in equal steps, one each trading day. */
+  function hedge(leg, type, k, drop) {
+    var sig = SIG - drop / 100 * k / 20, t = DAYS[k] / 365, h = 0;
+    leg.forEach(function (o) { h += o.n * 100 * DL.bsDelta(S, o.K, t, sig, type); });
+    return h;
+  }
+  /* each day's trade in dollars: the change in the hedge since the close before, times spot,
+     which is -(change in the dealers' option delta) x S; positive is buying */
+  function trades(leg, type, drop) {
+    var out = [], prev = hedge(leg, type, 0, drop);
+    for (var k = 1; k <= 20; k++) {
+      var h = hedge(leg, type, k, drop);
+      out.push((h - prev) * S);
+      prev = h;
+    }
+    return out;
+  }
+  function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+
+  /* one scale for each book, wide enough for every fall in volatility, so the slider moves
+     the bars and not the axis */
+  var scales = {};
+  function scale(both) {
+    var key = both ? 'both' : 'puts';
+    if (!scales[key]) {
+      var hi = 0, lo = 0;
+      [0, 2.5, 5].forEach(function (dr) {
+        trades(PUTS, 'put', dr).forEach(function (v) { hi = Math.max(hi, v); });
+        if (both) trades(CALLS, 'call', dr).forEach(function (v) { lo = Math.min(lo, v); });
+      });
+      scales[key] = { lo: lo, hi: hi };
+    }
+    return scales[key];
+  }
+
+  var st;
+  function compute() {
+    var drop = +IV.value, both = book() === 'both', zero = [];
+    for (var k = 0; k < 20; k++) zero.push(0);
+    var p = trades(PUTS, 'put', drop), p0 = trades(PUTS, 'put', 0);
+    var c = both ? trades(CALLS, 'call', drop) : zero, c0 = both ? trades(CALLS, 'call', 0) : zero;
+    var net = p.map(function (v, i) { return v + c[i]; });
+    var net0 = p0.map(function (v, i) { return v + c0[i]; });
+    var big = 0;
+    net.forEach(function (v, i) { if (Math.abs(v) > Math.abs(net[big])) big = i; });
+    var start = (hedge(PUTS, 'put', 0, 0) + (both ? hedge(CALLS, 'call', 0, 0) : 0)) * S;
+    var early = 0;
+    for (k = 0; k < 15; k++) early += net[k] - net0[k];
+    st = { drop: drop, both: both, p: p, p0: p0, c: c, c0: c0, net: net, big: big,
+           start: start, early: early, sc: scale(both) };
+  }
+
+  function bn(x) {
+    var s = DL.num(Math.abs(x) / 1e9, 2);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  function xOf(k) { return Math.floor(k / 5) * 6 + (k % 5); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var sc = st.sc, span = sc.hi - sc.lo;
+    var ymax = sc.hi + span * 0.1, ymin = sc.lo < 0 ? sc.lo - span * 0.06 : 0;
+    var p = new NMT.Plot(cv, { xmin: -1.6, xmax: 22.7, ymin: ymin, ymax: ymax,
+                               pad: { l: 52, r: 10, t: 38, b: 38 } });
+    var ty = DL.ticks(ymin, ymax, 4);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -1.6,
+                 y: function (v) { return Math.abs(v) < ty.step * 1e-6 ? '$0' : bn(v).replace('.00B', 'B').replace(/(\.\d)0B$/, '$1B'); } });
+    var g = p.g, buy = DL.color('insight'), sell = DL.color('plain'), ink = DL.color('ink'),
+        soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+
+    /* the weekends: calendar time passes, the market is shut */
+    g.save();
+    g.fillStyle = DL.fade(DL.color('ink-faint'), 0.12);
+    [-1, 5, 11, 17].forEach(function (x) {
+      g.fillRect(p.X(x - 0.5), p.Y(ymax), p.X(x + 0.5) - p.X(x - 0.5), p.Y(ymin) - p.Y(ymax));
+    });
+    g.restore();
+
+    /* the legs, the same book with volatility unchanged in outline, and the net */
+    var xs = [], i;
+    for (i = 0; i < 20; i++) xs.push(xOf(i));
+    DL.bars(p, xs, st.p, { w: 0.72, color: DL.fade(buy, 0.8) });
+    if (st.both) DL.bars(p, xs, st.c, { w: 0.72, color: DL.fade(sell, 0.8) });
+    function outline(vals) {
+      g.save();
+      g.strokeStyle = soft;
+      g.lineWidth = 1.2;
+      vals.forEach(function (v, j) {
+        var x0 = p.X(xs[j] - 0.36), x1 = p.X(xs[j] + 0.36), y0 = p.Y(0), y1 = p.Y(v);
+        g.strokeRect(x0 + 0.5, Math.min(y0, y1) + 0.5, x1 - x0 - 1, Math.abs(y1 - y0));
+      });
+      g.restore();
+    }
+    if (st.drop > 0) {
+      outline(st.p0);
+      if (st.both) outline(st.c0);
+    }
+    if (st.both) {
+      st.net.forEach(function (v, j) {
+        p.seg(xs[j] - 0.46, v, xs[j] + 0.46, v, { color: ink, width: 2.2 });
+      });
+    }
+
+    /* the days along the bottom (only the Mondays where the bars are narrow), the weeks
+       beneath them, expiration at the right */
+    var every = p.X(1) - p.X(0) >= 16;
+    DL.xticks(p, xs.filter(function (x, j) { return every || j % 5 === 0; }),
+              function (x) { return NAMES[x % 6].charAt(0); });
+    g.save();
+    g.font = font();
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    for (var wk = 0; wk < 4; wk++) g.fillText('week ' + (wk + 1), p.X(wk * 6 + 2), p.h - p.o.pad.b + 21);
+    g.restore();
+    p.text(22.7, ymax, 'expiry', { dx: -2, dy: 13, align: 'right', font: font(), color: faint });
+
+    /* the title and a key to what is drawn */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' hedge trade each day: + buys, − sells", 6, 10);
+    var items = [];
+    if (st.both) items.push(['box', DL.fade(buy, 0.8), 'put leg'], ['box', DL.fade(sell, 0.8), 'call leg'],
+                            ['line', ink, 'net']);
+    else if (st.drop > 0) items.push(['box', DL.fade(buy, 0.8), 'with the IV fall']);
+    if (st.drop > 0) items.push(['open', soft, 'IV unchanged']);
+    var kx = 6, ky = 27;
+    items.forEach(function (it) {
+      var wd = 17 + g.measureText(it[2]).width;
+      if (kx > 6 && kx + wd > p.w - 4) { kx = 6; ky += 15; }
+      if (it[0] === 'box') { g.fillStyle = it[1]; g.fillRect(kx, ky - 4, 12, 8); }
+      else if (it[0] === 'open') { g.strokeStyle = it[1]; g.lineWidth = 1.2; g.strokeRect(kx + 0.5, ky - 3.5, 11, 7); }
+      else { g.strokeStyle = it[1]; g.lineWidth = 2.2; g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 12, ky); g.stroke(); }
+      g.fillStyle = soft;
+      g.fillText(it[2], kx + 17, ky);
+      kx += wd + 14;
+    });
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var tot = sum(st.net), b = st.big;
+    DL.out(U + '-iv-o', DL.num(st.drop, 1) + ' pts');
+    DL.out(U + '-tot', 'total: dealers ' + (tot >= 0 ? 'buy ' : 'sell ') + '$' + DL.num(Math.abs(tot) / 1e9, 2) + 'B');
+    DL.out(U + '-big', 'largest day: ' + bn(st.net[b]) + ', ' + NAMES[b % 5] + ', week ' + (Math.floor(b / 5) + 1));
+    var legs = DL.$(U + '-legs-c');
+    if (legs.hidden === st.both) legs.hidden = !st.both;
+    DL.out(U + '-legs', 'puts ' + bn(sum(st.p)) + ', calls ' + bn(sum(st.c)));
+    DL.out(U + '-vk', 'The total is the starting hedge.');
+    var held = st.start < 0 ? 'short' : 'long';
+    var text = 'Every option here expires out of the money with no delta, so over the 20 days dealers unwind ' +
+               'all of the hedge they held at the start: ' + (st.both ? 'a net ' : '') + '$' +
+               DL.num(Math.abs(st.start) / 1e9, 2) + 'B ' + held + ' in futures.';
+    if (st.drop > 0) {
+      text += ' The fall in volatility moves $' + DL.num(Math.abs(st.early) / 1e9, 2) + 'B of that trade ' +
+              (st.early >= 0 ? 'out of week 4 and into weeks 1 to 3.' : 'out of weeks 1 to 3 and into week 4.');
+    }
+    DL.out(U + '-vt', text);
+    draw();
+  }
+  update();
+  DL.bind([U + '-iv'], update);
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--PWA-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../assets/pwa.css">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Other End">
+<meta name="theme-color" content="#f7f5ef">
+<script>(function(){var d=document.documentElement;var t='';try{t=JSON.parse(localStorage.getItem('library:v1')||'{}').look||localStorage.getItem('nmt-theme')||''}catch(e){}if(t!=='dark'&&t!=='light')t=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.classList.add('js');if(navigator.standalone===true||matchMedia('(display-mode:standalone)').matches)d.classList.add('standalone');})();</script>
+<script src="../assets/pwa.js" defer></script>
+<!--/PWA-->
+<title>10H Regime filters — The Other End of the Trade</title>
+<meta name="description" content="Chapter 10H of The Other End of the Trade: Regime filters.">
+<link rel="stylesheet" href="assets/katex.min.css">
+<link rel="stylesheet" href="assets/book.css">
+<!--NAVCSS-->
+<link rel="stylesheet" href="../assets/nav.css">
+<!--/NAVCSS-->
+</head>
+<body>
+<!--NAV-->
+<a class="skip" href="#text">Skip to text</a>
+<nav class="topnav" aria-label="Library" data-book="the-other-end-of-the-trade">
+  <a class="nav-brand two" href="index.html"><span class="nav-full">The Other End of&nbsp;the&nbsp;Trade</span><span class="nav-short">Other End</span></a>
+  <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-dest" hidden>Menu</button>
+  <div class="topnav-links" id="nav-dest">
+    <a href="contents.html">Contents</a>
+  </div>
+  <a class="up" href="../index.html">Library</a>
+  <button class="nav-theme" type="button" aria-pressed="false" aria-label="Dark theme" title="Switch to dark" hidden><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" fill="currentColor"/></svg></button>
+</nav>
+<!--/NAV-->
+<div class="wrap">
+<nav class="sidebar" aria-label="Chapter sections">
+  <a class="sb-home" href="contents.html#sec-9">← Part X · Edges, one by one</a>
+  <div class="sb-folio"><a class="sb-prev" href="10g.html" aria-label="Previous chapter: 10G · Calendar and flow effects" title="Previous chapter: 10G · Calendar and flow effects (←)">‹ 10G</a><p class="sb-title"><span class="sb-at">Chapter 10H ·</span> <span class="sb-at">54 of 89</span></p><a class="sb-next" href="10i.html" aria-label="Next chapter: 10I · What not to trade" title="Next chapter: 10I · What not to trade (→)">10I ›</a></div>
+  <div id="sb-toc"><a href="#what-a-filter-is">1 · What a filter is</a><a href="#the-vix-term-structure">2 · The VIX term structure</a><a href="#the-evidence" class="lvl3">The evidence</a><a href="#why-it-works" class="lvl3">Why it works</a><a href="#the-canonical-filter" class="lvl3">The canonical filter</a><a href="#realized-against-implied-volatility">3 · Realized against implied volatility</a><a href="#the-liquidity-regime">4 · The liquidity regime</a><a href="#the-sign-of-dealer-gamma-at-low-confidence">5 · The sign of dealer gamma, at low confidence</a><a href="#the-evidence-2" class="lvl3">The evidence</a><a href="#why-the-edge-book-downgrades-it" class="lvl3">Why the Edge Book downgrades it</a><a href="#where-this-books-two-traditions-disagree" class="lvl3">Where this book's two traditions disagree</a><a href="#breadth-and-internals">6 · Breadth and internals</a><a href="#stacking-the-filters">7 · Stacking the filters</a><a href="#what-is-not-a-filter">8 · What is not a filter</a><a href="#check-yourself">9 · Check yourself</a></div>
+</nav>
+<main class="main" id="text">
+<div class="col">
+
+<p class="eyebrow">Part X · Edges, one by one · Chapter 10H</p>
+
+<h1>Regime filters</h1>
+
+<p class="subtitle">Signals that size trades rather than make them</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 10B to 10G examined edges you can hold: premia, factor tilts and overlays. This chapter takes the fourth category of <a class="xref" href="10a.html">Chapter 10A</a>, <span class="gloss" data-facts="A variable, such as the shape of the VIX term structure, used to size other strategies up or down. It is not a trade in itself: its value is the losses it avoids." tabindex="0" role="button">regime filters</span>: measurements of the market that decide how much of those edges to hold. A filter earns nothing directly, since its value is the losses it keeps out of other positions, and the classic error is to trade it.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>The VIX, the VIX3M and the term structure (Chapters 5E and 9A).</li>
+<li>Realized against implied volatility, and why their gap decides a short option's P&amp;L (Chapters 7A and 10C).</li>
+<li>Gamma exposure and its sign conventions (Chapters 8A and 8B), and the two regimes of dealer hedging (<a class="xref" href="8d.html">Chapter 8D</a>).</li>
+<li>The market dashboard, which reads the same markers each morning (<a class="xref" href="11a.html">Chapter 11A</a>).</li>
+<li>A filter's hit rate as a positive predictive value (<a class="xref" href="10a.html">Chapter 10A</a>).</li>
+</ul>
+</div>
+
+<p>Filters are <em>not trades</em> but variables that size other strategies up or down, and their "edge" takes the form of avoided losses on existing positions rather than direct returns. The classic retail error is to treat a filter as a strategy: buying VXX because the VIX is in contango, or shorting SPX because dealer gamma is negative. Filters modulate rather than generate. This chapter examines five of them and then stacks them into one reading.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>A filter is a gauge on the dashboard, not a second engine. When it reads stress, you hold less of what you already own and open nothing new, and when it reads calm, you return to full size. Used that way, a gauge costs almost nothing, while trying to trade the gauge itself is usually expensive.</p>
+</div>
+
+<h2 id="what-a-filter-is">1 · What a filter is</h2>
+
+<p>A <strong>regime filter</strong> is a measurable market variable with three properties:</p>
+
+<ol>
+<li>It has predictive content about the near-term distribution of returns: their mean, volatility or skew.</li>
+<li>It does not itself constitute a tradable edge after costs.</li>
+<li>It modulates the sizing of <em>other</em> strategies.</li>
+</ol>
+
+<p>The distinction matters because the same information can be used in very different ways. Consider the ratio of the <span class="gloss" data-facts="Cboe's index of the implied volatility of S&amp;P 500 options over the next 30 days." tabindex="0" role="button">VIX</span> to the <span class="gloss" data-facts="Cboe's index of the implied volatility of S&amp;P 500 options over the next three months, the longer-dated companion of the VIX." tabindex="0" role="button">VIX3M</span>. When it is above 1.05, near-term volatility is priced meaningfully above longer-dated volatility, which indicates stress. Three uses of that information have very different results:</p>
+
+<ul>
+<li><em>Trading</em> the VIX directly through VXX, an <span class="gloss" data-facts="A security that trades on an exchange like a stock and tracks an index or a strategy. Exchange-traded funds and exchange-traded notes are both kinds. Abbreviated ETP." tabindex="0" role="button">exchange-traded product</span> (ETP) that holds VIX futures, has lost 99.84% to roll decay since its inception in 2009.</li>
+<li><em>Trading</em> strategies that target the VIX, such as long-volatility funds, costs 5% to 15% a year in decay.</li>
+<li><em>Using</em> the ratio as a filter, to halt new put-writing, costs nothing and prevents real losses.</li>
+</ul>
+
+<p><strong>Same information, different operational use, very different P&amp;L.</strong> The general rule follows from it. Suppose you can name a measurement, such as the term structure, dealer gamma, breadth or a credit spread, and you want to "trade" it. The answer is almost always not to trade it but to use it as a sizing input on something else.</p>
+
+<p>A filter works through a sizing multiplier. Write <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8778em; vertical-align: -0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span></span> for the position you would hold in a normal regime and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">x_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5806em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> for the filter's reading at time <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span>. The filter sets a multiplier <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">m(x_t)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">m</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span> between 0 and 1, so you hold</p>
+
+<div class="eq" id="e-filter">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>Q</mi><mi>t</mi></msub><mo>=</mo><mi>m</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo stretchy="false">)</mo> <mi>Q</mi></mrow><annotation encoding="application/x-tex"> Q_t = m(x_t)\,Q </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8778em; vertical-align: -0.1944em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal">m</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal">Q</span></span></span></span></span></span>
+<span class="eqnum">(10H.1)</span></div>
+
+<p>A filter is worth having when the losses it avoids, where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m &lt; 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5782em; vertical-align: -0.0391em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span> in bad regimes, exceed the premium it forgoes, where <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m &lt; 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.5782em; vertical-align: -0.0391em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span> in regimes that turn out fine. <a class="xref" href="10a.html">Chapter 10A</a> works that trade-off as a screening test, with the filter's hit rate as its positive predictive value.</p>
+
+<h2 id="the-vix-term-structure">2 · The VIX term structure</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>The VIX measures 30-day implied volatility on SPX, and the VIX3M measures it over 90 days, so their ratio captures the shape of the curve. In normal regimes, longer-dated volatility is higher, a <span class="gloss" data-facts="A term structure in which longer-dated prices or implied volatilities sit above shorter-dated ones. It is the usual shape for equity implied volatility." tabindex="0" role="button">contango</span> with the ratio below 1, reflecting demand for longer-dated hedges. In stress, near-term volatility spikes and the curve inverts into <span class="gloss" data-facts="A term structure in which shorter-dated prices or implied volatilities sit above longer-dated ones. For equity implied volatility it is a mark of stress." tabindex="0" role="button">backwardation</span>, with the ratio above 1, reflecting acute risk aversion.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: A calm reading and a stressed one</span>
+<p><strong>Step 1: calm.</strong> The VIX is 14 and the VIX3M 17, so the ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>14</mn><mi mathvariant="normal">/</mi><mn>17</mn><mo>=</mo><mn>0.82</mn></mrow><annotation encoding="application/x-tex">14/17 = 0.82</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">14/17</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.82</span></span></span></span></span>, and the term structure is in contango, its "normal" shape.</p>
+
+<p><strong>Step 2: stress.</strong> The VIX is 32 and the VIX3M 26, so the ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mi mathvariant="normal">/</mi><mn>26</mn><mo>=</mo><mn>1.23</mn></mrow><annotation encoding="application/x-tex">32/26 = 1.23</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">32/26</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1.23</span></span></span></span></span>, and the curve is in backwardation, pricing acute near-term risk.</p>
+</div>
+
+<p>When backwardation develops, near-term volatility is raised <em>more</em> than far-term volatility, which indicates concentrated short-term concern. Historically, that regime has come with sharp short-term moves in both directions, wider option spreads, higher correlation across assets and more margin expansion under <span class="gloss" data-facts="A margin model that sets the requirement from the loss the whole portfolio would suffer in stress scenarios, such as a 15% index move with shifts in implied volatility. It allows more leverage in calm markets and can expand sharply in stress." tabindex="0" role="button">portfolio margin</span> (PM). The filter is the ratio itself:</p>
+
+<div class="eq" id="e-ratio">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>F</mi><mi>t</mi></msub><mo>=</mo><mfrac><msub><mtext>VIX</mtext><mi>t</mi></msub><msub><mtext>VIX3M</mtext><mi>t</mi></msub></mfrac></mrow><annotation encoding="application/x-tex"> F_t = \frac{\text{VIX}_t}{\text{VIX3M}_t} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.1963em; vertical-align: -0.836em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.3603em;"><span class="" style="top: -2.314em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">VIX3M</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">VIX</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.836em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<span class="eqnum">(10H.2)</span></div>
+
+<p>A common rule reads it in three bands: below 1.00 is a normal regime, 1.00 to 1.05 is elevated and transitional, and above 1.05, sustained, is a stress regime.</p>
+
+<h3 id="the-evidence">The evidence</h3>
+
+<ul>
+<li><strong>Whaley (2009)</strong> on the VIX as a "fear gauge" established the framework of contango and backwardation.</li>
+<li><strong>ProShares "Term Structure" research notes</strong> backtest the term structure as a filter on equity exposure.</li>
+<li><strong>Bloomberg and Cboe practitioner literature</strong> uses it widely, but it is not academically formalized.</li>
+</ul>
+
+<h3 id="why-it-works">Why it works</h3>
+
+<p>The information comes from the demand-driven nature of VIX prices. When demand for near-term hedges spikes, as institutional accounts buy short-dated puts, the curve inverts. That spike in demand is itself information about how institutions perceive risk. <a class="xref" href="9a.html">Chapter 9A</a> traces the mechanism in the VIX's own construction.</p>
+
+<h3 id="the-canonical-filter">The canonical filter</h3>
+
+<p>The Edge Book's rule responds to backwardation in phases:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Trigger</th><th class="c-result">Action</th></tr></thead><tbody><tr><td class="c-trial">VIX/VIX3M above 1.00 for 3 closes</td><td class="c-result">Halt new short-volatility entries</td></tr><tr><td class="c-trial">VIX/VIX3M above 1.05 for 3 closes</td><td class="c-result">Halt all put sales; cut the existing premium-selling sleeve by 50%</td></tr><tr><td class="c-trial">VIX/VIX3M above 1.15 for 3 closes</td><td class="c-result">Close non-essential short volatility, keeping only deep out-of-the-money (OTM) tails, whose assignment risk is small</td></tr><tr><td class="c-trial">VIX/VIX3M below 1.00 for 5 closes after stress</td><td class="c-result">Re-enter in phases: 25% of target, then 50%, then 100%, over 3 weeks</td></tr></tbody></table></div></div>
+
+<p>Avoid binary on-off triggers, because they create <strong><span class="gloss" data-facts="Repeated losses from being pushed into and out of positions by a signal or a price that keeps reversing across a threshold before any trend develops." tabindex="0" role="button">whipsaw</span></strong>: being pushed in and out repeatedly by a signal that flickers across its threshold. Phase changes over several days instead. The persistence rule of 3 closes serves the same purpose, since a one-day spike does not trigger it.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Why three closes</span>
+<p><strong>Step 1: one close.</strong> Suppose, hypothetically, that in calm markets the ratio pokes above 1.00 on 1 day in 20, at random. A rule that acts on one close then trades on a false alarm about once a month.</p>
+
+<p><strong>Step 2: three closes in a row.</strong> If those days were independent, three in a row would come about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.0</mn><msup><mn>5</mn><mn>3</mn></msup><mo>=</mo><mn>0.000125</mn></mrow><annotation encoding="application/x-tex">0.05^3 = 0.000125</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.0</span><span class="mord"><span class="mord">5</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">0.000125</span></span></span></span></span> of the time, roughly once in 30 years. Real false alarms cluster, so the true rate is higher, but the persistence rule still removes most one-day noise. The price is lateness: the rule acts 2 days after a genuine inversion begins.</p>
+</div>
+
+<p>The figure runs the rule through a made-up stretch of 130 trading days. Drag the closes required from 3 down to 1, and the calm blips halt or cut the sleeve. Drag them up, and the rule acts later in the inversion.</p>
+
+<figure class="fig" id="fig-phased-ratio-filter">
+  <canvas id="phased-ratio-filter-c" data-h="210" width="631" height="210" style="height: 210px;"></canvas>
+  <canvas id="phased-ratio-filter-s" data-h="120" width="631" height="120" style="height: 120px;"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="phased-ratio-filter-n">closes required</label>
+      <input type="range" id="phased-ratio-filter-n" min="1" max="5" step="1" value="3">
+      <output id="phased-ratio-filter-n-o" for="phased-ratio-filter-n">3 closes</output>
+    </div>
+    <div class="ctrl">
+      <label for="phased-ratio-filter-h">halt line</label>
+      <input type="range" id="phased-ratio-filter-h" min="0.95" max="1.04" step="0.01" value="1">
+      <output id="phased-ratio-filter-h-o" for="phased-ratio-filter-h">1.00</output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="phased-ratio-filter-fa">false alarms: 0</output></div>
+    <div class="ctrl"><output id="phased-ratio-filter-lost">calm days halted or cut: 0</output></div>
+    <div class="ctrl"><output id="phased-ratio-filter-lag">lag: 2 days to halt, 2 to halve</output></div>
+  </div>
+  <figcaption><b>Waiting for closes trades whipsaw for lateness.</b> A made-up path of the ratio
+  of the VIX to the VIX3M runs through a calm stretch with a one-day spike and a two-day cluster,
+  then a sustained inversion. Below it, a put-writing sleeve follows the chapter's phased rule,
+  and each step waits for the chosen number of closes above its line: the halt line, 1.05 or
+  1.15. With one close required, the two calm blips halt or cut the sleeve for 21 days. With
+  three, neither fires, and the rule acts 2 days after the inversion begins.</figcaption>
+</figure>
+
+<p>The market dashboard of <a class="xref" href="11a.html">Chapter 11A</a> reads the same ratio each morning, with 1.0 as its stress line. Its same-day read and this filter's persistence rule answer different questions: whether to open a trade today, and whether a running strategy should stand down. <a class="xref" href="13e.html">Chapter 13E</a> works the filter through an open put-writing position, where the rule's 50% cut means closing positions, not only stopping new ones.</p>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Sometimes backwardation is brief, a single-day liquidity event that reverses without any action being needed. At other times it persists longer than expected, as in 2008 and in March 2020, when it lasted for weeks. The rule has a real opportunity cost during false stress signals.</p>
+</div>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Do</th><th class="c-result">Do not</th></tr></thead><tbody><tr><td class="c-trial">Use the ratio to halt new short-volatility entries</td><td class="c-result">Buy VXX or VIX futures directly: roll decay and the basis between futures and the index work against you</td></tr><tr><td class="c-trial">Use it to modulate the size of existing positions</td><td class="c-result">Treat backwardation as a directional signal on SPX: it correlates with stress, but the direction after stress is unpredictable</td></tr><tr><td class="c-trial">Use it to phase your return after stress</td><td class="c-result">Use a single threshold: phase the response</td></tr></tbody></table></div></div>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "VIX in backwardation means stocks are about to fall"</span>
+<p>Backwardation indicates <em>elevated near-term volatility</em>, not a negative direction. Many episodes of backwardation resolve through mean reversion <em>upward</em>, in sharp rallies as fear subsides. The signal is about magnitude, not direction: use it to size, not to bet on direction.</p>
+</div>
+
+<h2 id="realized-against-implied-volatility">3 · Realized against implied volatility</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Selling implied volatility assumes that <em>future realized volatility comes in lower</em>. If realized volatility is running at 30% while implied is 22%, selling premium is structurally negative in expected value (EV) until realized volatility falls back below implied.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Selling 22 while the market moves at 32</span>
+<p><strong>Step 1: the readings.</strong> SPX's 21-day <span class="gloss" data-facts="The volatility an asset actually showed over a past period, computed from its returns and annualized." tabindex="0" role="button">realized volatility</span> is 32%, and the VIX, its implied volatility, is 22%.</p>
+
+<p><strong>Step 2: the daily budget.</strong> By the rule of 16 (<a class="xref" href="5e.html">Chapter 5E</a>), a VIX of 22 prices a typical day of about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>22</mn><mi mathvariant="normal">/</mi><mn>16</mn><mo>=</mo><mn>1.4</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">22/16 = 1.4\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">22/16</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">1.4%</span></span></span></span></span>, while 32% volatility delivers days of about <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mi mathvariant="normal">/</mi><mn>16</mn><mo>=</mo><mn>2.0</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">32/16 = 2.0\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">32/16</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">2.0%</span></span></span></span></span>. Selling puts collects premium for 22% volatility while the index moves at 32%. The position is underpriced relative to the actual movement: this is the "negative VRP" regime.</p>
+</div>
+
+<p>The Edge Book measures the gap in volatility points, with realized volatility over the past 21 trading days:</p>
+
+<div class="eq" id="e-gap">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mtext>VRP</mtext><mi>t</mi></msub><mo>=</mo><msub><mi>σ</mi><mrow><mi>I</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>σ</mi><mrow><mi>R</mi><mo separator="true">,</mo> <mi>t</mi><mo>−</mo><mn>21</mn><mo separator="true">,</mo> <mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex"> \text{VRP}_t = \sigma_{I,t} - \sigma_{R,\,t-21,\,t} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">VRP</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8694em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0785em;">I</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0077em;">R</span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right: 0.1952em;"></span><span class="mord mathnormal mtight">t</span><span class="mbin mtight">−</span><span class="mord mtight">21</span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right: 0.1952em;"></span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(10H.3)</span></div>
+
+<p>Here <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mrow><mi>I</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\sigma_{I,t}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0785em;">I</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is today's implied volatility and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mrow><mi>R</mi><mo separator="true">,</mo> <mi>t</mi><mo>−</mo><mn>21</mn><mo separator="true">,</mo> <mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\sigma_{R,\,t-21,\,t}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7167em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3283em;"><span class="" style="top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0077em;">R</span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right: 0.1952em;"></span><span class="mord mathnormal mtight">t</span><span class="mbin mtight">−</span><span class="mord mtight">21</span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right: 0.1952em;"></span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span> the realized volatility (RV) over the last 21 days. In the example, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>VRP</mtext><mi>t</mi></msub><mo>=</mo><mn>22</mn><mo>−</mo><mn>32</mn><mo>=</mo><mo>−</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\text{VRP}_t = 22 - 32 = -10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">VRP</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">22</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">32</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">−</span><span class="mord">10</span></span></span></span></span> points, which signals an unfavorable regime for selling premium. The gap is a backward-looking proxy: the <span class="gloss" data-facts="The payment option sellers earn for taking the other side of investors who want to hedge volatility, seen as implied volatility above the volatility that follows, on average." tabindex="0" role="button">variance risk premium</span> of <a class="xref" href="10c.html">Chapter 10C</a> compares implied variance with the variance <em>expected</em> to follow, which no one can observe in advance.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Realized above implied</strong> over 21 days (a negative gap): halt new short-volatility entries.</li>
+<li><strong>Realized above implied plus 5 volatility points:</strong> close existing short volatility if the position's size requires it. In the example, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mo>&gt;</mo><mn>22</mn><mo>+</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">32 &gt; 22 + 5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6835em; vertical-align: -0.0391em;"></span><span class="mord">32</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">22</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">5</span></span></span></span></span>, so this step applies.</li>
+<li><strong>Realized back below implied:</strong> permit re-entry over 5 sessions.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Realized volatility can stay elevated for weeks: in March 2020 it stayed above 40% for more than 6 weeks. The timing of mean reversion is unpredictable. And some episodes of negative VRP resolve through implied volatility jumping, which makes your short puts worse, rather than through realized volatility falling.</p>
+</div>
+
+<p>Combine this filter with the term structure as a layered filter. Contango <em>and</em> realized below implied is a green light for selling premium; either condition violated is a pause. <a class="xref" href="11a.html">Chapter 11A</a>'s dashboard reads the same gap, the implied minus realized spread, as the variance premium available to a seller.</p>
+
+<h2 id="the-liquidity-regime">4 · The liquidity regime</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Funding stress propagates non-linearly: when banks become reluctant to lend to one another, leveraged players cut their positions and risk assets sell off together. The <span class="gloss" data-facts="The ICE BofA Treasury MOVE Index: an index of the implied volatility of options on US Treasury bonds, the bond market's counterpart of the VIX." tabindex="0" role="button">MOVE index</span> measures the volatility of the bond market, and its spikes mark stress in fixed income, which often precedes stress in equities.</p>
+</div>
+
+<p>The <strong><span class="gloss" data-facts="The gap between the rate at which banks lend to one another for three months and the three-month Treasury bill rate: originally LIBOR minus the bill rate, now read with SOFR. It widens when banks grow reluctant to lend." tabindex="0" role="button">TED spread</span></strong> measures that reluctance. It was the 3-month LIBOR rate, at which banks lent to one another, minus the 3-month Treasury bill (T-bill) rate. The Edge Book now reads it as SOFR minus the T-bill rate. The third gauge is the high-yield <span class="gloss" data-facts="The extra yield a bond pays over Treasuries of similar maturity, after allowing for options built into it, such as the issuer's right to repay early. For a bond index it is the market's price of credit risk. Abbreviated OAS." tabindex="0" role="button">option-adjusted spread</span> (HY OAS), the extra yield that <span class="gloss" data-facts="A bond rated below investment grade, which pays a higher yield in return for a greater risk that its issuer defaults. Also called a junk bond." tabindex="0" role="button">high-yield bonds</span> pay over Treasuries.</p>
+
+<div class="worked">
+<span class="ct">Worked example: Three readings of the TED spread</span>
+<p><strong>Step 1: normal, 20 to 30 bps.</strong> Banks lend to each other freely, and funding costs barely register in other markets.</p>
+
+<p><strong>Step 2: elevated, 100 bps.</strong> Funding strain is visible, and leveraged funds are reducing their positions.</p>
+
+<p><strong>Step 3: crisis, 250 to 400 bps,</strong> as in 2008 and March 2020. Funding stress is acute, and everything correlates.</p>
+</div>
+
+<p>The filter is a composite, triggered by any one of three measures of stress:</p>
+
+<div class="eq" id="e-liquidity">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi>L</mi><mi>t</mi></msub><mo>=</mo><mn mathvariant="double-struck">1</mn><mo stretchy="false">{</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mtext>TED</mtext><mo>&gt;</mo><msub><mi>τ</mi><mn>1</mn></msub><mtext>&nbsp;or</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mtext>MOVE</mtext><mo>&gt;</mo><msub><mi>τ</mi><mn>2</mn></msub><mtext>&nbsp;or</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mtext>HY&nbsp;OAS</mtext><mo>&gt;</mo><msub><mi>τ</mi><mn>3</mn></msub><mo stretchy="false">}</mo></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex"> \begin{aligned}
+L_t = \mathbb{1}\{&amp;\text{TED} &gt; \tau_1 \text{ or} \\
+&amp;\text{MOVE} &gt; \tau_2 \text{ or} \\
+&amp;\text{HY OAS} &gt; \tau_3\}
+\end{aligned} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 4.5em; vertical-align: -2em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 2.5em;"><span class="" style="top: -4.66em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mord">1</span><span class="mopen">{</span></span></span><span class="" style="top: -3.16em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"></span></span><span class="" style="top: -1.66em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 2em;"><span class=""></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 2.5em;"><span class="" style="top: -4.66em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"></span><span class="mord text"><span class="mord">TED</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.1132em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord text"><span class="mord">&nbsp;or</span></span></span></span><span class="" style="top: -3.16em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"></span><span class="mord text"><span class="mord">MOVE</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.1132em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mord text"><span class="mord">&nbsp;or</span></span></span></span><span class="" style="top: -1.66em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"></span><span class="mord text"><span class="mord">HY&nbsp;OAS</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.1132em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">}</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 2em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(10H.4)</span></div>
+
+<p>The <strong>indicator</strong> <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn mathvariant="double-struck">1</mn><mo stretchy="false">{</mo><mo>⋅</mo><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\mathbb{1}\{\cdot\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">1</span><span class="mopen">{</span><span class="mord">⋅</span><span class="mclose">}</span></span></span></span></span> equals 1 when the condition inside it is true and 0 otherwise, so <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>L</mi><mi>t</mi></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">L_t = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span> as soon as any one gauge crosses its threshold <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi></mrow><annotation encoding="application/x-tex">\tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4306em;"></span><span class="mord mathnormal" style="margin-right: 0.1132em;">τ</span></span></span></span></span>. The Edge Book's rough thresholds are a TED spread above 200 bps, a MOVE index above 150 and an HY OAS above 600 bps. They are not fixed, so recalibrate them on rolling history. With a MOVE of 160 and the other two gauges calm, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>L</mi><mi>t</mi></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">L_t = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1</span></span></span></span></span>.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>When liquidity is stressed, cut all leveraged and short-volatility exposure by 50%, cut equity beta by 25%, and halt new tactical positions until the gauges normalize.</p>
+</div>
+
+<p>This filter matters most for selling premium, because in liquidity events all premium-selling sleeves correlate at about 1.0 (<a class="xref" href="13g.html">Chapter 13G</a>). The diversification you thought you had between put credit spreads (PCS), covered calls (CC), 0DTE trades and condors evaporates, since all of them are short volatility in different wrappers. Liquidity filters are the strongest defense against this.</p>
+
+<p>The dashboard of <a class="xref" href="11a.html">Chapter 11A</a> reads the same instruments with different lines: HY OAS above 450 bps as elevated and above 700 as stress, and a MOVE above 120, sustained, as stress in rates. The Edge Book's full-size conditions, later in this chapter, are stricter still for calm: a MOVE below 100 and an HY OAS below 500 bps. Thresholds on these gauges are conventions to calibrate, not constants.</p>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Liquidity indicators can be late: the damage to equities is often done before credit and funding markets reflect it. Use this as one layer of the filter, not as the only one.</p>
+</div>
+
+<h2 id="the-sign-of-dealer-gamma-at-low-confidence">5 · The sign of dealer gamma, at low confidence</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Dealers who have sold options hedge to stay neutral to direction. When they are net long gamma, their hedging is <em>stabilizing</em>: they sell into rallies and buy into dips. When they are net short gamma, it is <em>destabilizing</em>: they buy into rallies and sell into dips, amplifying moves.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Ten billion dollars of gamma</span>
+<p><strong>Step 1: long gamma.</strong> Suppose dealers are net long gamma worth $10B per 1% move, in the dollar-gamma units of <a class="xref" href="8a.html">Chapter 8A</a>. A 1% rally raises their delta by about $10B, so they sell about $10B of index exposure to stay hedged. That selling damps the rally: implied volatility falls and range trades develop.</p>
+
+<p><strong>Step 2: short gamma.</strong> If dealers are net short the same amount, the same 1% rally <em>lowers</em> their delta by $10B, and they must buy. The buying amplifies the move: implied volatility rises and trends extend.</p>
+</div>
+
+<p><span class="gloss" data-facts="An estimate of the total gamma that dealers hold across all strikes, and so of how much hedging they must do as the index moves. Abbreviated GEX." tabindex="0" role="button">Gamma exposure</span> (GEX) adds up this hedging across every strike:</p>
+
+<div class="eq" id="e-gex">
+<span><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>GEX</mtext><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi mathvariant="normal">Γ</mi><mi>i</mi></msub><mo>⋅</mo><msub><mtext>OI</mtext><mi>i</mi></msub><mo>⋅</mo><msub><mi>M</mi><mi>i</mi></msub><mo>⋅</mo><msub><mi>d</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex"> \text{GEX} = \sum_i \Gamma_i \cdot \text{OI}_i \cdot M_i \cdot d_i </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6833em;"></span><span class="mord text"><span class="mord">GEX</span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 2.3277em; vertical-align: -1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.05em;"><span class="" style="top: -1.8723em; margin-left: 0em;"><span class="pstrut" style="height: 3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span class="" style="top: -3.05em;"><span class="pstrut" style="height: 3.05em;"></span><span class=""><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 1.2777em;"><span class=""></span></span></span></span></span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">OI</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">M</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8444em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span>
+<span class="eqnum">(10H.5)</span></div>
+
+<p>Here <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Γ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\Gamma_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord">Γ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> is the gamma of the options at strike <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></span>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>OI</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\text{OI}_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">OI</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> their <span class="gloss" data-facts="The number of contracts of one option that have been opened and not yet closed or expired. It rises when both sides of a trade open a position and falls when both close one." tabindex="0" role="button">open interest</span>, <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">M_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.109em;">M</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: -0.109em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> the contract multiplier and <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">d_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8444em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3117em;"><span class="" style="top: -2.55em; margin-left: 0em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span> the direction, +1 or −1, for whether dealers are long or short them. The direction is the part that depends on an assumption about who holds which strikes. Public GEX models, such as those of SqueezeMetrics and SpotGamma, make assumptions that may be unreliable. Written this way, GEX counts the shares dealers trade for each point the index moves. <a class="xref" href="8a.html">Chapter 8A</a> builds the full formula, in dollars per 1% move, and shows how the sign flips with the convention.</p>
+
+<h3 id="the-evidence-2">The evidence</h3>
+
+<ul>
+<li><strong>Garleanu, Pedersen and Poteshman (2009)</strong>, "Demand-Based Option Pricing", in the <em>Review of Financial Studies</em> (RFS), established the theoretical link between dealer positioning and option prices.</li>
+<li><strong>A practitioner narrative</strong> about dealer hedging effects grew from 2017 to 2022.</li>
+<li><strong>A Cboe study of 2025</strong>, Mandy Xu's "0DTEs Decoded" (May 2, 2025), estimates that 0DTE market-maker gamma hedging is approximately <strong>0.2% of SPX daily liquidity</strong>, much smaller than retail GEX narratives suggest.</li>
+</ul>
+
+<h3 id="why-the-edge-book-downgrades-it">Why the Edge Book downgrades it</h3>
+
+<p>Three reasons move GEX from an edge to a low-confidence filter:</p>
+
+<ol>
+<li><strong>Public GEX models are model-dependent.</strong> Vendors give different numbers because they make different assumptions about who is long and short which strikes.</li>
+<li><strong>The explosion of <span class="gloss" data-facts="Options with zero days to expiry: options traded on the day they expire." tabindex="0" role="button">0DTE</span> options after 2022 changed the structure.</strong> GEX models built before 2022 assumed that monthly and weekly options dominated, which is no longer true.</li>
+<li><strong>The Cboe finding</strong> that 0DTE market-maker hedging is about 0.2% of liquidity directly contradicts the narrative that dealer flows dominate the day. The finding covers same-day hedging only, so applying it to GEX and its walls, built mostly from longer-dated open interest, extends the measurement.</li>
+</ol>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li>Use the sign of GEX, positive or negative, as low-confidence regime context only.</li>
+<li>With GEX negative, expect higher realized volatility and wider intraday ranges, and consider trimming put-writing modestly.</li>
+<li>With GEX positive, expect compressed realized volatility and more <span class="gloss" data-facts="The pull of a strike with heavy open interest on the price of the underlying near expiry, as the hedging of dealers who are long options at that strike sells above it and buys below it. The measured effects are small: at least 16.5 basis points of return distortion per expiration for optionable single stocks, and at least 115 million dollars of S&amp;P 500 futures notional shifted per expiration day for the index." tabindex="0" role="button">pinning</span>; sizing put-writing normally is fine.</li>
+<li><strong>Do not trade specific levels,</strong> such as the "call wall" and the "put wall".</li>
+<li><strong>Do not size on the magnitude of GEX,</strong> which is too model-dependent.</li>
+</ul>
+
+<p>GEX is a soft input: ignore it if it disagrees with the term structure or the realized-volatility filter, and take slight confidence from it if it agrees. It is worth 10% to 15% of one filter's weight, not a filter of its own.</p>
+</div>
+
+<h3 id="where-this-books-two-traditions-disagree">Where this book's two traditions disagree</h3>
+
+<p>The chapters drawn from the Dealer Mechanics Lab give the sign far more weight. <a class="xref" href="8j.html">Chapter 8J</a> makes it, with the term structure, the decision boundary for choosing a strategy: premium selling and mean reversion with positive GEX and contango, directional and long-volatility trades with negative GEX and backwardation. <a class="xref" href="9a.html">Chapter 9A</a>'s regime table and the classifier of <a class="xref" href="9c.html">Chapter 9C</a> rest on the same pairing. The dashboard of <a class="xref" href="11a.html">Chapter 11A</a> also reads the distance to the <span class="gloss" data-facts="The level of the index at which estimated net dealer gamma crosses zero, so that dealer hedging damps moves on one side of it and amplifies them on the other. Vendors give it other names, and some define nearby levels of their own that are not the same thing." tabindex="0" role="button">gamma flip</span> and the nearest large strike, and the conviction score of <a class="xref" href="13b.html">Chapter 13B</a> asks whether dealer positioning supports a trade's path.</p>
+
+<p>The Edge Book's reasons for giving it less are the three above. Both traditions read the sign as regime context rather than a trade, and <a class="xref" href="8b.html">Chapter 8B</a> warns that the sign itself rests on a convention. Where they differ is weight: a central input for the Lab, a nudge worth a tenth of a filter for the Edge Book. Both reject scalping level by level (Chapters 10I and 13F).</p>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "I can sell at the call wall and buy at the put wall"</span>
+<p>Rules for trading specific levels are not retail edges. The levels shift during the day as positioning changes, and the Cboe finding that 0DTE market-maker hedging is about 0.2% of liquidity directly undermines the size of these effects. Use the sign of GEX as low-confidence context, not as a set of level-trading rules, and see <a class="xref" href="10i.html">Chapter 10I</a> for the full case.</p>
+</div>
+
+<h2 id="breadth-and-internals">6 · Breadth and internals</h2>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>An index's price can hide deterioration beneath it. When fewer and fewer stocks take part in a rally, the rally is fragile, and when <span class="gloss" data-facts="How many of an index's members take part in its move, often measured as the share of them trading above their own 50-day moving average. A rally on narrow breadth rests on a few large stocks." tabindex="0" role="button">breadth</span> improves while the index is flat, the regime is bullish.</p>
+</div>
+
+<div class="worked">
+<span class="ct">Worked example: Two divergences</span>
+<p><strong>Step 1: a narrow high.</strong> SPX is at an all-time high, but only 30% of its stocks, about 150 of 500, are above their 50-day <span class="gloss" data-facts="The average of a price over a fixed number of recent bars, recomputed as each new bar arrives, so that it traces a smoothed line through the price. The simple and exponential moving averages weight those bars differently." tabindex="0" role="button">moving average</span> (MA). The high is being driven by a few mega-caps, which is fragile: when the few stocks holding it up rotate, the index falls quickly.</p>
+
+<p><strong>Step 2: a broad base.</strong> SPX has been flat for 3 months, but 65% of its stocks, about 325 of 500, are above their 50-day average. Beneath the surface, participation is broad and improving, which is bullish although the index does not show it yet.</p>
+</div>
+
+<p>The usual measures are the shares of stocks above their 200-day and 50-day moving averages, new highs minus new lows, and the <strong>advance-decline line</strong>. That line is the running total, day after day, of the number of stocks that rose minus the number that fell.</p>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Breadth divergences are warning signs, not direct filters. Use them as context that confirms or disconfirms other signals:</p>
+
+<ul>
+<li><strong>A new high in SPX with deteriorating breadth:</strong> cut equity beta by 10% to 15%.</li>
+<li><strong>A flat SPX with improving breadth:</strong> maintain equity beta or raise it slightly.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Breadth can stay weak for months, as in the era of mega-cap concentration from 2018 to 2024. The signal often runs 6 to 12 months ahead of price, so acting on it early costs opportunity.</p>
+</div>
+
+<p><a class="xref" href="11a.html">Chapter 11A</a>'s dashboard uses the same measure with its own lines: under 40% of members above their 50-day average during a rally is narrow, and over 55% is part of its reading of a healthy uptrend.</p>
+
+<h2 id="stacking-the-filters">7 · Stacking the filters</h2>
+
+<p>The real value comes from stacking filters, because each one alone is noisy and conviction is highest where they agree. The Edge Book's conditions for full short-volatility exposure are these:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Gauge</th><th class="c-other">Green when</th></tr></thead><tbody><tr><td class="c-trial">VIX/VIX3M</td><td class="c-other">Below 1.00</td></tr><tr><td class="c-trial">21-day realized volatility</td><td class="c-other">Below implied</td></tr><tr><td class="c-trial">TED spread</td><td class="c-other">Below 100 bps</td></tr><tr><td class="c-trial">MOVE index</td><td class="c-other">Below 100</td></tr><tr><td class="c-trial">HY OAS</td><td class="c-other">Below 500 bps</td></tr><tr><td class="c-trial">GEX, a low-confidence supplement</td><td class="c-other">Positive</td></tr></tbody></table></div></div>
+
+<p>All green means full size, one yellow means cutting size by 25%, and two or more mean cutting it by 50% or more. This layered filtering is the operational discipline that turns individual signals, each with a mediocre signal-to-noise ratio, into a portfolio-level regime indicator with much higher confidence.</p>
+
+<div class="worked">
+<span class="ct">Worked example: One morning's stack</span>
+<p><strong>Step 1: the readings.</strong> Suppose, hypothetically, the VIX is 18 and the VIX3M 19.5, a ratio of 0.92, with realized volatility at 14% against implied 18%. The TED spread is 40 bps and HY OAS 430 bps, but the MOVE index is 112, and GEX is negative.</p>
+
+<p><strong>Step 2: count the lights.</strong> The term structure, the volatility gap, the TED spread and credit are green, while the MOVE index is yellow, above 100. GEX disagrees with the term structure and the realized-volatility filter, so by its own rule it is ignored.</p>
+
+<p><strong>Step 3: the size.</strong> One yellow means a 25% cut: a put-writing sleeve with a target of $100,000 runs at $75,000.</p>
+</div>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>Requiring every light to be green before full size is testing in parallel, in which any positive result stops you, and parallel testing raises sensitivity while lowering specificity. With two independent tests of 70% sensitivity and 90% specificity each, the pair misses stress only when both miss, so its sensitivity is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mn>0.</mn><msup><mn>3</mn><mn>2</mn></msup><mo>=</mo><mn>91</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">1 - 0.3^2 = 91\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.</span><span class="mord"><span class="mord">3</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">91%</span></span></span></span></span>. It passes a calm market only when both pass it, so its specificity is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.</mn><msup><mn>9</mn><mn>2</mn></msup><mo>=</mo><mn>81</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">0.9^2 = 81\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">0.</span><span class="mord"><span class="mord">9</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.8056em; vertical-align: -0.0556em;"></span><span class="mord">81%</span></span></span></span></span>. Missing a crash is far costlier than a paused sale, which is the case for accepting the extra false alarms.</p>
+</div>
+
+<p><strong>The cumulative impact of well-implemented filters is large.</strong> The biggest single contribution to a retail short-volatility account's survival is <em>not entering</em> during high-stress regimes. A disciplined stack of filters can prevent a drawdown like the PUT index's 33% in the global financial crisis (GFC) of 2008, by halting new entries before the worst losses. The cost is opportunity cost during false stress signals, the premium you do not capture. Empirically, the Edge Book finds that this opportunity cost is much smaller than the drawdown avoided.</p>
+
+<h2 id="what-is-not-a-filter">8 · What is not a filter</h2>
+
+<p>The negative space clarifies what a filter is. These are <em>not</em> filters:</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Not a filter</th><th class="c-endpoint">Why</th></tr></thead><tbody><tr><td class="c-trial">Specific GEX levels, such as a "call wall at 5500"</td><td class="c-endpoint">Too model-dependent</td></tr><tr><td class="c-trial">Single oscillator readings, such as a <span class="gloss" data-facts="An oscillator from 0 to 100 that compares recent gains with recent losses: 100 times the average gain divided by the sum of the average gain and the average loss over n bars. Abbreviated RSI. Above 70 is conventionally called overbought and below 30 oversold." tabindex="0" role="button">relative strength index</span> (RSI) at 30</td><td class="c-endpoint">Too noisy for sizing decisions</td></tr><tr><td class="c-trial">Headline news, such as a CPI print or a geopolitical event</td><td class="c-endpoint">Unpredictable and reactive</td></tr><tr><td class="c-trial">Concentrations of options open interest</td><td class="c-endpoint">Descriptive, not predictive</td></tr><tr><td class="c-trial">Sentiment indicators, such as the AAII survey or the Fear &amp; Greed index</td><td class="c-endpoint">Noisy, and useful only as contrarian signals</td></tr></tbody></table></div></div>
+
+<p>A filter needs continuous measurement, demonstrated value in predicting the regime, and a basis that is not a narrative. If a "filter" relies on a story to justify its use, it is probably not a filter.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>Write your filters down as rules before you need them: the gauge, the threshold, the number of closes, the size it sets and the condition for coming back. Read them at the same time each day, as the dashboard of <a class="xref" href="11a.html">Chapter 11A</a> suggests. When a rule fires, follow it even while your intuition says the position can recover, because the rule exists for exactly that moment (<a class="xref" href="13e.html">Chapter 13E</a>). Keep a log of each trigger and what followed, so that you can recalibrate a threshold that produces persistent false alarms (<a class="xref" href="10a.html">Chapter 10A</a>).</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Filters cry wolf, as brief backwardations and weak breadth do, and each false alarm forgoes premium. They arrive late, as liquidity gauges often do. Their thresholds also drift as a market's structure changes, so a level that worked in one decade misfires in the next, and the layered stack reduces each failure without removing it.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<ul>
+<li><strong>Size short volatility by the stack:</strong> full size only when every light is green, 75% with one yellow, 50% or less with two or more.</li>
+<li><strong>Act on persistence, not on a single close:</strong> 3 closes to step down, 5 to begin coming back, and 3 weeks to return to full size.</li>
+<li><strong>Never trade a filter directly.</strong> Hold no VXX, UVXY or VIX futures position because of a filter reading.</li>
+<li><strong>Give GEX only 10% to 15% of one filter's weight,</strong> and ignore it when it disagrees with the term structure or the realized-volatility gap.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: "if a filter has predictive value, I should trade it directly"</span>
+<p>Predictive value about <em>volatility</em> is not a tradable directional edge. The VIX has predictive value for stress, but trading it through VXX or UVXY costs 5% to 15% a year in roll decay. The information is real; the implementation is what loses money. Filters modulate other strategies, and they are not strategies themselves.</p>
+</div>
+
+<p>The negative space matters as much as the positive, and <a class="xref" href="10i.html">Chapter 10I</a> closes <a class="xref" href="10a.html">Part X</a> with the edges that are rejected outright, explaining why each one fails.</p>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>A filter sets a multiplier on positions you already hold. Its value is the losses it avoids, net of the premium it forgoes, and it gets no allocation of its own.</li>
+<li>The VIX/VIX3M ratio is the canonical filter: halt new short volatility above 1.00, halve the sleeve above 1.05, and close all but deep tails above 1.15, each after 3 closes.</li>
+<li>Realized volatility above implied, liquidity stress in the TED spread, the MOVE index or HY OAS, and narrow breadth each cut size further.</li>
+<li>The sign of dealer gamma is low-confidence context in the Edge Book, and a central input in the Dealer Mechanics Lab chapters.</li>
+<li>Stacked filters catch more stress than any single one, at the cost of more false alarms.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">9 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>State the canonical VIX term-structure filter, with its phased response.</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Watch the ratio of the VIX to the VIX3M. Above 1.00 for 3 closes, halt new short-volatility entries; above 1.05 for 3 closes, halt all put sales and cut the premium-selling sleeve by 50%; above 1.15 for 3 closes, close non-essential short volatility. After stress, once the ratio has been below 1.00 for 5 closes, re-enter at 25%, then 50%, then 100% of target over 3 weeks.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Why is GEX downgraded from an edge to a low-confidence filter?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Public GEX models are model-dependent, because vendors assume different holders for each strike. The explosion of 0DTE options after 2022 changed the structure those models assumed. And a Cboe study of 2025 put 0DTE market-maker hedging at about 0.2% of SPX daily liquidity, against the narrative that dealer flows dominate. So the sign is worth 10% to 15% of one filter's weight, and is ignored when it disagrees with the other filters.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>What three indicators define the liquidity filter, and what does it do when it fires?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The TED spread, the MOVE index and the high-yield option-adjusted spread, with rough thresholds of 200 bps, 150 and 600 bps, any one of which fires the filter. You then cut leveraged and short-volatility exposure by 50%, cut equity beta by 25% and halt new tactical positions until the gauges normalize.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>Why does layering filters give a better signal than any single filter?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Each filter alone has a mediocre signal-to-noise ratio. Requiring all of them to be green before full size is parallel testing, which catches stress that any single gauge misses: it raises sensitivity at the cost of more false alarms. In the parallel-testing example, two tests of 70% sensitivity reach 91% together. Since missing a crash costs far more than pausing a sale, the extra false alarms are worth paying for.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>Hypothetically, the VIX is 24 and the VIX3M 22.5, realized volatility is 26% against implied 24%, the TED spread is 60 bps, the MOVE 135, HY OAS 520 bps, and GEX is negative. What size does the stack allow a put-writing sleeve?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>The ratio is <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>24</mn><mi mathvariant="normal">/</mi><mn>22.5</mn><mo>=</mo><mn>1.07</mn></mrow><annotation encoding="application/x-tex">24/22.5 = 1.07</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord">24/22.5</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 0.6444em;"></span><span class="mord">1.07</span></span></span></span></span>, so the term structure is off green. If it has held above 1.05 for 3 closes, its own rule halts all put sales and cuts the sleeve by 50%. Realized volatility above implied, the MOVE above 100 and HY OAS above 500 bps are three more lights off green. With two or more, the stack says 50% or less, and with the term-structure rule firing you open nothing new. GEX agrees, which adds only slight confidence.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>A newsletter proposes the AAII sentiment survey as a filter. Does it meet the three requirements?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>It is measured weekly, not continuously. Its predictive value is noisy, and the Edge Book allows sentiment indicators only a contrarian use. Its use usually rests on a story about crowds being wrong at extremes. It fails the tests, so it is at most context, never a sizing rule.</p>
+</div></details>
+</div>
+</div>
+
+
+
+<nav class="chapnav" aria-label="Previous and next chapter">
+<a class="prev" href="10g.html" rel="prev"><span>Previous</span>10G · Calendar and flow effects</a>
+<a class="next" href="10i.html" rel="next"><span>Next</span>10I · What not to trade</a>
+</nav>
+
+</div>
+</main>
+</div>
+<script src="assets/book.js"></script>
+<script>
+
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- phased-ratio-filter ---------- */
+(function () {
+  var U = 'phased-ratio-filter';
+  var NN = DL.$(U + '-n'), HH = DL.$(U + '-h');
+  var D = 130, W0 = 56, W1 = 98, TAILS = 0.06, HALVE = 1.05, CLOSE = 1.15;
+
+  /* The made-up ratio: a calm level of 0.88 with persistent noise, a one-day spike to
+     1.08 on day 20, two closes at 1.03 and 1.02 on days 36 and 37, and a sustained
+     inversion from day 56 to day 96 that follows these key points, with a little noise. */
+  var HUMP = [[56, 0.90], [59, 0.97], [60, 1.02], [62, 1.08], [65, 1.17], [69, 1.24], [74, 1.20],
+              [79, 1.13], [84, 1.06], [88, 1.02], [91, 0.97], [96, 0.90]];
+  var X = (function () {
+    var r = DL.rng(5), x = [], b = 0;
+    for (var t = 0; t < D; t++) {
+      b = 0.7 * b + 0.018 * DL.gauss(r);
+      var v = 0.88 + b;
+      if (t >= W0 && t <= 96) {
+        var k = 0;
+        while (HUMP[k + 1][0] < t) k++;
+        var a = HUMP[k], c = HUMP[k + 1];
+        v = a[1] + (c[1] - a[1]) * (t - a[0]) / (c[0] - a[0]) + 0.35 * b;
+      }
+      if (t === 20) v = 1.08;
+      if (t === 21) v = 0.95;
+      if (t === 36) v = 1.03;
+      if (t === 37) v = 1.02;
+      if (t === 38) v = 0.96;
+      x.push(Math.round(v * 1000) / 1000);
+    }
+    return x;
+  })();
+
+  /* The chapter's table, at each close. A trigger needs N closes in a row above its line:
+     the halt line halts new sales, 1.05 cuts the size to half, 1.15 to the deep tails.
+     Once halted, 5 closes in a row below the halt line start the return: the size is at
+     least 25% of target for a week, at least 50% for a week, then 100%. A trigger during
+     the return stops it where it is. An episode runs from a trigger at full size until
+     full size with sales allowed again; it is a false alarm when it starts outside the
+     inversion (days 56 to 98). */
+  var st;
+  function run() {
+    var N = +NN.value, H = +HH.value;
+    var s = 1, halted = false, re = -1, above = [0, 0, 0], below = 0;
+    var size = [], stop = [], trig = [], eps = [], ep = null;
+    for (var t = 0; t < D; t++) {
+      var x = X[t];
+      above[0] = x > H ? above[0] + 1 : 0;
+      above[1] = x > HALVE ? above[1] + 1 : 0;
+      above[2] = x > CLOSE ? above[2] + 1 : 0;
+      below = x < H ? below + 1 : 0;
+      var want = above[2] >= N ? 3 : above[1] >= N ? 2 : above[0] >= N ? 1 : 0;
+      if (want > 0) {
+        if (!ep) { ep = { start: t, days: 0 }; eps.push(ep); }
+        halted = true;
+        re = -1;
+        if (want >= 2) s = Math.min(s, 0.5);
+        if (want >= 3) s = TAILS;
+      } else if (halted && below >= 5) {
+        halted = false;
+        if (s < 1) re = t;
+      }
+      if (re >= 0) {
+        var d = t - re;
+        if (d < 5) s = Math.max(s, 0.25);
+        else if (d < 10) s = Math.max(s, 0.5);
+        else { s = 1; re = -1; }
+      }
+      if (ep) ep.days += 1;
+      if (ep && !halted && re < 0 && s === 1) { ep.days -= 1; ep = null; }
+      size.push(s);
+      stop.push(halted);
+      trig.push(want);
+    }
+    var fa = eps.filter(function (e) { return e.start < W0 || e.start > W1; });
+    var lost = fa.reduce(function (n, e) { return n + e.days; }, 0);
+    /* the lag: from the inversion's first close above 1.00, where backwardation begins,
+       to the halt, and from its first close above 1.05 to the cut */
+    var t1 = null, t2 = null, a1 = null, a2 = null, u;
+    for (u = W0; u <= W1; u++) {
+      if (t1 == null && X[u] > 1) t1 = u;
+      if (t2 == null && X[u] > HALVE) t2 = u;
+    }
+    for (u = W0; u <= W1 && a1 == null; u++) if (stop[u]) a1 = u;
+    for (u = t2 == null ? D : t2; u <= W1 && a2 == null; u++) if (trig[u] >= 2) a2 = u;
+    st = { N: N, H: H, size: size, stop: stop, eps: eps, fa: fa.length, lost: lost,
+           lagHalt: t1 != null && a1 != null ? Math.max(0, a1 - t1) : null,
+           lagCut: t2 != null && a2 != null ? a2 - t2 : null };
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  /* a label centered above a point, on a paper patch so the path stays behind it */
+  function tag(p, x, y, text, color) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(text).width, px = p.X(x), py = p.Y(y) - 13;
+    px = Math.max(p.X(0) + w / 2 + 2, Math.min(p.X(D - 1) - w / 2 - 2, px));
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(px - w / 2 - 2, py - 7, w + 4, 14);
+    g.fillStyle = color;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(text, px, py);
+    g.restore();
+  }
+  var PAD = { l: 44, r: 12 };
+  var XS = [0, 20, 40, 60, 80, 100, 120];
+
+  run();
+  var drawRatio = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: D - 1, ymin: 0.8, ymax: 1.3,
+                              pad: { l: PAD.l, r: PAD.r, t: 16, b: 10 } });
+    DL.axes(p, { xs: XS, ys: [0.8, 0.9, 1.0, 1.1, 1.2, 1.3], x: false,
+                 y: function (v) { return DL.num(v, 2); } });
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), pla = DL.color('plain');
+    var g = p.g;
+    /* the inversion's days, faintly */
+    g.save();
+    g.fillStyle = DL.fade(pla, 0.07);
+    g.fillRect(p.X(W0), p.Y(1.3), p.X(96) - p.X(W0), p.Y(0.8) - p.Y(1.3));
+    g.restore();
+    DL.hline(p, st.H, { color: DL.color('accent'), dash: [5, 3], width: 1.3 });
+    DL.hline(p, HALVE, { color: soft, dash: [4, 3], width: 1 });
+    DL.hline(p, CLOSE, { color: soft, dash: [4, 3], width: 1 });
+    var xs = [];
+    for (var t = 0; t < D; t++) xs.push(t);
+    DL.line(p, xs, X, { color: DL.color('familiar'), width: 1.6 });
+    /* each false alarm's first trigger, marked on the path */
+    st.eps.forEach(function (e) {
+      if (e.start < W0 || e.start > W1) p.dot(e.start, X[e.start], { r: 4, color: pla, ring: true });
+    });
+    p.text(D - 1, CLOSE, 'tails only', { align: 'right', dy: -3, font: font(), color: soft });
+    p.text(D - 1, HALVE, 'halve', { align: 'right', dy: -3, font: font(), color: soft });
+    p.text(D - 1, st.H, 'halt', { align: 'right', dy: st.H > HALVE - 0.025 ? 13 : -3, font: font(),
+                                  color: DL.color('accent') });
+    tag(p, 20, 1.08, '1-day spike', faint);
+    tag(p, 36.5, 1.03, '2 days', faint);
+    tag(p, 69, 1.24, 'sustained inversion', faint);
+    p.text(0, 1.3, 'VIX / VIX3M', { dx: 4, dy: 12, font: font(), color: soft });
+  });
+
+  var drawSize = DL.figure(U + '-s', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: D - 1, ymin: 0, ymax: 1.22,
+                              pad: { l: PAD.l, r: PAD.r, t: 10, b: 24 } });
+    DL.axes(p, { xs: XS, ys: [0.25, 0.5, 1], grid: true,
+                 x: function (v) { return v === 0 ? 'day 0' : String(v); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    var g = p.g, pla = DL.color('plain'), acc = DL.color('accent');
+    /* days with new sales halted, as a strip along the top */
+    g.save();
+    g.fillStyle = DL.fade(pla, 0.55);
+    for (var t = 0; t < D; t++) {
+      if (st.stop[t]) g.fillRect(p.X(t - 0.5), p.Y(1.17), Math.max(1, p.X(t + 0.5) - p.X(t - 0.5)), p.Y(1.07) - p.Y(1.17));
+    }
+    g.restore();
+    var pts = [];
+    for (var u = 0; u < D; u++) { pts.push([u - 0.5, st.size[u]]); pts.push([u + 0.5, st.size[u]]); }
+    p.path(pts, { color: acc, width: 2 });
+    p.text(0, TAILS, 'tails', { dx: -7, align: 'right', baseline: 'middle', font: font(),
+                                color: DL.color('ink-faint') });
+    p.text(D - 1, 1.12, 'no new sales', { align: 'right', dx: 0, dy: -8, font: font(), color: pla });
+    p.text(0, 1.12, 'sleeve size', { dx: 4, dy: -8, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    run();
+    DL.out(U + '-n-o', st.N === 1 ? '1 close' : st.N + ' closes');
+    DL.out(U + '-h-o', DL.num(st.H, 2));
+    DL.out(U + '-fa', 'false alarms: ' + st.fa);
+    DL.out(U + '-lost', 'calm days halted or cut: ' + st.lost);
+    DL.out(U + '-lag', st.lagHalt == null ? 'lag: none' :
+           'lag: ' + st.lagHalt + (st.lagHalt === 1 ? ' day' : ' days') + ' to halt, ' +
+           (st.lagCut == null ? '—' : st.lagCut) + ' to halve');
+    drawRatio();
+    drawSize();
+  }
+  update();
+  DL.bind([U + '-n', U + '-h'], update);
+})();
+
+</script>
+</body>
+</html>
