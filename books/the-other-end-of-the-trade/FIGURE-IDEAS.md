@@ -1,6 +1,6 @@
 # Where a new figure would help
 
-460 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
+459 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
 
 ## 1A · What a return is
 
@@ -454,7 +454,6 @@
 
 ## 11B · Conditional mean reversion
 
-- *The thesis, stated with its conditions.* Pooled against conditional reversal. A synthetic series switches between a calm regime with mean reversion and a stressed regime with momentum. The reader sets each regime's share of days and the size of each effect. Bars show the next-day mean after down stretches, pooled and by regime, beside a line for the round-trip cost. It shows a pooled edge too small to pay costs sitting on top of a calm-regime edge that does, and a stressed regime that costs money.
 - *Three nested horizons.* Three clocks on one chart. A price series drawn three times, at weekly, daily and 30-minute resolution, with each layer's reading shaded beneath its own panel: the macro prior, the structural setup and the gamma path. The reader scrubs through time and sees the three layers change at their own speeds. It shows a Layer 3 "go" flickering many times inside a single Layer 1 "suspended" stretch, none of which may be acted on.
 - *The decision tree.* The decision tree you can drive. Three rows of toggles, one per layer: the composite signal, the term structure and the drift for Layer 1; the stage, the pullback level and relative strength for Layer 2; the GEX sign and the distance to the flip for Layer 3. The tree lights the path the inputs take and stops at the first failed gate, printing "no trade", "skip" or "take the trade". It shows how few combinations reach the bottom, and that no setting of a lower layer can rescue a failed higher one.
 - *The decision tree.* The funnel of a year. A bar of 252 trading days narrows through the three gates, with the reader setting each gate's pass rate and whether the gates are independent or correlated. Beside it, the same capital is spread over every setup or concentrated in the survivors, with a readout of each approach's expected yearly return and drawdown under a conditional edge the reader sets. It shows what the aggressive filter costs in activity and what it buys in edge per trade.
