@@ -1,6 +1,6 @@
 # Questions for the author
 
-384 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
+379 questions the rewrite raised, collected by `tools/spx.py` from the "Questions for the author" in `notes/*.md`. Answer them there, or in the chapter, not here.
 
 ## 1A · What a return is
 
@@ -243,7 +243,6 @@
 - The tabulation of customer 0DTE buys (14.95%) against sells (14.06%): the research could not tie it to the Amaya study with certainty. Which source is it?
 - Does Cboe's measure of market makers' 0DTE gamma include positions opened on earlier days that became 0DTE? Its notes do not say, and Adams, Fontaine and Ornthanalai locate most of the dealers' same-day gamma there.
 - SqueezeMetrics' formula, its reasoning about calls and puts, the monitor's $64,521,235 example, SpotGamma's statements and Tier1 Alpha's "$1.7 billion to hedge per index point" were seen only in search summaries. Check them against the pages before publication, especially Tier1 Alpha's unit and SqueezeMetrics' monitor unit (one summary says "thousands of dollars per SPX point").
-- The classification-error caption calls Savickas and Wilson "one study of equity options". The research describes a CBOE data set that includes index-option complex trades. Should the caption say "option trades on the CBOE"?
 - The JPM collar's 35,000 contracts per leg and its description come from vendor commentary, not a JPMorgan document. Is there a primary source?
 
 ## 8C · The map
@@ -251,7 +250,6 @@
 - Every Skylit quotation comes from search-result summaries of Skylit's pages, which the research could not open (practice.md, "How this file was built"); they may carry light paraphrase. Check each against the live pages before publication.
 - The third-party figures (members, plan prices, star ratings, the FAQ's 85% to 90%, "~50% win rates", the chat bot's 15-second refresh) come from review and affiliate pages of unknown independence. Keep them, as now labeled, or cut them?
 - MenthorQ's High Volatility Level "reverses slope" on "the cumulative gamma curve". If that curve is cumulative GEX by strike, the level is where the strike profile changes sign, which differs from the flip. The text says only that the description does not settle it. Is there a MenthorQ page that does?
-- gex-heatmap's caption says that at spot 6,010 the same-day cell "all but vanishes". With 15 minutes left it falls from +$12.15 billion to +$1.82 billion, and remains the largest cell (ring 1 stays); only at 6,015 does it fall to +$0.17 billion and the largest cell move to 6,100 on the 30-day column. The text gives both; the caption might say 6,015.
 - The chapter uses three Skylit "ring" roles computed on the book's own made-up chain (King, floor, two Kings). They are the vendor's definitions applied to the book's figure, not Skylit's output. Is that framing clear enough?
 
 ## 8D · Two regimes
@@ -266,7 +264,6 @@
 
 - Golez and Jackwerth (2012): does the body of the paper support the reading that the time decay of hedges alone produced anti-pinning? The text relies on a summary of the results for it.
 - Cboe's 2023 note gives market makers' net same-day gamma as "$170mm to $670mm throughout the day". practice.md marks its per-1% unit as implied but unverified; the text quotes the figure without a unit beside the figure's $11.7 billion per 1% move. Please confirm the unit.
-- The 0DTE paper's author order (Amaya, Garcia-Ares, Pearson and Vasquez in theory.md and practice.md; Vasquez first in evidence.md): the text uses the first.
 - Should the chapter give Skylit's King Node more space, or leave it to Chapter 8C and keep only the test against the theory here?
 
 ## 8F · Beyond gamma
@@ -279,7 +276,6 @@
 
 ## 8G · The evidence
 
-- The Cboe-hosted paper (SSRN 5113405): is the author order Amaya, Garcia-Ares, Pearson and Vasquez, or Vasquez, Amaya, Pearson and Garcia-Ares? The research files disagree, and the text (with Chapter 8B) and the figure's labels differ.
 - Adams and co-authors (SSRN 5641974): which SSRN date should the book give (October 17 or December 3, 2025), and does the paper use the 2022 Tuesday and Thursday additions as its variation?
 - Barbon and Buraschi: which version's effect sizes should the book cite, and how does the paper sign clients' positions?
 - Ni, Pearson, Poteshman and White: if the book wants their result on large moves, the paper's table gives it in units the research did not see.
@@ -293,10 +289,9 @@
 - Dealer positioning in March 2020 and August 2024: partly answered. For March 2020 the research supports the direction (Jackwerth 2020; the historical short-put book) but finds no estimate of its size; for August 2024 it finds no source, and the BIS found no role for hedging in the VIX spike. Is there a source the Lab relied on?
 - "Volmageddon's VIX call wing was in FLEX" and dealers "short gamma in vol-of-vol": no study found supports either; the text labels them the Lab's interpretation. Is there a source?
 - The Lab's $3.5 billion (XIV and SVXY combined) and $1.9 billion (XIV's AUM): sources? Neither was found.
-- The Lab's intraday low of 2,280 on March 16, 2020: source? It cannot fit "down approximately 12%". Chapter 2E carries the same "intraday low about 2280"; it may need the same correction.
+- The Lab's intraday low of 2,280 on March 16, 2020: source? It cannot fit "down approximately 12%". (Chapter 2E's table now gives the day's close, 2,386, instead.)
 - The SEC staff report's short-interest peak: the research saw about 122.97% in a search summary, with the exact figure and date unverified. Please check the report before publication; the text says "about 123%".
 - The $483 intraday high and the $193.60 close: the research verified the close and the 44.3% fall from a search summary of the House committee's memorandum, but not the $483 high. Please check.
-- Chapters 5D, 7B and 9A state the dealers' negative vomma in Volmageddon as fact. Should they carry the same label as here (the Lab's interpretation)?
 - Robinhood's deposits: answered. The testimony was before the House Financial Services Committee (Tenev's, per the research), and the committee's staff memorandum gives the figures the text now quotes.
 - August 5, 2024: Li and Askanazi's starting VIX of 23.9 and the BIS's "up 180% to almost 66" do not share a base. From 23.9, 66 is a rise of 176%; 180% implies a base near 23.5. Is 23.9 a slip for 23.39, or do the two measure from different prints? (From the Part VIII maths check.)
 
