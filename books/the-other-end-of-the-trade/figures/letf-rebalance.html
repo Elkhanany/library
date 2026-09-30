@@ -1,0 +1,192 @@
+<!--
+name: rebalancing calculator
+source: new for this book: chapter 8H, "A rebalancing calculator for any leverage"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-lev">leverage L</label>
+      <input type="range" id="{{uid}}-lev" min="-3" max="3" step="0.5" value="-1">
+      <output id="{{uid}}-lev-o" for="{{uid}}-lev"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-aum">assets A</label>
+      <input type="range" id="{{uid}}-aum" min="50" max="5000" step="50" value="100">
+      <output id="{{uid}}-aum-o" for="{{uid}}-aum"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-move">the day's move x</label>
+      <input type="range" id="{{uid}}-move" min="-30" max="30" step="1" value="10">
+      <output id="{{uid}}-move-o" for="{{uid}}-move"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-off">offset by investors</label>
+      <input type="range" id="{{uid}}-off" min="0" max="100" step="5" value="0">
+      <output id="{{uid}}-off-o" for="{{uid}}-off"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-fac"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gross"></output></div>
+    <div class="ctrl"><output id="{{uid}}-net"></output></div>
+    <div class="ctrl"><output id="{{uid}}-gex"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Every inverse or leveraged product trades with the move.</b> Each bar is the
+  trade a product must make at the close to restore its leverage after the underlying moves x,
+  L(L − 1) × x × A, for the assets A the slider sets, and the dashed curve covers the leverages
+  between the bars. The first state is the chapter's worked example: a −1× product with $100
+  million buys $20 million after a 10% rise. Every bar points the way the day moved, and the 1×
+  product does not trade at all. The last slider is an assumption to try, not an estimate: the
+  share of the trade that investors' flows into and out of the funds offset, as Ivanov and
+  Lenkey find they do, with the faded bars keeping the gross trade.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var LEV = DL.$(U + '-lev'), AUM = DL.$(U + '-aum'), MOVE = DL.$(U + '-move'), OFF = DL.$(U + '-off');
+  var LISTED = [-3, -2, -1, 1, 2, 3];
+
+  /* the chapter's rule: after the underlying returns x, a product with assets A that targets
+     an exposure of L x A must trade L(L - 1) x A at the close, in dollars of the underlying;
+     positive is buying. Investors' flows against the rebalance take a share off it. */
+  function factor(L) { return L * (L - 1); }
+  var st;
+  function compute() {
+    var L = +LEV.value, A = +AUM.value, x = +MOVE.value / 100, s = +OFF.value / 100;
+    var m = factor(L), gross = m * x * A;
+    st = { L: L, A: A, x: x, s: s, m: m, gross: gross, net: gross * (1 - s),
+           gex: -m * A * 0.01 };
+  }
+
+  /* dollars given in millions, as $20M, $2.5M, $120M, $1.2B, with no sign */
+  function money(v) {
+    var a = Math.abs(v);
+    if (Number(a.toFixed(2)) === 0) return '$0';
+    if (a >= 1000) return '$' + Number((a / 1000).toFixed(2)) + 'B';
+    return '$' + Number(a.toFixed(a < 10 ? 2 : a < 100 ? 1 : 0)) + 'M';
+  }
+  /* the same with a sign: + for buying, − for selling */
+  function smoney(v) {
+    var s = money(v);
+    return s === '$0' ? s : (v > 0 ? '+' : DL.MINUS) + s;
+  }
+  /* text with a halo of the page's color, so it reads over the bars and the curve */
+  function label(p, x, y, s, color, dy, below) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    g.textAlign = 'center';
+    g.textBaseline = below ? 'top' : 'bottom';
+    g.lineJoin = 'round';
+    g.lineWidth = 3;
+    g.strokeStyle = DL.color('paper');
+    g.strokeText(s, p.X(x), p.Y(y) + dy);
+    g.fillStyle = color;
+    g.fillText(s, p.X(x), p.Y(y) + dy);
+    g.restore();
+  }
+  function lev(L) { return DL.num(L, L % 1 ? 1 : 0) + '×'; }
+  function fac(m) { var t = String(Number(m.toFixed(2))); return t.replace('-', DL.MINUS); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var x = st.x, A = st.A, keep = 1 - st.s;
+    /* the scale follows the largest trade, the −3× product's twelve times x times A, so the
+       bars keep their proportions and the axis carries the size */
+    var span = 12 * Math.max(Math.abs(x), 0.01) * A;
+    var up = x >= 0;
+    var lo = up ? -span * 0.16 : -span * 1.22, hi = up ? span * 1.22 : span * 0.16;
+    var p = new NMT.Plot(c, { xmin: -3.6, xmax: 3.6, ymin: lo, ymax: hi,
+                              pad: { l: 52, r: 12, t: 24, b: 40 } });
+    DL.axes(p, { xs: [-3, -2, -1, 0, 1, 2, 3], ny: 5,
+                 x: function (v) { return v === 0 ? '0' : lev(v); },
+                 y: function (v) { return v === 0 ? '0' : (v < 0 ? DL.MINUS : '') + money(v); } });
+    var withC = DL.color('plain'), against = DL.color('insight'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint');
+    function hue(v) { return v * x > 0 || (x === 0 && v > 0) ? withC : against; }
+
+    /* the gross trade faded, the net trade solid, at the listed leverages */
+    var gross = LISTED.map(function (L) { return factor(L) * x * A; });
+    var net = gross.map(function (v) { return v * keep; });
+    if (st.s > 0) {
+      DL.bars(p, LISTED, gross, { w: 0.56, color: function (v) { return DL.fade(hue(v), 0.2); } });
+      p.g.save();
+      p.g.lineWidth = 1;
+      LISTED.forEach(function (L, i) {
+        if (!gross[i]) return;
+        var x0 = p.X(L - 0.28), x1 = p.X(L + 0.28), y0 = p.Y(0), y1 = p.Y(gross[i]);
+        p.g.strokeStyle = DL.fade(hue(gross[i]), 0.75);
+        p.g.strokeRect(Math.round(x0) + 0.5, Math.round(Math.min(y0, y1)) + 0.5,
+                       Math.round(x1 - x0) - 1, Math.round(Math.abs(y1 - y0)) - 1);
+      });
+      p.g.restore();
+    }
+    DL.bars(p, LISTED, net, { w: 0.56, color: function (v, i) {
+      return DL.fade(hue(v), LISTED[i] === st.L ? 0.9 : 0.5); } });
+    /* any leverage in between, and the one chosen */
+    p.fn(function (L) { return L < -3 || L > 3 ? NaN : factor(L) * x * A * keep; },
+         { color: faint, width: 1.2, dash: [4, 3] });
+    DL.hline(p, 0, { color: DL.color('rule'), width: 1.2 });
+    var yv = st.net, on = LISTED.indexOf(st.L) >= 0;
+    p.dot(st.L, yv, { r: 5, color: Math.abs(yv) < 1e-9 ? faint : hue(yv), ring: true });
+
+    /* each bar's net trade, beyond its end */
+    LISTED.forEach(function (L, i) {
+      var v = net[i], pos = v > 0 || (v === 0 && up);
+      label(p, L, v, money(v), L === st.L && v ? hue(v) : soft, pos ? -6 : 6, !pos);
+    });
+    if (!on) {
+      var pos2 = yv > 0 || (yv === 0 && up);
+      label(p, st.L, yv, money(yv), yv ? hue(yv) : soft, pos2 ? -8 : 8, !pos2);
+    }
+    p.text(-3.6, hi, up ? 'trade at the close, buying up' : 'trade at the close, selling down',
+           { dx: -46, dy: -8, color: soft, font: font() });
+    p.text(3.6, hi, "the day's move " + DL.signed(x * 100, 0) + '%',
+           { dx: -2, dy: -8, align: 'right', color: withC, font: font() });
+    p.text(3.6, lo, 'leverage L', { dx: -2, dy: 22, align: 'right',
+           baseline: 'top', color: soft, font: font() });
+  });
+
+  /* the worked example's steps for the chosen product: the day moves its assets to
+     A(1 + Lx) and its exposure to LA(1 + x); the new target is L times the new assets */
+  function verdict() {
+    var L = st.L, x = st.x, A = st.A;
+    if (x === 0) return ['No move, no trade.', 'The exposure still matches its target.'];
+    if (Math.abs(st.m) < 1e-9)
+      return ['No trade.', L === 1 ? 'At 1× the exposure grows exactly as the assets do, so there is nothing to rebalance.'
+                                   : 'At 0× the product holds no exposure to rebalance.'];
+    function ex(v) { return (v < 0 ? DL.MINUS : '') + money(v); }
+    var pct = DL.num(x * 100, 0) + '%';
+    var steps = 'After a day ' + (x > 0 ? 'up ' : 'down ') + DL.num(Math.abs(x) * 100, 0) + '%, a ' +
+                lev(L) + " product's assets go from " + money(A) + ' to ' + money(A * (1 + L * x)) +
+                ' and its exposure from ' + ex(L * A) + ' to ' + ex(L * A * (1 + x)) + '. Its target is now ' +
+                ex(L * A * (1 + L * x)) + ', so it must ' + (st.gross > 0 ? 'buy ' : 'sell ') + money(st.gross) +
+                ' at the close: ' + fac(st.m) + ' × ' + (x < 0 ? '(' + pct + ')' : pct) + ' × ' + money(A) + '.';
+    var off = st.s > 0 ? " Investors' flows offset " + DL.num(st.s * 100, 0) + '% of it, leaving ' +
+                         money(st.net) + '.' : '';
+    if (st.m > 0) return ['With the move.', steps + off];
+    return ['Against the move.', steps + ' Between 0× and 1× the rule trades like a long-gamma hedge.' + off];
+  }
+
+  function update() {
+    compute();
+    DL.out(U + '-lev-o', lev(st.L));
+    DL.out(U + '-aum-o', money(st.A));
+    DL.out(U + '-move-o', DL.signed(st.x * 100, 0) + '%');
+    DL.out(U + '-off-o', DL.num(st.s * 100, 0) + '%');
+    DL.out(U + '-fac', 'L(L − 1) = ' + fac(st.m));
+    DL.out(U + '-gross', 'trade at the close = ' + smoney(st.gross));
+    DL.out(U + '-net', "net of investors' flows = " + smoney(st.net));
+    DL.out(U + '-gex', 'like dealer GEX of ' + smoney(st.gex) + ' per 1%');
+    var v = verdict();
+    DL.out(U + '-vk', v[0]);
+    DL.out(U + '-vt', v[1]);
+    draw();
+  }
+  update();
+  DL.bind([U + '-lev', U + '-aum', U + '-move', U + '-off'], update);
+})();
+</script>
