@@ -1,0 +1,189 @@
+<!--
+name: level test planner
+source: new for this book: chapter 8J, "A test planner"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-p0">base rate</label>
+      <input type="range" id="{{uid}}-p0" min="50" max="90" step="1" value="80">
+      <output id="{{uid}}-p0-o" for="{{uid}}-p0"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-edge">hoped-for edge</label>
+      <input type="range" id="{{uid}}-edge" min="1" max="10" step="0.5" value="5">
+      <output id="{{uid}}-edge-o" for="{{uid}}-edge"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">touched on</label>
+      <input type="range" id="{{uid}}-k" min="1" max="20" step="1" value="5">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-m">touches per session</label>
+      <input type="range" id="{{uid}}-m" min="1" max="6" step="1" value="1">
+      <output id="{{uid}}-m-o" for="{{uid}}-m"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-rho">correlation ρ</label>
+      <input type="range" id="{{uid}}-rho" min="0" max="0.8" step="0.05" value="0.2">
+      <output id="{{uid}}-rho-o" for="{{uid}}-rho"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-n"></output></div>
+    <div class="ctrl"><output id="{{uid}}-nd"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ses"></output></div>
+    <div class="ctrl"><output id="{{uid}}-nc"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Halve the edge and the test takes about four times as long.</b> The solid curve is
+  the years of sessions, at 252 a year, needed to tell the hoped-for hold rate from a known
+  base rate at the 5% significance level (two-sided) with 80% power. The dashed curve is the
+  same test when the base rate must be estimated from as many touches of control levels.
+  Touches in one session count for less: the count is multiplied by the design effect,
+  1 + (m − 1)ρ, for m touches a session with correlation ρ. The first state is the chapter's
+  example: 80% against 85%, one touch a session, on one session in five.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var P0 = DL.$(U + '-p0'), ED = DL.$(U + '-edge'), KK = DL.$(U + '-k'),
+      MM = DL.$(U + '-m'), RH = DL.$(U + '-rho');
+  /* the worked example's test: 5% two-sided and 80% power, with its own z values */
+  var ZA = 1.96, ZB = 0.84, DAYS = 252;
+
+  /* touches needed against a known base rate p0 to detect a true rate p1 (the chapter's
+     formula), and per group when the base rate is estimated from control touches too */
+  function nKnown(p0, p1) {
+    var t = ZA * Math.sqrt(p0 * (1 - p0)) + ZB * Math.sqrt(p1 * (1 - p1));
+    return t * t / ((p1 - p0) * (p1 - p0));
+  }
+  function nControls(p0, p1) {
+    var pb = (p0 + p1) / 2;
+    var t = ZA * Math.sqrt(2 * pb * (1 - pb)) + ZB * Math.sqrt(p0 * (1 - p0) + p1 * (1 - p1));
+    return t * t / ((p1 - p0) * (p1 - p0));
+  }
+  /* m touches in a touched session, correlated at rho, count as m / (1 + (m - 1) rho)
+     independent ones; the level is touched on one session in k */
+  function deff(s) { return 1 + (s.m - 1) * s.rho; }
+  function sessions(n, s) { return n * deff(s) * s.k / s.m; }
+  function years(n, s) { return sessions(n, s) / DAYS; }
+
+  function state() {
+    var s = { p0: +P0.value / 100, edge: +ED.value, k: +KK.value, m: +MM.value, rho: +RH.value };
+    s.p1 = s.p0 + s.edge / 100;
+    return s;
+  }
+  function yrs(y) { return DL.num(y, y < 0.1 ? 2 : y < 10 ? 1 : 0) + ' years'; }
+  function up(x) { return DL.num(Math.ceil(x - 1e-9), 0); }
+  /* points as the slider sets them: whole, or to the half or quarter point */
+  function pts(x) {
+    var r = Math.round(x * 100) / 100;
+    return DL.num(r, Math.abs(r - Math.round(r)) < 1e-9 ? 0 : Math.abs(r * 10 - Math.round(r * 10)) < 1e-9 ? 1 : 2);
+  }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+  /* years on a log scale from 0.1 to 1,000, shifted up one decade so that the axis line
+     lies along the bottom of the plot */
+  var LO = 0, HI = 4;
+  function ly(y) { return Math.log(Math.max(y, 1e-6)) / Math.LN10 + 1; }
+  function one(x) { return DL.num(x, Math.abs(x * 10 - Math.round(x * 10)) < 1e-9 ? 1 : 2); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = state();
+    var p = new NMT.Plot(c, { xmin: 1, xmax: 10, ymin: LO, ymax: HI,
+                              pad: { l: 44, r: 16, t: 24, b: 36 },
+                              xlabel: 'hoped-for edge, points above the base rate' });
+    DL.axes(p, { xs: [1, 2, 4, 6, 8, 10], ys: [0, 1, 2, 3, 4],
+                 x: function (v) { return '+' + v; },
+                 y: function (v) { return DL.num(Math.pow(10, v - 1), v < 1 ? 1 : 0); } });
+    var xs = [], known = [], ctl = [];
+    for (var e = 1; e <= 10.0001; e += 0.05) {
+      var p1 = s.p0 + e / 100;
+      xs.push(e);
+      known.push(ly(years(nKnown(s.p0, p1), s)));
+      ctl.push(ly(years(nControls(s.p0, p1), s)));
+    }
+    var acc = DL.color('accent'), fam = DL.color('familiar'), soft = DL.color('ink-soft');
+    DL.line(p, xs, ctl, { color: fam, width: 1.6, dash: [6, 4] });
+    DL.line(p, xs, known, { color: acc, width: 2.2 });
+
+    /* the chosen edge on both curves; the dot sits at the edge of the plot when the
+       years run off it */
+    var yk = years(nKnown(s.p0, s.p1), s), yc = years(nControls(s.p0, s.p1), s);
+    var dk = Math.min(HI, Math.max(LO, ly(yk))), dc = Math.min(HI, Math.max(LO, ly(yc)));
+    p.seg(s.edge, LO, s.edge, dk, { color: DL.color('ink-faint'), dash: [3, 3], width: 1 });
+    p.dot(s.edge, dc, { r: 3.5, color: fam, ring: true });
+    p.dot(s.edge, dk, { r: 5, color: acc, ring: true });
+    /* its label below and to the left of the dot, under the curve, where there is room;
+       otherwise to the right, on a patch of the ground so the curve cannot cross it */
+    var g = p.g, lab = yrs(yk);
+    g.save();
+    g.font = font(11);
+    var lw = g.measureText(lab).width, px = p.X(s.edge), py = p.Y(dk);
+    var lx = px - 9 - lw >= p.o.pad.l + 4 ? px - 9 - lw : px + 9;
+    var ty = py + 17 <= p.h - p.o.pad.b - 2 ? py + 5 : py - 17;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(lx - 3, ty - 1, lw + 6, 14);
+    g.fillStyle = acc;
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
+    g.fillText(lab, lx, ty);
+    g.restore();
+
+    /* the title at the top left, the key at the top right */
+    g.save();
+    g.font = font(11);
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText('years of sessions needed', 4, 11);
+    var kx = p.w - p.o.pad.r - 4, items = [['base rate known', acc, []], ['from controls too', fam, [6, 4]]];
+    g.textAlign = 'right';
+    items.forEach(function (it, i) {
+      var y = p.o.pad.t + 10 + i * 16, w = g.measureText(it[0]).width;
+      g.fillStyle = soft;
+      g.fillText(it[0], kx, y);
+      g.strokeStyle = it[1];
+      g.lineWidth = 2;
+      g.setLineDash(it[2]);
+      g.beginPath();
+      g.moveTo(kx - w - 24, y);
+      g.lineTo(kx - w - 6, y);
+      g.stroke();
+      g.setLineDash([]);
+    });
+    g.restore();
+  });
+
+  function update() {
+    var s = state(), n = nKnown(s.p0, s.p1), nc = nControls(s.p0, s.p1), d = deff(s);
+    var ses = sessions(n, s), y = ses / DAYS;
+    DL.out(U + '-p0-o', DL.num(s.p0 * 100, 0) + '%');
+    DL.out(U + '-edge-o', '+' + pts(s.edge) + ' (' + pts(s.p1 * 100) + '%)');
+    DL.out(U + '-k-o', s.k === 1 ? 'every session' : '1 session in ' + s.k);
+    DL.out(U + '-m-o', String(s.m));
+    DL.out(U + '-rho-o', DL.num(s.rho, 2));
+    DL.out(U + '-n', 'touches needed = ' + up(n));
+    DL.out(U + '-nd', '× design effect ' + one(d) + ' = ' + up(n * d));
+    DL.out(U + '-ses', 'sessions = ' + up(ses) + ' ≈ ' + yrs(y));
+    DL.out(U + '-nc', 'from controls too: ' + up(nc * d) + ' of each');
+
+    var half = s.edge / 2, yh = years(nKnown(s.p0, s.p0 + half / 100), s);
+    var perYear = DAYS * s.m / s.k;
+    DL.out(U + '-vk', y < 1 ? 'About ' + up(ses) + ' sessions, under a year.' : 'About ' + yrs(y) + '.');
+    var vt = 'The level is touched about ' + DL.num(perYear, 0) + ' times a year.';
+    if (s.m > 1) vt += ' Its ' + s.m + ' touches a session count as ' + DL.num(s.m / d, 1) +
+                       ' independent ones.';
+    vt += ' Halve the edge to ' + pts(half) + (half === 1 ? ' point' : ' points') +
+          ' and the test takes about ' + yrs(yh) + '.';
+    DL.out(U + '-vt', vt);
+    draw();
+  }
+  update();
+  DL.bind([U + '-p0', U + '-edge', U + '-k', U + '-m', U + '-rho'], update);
+})();
+</script>
