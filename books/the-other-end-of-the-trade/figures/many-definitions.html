@@ -1,0 +1,223 @@
+<!--
+name: best of many definitions
+source: new for this book: chapter 8J, "The best of many definitions"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="270"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-k">definitions tried, K</label>
+      <input type="range" id="{{uid}}-k" min="1" max="100" step="1" value="20">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new sessions</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-best"></output></div>
+    <div class="ctrl"><output id="{{uid}}-rule"></output></div>
+    <div class="ctrl"><output id="{{uid}}-rate"></output></div>
+    <div class="ctrl"><output id="{{uid}}-oos"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Try enough definitions and one of them beats chance.</b> Fifty made-up
+  sessions of a random walk that moves one point at a time, with levels every 25 points and
+  nothing at them. A touch is price reaching a level from at least 3 points away. Each dot is
+  one definition of a hold, with its own bounce target and break point from 2 to 20 points,
+  scored on the same touches: its hold rate minus its own base rate, break ÷ (bounce + break).
+  The first is the level test's default, 5 and 20. The solid line keeps the best of the first
+  K definitions, and the dashed line runs that same rule on 50 fresh sessions. Raise K and the
+  best edge climbs to several points, while the same rule on fresh sessions scatters around
+  zero.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var KK = DL.$(U + '-k');
+  var SESS = 50, STEPS = 780, GRID = 25, APPROACH = 3, MAXD = 20, NDEF = 100;
+  var seed = 174, st;
+
+  /* the definitions, in the order they are tried: the level test's default first (bounce
+     target 5, break point 20), then 99 of the other bounce and break pairs from 2 to 20
+     points, in a fixed shuffled order */
+  var DEFS = (function () {
+    var r = DL.rng(99), all = [], i;
+    for (var X = 2; X <= MAXD; X++)
+      for (var Y = 2; Y <= MAXD; Y++) if (!(X === 5 && Y === 20)) all.push([X, Y]);
+    for (i = all.length - 1; i > 0; i--) {
+      var j = Math.floor(r() * (i + 1)), t = all[i];
+      all[i] = all[j];
+      all[j] = t;
+    }
+    return [[5, 20]].concat(all.slice(0, NDEF - 1));
+  })();
+
+  /* One block of sessions: a walk that moves one point up or down at each step, run on
+     from one session to the next, so that a touch late in a session is decided after it.
+     Stepping one point at a time, price lands exactly on a level and on each distance, so
+     the chance of moving X back before Y through is exactly Y / (X + Y). For each touch the
+     first step at which price is d points back (up[d]) or d points through (dn[d]) is kept,
+     for d up to 20, which decides every definition at once. */
+  function block(r) {
+    var n = SESS * STEPS, x = Math.floor(r() * GRID), path = [x], touches = [], armed = {};
+    function ext(to) { while (path.length <= to) { x += r() < 0.5 ? 1 : -1; path.push(x); } }
+    ext(n);
+    for (var i = 1; i <= n; i++) {
+      var S = path[i], L0 = Math.floor(S / GRID) * GRID;
+      /* a level is armed once price is at least APPROACH points from it */
+      for (var q = -1; q <= 2; q++) {
+        var lv = L0 + q * GRID;
+        if (Math.abs(S - lv) >= APPROACH && armed[lv] == null) armed[lv] = S > lv ? 1 : -1;
+      }
+      if (S % GRID === 0 && armed[S] != null) {
+        var side = armed[S], up = [], dn = [], hi = 0, lo = 0, j = i, d;
+        for (d = 0; d <= MAXD; d++) { up.push(Infinity); dn.push(Infinity); }
+        while (hi < MAXD && lo > -MAXD) {
+          j++;
+          ext(j);
+          var m = (path[j] - S) * side;
+          if (m > hi) { hi = m; up[hi] = j; }
+          if (m < lo) { lo = m; dn[-lo] = j; }
+        }
+        touches.push({ up: up, dn: dn });
+        armed[S] = null;
+      }
+    }
+    return touches;
+  }
+  /* a definition's edge: its hold rate minus its own base rate */
+  function edge(T, X, Y) {
+    var h = 0;
+    for (var i = 0; i < T.length; i++) if (T[i].up[X] < T[i].dn[Y]) h++;
+    return { rate: h / T.length, base: Y / (X + Y), e: h / T.length - Y / (X + Y) };
+  }
+
+  /* the sessions the definitions are chosen on, then as many fresh ones after them */
+  function compute() {
+    var r = DL.rng(seed), A = block(r), B = block(r);
+    var inS = DEFS.map(function (dxy) { return edge(A, dxy[0], dxy[1]); });
+    var out = DEFS.map(function (dxy) { return edge(B, dxy[0], dxy[1]); });
+    var best = [], who = [], bi = 0, top = -Infinity, big = 0;
+    inS.forEach(function (v, i) {
+      if (v.e > top) { top = v.e; bi = i; }
+      best.push(top);
+      who.push(bi);
+      big = Math.max(big, Math.abs(v.e), Math.abs(out[bi].e));
+    });
+    /* a y range that holds every dot and both lines, in whole ticks either side of zero */
+    var raw = big * 100 + 1;
+    st = { nA: A.length, nB: B.length, inS: inS, out: out, best: best, who: who,
+           span: raw <= 6 ? 6 : raw <= 8 ? 8 : 4 * Math.ceil(raw / 4) };
+  }
+
+  function pts(x) { return DL.signed(x * 100, 1); }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var K = +KK.value, sp = st.span;
+    /* the key across the top, wrapped into as many rows as the width needs, and the
+       y axis's title on a line of its own below it: laid out before the plot so that the
+       plot starts under them */
+    var items = [['best of the first K', 'accent', []], ['that rule, fresh sessions', 'familiar', [5, 3]],
+                 ['one definition', 'ink-soft', null]];
+    var g0 = c.getContext('2d'), W = c.clientWidth || 640, xx = 4, row = 0;
+    g0.font = font(11);
+    items.forEach(function (it) {
+      var w = g0.measureText(it[0]).width + 19;
+      if (xx + w > W - 4 && xx > 4) { xx = 4; row++; }
+      it.push(xx, 10 + row * 15);
+      xx += w + 14;
+    });
+    var titleY = 10 + (row + 1) * 15;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: NDEF + 1, ymin: -sp, ymax: sp,
+                              pad: { l: 40, r: 14, t: titleY + 15, b: 34 },
+                              xlabel: 'definitions tried, K' });
+    var ys = [];
+    for (var v = -sp; v <= sp; v += sp > 8 ? 4 : 2) ys.push(v);
+    DL.axes(p, { xs: [1, 20, 40, 60, 80, 100], ys: ys, yAt: 0,
+                 x: function (x) { return String(x); },
+                 y: function (y) { return y > 0 ? '+' + y : DL.num(y, 0); } });
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'),
+        acc = DL.color('accent'), fam = DL.color('familiar');
+    DL.hline(p, 0, { color: DL.color('ink-soft'), width: 1.2 });
+
+    /* every definition's edge on the sessions it was chosen on: tried ones darker */
+    st.inS.forEach(function (d, i) {
+      var k = i + 1;
+      p.dot(k, d.e * 100, { r: 2.6, color: k <= K ? DL.fade(soft, 0.75) : DL.fade(faint, 0.3) });
+    });
+
+    /* the best so far, and the same rule on fresh sessions, as steps up to K */
+    var xb = [], yb = [], yo = [];
+    for (var k = 1; k <= K; k++) {
+      xb.push(k - 0.5, k + 0.5);
+      yb.push(st.best[k - 1] * 100, st.best[k - 1] * 100);
+      var o = st.out[st.who[k - 1]].e * 100;
+      yo.push(o, o);
+    }
+    DL.line(p, xb, yo, { color: fam, width: 1.8, dash: [5, 3] });
+    DL.line(p, xb, yb, { color: acc, width: 2.2 });
+    p.seg(K, -sp, K, sp, { color: faint, dash: [2, 3], width: 1 });
+    var bw = st.who[K - 1];
+    p.dot(K, st.out[bw].e * 100, { r: 4, color: fam, ring: true });
+    p.dot(K, st.best[K - 1] * 100, { r: 5, color: acc, ring: true });
+
+    /* the key and the y axis's title, where the layout above put them */
+    var g = p.g;
+    g.save();
+    g.font = font(11);
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    items.forEach(function (it) {
+      var col = DL.color(it[1]), x = it[3], y = it[4];
+      if (it[2] === null) {
+        g.fillStyle = DL.fade(col, 0.75);
+        g.beginPath();
+        g.arc(x + 7, y, 2.6, 0, 2 * Math.PI);
+        g.fill();
+      } else {
+        g.strokeStyle = col;
+        g.lineWidth = 2;
+        g.setLineDash(it[2]);
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x + 14, y);
+        g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = soft;
+      g.fillText(it[0], x + 19, y);
+    });
+    g.fillStyle = faint;
+    g.fillText('edge: points above its own base rate', 4, titleY);
+    g.restore();
+  });
+
+  function update() {
+    var K = +KK.value, i = st.who[K - 1], dxy = DEFS[i], a = st.inS[i], b = st.out[i];
+    DL.out(U + '-k-o', String(K));
+    DL.out(U + '-best', (K === 1 ? 'one rule: ' : 'best of ' + K + ': ') + pts(a.e) + ' points');
+    DL.out(U + '-rule', 'bounce ' + dxy[0] + ', break ' + dxy[1]);
+    DL.out(U + '-rate', 'holds ' + DL.pct(a.rate, 1) + ', chance ' + DL.pct(a.base, 1));
+    DL.out(U + '-oos', 'fresh sessions: ' + pts(b.e) + ' points');
+    var fresh = 'Frozen and run on ' + SESS + ' fresh sessions, the same rule ' +
+                (b.e >= 0 ? 'beats' : 'falls short of') + ' its base rate by ' +
+                DL.num(Math.abs(b.e) * 100, 1) + ' points.';
+    if (K === 1) {
+      DL.out(U + '-vk', 'One rule, no search.');
+      DL.out(U + '-vt', 'The level test\'s default, bounce 5 and break 20, differs from its base rate by ' +
+             pts(a.e) + ' points over ' + DL.num(st.nA, 0) + ' touches: noise, since nothing' +
+             ' happens at the levels. ' + fresh);
+    } else {
+      DL.out(U + '-vk', 'An edge from nothing.');
+      DL.out(U + '-vt', 'Nothing happens at these levels, yet the best of ' + K +
+             ' definitions beats its own base rate by ' + DL.num(a.e * 100, 1) + ' points over ' +
+             DL.num(st.nA, 0) + ' touches. ' + fresh);
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-k'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; compute(); update(); });
+})();
+</script>

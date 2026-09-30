@@ -1,6 +1,6 @@
 # Where a new figure would help
 
-486 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
+485 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
 
 ## 1A · What a return is
 
@@ -377,7 +377,6 @@
 - *What the evidence says about the weight.* Stops and size across the regime. The reader drags effective volatility from 10% to 60%, and sets a stop in daily standard deviations and a dollar risk budget. The figure shows the stop's distance in percent and the position size that keeps the dollar risk fixed. It shows the stop widening and the size shrinking together as the regime turns.
 - *What the evidence says about the weight.* What GEX knows that the VIX already knows. A synthetic scatter of next-day realized volatility against GEX, colored by the VIX, built to match the reported rank correlation of −0.36. Checkboxes add the VIX and at-the-money implied volatility as controls, and the scatter re-plots the residuals, with the correlation falling toward −0.03 and the top-minus-bottom gap from about 10.6 to about 1 volatility point. It shows how a strong raw association can be almost all confounding.
 - *No look-ahead from intraday open interest.* Testing levels without look-ahead. A synthetic price path with two sets of levels: those computed as of each moment and those from the day's final map. The reader switches which set a simple "fade the level" rule uses, and a readout gives the hit rate for each. It shows how a map that updates all day inflates a backtest when the final map is used, the trap the LuxAlgo warning describes.
-- *Out of sample, and how many tries.* The best of many definitions. Random-walk sessions are scored under K definitions of "hold", each with its own bounce target and break point, and the figure plots the best definition's apparent edge over its own base rate as the reader raises K from 1 to 100. It shows an edge of several points appearing from nothing as the number of tries grows, the level-testing version of the deflated Sharpe ratio.
 - *A checklist.* The checklist as a setup card. An interactive card with the seven lines above, each with a status the reader sets (met, watch, not met, needs data), and a verdict at the bottom that allows full size only when every line is met and treats "needs data" as not met. It shows how a missing input, such as an unstated convention, blocks a trade rather than being skipped.
 
 ## 9A · The VIX
