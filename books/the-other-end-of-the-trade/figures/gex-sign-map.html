@@ -1,0 +1,176 @@
+<!--
+name: sign-sensitivity map
+source: new for this book: chapter 8B, "A sensitivity map of GEX"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="330"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-spot">spot</label>
+      <input type="range" id="{{uid}}-spot" min="88" max="112" step="0.5" value="100">
+      <output id="{{uid}}-spot-o" for="{{uid}}-spot"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pk">put OI scale</label>
+      <input type="range" id="{{uid}}-pk" min="-2" max="2" step="0.1" value="0">
+      <output id="{{uid}}-pk-o" for="{{uid}}-pk"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-jpm"></output></div>
+    <div class="ctrl"><output id="{{uid}}-odte"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pos"></output></div>
+    <div class="ctrl"><output id="{{uid}}-ps"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Every guess at who holds the book gives its own GEX.</b> Across is the share of
+  call open interest that dealers are short, and up the share of put open interest they are
+  long. Dealers hold the rest the other way. Each point is the GEX that guess gives for the
+  made-up book of the GEX profile builder, at the chosen spot: green where positive and rose
+  where negative, deeper the larger, with zero dashed. The JPM-era convention is the bottom-left
+  corner and the 0DTE-era convention the top-right one. The zero line always crosses the middle,
+  where dealers are as long as they are short, so exactly half the square is positive for any
+  book at any spot. Moving spot or scaling the puts turns the line: the more of the gamma one
+  type carries, the more the sign depends on who holds that type.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SP = DL.$(U + '-spot'), PK = DL.$(U + '-pk');
+  var SIGMA = 0.18, T = 30 / 365, NG = 50, st;
+
+  /* the GEX profile builder's made-up book: puts below and at 100, calls at and above */
+  var OI = [
+    { K: 88, type: 'put', oi: 18000 }, { K: 92, type: 'put', oi: 32000 },
+    { K: 95, type: 'put', oi: 55000 }, { K: 98, type: 'put', oi: 42000 },
+    { K: 100, type: 'put', oi: 60000 }, { K: 100, type: 'call', oi: 70000 },
+    { K: 102, type: 'call', oi: 38000 }, { K: 105, type: 'call', oi: 55000 },
+    { K: 108, type: 'call', oi: 22000 }, { K: 112, type: 'call', oi: 14000 }
+  ];
+  /* one line's dollar gamma per 1% move before any sign: Γ · OI · 100 · S² · 0.01 */
+  function dg(S, o) { return DL.bsGamma(S, o.K, T, SIGMA) * S * S * 0.01 * o.oi * 100; }
+  /* GEX when dealers are short a share a of the call open interest and long the rest, and
+     long a share b of the put open interest and short the rest. Each line then carries a
+     net sign of 1 - 2a (calls) or 2b - 1 (puts), so
+         GEX = C (1 - 2a) + P (2b - 1),
+     with C and P the calls' and the puts' dollar gamma. (0, 0) signs every call +1 and every
+     put -1, the JPM-era convention; (1, 1) signs them -1 and +1, the 0DTE-era one */
+  function gex(a, b) { return st.C * (1 - 2 * a) + st.P * (2 * b - 1); }
+
+  function compute() {
+    var S = +SP.value, k = Math.pow(2, +PK.value), C = 0, P = 0;
+    OI.forEach(function (o) { if (o.type === 'call') C += dg(S, o); else P += k * dg(S, o); });
+    st = { S: S, k: k, C: C, P: P };
+    /* the share of the square's cells where GEX is positive */
+    var pos = 0;
+    for (var i = 0; i < NG; i++)
+      for (var j = 0; j < NG; j++) if (gex((i + 0.5) / NG, (j + 0.5) / NG) > 0) pos++;
+    st.pos = pos / (NG * NG);
+  }
+
+  /* dollars in billions, a true minus, no sign on a zero */
+  function bn(x, d) {
+    var s = DL.num(Math.abs(x) / 1e9, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  /* a label on a paper ground, so the colors under it leave it readable */
+  function note(p, x, y, s, o) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(s).width, px = p.X(x) + (o.dx || 0), py = p.Y(y) + (o.dy || 0);
+    var x0 = o.align === 'right' ? px - w : px, y0 = o.baseline === 'top' ? py : py - 13;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(x0 - 3, y0 - 1, w + 6, 15);
+    g.restore();
+    o.font = font();
+    p.text(x, y, s, o);
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var M = 0.035;
+    var p = new NMT.Plot(cv, { xmin: -M, xmax: 1 + M, ymin: -M, ymax: 1 + M,
+                               pad: { l: 44, r: 14, t: 26, b: 40 } });
+    var pc = function (v) { return Math.round(v * 100) + '%'; };
+    DL.axes(p, { xs: [0, 0.25, 0.5, 0.75, 1], ys: [0, 0.25, 0.5, 0.75, 1], grid: false,
+                 x: pc, y: pc });
+    var g = p.g, pos = DL.color('insight'), neg = DL.color('plain'), soft = DL.color('ink-soft'),
+        ink = DL.color('ink');
+
+    /* the cells: the sign picks the hue and the size, against the largest in the square
+       (a corner where dealers hold every option on one side), sets the depth */
+    /* cell edges on whole pixels, so neighboring cells neither overlap nor gap */
+    var m = st.C + st.P, xe = [], ye = [], i, j;
+    for (i = 0; i <= NG; i++) {
+      xe.push(Math.round(p.X(i / NG)));
+      ye.push(Math.round(p.Y(i / NG)));
+    }
+    for (i = 0; i < NG; i++) {
+      for (j = 0; j < NG; j++) {
+        var v = gex((i + 0.5) / NG, (j + 0.5) / NG), a = Math.pow(Math.min(1, Math.abs(v) / m), 0.6);
+        g.fillStyle = DL.fade(v >= 0 ? pos : neg, 0.05 + 0.9 * a);
+        g.fillRect(xe[i], ye[j + 1], xe[i + 1] - xe[i], ye[j] - ye[j + 1]);
+      }
+    }
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1;
+    g.strokeRect(p.X(0) + 0.5, p.Y(1) + 0.5, p.X(1) - p.X(0) - 1, p.Y(0) - p.Y(1) - 1);
+    g.restore();
+
+    /* the zero line: through the middle, rising C for every P along it */
+    var h = 0.5 / Math.max(st.C, st.P);
+    var x0 = 0.5 - h * st.P, y0 = 0.5 - h * st.C, x1 = 0.5 + h * st.P, y1 = 0.5 + h * st.C;
+    p.seg(x0, y0, x1, y1, { color: ink, width: 1.5, dash: [5, 4] });
+
+    /* the two conventions, ringed, and the other two corners named */
+    [[0, 0], [1, 1]].forEach(function (q) {
+      g.save();
+      g.beginPath();
+      g.arc(p.X(q[0]), p.Y(q[1]), 6, 0, 2 * Math.PI);
+      g.strokeStyle = ink;
+      g.lineWidth = 2;
+      g.stroke();
+      g.restore();
+    });
+    note(p, 0, 0, 'JPM-era', { dx: 11, dy: -9, color: ink });
+    note(p, 1, 1, '0DTE-era', { dx: -11, dy: 9, align: 'right', baseline: 'top', color: ink });
+    note(p, 0, 1, 'dealers long every option', { dx: 6, dy: 6, baseline: 'top', color: soft });
+    note(p, 1, 0, 'dealers short every option', { dx: -6, dy: -6, align: 'right', color: soft });
+    /* the zero line's name, beside it a little below the middle */
+    var f = 0.35;
+    note(p, 0.5 - f * h * st.P, 0.5 - f * h * st.C, 'GEX = 0',
+         { dx: 8, dy: 2, baseline: 'top', color: ink });
+
+    /* the axes' names */
+    g.save();
+    g.font = font();
+    g.fillStyle = soft;
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillText('↑ share of put OI dealers are long', 6, 12);
+    g.textAlign = 'right';
+    g.textBaseline = 'bottom';
+    g.fillText('share of call OI dealers are short →', p.w - 14, p.h - 3);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-spot-o', '$' + st.S.toFixed(1));
+    DL.out(U + '-pk-o', '×' + DL.num(st.k, 2));
+    DL.out(U + '-jpm', 'JPM-era corner: ' + bn(gex(0, 0), 3));
+    DL.out(U + '-odte', '0DTE-era corner: ' + bn(gex(1, 1), 3));
+    DL.out(U + '-pos', 'GEX > 0 on ' + DL.pct(st.pos, 0) + ' of the square');
+    DL.out(U + '-ps', 'puts carry ' + DL.pct(st.P / (st.C + st.P), 0) + ' of the gamma');
+    DL.out(U + '-vk', 'The whole square:');
+    DL.out(U + '-vt', 'from ' + bn(gex(1, 0), 3) + ', dealers short every option, to ' +
+                      bn(gex(0, 1), 3) + ', dealers long every option.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-spot', U + '-pk'], update);
+})();
+</script>

@@ -1,0 +1,140 @@
+<!--
+name: loss by horizon
+source: new for this book: chapter 10B, "Loss aversion by horizon"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-d" data-h="190"></canvas>
+  <canvas id="{{uid}}-p" data-h="170"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-h">horizon</label>
+      <input type="range" id="{{uid}}-h" min="0" max="12" step="1" value="5">
+      <output id="{{uid}}-h-o" for="{{uid}}-h"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mu">mean</label>
+      <input type="range" id="{{uid}}-mu" min="0" max="12" step="0.5" value="7">
+      <output id="{{uid}}-mu-o" for="{{uid}}-mu"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sig">volatility</label>
+      <input type="range" id="{{uid}}-sig" min="5" max="30" step="1" value="16">
+      <output id="{{uid}}-sig-o" for="{{uid}}-sig"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-pl"></output></div>
+    <div class="ctrl"><output id="{{uid}}-z"></output></div>
+    <div class="ctrl"><output id="{{uid}}-n"></output></div>
+  </div>
+  <figcaption><b>The more often you look, the more often a look shows a loss.</b> Equity log
+  returns are modeled as normal, with the chapter's hypothetical mean of 7% a year and
+  volatility of 16%. Above, the return per year over one look at the chosen horizon, with the
+  part below zero, a loss, shaded. Below, the chance that a look shows a loss against the
+  horizon, with a month, a year and a decade marked. Lengthen the horizon: the spread narrows
+  around the mean, and the loss area shrinks from 45% of months to 8% of decades.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var HZ = DL.$(U + '-h'), MU = DL.$(U + '-mu'), SIG = DL.$(U + '-sig');
+  /* the horizons on the slider, in years: from one month to twenty years */
+  var HS = [1 / 12, 2 / 12, 3 / 12, 6 / 12, 9 / 12, 1, 2, 3, 5, 7, 10, 15, 20];
+  var MARKS = [1 / 12, 1, 10];
+
+  /* a look over h years sees a log return with mean mu*h and sd sigma*sqrt(h); it shows a
+     loss when that return is below zero, with probability N(-mu*sqrt(h)/sigma) */
+  function ploss(mu, sig, h) { return DL.N(-mu * Math.sqrt(h) / sig); }
+  function hname(h) {
+    if (h < 1) { var m = Math.round(h * 12); return m + (m === 1 ? ' month' : ' months'); }
+    return h + (h === 1 ? ' year' : ' years');
+  }
+  function pc(x) { return DL.num(x, 0) + '%'; }
+  function state() {
+    return { h: HS[+HZ.value], mu: +MU.value / 100, sig: +SIG.value / 100 };
+  }
+
+  /* above: the return per year over one look, N(mu, sigma^2 / h), in percent */
+  var drawD = DL.figure(U + '-d', function (c) {
+    var s = state(), sd = s.sig / Math.sqrt(s.h) * 100, m = s.mu * 100;
+    var peak = 1 / (sd * Math.sqrt(2 * Math.PI));
+    var p = new NMT.Plot(c, { xmin: -50, xmax: 65, ymin: 0, ymax: peak * 1.22,
+                              pad: { l: 14, r: 14, t: 22, b: 30 } });
+    DL.axes(p, { xs: [-40, -20, 0, 20, 40, 60], y: false, yAxis: false,
+                 x: function (v) { return (v < 0 ? DL.MINUS + (-v) : v) + '%'; } });
+    var xs = [], ys = [], xl = [], yl = [];
+    for (var i = 0; i <= 460; i++) {
+      var x = -50 + 115 * i / 460, y = DL.phi((x - m) / sd) / sd;
+      xs.push(x); ys.push(y);
+      if (x <= 0) { xl.push(x); yl.push(y); }
+    }
+    xl.push(0); yl.push(DL.phi(-m / sd) / sd);
+    DL.band(p, xl, yl, 0, DL.fade(DL.color('plain'), 0.4));
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 2 });
+    DL.vline(p, 0, { color: DL.color('ink-soft'), width: 1.2 });
+    DL.vline(p, m, { color: DL.color('familiar'), dash: [4, 4], width: 1.3 });
+    var top = p.o.ymax, pl = ploss(s.mu, s.sig, s.h);
+    p.text(m, top, 'mean ' + DL.num(m, 1).replace(/\.0$/, '') + '%',
+           { dx: 5, dy: 13, color: DL.color('familiar'), font: '11px ' + DL.color('sans') });
+    p.text(0, top * 0.05, 'loss ' + pc(pl * 100), { dx: -6, align: 'right',
+           color: DL.color('plain'), font: '11px ' + DL.color('sans') });
+    p.text(-50, top, 'return per year over one look of ' + hname(s.h),
+           { dx: 2, dy: -8, color: DL.color('ink-soft'), font: '11px ' + DL.color('sans') });
+  });
+
+  /* below: the chance of a loss against the horizon, on a log scale of years */
+  var L0 = Math.log(1 / 12) / Math.LN10, L1 = Math.log(20) / Math.LN10;
+  function lg(h) { return Math.log(h) / Math.LN10; }
+  var drawP = DL.figure(U + '-p', function (c) {
+    var s = state();
+    var p = new NMT.Plot(c, { xmin: L0, xmax: L1, ymin: 0, ymax: 0.56,
+                              pad: { l: 40, r: 16, t: 14, b: 28 } });
+    var tk = [1 / 12, 0.25, 1, 3, 10, 20], names = ['1 mo', '3 mo', '1 yr', '3 yr', '10 yr', '20 yr'];
+    DL.axes(p, { xs: tk.map(lg), ys: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yAt: L0, x: false,
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    /* the horizon labels, left to right, skipping one that would touch its neighbor */
+    var g = p.g, right = -1e9;
+    g.save();
+    g.font = '11px ' + DL.color('sans');
+    g.fillStyle = DL.color('ink-faint');
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    tk.forEach(function (t, i) {
+      var x = p.X(lg(t)), w = g.measureText(names[i]).width;
+      if (x - w / 2 < right + 6) return;
+      g.fillText(names[i], x, p.Y(0) + 6);
+      right = x + w / 2;
+    });
+    g.restore();
+    var xs = [], ys = [];
+    for (var i = 0; i <= 200; i++) {
+      var lx = L0 + (L1 - L0) * i / 200;
+      xs.push(lx); ys.push(ploss(s.mu, s.sig, Math.pow(10, lx)));
+    }
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 2 });
+    DL.vline(p, lg(s.h), { color: DL.color('ink-faint'), dash: [3, 3] });
+    MARKS.forEach(function (h) {
+      var v = ploss(s.mu, s.sig, h);
+      p.dot(lg(h), v, { r: 3.5, color: DL.color('plain') });
+      p.text(lg(h), v, pc(v * 100), { dx: h < 1 ? 6 : 5, dy: -5, color: DL.color('plain'),
+             font: '11px ' + DL.color('sans') });
+    });
+    p.dot(lg(s.h), ploss(s.mu, s.sig, s.h), { r: 5, color: DL.color('accent'), ring: true });
+  });
+
+  function update() {
+    var s = state(), pl = ploss(s.mu, s.sig, s.h), looks = 20 / s.h, lose = looks * pl;
+    DL.out(U + '-h-o', hname(s.h));
+    DL.out(U + '-mu-o', DL.num(s.mu * 100, 1).replace(/\.0$/, '') + '%');
+    DL.out(U + '-sig-o', pc(s.sig * 100));
+    DL.out(U + '-pl', 'a look shows a loss: ' + pc(pl * 100));
+    DL.out(U + '-z', 'zero is ' + DL.num(s.mu * Math.sqrt(s.h) / s.sig, 2) + ' sd below the mean');
+    DL.out(U + '-n', 'losing looks in 20 years: ' +
+           DL.num(lose, lose < 1 ? 2 : lose < 10 ? 1 : 0) + ' of ' + DL.num(looks, 0));
+    drawD();
+    drawP();
+  }
+  update();
+  DL.bind([U + '-h', U + '-mu', U + '-sig'], update);
+})();
+</script>

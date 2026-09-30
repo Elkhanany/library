@@ -1,0 +1,184 @@
+<!--
+name: squeeze screen
+source: new for this book: chapter 8I, "The screen as a table of outcomes"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-prev">prevalence</label>
+      <input type="range" id="{{uid}}-prev" min="0" max="15" step="1" value="3">
+      <output id="{{uid}}-prev-o" for="{{uid}}-prev"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-sens">sensitivity</label>
+      <input type="range" id="{{uid}}-sens" min="50" max="100" step="5" value="80">
+      <output id="{{uid}}-sens-o" for="{{uid}}-sens"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-spec">specificity</label>
+      <input type="range" id="{{uid}}-spec" min="80" max="100" step="0.5" value="95">
+      <output id="{{uid}}-spec-o" for="{{uid}}-spec"></output>
+    </div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Screen</th><th>Real setup</th><th>No setup</th><th>Total</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">Alignment (positive)</td><td data-label="Real setup" id="{{uid}}-tp"></td><td data-label="No setup" id="{{uid}}-fp"></td><td data-label="Total" id="{{uid}}-pos"></td></tr>
+      <tr><td class="c-trial">No alignment (negative)</td><td data-label="Real setup" id="{{uid}}-fn"></td><td data-label="No setup" id="{{uid}}-tn"></td><td data-label="Total" id="{{uid}}-neg"></td></tr>
+      <tr><td class="c-trial">Total</td><td data-label="Real setup" id="{{uid}}-d"></td><td data-label="No setup" id="{{uid}}-h"></td><td data-label="Total">1,000</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-ppv"></output></div>
+    <div class="ctrl"><output id="{{uid}}-per"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A good screen for a rare setup lights up mostly false alarms.</b> Each square
+  is one of 1,000 made-up stock-months, sorted by what the alignment of P, V, G and D did,
+  and the table counts them in whole stock-months. The positive predictive value (PPV) is the
+  share of alignments that are real setups. The first state is the chapter's example: a
+  prevalence of 0.5%, a sensitivity of 80% and a specificity of 95%, rates that no published
+  study gives. Push the sensitivity to 100% and the PPV rises only to 9.1%. The prevalence
+  and the specificity move it far more.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var PV = DL.$(U + '-prev'), SE = DL.$(U + '-sens'), SP = DL.$(U + '-spec');
+  /* the prevalence stops, in percent of stock-months; the slider picks one */
+  var PREV = [0.1, 0.2, 0.3, 0.5, 0.7, 1, 1.5, 2, 3, 5, 7, 10, 15, 20, 30, 50];
+  var N = 1000, COLS = 40, ROWS = 25;
+  var st;
+
+  /* the worked example's arithmetic: D real setups among N stock-months, the alignment
+     catches sensitivity x D of them and lights on (1 - specificity) of the other H.
+     The rates use these expected counts, as the example does (4 / (4 + 49.75)); the
+     grid and the table round each count to whole stock-months (about 50) */
+  function compute() {
+    var prev = PREV[+PV.value] / 100, sens = +SE.value / 100, spec = +SP.value / 100;
+    var D = Math.round(prev * N), H = N - D;
+    var tp = sens * D, fp = (1 - spec) * H;
+    var TP = Math.round(tp), FP = Math.round(fp);
+    st = { prev: prev, sens: sens, spec: spec, D: D, H: H, tp: tp, fp: fp,
+           TP: TP, FN: D - TP, FP: FP, TN: H - FP,
+           ppv: tp / (tp + fp), per: (tp + fp) / tp };
+  }
+
+  /* a count as the example writes it: whole where it is whole, else to two places */
+  function cnt(x) {
+    var r = Math.round(x * 100) / 100;
+    var d = Math.abs(r - Math.round(r)) < 1e-9 ? 0 : Math.abs(r * 10 - Math.round(r * 10)) < 1e-9 ? 1 : 2;
+    return DL.num(r, d);
+  }
+  function rate(x) { return DL.num(x, Math.abs(x - Math.round(x)) < 1e-9 ? 0 : 1) + '%'; }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+  function many(n, one, more) { return DL.num(n, 0) + ' ' + (n === 1 ? one : more); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1,
+                               pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+
+    var cols = { tp: DL.color('insight'), fp: DL.color('accent'), fn: DL.color('plain'),
+                 tn: DL.fade(DL.color('ink-faint'), 0.3) };
+    var soft = DL.color('ink-soft'), ink = DL.color('ink');
+
+    /* a wide column: the grid at the left and the key beside it; a phone: the grid across
+       the top and the key in two columns below */
+    var wide = W >= 560, keyW = wide ? 200 : 0, keyH = wide ? 0 : 44;
+    var cell = Math.min((W - keyW - (wide ? 20 : 0)) / COLS, (H - keyH - 4) / ROWS);
+    var gw = cell * COLS, gh = cell * ROWS;
+    var x0 = wide ? 0 : Math.floor((W - gw) / 2), y0 = 2;
+    var gap = Math.max(1.2, cell * 0.16);
+
+    /* positive screens first (real, then false), then the negatives (missed, then clear),
+       read across the rows */
+    var kinds = [], n;
+    for (n = 0; n < st.TP; n++) kinds.push('tp');
+    for (n = 0; n < st.FP; n++) kinds.push('fp');
+    for (n = 0; n < st.FN; n++) kinds.push('fn');
+    for (n = 0; n < st.TN; n++) kinds.push('tn');
+    kinds.forEach(function (k, i) {
+      var r = Math.floor(i / COLS), c = i % COLS;
+      g.fillStyle = cols[k];
+      g.fillRect(x0 + c * cell + gap / 2, y0 + r * cell + gap / 2, cell - gap, cell - gap);
+    });
+
+    /* the key, with each count, grouped as the table's rows */
+    var pos = st.TP + st.FP, neg = st.FN + st.TN;
+    var items = [['tp', many(st.TP, 'true positive', 'true positives')],
+                 ['fp', many(st.FP, 'false positive', 'false positives')],
+                 ['fn', many(st.FN, 'false negative', 'false negatives')],
+                 ['tn', many(st.TN, 'true negative', 'true negatives')]];
+    g.save();
+    g.font = font(11);
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    function swatch(k, label, x, y) {
+      g.fillStyle = cols[k];
+      g.fillRect(x, y - 5, 10, 10);
+      g.fillStyle = soft;
+      g.fillText(label, x + 16, y);
+    }
+    if (wide) {
+      var kx = gw + 24, ky = y0 + 10;
+      g.fillStyle = ink;
+      g.fillText(many(pos, 'positive screen', 'positive screens'), kx, ky);
+      swatch('tp', items[0][1], kx, ky + 20);
+      swatch('fp', items[1][1], kx, ky + 38);
+      g.fillStyle = ink;
+      g.fillText(many(neg, 'negative screen', 'negative screens'), kx, ky + 66);
+      swatch('fn', items[2][1], kx, ky + 86);
+      swatch('tn', items[3][1], kx, ky + 104);
+      g.fillStyle = soft;
+      g.fillText('one square: one stock-month', kx, y0 + gh - 6);
+    } else {
+      var ky2 = y0 + gh + 14, half = gw / 2;
+      swatch('tp', items[0][1], x0, ky2);
+      swatch('fp', items[1][1], x0, ky2 + 18);
+      swatch('fn', items[2][1], x0 + half, ky2);
+      swatch('tn', items[3][1], x0 + half, ky2 + 18);
+    }
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-prev-o', rate(st.prev * 100));
+    DL.out(U + '-sens-o', rate(st.sens * 100));
+    DL.out(U + '-spec-o', rate(st.spec * 100));
+    DL.out(U + '-tp', DL.num(st.TP, 0));
+    DL.out(U + '-fp', DL.num(st.FP, 0));
+    DL.out(U + '-pos', DL.num(st.TP + st.FP, 0));
+    DL.out(U + '-fn', DL.num(st.FN, 0));
+    DL.out(U + '-tn', DL.num(st.TN, 0));
+    DL.out(U + '-neg', DL.num(st.FN + st.TN, 0));
+    DL.out(U + '-d', DL.num(st.D, 0));
+    DL.out(U + '-h', DL.num(st.H, 0));
+    DL.out(U + '-ppv', 'PPV = ' + cnt(st.tp) + '/(' + cnt(st.tp) + ' + ' + cnt(st.fp) + ') = ' +
+           DL.pct(st.ppv, 1));
+    var per = st.per >= 10 ? DL.num(st.per, 0) : DL.num(st.per, 1);
+    DL.out(U + '-per', 'alignments per real setup ≈ ' + per);
+    var from = 'An alignment raises the chance of a real setup from ' + rate(st.prev * 100) +
+               ' to ' + DL.pct(st.ppv, 1) + '.';
+    if (st.ppv < 0.5) {
+      DL.out(U + '-vk', 'Mostly false alarms.');
+      DL.out(U + '-vt', from + ' About ' + per + ' alignments light up for every real setup.' +
+             ' Each one calls for the workup, not a bet: a catalyst check and a look at who' +
+             ' holds the options.');
+    } else {
+      DL.out(U + '-vk', 'Mostly real setups.');
+      DL.out(U + '-vt', from + ' It has raised the probability, not established it.' +
+             ' The workup still comes before a bet.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-prev', U + '-sens', U + '-spec'], update);
+})();
+</script>

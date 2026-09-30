@@ -1,0 +1,174 @@
+<!--
+name: long call through its life
+source: new for this book: chapter 12B, "A long call through its life"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="280"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV at entry</label>
+      <input type="range" id="{{uid}}-iv" min="5" max="40" step="0.1" value="8.2">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-days">days left</label>
+      <input type="range" id="{{uid}}-days" min="0" max="30" step="1" value="15">
+      <output id="{{uid}}-days-o" for="{{uid}}-days"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-crush">IV crush</label>
+      <input type="range" id="{{uid}}-crush" min="0" max="60" step="5" value="0">
+      <output id="{{uid}}-crush-o" for="{{uid}}-crush"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-spx">SPX then</label>
+      <input type="range" id="{{uid}}-spx" min="5900" max="6200" step="5" value="6150">
+      <output id="{{uid}}-spx-o" for="{{uid}}-spx"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-prem"></output></div>
+    <div class="ctrl"><output id="{{uid}}-be"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-bet"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pnlt"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pnle"></output></div>
+  </div>
+  <figcaption><b>Right on direction, still losing.</b> The P&amp;L of one SPX 6,050 call bought
+  with 30 days to expiry and SPX at 6,000, in dollars per contract, priced by Black-Scholes with
+  interest ignored. The curves are the position on the day it is bought, on the day set by days
+  left, and at expiry; the IV crush cuts the implied volatility by the share chosen from that day
+  on, and the dashed curve is the same day without it. Run the days down and the curve sags onto
+  the expiry hockey stick; add a crush with SPX then at 6,050, a rise, and a gain turns into a
+  loss. The figure opens at 8.2%, the implied volatility at which the model prices this call at
+  the worked example's $35; at the stated 18% it costs about $100.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IV = DL.$(U + '-iv'), DAYS = DL.$(U + '-days'), CR = DL.$(U + '-crush'),
+      SPX = DL.$(U + '-spx');
+
+  /* the worked example's call: SPX at 6,000, the 6,050 strike, 30 days to expiry;
+     Black-Scholes with interest ignored (r = 0), as the chapter prices it */
+  var S0 = 6000, K = 6050, D0 = 30, XMIN = 5880, XMAX = 6220;
+  function call(S, days, iv) { return DL.bsPrice(S, K, days / 365, iv, 'call', 0); }
+
+  /* the price at which the position breaks even with this many days left: the call's
+     value rises with SPX, so halve the interval until it pays back the premium */
+  function breakeven(days, iv, prem) {
+    if (days <= 0) return K + prem;
+    var lo = 1, hi = K + prem + 5000;
+    for (var n = 0; n < 80; n++) {
+      var mid = (lo + hi) / 2;
+      if (call(mid, days, iv) < prem) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  /* dollars per contract, to the nearest $10: the premium is only as exact as the
+     tenth of a point of IV that sets it */
+  function dollars(x, sign) {
+    var r = Math.round(x / 10) * 10;
+    if (!sign || r === 0) return DL.usd(r, 0);
+    return (r > 0 ? '+' : '') + DL.usd(r, 0);
+  }
+  function kfmt(v, step) {
+    if (v === 0) return '$0';
+    var d = Math.abs(step) >= 1000 ? 0 : 1;
+    return (v < 0 ? DL.MINUS : '') + '$' + DL.num(Math.abs(v) / 1000, d) + 'K';
+  }
+  var FONT = function () { return '11px ' + DL.color('sans'); };
+
+  /* the key sits in a band above the plot, in one row or, on a narrow screen, two */
+  function keyRows(g, items, width) {
+    g.font = FONT();
+    var rows = [[]], x = 4;
+    items.forEach(function (it) {
+      var w = 19 + g.measureText(it.label).width;
+      if (x + w > width - 4 && rows[rows.length - 1].length) { rows.push([]); x = 4; }
+      rows[rows.length - 1].push({ it: it, x: x });
+      x += w + 14;
+    });
+    return rows;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var iv = +IV.value / 100, days = +DAYS.value, crush = +CR.value / 100, S1 = +SPX.value;
+    var ivThen = iv * (1 - crush), cut = crush > 0 && days > 0;
+    var prem = call(S0, D0, iv);
+    function pnl(S, d, v) { return (call(S, d, v) - prem) * 100; }
+
+    var soft = DL.color('ink-soft'), fam = DL.color('familiar'), acc = DL.color('accent');
+    var items = [{ label: 'bought', color: fam }, { label: days + ' days left', color: acc }];
+    if (cut) items.push({ label: 'no crush', color: DL.fade(acc, 0.8), dash: [5, 4] });
+    items.push({ label: 'expiry', color: soft });
+    var rows = keyRows(c.getContext('2d'), items, c.clientWidth || 640);
+
+    /* the y range from the curves themselves, so a rich premium still fits */
+    var lo = Infinity, hi = -Infinity;
+    for (var s = XMIN; s <= XMAX; s += 5) {
+      [pnl(s, D0, iv), pnl(s, days, ivThen), pnl(s, days, iv), pnl(s, 0, iv)].forEach(function (v) {
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      });
+    }
+    var span = hi - lo;
+    var p = new NMT.Plot(c, { xmin: XMIN, xmax: XMAX, ymin: lo - span * 0.06,
+                              ymax: hi + span * 0.06,
+                              pad: { l: 48, r: 14, t: 12 + 15 * rows.length, b: 30 } });
+    DL.axes(p, { xs: [5900, 6000, 6100, 6200], ny: 5, yAt: XMIN,
+                 x: function (v) { return DL.num(v, 0); }, y: kfmt });
+    DL.hline(p, 0, { color: DL.color('ink-faint') });
+
+    /* expiry, the hockey stick; the day of purchase; the chosen day without the crush
+       (dashed) and with it */
+    p.fn(function (S) { return pnl(S, 0, iv); }, { color: soft, width: 1.6 });
+    p.fn(function (S) { return pnl(S, D0, iv); }, { color: fam, width: 1.6 });
+    if (cut) p.fn(function (S) { return pnl(S, days, iv); },
+                  { color: DL.fade(acc, 0.8), width: 1.4, dash: [5, 4] });
+    p.fn(function (S) { return pnl(S, days, ivThen); }, { color: acc, width: 2.2 });
+
+    /* SPX then, with the two readout points on it */
+    DL.vline(p, S1, { color: DL.color('ink-faint'), dash: [3, 3] });
+    p.dot(S1, pnl(S1, 0, iv), { r: 3.5, color: soft, ring: true });
+    p.dot(S1, pnl(S1, days, ivThen), { r: 4, color: acc, ring: true });
+
+    var g = p.g;
+    g.save();
+    g.font = FONT();
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    rows.forEach(function (row, r) {
+      var y = 9 + 15 * r;
+      row.forEach(function (e) {
+        g.strokeStyle = e.it.color;
+        g.lineWidth = 2;
+        g.setLineDash(e.it.dash || []);
+        g.beginPath();
+        g.moveTo(e.x, y);
+        g.lineTo(e.x + 14, y);
+        g.stroke();
+        g.setLineDash([]);
+        g.fillStyle = soft;
+        g.fillText(e.it.label, e.x + 19, y);
+      });
+    });
+    g.restore();
+
+    var beNow = breakeven(days, ivThen, prem);
+    DL.out(U + '-iv-o', DL.num(iv * 100, 1) + '%');
+    DL.out(U + '-days-o', String(days));
+    DL.out(U + '-crush-o', crush > 0 ? DL.MINUS + DL.num(crush * 100, 0) + '% → ' +
+           DL.num(ivThen * 100, 1) + '%' : 'none');
+    DL.out(U + '-spx-o', DL.num(S1, 0));
+    DL.out(U + '-prem', 'premium P = $' + DL.num(prem, 1) + ' (' + dollars(prem * 100) + ')');
+    DL.out(U + '-be', 'breakeven at expiry = ' + DL.num(K + prem, 0));
+    DL.out(U + '-bet', 'breakeven, ' + days + ' days left = ' + DL.num(beNow, 0));
+    DL.out(U + '-pnlt', 'P&L then, ' + days + ' days left = ' + dollars(pnl(S1, days, ivThen), true));
+    DL.out(U + '-pnle', 'P&L at expiry = ' + dollars(pnl(S1, 0, iv), true));
+  });
+  DL.bind([U + '-iv', U + '-days', U + '-crush', U + '-spx'], draw);
+})();
+</script>

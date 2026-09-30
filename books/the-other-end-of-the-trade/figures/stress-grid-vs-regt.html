@@ -1,0 +1,95 @@
+<!--
+name: stress grid against Reg-T
+source: new for this book: chapter 12G, "The stress grid against the formula"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Position" id="{{uid}}-pos">
+      <label>position</label>
+      <button type="button" data-v="naked" class="on" aria-pressed="true">naked call</button>
+      <button type="button" data-v="spread" aria-pressed="false">call spread</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-w">scenario width</label>
+      <input type="range" id="{{uid}}-w" min="15" max="25" step="0.5" value="15">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-regt"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pm"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-max"></output></div>
+    <div class="ctrl"><output id="{{uid}}-x"></output></div>
+  </div>
+  <figcaption><b>The same position, a wider scenario, a bigger requirement.</b> The short SPX
+  6,100 call sold for 15 with SPX at 6,000, alone or with the 6,150 call bought against it for a
+  net credit of 8, per contract. The curve is its loss if SPX rises by the move on the axis,
+  valued at what the calls would pay at expiry, the chapter's simplification, with no shock to
+  implied volatility. The level line is the Reg-T requirement, and the dot is a portfolio-margin
+  requirement: the loss at the broker's scenario width, which for a short call is the up-move.
+  Widen the scenario and the naked call's requirement passes Reg-T's; buy the wing and both fall
+  to the spread's maximum loss, whatever the width.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var WD = DL.$(U + '-w');
+  var pos = DL.seg(U + '-pos', function () { draw(); });
+
+  /* the chapter's worked examples: SPX at 6,000, the 6,100 call sold for 15 points, and
+     the 6,150 call bought against it for a net credit of 8; dollars are points × $100 */
+  var S0 = 6000, K1 = 6100, P = 15, K2 = 6150, CR = 8, XMAX = 0.30;
+  /* Reg-T on an uncovered option, P + max(0.20 S − O, 0.10 S), and on a credit spread,
+     the width less the credit */
+  var REGT_NAKED = P + Math.max(0.20 * S0 - (K1 - S0), 0.10 * S0), REGT_SPREAD = (K2 - K1) - CR;
+  function loss(x, spread) {
+    var S = S0 * (1 + x);
+    var owe = Math.max(S - K1, 0) - (spread ? Math.max(S - K2, 0) : 0);
+    return owe - (spread ? CR : P);
+  }
+  /* the move at which the naked call's loss reaches its Reg-T requirement */
+  var CROSS = (REGT_NAKED + P + (K1 - S0)) / S0;
+  function usd(pts) { return DL.usd(Math.round(pts * 100), 0); }
+  function kfmt(v) { return v === 0 ? '$0' : '$' + DL.num(v / 1000, 0) + 'K'; }
+  var FONT = function () { return '11px ' + DL.color('sans'); };
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var w = +WD.value / 100, sp = pos() === 'spread';
+    var regt = sp ? REGT_SPREAD : REGT_NAKED, pm = loss(w, sp);
+    /* one dollar scale for both positions, so the wing's effect shows as a collapse */
+    var p = new NMT.Plot(c, { xmin: 0, xmax: XMAX, ymin: -8000, ymax: 180000,
+                              pad: { l: 48, r: 16, t: 12, b: 30 } });
+    DL.axes(p, { xs: [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30], ys: [0, 50000, 100000, 150000],
+                 x: function (v) { return (v > 0 ? '+' : '') + DL.num(v * 100, 0) + '%'; }, y: kfmt });
+
+    var plain = DL.color('plain'), soft = DL.color('ink-soft'), acc = DL.color('accent'),
+        faint = DL.color('ink-faint');
+    /* the naked call's loss stays behind the spread's, faintly */
+    if (sp) p.fn(function (x) { return loss(x, false) * 100; }, { color: DL.fade(faint, 0.8), width: 1.2, dash: [4, 4] });
+    p.fn(function (x) { return loss(x, sp) * 100; }, { color: plain, width: 2.2 });
+    DL.hline(p, regt * 100, { color: acc, width: 1.6 });
+    DL.vline(p, w, { color: soft, dash: [3, 3] });
+    p.dot(w, pm * 100, { r: 4.5, color: plain, ring: true });
+
+    var font = FONT();
+    p.text(0, regt * 100, 'Reg-T ' + usd(regt), { dx: 6, dy: -4, color: acc, font: font });
+    /* the dot's label goes where the curve is not: below and right of the rising line, or
+       above and left of it near the right edge; above the flat spread */
+    var right = p.X(w) + 110 < p.w - p.o.pad.r, below = right && !sp;
+    p.text(w, pm * 100, 'PM ' + usd(pm), { dx: right ? 8 : -8, dy: below ? 4 : -6,
+                                           align: right ? 'left' : 'right',
+                                           baseline: below ? 'top' : 'bottom', color: plain, font: font });
+
+    DL.out(U + '-w-o', '±' + DL.num(w * 100, 1).replace('.0', '') + '%');
+    DL.out(U + '-regt', 'Reg-T requirement = ' + usd(regt));
+    DL.out(U + '-pm', 'PM at ±' + DL.num(w * 100, 1).replace('.0', '') + '% = ' + usd(pm));
+    DL.out(U + '-max', sp ? 'maximum loss = ' + usd(REGT_SPREAD) : 'maximum loss: unbounded');
+    DL.out(U + '-x', sp ? 'PM = Reg-T at every width'
+                        : 'PM passes Reg-T past ±' + DL.num(CROSS * 100, 1) + '%');
+  });
+  DL.bind([U + '-w'], draw);
+})();
+</script>

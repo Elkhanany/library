@@ -1,0 +1,1468 @@
+<p class="eyebrow">Part VIII · The whole market · Chapter 8G</p>
+
+<h1>The evidence</h1>
+
+<p class="subtitle">What dealer gamma does to prices, measured</p>
+
+<div class="callout where">
+<span class="ct">Where we are</span>
+<p>Chapters 8D to 8F built the mechanism. Dealers who are long gamma damp moves and, near expiry, pull prices toward heavily held strikes. Dealers who are short gamma amplify moves. This chapter reads the studies that measured the mechanism the way you would read the trials behind a guideline. For each it gives the design, the sample, how the exposure was measured, and the effect in its own units. It ends with what the literature agrees on, where it disagrees, what nobody has tested, and how a typical day differs from the tail.</p>
+</div>
+
+<div class="tools"><b>What you need first</b>
+<ul>
+<li>Gamma exposure and the hedge flow (<a class="xref" href="8a.html">Chapter 8A</a>), and why the sign of every GEX number is an assumption (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li>The two regimes and effective volatility, \(\sigma/(1 - \kappa G)\) (<a class="xref" href="8d.html">Chapter 8D</a>).</li>
+<li>Pinning at expiry (<a class="xref" href="8e.html">Chapter 8E</a>), and vanna and charm (<a class="xref" href="8f.html">Chapter 8F</a>).</li>
+<li>The square-root-of-time rule that annualizes a daily volatility (<a class="xref" href="1a.html">Chapter 1A</a>), and <span class="gloss" title="The volatility an asset actually showed over a past period, computed from its returns and annualized.">realized volatility</span> (<a class="xref" href="5e.html">Chapter 5E</a>).</li>
+<li><span class="gloss" title="The correlation of a series with its own earlier values. The lag-1 autocorrelation of returns is the correlation between each period's return and the one before.">Autocorrelation</span>: momentum is positive autocorrelation of returns, and mean reversion negative (<a class="xref" href="3b.html">Chapter 3B</a>).</li>
+</ul>
+</div>
+
+<p>Every chapter so far in this part rests on one mechanism, and the mechanism makes testable predictions. Where dealers are long gamma, prices should be calmer and should revert. Where they are short, prices should be more volatile and should trend. Near expiry, a strike that dealers are long should pull the price. Whether these things happen, and by how much, is a question for data.</p>
+
+<p>The literature that answers it is young, small and uneven. It has a handful of peer-reviewed papers with real position data and many working papers. It also has some exchange and vendor research, and one <span class="gloss" title="Writing down a test's hypothesis, definitions, data and analysis before seeing any result, so that the test cannot be tuned to the data it is judged on.">pre-registered</span> test, by a vendor of its own product. Read it as you would read the trials behind a guideline. Look at the design before the result, at how the exposure was measured before the size of the effect, and at who stands to gain before the conclusion.</p>
+
+<div class="callout plain">
+<span class="ct">In plain terms</span>
+<p>Read as a body of evidence, the literature says three things plainly. The direction is what the mechanism predicts: where dealers are long gamma, prices are calmer and revert, and where they are short, prices are more volatile and trend. The effect is price pressure that reverts, not information. And on a typical day it is modest: about a tenth of a single stock's daily movement, and a point or less of an index's annualized volatility. Beyond that, much of what traders say about dealer gamma, above all about levels on a map, has not been tested at all.</p>
+</div>
+
+<h2 id="how-to-read-a-gamma-study">1 · How to read a gamma study</h2>
+
+<p>Every study in this chapter relates an exposure, dealers' gamma, to an outcome, usually the volatility or the autocorrelation of prices. Four questions sort the studies, the questions of any observational study. How was the exposure measured? What is the outcome, and in what unit? What is the design, and what is the study's status?</p>
+
+<h3 id="how-the-exposure-was-measured">How the exposure was measured</h3>
+
+<p>The exposure is the hard part, for the reason <a class="xref" href="8b.html">Chapter 8B</a> gave: open interest counts contracts, not who holds them. The studies get dealers' positions in four ways, from the most direct to the least:</p>
+
+<ol>
+<li><strong>Observed.</strong> Exchange records that flag each trade's side and the type of account behind it. Ni, Pearson, Poteshman and White use such data before 2002, and Amaya and co-authors use proprietary records of every SPX trade.</li>
+<li><strong>Reconstructed.</strong> Positions rebuilt by adding up recorded flows: Cboe's Open-Close data in Dim, Eraker and Vilkov (<a class="xref" href="8b.html">Chapter 8B</a>), trade-repository reports in Anderegg and co-authors' study of currencies.</li>
+<li><strong>Estimated.</strong> Positions estimated from signed volume or imputed from trade data: Ni and co-authors after 2001, and Barbon and Buraschi.</li>
+<li><strong>Assumed.</strong> A sign convention applied to open interest, such as dealers long calls and short puts: Baltussen and co-authors' measure for the S&amp;P 500, and nearly every vendor's GEX.</li>
+</ol>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>A sign convention is an exposure measured with error. If the error is random, unrelated to the outcome, it blurs the contrast between exposed and unexposed. It then biases an association toward the null, as nondifferential misclassification does in a cohort study. A study with an assumed sign that still finds an effect has found it through that noise. The danger is error that tracks the outcome, such as a convention that is wrong mostly on the most volatile days: it can bias the result either way. Ask of each study what you would ask of an exposure in an epidemiological one: how it was measured, and whether its errors could follow the outcome.</p>
+</div>
+
+<h3 id="what-the-outcome-is-and-in-what-unit">What the outcome is, and in what unit</h3>
+
+<p>The studies report their effects in at least five units, and none converts to another without an assumption:</p>
+
+<ul>
+<li>basis points of absolute daily return per standard deviation of dealer gamma;</li>
+<li>the share of a stock's absolute daily return attributable to hedging;</li>
+<li>points of annualized volatility;</li>
+<li>a percentage of mean volatility per standard deviation of a treatment;</li>
+<li>coefficients of momentum or reversal, and correlations with the next day's volatility.</li>
+</ul>
+
+<p>The <strong>absolute daily return</strong> is the size of a day's move, whatever its sign. Averaged over days it measures volatility, and it converts to annualized volatility under one assumption: that daily returns are normal.</p>
+
+<div class="worked">
+<span class="ct">Worked example: From basis points of absolute return to points of volatility</span>
+<p><strong>Step 1: the link.</strong> If a day's return is normal with standard deviation \(\sigma_d\), the average size of the move is \(\mathbb{E}|r| = \sigma_d\sqrt{2/\pi} \approx 0.80\,\sigma_d\), which the box below derives. So \(\sigma_d \approx 1.25\,\mathbb{E}|r|\).</p>
+
+<p><strong>Step 2: a year.</strong> The square-root-of-time rule with 252 trading days multiplies by \(\sqrt{252} \approx 15.87\) (<a class="xref" href="1a.html">Chapter 1A</a>). Together:</p>
+
+<div class="eq" id="e-conv">
+\[ \begin{aligned} \sigma &amp;= \sqrt{252}\,\sqrt{\pi/2}\;\mathbb{E}|r| \\ &amp;\approx 19.9\;\mathbb{E}|r| \end{aligned} \]
+</div>
+
+<p><strong>Step 3: a study's effect.</strong> A change of 28.8 basis points in the absolute daily return is \(19.9 \times 0.288\% = 5.7\) points of annualized volatility.</p>
+
+<p><strong>Step 4: against a base.</strong> A stock whose absolute daily move averages 2% has an annualized volatility of about \(19.9 \times 2\% = 40\%\). A change of 5.7 points is about a seventh of it.</p>
+</div>
+
+<details class="grind"><summary>Why the average size of a normal move is 0.80 σ</summary><div class="grind-body">
+<p>For \(X\) normal with mean 0 and standard deviation \(\sigma\), the average of \(|X|\) is an integral: the accumulation of \(|x|\) weighted by the density (<a class="xref" href="1b.html">Chapter 1B</a>). By symmetry it is twice the integral over positive \(x\):</p>
+
+<div class="eq">
+\[ \mathbb{E}|X| = 2\int_0^\infty \frac{x\,e^{-x^2/2\sigma^2}}{\sigma\sqrt{2\pi}}\,dx \]
+</div>
+
+<p>Substitute \(u = x^2/(2\sigma^2)\), so that \(x\,dx = \sigma^2\,du\):</p>
+
+<div class="eq">
+\[ \begin{aligned} \mathbb{E}|X| &amp;= \frac{2\sigma^2}{\sigma\sqrt{2\pi}}\int_0^\infty e^{-u}\,du \\ &amp;= \sigma\sqrt{2/\pi} \end{aligned} \]
+</div>
+
+<p>because the last integral is 1. So \(\mathbb{E}|X| \approx 0.798\,\sigma\).</p>
+
+<p>Real daily returns have fatter tails than the normal (<a class="xref" href="1b.html">Chapter 1B</a>). For them the average size is a smaller fraction of the standard deviation, so <a class="eqref" href="#e-conv"></a> somewhat understates the volatility behind a given absolute move. Treat every conversion in this chapter as approximate.</p>
+</div></details>
+
+<h3 id="design-and-status">Design, and status</h3>
+
+<p>Designs differ in how close they come to cause and effect:</p>
+
+<ul>
+<li><strong>Panel regressions</strong> relate many stocks' volatility, day by day, to their dealers' gamma, with controls. They are observational, and a factor that moves both can fake an effect.</li>
+<li>A <strong><span class="gloss" title="An event outside researchers' control that changes an exposure for some units and not for others, in a way close enough to random that comparing them estimates the exposure's effect.">natural experiment</span></strong> uses an event outside the researchers' control that changes the exposure for some units and not others. The 2022 addition of daily SPX expirations and Robinhood's free option trades of 2018 are the two in this chapter.</li>
+<li>An <strong><span class="gloss" title="A variable that shifts an exposure and is assumed to affect the outcome only through that exposure, used to estimate a causal effect from observational data, as Mendelian randomization uses a gene.">instrumental variable</span></strong> shifts the exposure but, by assumption, touches the outcome only through it, as a gene does in Mendelian randomization. The assumption cannot be tested directly.</li>
+<li><strong><span class="gloss" title="A design that compares the change in an outcome in a group that received a treatment with the change in a group that did not, over the same period.">Difference-in-differences</span></strong> compares the change in a treated group with the change in an untreated group over the same period.</li>
+<li><strong>Counterfactual bounds</strong> fit a model to the data and simulate the same market with the dealer effect switched off. The difference is the effect under the model.</li>
+<li><strong>Simulations</strong> build an artificial market and vary dealer gamma in it (<a class="xref" href="8d.html">Chapter 8D</a>). They show what a mechanism can do, not what it did.</li>
+<li><strong>Vendor and exchange tests</strong> study their own products. The best are pre-registered, and all have an interest in the answer.</li>
+</ul>
+
+<p>Status matters as much as design. A <strong><span class="gloss" title="A research paper circulated before peer review, often on the SSRN preprint server, and often revised, with different numbers, between versions.">working paper</span></strong> is a study circulated before peer review, most often on SSRN, which is to economics roughly what medRxiv is to medicine. Working papers are revised, and their numbers change between versions: two of the studies below report different effect sizes in different drafts. Peer review does not settle a result, but a working paper has not yet faced it.</p>
+
+<h2 id="the-studies-at-a-glance">2 · The studies at a glance</h2>
+
+<p>The table lists the studies that measure an effect on prices, in the order the chapter reads them. The position studies of <a class="xref" href="8b.html">Chapter 8B</a>, which measure who holds what rather than what it does, are not repeated here.</p>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Study</th><th class="c-other">Status</th><th class="c-endpoint">Market, sample</th><th class="c-other">Dealers' positions</th><th class="c-result">Effect, as published</th></tr></thead><tbody><tr><td class="c-trial" data-label="Study">Ni, Pearson, Poteshman and White (2021)</td><td class="c-other" data-label="Status">Peer-reviewed</td><td class="c-endpoint" data-label="Market, sample">US stocks, 1990 to 2012</td><td class="c-other" data-label="Dealers' positions">Observed to 2001, estimated after</td><td class="c-result" data-label="Effect, as published">9.5% and 13.4% of absolute daily return; 28.8 and 29.6 bp per SD of gamma</td></tr><tr><td class="c-trial" data-label="Study">Barbon and Buraschi (2021)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">Stocks and four indexes, 2010 to 2020</td><td class="c-other" data-label="Dealers' positions">Imputed from trade data</td><td class="c-result" data-label="Effect, as published">About 12 bp of absolute daily return per SD (5 to 25 in another version); over 20 bp for indexes</td></tr><tr><td class="c-trial" data-label="Study">Soebhag (2023)</td><td class="c-other" data-label="Status">Peer-reviewed</td><td class="c-endpoint" data-label="Market, sample">Optionable stocks; sample not seen</td><td class="c-other" data-label="Dealers' positions">Not seen</td><td class="c-result" data-label="Effect, as published">High-gamma stocks trail low-gamma stocks by about 10% a year</td></tr><tr><td class="c-trial" data-label="Study">Beckmeyer and Moerke (2021)</td><td class="c-other" data-label="Status">Conference paper</td><td class="c-endpoint" data-label="Market, sample">US stocks</td><td class="c-other" data-label="Dealers' positions">Aggregated; construction not seen</td><td class="c-result" data-label="Effect, as published">18 bp of momentum or reversal per 1 point of move to 3:30 PM</td></tr><tr><td class="c-trial" data-label="Study">Baltussen, Da, Lammers and Martens (2021)</td><td class="c-other" data-label="Status">Peer-reviewed</td><td class="c-endpoint" data-label="Market, sample">60+ futures, 1974 to 2020</td><td class="c-other" data-label="Dealers' positions">Assumed for the S&amp;P 500</td><td class="c-result" data-label="Effect, as published">Intraday momentum, strongest when assumed gamma is negative</td></tr><tr><td class="c-trial" data-label="Study">Ardia and Vaudescal (2026)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">SPX half-hours, five years</td><td class="c-other" data-label="Dealers' positions">Public open interest</td><td class="c-result" data-label="Effect, as published">About 36% lower next half-hour variance per SD of gamma</td></tr><tr><td class="c-trial" data-label="Study">Anderegg, Ulmann and Sornette (2022)</td><td class="c-other" data-label="Status">Peer-reviewed</td><td class="c-endpoint" data-label="Market, sample">Two currency pairs, 2017 to 2018</td><td class="c-other" data-label="Dealers' positions">Reconstructed</td><td class="c-result" data-label="Effect, as published">+0.7 and +0.9 points of volatility</td></tr><tr><td class="c-trial" data-label="Study">Dim, Eraker and Vilkov (2023)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">SPX options</td><td class="c-other" data-label="Dealers' positions">Reconstructed</td><td class="c-result" data-label="Effect, as published">Dealer gamma positive on average; lower future intraday volatility</td></tr><tr><td class="c-trial" data-label="Study">Adams, Fontaine and Ornthanalai (2024)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">SPX, 2019 to 2023</td><td class="c-other" data-label="Dealers' positions">Inferred from flow data</td><td class="c-result" data-label="Effect, as published">60 to 90 bp lower annualized volatility on 0DTE days</td></tr><tr><td class="c-trial" data-label="Study">Amaya, Garcia-Ares, Pearson and Vasquez (2025)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">SPX, 2020 to mid-2023</td><td class="c-other" data-label="Dealers' positions">Observed</td><td class="c-result" data-label="Effect, as published">At most +3.3 points daily and +6.4 points over 30 minutes</td></tr><tr><td class="c-trial" data-label="Study">Brogaard, Han and Won (2023)</td><td class="c-other" data-label="Status">Working paper</td><td class="c-endpoint" data-label="Market, sample">Index 0DTE volume, 2011 to 2023</td><td class="c-other" data-label="Dealers' positions">None: volume</td><td class="c-result" data-label="Effect, as published">+9.10% of mean volatility per SD of 0DTE trading</td></tr><tr><td class="c-trial" data-label="Study">Dobrowolski, FlashAlpha (2026)</td><td class="c-other" data-label="Status">Vendor self-test</td><td class="c-endpoint" data-label="Market, sample">SPY, 2018 to 2026</td><td class="c-other" data-label="Dealers' positions">Vendor's own, not published</td><td class="c-result" data-label="Effect, as published">Rank correlation with next-day volatility −0.36 raw, about −0.03 after controls</td></tr></tbody></table></div></div>
+
+<h2 id="single-stocks">3 · Single stocks</h2>
+
+<p><strong>Ni, Pearson, Poteshman and White (2021)</strong>, in the <em>Review of Financial Studies</em>, is the strongest study of the everyday effect. It uses daily open interest and signed volume by type of investor from the CBOE and the Nasdaq ISE. For 1990 to 2001 it computes the gamma of likely delta hedgers, market makers and firms like them, from their positions. For 2002 to 2012 it estimates that gamma from signed volume. Panel regressions relate each stock's absolute daily return to the gamma, with controls.</p>
+
+<p>The relation is negative on all days, not only near expiry: hedgers' long gamma lowers volatility and their short gamma raises it. In size, 9.5% of optioned stocks' absolute daily return in the first period, and 13.4% in the second, can be attributed to hedge rebalancing. A one-standard-deviation shock to the gamma goes with a change of 28.8 basis points in the absolute daily return in the first period and 29.6 in the second. An earlier version of 2007 gave about 11.8% and 37 basis points. The paper also finds that rebalancing changes the probability of large moves.</p>
+
+<p>Read plainly: if a stock's absolute daily move averages 2%, about a tenth of that size is dealers' hedge trades pushing with or against the move. One standard deviation of dealer gamma shifts the day's absolute return by about 0.3 of a percentage point, which <a class="eqref" href="#e-conv"></a> turns into about 5.7 to 5.9 points of annualized volatility. The limits are single stocks, and positions estimated rather than observed after 2001.</p>
+
+<p><strong>Barbon and Buraschi</strong>, "Gamma Fragility" (SSRN 3725454, revised March 18, 2021), is a working paper. It merges option trade data from three Nasdaq exchanges, ISE, GEMX and PHLX, with OptionMetrics data for 2010 to 2020. It covers single stocks and four indexes: the S&amp;P 500, the Dow Jones, the Nasdaq 100 and the Russell 2000. Its measure, the gamma imbalance, is the dollar value of all market makers' gamma with their clients, computed daily per underlying from open interest. How the paper signs the clients' positions could not be checked for this chapter.</p>
+
+<p>Its abstract finds that "intra-day momentum (reversal) is explained by the interaction of negative (positive) ex-ante gamma imbalance and illiquidity". The effect is stronger for the least liquid underlyings, and the imbalance is related to the frequency and size of flash crashes. The effect's size depends on the version. In one, a one-standard-deviation rise in the imbalance goes with a fall of about 12 basis points in a stock's absolute daily return, against an average of about 109. Another gives 5 to 25 basis points for stocks, against an average of 180. For the indexes, one standard deviation goes with a fall of more than 20 basis points.</p>
+
+<p>Read plainly: a stock that usually moves 1.09% a day, in either direction, moves about 0.97% on a day when its dealers' gamma imbalance is one standard deviation more positive. Two readings of this paper should be dropped. It gives no figure of 16 basis points per standard deviation, which the Dealer Mechanics Lab attributes to it. And the Lab reads its illiquidity result as suggesting that SPX, being liquid, feels smaller effects than single stocks. The numbers seen do not support that: the index estimate, more than 20 basis points, is not smaller than the stocks' range.</p>
+
+<p><strong>Soebhag (2023)</strong>, in the <em>Journal of Empirical Finance</em>, sorts stocks into portfolios by their net gamma exposure. Stocks with high net gamma exposure underperform those with low exposure by about 10% a year, and low-exposure stocks are more volatile afterward. The author reads the return gap as a premium for holding the more volatile, short-gamma stocks, from a hedging channel rather than private information. How the paper signs the exposure could not be checked. One lesson travels: in this sample, low-gamma stocks earned more on average, which cuts against the idea that negative gamma is bearish.</p>
+
+<p><strong>Autocorrelation.</strong> Yang (2015), an unpublished job-market paper, measures option writers' hedging demand stock by stock, assuming the writers are short. It uses the distance of the price from the nearest round number as an instrument, since strikes are round numbers. Moving from the lowest to the highest fifth of hedging demand raises daily return autocorrelation from −5.0% to −1.6%. That is a change of 3.4 percentage points: the predicted sign, and far smaller than the weight of 0.45 in <a class="xref" href="8d.html">Chapter 8D</a>'s illustrative regime figure.</p>
+
+<p><strong>The end of the day.</strong> Three papers study the last half hour in single stocks, and they do not agree:</p>
+
+<ul>
+<li>Beckmeyer and Moerke (2021), a conference paper, study market makers' hedging near the close. Establishing delta neutrality then "causes return momentum or reversal of 18 basis points for each one percentage point move in the underlying until half an hour before trading close". The sign of market makers' aggregated gamma sets the direction. Roughly: a stock up 1% at 3:30 PM with dealers short gamma tends to add about 0.18% by the close, and with dealers long gamma to give about 0.18% back.</li>
+<li>Barbon, Beckmeyer, Buraschi and Moerke (2022), a working paper, find the same momentum and reversal. They also find leveraged-ETF rebalancing at the close economically larger than option hedging. Both effects reverse at the next day's open, and the leveraged-ETF effect has shrunk over time as liquidity providers learned to anticipate it.</li>
+<li>Baltussen, Da and Soebhag (2024), a working paper, find sharp reversals across stocks in the last 30 minutes, with the day's losers bouncing. The reversals "cannot be explained by liquidity- or gamma-hedging effects". They attribute them to attention-driven retail buying and to short sellers managing risk at the close.</li>
+</ul>
+
+<p>Not every end-of-day pattern is a dealer pattern.</p>
+
+<p><strong>Retail option buying, and other markets.</strong> The natural experiment of <a class="xref" href="8i.html">Chapter 8I</a> points the same way as the panels. Where retail option trading grew after Robinhood's free option trades of 2018, stock volatility rose, through dealers' hedging of retail flow (Lipson, Tomio and Zhang 2023, a working paper). In China's SSE 50 ETF options, call (put) order imbalances move the underlying up (down) and then reverse quickly, from market makers' delta hedging rather than information (Chen and co-authors 2025). In bitcoin, returns reverse around daily option expiries, most strongly when estimated dealer gamma is negative (Weiss and co-authors 2026). The reversals move about USD 50 million a year between option writers and holders.</p>
+
+<h2 id="the-index">4 · The index</h2>
+
+<p><strong>Baltussen, Da, Lammers and Martens (2021)</strong>, in the <em>Journal of Financial Economics</em>, find "market intraday momentum everywhere". Across more than 60 futures on equity indexes, bonds, commodities and currencies, 1974 to 2020, the return over the rest of the day predicts the return over the last 30 minutes. The effect is "economically and statistically highly significant", and it reverts over the next days. Their explanation is in their abstract: "Hedging short gamma exposure requires trading in the direction of price movements, thereby creating price momentum."</p>
+
+<p>For the S&amp;P 500 they build option market makers' net gamma exposure from index option open interest, January 1996 to May 2020, assuming market makers are long calls and short puts. By that measure it was negative on about 2,930 of 6,088 days. Momentum appears when it is negative, grows the more negative it is, and is weak or absent when it is positive. Leveraged-ETF rebalancing on each index drives the size of that index's momentum too.</p>
+
+<p>Two cautions apply. The S&amp;P 500 sign is assumed, so a "negative" day is a day with more put than call gamma near spot, not a day of observed dealer short gamma. And the predictor is the rest-of-day return. A separate paper, Gao, Han, Li and Zhou (2018), finds that SPY's first half hour predicts its last half hour, 1993 to 2013. It has no gamma measure, and it explains the pattern by late-informed trading and infrequent rebalancing.</p>
+
+<p><strong>Park and Zhao (2024)</strong>, a conference paper, sharpen the test. Intraday momentum is stronger when active option traders are short gamma. It surges when the index moves beyond the gamma-theta breakeven range, the move at which a short-gamma book's gamma loss equals its theta income. Past that range, hedgers' demand turns insensitive to price, and market makers on average keep hedging rather than buy the options back. The paper turns the vendors' gamma flip into a testable claim about the size of a move rather than a price level. Its effect sizes were not available for this chapter.</p>
+
+<p><strong>Ardia and Vaudescal (2026)</strong>, a working paper, rebuild net gamma from public open interest over five years of half-hour SPX data. A one-standard-deviation rise in net gamma outside the same-day options predicts realized variance over the next half hour about 36% lower, "nearly twice the published coefficient". The public proxy tracks a dealer-inventory benchmark at a correlation of 0.99 outside 0DTE and 0.53 inside it (<a class="xref" href="8b.html">Chapter 8B</a>), and the result reproduces on SPY and QQQ options. In another working paper, Egebjerg and Kokholm (2024) link changes in market makers' net delta in SPX options to subsequent SPX futures returns. The link runs through new option trades as well as through gamma.</p>
+
+<p><strong>Currencies.</strong> Anderegg, Ulmann and Sornette (2022) rebuilt the aggregate market maker's gamma in EURUSD and USDJPY options from trade-repository data, October 2017 to June 2018. It was negative, and it added about 0.7 and 0.9 points to annualized volatility, under a point in the two deepest currency pairs (<a class="xref" href="8d.html">Chapter 8D</a> gives the study in full).</p>
+
+<h2 id="the-0dte-question">5 · The 0DTE question</h2>
+
+<p>Since same-day options took over SPX volume (<a class="xref" href="8b.html">Chapter 8B</a>), one question has dominated: does dealers' hedging of them calm the index or push it? The studies split, and the split follows the method.</p>
+
+<h3 id="studies-of-dealers-positions-damping-on-average">Studies of dealers' positions: damping on average</h3>
+
+<p><strong>Dim, Eraker and Vilkov (2023)</strong>, a working paper first posted in November 2023 and circulated in 2024, rebuild market makers' inventory from Cboe's records of end users' trades (<a class="xref" href="8b.html">Chapter 8B</a>). The inventory's gamma is "on average positive and negatively related to future intraday volatility". Positive (negative) inventory gamma "strengthens intraday price reversal (momentum)", a pattern "consistent with delta-hedging but inconsistent with information-based trading". Average daily open-interest gamma did not grow after 2016, so even if short-gamma holders hedge, the growth of 0DTE is unlikely to have raised volatility. Effect sizes in standard-deviation units were not available.</p>
+
+<p><strong>Adams, Fontaine and Ornthanalai (2024)</strong>, a working paper, use intraday SPX option volume for 2019 to 2023. They identify the effect from the calendar: days with an expiring contract against days without one. "Index volatility decreases by 60–90 annualized basis points on days with 0DTE trading". Read plainly, a day with an expiring SPX option runs at about 15.0% annualized volatility where a comparable day without one would run at about 15.7%. The mechanism is the one <a class="xref" href="8b.html">Chapter 8B</a> describes. Market makers pass through most same-day flow, but absorb longer-dated trades that later become same-day positions, and hedging those damps volatility.</p>
+
+<p><strong>Adams, Dim, Eraker, Fontaine, Ornthanalai and Vilkov (2025)</strong>, a working paper, report "a robust negative relation between 0DTE trading days and realized S&amp;P500 volatility". Changes in intermediaries' net gamma and hedging demands drive it. Positions in longer-dated options "roll down the term structure" and leave market makers trading against the index's moves. The variation behind it is again the calendar: days with and without 0DTE trading. The Dealer Mechanics Lab ties that variation to the 2022 additions. Cboe listed Tuesday and Thursday SPXW expirations from April 18 and May 11, 2022, and they first expired on April 26 and May 19. The Lab also says the paper "establishes causally" that 0DTE options damp volatility. The paper's own words are a robust negative relation from a natural experiment: strong evidence, but not a randomized design.</p>
+
+<p><strong>Amaya, Garcia-Ares, Pearson and Vasquez (2025)</strong>, a working paper published by Cboe's Options Institute, use proprietary records of all SPX and SPXW trades from January 2020 to June 2023. The records identify market makers' aggregate position directly. They fit models of index volatility and simulate the market with dealer gamma switched off. The largest impact of dealer gamma they find is 3.3 points of annualized daily volatility, and 6.4 points of annualized volatility measured over 30-minute periods. Read plainly: even on the days and half hours when dealer gamma is most destabilizing, it adds a few points, for example from 15% to about 18%, not a crash. On average the impact is to reduce volatility, because market makers' gamma is usually positive. It is also, in the authors' words, "often negative", and volatility is higher when it is.</p>
+
+<p><strong>Cboe's own notes</strong> measure the same thing with the exchange's account flags. The 2023 note by Mandy Xu puts market makers' net 0DTE gamma at about $170 million to $670 million through the day. That is 0.04% to 0.17% of about $400 billion of daily S&amp;P 500 futures liquidity. At 3:30 PM the median was +$173 million, with a typical range reaching down to −$1.1 billion, and the note finds "no discernible market impact". In one example, over 100,000 contracts of a single put traded in a day and market makers ended it short about 3,000, "just 3% of the gross volume". The 2025 update, "0DTEs Decoded" (May 2, 2025), finds customer 0DTE activity "extremely balanced" and market-maker hedging "at best, just 0.2% of the SPX daily liquidity". Both figures cover 0DTE market-maker hedging only, and Cboe sells the product. The notes also leave unclear whether they count older positions that age into expiry, which Adams and co-authors find to be the source of most dealer 0DTE gamma.</p>
+
+<h3 id="a-study-of-volume-amplification">A study of volume: amplification</h3>
+
+<p><strong>Brogaard, Han and Won (2023, revised 2026)</strong>, a working paper, study index 0DTE volume, which rose from 0.08 million contracts a month in January 2011 to 34.4 million in August 2023, 48% of index option trading. They use the staggered introduction of index weekly options as an instrumental variable. "A one standard deviation increase in 0DTE options trading leads to 9.10% increase relative to the mean value of volatility, which is 15.91% of its standard deviation". The effect stays positive after controlling for market makers' gamma hedging, and is "primarily driven by speculative retail investors".</p>
+
+<p>Read plainly: at a mean volatility of 15%, a standard deviation more 0DTE trading adds about 1.4 points. The instrument's assumption is the one to question. The listing of weekly options could raise volatility through channels other than 0DTE volume, which would break the assumption the design rests on. The paper measures volume, not dealer positions. At the single-stock level, the listing of weekly options also raised volatility (Ellahie and co-authors, <a class="xref" href="8i.html">Chapter 8I</a>).</p>
+
+<h3 id="reading-the-split">Reading the split</h3>
+
+<p>The two findings answer different questions. The position studies ask what dealers' hedging does, and find it small and, on average, damping. The volume study asks what 0DTE trading does as a whole. It finds that the trading adds volatility through speculation, not through hedging, since the effect survives controls for dealers' hedging. Both can hold: a small, stabilizing dealer channel inside a trading boom that adds volatility of its own. That is close to the opposite of the story most heatmaps tell, in which same-day dealer hedging drives the day.</p>
+
+<p>Two further disputes sit beside the split, and <a class="xref" href="8b.html">Chapter 8B</a> gives both in full. Who is on the other side of 0DTE is contested. The Dealer Mechanics Lab says customers sell premium, and Cboe calls customer flow balanced. A retail slice identified through Cboe's auctions bought more than it sold. And whether dealers delta hedge as the models assume is open. In Korean index options, market makers mostly trade their option inventory back out within minutes. S&amp;P 500 option volume runs 32 times the net change in positions (Hu, Kirilova, Muravyev and Ryu 2023). Every effect in this chapter is measured through whatever hedging dealers actually do.</p>
+
+<h2 id="expiration-and-pinning">6 · Expiration and pinning</h2>
+
+<p><a class="xref" href="8e.html">Chapter 8E</a> gives the pinning evidence in full; its shape belongs in any summary. Closing prices of optionable single stocks cluster at strikes on expiration dates (Ni, Pearson and Poteshman 2005). In 1996 to 2002, the clustering altered returns by an average of at least 16.5 basis points per expiration, about $9 billion of market value. Clustering is much more frequent when market makers are net long options, and part of it looks like manipulation by traders who hold options. The 16.5 basis points is a single-stock number: the paper does not study the index, and it cannot be turned into index points.</p>
+
+<p>At the index level, S&amp;P 500 futures are pulled toward the at-the-money strike when options on the futures expire, and pushed away from it just before SPX options expire. The shift is at least $115 million of futures notional per expiration day (Golez and Jackwerth 2012). Clustering is much weaker for weekly single-stock options, and about three quarters of 96 firms show none (Zhang and co-authors, 2010 to 2012). Some expiration moves are not hedging at all. Stocks with large deep in-the-money call open interest fall 0.8 percentage point on expiration days and then recover, as call holders exercise and sell the stock (Chiang 2014). That channel is absent from cash-settled SPX. The classic index expiration effect of 1984 and 1985 was about 0.4% of the closing index value, reversed the next morning. It came from futures arbitrage unwinding, not option hedging (Stoll and Whaley 1987).</p>
+
+<h2 id="tests-of-gex-as-a-signal-and-of-levels">7 · Tests of GEX as a signal, and of levels</h2>
+
+<p><strong>The claim.</strong> SqueezeMetrics' white paper of 2016, revised in 2017, introduced the vendor formula of <a class="xref" href="8b.html">Chapter 8B</a>. It claimed that high GEX goes with low volatility the next day, and that GEX separates calm states the VIX does not. The test was in-sample and its sign was assumed. Its quartile figures, as summarized in the sources behind this chapter, do not reconcile, so the chapter does not quote them.</p>
+
+<p><strong>The pre-registered test.</strong> Dobrowolski (2026), who sells a GEX data service through FlashAlpha, tested his own product on 1,972 SPY trading days from 2018 to 2026, with tests he says he registered in advance. Raw GEX is strongly related to the next day's realized volatility: a rank correlation of −0.36, and a gap of 10.63 volatility points between the top and bottom groups of days. After controlling for the VIX, the gap shrinks to 3.15 points. After controlling for the VIX and at-the-money implied volatility, it is 0.99 points (p = 0.25), and the rank correlation is about −0.03. Vanna exposure correlates +0.72 with the VIX and adds almost nothing after the same controls. Read plainly: high-GEX days are calm mostly because GEX is high when implied volatility is low. Once you know implied volatility, GEX adds almost nothing about tomorrow.</p>
+
+<div class="callout familiar">
+<span class="ct">Familiar ground</span>
+<p>GEX behaved like a biomarker whose raw association with survival vanishes once stage is in the model. It is prognostic on its own, and adds nothing to what stage already says. Here stage is implied volatility. High GEX and a calm tomorrow share a cause, a calm today, which the VIX already prices. The test that counts is incremental value, not raw association.</p>
+</div>
+
+<p>The figure below rebuilds that test on 1,972 made-up days, the published count. They are built so that the VIX and at-the-money implied volatility drive both GEX and the next day's volatility, while GEX has only a small effect of its own. Each dot is a day, colored by the VIX's thirds. A three-way choice adjusts for nothing, for the VIX, or for the VIX and at-the-money implied volatility. A table sets these days' numbers beside the published ones, as a paper sets crude estimates beside adjusted ones, and new sample draws another 1,972 days.</p>
+
+<figure class="fig" id="fig-gex-vix-confound">
+  <canvas id="gex-vix-confound-c" data-h="340"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Adjust for" id="gex-vix-confound-adj">
+      <label>adjust for</label>
+      <button type="button" data-v="none" class="on" aria-pressed="true">none</button>
+      <button type="button" data-v="vix" aria-pressed="false">VIX</button>
+      <button type="button" data-v="both" aria-pressed="false">VIX, ATM IV</button>
+    </div>
+    <div class="ctrl"><button type="button" id="gex-vix-confound-new">new sample</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Adjusted for</th><th>Rank correlation, these days / published</th><th>Gap in pts, these days / published</th></tr></thead>
+    <tbody>
+      <tr id="gex-vix-confound-r0" class="on"><td class="c-trial">none</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p0"></span> / −0.36</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g0"></span> / 10.63</td></tr>
+      <tr id="gex-vix-confound-r1"><td class="c-trial">the VIX</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p1"></span> / −0.14</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g1"></span> / 3.15</td></tr>
+      <tr id="gex-vix-confound-r2"><td class="c-trial">the VIX and ATM IV</td><td data-label="Rank correlation, these days / published"><span id="gex-vix-confound-p2"></span> / −0.03</td><td data-label="Gap in pts, these days / published"><span id="gex-vix-confound-g2"></span> / 0.99 (p = 0.25)</td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="gex-vix-confound-vk"></b> <span id="gex-vix-confound-vt"></span></p>
+  <figcaption><b>What GEX knows that the VIX already knows.</b> Each dot is one made-up day:
+  its GEX against the next day's realized volatility (RV), colored by the day's VIX. The 1,972
+  days are built so that the VIX and at-the-money implied volatility (ATM IV) drive both, with
+  only a small effect of GEX itself, and come close to the published results of Dobrowolski's
+  test on 1,972 SPY days. Adjusting plots the residuals, what is left of each after a
+  straight-line fit on the controls, as a study adjusts a biomarker for stage. Adjust for the
+  VIX, then for ATM IV too, and watch the colors mix and the gap between the bottom and top
+  fifths of days by GEX (the bands) close.</figcaption>
+</figure>
+
+<p>Unadjusted, the made-up days give a rank correlation of −0.36 and a gap of 10.45 points between the bottom and top fifths of days by GEX, against the published −0.36 and 10.63. Adjust for the VIX and they fall to −0.14 and 3.09. Adjust for implied volatility too and they are −0.03 and 1.03, against the published −0.03 and 0.99. Before adjustment, watch the colors: the high-GEX days are mostly low-VIX days. Draw a few new samples, and the fully adjusted gap wanders between about −0.2 and +1.3 points while the raw one stays near 10 or more.</p>
+
+<p><strong>The counterweights.</strong> Not every test finds nothing. At the half-hour horizon, public open-interest gamma keeps predictive information about variance (Ardia and Vaudescal, above). A master's thesis finds that changes in aggregate GEX predict S&amp;P 500 returns and improve out-of-sample forecasts, more weakly after 2020 (Jonsson and Nyberg 2025). It has no control for implied volatility. Both concern the aggregate, not any named strike.</p>
+
+<p><strong>Levels.</strong> No academic test of trading a named GEX level, a wall, a flip or a King Node, was found. The only published statistics come from a vendor. SpotGamma reports that from May 10, 2019 to May 28, 2024, SPX's intraday low held above its Put Wall in 89% of sessions and closed above it in 93%. After a Put Wall breach, average forward returns were +14 basis points over 1 day, +7 over 5 days and +39 over 10 days; after a Call Wall breach, −7 over 1 day and +5 over 5 days. None of these has a base rate. A strike chosen well below spot is "held" on most days whatever its gamma. The returns come with no standard errors, and no arbitrary strikes at the same distance were compared. <a class="xref" href="8j.html">Chapter 8J</a> shows how to run that comparison yourself. A widely read practitioner test of SqueezeMetrics' GEX and dark-pool index, a blog post of 2021 with positive results, was retracted by its author after a data error.</p>
+
+<p>The one academic test of a retail level is of "max pain", the strike at which option holders' total payout at expiry would be smallest. Filippou, Garcia-Ares and Zapatero (2022, revised 2023) test it in a working paper on US stocks from 1996 to 2021. A long-short strategy built on the distance from max pain earned about 0.4% a week, most in small and illiquid stocks. The authors attribute it to a reversal in stocks that had fallen, and cannot rule out manipulation. Even where a level "works", the mechanism need not be the one its users claim. Skylit's own claims about its nodes, such as a reaction about 80% of the time when price approaches a fresh node, come with no method or sample (<a class="xref" href="8c.html">Chapter 8C</a>).</p>
+
+<h2 id="the-effects-on-one-scale">8 · The effects on one scale</h2>
+
+<p>The figure puts ten estimates from these studies on one axis, in points of annualized volatility. Each row shows the study, its market and sample, and its effect as published. Beneath them is the converted effect: a dot for an estimate, a bar for a range, an arrow for "at least" and a hatched bar for an upper bound. Green marks a calmer market, rose a more volatile one. The conversions use <a class="eqref" href="#e-conv"></a>, normal daily returns and 252 trading days. Start with the rows grouped by market, then switch the grouping to how dealers were known. The mean-volatility slider moves only the volume study's row, whose effect is a share of mean volatility.</p>
+
+<figure class="fig" id="fig-gamma-evidence-forest">
+  <canvas id="gamma-evidence-forest-c" data-h="662"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Group the studies by" id="gamma-evidence-forest-grp">
+      <label>group by</label>
+      <button type="button" data-v="market" class="on" aria-pressed="true">market</button>
+      <button type="button" data-v="ident" aria-pressed="false">how dealers were known</button>
+    </div>
+    <div class="ctrl">
+      <label for="gamma-evidence-forest-mv">mean vol</label>
+      <input type="range" id="gamma-evidence-forest-mv" min="10" max="30" step="1" value="15">
+      <output id="gamma-evidence-forest-mv-o" for="gamma-evidence-forest-mv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="gamma-evidence-forest-agree"></output></div>
+    <div class="ctrl"><output id="gamma-evidence-forest-size"></output></div>
+  </div>
+  <figcaption><b>Dealer gamma and volatility, study by study.</b> Each row is one estimate: its
+  study, market and sample, its effect as published, and below them the same effect in points
+  of annualized volatility, a dot for an estimate, a bar for a range, an arrow for "at least"
+  and a hatched bar for an upper bound; green is calmer, rose more volatile, and orange marks the
+  one estimate from 0DTE trading volume rather than dealer positions. Effects published in basis points
+  of absolute daily return are converted assuming normal daily returns and 252 trading days, and
+  the volume row needs a mean volatility, which the slider sets. The rows measure different
+  comparisons (per standard deviation of dealer gamma, days with and without same-day options,
+  observed short gamma against none), so compare their sizes and directions, not their exact
+  values.</figcaption>
+</figure>
+
+<p>The largest point estimates per standard deviation are in single stocks: about 5.7 and 5.9 points for Ni and co-authors, the readout's 5.9. For the index, Adams, Fontaine and Ornthanalai put the 0DTE effect at 0.6 to 0.9 points calmer. Barbon and Buraschi's index estimate is at least 4.0 points, drawn as an arrow because it is a lower bound. The worst case, Amaya and co-authors' upper bounds, reaches +3.3 points daily and +6.4 over 30 minutes; the two currency pairs sit under a point.</p>
+
+<p>The readout counts 9 of 10 estimates that fit the mechanism, and the one in orange is Brogaard and co-authors': +1.4 points at a mean volatility of 15%, +0.9 at 10%, +2.7 at 30%. Switch to "how dealers were known" and the orange row is the only one with no positions at all. It measures 0DTE trading, not dealer gamma, so it does not contradict the sign rule. It contradicts the reading that 0DTE, taken as a whole, calms the index. Do not read the count as a vote: the rows measure different comparisons, per standard deviation of gamma, days with and without same-day options, observed short gamma against none. Compare their directions and rough sizes, not their exact values.</p>
+
+<h2 id="what-the-literature-agrees-on">9 · What the literature agrees on</h2>
+
+<p>Six findings recur across designs, markets and samples. On the evidence tiers of <a class="xref" href="10a.html">Chapter 10A</a>, the first two come close to the top tier, peer-reviewed and replicated over decades of data; the rest sit lower.</p>
+
+<ol>
+<li><strong>The direction of the effect.</strong> Where dealers or other hedgers are long gamma, the underlying is calmer and reverts; where they are short, it is more volatile and trends. It holds in single stocks (Ni and co-authors; Barbon and Buraschi; Soebhag; Beckmeyer and Moerke; Lipson and co-authors). It holds for the index within the day (Baltussen and co-authors; Park and Zhao) and for SPX 0DTE (Dim, Eraker and Vilkov; Adams, Fontaine and Ornthanalai). It holds in currencies (Anderegg and co-authors), in Chinese ETF options, and in simulations (<a class="xref" href="8d.html">Chapter 8D</a>). No study found reverses the sign of the mechanism.</li>
+<li><strong>Price pressure that reverts.</strong> The effect reverses at the next open (Barbon, Beckmeyer, Buraschi and Moerke) and over the following days (Baltussen and co-authors). It reverses quickly in China (Chen and co-authors), and after expiration-day exercise (Chiang). Author after author rules out information as the explanation. A move that reverts is a move you can wait out, and a move you should not read as news.</li>
+<li><strong>Modest typical-day magnitudes.</strong> In single stocks, hedging accounts for about a tenth of the absolute daily move, 9.5% and 13.4% in two periods. One standard deviation of dealer gamma moves a stock's absolute daily return by about 12 to 30 basis points. In SPX, volatility runs 60 to 90 annualized basis points lower on 0DTE days, and the worst measured case adds a few points. In currencies the effect is under a point, and Cboe puts 0DTE hedging at 0.04% to 0.17% of futures liquidity.</li>
+<li><strong>Small pinning.</strong> Pinning exists and is small, it needs dealers long the options at the strike, it weakens as expirations multiply, and part of it is manipulation (<a class="xref" href="8e.html">Chapter 8E</a>).</li>
+<li><strong>The historical dealer short-put book.</strong> End users were net long SPX puts and dealers net short them in 1996 to 2001, 1991 to 2012, and 2011 to 2023, about 19 million contracts in the last sample. Dealers' willingness to stay short shrinks when their constraints bind (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+<li><strong>Rule-based flows in the index stress episodes.</strong> Volmageddon ran through leveraged and inverse VIX products, and the August 2024 VIX spike was a quote artifact with no meaningful role for market makers' hedging (<a class="xref" href="8h.html">Chapter 8H</a>).</li>
+</ol>
+
+<h2 id="where-it-disagrees">10 · Where it disagrees</h2>
+
+<div class="evidence"><div class="ev-scroll"><table class="trials"><thead><tr><th class="c-trial">Question</th><th class="c-result">One side</th><th class="c-result">The other side</th><th class="c-result">What splits them</th></tr></thead><tbody><tr><td class="c-trial" data-label="Question">Does 0DTE trading damp or amplify?</td><td class="c-result" data-label="One side">Damps on average (Dim, Eraker and Vilkov; Adams and co-authors; Amaya and co-authors' bound; Cboe)</td><td class="c-result" data-label="The other side">Amplifies (Brogaard, Han and Won); single-stock weeklies raised volatility (Ellahie and co-authors)</td><td class="c-result" data-label="What splits them">Positions against volume; SPX against single stocks</td></tr><tr><td class="c-trial" data-label="Question">Who is on the other side of 0DTE?</td><td class="c-result" data-label="One side">Customers sell premium (the Lab)</td><td class="c-result" data-label="The other side">Customer flow balanced (Cboe); an auction-identified retail slice bought more than it sold (Beckmeyer, Branger and Gayda)</td><td class="c-result" data-label="What splits them">Who counts as retail: about 6% of 0DTE by auctions, 50% to 60% by Cboe's estimate</td></tr><tr><td class="c-trial" data-label="Question">Which convention fits SPX?</td><td class="c-result" data-label="One side">Dealers short puts, calls flat, by contracts (Terstegge)</td><td class="c-result" data-label="The other side">Dealers long gamma on average (Dim, Eraker and Vilkov)</td><td class="c-result" data-label="What splits them">Contracts against gamma; both can hold (<a class="xref" href="8b.html">Chapter 8B</a>)</td></tr><tr><td class="c-trial" data-label="Question">What drives the last half hour?</td><td class="c-result" data-label="One side">Dealer gamma: index momentum; momentum or reversal in stocks</td><td class="c-result" data-label="The other side">A cross-sectional reversal gamma does not explain (Baltussen, Da and Soebhag)</td><td class="c-result" data-label="What splits them">Index against cross-section of stocks</td></tr><tr><td class="c-trial" data-label="Question">Do leveraged ETFs move closes?</td><td class="c-result" data-label="One side">Yes, most on volatile days (Cheng and Madhavan; Shum and co-authors; Zhao)</td><td class="c-result" data-label="The other side">Not economically, once investor flows are counted (Ivanov and Lenkey; Lenkey)</td><td class="c-result" data-label="What splits them">Gross against net flow; the products' size against the market</td></tr><tr><td class="c-trial" data-label="Question">Was GME a gamma squeeze?</td><td class="c-result" data-label="One side">It may have contributed (academic committee)</td><td class="c-result" data-label="The other side">Not consistent with one (SEC staff)</td><td class="c-result" data-label="What splits them">Public against regulatory data; calls against puts (<a class="xref" href="8h.html">Chapter 8H</a>)</td></tr><tr><td class="c-trial" data-label="Question">Does GEX add to the VIX?</td><td class="c-result" data-label="One side">Yes (SqueezeMetrics' claim; changes in GEX, Jonsson and Nyberg; half-hour variance, Ardia and Vaudescal)</td><td class="c-result" data-label="The other side">Almost nothing at the daily horizon (FlashAlpha's pre-registered test)</td><td class="c-result" data-label="What splits them">Controls for implied volatility; daily against half-hour horizons</td></tr></tbody></table></div></div>
+
+<p>Two smaller disputes sit behind the table. Whether dealers delta hedge as the models assume is open, as the 0DTE section showed. And what suppressed volatility in 2023 and 2024 is contested. A BIS box proposes that dealers damp volatility when they hedge structured products (Todorov and Vilkov 2024). Cboe finds "no compelling evidence" that option-income funds, which grew from about $20 billion in 2019 to over $120 billion, were a primary cause, and points to the economic outlook instead.</p>
+
+<h2 id="what-nobody-has-tested">11 · What nobody has tested</h2>
+
+<ul>
+<li><strong>Walls, flips and nodes as levels.</strong> No academic study tests a call wall, a put wall, a gamma flip or a King Node as a level that price responds to. Nor has anyone tested node lifecycle or agreement across indexes (<a class="xref" href="8c.html">Chapter 8C</a>). The only statistics are a vendor's, without a base rate.</li>
+<li><strong>The sign of vendor GEX on a given day.</strong> The position studies publish no daily series comparable to a vendor's number, so no vendor's sign has been checked day by day against measured positions.</li>
+<li><strong>The feedback formula.</strong> \(\sigma/(1 - \kappa G)\) has not been estimated for any market. Its nearest empirical analogues, the currency study and Amaya and co-authors' bound, are small, and no study finds an S&amp;P 500 feedback gain near 1 (<a class="xref" href="8d.html">Chapter 8D</a>).</li>
+<li><strong>SPX pinning in the 0DTE era.</strong> The pinning evidence is for single stocks and for S&amp;P 500 futures in a sample from before the daily expirations. No study of SPX strike pinning in the 0DTE era was found.</li>
+<li><strong>Vanna and charm flows.</strong> "Vanna rallies" after volatility falls, and the "window of weakness" after monthly expiration, have no direct academic test. The nearest is a single-stock study of the expiration week (<a class="xref" href="8f.html">Chapter 8F</a>).</li>
+<li><strong>Dealer gamma in the stress episodes.</strong> No peer-reviewed estimate exists for March 2020 or August 2024 (<a class="xref" href="8h.html">Chapter 8H</a>), and for flash crashes only Barbon and Buraschi's reported correlation.</li>
+<li><strong>The invisible books.</strong> The size and hedging of FLEX and over-the-counter books, which a BIS box proposes as a damping force, are unmeasured (<a class="xref" href="8b.html">Chapter 8B</a>).</li>
+</ul>
+
+<h2 id="typical-days-and-the-tail">12 · Typical days and the tail</h2>
+
+<p>The dealer-feedback story is real and quantifiable, but its practical effect is modest on a typical day. The studies above put it at a tenth or so of a single stock's daily movement, and at a point or less of the index's annualized volatility. Even the most destabilizing measured case, Amaya and co-authors' upper bound, adds a few points, not a crash.</p>
+
+<p>The episodes that everyone remembers are February 2018, March 2020, the GME squeeze and the August 5, 2024 unwind. In the Dealer Mechanics Lab's reading, they are the <strong>right tail</strong> of this distribution, where feedback briefly approached the unstable threshold. The evidence of <a class="xref" href="8h.html">Chapter 8H</a> complicates that reading: the documented damage in the index episodes came from rule-based products and forced deleveraging, and the GME squeeze is disputed. What both readings share is the practical point. On most days, GEX is a probabilistic prior you can use to bias your strategy selection, not a deterministic forecast. The days that do damage are the ones the typical-day studies do not describe.</p>
+
+<div class="callout practice">
+<span class="ct">In practice</span>
+<p>For an account, the evidence supports three uses and rules out a fourth. Use the sign of GEX as context for how volatile the day may be. At the daily horizon, most of that information is already in the VIX and implied volatility. Expect a move driven by hedging to revert, so do not chase a late-day push as if it were news. Treat an expiring strike's pull as real but small, worth basis points, not a target. Do not trade named levels on the strength of vendor statistics: none has a base rate, and no academic study supports them. <a class="xref" href="8j.html">Chapter 8J</a> turns these into a workflow.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">When it fails</span>
+<p>Evidence of this kind fails in known ways. Most of the recent studies are working papers whose numbers change between versions. The samples end before, or early in, the daily-expiration era, and most of the index evidence is SPX alone. Several studies come from an exchange or a vendor with an interest in the answer. And a positive result draws more attention than its correction: a widely read practitioner test of GEX turned out to be wrong. Weigh each finding by its design and its independence, not by how often you have seen it quoted.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">Decision rule</span>
+<p>Before a claim about dealer gamma changes what you do, put five questions to it:</p>
+
+<ul>
+<li><strong>Design:</strong> is it a panel, a natural experiment, a model's bound, or a vendor's backtest?</li>
+<li><strong>Exposure:</strong> were dealers' positions observed, reconstructed, estimated or assumed?</li>
+<li><strong>Unit:</strong> what is the effect a number of, and what does it come to in points of volatility?</li>
+<li><strong>Controls:</strong> does it survive implied volatility, which already prices the calm or the storm?</li>
+<li><strong>Independence:</strong> is it out of sample, pre-registered, and free of a seller's interest?</li>
+</ul>
+
+<p>A claim that fails the second and fourth questions is a hypothesis, however often it is repeated.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: reading an upper bound as a typical effect</span>
+<p>"Dealer gamma adds 6.4 points of volatility" misreads Amaya and co-authors. The 6.4 is the largest impact on 30-minute volatility under their model, and on average the impact reduces volatility. Quote a bound as a bound.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: counting votes</span>
+<p>Nine of ten estimates agree, so the question looks settled. Vote counting ignores what each study measured, how precisely and in what comparison, which is why systematic reviews pool effects rather than tally them. Here the rows cannot even be pooled, because their comparisons differ. The agreement is about direction; the sizes stay study by study.</p>
+</div>
+
+<div class="callout warn">
+<span class="ct">Common mistake: a hold rate without a base rate</span>
+<p>"The put wall held 89% of the time" sounds like evidence that the wall matters. Any strike far enough below spot is held on most days, whatever its gamma. Without the hold rate of arbitrary strikes at the same distance, the 89% says nothing about the wall.</p>
+</div>
+
+<div class="callout brick">
+<span class="ct">What to carry forward</span>
+<ul>
+<li>The direction of the dealer-gamma effect is well supported across stocks, the index, currencies and 0DTE. Long gamma goes with calmer, reverting prices, and short gamma with more volatile, trending ones.</li>
+<li>The effect is price pressure that reverts. On a typical day it is modest: about a tenth of single stocks' absolute daily moves, and under a point of SPX volatility on 0DTE days. Even the worst measured case adds only a few points.</li>
+<li>The 0DTE evidence splits by method: position studies find dealers' hedging small and damping on average, and a volume study finds 0DTE trading adds volatility through speculation. Both can hold.</li>
+<li>At the daily horizon, GEX adds almost nothing once the VIX and implied volatility are known. Walls, flips and nodes as levels are untested.</li>
+<li>Weigh each study by its design, how it measured dealers' positions, its unit, its controls and its independence.</li>
+</ul>
+</div>
+
+<h2 id="check-yourself">13 · Check yourself</h2>
+<div class="problems">
+<div class="prob">
+<p class="pnum">Question 1</p>
+<p>A study reports that one standard deviation of dealer gamma lowers a stock's absolute daily return by 20 basis points. Roughly how many points of annualized volatility is that, and what assumption does the conversion need?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>By <a class="eqref" href="#e-conv"></a>, \(19.9 \times 0.20\% \approx 4.0\) points. The conversion assumes normal daily returns, for which the average absolute move is about 0.80 of the daily standard deviation, and 252 trading days a year. With fat tails the true figure is somewhat larger.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 2</p>
+<p>Why does it matter that Baltussen and co-authors assume, rather than observe, the sign of S&amp;P 500 dealer gamma?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Their "negative gamma" days are days with more put than call gamma near spot under a convention, not days on which dealers were observed to be short gamma. The exposure is measured with error, so the finding supports the mechanism only as far as the convention is right. Random errors would weaken the association, not create it.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 3</p>
+<p>Dim, Eraker and Vilkov find 0DTE dealer gamma damping, and Brogaard, Han and Won find 0DTE trading raising volatility. Must one of them be wrong?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>No. The first measures what dealers' hedging does, using their positions. The second measures what 0DTE trading does as a whole, using volume, and finds the effect survives controls for dealers' hedging. A small, damping dealer channel can sit inside trading that adds volatility through speculation.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 4</p>
+<p>FlashAlpha's raw rank correlation between GEX and next-day realized volatility is −0.36. Why does it fall to about −0.03?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>GEX tends to be high when implied volatility is low, and low implied volatility already predicts a calm tomorrow. Once the VIX and at-the-money implied volatility are controlled for, GEX has almost nothing left to add at the daily horizon. It is like a biomarker that adds nothing once stage is in the model.</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 5</p>
+<p>A vendor reports that SPX closed above its put wall on 93% of days over five years. What would you need before you believed the wall matters?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>A base rate: how often SPX closed above arbitrary strikes at the same distance below spot over the same days. If those also held about 93% of the time, the wall added nothing. You would also want standard errors, levels fixed in advance with no look-ahead, and a test out of sample (<a class="xref" href="8j.html">Chapter 8J</a>).</p>
+</div></details>
+</div>
+<div class="prob">
+<p class="pnum">Question 6</p>
+<p>Amaya and co-authors find that dealer gamma can add at most 6.4 points of annualized volatility over 30 minutes. What does that bound say about the typical day?</p>
+<details><summary>Answer</summary><div class="sol">
+<p>Little directly: it is the largest impact under their model, not a typical one, and on average dealer gamma reduced volatility in their sample. What it does say is that even the most destabilizing measured case was a few points of volatility, not a crash.</p>
+</div></details>
+</div>
+</div>
+
+<!--SCRIPT-->
+/* ============================================================
+   The Other End of the Trade: what every figure shares.
+
+   tools/spx.py puts this once at the head of a chapter's SCRIPT block, before
+   the figures on that page, so a figure may call DL.* freely. The numbers are
+   the Dealer Mechanics Lab's own (src/lib/math.js, synth.js, indicators.js),
+   ported line for line, so a figure computes what the app's widget computed.
+   Everything drawn goes through NMT.Plot and takes its colours from the
+   theme's roles (DL.color), so a figure follows the light and dark themes
+   and redraws when the reader switches.
+
+   Two rules every figure keeps, because the build runs the page and saves
+   its column (DESIGN.md section 8):
+   - the markup is static. A script writes text into outputs and draws on
+     canvases; it never adds or removes elements inside the figure;
+   - the first state is fixed. Seeds are constants and nothing animates
+     until the reader asks, so two builds of the same source are identical.
+   ============================================================ */
+var DL = (function () {
+  'use strict';
+
+  /* ---------- the normal distribution (Abramowitz and Stegun 26.2.17) ---------- */
+  function N(x) {
+    var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+        a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    var ax = Math.abs(x) / Math.sqrt(2);
+    var t = 1 / (1 + p * ax);
+    var y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax);
+    return 0.5 * (1 + sign * y);
+  }
+  function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+  /* ---------- Black-Scholes-Merton (r = 0.04, q = 0 unless given) ---------- */
+  function d1(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    return (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  }
+  function d2(S, K, T, sigma, r, q) { return d1(S, K, T, sigma, r, q) - sigma * Math.sqrt(T); }
+  function bsPrice(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return type === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    if (type === 'call') return S * Math.exp(-q * T) * N(D1) - K * Math.exp(-r * T) * N(D2);
+    return K * Math.exp(-r * T) * N(-D2) - S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsDelta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) {
+      if (type === 'call') return S > K ? 1 : S < K ? 0 : 0.5;
+      return S < K ? -1 : S > K ? 0 : -0.5;
+    }
+    var D1 = d1(S, K, T, sigma, r, q);
+    return type === 'call' ? Math.exp(-q * T) * N(D1) : Math.exp(-q * T) * (N(D1) - 1);
+  }
+  function bsGamma(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 1e-6) return S === K ? 1000 : 0;
+    var D1 = d1(S, K, T, sigma, r, q);
+    return Math.exp(-q * T) * phi(D1) / (S * sigma * Math.sqrt(T));
+  }
+  function bsVega(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    return S * Math.exp(-q * T) * phi(d1(S, K, T, sigma, r, q)) * Math.sqrt(T);
+  }
+  function bsTheta(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var t1 = -(S * Math.exp(-q * T) * phi(D1) * sigma) / (2 * Math.sqrt(T));
+    if (type === 'call') return t1 - r * K * Math.exp(-r * T) * N(D2) + q * S * Math.exp(-q * T) * N(D1);
+    return t1 + r * K * Math.exp(-r * T) * N(-D2) - q * S * Math.exp(-q * T) * N(-D1);
+  }
+  function bsRho(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0; type = type || 'call';
+    if (T <= 0) return 0;
+    var D2 = d2(S, K, T, sigma, r, q);
+    return type === 'call' ? K * T * Math.exp(-r * T) * N(D2) : -K * T * Math.exp(-r * T) * N(-D2);
+  }
+  function bsVanna(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    return -Math.exp(-q * T) * phi(D1) * (D2 / sigma);
+  }
+  function bsCharm(S, K, T, sigma, type, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    if (T <= 0) return 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var term = -phi(D1) * ((2 * (r - q) * T - D2 * sigma * Math.sqrt(T)) / (2 * T * sigma * Math.sqrt(T)));
+    return Math.exp(-q * T) * term;
+  }
+  /* every price and Greek at once, as the app's bsm() */
+  function bsm(S, K, T, sigma, r, q) {
+    r = r == null ? 0.04 : r; q = q || 0;
+    var D1 = d1(S, K, T, sigma, r, q), D2 = D1 - sigma * Math.sqrt(T);
+    var Nd1 = N(D1), Nd2 = N(D2), pd1 = phi(D1);
+    var eqT = Math.exp(-q * T), erT = Math.exp(-r * T), sT = Math.sqrt(T);
+    return {
+      d1: D1, d2: D2, Nd1: Nd1, Nd2: Nd2,
+      callPrice: S * eqT * Nd1 - K * erT * Nd2,
+      putPrice: K * erT * (1 - Nd2) - S * eqT * (1 - Nd1),
+      callDelta: eqT * Nd1,
+      putDelta: eqT * (Nd1 - 1),
+      gamma: T <= 0 ? 0 : eqT * pd1 / (S * sigma * sT),
+      vega: S * eqT * pd1 * sT,
+      callTheta: -(S * eqT * pd1 * sigma) / (2 * sT) - r * K * erT * Nd2 + q * S * eqT * Nd1,
+      putTheta: -(S * eqT * pd1 * sigma) / (2 * sT) + r * K * erT * (1 - Nd2) - q * S * eqT * (1 - Nd1),
+      callRho: K * T * erT * Nd2,
+      putRho: -K * T * erT * (1 - Nd2),
+      vanna: -eqT * pd1 * (D2 / sigma),
+      charm: T <= 0 ? 0 : eqT * (-pd1 * ((2 * (r - q) * T - D2 * sigma * sT) / (2 * T * sigma * sT)))
+    };
+  }
+
+  /* ---------- seeded randomness (Mulberry32, Box-Muller), as the app ---------- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      var t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    var u = 1 - r(), v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* ---------- synthetic price tapes (src/lib/synth.js) ---------- */
+  var REGIMES = [
+    { end: 40, drift: 0.0001, vol: 0.008, label: 'Stage 1 · Basing', stage: 1 },
+    { end: 110, drift: 0.0030, vol: 0.013, label: 'Stage 2 · Markup', stage: 2 },
+    { end: 145, drift: -0.0020, vol: 0.020, label: 'Pullback', stage: 2 },
+    { end: 200, drift: 0.0034, vol: 0.014, label: 'Continuation', stage: 2 },
+    { end: 240, drift: 0.0001, vol: 0.022, label: 'Stage 3 · Distribution', stage: 3 },
+    { end: 295, drift: -0.0030, vol: 0.020, label: 'Stage 4 · Markdown', stage: 4 },
+    { end: 350, drift: 0.0008, vol: 0.012, label: 'New Stage 1', stage: 1 }
+  ];
+  function ohlc(n, seed, regimes, start) {
+    n = n || 300; seed = seed == null ? 7 : seed; regimes = regimes || REGIMES; start = start || 100;
+    var r = rng(seed), out = [], price = start;
+    for (var i = 0; i < n; i++) {
+      var g = null;
+      for (var k = 0; k < regimes.length; k++) if (i < regimes[k].end) { g = regimes[k]; break; }
+      if (!g) g = regimes[regimes.length - 1];
+      var ret = g.drift + g.vol * gauss(r);
+      var open = price, close = Math.max(0.5, price * (1 + ret));
+      var wick = price * g.vol * (0.4 + r() * 0.9);
+      var high = Math.max(open, close) + wick * r();
+      var low = Math.min(open, close) - wick * r();
+      var volume = Math.floor(400000 + r() * 1400000 * (1 + Math.abs(ret) * 25));
+      out.push({ i: i, open: open, high: high, low: low, close: close, volume: volume,
+                 regime: g.label, stage: g.stage });
+      price = close;
+    }
+    return out;
+  }
+  function aggregate(data, k) {
+    var out = [];
+    for (var i = 0; i < data.length; i += k) {
+      var ch = data.slice(i, Math.min(i + k, data.length));
+      if (!ch.length) break;
+      out.push({ i: out.length, open: ch[0].open, close: ch[ch.length - 1].close,
+                 high: Math.max.apply(null, ch.map(function (d) { return d.high; })),
+                 low: Math.min.apply(null, ch.map(function (d) { return d.low; })),
+                 volume: ch.reduce(function (s, d) { return s + d.volume; }, 0) });
+    }
+    return out;
+  }
+
+  /* ---------- indicators (src/lib/indicators.js): arrays aligned to the data ---------- */
+  function key(k) { return k || 'close'; }
+  function sma(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = 0;
+      for (var j = i - n + 1; j <= i; j++) s += data[j][k];
+      return s / n;
+    });
+  }
+  function ema(data, n, k) {
+    k = key(k);
+    var a = 2 / (n + 1), r = [], prev = data.length ? data[0][k] : 0;
+    data.forEach(function (d, i) {
+      if (i === 0) r.push(prev);
+      else { prev = a * d[k] + (1 - a) * prev; r.push(prev); }
+    });
+    return r;
+  }
+  function stdDev(data, n, k) {
+    k = key(k);
+    return data.map(function (_, i) {
+      if (i < n - 1) return null;
+      var s = data.slice(i - n + 1, i + 1), m = 0, v = 0;
+      s.forEach(function (x) { m += x[k]; }); m /= n;
+      s.forEach(function (x) { v += (x[k] - m) * (x[k] - m); });
+      return Math.sqrt(v / n);
+    });
+  }
+  function bollinger(data, n, mult) {
+    n = n || 20; mult = mult || 2;
+    var m = sma(data, n), s = stdDev(data, n);
+    return { mid: m,
+             upper: m.map(function (v, i) { return v == null ? null : v + mult * s[i]; }),
+             lower: m.map(function (v, i) { return v == null ? null : v - mult * s[i]; }) };
+  }
+  function trueRange(data) {
+    return data.map(function (d, i) {
+      if (i === 0) return d.high - d.low;
+      var pc = data[i - 1].close;
+      return Math.max(d.high - d.low, Math.abs(d.high - pc), Math.abs(d.low - pc));
+    });
+  }
+  function atr(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), r = [], prev = null;
+    tr.forEach(function (v, i) {
+      if (i < n - 1) { r.push(null); return; }
+      if (i === n - 1) {
+        var init = tr.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n;
+        r.push(init); prev = init; return;
+      }
+      prev = (prev * (n - 1) + v) / n;
+      r.push(prev);
+    });
+    return r;
+  }
+  function donchian(data, n) {
+    n = n || 20;
+    return data.map(function (_, i) {
+      if (i < n - 1) return { upper: null, lower: null, mid: null };
+      var s = data.slice(i - n + 1, i + 1);
+      var u = Math.max.apply(null, s.map(function (x) { return x.high; }));
+      var l = Math.min.apply(null, s.map(function (x) { return x.low; }));
+      return { upper: u, lower: l, mid: (u + l) / 2 };
+    });
+  }
+  function rsi(data, n) {
+    n = n || 14;
+    var r = new Array(data.length).fill(null), g = 0, l = 0;
+    // Wilder's RSI. With no losses in the window RS is infinite and RSI is 100 (the app set
+    // RS to 100, which read 99.0); with neither gains nor losses it is taken as 50.
+    function value() { return l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l); }
+    for (var i = 1; i < data.length; i++) {
+      var c = data[i].close - data[i - 1].close, gain = Math.max(c, 0), loss = Math.max(-c, 0);
+      if (i <= n) {
+        g += gain / n; l += loss / n;
+        if (i === n) r[i] = value();
+      } else {
+        g = (g * (n - 1) + gain) / n; l = (l * (n - 1) + loss) / n;
+        r[i] = value();
+      }
+    }
+    return r;
+  }
+  function macd(data, fast, slow, signal) {
+    fast = fast || 12; slow = slow || 26; signal = signal || 9;
+    var ef = ema(data, fast), es = ema(data, slow);
+    var line = ef.map(function (v, i) { return v - es[i]; });
+    var sig = ema(line.map(function (v) { return { close: v }; }), signal);
+    return { line: line, signal: sig, hist: line.map(function (v, i) { return v - sig[i]; }) };
+  }
+  function adx(data, n) {
+    n = n || 14;
+    var tr = trueRange(data), plusDM = [], minusDM = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i === 0) { plusDM.push(0); minusDM.push(0); continue; }
+      var up = data[i].high - data[i - 1].high, dn = data[i - 1].low - data[i].low;
+      plusDM.push(up > dn && up > 0 ? up : 0);
+      minusDM.push(dn > up && dn > 0 ? dn : 0);
+    }
+    function wilder(arr) {
+      var r = new Array(arr.length).fill(null), prev = null;
+      arr.forEach(function (v, i) {
+        if (i < n - 1) return;
+        if (i === n - 1) { prev = arr.slice(0, n).reduce(function (a, b) { return a + b; }, 0); r[i] = prev; return; }
+        prev = prev - prev / n + v; r[i] = prev;
+      });
+      return r;
+    }
+    var trS = wilder(tr), pS = wilder(plusDM), mS = wilder(minusDM);
+    var plusDI = trS.map(function (v, i) { return v == null || pS[i] == null ? null : 100 * pS[i] / v; });
+    var minusDI = trS.map(function (v, i) { return v == null || mS[i] == null ? null : 100 * mS[i] / v; });
+    var dx = plusDI.map(function (v, i) {
+      return v == null || minusDI[i] == null ? null : 100 * Math.abs(v - minusDI[i]) / ((v + minusDI[i]) || 1);
+    });
+    var out = new Array(data.length).fill(null), prev = null, count = 0, sum = 0;
+    for (var j = 0; j < dx.length; j++) {
+      if (dx[j] == null) continue;
+      count++;
+      if (count <= n) { sum += dx[j]; if (count === n) { prev = sum / n; out[j] = prev; } }
+      else { prev = (prev * (n - 1) + dx[j]) / n; out[j] = prev; }
+    }
+    return { adx: out, plusDI: plusDI, minusDI: minusDI };
+  }
+
+  /* ---------- writing numbers ----------
+     A true minus sign (U+2212) rather than a hyphen, as the prose writes
+     them, and thousands grouped with commas. */
+  var MINUS = '−';
+  function num(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    d = d == null ? 2 : d;
+    var s = Math.abs(x).toFixed(d);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    s = parts.join('.');
+    return (x < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function signed(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(x, d);
+    return x > 0 && Number(Math.abs(x).toFixed(d == null ? 2 : d)) !== 0 ? '+' + s : s;
+  }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : num(x * 100, d == null ? 1 : d) + '%'; }
+  function spct(x, d) { return x == null || !isFinite(x) ? '—' : signed(x * 100, d == null ? 1 : d) + '%'; }
+  function usd(x, d) {
+    if (x == null || !isFinite(x)) return '—';
+    var s = num(Math.abs(x), d == null ? 2 : d);
+    return (x < 0 && s.replace(/[0.,]/g, '') !== '' ? MINUS : '') + '$' + s;
+  }
+  function compact(x, d, prefix) {
+    if (x == null || !isFinite(x)) return '—';
+    prefix = prefix || ''; d = d == null ? 1 : d;
+    var a = Math.abs(x), sign = x < 0 ? MINUS : '';
+    if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(d) + 'T';
+    if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(d) + 'B';
+    if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(d) + 'K';
+    return sign + prefix + a.toFixed(d);
+  }
+
+  /* ---------- the page: outputs and controls ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* Text into an element, only when it changes, so the build captures one
+     settled state and a redraw does not churn the DOM. */
+  function out(id, text) {
+    var el = typeof id === 'string' ? $(id) : id;
+    if (el && el.textContent !== String(text)) el.textContent = String(text);
+  }
+  function val(id) { var el = $(id); return el ? parseFloat(el.value) : NaN; }
+  function checked(id) { var el = $(id); return !!(el && el.checked); }
+  /* Call fn whenever any of these controls moves. */
+  function bind(ids, fn) {
+    ids.forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', fn);
+      el.addEventListener('change', fn);
+    });
+  }
+  /* A row of buttons acting as one choice: each button carries data-v, the one
+     chosen has .on and aria-pressed="true". Returns a function giving the
+     current value. The first state is whichever button the markup marked
+     .on, so the saved page and the live page agree. */
+  function seg(id, fn) {
+    var box = $(id);
+    if (!box) return function () { return null; };
+    var bs = [].slice.call(box.querySelectorAll('button[data-v]'));
+    function current() {
+      for (var i = 0; i < bs.length; i++) if (bs[i].classList.contains('on')) return bs[i].getAttribute('data-v');
+      return bs.length ? bs[0].getAttribute('data-v') : null;
+    }
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        bs.forEach(function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if (fn) fn(b.getAttribute('data-v'));
+      });
+    });
+    return current;
+  }
+  function still() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  /* Register a canvas figure. draw(canvas) is called now, on resize and on
+     a change of theme (NMT.figure). Returns the redraw. */
+  function figure(canvasId, draw) {
+    if (!window.NMT) return function () {};
+    return NMT.figure(canvasId, draw) || function () {};
+  }
+  function redraw() { if (window.NMT) NMT.redrawAll(); }
+
+  /* ---------- colour ----------
+     A role from the stylesheet, resolved for the current theme: accent,
+     familiar, insight, warn, plain, ink, ink-soft, ink-faint, rule, rule-soft,
+     paper, bg. The app's amber is the accent here; its cyan and violet are
+     familiar, its green insight, its rose plain. */
+  function color(role) { return window.NMT ? NMT.css('--' + role) : '#888888'; }
+  function fade(c, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || '');
+    if (m) return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+    var r = /rgba?\(([^)]+)\)/.exec(c || '');
+    if (r) {
+      var p = r[1].split(',');
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + a + ')';
+    }
+    return c;
+  }
+
+  /* ---------- drawing on an NMT.Plot ---------- */
+
+  /* NMT.Plot's own axes with a format for each axis, and ticks you choose.
+       o.x, o.y      a function (value, step) -> label, or false for none
+       o.nx, o.ny    how many ticks to aim for (as Plot.axes)
+       o.xs, o.ys    the tick values themselves, overriding nx and ny
+       o.grid        false for no grid (default: the plot's own setting)
+     Paints the ground first, as Plot.axes does, so call it before drawing. */
+  function ticks(lo, hi, target) {
+    var span = hi - lo, raw = span / (target || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    var step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step)
+      out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+    return { vals: out, step: step };
+  }
+  function axes(p, o) {
+    o = o || {};
+    var g = p.g, P = p.o;
+    var tx = o.xs ? { vals: o.xs, step: o.xs.length > 1 ? Math.abs(o.xs[1] - o.xs[0]) : 1 }
+                  : ticks(P.xmin, P.xmax, o.nx || 6);
+    var ty = o.ys ? { vals: o.ys, step: o.ys.length > 1 ? Math.abs(o.ys[1] - o.ys[0]) : 1 }
+                  : ticks(P.ymin, P.ymax, o.ny || 5);
+    function dflt(v, st) { return num(v, Math.min(Math.max(0, -Math.floor(Math.log10(st))), 4)); }
+    var fx = o.x === false ? null : (o.x || dflt), fy = o.y === false ? null : (o.y || dflt);
+    g.clearRect(0, 0, p.w, p.h);
+    g.fillStyle = color('paper'); g.fillRect(0, 0, p.w, p.h);
+    if (o.grid == null ? P.grid : o.grid) {
+      g.strokeStyle = color('rule-soft'); g.lineWidth = 1;
+      tx.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(v) + .5, p.Y(P.ymin)); g.lineTo(p.X(v) + .5, p.Y(P.ymax)); g.stroke(); });
+      ty.vals.forEach(function (v) {
+        g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(v) + .5); g.lineTo(p.X(P.xmax), p.Y(v) + .5); g.stroke(); });
+    }
+    g.strokeStyle = color('rule'); g.lineWidth = 1.4;
+    var y0 = (P.ymin <= 0 && P.ymax >= 0) ? 0 : P.ymin;
+    var x0 = o.yAt != null ? o.yAt : ((P.xmin <= 0 && P.xmax >= 0) ? 0 : P.xmin);
+    g.beginPath(); g.moveTo(p.X(P.xmin), p.Y(y0)); g.lineTo(p.X(P.xmax), p.Y(y0)); g.stroke();
+    if (o.yAxis !== false) {
+      g.beginPath(); g.moveTo(p.X(x0), p.Y(P.ymin)); g.lineTo(p.X(x0), p.Y(P.ymax)); g.stroke();
+    }
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    if (fx) {
+      g.textAlign = 'center'; g.textBaseline = 'top';
+      tx.vals.forEach(function (v) { g.fillText(fx(v, tx.step), p.X(v), p.Y(P.ymin) + 6); });
+    }
+    if (fy) {
+      g.textAlign = 'right'; g.textBaseline = 'middle';
+      ty.vals.forEach(function (v) { g.fillText(fy(v, ty.step), p.X(P.xmin) - 7, p.Y(v)); });
+    }
+    if (P.xlabel) {
+      g.textAlign = 'right'; g.textBaseline = 'bottom';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.xlabel, p.w - P.pad.r, p.h - 4);
+    }
+    if (P.ylabel) {
+      g.save(); g.translate(11, P.pad.t); g.rotate(-Math.PI / 2);
+      g.textAlign = 'right'; g.textBaseline = 'top';
+      g.fillStyle = color('ink-soft'); g.font = 'italic 12px ' + color('serif');
+      g.fillText(P.ylabel, 0, 0); g.restore();
+    }
+    return p;
+  }
+
+  function clip(p) {
+    var g = p.g, o = p.o;
+    g.save();
+    g.beginPath();
+    g.rect(o.pad.l, o.pad.t, p.w - o.pad.l - o.pad.r, p.h - o.pad.t - o.pad.b);
+    g.clip();
+  }
+  /* Vertical bars from a baseline (o.base, default 0), o.w wide in data units.
+     o.color is a colour or a function (value, index) -> colour. */
+  function bars(p, xs, ys, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, w = o.w == null ? 0.8 : o.w;
+    clip(p);
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) continue;
+      var x0 = p.X(xs[i] - w / 2), x1 = p.X(xs[i] + w / 2);
+      var y0 = p.Y(base), y1 = p.Y(ys[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(ys[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(1, Math.abs(x1 - x0)), Math.abs(y1 - y0));
+    }
+    g.restore();
+  }
+  /* Horizontal bars: ys are positions, xs the lengths from o.base. */
+  function hbars(p, ys, xs, o) {
+    o = o || {};
+    var g = p.g, base = o.base || 0, h = o.h == null ? 0.8 : o.h;
+    clip(p);
+    for (var i = 0; i < ys.length; i++) {
+      if (xs[i] == null || !isFinite(xs[i])) continue;
+      var y0 = p.Y(ys[i] - h / 2), y1 = p.Y(ys[i] + h / 2);
+      var x0 = p.X(base), x1 = p.X(xs[i]);
+      g.fillStyle = typeof o.color === 'function' ? o.color(xs[i], i) : (o.color || color('accent'));
+      g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.max(1, Math.abs(y1 - y0)));
+    }
+    g.restore();
+  }
+  /* A filled band between two curves (lo may be a number: the baseline). */
+  function band(p, xs, hi, lo, fill) {
+    var g = p.g;
+    clip(p);
+    g.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (hi[i] == null) continue;
+      if (!started) { g.moveTo(p.X(xs[i]), p.Y(hi[i])); started = true; }
+      else g.lineTo(p.X(xs[i]), p.Y(hi[i]));
+    }
+    for (var j = xs.length - 1; j >= 0; j--) {
+      var l = typeof lo === 'number' ? lo : lo[j];
+      if (l == null || hi[j] == null) continue;
+      g.lineTo(p.X(xs[j]), p.Y(l));
+    }
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+    g.restore();
+  }
+  /* A series as a line, skipping nulls (a gap, not a drop to zero). */
+  function line(p, xs, ys, o) {
+    var pts = [], runs = [];
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] == null || !isFinite(ys[i])) { if (pts.length) runs.push(pts); pts = []; continue; }
+      pts.push([xs[i], ys[i]]);
+    }
+    if (pts.length) runs.push(pts);
+    runs.forEach(function (r) { if (r.length > 1) p.path(r, o || {}); });
+  }
+  function hline(p, y, o) {
+    o = o || {};
+    p.seg(p.o.xmin, y, p.o.xmax, y, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  function vline(p, x, o) {
+    o = o || {};
+    p.seg(x, p.o.ymin, x, p.o.ymax, { color: o.color || color('ink-faint'), width: o.width || 1, dash: o.dash });
+  }
+  /* Candles for OHLC data at x = index. */
+  function candles(p, data, o) {
+    o = o || {};
+    var g = p.g, up = o.up || color('insight'), dn = o.down || color('plain');
+    var w = Math.max(1, (p.X(1) - p.X(0)) * 0.6);
+    clip(p);
+    data.forEach(function (d, i) {
+      var x = p.X(o.x ? o.x(d, i) : i), c = d.close >= d.open ? up : dn;
+      g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, p.Y(d.high)); g.lineTo(x, p.Y(d.low)); g.stroke();
+      var y0 = p.Y(Math.max(d.open, d.close)), y1 = p.Y(Math.min(d.open, d.close));
+      g.fillRect(x - w / 2, y0, w, Math.max(1, y1 - y0));
+    });
+    g.restore();
+  }
+  /* A small key, top left inside the plot: [{label, color, dash, box}]. */
+  function legend(p, items, o) {
+    o = o || {};
+    var g = p.g, x = p.o.pad.l + 10 + (o.dx || 0), y = p.o.pad.t + 12 + (o.dy || 0);
+    g.save();
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    items.forEach(function (it) {
+      g.strokeStyle = it.color; g.fillStyle = it.color; g.lineWidth = 2;
+      if (it.box) g.fillRect(x, y - 4, 12, 8);
+      else {
+        g.setLineDash(it.dash || []);
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y); g.stroke();
+        g.setLineDash([]);
+      }
+      g.fillStyle = color('ink-soft');
+      g.fillText(it.label, x + 19, y);
+      x += 19 + g.measureText(it.label).width + 14;
+    });
+    g.restore();
+  }
+  /* Tick labels at chosen x positions (a categorical axis): draw the axes with
+     p.axes({nx: 0}) or grid off first. */
+  function xticks(p, xs, fmt) {
+    var g = p.g;
+    g.save();
+    g.fillStyle = color('ink-faint');
+    g.font = '11px ' + color('sans');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    xs.forEach(function (x, i) { g.fillText(fmt ? fmt(x, i) : String(x), p.X(x), p.h - p.o.pad.b + 6); });
+    g.restore();
+  }
+
+  return {
+    N: N, phi: phi, d1: d1, d2: d2, bsm: bsm,
+    bsPrice: bsPrice, bsDelta: bsDelta, bsGamma: bsGamma, bsVega: bsVega,
+    bsTheta: bsTheta, bsRho: bsRho, bsVanna: bsVanna, bsCharm: bsCharm,
+    rng: rng, gauss: gauss, ohlc: ohlc, aggregate: aggregate, REGIMES: REGIMES,
+    sma: sma, ema: ema, stdDev: stdDev, bollinger: bollinger, trueRange: trueRange,
+    atr: atr, donchian: donchian, rsi: rsi, macd: macd, adx: adx,
+    MINUS: MINUS, num: num, signed: signed, pct: pct, spct: spct, usd: usd, compact: compact,
+    $: $, out: out, val: val, checked: checked, bind: bind, seg: seg, still: still,
+    figure: figure, redraw: redraw,
+    color: color, fade: fade, clip: clip, axes: axes, ticks: ticks,
+    bars: bars, hbars: hbars, band: band, line: line, hline: hline, vline: vline,
+    candles: candles, legend: legend, xticks: xticks
+  };
+})();
+
+/* ---------- gex-vix-confound ---------- */
+(function () {
+  var U = 'gex-vix-confound';
+  var view = DL.seg(U + '-adj', update);
+  var N = 1972, SEED = 91784, seed = SEED;
+
+  /* The made-up days. Each day draws four standard normals: the VIX is 9 plus a lognormal;
+     ATM IV is 0.9 times the VIX with a spread of its own; GEX ($B per 1%) falls as ATM IV
+     rises, plus noise; next-day RV is proportional to ATM IV (with a little of the VIX),
+     times lognormal noise, times a small effect of GEX itself. The constants were fitted so
+     that the rank correlations and gaps, over many samples, come close to the published
+     ones, and the first seed is one whose numbers round to them. */
+  function days(sd) {
+    var r = DL.rng(sd), V = [], A = [], G = [], R = [];
+    for (var i = 0; i < N; i++) {
+      var z1 = DL.gauss(r), z2 = DL.gauss(r), e = DL.gauss(r), u = DL.gauss(r);
+      var vix = 9 + 8 * Math.exp(0.6127 * z1);
+      var atm = 0.9 * vix * Math.exp(0.1501 * z2 - 0.1501 * 0.1501 / 2);
+      var gex = 3 - 0.3890 * (0.9879 * atm / 0.9 + 0.0121 * vix - 17) + 2.5341 * u;
+      var rv = 0.6850 * (0.9511 * atm / 0.9 + 0.0489 * vix) *
+               Math.exp(0.5794 * e - 0.5794 * 0.5794 / 2) * Math.exp(-0.0100 * (gex - 3));
+      V.push(vix); A.push(atm); G.push(gex); R.push(rv);
+    }
+    return { V: V, A: A, G: G, R: R };
+  }
+
+  /* residuals of y after a straight-line (least-squares) fit on the controls */
+  function resid(y, cols) {
+    var n = y.length, k = cols.length + 1, a, c, i;
+    function X(i2, j) { return j === 0 ? 1 : cols[j - 1][i2]; }
+    var M = [], b = [];
+    for (a = 0; a < k; a++) { M.push([]); b.push(0); for (c = 0; c < k; c++) M[a].push(0); }
+    for (i = 0; i < n; i++)
+      for (a = 0; a < k; a++) {
+        b[a] += X(i, a) * y[i];
+        for (c = 0; c < k; c++) M[a][c] += X(i, a) * X(i, c);
+      }
+    for (var p = 0; p < k; p++) {
+      var m = p;
+      for (a = p + 1; a < k; a++) if (Math.abs(M[a][p]) > Math.abs(M[m][p])) m = a;
+      var t = M[p]; M[p] = M[m]; M[m] = t; t = b[p]; b[p] = b[m]; b[m] = t;
+      for (a = p + 1; a < k; a++) {
+        var f = M[a][p] / M[p][p];
+        for (c = p; c < k; c++) M[a][c] -= f * M[p][c];
+        b[a] -= f * b[p];
+      }
+    }
+    var beta = [];
+    for (a = 0; a < k; a++) beta.push(0);
+    for (p = k - 1; p >= 0; p--) {
+      var s = b[p];
+      for (c = p + 1; c < k; c++) s -= M[p][c] * beta[c];
+      beta[p] = s / M[p][p];
+    }
+    return y.map(function (v, i2) {
+      var fit = 0;
+      for (var j = 0; j < k; j++) fit += beta[j] * X(i2, j);
+      return v - fit;
+    });
+  }
+  function order(x) {
+    return x.map(function (v, i) { return i; }).sort(function (i, j) { return x[i] - x[j]; });
+  }
+  function ranks(x) {
+    var r = [];
+    order(x).forEach(function (i, k) { r[i] = k; });
+    return r;
+  }
+  function pearson(x, y) {
+    var n = x.length, mx = 0, my = 0, sxy = 0, sxx = 0, syy = 0, i;
+    for (i = 0; i < n; i++) { mx += x[i]; my += y[i]; }
+    mx /= n; my /= n;
+    for (i = 0; i < n; i++) {
+      var a = x[i] - mx, b = y[i] - my;
+      sxy += a * b; sxx += a * a; syy += b * b;
+    }
+    return sxy / Math.sqrt(sxx * syy);
+  }
+  /* the rank correlation, and the gap: the mean y of the bottom fifth of days by x less the
+     mean y of the top fifth, with the two fifths' edges for the bands */
+  function summary(x, y) {
+    var o = order(x), m = Math.round(N / 5), lo = 0, hi = 0;
+    for (var k = 0; k < m; k++) { lo += y[o[k]]; hi += y[o[N - 1 - k]]; }
+    return { x: x, y: y, rho: pearson(ranks(x), ranks(y)), lo: lo / m, hi: hi / m,
+             gap: lo / m - hi / m, q20: x[o[m - 1]], q80: x[o[N - m]] };
+  }
+
+  var st;
+  function compute() {
+    var D = days(seed), sv = D.V.slice().sort(function (a, b) { return a - b; });
+    st = {
+      V: D.V, t1: sv[Math.round(N / 3) - 1], t2: sv[Math.round(2 * N / 3) - 1],
+      none: summary(D.G, D.R),
+      vix: summary(resid(D.G, [D.V]), resid(D.R, [D.V])),
+      both: summary(resid(D.G, [D.V, D.A]), resid(D.R, [D.V, D.A]))
+    };
+  }
+
+  /* the gap as the reader can check it: the difference of the two means as written */
+  function gapOf(S) { return Number(S.lo.toFixed(2)) - Number(S.hi.toFixed(2)); }
+  function font() { return '11px ' + DL.color('sans'); }
+  /* text with a halo of the page's color, so it reads over the dots */
+  function label(g, s, x, y, color, align, base) {
+    g.save();
+    g.font = font();
+    g.textAlign = align || 'left';
+    g.textBaseline = base || 'middle';
+    g.lineJoin = 'round';
+    g.lineWidth = 3;
+    g.strokeStyle = DL.color('paper');
+    g.strokeText(s, x, y);
+    g.fillStyle = color;
+    g.fillText(s, x, y);
+    g.restore();
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var v = view(), S = st[v], raw = v === 'none';
+    var p = new NMT.Plot(cv, { xmin: raw ? -8 : -10, xmax: raw ? 12 : 10,
+                               ymin: raw ? 0 : -30, ymax: raw ? 60 : 30,
+                               pad: { l: 40, r: 12, t: 24, b: 40 } });
+    var P = p.o, g = p.g;
+    DL.axes(p, { xs: raw ? [-8, -4, 0, 4, 8, 12] : [-10, -5, 0, 5, 10],
+                 ys: raw ? [0, 10, 20, 30, 40, 50, 60] : [-30, -20, -10, 0, 10, 20, 30],
+                 x: function (t) { return DL.num(t, 0); }, y: function (t) { return DL.num(t, 0); } });
+    var roles = ['insight', 'accent', 'plain'];
+    var cols = roles.map(function (r) { return DL.fade(DL.color(r), 0.55); });
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+
+    /* the bottom and top fifths of days by x, as bands */
+    var band = DL.fade(faint, 0.1);
+    g.fillStyle = band;
+    g.fillRect(p.X(P.xmin), p.Y(P.ymax), p.X(Math.max(P.xmin, S.q20)) - p.X(P.xmin), p.Y(P.ymin) - p.Y(P.ymax));
+    g.fillRect(p.X(Math.min(P.xmax, S.q80)), p.Y(P.ymax), p.X(P.xmax) - p.X(Math.min(P.xmax, S.q80)),
+               p.Y(P.ymin) - p.Y(P.ymax));
+
+    /* the days, colored by the VIX's thirds; a day beyond the axes sits on the edge as a
+       small triangle pointing out */
+    var rad = p.w < 500 ? 1.7 : 2.1;
+    for (var i = 0; i < N; i++) {
+      var x = S.x[i], y = S.y[i];
+      g.fillStyle = cols[st.V[i] <= st.t1 ? 0 : st.V[i] <= st.t2 ? 1 : 2];
+      var cx = Math.min(P.xmax, Math.max(P.xmin, x)), cy = Math.min(P.ymax, Math.max(P.ymin, y));
+      var px = p.X(cx), py = p.Y(cy);
+      g.beginPath();
+      if (cx === x && cy === y) g.arc(px, py, rad, 0, 2 * Math.PI);
+      else if (cy !== y) { var up = y > P.ymax ? -1 : 1;
+        g.moveTo(px - 3, py); g.lineTo(px + 3, py); g.lineTo(px, py + 4 * up); }
+      else { var lf = x < P.xmin ? -1 : 1;
+        g.moveTo(px, py - 3); g.lineTo(px, py + 3); g.lineTo(px + 4 * lf, py); }
+      g.fill();
+    }
+
+    /* each fifth's mean next-day RV, and the gap between them */
+    var yl = p.Y(S.lo), yh = p.Y(S.hi), xl = p.X(Math.max(P.xmin, S.q20)), xh = p.X(Math.min(P.xmax, S.q80));
+    g.save();
+    g.strokeStyle = ink;
+    g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(p.X(P.xmin), yl); g.lineTo(xl, yl); g.stroke();
+    g.beginPath(); g.moveTo(xh, yh); g.lineTo(p.X(P.xmax), yh); g.stroke();
+    g.lineWidth = 1;
+    g.setLineDash([3, 3]);
+    var xm = (xl + xh) / 2;
+    g.beginPath(); g.moveTo(xl, yl); g.lineTo(xm, yl); g.moveTo(xm, yh); g.lineTo(xh, yh); g.stroke();
+    g.setLineDash([]);
+    g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(xm, yl); g.lineTo(xm, yh); g.stroke();
+    g.restore();
+    var sl = 'bottom fifth ' + DL.num(S.lo, 2), sh = 'top fifth ' + DL.num(S.hi, 2),
+        sg = 'gap ' + DL.num(gapOf(S), 2);
+    label(g, sl, p.X(P.xmin) + 4, yl - 9, ink, 'left');
+    label(g, sh, p.X(P.xmax) - 4, yh - 9, ink, 'right');
+    /* the gap's label beside the bracket, on the first side where it clears the other two */
+    g.font = font();
+    var wl = g.measureText(sl).width, wh = g.measureText(sh).width, wg = g.measureText(sg).width;
+    var taken = [[p.X(P.xmin) + 4, yl - 9, wl], [p.X(P.xmax) - 4 - wh, yh - 9, wh]];
+    var ym = (yl + yh) / 2, top = Math.min(yl, yh), bot = Math.max(yl, yh);
+    var tries = [[xm + 5, ym], [xm - 5 - wg, ym], [xm + 5, top - 10], [xm - 5 - wg, top - 10],
+                 [xm + 5, bot + 10], [xm - 5 - wg, bot + 10]];
+    var spot = tries[0];
+    for (var t = 0; t < tries.length; t++) {
+      var tx = tries[t][0], ty = tries[t][1];
+      var clear = taken.every(function (b) {
+        return tx + wg + 3 < b[0] || b[0] + b[2] + 3 < tx || Math.abs(ty - b[1]) > 13;
+      });
+      if (clear) { spot = tries[t]; break; }
+    }
+    label(g, sg, spot[0], spot[1], ink, 'left');
+
+    /* the key, top right, and the axes' names */
+    var keys = ['VIX under ' + DL.num(st.t1, 1), 'VIX ' + DL.num(st.t1, 1) + ' to ' + DL.num(st.t2, 1),
+                'VIX over ' + DL.num(st.t2, 1)];
+    g.save();
+    g.font = font();
+    var kw = Math.max.apply(null, keys.map(function (k) { return g.measureText(k).width; })) + 18;
+    var kx = p.X(P.xmax) - kw - 4, ky = p.Y(P.ymax) + 4;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(kx - 4, ky - 2, kw + 6, 3 * 15 + 4);
+    g.restore();
+    [2, 1, 0].forEach(function (k, row) {
+      g.fillStyle = DL.color(roles[k]);
+      g.beginPath();
+      g.arc(kx + 5, ky + 8 + row * 15, 3.5, 0, 2 * Math.PI);
+      g.fill();
+      label(g, keys[k], kx + 14, ky + 8 + row * 15, soft);
+    });
+    p.text(P.xmin, P.ymax, raw ? 'next-day RV, annualized pts' : 'next-day RV, residual pts',
+           { dx: -34, dy: -8, color: soft, font: font() });
+    p.text(P.xmax, P.ymin, raw ? 'GEX, $B per 1%' : 'GEX, residual $B', { dx: -2, dy: 22,
+           align: 'right', baseline: 'top', color: soft, font: font() });
+  });
+
+  var TEXT = {
+    none: ['Unadjusted.', 'Low-GEX days are mostly high-VIX days, and those are the volatile ones.'],
+    vix: ['Adjusted for the VIX.', 'Most of the association goes with it. What is left travels with ATM IV.'],
+    both: ['Adjusted for the VIX and ATM IV.', 'GEX adds almost nothing about tomorrow, like a biomarker once stage is in the model.']
+  };
+  function update() {
+    var v = view(), names = ['none', 'vix', 'both'];
+    names.forEach(function (k, i) {
+      DL.out(U + '-p' + i, DL.num(st[k].rho, 2));
+      DL.out(U + '-g' + i, DL.num(gapOf(st[k]), 2));
+      var row = DL.$(U + '-r' + i), on = k === v;
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+    });
+    DL.out(U + '-vk', TEXT[v][0]);
+    DL.out(U + '-vt', TEXT[v][1]);
+    draw();
+  }
+  DL.$(U + '-new').addEventListener('click', function () {
+    seed += 1;
+    compute();
+    update();
+  });
+  update();
+})();
+
+/* ---------- gamma-evidence-forest ---------- */
+(function () {
+  var U = 'gamma-evidence-forest';
+  var MV = DL.$(U + '-mv');
+  var grp = DL.seg(U + '-grp', update);
+
+  /* basis points of absolute daily return into points of annualized volatility: for normal
+     returns the mean absolute return is sigma * sqrt(2 / pi), so sigma = |r| * sqrt(pi / 2),
+     and a year has 252 trading days */
+  var K = Math.sqrt(Math.PI / 2) * Math.sqrt(252) / 100;
+
+  /* each row: its label, its effect as published, its market and how the authors knew the
+     dealers' positions, and its effect in annualized points as a point, a range, an "at least"
+     (arrow) or an upper bound; agree says whether it fits "long gamma calms, short gamma
+     stirs" */
+  var ROWS = [
+    { lab: 'Ni et al. 2021 · stocks, 1990–2001', own: '28.8 bp of |r| per SD',
+      mkt: 0, id: 0, kind: 'pt', v: -28.8 * K, agree: true },
+    { lab: 'Ni et al. 2021 · stocks, 2002–2012', own: '29.6 bp of |r| per SD',
+      mkt: 0, id: 1, kind: 'pt', v: -29.6 * K, agree: true },
+    { lab: 'Barbon, Buraschi 2021 · stocks', own: 'about 12 bp of |r| per SD',
+      mkt: 0, id: 1, kind: 'rg', v: -12 * K, lo: -25 * K, hi: -5 * K, agree: true },
+    { lab: 'Barbon, Buraschi 2021 · indexes', own: 'over 20 bp of |r| per SD',
+      mkt: 1, id: 1, kind: 'least', v: -20 * K, agree: true },
+    { lab: 'Adams et al. 2024 · SPX, 0DTE days', own: '60 to 90 bp lower',
+      mkt: 1, id: 1, kind: 'rg', v: -0.75, lo: -0.9, hi: -0.6, agree: true },
+    { lab: 'Amaya et al. 2025 · SPX, daily', own: 'at most +3.3 points',
+      mkt: 1, id: 0, kind: 'ub', v: 3.3, agree: true },
+    { lab: 'Amaya et al. 2025 · SPX, 30 min', own: 'at most +6.4 points',
+      mkt: 1, id: 0, kind: 'ub', v: 6.4, agree: true },
+    { lab: 'Brogaard et al. 2023 · 0DTE volume', own: '+9.1% of mean vol per SD',
+      mkt: 1, id: 2, kind: 'pt', v: null, agree: false },
+    { lab: 'Anderegg et al. 2022 · EURUSD', own: '+0.7 points',
+      mkt: 2, id: 1, kind: 'pt', v: 0.7, agree: true },
+    { lab: 'Anderegg et al. 2022 · USDJPY', own: '+0.9 points',
+      mkt: 2, id: 1, kind: 'pt', v: 0.9, agree: true }
+  ];
+  var GROUPS = {
+    market: ['Single stocks', 'Stock indexes', 'Currencies'],
+    ident: ['Positions observed', 'Positions estimated or inferred', 'Volume only, no positions']
+  };
+
+  function layout() {
+    var mode = grp(), key = mode === 'market' ? 'mkt' : 'id', out = [];
+    GROUPS[mode].forEach(function (name, gi) {
+      var rows = ROWS.filter(function (r) { return r[key] === gi; });
+      if (!rows.length) return;
+      out.push({ head: name });
+      rows.forEach(function (r) { out.push({ row: r }); });
+    });
+    return out;
+  }
+
+  function font(px, bold) { return (bold ? '600 ' : '') + (px || 11) + 'px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: -8, xmax: 8, ymin: 0, ymax: 1, pad: { l: 12, r: 12, t: 8, b: 58 } });
+    var g = p.g, W = p.w, H = p.h, items = layout();
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var HEAD = 22, ROW = 52, y = 10, mv = +MV.value / 100;
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var calm = DL.color('insight'), stir = DL.color('plain'), odd = DL.color('warn');
+    var top = y, bottom = H - 58;
+
+    /* the zero line and the grid, drawn first so the rows sit over them */
+    g.save();
+    [-8, -6, -4, -2, 2, 4, 6, 8].forEach(function (v) {
+      g.strokeStyle = DL.color('rule-soft');
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(p.X(v) + 0.5, top);
+      g.lineTo(p.X(v) + 0.5, bottom);
+      g.stroke();
+    });
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(p.X(0) + 0.5, top);
+    g.lineTo(p.X(0) + 0.5, bottom);
+    g.stroke();
+    g.restore();
+
+    items.forEach(function (it) {
+      g.save();
+      if (it.head) {
+        g.font = font(11, true);
+        g.fillStyle = ink;
+        g.textAlign = 'left';
+        g.textBaseline = 'middle';
+        var tw = g.measureText(it.head).width;
+        g.fillStyle = DL.fade(DL.color('paper'), 0.92);
+        g.fillRect(6, y + 3, tw + 8, 16);
+        g.fillStyle = ink;
+        g.fillText(it.head, 10, y + HEAD / 2 + 1);
+        y += HEAD;
+        g.restore();
+        return;
+      }
+      var r = it.row, v = r.v == null ? 0.091 * mv * 100 : r.v;
+      /* the label, then the effect as published beneath it, each on a paper patch over the grid */
+      g.font = font(11);
+      g.textBaseline = 'middle';
+      g.textAlign = 'left';
+      var lw = g.measureText(r.lab).width, ow = g.measureText(r.own).width;
+      g.fillStyle = DL.fade(DL.color('paper'), 0.92);
+      g.fillRect(8, y + 2, lw + 6, 15);
+      g.fillRect(8, y + 17, ow + 6, 14);
+      g.fillStyle = soft;
+      g.fillText(r.lab, 10, y + 10);
+      g.fillStyle = faint;
+      g.fillText(r.own, 10, y + 24);
+      /* the effect in annualized points */
+      var yl = y + 41, col = !r.agree ? odd : v < 0 ? calm : stir;
+      g.strokeStyle = col;
+      g.fillStyle = col;
+      g.lineWidth = 2.5;
+      if (r.kind === 'rg') {
+        g.beginPath();
+        g.moveTo(p.X(r.lo), yl);
+        g.lineTo(p.X(r.hi), yl);
+        g.stroke();
+        g.beginPath();
+        g.arc(p.X(v), yl, 4.5, 0, 2 * Math.PI);
+        g.fill();
+      } else if (r.kind === 'least') {
+        var x0 = p.X(v), x1 = p.X(-7.6);
+        g.beginPath();
+        g.moveTo(x0, yl);
+        g.lineTo(x1 + 6, yl);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x1, yl);
+        g.lineTo(x1 + 8, yl - 5);
+        g.lineTo(x1 + 8, yl + 5);
+        g.closePath();
+        g.fill();
+        g.beginPath();
+        g.arc(x0, yl, 4.5, 0, 2 * Math.PI);
+        g.fill();
+      } else if (r.kind === 'ub') {
+        var a = p.X(0), b = p.X(v);
+        g.fillStyle = DL.fade(col, 0.22);
+        g.fillRect(a, yl - 6, b - a, 12);
+        g.lineWidth = 1;
+        for (var hx = a + 4; hx < b; hx += 6) {
+          g.beginPath();
+          g.moveTo(hx, yl + 6);
+          g.lineTo(Math.min(hx + 6, b), yl - 6);
+          g.stroke();
+        }
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.moveTo(b, yl - 7);
+        g.lineTo(b, yl + 7);
+        g.stroke();
+      } else {
+        g.beginPath();
+        g.arc(p.X(v), yl, 5, 0, 2 * Math.PI);
+        g.fill();
+      }
+      y += ROW;
+      g.restore();
+    });
+
+    /* the axis */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    [-8, -4, 0, 4, 8].forEach(function (v) {
+      g.fillText((v > 0 ? '+' : v < 0 ? DL.MINUS : '') + Math.abs(v), p.X(v), bottom + 6);
+    });
+    g.fillStyle = soft;
+    g.textAlign = 'left';
+    g.fillText('← calmer', p.X(-8), bottom + 22);
+    g.textAlign = 'right';
+    g.fillText('more volatile →', p.X(8), bottom + 22);
+    g.textAlign = 'center';
+    g.fillText('points of annualized volatility', p.X(0), bottom + 38);
+    g.restore();
+  });
+
+  function update() {
+    var mv = +MV.value;
+    DL.out(U + '-mv-o', mv + '% → ' + DL.signed(0.091 * mv, 1));
+    var agree = ROWS.filter(function (r) { return r.agree; }).length;
+    DL.out(U + '-agree', agree + ' of ' + ROWS.length + ' estimates fit the mechanism');
+    DL.out(U + '-size', 'largest per-SD effect: ' + DL.num(29.6 * K, 1) + ' pts (stocks)');
+    draw();
+  }
+  update();
+  DL.bind([U + '-mv'], update);
+})();
+<!--/SCRIPT-->

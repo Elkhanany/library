@@ -1,0 +1,135 @@
+<!--
+name: gap through a stop
+source: new for this book: chapter 13D, "A gap against a stop"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-stop">stop</label>
+      <input type="range" id="{{uid}}-stop" min="507.5" max="513" step="0.1" value="511.5">
+      <output id="{{uid}}-stop-o" for="{{uid}}-stop"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-gap">overnight gap</label>
+      <input type="range" id="{{uid}}-gap" min="0" max="4" step="0.05" value="1">
+      <output id="{{uid}}-gap-o" for="{{uid}}-gap"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-size"></output></div>
+    <div class="ctrl"><output id="{{uid}}-open"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sh"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sp"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><span id="{{uid}}-say"></span></p>
+  <figcaption><b>A stop caps the loss only if the price trades at the stop.</b> Example 6's
+  position: QQQ bought at the $513.50 close with $10,000 at risk, sized as that budget divided
+  by the distance to the stop. The rose line is the loss when the stop is hit after an
+  overnight gap against the position, in units of R, the loss planned at the stop. The green
+  line is a call debit spread that costs the same R, which is all it can lose whatever the
+  gap. Tighten the stop and the position grows, so the same gap costs more R.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var ENTRY = 513.5, BUDGET = 10000, ACCOUNT = 1000000, GMAX = 4, RMAX = 12;
+  var STOP = DL.$(U + '-stop'), GAP = DL.$(U + '-gap');
+
+  /* the position from its loss budget (Chapter 13C): shares = floor(B / distance) */
+  var st;
+  function compute() {
+    var stop = +STOP.value, d = Math.round((ENTRY - stop) * 100) / 100, g = +GAP.value / 100;
+    var n = Math.floor(BUDGET / d + 1e-9), open = ENTRY * (1 - g), planned = n * d;
+    /* stopped out: at the stop if the open is above it, at the open if the gap jumps it */
+    var fill = Math.min(stop, open), loss = n * (ENTRY - fill);
+    st = { stop: stop, d: d, g: g, n: n, open: open, planned: planned, loss: loss,
+           jumped: open < stop, notional: n * ENTRY, reach: d / ENTRY };
+  }
+  /* the loss in R, the loss planned at the stop, at a gap x (a fraction): 1R until the gap
+     reaches the stop, the gap's loss after it */
+  function lossR(x) { return Math.max(1, st.n * ENTRY * x / st.planned); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: GMAX, ymin: 0, ymax: RMAX,
+                              pad: { l: 38, r: 16, t: 16, b: 30 } });
+    DL.axes(p, { xs: [0, 1, 2, 3, 4], ys: [0, 2, 4, 6, 8, 10, 12],
+                 x: function (v) { return v + '%'; },
+                 y: function (v) { return v + 'R'; } });
+    var g = p.g, plain = DL.color('plain'), ins = DL.color('insight'), acc = DL.color('accent');
+    var font = '11px ' + DL.color('sans');
+
+    /* the spread: its debit is the most it can lose */
+    p.seg(0, 1, GMAX, 1, { color: ins, width: 2.4 });
+    /* the shares: flat at the plan until the gap reaches the stop, then the gap's loss */
+    var k = st.reach * 100, end = lossR(GMAX / 100);
+    p.path([[0, 1], [k, 1], [GMAX, end]], { color: plain, width: 2.4 });
+    p.dot(k, 1, { r: 3.5, color: plain });
+
+    /* the chosen gap, and where each position stands at it */
+    var x = st.g * 100, yr = st.loss / st.planned;
+    DL.vline(p, x, { color: DL.fade(acc, 0.6), width: 1, dash: [3, 3] });
+    p.dot(x, 1, { r: 4.5, color: ins, ring: true });
+    if (yr <= RMAX) p.dot(x, yr, { r: 5, color: plain, ring: true });
+
+    g.save();
+    g.font = font;
+    /* line names at the right-hand end: the spread under its line, the shares by theirs */
+    g.fillStyle = ins;
+    g.textAlign = 'right';
+    g.textBaseline = 'top';
+    g.fillText('debit spread', p.X(GMAX) - 2, p.Y(1) + 4);
+    g.fillStyle = plain;
+    g.textBaseline = 'bottom';
+    var shares = DL.num(st.n, 0) + ' shares';
+    if (end <= RMAX) {
+      g.fillText(shares, p.X(GMAX) - 2, p.Y(end) - 6);
+    } else {
+      var xe = RMAX * st.planned / (st.n * ENTRY) * 100;
+      g.textAlign = 'left';
+      g.textBaseline = 'top';
+      var s2 = shares + ': ' + DL.num(end, 0) + 'R at 4%';
+      var tx = Math.min(p.X(xe) + 6, p.X(GMAX) - g.measureText(s2).width - 2);
+      g.fillText(s2, tx, p.Y(RMAX) + 3);
+    }
+    /* the loss at a gap past the stop, beside its dot: above and to the left, clear of the
+       rising line, or under the line to the right where the left has no room */
+    if (st.jumped && yr <= RMAX) {
+      var lab = DL.num(yr, 2) + 'R', w = g.measureText(lab).width;
+      var left = p.X(x) - 8 - w >= p.X(0) + 2;
+      g.textAlign = left ? 'right' : 'left';
+      g.textBaseline = left ? 'bottom' : 'top';
+      g.fillText(lab, p.X(x) + (left ? -8 : 8), p.Y(yr) + (left ? -4 : 4));
+    }
+    g.restore();
+  });
+
+  function money(x) { return '$' + DL.num(x, 0); }
+  function update() {
+    compute();
+    DL.out(U + '-stop-o', '$' + DL.num(st.stop, 2));
+    DL.out(U + '-gap-o', DL.num(st.g * 100, 2) + '%');
+    DL.out(U + '-size', 'size: ' + DL.num(st.n, 0) + ' shares, ' +
+           DL.compact(st.notional, st.notional >= 1e6 ? 2 : 0, '$'));
+    DL.out(U + '-open', 'open after the gap: $' + DL.num(st.open, 2));
+    DL.out(U + '-sh', 'shares lose ' + money(st.loss) + ' = ' + DL.num(st.loss / st.planned, 2) + 'R');
+    DL.out(U + '-sp', 'spread loses at most ' + money(st.planned) + ' = 1R');
+    var say;
+    if (st.jumped) {
+      say = 'The price opens $' + DL.num(st.stop - st.open, 2) + ' below the $' + DL.num(st.stop, 2) +
+            ' stop, so the stop fills at the open. The shares lose ' + money(st.loss) + ', ' +
+            DL.num(st.loss / st.planned, 2) + ' times the ' + money(st.planned) + ' planned and ' +
+            DL.pct(st.loss / ACCOUNT, 1) + ' of a $1 million account.';
+    } else {
+      say = 'The price opens at $' + DL.num(st.open, 2) + ', above the $' + DL.num(st.stop, 2) +
+            ' stop, so the stop can still fill at its level and the planned ' + money(st.planned) +
+            ' holds. A gap of ' + DL.num(st.reach * 100, 2) + '% would reach the stop.';
+    }
+    DL.out(U + '-say', say);
+    draw();
+  }
+  update();
+  DL.bind([U + '-stop', U + '-gap'], update);
+})();
+</script>

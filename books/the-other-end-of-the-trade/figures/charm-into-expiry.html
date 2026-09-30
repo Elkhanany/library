@@ -1,0 +1,225 @@
+<!--
+name: charm into expiry
+source: new for this book: chapter 8F, "Dealers' delta decays with time"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="290"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Customers are long" id="{{uid}}-book">
+      <label>customers long</label>
+      <button type="button" data-v="puts" class="on" aria-pressed="true">puts</button>
+      <button type="button" data-v="both" aria-pressed="false">puts and calls</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV fall</label>
+      <input type="range" id="{{uid}}-iv" min="0" max="5" step="0.5" value="0">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-tot"></output></div>
+    <div class="ctrl"><output id="{{uid}}-big"></output></div>
+    <div class="ctrl" id="{{uid}}-legs-c" hidden><output id="{{uid}}-legs"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The clock moves the hedge.</b> A made-up book of monthly SPX options at 18%
+  implied volatility: customers are long out-of-the-money puts, so dealers are short them, with
+  short futures as the hedge. Spot stays at 6,000 through the last 20 trading days, to
+  expiration at the close of week 4. Time runs on the calendar, so each Monday's bar carries a
+  weekend of decay. Each bar is one day's change in the dealers' hedge, minus the change in the
+  delta of the options they are short, times spot, in billions of dollars. As the puts' deltas
+  shrink toward zero, dealers buy their hedge back. With calls in the book, dealers sell the long
+  hedge they hold against them (rose), and the tick is the net. The IV fall lowers volatility in
+  equal steps over the 20 days, and the outlines are the same book with volatility
+  unchanged.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var IV = DL.$(U + '-iv');
+  var book = DL.seg(U + '-book', update);
+  var S = 6000, SIG = 0.18, T0 = 28, NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+  /* the made-up book, in contracts the customers hold long and the dealers short: puts 1.7%
+     to 5% below spot, and fewer calls 1.7% to 5% above it, all on the monthly expiration */
+  var PUTS = [{ K: 5700, n: 30000 }, { K: 5800, n: 30000 }, { K: 5900, n: 20000 }];
+  var CALLS = [{ K: 6100, n: 15000 }, { K: 6200, n: 10000 }, { K: 6300, n: 5000 }];
+
+  /* calendar days to expiration at the Friday close before the window, then at each of its
+     20 closes: a Monday's close comes three days after Friday's, every other close one day
+     after the one before, and the options expire at the close of the last Friday */
+  var DAYS = [T0];
+  for (var w = 0; w < 4; w++) for (var d = 0; d < 5; d++) DAYS.push(T0 - 7 * w - 3 - d);
+
+  /* The dealers' futures hedge against one leg at the close of day k, in index units. They
+     are short n contracts of each line, so their option delta is -n x 100 x delta and their
+     hedge is +n x 100 x delta: short against the puts (delta below zero), long against the
+     calls. Implied volatility falls by drop points in equal steps, one each trading day. */
+  function hedge(leg, type, k, drop) {
+    var sig = SIG - drop / 100 * k / 20, t = DAYS[k] / 365, h = 0;
+    leg.forEach(function (o) { h += o.n * 100 * DL.bsDelta(S, o.K, t, sig, type); });
+    return h;
+  }
+  /* each day's trade in dollars: the change in the hedge since the close before, times spot,
+     which is -(change in the dealers' option delta) x S; positive is buying */
+  function trades(leg, type, drop) {
+    var out = [], prev = hedge(leg, type, 0, drop);
+    for (var k = 1; k <= 20; k++) {
+      var h = hedge(leg, type, k, drop);
+      out.push((h - prev) * S);
+      prev = h;
+    }
+    return out;
+  }
+  function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+
+  /* one scale for each book, wide enough for every fall in volatility, so the slider moves
+     the bars and not the axis */
+  var scales = {};
+  function scale(both) {
+    var key = both ? 'both' : 'puts';
+    if (!scales[key]) {
+      var hi = 0, lo = 0;
+      [0, 2.5, 5].forEach(function (dr) {
+        trades(PUTS, 'put', dr).forEach(function (v) { hi = Math.max(hi, v); });
+        if (both) trades(CALLS, 'call', dr).forEach(function (v) { lo = Math.min(lo, v); });
+      });
+      scales[key] = { lo: lo, hi: hi };
+    }
+    return scales[key];
+  }
+
+  var st;
+  function compute() {
+    var drop = +IV.value, both = book() === 'both', zero = [];
+    for (var k = 0; k < 20; k++) zero.push(0);
+    var p = trades(PUTS, 'put', drop), p0 = trades(PUTS, 'put', 0);
+    var c = both ? trades(CALLS, 'call', drop) : zero, c0 = both ? trades(CALLS, 'call', 0) : zero;
+    var net = p.map(function (v, i) { return v + c[i]; });
+    var net0 = p0.map(function (v, i) { return v + c0[i]; });
+    var big = 0;
+    net.forEach(function (v, i) { if (Math.abs(v) > Math.abs(net[big])) big = i; });
+    var start = (hedge(PUTS, 'put', 0, 0) + (both ? hedge(CALLS, 'call', 0, 0) : 0)) * S;
+    var early = 0;
+    for (k = 0; k < 15; k++) early += net[k] - net0[k];
+    st = { drop: drop, both: both, p: p, p0: p0, c: c, c0: c0, net: net, big: big,
+           start: start, early: early, sc: scale(both) };
+  }
+
+  function bn(x) {
+    var s = DL.num(Math.abs(x) / 1e9, 2);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  function xOf(k) { return Math.floor(k / 5) * 6 + (k % 5); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var sc = st.sc, span = sc.hi - sc.lo;
+    var ymax = sc.hi + span * 0.1, ymin = sc.lo < 0 ? sc.lo - span * 0.06 : 0;
+    var p = new NMT.Plot(cv, { xmin: -1.6, xmax: 22.7, ymin: ymin, ymax: ymax,
+                               pad: { l: 52, r: 10, t: 38, b: 38 } });
+    var ty = DL.ticks(ymin, ymax, 4);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -1.6,
+                 y: function (v) { return Math.abs(v) < ty.step * 1e-6 ? '$0' : bn(v).replace('.00B', 'B').replace(/(\.\d)0B$/, '$1B'); } });
+    var g = p.g, buy = DL.color('insight'), sell = DL.color('plain'), ink = DL.color('ink'),
+        soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+
+    /* the weekends: calendar time passes, the market is shut */
+    g.save();
+    g.fillStyle = DL.fade(DL.color('ink-faint'), 0.12);
+    [-1, 5, 11, 17].forEach(function (x) {
+      g.fillRect(p.X(x - 0.5), p.Y(ymax), p.X(x + 0.5) - p.X(x - 0.5), p.Y(ymin) - p.Y(ymax));
+    });
+    g.restore();
+
+    /* the legs, the same book with volatility unchanged in outline, and the net */
+    var xs = [], i;
+    for (i = 0; i < 20; i++) xs.push(xOf(i));
+    DL.bars(p, xs, st.p, { w: 0.72, color: DL.fade(buy, 0.8) });
+    if (st.both) DL.bars(p, xs, st.c, { w: 0.72, color: DL.fade(sell, 0.8) });
+    function outline(vals) {
+      g.save();
+      g.strokeStyle = soft;
+      g.lineWidth = 1.2;
+      vals.forEach(function (v, j) {
+        var x0 = p.X(xs[j] - 0.36), x1 = p.X(xs[j] + 0.36), y0 = p.Y(0), y1 = p.Y(v);
+        g.strokeRect(x0 + 0.5, Math.min(y0, y1) + 0.5, x1 - x0 - 1, Math.abs(y1 - y0));
+      });
+      g.restore();
+    }
+    if (st.drop > 0) {
+      outline(st.p0);
+      if (st.both) outline(st.c0);
+    }
+    if (st.both) {
+      st.net.forEach(function (v, j) {
+        p.seg(xs[j] - 0.46, v, xs[j] + 0.46, v, { color: ink, width: 2.2 });
+      });
+    }
+
+    /* the days along the bottom (only the Mondays where the bars are narrow), the weeks
+       beneath them, expiration at the right */
+    var every = p.X(1) - p.X(0) >= 16;
+    DL.xticks(p, xs.filter(function (x, j) { return every || j % 5 === 0; }),
+              function (x) { return NAMES[x % 6].charAt(0); });
+    g.save();
+    g.font = font();
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    for (var wk = 0; wk < 4; wk++) g.fillText('week ' + (wk + 1), p.X(wk * 6 + 2), p.h - p.o.pad.b + 21);
+    g.restore();
+    p.text(22.7, ymax, 'expiry', { dx: -2, dy: 13, align: 'right', font: font(), color: faint });
+
+    /* the title and a key to what is drawn */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' hedge trade each day: + buys, − sells", 6, 10);
+    var items = [];
+    if (st.both) items.push(['box', DL.fade(buy, 0.8), 'put leg'], ['box', DL.fade(sell, 0.8), 'call leg'],
+                            ['line', ink, 'net']);
+    else if (st.drop > 0) items.push(['box', DL.fade(buy, 0.8), 'with the IV fall']);
+    if (st.drop > 0) items.push(['open', soft, 'IV unchanged']);
+    var kx = 6, ky = 27;
+    items.forEach(function (it) {
+      var wd = 17 + g.measureText(it[2]).width;
+      if (kx > 6 && kx + wd > p.w - 4) { kx = 6; ky += 15; }
+      if (it[0] === 'box') { g.fillStyle = it[1]; g.fillRect(kx, ky - 4, 12, 8); }
+      else if (it[0] === 'open') { g.strokeStyle = it[1]; g.lineWidth = 1.2; g.strokeRect(kx + 0.5, ky - 3.5, 11, 7); }
+      else { g.strokeStyle = it[1]; g.lineWidth = 2.2; g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + 12, ky); g.stroke(); }
+      g.fillStyle = soft;
+      g.fillText(it[2], kx + 17, ky);
+      kx += wd + 14;
+    });
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var tot = sum(st.net), b = st.big;
+    DL.out(U + '-iv-o', DL.num(st.drop, 1) + ' pts');
+    DL.out(U + '-tot', 'total: dealers ' + (tot >= 0 ? 'buy ' : 'sell ') + '$' + DL.num(Math.abs(tot) / 1e9, 2) + 'B');
+    DL.out(U + '-big', 'largest day: ' + bn(st.net[b]) + ', ' + NAMES[b % 5] + ', week ' + (Math.floor(b / 5) + 1));
+    var legs = DL.$(U + '-legs-c');
+    if (legs.hidden === st.both) legs.hidden = !st.both;
+    DL.out(U + '-legs', 'puts ' + bn(sum(st.p)) + ', calls ' + bn(sum(st.c)));
+    DL.out(U + '-vk', 'The total is the starting hedge.');
+    var held = st.start < 0 ? 'short' : 'long';
+    var text = 'Every option here expires out of the money with no delta, so over the 20 days dealers unwind ' +
+               'all of the hedge they held at the start: ' + (st.both ? 'a net ' : '') + '$' +
+               DL.num(Math.abs(st.start) / 1e9, 2) + 'B ' + held + ' in futures.';
+    if (st.drop > 0) {
+      text += ' The fall in volatility moves $' + DL.num(Math.abs(st.early) / 1e9, 2) + 'B of that trade ' +
+              (st.early >= 0 ? 'out of week 4 and into weeks 1 to 3.' : 'out of weeks 1 to 3 and into week 4.');
+    }
+    DL.out(U + '-vt', text);
+    draw();
+  }
+  update();
+  DL.bind([U + '-iv'], update);
+})();
+</script>

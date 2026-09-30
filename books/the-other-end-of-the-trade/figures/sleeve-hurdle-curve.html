@@ -1,0 +1,139 @@
+<!--
+name: sleeve hurdle
+source: new for this book: chapter 10D, "The hurdle for adding a sleeve"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-srb">sleeve Sharpe</label>
+      <input type="range" id="{{uid}}-srb" min="0" max="1" step="0.05" value="0.3">
+      <output id="{{uid}}-srb-o" for="{{uid}}-srb"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-rho">correlation ρ</label>
+      <input type="range" id="{{uid}}-rho" min="-0.5" max="1" step="0.05" value="0">
+      <output id="{{uid}}-rho-o" for="{{uid}}-rho"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-w">weight</label>
+      <input type="range" id="{{uid}}-w" min="0" max="50" step="1" value="20">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Presets">
+      <label>preset</label>
+      <button type="button" id="{{uid}}-trend">trend</button>
+      <button type="button" id="{{uid}}-prem">premium selling</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-at"></output></div>
+    <div class="ctrl"><output id="{{uid}}-hur"></output></div>
+    <div class="ctrl"><output id="{{uid}}-peak"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A weaker sleeve can lift a portfolio further.</b> A portfolio with a Sharpe
+  ratio of 0.40 and 15% volatility moves a weight from 0% to 50% into a sleeve with 15%
+  volatility and the Sharpe ratio and correlation you set. The solid curve is the mix's Sharpe
+  ratio, and the dashed curves are the worked example's two sleeves: trend at 0.3,
+  uncorrelated, and premium selling at 0.5, correlated at 0.8. A sleeve raises the portfolio
+  when its Sharpe ratio clears the hurdle ρ × 0.40, and the trend curve runs above the stronger
+  sleeve's at every weight shown.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SRB = DL.$(U + '-srb'), RHO = DL.$(U + '-rho'), WW = DL.$(U + '-w');
+  /* the worked example's portfolio, and both sleeves at its volatility */
+  var SRP = 0.40, SIGP = 15, SIGB = 15;
+  var PRESETS = { trend: { sr: 0.3, rho: 0 }, prem: { sr: 0.5, rho: 0.8 } };
+
+  /* the grind box's mix: weight w in the sleeve and 1 - w in the portfolio */
+  function mix(w, srb, rho) {
+    var m = (1 - w) * SRP * SIGP + w * srb * SIGB;
+    var v = (1 - w) * (1 - w) * SIGP * SIGP + w * w * SIGB * SIGB +
+            2 * rho * w * (1 - w) * SIGP * SIGB;
+    return m / Math.sqrt(v);
+  }
+  function curve(srb, rho) {
+    var xs = [], ys = [];
+    for (var i = 0; i <= 250; i++) { var w = i / 500; xs.push(w); ys.push(mix(w, srb, rho)); }
+    return { xs: xs, ys: ys };
+  }
+  function peak(srb, rho) {
+    var best = { w: 0, s: mix(0, srb, rho) };
+    for (var i = 1; i <= 500; i++) {
+      var w = i / 1000, s = mix(w, srb, rho);
+      if (s > best.s + 1e-12) best = { w: w, s: s };
+    }
+    return best;
+  }
+  function state() { return { sr: +SRB.value, rho: +RHO.value, w: +WW.value / 100 }; }
+  function n2(x) { return DL.num(x, 2); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = state();
+    var cur = curve(s.sr, s.rho), tr = curve(PRESETS.trend.sr, PRESETS.trend.rho),
+        pr = curve(PRESETS.prem.sr, PRESETS.prem.rho);
+    var all = cur.ys.concat(tr.ys, pr.ys, [SRP]);
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), span = hi - lo;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 0.5, ymin: lo - span * 0.1, ymax: hi + span * 0.16,
+                              pad: { l: 44, r: 16, t: 26, b: 30 } });
+    DL.axes(p, { xs: [0, 0.1, 0.2, 0.3, 0.4, 0.5], ny: 5, yAt: 0,
+                 x: function (v) { return DL.num(v * 100, 0) + '%'; },
+                 y: function (v, st) { return DL.num(v, st < 0.1 ? 2 : 1); } });
+    DL.hline(p, SRP, { color: DL.color('ink-faint'), dash: [2, 3] });
+    DL.line(p, tr.xs, tr.ys, { color: DL.color('insight'), width: 1.4, dash: [5, 3] });
+    DL.line(p, pr.xs, pr.ys, { color: DL.color('plain'), width: 1.4, dash: [5, 3] });
+    DL.line(p, cur.xs, cur.ys, { color: DL.color('accent'), width: 2.4 });
+    var at = mix(s.w, s.sr, s.rho);
+    p.seg(s.w, p.o.ymin, s.w, at, { color: DL.color('ink-faint'), dash: [3, 3], width: 1 });
+    p.dot(s.w, at, { r: 4.5, color: DL.color('accent'), ring: true });
+
+    /* the key names the two dashed sleeves; the portfolio line is labeled below itself */
+    var f = '11px ' + DL.color('sans');
+    DL.legend(p, [{ label: 'trend 0.3, ρ 0', color: DL.color('insight'), dash: [5, 3] },
+                  { label: 'premium 0.5, ρ 0.8', color: DL.color('plain'), dash: [5, 3] }]);
+    p.text(0.5, SRP, 'portfolio alone 0.40', { dx: -4, dy: 5, align: 'right', baseline: 'top',
+           color: DL.color('ink-faint'), font: f });
+    p.g.save();
+    p.g.font = f;
+    p.g.fillStyle = DL.color('ink-soft');
+    p.g.textAlign = 'left';
+    p.g.textBaseline = 'bottom';
+    p.g.fillText('Sharpe ratio of the mix, against the weight in the sleeve', 4, 14);
+    p.g.restore();
+  });
+
+  function update() {
+    var s = state(), at = mix(s.w, s.sr, s.rho), hurdle = s.rho * SRP, pk = peak(s.sr, s.rho);
+    DL.out(U + '-srb-o', n2(s.sr));
+    DL.out(U + '-rho-o', n2(s.rho));
+    DL.out(U + '-w-o', DL.num(s.w * 100, 0) + '%');
+    DL.out(U + '-at', 'Sharpe at ' + DL.num(s.w * 100, 0) + '% = ' + n2(at));
+    DL.out(U + '-hur', 'hurdle ρ × 0.40 = ' + n2(hurdle));
+    DL.out(U + '-peak', 'best in range: ' + n2(pk.s) + ' at ' + DL.num(pk.w * 100, 0) + '%');
+    var d = s.sr - hurdle;
+    if (d > 1e-9) {
+      DL.out(U + '-vk', 'Clears the hurdle.');
+      DL.out(U + '-vt', 'The sleeve\'s ' + n2(s.sr) + ' beats ' + n2(hurdle) +
+             ', so a first slice raises the portfolio\'s Sharpe ratio above 0.40.');
+    } else if (d < -1e-9) {
+      DL.out(U + '-vk', 'Fails the hurdle.');
+      DL.out(U + '-vt', 'The sleeve\'s ' + n2(s.sr) + ' falls short of ' + n2(hurdle) +
+             ', so any slice lowers the portfolio\'s Sharpe ratio.');
+    } else {
+      DL.out(U + '-vk', 'On the hurdle.');
+      DL.out(U + '-vt', 'A first slice leaves the portfolio\'s Sharpe ratio at 0.40.');
+    }
+    draw();
+  }
+  function preset(k) { SRB.value = PRESETS[k].sr; RHO.value = PRESETS[k].rho; update(); }
+  DL.$(U + '-trend').addEventListener('click', function () { preset('trend'); });
+  DL.$(U + '-prem').addEventListener('click', function () { preset('prem'); });
+  update();
+  DL.bind([U + '-srb', U + '-rho', U + '-w'], update);
+})();
+</script>

@@ -383,6 +383,7 @@ def prose(text, label, dollars=True):
         t = re.sub(r'\[@[^\]]*\]', blank, t)                    # citations
         t = re.sub(r'\{\{[^}]*\}\}', blank, t)                  # trial chips
         t = re.sub(r'\[\[[^\]]*\]\]', blank, t)                 # cross-refs
+        t = re.sub(r'^[ \t]*\[FIGURE:[ \t]*[a-z0-9-]+[ \t]*\][ \t]*$', blank, t, flags=re.M)   # figure markers
         t = re.sub(r'\]\([^)]*\)', blank, t)                    # link targets
     else:
         t = re.sub(r'<script.*?</script>|<style.*?</style>', blank, t, flags=re.S)

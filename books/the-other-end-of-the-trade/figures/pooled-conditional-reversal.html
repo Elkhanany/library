@@ -1,0 +1,138 @@
+<!--
+name: pooled against conditional reversal
+source: new for this book: chapter 11B, "Pooled against conditional reversal"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-share">calm share of days</label>
+      <input type="range" id="{{uid}}-share" min="50" max="95" step="1" value="80">
+      <output id="{{uid}}-share-o" for="{{uid}}-share"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cost">round-trip cost</label>
+      <input type="range" id="{{uid}}-cost" min="0" max="0.2" step="0.01" value="0.05">
+      <output id="{{uid}}-cost-o" for="{{uid}}-cost"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-calm">calm effect</label>
+      <input type="range" id="{{uid}}-calm" min="0" max="0.3" step="0.01" value="0.1">
+      <output id="{{uid}}-calm-o" for="{{uid}}-calm"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-stress">stressed effect</label>
+      <input type="range" id="{{uid}}-stress" min="-0.4" max="0.1" step="0.01" value="-0.15">
+      <output id="{{uid}}-stress-o" for="{{uid}}-stress"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-w"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pool"></output></div>
+    <div class="ctrl"><output id="{{uid}}-calmnet"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A pooled edge too small to pay, over a conditional edge that pays.</b> Two
+  made-up regimes: after a down week, the next day's mean return is the calm effect on calm
+  days and the stressed effect on stressed ones, and down weeks come on 35% of calm days and
+  60% of stressed ones, as in the chapter's example. The pooled bar weights the two regimes by
+  where down weeks fall, which Bayes' theorem gives, so stress counts for more than its share
+  of days. The dashed line is the round-trip cost, which a bar must clear to pay.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SH = DL.$(U + '-share'), CO = DL.$(U + '-cost'), CA = DL.$(U + '-calm'), SS = DL.$(U + '-stress');
+  /* how often a down week comes, in each regime (the worked example's 35% and 60%) */
+  var DOWN_CALM = 0.35, DOWN_STRESS = 0.60;
+
+  /* Bayes: the chance a down week falls in the stressed regime is
+       w = (1 - c) d_s / (c d_c + (1 - c) d_s),
+     and the pooled next-day mean after a down week is (1 - w) m_c + w m_s. */
+  var st;
+  function compute() {
+    var c = +SH.value / 100, k = +CO.value, mc = +CA.value, ms = +SS.value;
+    var w = (1 - c) * DOWN_STRESS / (c * DOWN_CALM + (1 - c) * DOWN_STRESS);
+    var pooled = (1 - w) * mc + w * ms;
+    st = { c: c, k: k, mc: mc, ms: ms, w: w, pooled: pooled };
+  }
+  /* a percent with two decimals, or three where the third is not zero */
+  function pc(x, sign) {
+    var r = Math.round(x * 1000) / 1000, d = Math.round(Math.abs(r) * 1000) % 10 === 0 ? 2 : 3;
+    return (sign ? DL.signed(r, d) : DL.num(r, d)) + '%';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    /* the scale covers every bar and the cost line, in steps of 0.1%, never less than 0.2% a side */
+    var lo = Math.min(-0.2, Math.floor(Math.round((Math.min(st.ms, st.pooled) - 0.06) * 1e6) / 1e5) / 10);
+    var hi = Math.max(0.2, Math.ceil(Math.round((Math.max(st.mc, st.pooled, st.k) + 0.07) * 1e6) / 1e5) / 10);
+    var ys = [];
+    for (var y = lo; y <= hi + 1e-9; y += 0.1) ys.push(Math.round(y * 10) / 10);
+    var p = new NMT.Plot(cv, { xmin: 0.45, xmax: 3.55, ymin: lo, ymax: hi,
+                               pad: { l: 50, r: 12, t: 26, b: 38 } });
+    DL.axes(p, { xs: [], ys: ys, x: false,
+                 y: function (v) { return v === 0 ? '0%' : DL.signed(v, 1) + '%'; } });
+    var acc = DL.color('accent'), ins = DL.color('insight'), pla = DL.color('plain');
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), g = p.g;
+    var bars = [
+      { x: 1, v: st.pooled, col: acc, name: 'pooled', sub: 'all down weeks' },
+      { x: 2, v: st.mc, col: ins, name: 'calm only', sub: DL.num((1 - st.w) * 100, 0) + '% of them' },
+      { x: 3, v: st.ms, col: pla, name: 'stressed only', sub: DL.num(st.w * 100, 0) + '% of them' }
+    ];
+    bars.forEach(function (b) {
+      DL.bars(p, [b.x], [b.v], { w: 0.5, color: DL.fade(b.col, 0.8) });
+      p.text(b.x, lo, b.name, { align: 'center', baseline: 'top', dy: 6, font: font(), color: soft });
+      p.text(b.x, lo, b.sub, { align: 'center', baseline: 'top', dy: 20, font: font(), color: faint });
+    });
+    DL.hline(p, st.k, { color: soft, dash: [5, 3], width: 1.3 });
+    /* each bar's value on a paper patch, so the cost line passes behind it */
+    bars.forEach(function (b) {
+      var s = pc(b.v, true), up = b.v >= 0;
+      g.save();
+      g.font = font();
+      var w = g.measureText(s).width, x = p.X(b.x), y = p.Y(b.v) + (up ? -11 : 11);
+      g.fillStyle = DL.fade(DL.color('paper'), 0.9);
+      g.fillRect(x - w / 2 - 3, y - 7, w + 6, 14);
+      g.fillStyle = b.col;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(s, x, y);
+      g.restore();
+    });
+    DL.legend(p, [{ label: 'round-trip cost', color: soft, dash: [5, 3] }], { dy: -22 });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-share-o', DL.num(st.c * 100, 0) + '%');
+    DL.out(U + '-cost-o', pc(st.k, false));
+    DL.out(U + '-calm-o', pc(st.mc, true));
+    DL.out(U + '-stress-o', pc(st.ms, true));
+    DL.out(U + '-w', 'stress: ' + DL.num((1 - st.c) * 100, 0) + '% of days, ' +
+                     DL.num(st.w * 100, 0) + '% of down weeks');
+    var pn = st.pooled - st.k, cn = st.mc - st.k;
+    DL.out(U + '-pool', 'pooled after cost = ' + pc(pn, true));
+    DL.out(U + '-calmnet', 'calm only after cost = ' + pc(cn, true));
+    var r6 = function (x) { return Math.round(x * 1e6) / 1e6; };
+    if (r6(cn) > 0 && r6(pn) <= 0) {
+      DL.out(U + '-vk', 'Conditioning pays.');
+      DL.out(U + '-vt', 'Taken after every down week, the rule does not clear its cost. Taken ' +
+                        'only in the calm regime, it clears it by ' + pc(cn, false) + ' a trade.');
+    } else if (r6(cn) > 0) {
+      DL.out(U + '-vk', 'Both clear the cost.');
+      DL.out(U + '-vt', 'The calm-only rule still earns ' + pc(cn - pn, false) +
+                        ' a trade more, and it skips the stressed days.');
+    } else {
+      DL.out(U + '-vk', 'Nothing pays.');
+      DL.out(U + '-vt', 'Even the calm regime\'s edge does not clear the round-trip cost.');
+    }
+    draw();
+  }
+  update();
+  DL.bind([U + '-share', U + '-cost', U + '-calm', U + '-stress'], update);
+})();
+</script>

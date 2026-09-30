@@ -1,0 +1,211 @@
+<!--
+name: phased ratio filter
+source: new for this book: chapter 10H, "The phased filter on a timeline"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="210"></canvas>
+  <canvas id="{{uid}}-s" data-h="120"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">closes required</label>
+      <input type="range" id="{{uid}}-n" min="1" max="5" step="1" value="3">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-h">halt line</label>
+      <input type="range" id="{{uid}}-h" min="0.95" max="1.04" step="0.01" value="1">
+      <output id="{{uid}}-h-o" for="{{uid}}-h"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-fa"></output></div>
+    <div class="ctrl"><output id="{{uid}}-lost"></output></div>
+    <div class="ctrl"><output id="{{uid}}-lag"></output></div>
+  </div>
+  <figcaption><b>Waiting for closes trades whipsaw for lateness.</b> A made-up path of the ratio
+  of the VIX to the VIX3M runs through a calm stretch with a one-day spike and a two-day cluster,
+  then a sustained inversion. Below it, a put-writing sleeve follows the chapter's phased rule,
+  and each step waits for the chosen number of closes above its line: the halt line, 1.05 or
+  1.15. With one close required, the two calm blips halt or cut the sleeve for 21 days. With
+  three, neither fires, and the rule acts 2 days after the inversion begins.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var NN = DL.$(U + '-n'), HH = DL.$(U + '-h');
+  var D = 130, W0 = 56, W1 = 98, TAILS = 0.06, HALVE = 1.05, CLOSE = 1.15;
+
+  /* The made-up ratio: a calm level of 0.88 with persistent noise, a one-day spike to
+     1.08 on day 20, two closes at 1.03 and 1.02 on days 36 and 37, and a sustained
+     inversion from day 56 to day 96 that follows these key points, with a little noise. */
+  var HUMP = [[56, 0.90], [59, 0.97], [60, 1.02], [62, 1.08], [65, 1.17], [69, 1.24], [74, 1.20],
+              [79, 1.13], [84, 1.06], [88, 1.02], [91, 0.97], [96, 0.90]];
+  var X = (function () {
+    var r = DL.rng(5), x = [], b = 0;
+    for (var t = 0; t < D; t++) {
+      b = 0.7 * b + 0.018 * DL.gauss(r);
+      var v = 0.88 + b;
+      if (t >= W0 && t <= 96) {
+        var k = 0;
+        while (HUMP[k + 1][0] < t) k++;
+        var a = HUMP[k], c = HUMP[k + 1];
+        v = a[1] + (c[1] - a[1]) * (t - a[0]) / (c[0] - a[0]) + 0.35 * b;
+      }
+      if (t === 20) v = 1.08;
+      if (t === 21) v = 0.95;
+      if (t === 36) v = 1.03;
+      if (t === 37) v = 1.02;
+      if (t === 38) v = 0.96;
+      x.push(Math.round(v * 1000) / 1000);
+    }
+    return x;
+  })();
+
+  /* The chapter's table, at each close. A trigger needs N closes in a row above its line:
+     the halt line halts new sales, 1.05 cuts the size to half, 1.15 to the deep tails.
+     Once halted, 5 closes in a row below the halt line start the return: the size is at
+     least 25% of target for a week, at least 50% for a week, then 100%. A trigger during
+     the return stops it where it is. An episode runs from a trigger at full size until
+     full size with sales allowed again; it is a false alarm when it starts outside the
+     inversion (days 56 to 98). */
+  var st;
+  function run() {
+    var N = +NN.value, H = +HH.value;
+    var s = 1, halted = false, re = -1, above = [0, 0, 0], below = 0;
+    var size = [], stop = [], trig = [], eps = [], ep = null;
+    for (var t = 0; t < D; t++) {
+      var x = X[t];
+      above[0] = x > H ? above[0] + 1 : 0;
+      above[1] = x > HALVE ? above[1] + 1 : 0;
+      above[2] = x > CLOSE ? above[2] + 1 : 0;
+      below = x < H ? below + 1 : 0;
+      var want = above[2] >= N ? 3 : above[1] >= N ? 2 : above[0] >= N ? 1 : 0;
+      if (want > 0) {
+        if (!ep) { ep = { start: t, days: 0 }; eps.push(ep); }
+        halted = true;
+        re = -1;
+        if (want >= 2) s = Math.min(s, 0.5);
+        if (want >= 3) s = TAILS;
+      } else if (halted && below >= 5) {
+        halted = false;
+        if (s < 1) re = t;
+      }
+      if (re >= 0) {
+        var d = t - re;
+        if (d < 5) s = Math.max(s, 0.25);
+        else if (d < 10) s = Math.max(s, 0.5);
+        else { s = 1; re = -1; }
+      }
+      if (ep) ep.days += 1;
+      if (ep && !halted && re < 0 && s === 1) { ep.days -= 1; ep = null; }
+      size.push(s);
+      stop.push(halted);
+      trig.push(want);
+    }
+    var fa = eps.filter(function (e) { return e.start < W0 || e.start > W1; });
+    var lost = fa.reduce(function (n, e) { return n + e.days; }, 0);
+    /* the lag: from the inversion's first close above 1.00, where backwardation begins,
+       to the halt, and from its first close above 1.05 to the cut */
+    var t1 = null, t2 = null, a1 = null, a2 = null, u;
+    for (u = W0; u <= W1; u++) {
+      if (t1 == null && X[u] > 1) t1 = u;
+      if (t2 == null && X[u] > HALVE) t2 = u;
+    }
+    for (u = W0; u <= W1 && a1 == null; u++) if (stop[u]) a1 = u;
+    for (u = t2 == null ? D : t2; u <= W1 && a2 == null; u++) if (trig[u] >= 2) a2 = u;
+    st = { N: N, H: H, size: size, stop: stop, eps: eps, fa: fa.length, lost: lost,
+           lagHalt: t1 != null && a1 != null ? Math.max(0, a1 - t1) : null,
+           lagCut: t2 != null && a2 != null ? a2 - t2 : null };
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  /* a label centered above a point, on a paper patch so the path stays behind it */
+  function tag(p, x, y, text, color) {
+    var g = p.g;
+    g.save();
+    g.font = font();
+    var w = g.measureText(text).width, px = p.X(x), py = p.Y(y) - 13;
+    px = Math.max(p.X(0) + w / 2 + 2, Math.min(p.X(D - 1) - w / 2 - 2, px));
+    g.fillStyle = DL.fade(DL.color('paper'), 0.85);
+    g.fillRect(px - w / 2 - 2, py - 7, w + 4, 14);
+    g.fillStyle = color;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(text, px, py);
+    g.restore();
+  }
+  var PAD = { l: 44, r: 12 };
+  var XS = [0, 20, 40, 60, 80, 100, 120];
+
+  run();
+  var drawRatio = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: D - 1, ymin: 0.8, ymax: 1.3,
+                              pad: { l: PAD.l, r: PAD.r, t: 16, b: 10 } });
+    DL.axes(p, { xs: XS, ys: [0.8, 0.9, 1.0, 1.1, 1.2, 1.3], x: false,
+                 y: function (v) { return DL.num(v, 2); } });
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), pla = DL.color('plain');
+    var g = p.g;
+    /* the inversion's days, faintly */
+    g.save();
+    g.fillStyle = DL.fade(pla, 0.07);
+    g.fillRect(p.X(W0), p.Y(1.3), p.X(96) - p.X(W0), p.Y(0.8) - p.Y(1.3));
+    g.restore();
+    DL.hline(p, st.H, { color: DL.color('accent'), dash: [5, 3], width: 1.3 });
+    DL.hline(p, HALVE, { color: soft, dash: [4, 3], width: 1 });
+    DL.hline(p, CLOSE, { color: soft, dash: [4, 3], width: 1 });
+    var xs = [];
+    for (var t = 0; t < D; t++) xs.push(t);
+    DL.line(p, xs, X, { color: DL.color('familiar'), width: 1.6 });
+    /* each false alarm's first trigger, marked on the path */
+    st.eps.forEach(function (e) {
+      if (e.start < W0 || e.start > W1) p.dot(e.start, X[e.start], { r: 4, color: pla, ring: true });
+    });
+    p.text(D - 1, CLOSE, 'tails only', { align: 'right', dy: -3, font: font(), color: soft });
+    p.text(D - 1, HALVE, 'halve', { align: 'right', dy: -3, font: font(), color: soft });
+    p.text(D - 1, st.H, 'halt', { align: 'right', dy: st.H > HALVE - 0.025 ? 13 : -3, font: font(),
+                                  color: DL.color('accent') });
+    tag(p, 20, 1.08, '1-day spike', faint);
+    tag(p, 36.5, 1.03, '2 days', faint);
+    tag(p, 69, 1.24, 'sustained inversion', faint);
+    p.text(0, 1.3, 'VIX / VIX3M', { dx: 4, dy: 12, font: font(), color: soft });
+  });
+
+  var drawSize = DL.figure(U + '-s', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: D - 1, ymin: 0, ymax: 1.22,
+                              pad: { l: PAD.l, r: PAD.r, t: 10, b: 24 } });
+    DL.axes(p, { xs: XS, ys: [0.25, 0.5, 1], grid: true,
+                 x: function (v) { return v === 0 ? 'day 0' : String(v); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+    var g = p.g, pla = DL.color('plain'), acc = DL.color('accent');
+    /* days with new sales halted, as a strip along the top */
+    g.save();
+    g.fillStyle = DL.fade(pla, 0.55);
+    for (var t = 0; t < D; t++) {
+      if (st.stop[t]) g.fillRect(p.X(t - 0.5), p.Y(1.17), Math.max(1, p.X(t + 0.5) - p.X(t - 0.5)), p.Y(1.07) - p.Y(1.17));
+    }
+    g.restore();
+    var pts = [];
+    for (var u = 0; u < D; u++) { pts.push([u - 0.5, st.size[u]]); pts.push([u + 0.5, st.size[u]]); }
+    p.path(pts, { color: acc, width: 2 });
+    p.text(0, TAILS, 'tails', { dx: -7, align: 'right', baseline: 'middle', font: font(),
+                                color: DL.color('ink-faint') });
+    p.text(D - 1, 1.12, 'no new sales', { align: 'right', dx: 0, dy: -8, font: font(), color: pla });
+    p.text(0, 1.12, 'sleeve size', { dx: 4, dy: -8, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    run();
+    DL.out(U + '-n-o', st.N === 1 ? '1 close' : st.N + ' closes');
+    DL.out(U + '-h-o', DL.num(st.H, 2));
+    DL.out(U + '-fa', 'false alarms: ' + st.fa);
+    DL.out(U + '-lost', 'calm days halted or cut: ' + st.lost);
+    DL.out(U + '-lag', st.lagHalt == null ? 'lag: none' :
+           'lag: ' + st.lagHalt + (st.lagHalt === 1 ? ' day' : ' days') + ' to halt, ' +
+           (st.lagCut == null ? '—' : st.lagCut) + ' to halve');
+    drawRatio();
+    drawSize();
+  }
+  update();
+  DL.bind([U + '-n', U + '-h'], update);
+})();
+</script>

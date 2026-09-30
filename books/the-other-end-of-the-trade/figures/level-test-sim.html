@@ -1,0 +1,213 @@
+<!--
+name: level test
+source: new for this book: how often a level holds by chance
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="220"></canvas>
+  <canvas id="{{uid}}-k" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-x">bounce target</label>
+      <input type="range" id="{{uid}}-x" min="2" max="20" step="1" value="5">
+      <output id="{{uid}}-x-o" for="{{uid}}-x"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-y">break point</label>
+      <input type="range" id="{{uid}}-y" min="2" max="20" step="1" value="20">
+      <output id="{{uid}}-y-o" for="{{uid}}-y"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Market" id="{{uid}}-mkt">
+      <label>market</label>
+      <button type="button" data-v="walk" class="on" aria-pressed="true">random walk</button>
+      <button type="button" data-v="pin" aria-pressed="false">dealers long gamma at the levels</button>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new sessions</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-rate"></output></div>
+    <div class="ctrl"><output id="{{uid}}-base"></output></div>
+    <div class="ctrl"><output id="{{uid}}-near"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>How often a level holds by chance.</b> Levels sit every 25 points. A touch
+  is price reaching a level from at least 3 points away; it holds if price then moves the
+  bounce target back from the touch before it moves the break point through it, and a touch
+  still undecided at the close is not counted. Above, one
+  made-up session with its holds (circles) and breaks (crosses); below, the hold rate over 200
+  sessions against the ratio of the two distances, with the curve a random walk gives,
+  break ÷ (bounce + break). With a small target and a wide break point most touches hold when
+  nothing happens at the levels. Put dealers long gamma at the levels and the hold rate moves a
+  few points one way or the other, while the time price spends near them jumps: their
+  hedging makes price stick, not bounce.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var XX = DL.$(U + '-x'), YY = DL.$(U + '-y');
+  var mkt = DL.seg(U + '-mkt', update);
+  var SESS = 200, STEPS = 390, VOL = 1.4, GRID = 25, APPROACH = 3;
+  var seed = 7, st;
+
+  /* One session, minute by minute, starting at 6,000 plus a random offset. In the random
+     walk each minute's move is VOL points times a standard normal draw. With dealers long
+     gamma at the levels, a move within 6 points of a level is damped by 1 / (1 + w), with w
+     rising to 1.5 at the level itself, and a small pull toward the level is added: the
+     pinning of Chapter 8E in miniature. Both markets are built from the same draws, so each
+     session has a random-walk twin with the same news. */
+  function sessions(r, n) {
+    var out = [];
+    for (var k = 0; k < n; k++) {
+      var s0 = 6000 + (r() - 0.5) * GRID, e = [];
+      for (var t = 0; t < STEPS; t++) e.push(VOL * DL.gauss(r));
+      out.push({ s0: s0, e: e });
+    }
+    return out;
+  }
+  function build(sess, pin) {
+    var S = sess.s0, path = [S];
+    for (var t = 0; t < STEPS; t++) {
+      var e = sess.e[t];
+      if (pin) {
+        var L = Math.round(S / GRID) * GRID, d = S - L;
+        var w = Math.abs(d) < 6 ? 1.5 * (1 - Math.abs(d) / 6) : 0;
+        e = (e - 0.08 * w * d) / (1 + w);
+      }
+      S += e;
+      path.push(S);
+    }
+    return path;
+  }
+  /* the share of minutes a path spends within 3 points of a level */
+  function near(paths) {
+    var n = 0, m = 0;
+    paths.forEach(function (p) {
+      p.forEach(function (S) { m++; if (Math.abs(S - Math.round(S / GRID) * GRID) < 3) n++; });
+    });
+    return n / m;
+  }
+  /* every touch in a path and its outcome: +1 a hold, -1 a break, 0 undecided at the close */
+  function touches(path, X, Y) {
+    var out = [], armed = {}, i, L;
+    for (i = 1; i < path.length; i++) {
+      var S = path[i];
+      L = Math.round(S / GRID) * GRID;
+      /* a level is armed once price is at least APPROACH points from it */
+      [L - GRID, L, L + GRID].forEach(function (lv) {
+        if (Math.abs(path[i] - lv) >= APPROACH && armed[lv] == null) armed[lv] = path[i] > lv ? 1 : -1;
+      });
+      var side = armed[L];
+      if (side != null && (side > 0 ? S <= L : S >= L)) {
+        var res = 0;
+        for (var j = i + 1; j < path.length; j++) {
+          var m = (path[j] - path[i]) * side;
+          if (m >= X) { res = 1; break; }
+          if (m <= -Y) { res = -1; break; }
+        }
+        out.push({ i: i, L: L, res: res });
+        armed[L] = null;
+      }
+    }
+    return out;
+  }
+
+  function compute() {
+    var X = +XX.value, Y = +YY.value, pin = mkt() === 'pin';
+    var ss = sessions(DL.rng(seed), SESS);
+    var walks = ss.map(function (x) { return build(x, false); });
+    var paths = pin ? ss.map(function (x) { return build(x, true); }) : walks;
+    /* the hold rate at the chosen distances, and at a sweep of ratios for the chart */
+    function rate(X2, Y2) {
+      var h = 0, n = 0;
+      paths.forEach(function (p) {
+        touches(p, X2, Y2).forEach(function (t) { if (t.res !== 0) { n++; if (t.res > 0) h++; } });
+      });
+      return { h: h, n: n, r: n ? h / n : null };
+    }
+    var cur = rate(X, Y);
+    var sweep = [[20, 2], [15, 3], [12, 4], [10, 5], [8, 8], [5, 10], [4, 12], [3, 15], [2, 20]].map(function (q) {
+      var rr = rate(q[0], q[1]);
+      return { ratio: q[1] / q[0], r: rr.r };
+    });
+    st = { X: X, Y: Y, pin: pin, first: paths[0], firstT: touches(paths[0], X, Y), cur: cur,
+           sweep: sweep, near: near(paths), nearWalk: near(walks) };
+  }
+
+  function font() { return '11px ' + DL.color('sans'); }
+  compute();
+
+  var drawPath = DL.figure(U + '-c', function (c) {
+    var ys = st.first, lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    var ymin = Math.floor((lo - 6) / GRID) * GRID, ymax = Math.ceil((hi + 6) / GRID) * GRID;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: ymin, ymax: ymax,
+                              pad: { l: 46, r: 14, t: 16, b: 24 } });
+    var lv = [];
+    for (var v = ymin; v <= ymax; v += GRID) lv.push(v);
+    DL.axes(p, { xs: [0, 90, 180, 270, 360], ys: lv, grid: false,
+                 x: function (x) { return ['9:30', '11:00', '12:30', '2:00', '3:30'][x / 90]; },
+                 y: function (y) { return DL.num(y, 0); } });
+    lv.forEach(function (y) { DL.hline(p, y, { color: DL.color('familiar'), dash: [5, 3] }); });
+    var xs = [];
+    for (var t = 0; t <= STEPS; t++) xs.push(t);
+    DL.line(p, xs, ys, { color: DL.color('accent'), width: 1.4 });
+    var g = p.g, ok = DL.color('insight'), bad = DL.color('plain');
+    st.firstT.forEach(function (tc) {
+      var x = p.X(tc.i), y = p.Y(tc.L);
+      g.save();
+      g.lineWidth = 2;
+      if (tc.res > 0) {
+        g.strokeStyle = ok;
+        g.beginPath();
+        g.arc(x, y, 5, 0, 2 * Math.PI);
+        g.stroke();
+      } else if (tc.res < 0) {
+        g.strokeStyle = bad;
+        g.beginPath();
+        g.moveTo(x - 4, y - 4); g.lineTo(x + 4, y + 4);
+        g.moveTo(x + 4, y - 4); g.lineTo(x - 4, y + 4);
+        g.stroke();
+      }
+      g.restore();
+    });
+    p.text(0, ymax, 'one session: holds and breaks', { dx: 4, dy: 12, font: font(), color: DL.color('ink-soft') });
+  });
+
+  var drawRate = DL.figure(U + '-k', function (c) {
+    /* the ratio break / bounce on a log axis, from 0.1 to 10 */
+    var p = new NMT.Plot(c, { xmin: -1, xmax: 1, ymin: 0, ymax: 1, pad: { l: 46, r: 14, t: 16, b: 24 } });
+    DL.axes(p, { xs: [-1, -0.5, 0, 0.5, 1], ys: [0, 0.25, 0.5, 0.75, 1],
+                 x: function (x) { var v = Math.pow(10, x); return (v < 1 ? DL.num(v, 1) : DL.num(v, 0)) + '×'; },
+                 y: function (y) { return DL.pct(y, 0); } });
+    p.fn(function (x) { var q = Math.pow(10, x); return q / (1 + q); },
+         { color: DL.color('ink-faint'), width: 1.6 });
+    var col = st.pin ? DL.color('insight') : DL.color('accent');
+    st.sweep.forEach(function (s) {
+      if (s.r != null) p.dot(Math.log10(s.ratio), s.r, { r: 3.5, color: DL.fade(col, 0.8) });
+    });
+    if (st.cur.r != null) p.dot(Math.log10(st.Y / st.X), st.cur.r, { r: 6, color: col, ring: true });
+    p.text(-1, 1, 'hold rate against break ÷ bounce', { dx: 4, dy: 12, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    compute();
+    var base = st.Y / (st.X + st.Y);
+    DL.out(U + '-x-o', st.X + ' pts');
+    DL.out(U + '-y-o', st.Y + ' pts');
+    DL.out(U + '-rate', 'holds: ' + (st.cur.r == null ? '—' : DL.pct(st.cur.r, 0)) +
+                        ' of ' + DL.num(st.cur.n, 0) + ' touches');
+    DL.out(U + '-base', 'chance alone: ' + DL.pct(base, 0));
+    DL.out(U + '-near', 'minutes near a level: ' + DL.pct(st.near, 0) + ' (walk ' + DL.pct(st.nearWalk, 0) + ')');
+    var gap = st.cur.r == null ? 0 : st.cur.r - base;
+    DL.out(U + '-vk', st.pin ? 'With dealers long gamma at the levels:' : 'In a random walk:');
+    DL.out(U + '-vt', 'the hold rate differs from chance by ' + DL.signed(gap * 100, 0) +
+                      ' points, and the time spent near a level by ' +
+                      DL.signed((st.near - st.nearWalk) * 100, 0) + ' points.');
+    drawPath();
+    drawRate();
+  }
+  update();
+  DL.bind([U + '-x', U + '-y'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+</script>

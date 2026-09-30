@@ -1,0 +1,325 @@
+<!--
+name: GEX heatmap
+source: new for this book: a synthetic SPX option chain
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="470"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-spot">spot</label>
+      <input type="range" id="{{uid}}-spot" min="5850" max="6150" step="5" value="6000">
+      <output id="{{uid}}-spot-o" for="{{uid}}-spot"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV</label>
+      <input type="range" id="{{uid}}-iv" min="8" max="40" step="1" value="16">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-hrs">hours to the close</label>
+      <input type="range" id="{{uid}}-hrs" min="0.25" max="6.5" step="0.25" value="6.5">
+      <output id="{{uid}}-hrs-o" for="{{uid}}-hrs"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Sign convention" id="{{uid}}-conv">
+      <label>sign convention</label>
+      <button type="button" data-v="jpm" class="on" aria-pressed="true">JPM-era</button>
+      <button type="button" data-v="odte" aria-pressed="false">0DTE-era</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="What each cell shows" id="{{uid}}-view">
+      <label>cells</label>
+      <button type="button" data-v="gex" class="on" aria-pressed="true">GEX</button>
+      <button type="button" data-v="abs" aria-pressed="false">size only</button>
+      <button type="button" data-v="vex" aria-pressed="false">VEX</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Color scale" id="{{uid}}-scale">
+      <label>color scale</label>
+      <button type="button" data-v="map" class="on" aria-pressed="true">whole map</button>
+      <button type="button" data-v="col" aria-pressed="false">each expiry</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-tot"></output></div>
+    <div class="ctrl"><output id="{{uid}}-king"></output></div>
+    <div class="ctrl"><output id="{{uid}}-zero"></output></div>
+    <div class="ctrl"><output id="{{uid}}-flip"></output></div>
+  </div>
+  <figcaption><b>Dealer gamma at every strike and every expiry.</b> Each cell is the dealers'
+  GEX at one strike and one expiry, Γ · OI · 100 · S² · 0.01 signed by the chosen convention, in
+  dollars of delta per 1% move: green where hedging opposes a move, rose where it joins one. The
+  right panel adds each strike across all ten expiries, and the rings mark the three largest
+  cells. The open interest is made up, built at a spot of 6,000 and held fixed while spot moves.
+  Run the hours toward the close and the same-day cell at spot outgrows everything else, then
+  move spot to 6,015 and it all but vanishes; switch the convention and every color flips while
+  the rings stay where they are, so a map read by size alone cannot say which way the dealers
+  will trade.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var SP = DL.$(U + '-spot'), IV = DL.$(U + '-iv'), HR = DL.$(U + '-hrs');
+  var conv = DL.seg(U + '-conv', update), view = DL.seg(U + '-view', update),
+      scale = DL.seg(U + '-scale', update);
+
+  /* the made-up chain: ten expiries (a week of dailies, three weeklies, the monthly at
+     30 days and one beyond it) and strikes every 25 points from 5,700 to 6,300 */
+  var S0 = 6000;
+  var DAYS = [0, 1, 2, 3, 4, 7, 14, 21, 30, 45];
+  var WEIGHT = [1.2, 0.5, 0.5, 0.5, 0.6, 1.0, 1.0, 0.9, 3.0, 1.6];
+  var KS = [];
+  for (var k = 5700; k <= 6300; k += 25) KS.push(k);
+
+  /* open interest in contracts, fixed at the morning's spot: puts gathered below spot and
+     calls at and above it (the same-day calls centered on the money), spread wider the
+     longer the expiry, heavier at round strikes, and puts more numerous than calls, with a
+     seeded roughness so no two strikes are alike */
+  function round(K) { return K % 100 === 0 ? 2.4 : K % 50 === 0 ? 1.5 : 1; }
+  var OI = (function () {
+    var r = DL.rng(11), out = [];
+    DAYS.forEach(function (d, j) {
+      var w = 60 + 55 * Math.sqrt(d + 1), col = [];
+      var pc = j === 0 ? 1.1 : 1.0, cc = j === 0 ? 0 : 0.25;
+      KS.forEach(function (K) {
+        var x = K - S0;
+        var put = x <= 50 ? Math.exp(-Math.pow((x + pc * w) / (1.3 * w), 2)) : 0;
+        var call = x >= -50 ? Math.exp(-Math.pow((x - cc * w) / w, 2)) : 0;
+        var base = 2500 * WEIGHT[j] * round(K);
+        col.push({ put: Math.round(1.3 * base * put * (0.7 + 0.6 * r())),
+                   call: Math.round(base * call * (0.7 + 0.6 * r())) });
+      });
+      out.push(col);
+    });
+    return out;
+  })();
+
+  /* the dealers' net contracts at one line: calls and puts at one strike and expiry have
+     the same gamma and the same vanna, so only the net position matters */
+  function net(o, c) { return c === 'jpm' ? o.call - o.put : o.put - o.call; }
+  function years(j, hrs) { return (DAYS[j] * 24 + hrs) / (24 * 365); }
+  /* GEX: dollars of dealer delta per 1% move; VEX: dollars of dealer delta per vol point */
+  function cell(S, j, i, sigma, hrs, c, what) {
+    var K = KS[i], T = years(j, hrs), n = net(OI[j][i], c);
+    if (what === 'vex') return n * DL.bsVanna(S, K, T, sigma) * 0.01 * S * 100;
+    return n * DL.bsGamma(S, K, T, sigma) * S * S * 0.01 * 100;
+  }
+
+  /* total GEX against spot, kept until the volatility, the hour or the convention changes;
+     the flip is the zero crossing nearest to spot, found by straight-line interpolation */
+  var cache = { key: null };
+  function flipNear(S, sigma, hrs, c) {
+    var key = [sigma, hrs, c].join('|');
+    if (cache.key !== key) {
+      var xs = [], ys = [];
+      for (var s = 5700; s <= 6300; s += 5) {
+        var t = 0;
+        for (var j = 0; j < DAYS.length; j++)
+          for (var i = 0; i < KS.length; i++) t += cell(s, j, i, sigma, hrs, c, 'gex');
+        xs.push(s); ys.push(t);
+      }
+      cache = { key: key, xs: xs, ys: ys };
+    }
+    var best = null, xs2 = cache.xs, ys2 = cache.ys;
+    for (var n = 1; n < xs2.length; n++) {
+      var a = ys2[n - 1], b = ys2[n];
+      if ((a < 0) !== (b < 0)) {
+        var z = xs2[n - 1] + (xs2[n] - xs2[n - 1]) * a / (a - b);
+        if (best == null || Math.abs(z - S) < Math.abs(best - S)) best = z;
+      }
+    }
+    return best;
+  }
+
+  var st;
+  function compute() {
+    var S = +SP.value, sigma = +IV.value / 100, hrs = +HR.value, c = conv(), v = view();
+    var what = v === 'vex' ? 'vex' : 'gex';
+    var M = [], tot = 0, sizeAll = 0, size0 = 0, nodes = [], i, j;
+    for (j = 0; j < DAYS.length; j++) {
+      var col = [];
+      for (i = 0; i < KS.length; i++) {
+        var x = cell(S, j, i, sigma, hrs, c, what);
+        col.push(x);
+        tot += x;
+        sizeAll += Math.abs(x);
+        if (j === 0) size0 += Math.abs(x);
+        nodes.push({ j: j, i: i, a: Math.abs(x) });
+      }
+      M.push(col);
+    }
+    nodes.sort(function (p, q) { return q.a - p.a || p.j - q.j || p.i - q.i; });
+    var prof = KS.map(function (K, i2) {
+      var s = 0;
+      for (var j2 = 0; j2 < DAYS.length; j2++) s += v === 'abs' ? Math.abs(M[j2][i2]) : M[j2][i2];
+      return s;
+    });
+    st = { S: S, sigma: sigma, hrs: hrs, c: c, v: v, M: M, tot: tot, sizeAll: sizeAll,
+           size0: size0, top: nodes.slice(0, 3), prof: prof, flip: flipNear(S, sigma, hrs, c) };
+  }
+
+  /* billions of dollars, with a sign unless the view is size only */
+  function bn(x, signed) {
+    var a = Math.abs(x) / 1e9, d = a >= 10 ? 0 : a >= 1 ? 1 : 2, s = '$' + DL.num(a, d) + 'B';
+    if (!signed || Number(a.toFixed(d)) === 0) return s;
+    return (x > 0 ? '+' : DL.MINUS) + s;
+  }
+  function strike(K) { return DL.num(K, 0); }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1,
+                               pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+
+    var L = 42, R = Math.max(70, Math.min(130, Math.round(W * 0.2))), TOP = 36, BOT = 24, GAP = 12;
+    var gw = W - L - R - GAP, gh = H - TOP - BOT;
+    var nc = DAYS.length, nr = KS.length, cw = gw / nc, rh = gh / nr;
+    var hi = KS[nr - 1];
+    function yc(K) { return TOP + ((hi - K) / 25 + 0.5) * rh; }
+    function xc(j) { return L + (j + 0.5) * cw; }
+
+    var pos = DL.color('insight'), neg = DL.color('plain'), acc = DL.color('accent');
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint'),
+        fam = DL.color('familiar'), paper = DL.color('paper');
+    var i, j;
+
+    /* the color of a cell: its sign picks the hue (one hue when the view is size only) and
+       its size against the largest cell on the scale sets the depth */
+    var colMax = st.M.map(function (col) {
+      return Math.max.apply(null, col.map(Math.abs));
+    });
+    var mapMax = Math.max.apply(null, colMax);
+    function shade(x, m) {
+      if (!(m > 0)) return DL.fade(DL.color('rule-soft'), 0.6);
+      var a = Math.pow(Math.min(1, Math.abs(x) / m), 0.6);
+      var base = st.v === 'abs' ? acc : (x >= 0 ? pos : neg);
+      return DL.fade(base, 0.05 + 0.9 * a);
+    }
+    for (j = 0; j < nc; j++) {
+      var m = scale() === 'col' ? colMax[j] : mapMax;
+      for (i = 0; i < nr; i++) {
+        g.fillStyle = shade(st.M[j][i], m);
+        g.fillRect(L + j * cw + 0.5, yc(KS[i]) - rh / 2 + 0.5, Math.max(1, cw - 1), Math.max(1, rh - 1));
+      }
+    }
+
+    /* the expiries along the top and the strikes down the side, every 100 points */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    /* on a narrow column the unit goes: the heading above already names it */
+    var unit = cw >= 30 ? 'd' : '';
+    for (j = 0; j < nc; j++) g.fillText(DAYS[j] + unit, xc(j), TOP - 5);
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText('days to expiry', L, 13);
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    g.fillStyle = faint;
+    KS.forEach(function (K) { if (K % 100 === 0) g.fillText(strike(K), L - 6, yc(K)); });
+    g.restore();
+
+    /* the right panel: each strike added across all expiries */
+    var x0 = L + gw + GAP, x1 = W - 4, mid = (x0 + x1) / 2;
+    var pm = Math.max.apply(null, st.prof.map(Math.abs)) || 1;
+    var half = (x1 - x0) / 2;
+    var base = st.v === 'abs' ? x0 : mid, span = st.v === 'abs' ? x1 - x0 : half;
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(base + 0.5, TOP);
+    g.lineTo(base + 0.5, TOP + gh);
+    g.stroke();
+    for (i = 0; i < nr; i++) {
+      var v = st.prof[i], len = v / pm * span;
+      g.fillStyle = DL.fade(st.v === 'abs' ? acc : v >= 0 ? pos : neg, 0.75);
+      g.fillRect(Math.min(base, base + len), yc(KS[i]) - rh * 0.36, Math.abs(len), rh * 0.72);
+    }
+    g.font = font(11);
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillText('all expiries', (x0 + x1) / 2, TOP - 5);
+    g.restore();
+
+    /* the gamma flip, where total GEX changes sign, as a dashed line on the GEX views */
+    if (st.flip != null && st.v !== 'vex') {
+      var yf = yc(st.flip);
+      g.save();
+      g.setLineDash([4, 3]);
+      g.strokeStyle = soft;
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.moveTo(L, yf);
+      g.lineTo(x1, yf);
+      g.stroke();
+      g.restore();
+    }
+
+    /* spot, a solid line across both panels, labeled below the map */
+    var ys = yc(st.S);
+    g.save();
+    g.strokeStyle = fam;
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(L - 3, ys);
+    g.lineTo(x1, ys);
+    g.stroke();
+    g.font = font(11);
+    g.textBaseline = 'top';
+    var label = 'spot ' + strike(st.S);
+    g.textAlign = 'left';
+    g.fillStyle = fam;
+    g.fillText(label, L, TOP + gh + 6);
+    if (st.flip != null && st.v !== 'vex') {
+      g.textAlign = 'right';
+      g.fillStyle = soft;
+      g.fillText('- - flip ' + strike(Math.round(st.flip)), x1, TOP + gh + 6);
+    }
+    g.restore();
+
+    /* rings on the three largest cells, numbered by size */
+    st.top.forEach(function (n, r) {
+      var x = xc(n.j), y = yc(KS[n.i]), rad = Math.max(5, Math.min(cw, rh) * 0.62);
+      g.save();
+      g.beginPath();
+      g.arc(x, y, rad, 0, 2 * Math.PI);
+      g.fillStyle = DL.fade(paper, 0.72);
+      g.fill();
+      g.strokeStyle = ink;
+      g.lineWidth = r === 0 ? 2 : 1.2;
+      g.stroke();
+      g.font = 'bold ' + font(10);
+      g.fillStyle = ink;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(String(r + 1), x, y + 0.5);
+      g.restore();
+    });
+  });
+
+  function update() {
+    compute();
+    DL.out(U + '-spot-o', strike(st.S));
+    DL.out(U + '-iv-o', st.sigma * 100 + '%');
+    DL.out(U + '-hrs-o', DL.num(st.hrs, 2) + ' h');
+    var what = st.v === 'vex' ? 'VEX' : st.v === 'abs' ? 'size' : 'GEX';
+    var per = st.v === 'vex' ? ' per vol pt' : ' per 1%';
+    DL.out(U + '-tot', 'total ' + what + ' = ' + bn(st.v === 'abs' ? st.sizeAll : st.tot, st.v !== 'abs') + per);
+    var n = st.top[0];
+    DL.out(U + '-king', 'largest cell: ' + strike(KS[n.i]) + ' · ' + DAYS[n.j] + 'd');
+    DL.out(U + '-zero', 'same-day share of size = ' + DL.pct(st.size0 / st.sizeAll, 0));
+    DL.out(U + '-flip', st.flip == null ? 'flip: none in range' : 'flip = ' + strike(Math.round(st.flip)));
+    draw();
+  }
+  update();
+  DL.bind([U + '-spot', U + '-iv', U + '-hrs'], update);
+})();
+</script>

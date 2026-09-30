@@ -1,0 +1,222 @@
+<!--
+name: same-day gamma map
+source: new for this book: one same-day expiry through one session
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="380"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-t">time</label>
+      <input type="range" id="{{uid}}-t" min="2" max="25" step="1" value="20">
+      <output id="{{uid}}-t-o" for="{{uid}}-t"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new day</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Dealer book" id="{{uid}}-book">
+      <label>book</label>
+      <button type="button" data-v="fixed" class="on" aria-pressed="true">fixed at the open</button>
+      <button type="button" data-v="trades" aria-pressed="false">with the day's trades</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Color scale" id="{{uid}}-scale">
+      <label>color scale</label>
+      <button type="button" data-v="day" class="on" aria-pressed="true">whole day</button>
+      <button type="button" data-v="col" aria-pressed="false">each time</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-node"></output></div>
+    <div class="ctrl"><output id="{{uid}}-chg"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>The same-day expiry through one session.</b> Each column is one quarter hour
+  from the open to 3:45 PM and each row one strike, 5 points apart; a cell is the dealers' GEX
+  at that strike and time, in dollars of delta per 1% move, green where hedging opposes a move
+  and rose where it joins one, and the line is spot. The dealers' book is made up. Fixed at the
+  open, every change in the map comes from spot and the clock alone; with the day's trades,
+  customers buy options at the strike nearest spot after a move of more than 3 points in a
+  quarter hour and sell them after a quiet one. The readouts split the change in the largest
+  node over the last half hour into the two parts.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var TT = DL.$(U + '-t');
+  var book = DL.seg(U + '-book', update), scale = DL.seg(U + '-scale', update);
+  var SIGMA = 0.15, S0 = 6003, NC = 26, STEP = 15, MIN = 1 / (365 * 24 * 60);
+  var KS = [];
+  for (var k = 5950; k <= 6050; k += 5) KS.push(k);
+  var seed = 5, st;
+
+  /* the dealers' same-day book at the open, in net contracts (positive: dealers long):
+     long the round strikes near spot, short a few strikes 20 to 30 points out, with a seeded
+     roughness; zero beyond the strikes listed */
+  function openBook(r) {
+    var b = {};
+    KS.forEach(function (K) {
+      var x = K - 6000, base = K % 25 === 0 ? 700 : K % 10 === 0 ? 300 : 150;
+      var shape = Math.abs(x) <= 15 ? 1 : Math.abs(x) <= 30 ? -0.6 : 0.4;
+      b[K] = Math.round(base * shape * (0.6 + 0.8 * r()));
+    });
+    return b;
+  }
+  function nearest(S) {
+    var best = KS[0];
+    KS.forEach(function (K) { if (Math.abs(K - S) < Math.abs(best - S)) best = K; });
+    return best;
+  }
+  function clock(j) {
+    var m = 9 * 60 + 30 + j * STEP, h = Math.floor(m / 60), mm = m % 60;
+    return ((h - 1) % 12 + 1) + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+  /* GEX of one strike at one time: net contracts x gamma x S^2 x 0.01 x 100 */
+  function gex(n, S, K, j) {
+    var T = (390 - j * STEP) * MIN;
+    return n * DL.bsGamma(S, K, T, SIGMA) * S * S * 0.01 * 100;
+  }
+
+  /* one session: the path minute by minute, then the book at the start of each quarter
+     hour, before (fixed) or after (trades) that quarter hour's customer trades */
+  function compute() {
+    var r = DL.rng(seed), path = [S0];
+    for (var t = 0; t < 390; t++) path.push(path[t] + SIGMA * path[t] * Math.sqrt(MIN) * DL.gauss(r));
+    var b0 = openBook(DL.rng(seed + 100)), cur = {}, books = [];
+    KS.forEach(function (K) { cur[K] = b0[K]; });
+    for (var j = 0; j < NC; j++) {
+      if (j > 0 && book() === 'trades') {
+        var move = path[j * STEP] - path[(j - 1) * STEP], K2 = nearest(path[j * STEP]);
+        cur[K2] += Math.abs(move) > 3 ? -200 : 150;
+      }
+      var snap = {};
+      KS.forEach(function (K) { snap[K] = cur[K]; });
+      books.push(snap);
+    }
+    var M = [];
+    for (j = 0; j < NC; j++) {
+      var S = path[j * STEP];
+      M.push(KS.map(function (K) { return gex(books[j][K], S, K, j); }));
+    }
+    st = { path: path, books: books, M: M, j: +TT.value };
+  }
+
+  function bn(x) {
+    var a = Math.abs(x) / 1e9, d = a >= 10 ? 0 : a >= 1 ? 1 : 2, s = DL.num(a, d);
+    return (Number(s) === 0 ? '' : x > 0 ? '+' : DL.MINUS) + '$' + s + 'B';
+  }
+  function font(px) { return (px || 11) + 'px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (cv) {
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var L = 42, R = Math.max(64, Math.min(120, Math.round(W * 0.18))), TOP = 30, BOT = 24, GAP = 12;
+    var gw = W - L - R - GAP, gh = H - TOP - BOT, nr = KS.length, cw = gw / NC, rh = gh / nr;
+    var hi = KS[nr - 1];
+    function yv(S) { return TOP + ((hi - S) / 5 + 0.5) * rh; }
+    var pos = DL.color('insight'), neg = DL.color('plain'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), ink = DL.color('ink'), fam = DL.color('familiar');
+    var i, j;
+    var colMax = st.M.map(function (c) { return Math.max.apply(null, c.map(Math.abs)); });
+    var dayMax = Math.max.apply(null, colMax);
+    for (j = 0; j < NC; j++) {
+      var m = scale() === 'col' ? colMax[j] : dayMax;
+      for (i = 0; i < nr; i++) {
+        var v = st.M[j][i], a = m > 0 ? Math.pow(Math.min(1, Math.abs(v) / m), 0.6) : 0;
+        g.fillStyle = DL.fade(v >= 0 ? pos : neg, 0.05 + 0.9 * a);
+        g.fillRect(L + j * cw + 0.5, yv(KS[i]) - rh / 2 + 0.5, Math.max(1, cw - 1), Math.max(1, rh - 1));
+      }
+    }
+    /* strikes every 25 points, the clock every hour */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    KS.forEach(function (K) { if (K % 25 === 0) g.fillText(DL.num(K, 0), L - 6, yv(K)); });
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    for (j = 2; j < NC; j += 4) g.fillText(clock(j), L + (j + 0.5) * cw, TOP + gh + 6);
+    g.textAlign = 'left';
+    g.textBaseline = 'bottom';
+    g.fillStyle = soft;
+    g.fillText('same-day expiry, strike by quarter hour', L, TOP - 8);
+    g.restore();
+
+    /* spot through the day, clipped to the map */
+    g.save();
+    g.beginPath();
+    g.rect(L, TOP, gw, gh);
+    g.clip();
+    g.beginPath();
+    for (var t = 0; t <= 390; t++) {
+      var x = L + t / STEP * cw, y = yv(st.path[t]);
+      if (t === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.strokeStyle = ink;
+    g.lineWidth = 1.5;
+    g.stroke();
+    g.restore();
+
+    /* the chosen time, and half an hour before it */
+    var jx = L + (st.j + 0.5) * cw, jb = L + (st.j - 2 + 0.5) * cw;
+    g.save();
+    g.strokeStyle = fam;
+    g.lineWidth = 1.6;
+    g.strokeRect(L + st.j * cw + 0.5, TOP + 0.5, cw - 1, gh - 1);
+    g.setLineDash([3, 3]);
+    g.lineWidth = 1;
+    g.strokeRect(L + (st.j - 2) * cw + 0.5, TOP + 0.5, cw - 1, gh - 1);
+    g.restore();
+    void jx; void jb;
+
+    /* the right panel: the chosen column as bars */
+    var x0 = L + gw + GAP, x1 = W - 4, mid = (x0 + x1) / 2, half = (x1 - x0) / 2;
+    var col = st.M[st.j], cm = Math.max.apply(null, col.map(Math.abs)) || 1;
+    g.save();
+    g.strokeStyle = DL.color('rule');
+    g.beginPath();
+    g.moveTo(mid + 0.5, TOP);
+    g.lineTo(mid + 0.5, TOP + gh);
+    g.stroke();
+    for (i = 0; i < nr; i++) {
+      var len = col[i] / cm * half;
+      g.fillStyle = DL.fade(col[i] >= 0 ? pos : neg, 0.75);
+      g.fillRect(Math.min(mid, mid + len), yv(KS[i]) - rh * 0.36, Math.abs(len), rh * 0.72);
+    }
+    g.strokeStyle = ink;
+    g.lineWidth = 1.2;
+    var ys = yv(st.path[st.j * STEP]);
+    g.beginPath();
+    g.moveTo(x0, ys);
+    g.lineTo(x1, ys);
+    g.stroke();
+    g.font = font(11);
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillText('at ' + clock(st.j), mid, TOP - 8);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var j = st.j, col = st.M[j], big = 0;
+    for (var i = 1; i < col.length; i++) if (Math.abs(col[i]) > Math.abs(col[big])) big = i;
+    var K = KS[big], S = st.path[j * STEP], Sb = st.path[(j - 2) * STEP];
+    var now = col[big], before = gex(st.books[j - 2][K], Sb, K, j - 2);
+    var drift = gex(st.books[j - 2][K], S, K, j) - before, trades = now - gex(st.books[j - 2][K], S, K, j);
+    DL.out(U + '-t-o', clock(j) + ' · spot ' + DL.num(S, 0));
+    DL.out(U + '-node', 'largest node: ' + DL.num(K, 0) + ' at ' + bn(now));
+    DL.out(U + '-chg', 'since ' + clock(j - 2) + ': ' + bn(now - before));
+    DL.out(U + '-vk', 'Where the change came from:');
+    DL.out(U + '-vt', bn(drift) + ' from spot and the clock, ' + bn(trades) + ' from new trades.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-t'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+</script>

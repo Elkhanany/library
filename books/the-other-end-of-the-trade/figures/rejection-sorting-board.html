@@ -1,0 +1,195 @@
+<!--
+name: rejection sorting board
+source: new for this book: chapter 10I, "The map of rejection as a sorting board"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-prog"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-name"></b> <span id="{{uid}}-pitch"></span></p>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="File this strategy as decayed or never robust" id="{{uid}}-da">
+      <label>file as</label>
+      <button type="button" data-v="dec" aria-pressed="false">decayed</button>
+      <button type="button" data-v="nev" aria-pressed="false">never robust</button>
+    </div>
+    <div class="ctrl" role="group" aria-label="Or file it as institutional-only or catastrophic" id="{{uid}}-db">
+      <label>or</label>
+      <button type="button" data-v="ins" aria-pressed="false">institutional-only</button>
+      <button type="button" data-v="cat" aria-pressed="false">catastrophic</button>
+    </div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <div class="ctrls">
+    <div class="ctrl"><button type="button" id="{{uid}}-prev">previous card</button></div>
+    <div class="ctrl"><button type="button" id="{{uid}}-next">next card</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Strategy</th><th class="c-other">Your drawer</th></tr></thead>
+    <tbody>
+      <tr id="{{uid}}-r0"><td class="c-trial" id="{{uid}}-n0"></td><td class="c-other" id="{{uid}}-y0"></td></tr>
+      <tr id="{{uid}}-r1"><td class="c-trial" id="{{uid}}-n1"></td><td class="c-other" id="{{uid}}-y1"></td></tr>
+      <tr id="{{uid}}-r2"><td class="c-trial" id="{{uid}}-n2"></td><td class="c-other" id="{{uid}}-y2"></td></tr>
+      <tr id="{{uid}}-r3"><td class="c-trial" id="{{uid}}-n3"></td><td class="c-other" id="{{uid}}-y3"></td></tr>
+      <tr id="{{uid}}-r4"><td class="c-trial" id="{{uid}}-n4"></td><td class="c-other" id="{{uid}}-y4"></td></tr>
+      <tr id="{{uid}}-r5"><td class="c-trial" id="{{uid}}-n5"></td><td class="c-other" id="{{uid}}-y5"></td></tr>
+      <tr id="{{uid}}-r6"><td class="c-trial" id="{{uid}}-n6"></td><td class="c-other" id="{{uid}}-y6"></td></tr>
+      <tr id="{{uid}}-r7"><td class="c-trial" id="{{uid}}-n7"></td><td class="c-other" id="{{uid}}-y7"></td></tr>
+      <tr id="{{uid}}-r8"><td class="c-trial" id="{{uid}}-n8"></td><td class="c-other" id="{{uid}}-y8"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>File each strategy before you read the verdict.</b> The nine cards are the
+  strategies this chapter rejects, with the institutional version of earnings short volatility
+  added for the institutional-only drawer. The fourth drawer holds catastrophic costs or tails.
+  Choose a drawer for each card, and the figure says whether the chapter files it the same way,
+  gives the evidence and the chapters that teach or reject the trade, and, for a wrong drawer,
+  why it does not fit. The table keeps the score.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var DRAWER = { dec: 'decayed', nev: 'never robust', ins: 'institutional-only',
+                 cat: 'catastrophic costs or tails' };
+
+  /* The chapter's map of rejection, with Cao, Han, Tong and Zhan's portfolios for the
+     institutional-only drawer; every figure in the evidence is the chapter's own. */
+  var CARDS = [
+    { name: 'Pre-FOMC drift', a: 'dec',
+      pitch: 'Buy the index for the 24 hours before each scheduled FOMC announcement.',
+      ev: 'Lucca and Moench (2015) found about 49 bps in those 24 hours from 1994 to 2011. ' +
+          'Kurov and colleagues (2021) found it gone after 2015, when the Fed\'s transparency ' +
+          'reforms changed the mechanism.',
+      at: 'The Lab\'s own cards reject it (Chapter 13F). Its FOMC trade comes after the ' +
+          'announcement (Chapters 7B and 11K).' },
+    { name: 'Systematic iron condors', a: 'nev',
+      pitch: 'Sell a defined-risk condor every month, because markets are usually range-bound.',
+      ev: 'The Cboe CNDR index returned about 690% from 1986 to 2024, against about 5,500% for ' +
+          'the SPX Total Return index: about 5.5% a year against 11.0%.',
+      at: 'The Lab teaches the condor as a tool chosen for a regime (Chapters 12C and 12A) and ' +
+          'rejects the systematic sleeve on the same record (Chapter 13F).' },
+    { name: 'Long VIX ETPs', a: 'cat',
+      pitch: 'Hold VXX as a hedge that pays when the market panics.',
+      ev: 'VXX lost 99.84% from its inception in 2009 through 2024 to roll decay, 5% to 15% a ' +
+          'year in normal times.',
+      at: 'Chapter 10A works the roll arithmetic, and the Lab puts VXX\'s drag near 10% a ' +
+          'year (Chapter 9A).' },
+    { name: 'Earnings volatility across 200 names', a: 'ins',
+      pitch: 'Sell earnings volatility across 200 or more names, built on the dispersion ' +
+             'between them.',
+      ev: 'Cao, Han, Tong and Zhan (2022) document a profitable version. It needs 200 or more ' +
+          'names, cross-margining, risk infrastructure and analytics of the volatility surface.',
+      at: 'The single-name version a retail account can run is never robust at retail ' +
+          '(Adams and Neururer 2020).' },
+    { name: 'GEX-level scalping', a: 'nev',
+      pitch: 'Sell at the call wall and buy at the put wall, where dealer hedging should ' +
+             'reverse the move.',
+      ev: 'Vendors\' GEX models disagree, 0DTE options changed the structure after 2022, and a ' +
+          'Cboe study of 2025 puts 0DTE market-maker hedging at about 0.2% of SPX daily liquidity.',
+      at: 'The Lab builds the walls (Chapter 8C) and reads them on its dashboard (Chapter 11A), ' +
+          'but its own cards reject the scalp (Chapter 13F).' },
+    { name: 'S&P 500 inclusion', a: 'dec',
+      pitch: 'Buy a stock when its addition to the S&P 500 is announced, and sell on the ' +
+             'effective date.',
+      ev: 'Added stocks once rallied about 7% across that window (Shleifer 1986; Harris and ' +
+          'Gurel 1986). Greenwood and Sammon (2024) find it below 1% since, as index funds grew ' +
+          'smarter and arbitrageurs took the mispricing.',
+      at: 'No Lab chapter teaches it. Chapter 1G uses its decline to show how institutional ' +
+          'edges end.' },
+    { name: 'Naive earnings straddles', a: 'nev',
+      pitch: 'Sell a straddle before every earnings report of a single stock, to collect the ' +
+             'IV crush.',
+      ev: 'Adams and Neururer (2020) find a positive median and a negative mean at a size ' +
+          'retail can trade. In the chapter\'s toy, 80% of reports keep $6 and 20% lose $30: ' +
+          'a mean of −$1.20.',
+      at: 'The Lab agrees (Chapter 13F), and its pre-earnings trade closes before the report ' +
+          '(Chapter 11I).' },
+    { name: 'Short VIX ETPs', a: 'cat',
+      pitch: 'Hold an inverse VIX product to earn the roll that long holders pay.',
+      ev: 'XIV lost 96% in a single day in February 2018 and was terminated. A product that ' +
+          'returns −1 times its index each day loses everything if the index doubles.',
+      at: 'Chapter 8H tells the story of that day.' },
+    { name: 'Put spread plus LEAPS', a: 'nev',
+      pitch: 'Sell 1-year SPX put spreads to fund LEAPS calls: leveraged equity plus a VRP edge.',
+      ev: 'It is about 1.4 times SPX exposure, with 50 to 150 bps a year of embedded leverage ' +
+          'drag, a VRP of 1 to 3 volatility points net and margin that expands in stress.',
+      at: 'Chapter 13E works it in full, and Chapter 1E calls it the leverage trap.' }
+  ];
+
+  /* why a card does not belong in the drawer chosen, by its own drawer and the chosen one */
+  var WHY = {
+    'dec>nev': 'It was robust once: a documented effect that ended when its mechanism changed or capital arrived.',
+    'dec>ins': 'Nothing about it needed institutional infrastructure. The edge faded for everyone.',
+    'dec>cat': 'It failed by fading away, not by a catastrophic cost or a blowup.',
+    'nev>dec': 'There was never a gross edge that survives honest testing, so there was nothing to decay.',
+    'nev>ins': 'No infrastructure rescues it: the trouble is in the payoff or the evidence, not in the costs.',
+    'nev>cat': 'It fails by a negative mean or a long lag, not by one catastrophic cost or tail.',
+    'ins>dec': 'The edge still exists for the firms that can run it.',
+    'ins>nev': 'The edge is real and documented. Capturing it takes 200 names and cross-margining.',
+    'ins>cat': 'Its breadth keeps one blowup from sinking the book.',
+    'cat>dec': 'The product never held an edge that faded: it loses to its own structure.',
+    'cat>nev': 'The chapter files it apart from the lags and negative means: its costs or its tail are catastrophic.',
+    'cat>ins': 'No infrastructure fixes a roll decay of 5% to 15% a year or a 96% day.'
+  };
+  /* the single-name trade has an institutional cousin, so that mistake gets its own answer */
+  var WHY_CARD = {
+    6: { ins: 'The version that works is institutional-only, across 200 or more names. This ' +
+              'single-name version takes only the negative-mean exposure, and diversification ' +
+              'alone would not fix that.' }
+  };
+
+  var buttons = [].slice.call(DL.$(U + '-da').querySelectorAll('button[data-v]'))
+    .concat([].slice.call(DL.$(U + '-db').querySelectorAll('button[data-v]')));
+  var cur = 0, filed = [];
+  for (var i = 0; i < CARDS.length; i++) filed.push(null);
+
+  function press(v) {
+    buttons.forEach(function (b) {
+      var on = b.getAttribute('data-v') === v;
+      if (b.classList.contains('on') !== on) b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  function update() {
+    var c = CARDS[cur], f = filed[cur], right = 0, n = 0;
+    filed.forEach(function (x, j) { if (x) { n += 1; if (x === CARDS[j].a) right += 1; } });
+    DL.out(U + '-prog', 'card ' + (cur + 1) + ' of ' + CARDS.length + ' · filed ' + n +
+                        ' · right ' + right);
+    DL.out(U + '-name', c.name + '.');
+    DL.out(U + '-pitch', c.pitch);
+    press(f);
+    if (!f) {
+      DL.out(U + '-vk', 'Choose a drawer.');
+      DL.out(U + '-vt', 'Decayed, never robust, institutional-only, or catastrophic costs or tails?');
+    } else if (f === c.a) {
+      DL.out(U + '-vk', 'Right: ' + DRAWER[c.a] + '.');
+      DL.out(U + '-vt', c.ev + ' ' + c.at);
+    } else {
+      var why = (WHY_CARD[cur] && WHY_CARD[cur][f]) || WHY[c.a + '>' + f];
+      DL.out(U + '-vk', 'Not ' + DRAWER[f] + ': the chapter files it as ' + DRAWER[c.a] + '.');
+      DL.out(U + '-vt', why + ' ' + c.ev);
+    }
+    for (var j = 0; j < CARDS.length; j++) {
+      var row = DL.$(U + '-r' + j), on = j === cur, x = filed[j];
+      if (row.classList.contains('on') !== on) row.classList.toggle('on', on);
+      DL.out(U + '-n' + j, CARDS[j].name);
+      DL.out(U + '-y' + j, !x ? '—' : x === CARDS[j].a ? DRAWER[x] + ' · right' :
+             DRAWER[x] + ' · the chapter: ' + DRAWER[CARDS[j].a]);
+    }
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      filed[cur] = b.getAttribute('data-v');
+      update();
+    });
+  });
+  DL.$(U + '-prev').addEventListener('click', function () {
+    cur = (cur + CARDS.length - 1) % CARDS.length;
+    update();
+  });
+  DL.$(U + '-next').addEventListener('click', function () {
+    cur = (cur + 1) % CARDS.length;
+    update();
+  });
+  DL.figure('fig-' + U, update);
+})();
+</script>

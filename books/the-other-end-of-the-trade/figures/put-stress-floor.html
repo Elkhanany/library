@@ -1,0 +1,156 @@
+<!--
+name: put stress floor
+source: new for this book: chapter 13E, "A put-writer's stress calculator"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Stress scenario" id="{{uid}}-scn">
+      <label>stress</label>
+      <button type="button" data-v="1" class="on" aria-pressed="true">S1</button>
+      <button type="button" data-v="2" aria-pressed="false">S2</button>
+      <button type="button" data-v="3" aria-pressed="false">S3</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-prem">premium</label>
+      <input type="range" id="{{uid}}-prem" min="12" max="18" step="0.5" value="15">
+      <output id="{{uid}}-prem-o" for="{{uid}}-prem"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-n">contracts</label>
+      <input type="range" id="{{uid}}-n" min="1" max="5" step="1" value="3">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-floor"></output></div>
+    <div class="ctrl"><output id="{{uid}}-bs"></output></div>
+    <div class="ctrl"><output id="{{uid}}-delta"></output></div>
+    <div class="ctrl"><output id="{{uid}}-tot"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><span id="{{uid}}-say"></span></p>
+  <figcaption><b>Delta alone understates a short put's loss in a large fall.</b> One XSP put,
+  struck at the money at 600 and sold for the premium you set, with the seller's loss a
+  contract drawn at each index level. The floor is its intrinsic value less the premium, what
+  it costs at expiry, and the dashed line is its Black-Scholes value with 30 days left at the
+  stressed VIX (the calm 14 plus the scenario's rise, with no interest rate). The straight line
+  is the first-order estimate from a delta of −0.5, and it falls further behind the floor as
+  the stress deepens from S1 to S3.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var K = 600, VIX0 = 14, DAYS = 30, DELTA = -0.5, PORT = 1000000, X0 = 360, X1 = 630;
+  /* Chapter 1D's scenarios: the index's fall and the VIX's rise */
+  var SCN = { 1: { fall: 0.10, vix: 10 }, 2: { fall: 0.20, vix: 25 }, 3: { fall: 0.35, vix: 50 } };
+  var PREM = DL.$(U + '-prem'), NC = DL.$(U + '-n');
+  var scn = DL.seg(U + '-scn', update);
+
+  /* the seller's loss a contract at index level S: the put's value less the premium, x 100 */
+  function floorLoss(S, P) { return (Math.max(K - S, 0) - P) * 100; }
+  function bsLoss(S, P, sig) { return (DL.bsPrice(S, K, DAYS / 365, sig, 'put', 0, 0) - P) * 100; }
+  function deltaLoss(S) { return -DELTA * (K - S) * 100; }
+
+  var st;
+  function compute() {
+    var k = scn(), sc = SCN[k], P = +PREM.value, n = +NC.value;
+    var S = K * (1 - sc.fall), vix = VIX0 + sc.vix, sig = vix / 100;
+    var fl = floorLoss(S, P), bs = bsLoss(S, P, sig), de = deltaLoss(S);
+    st = { k: k, sc: sc, P: P, n: n, S: S, vix: vix, sig: sig, fl: fl, bs: bs, de: de,
+           miss: 1 - de / fl, tot: n * fl };
+  }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: -2500, ymax: 25000,
+                              pad: { l: 44, r: 14, t: 22, b: 30 } });
+    DL.axes(p, { xs: [400, 450, 500, 550, 600], ys: [0, 5000, 10000, 15000, 20000, 25000],
+                 yAt: X0,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return v === 0 ? '$0' : '$' + v / 1000 + 'k'; } });
+    var g = p.g, plain = DL.color('plain'), acc = DL.color('accent'), fam = DL.color('familiar'),
+        soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), font = '11px ' + DL.color('sans');
+
+    /* the three scenarios' levels along the top, the chosen one marked */
+    g.save();
+    g.font = font;
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    [1, 2, 3].forEach(function (k) {
+      var x = K * (1 - SCN[k].fall);
+      g.fillStyle = k === st.k ? DL.color('ink') : faint;
+      g.fillText('S' + k, p.X(x), p.Y(25000) - 5);
+    });
+    g.restore();
+    DL.vline(p, st.S, { color: DL.fade(DL.color('ink'), 0.35), width: 1 });
+
+    /* the three prices of the same short put */
+    var xs = [], fl = [], bs = [], de = [];
+    for (var s = X0; s <= X1; s += 1) {
+      xs.push(s); fl.push(floorLoss(s, st.P)); bs.push(bsLoss(s, st.P, st.sig)); de.push(deltaLoss(s));
+    }
+    DL.line(p, xs, de, { color: fam, width: 1.8 });
+    DL.line(p, xs, bs, { color: acc, width: 1.8, dash: [5, 4] });
+    DL.line(p, xs, fl, { color: plain, width: 2.4 });
+
+    p.dot(st.S, st.de, { r: 4.5, color: fam, ring: true });
+    p.dot(st.S, st.bs, { r: 4, color: acc, ring: true });
+    p.dot(st.S, st.fl, { r: 4.5, color: plain, ring: true });
+
+    /* the floor's and the delta line's values beside the chosen level, each where its
+       neighbors leave room: the floor above and to the right of its dot, where both curves
+       fall away, and the estimate below and to the left of its own */
+    g.save();
+    g.font = font;
+    g.textAlign = 'left';
+    g.fillStyle = plain;
+    g.textBaseline = 'bottom';
+    g.fillText('$' + DL.num(st.fl, 0), p.X(st.S) + 8, p.Y(st.fl) - 3);
+    g.fillStyle = fam;
+    g.textAlign = 'right';
+    g.textBaseline = 'top';
+    g.fillText('$' + DL.num(st.de, 0), p.X(st.S) - 8, p.Y(st.de) + 3);
+
+    /* a key in the empty top-right corner */
+    var items = [['floor at expiry', plain, []], ['30 days left, VIX ' + st.vix, acc, [5, 4]],
+                 ['delta alone', fam, []]];
+    var kx = p.X(X1) - 6, ky = p.Y(25000) + 12;
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    items.forEach(function (it, i) {
+      var y = ky + i * 16, w = g.measureText(it[0]).width;
+      g.fillStyle = soft;
+      g.fillText(it[0], kx, y);
+      g.strokeStyle = it[1];
+      g.lineWidth = 2;
+      g.setLineDash(it[2]);
+      g.beginPath();
+      g.moveTo(kx - w - 24, y);
+      g.lineTo(kx - w - 6, y);
+      g.stroke();
+      g.setLineDash([]);
+    });
+    g.restore();
+  });
+
+  function money(x) { return (x < 0 ? DL.MINUS : '') + '$' + DL.num(Math.abs(x), 0); }
+  function update() {
+    compute();
+    DL.out(U + '-prem-o', '$' + DL.num(st.P, 2));
+    DL.out(U + '-n-o', String(st.n));
+    DL.out(U + '-floor', 'floor loss: ' + money(st.fl) + ' a contract');
+    DL.out(U + '-bs', 'with 30 days left: ' + money(st.bs));
+    DL.out(U + '-delta', 'delta alone: ' + money(st.de) + ' (' + DL.pct(st.miss, 0) + ' short)');
+    DL.out(U + '-tot', st.n + (st.n === 1 ? ' contract: ' : ' contracts: ') + money(st.tot) +
+           ', ' + DL.pct(st.tot / PORT, 1) + ' of $1M');
+    var itm = K - st.S;
+    DL.out(U + '-say', 'In S' + st.k + ', XSP falls ' + DL.pct(st.sc.fall, 0) + ' to ' + DL.num(st.S, 0) +
+           ' and the VIX rises ' + st.sc.vix + ' points to ' + st.vix + ', leaving the put $' +
+           DL.num(itm, 0) + ' in the money. Delta alone, 0.5 × ' + DL.num(itm, 0) + ' × 100 = ' +
+           money(st.de) + ', misses ' + DL.pct(st.miss, 0) + ' of the loss at the floor.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-prem', U + '-n'], update);
+})();
+</script>

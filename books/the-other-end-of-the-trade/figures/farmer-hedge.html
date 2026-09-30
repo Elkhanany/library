@@ -1,0 +1,119 @@
+<!--
+name: farmer's hedge
+source: new for this book: chapter 4C, "A hedger's three lines"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="270"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Hedge" id="{{uid}}-hedge">
+      <label>hedge</label>
+      <button type="button" data-v="none" aria-pressed="false">none</button>
+      <button type="button" data-v="fut" class="on" aria-pressed="true">sell futures</button>
+      <button type="button" data-v="put" aria-pressed="false">buy puts</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-h">hedge ratio</label>
+      <input type="range" id="{{uid}}-h" min="0" max="100" step="5" value="100">
+      <output id="{{uid}}-h-o" for="{{uid}}-h"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">put strike</label>
+      <input type="range" id="{{uid}}-k" min="3.5" max="5.5" step="0.05" value="4.5">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pr">put premium</label>
+      <input type="range" id="{{uid}}-pr" min="0.05" max="0.6" step="0.01" value="0.2">
+      <output id="{{uid}}-pr-o" for="{{uid}}-pr"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-worst"></output></div>
+    <div class="ctrl"><output id="{{uid}}-up"></output></div>
+    <div class="ctrl"><output id="{{uid}}-cost"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Harvest price</th><th>Crop alone</th><th>With futures sold</th><th>With puts bought</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">$3.80</td><td data-label="Crop alone" id="{{uid}}-a0"></td><td data-label="With futures sold" id="{{uid}}-f0"></td><td data-label="With puts bought" id="{{uid}}-p0"></td></tr>
+      <tr><td class="c-trial">$5.20</td><td data-label="Crop alone" id="{{uid}}-a1"></td><td data-label="With futures sold" id="{{uid}}-f1"></td><td data-label="With puts bought" id="{{uid}}-p1"></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>Flattened or floored.</b> A farmer's 10,000 bushels are worth 10,000 times
+  the harvest price, the thin line. Selling futures at $4.50 adds the dashed mirror-image
+  line, so the bold total is flat at $45,000. Buying puts adds a hinge instead, which floors
+  the total at the strike less the premium and keeps the upside. The hedge ratio sets the
+  share of the crop hedged, and the table reads all three positions at the chapter's two
+  harvest prices, with its hypothetical premium of $0.20 a bushel.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var HR = DL.$(U + '-h'), KS = DL.$(U + '-k'), PR = DL.$(U + '-pr');
+  var hedge = DL.seg(U + '-hedge', function () { draw(); });
+
+  /* the chapter's farmer: 10,000 bushels, futures for harvest delivery at $4.50 */
+  var Q = 10000, F = 4.5, PRICES = [3.8, 5.2];
+  function crop(S) { return Q * S; }
+  /* futures sold on h of the crop pay h Q (F − S); puts bought on h of it pay
+     h Q max(K − S, 0), less the premium paid for them */
+  function futLeg(S, h) { return h * Q * (F - S); }
+  function putLeg(S, h, K, pr) { return h * Q * (Math.max(K - S, 0) - pr); }
+  function leg(kind, S, h, K, pr) {
+    return kind === 'fut' ? futLeg(S, h) : kind === 'put' ? putLeg(S, h, K, pr) : 0;
+  }
+  function k(v) {
+    if (v === 0) return '$0';
+    return (v < 0 ? DL.MINUS : '') + '$' + DL.num(Math.abs(v) / 1000, 0) + 'k';
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var h = +HR.value / 100, K = +KS.value, pr = +PR.value, kind = hedge();
+    var X0 = 3, X1 = 6;
+    var p = new NMT.Plot(c, { xmin: X0, xmax: X1, ymin: -20000, ymax: 66000,
+                              pad: { l: 50, r: 20, t: 12, b: 34 }, xlabel: 'harvest price, $ a bushel' });
+    /* a tick every 50 cents where there is room, every dollar on a phone */
+    DL.axes(p, { xs: p.w < 520 ? [3, 4, 5, 6] : [3, 3.5, 4, 4.5, 5, 5.5, 6],
+                 ys: [-20000, 0, 20000, 40000, 60000],
+                 x: function (v) { return DL.usd(v, 2); }, y: k });
+    var soft = DL.color('ink-soft'), fam = DL.color('familiar'), acc = DL.color('accent');
+    PRICES.forEach(function (S) {
+      p.seg(S, -20000, S, 66000, { color: DL.color('rule'), dash: [2, 4], width: 1 });
+    });
+    function total(S) { return crop(S) + leg(kind, S, h, K, pr); }
+
+    if (kind === 'none') {
+      p.fn(crop, { color: acc, width: 2.6, N: 60 });
+      p.text(X0, crop(X0), 'crop alone', { dx: 6, dy: 16, color: acc, font: font() });
+    } else {
+      p.fn(crop, { color: soft, width: 1.4, N: 60 });
+      p.fn(function (S) { return leg(kind, S, h, K, pr); }, { color: fam, width: 1.6, dash: [5, 4], N: 600 });
+      p.fn(total, { color: acc, width: 2.6, N: 600 });
+      p.text(X0, crop(X0), 'crop alone', { dx: 6, dy: 16, color: soft, font: font() });
+      p.text(X0, leg(kind, X0, h, K, pr), kind === 'fut' ? 'futures sold' : 'puts bought',
+             { dx: 6, dy: -6, color: fam, font: font() });
+      p.text(X0, total(X0), 'total', { dx: 6, dy: -7, color: acc, font: font() });
+    }
+    PRICES.forEach(function (S) { p.dot(S, total(S), { color: acc, r: 3.8, ring: true }); });
+
+    /* the worst case is the total at a price of zero: every line here falls or stays
+       flat as the price falls */
+    var worst = total(0), kept = kind === 'fut' ? 1 - h : 1, cost = kind === 'put' ? h * Q * pr : 0;
+    DL.out(U + '-h-o', DL.num(h * 100, 0) + '%');
+    DL.out(U + '-k-o', DL.usd(K, 2));
+    DL.out(U + '-pr-o', DL.usd(pr, 2));
+    DL.out(U + '-worst', 'worst case = ' + DL.usd(worst, 0));
+    DL.out(U + '-up', 'upside kept = ' + DL.num(kept * 100, 0) + '%');
+    DL.out(U + '-cost', 'premium paid = ' + DL.usd(cost, 0));
+    PRICES.forEach(function (S, i) {
+      DL.out(U + '-a' + i, DL.usd(crop(S), 0));
+      DL.out(U + '-f' + i, DL.usd(crop(S) + futLeg(S, h), 0));
+      DL.out(U + '-p' + i, DL.usd(crop(S) + putLeg(S, h, K, pr), 0));
+    });
+  });
+  DL.bind([U + '-h', U + '-k', U + '-pr'], draw);
+})();
+</script>

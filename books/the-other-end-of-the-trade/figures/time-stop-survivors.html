@@ -1,0 +1,197 @@
+<!--
+name: time stop survivors
+source: new for this book: chapter 11N, "Who survives to the time stop"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-w">win rate</label>
+      <input type="range" id="{{uid}}-w" min="10" max="90" step="1" value="60">
+      <output id="{{uid}}-w-o" for="{{uid}}-w"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-pay">winners paid in time</label>
+      <input type="range" id="{{uid}}-pay" min="0" max="100" step="1" value="85">
+      <output id="{{uid}}-pay-o" for="{{uid}}-pay"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-open">losers still open</label>
+      <input type="range" id="{{uid}}-open" min="0" max="100" step="1" value="50">
+      <output id="{{uid}}-open-o" for="{{uid}}-open"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="The chapter's cases">
+      <label>cases</label>
+      <button type="button" id="{{uid}}-ex">example</button>
+      <button type="button" id="{{uid}}-chk">check</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-dw"></output></div>
+    <div class="ctrl"><output id="{{uid}}-sl"></output></div>
+    <div class="ctrl"><output id="{{uid}}-pw"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>What a trade still open at the time stop says about itself.</b> The square is
+  all of a setup's trades, split by width into eventual winners and losers, and within each
+  column into trades resolved by the time stop and trades still open. The bar on the right
+  takes only the open trades, the delayed winners and the slow losers, and sets the winners'
+  share against the base rate. The two cases load the worked example and the first check
+  question; when most winners pay early, an open trade is far less likely a winner than the
+  base rate says.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var WR = DL.$(U + '-w'), PAY = DL.$(U + '-pay'), OPEN = DL.$(U + '-open');
+
+  /* Bayes' rule at the time stop: delayed winners are w (1 - pay) of all trades, slow
+     losers (1 - w) open, and an open trade is a winner with probability
+     delayed / (delayed + slow) */
+  function state() {
+    var w = DL.val(U + '-w') / 100, pay = DL.val(U + '-pay') / 100, op = DL.val(U + '-open') / 100;
+    var dw = w * (1 - pay), sl = (1 - w) * op, all = dw + sl;
+    return { w: w, pay: pay, op: op, dw: dw, sl: sl, post: all > 0 ? dw / all : null };
+  }
+  function font(bold) { return (bold ? 'bold ' : '') + '11px ' + DL.color('sans'); }
+  function pc(x) { return DL.pct(x, 0); }
+
+  var st = state();
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = st;
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, pad: { l: 0, r: 0, t: 0, b: 0 } });
+    var g = p.g, W = p.w, H = p.h;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var ins = DL.color('insight'), pla = DL.color('plain'), paper = DL.color('paper'),
+        ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+
+    /* the square of all trades on the left, the bar of open trades on the right */
+    var TOP = 20, BOT = 22, GAP = 22, BW = 30, LAB = 70;
+    var x0 = 2, MW = Math.min(W - x0 - GAP - BW - LAB, 2.4 * (H - TOP - BOT));
+    var bx = x0 + MW + GAP, MH = H - TOP - BOT;
+    function yOf(f) { return TOP + MH * (1 - f); }
+
+    /* text centered in a box: the long form if it fits, else the number alone, else nothing */
+    function inBox(text, x, y, w, h, col, bold) {
+      g.font = font(bold);
+      if (h < 15) return;
+      var short = text.slice(text.lastIndexOf(' ') + 1);
+      var t = g.measureText(text).width + 8 <= w ? text :
+              g.measureText(short).width + 6 <= w ? short : '';
+      if (!t) return;
+      g.fillStyle = col;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(t, x + w / 2, y + h / 2);
+    }
+    function cell(x, y, w, h, fill) {
+      if (w <= 2 || h <= 2) return;
+      g.fillStyle = fill;
+      g.fillRect(x + 1, y + 1, w - 2, h - 2);
+    }
+
+    g.save();
+    /* winners: paid by the time stop below, still open above */
+    var ww = MW * s.w, lw = MW - ww;
+    var hPay = MH * s.pay, hOpenL = MH * s.op;
+    cell(x0, TOP + MH - hPay, ww, hPay, DL.fade(ins, 0.22));
+    cell(x0, TOP, ww, MH - hPay, DL.fade(ins, 0.9));
+    /* losers: stopped out below, still open above */
+    cell(x0 + ww, TOP + hOpenL, lw, MH - hOpenL, DL.fade(pla, 0.22));
+    cell(x0 + ww, TOP, lw, hOpenL, DL.fade(pla, 0.9));
+    inBox('paid in time ' + pc(s.w * s.pay), x0, TOP + MH - hPay, ww, hPay, soft);
+    inBox('open ' + pc(s.dw), x0, TOP, ww, MH - hPay, paper, true);
+    inBox('stopped ' + pc((1 - s.w) * (1 - s.op)), x0 + ww, TOP + hOpenL, lw,
+          MH - hOpenL, soft);
+    inBox('open ' + pc(s.sl), x0 + ww, TOP, lw, hOpenL, paper, true);
+
+    /* column names under the square, each shortened or dropped if its column is narrow */
+    g.font = font();
+    g.fillStyle = soft;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    [['winners ' + pc(s.w), pc(s.w), x0, ww], ['losers ' + pc(1 - s.w), pc(1 - s.w), x0 + ww, lw]]
+      .forEach(function (col) {
+        var t = g.measureText(col[0]).width + 6 <= col[3] ? col[0] :
+                g.measureText(col[1]).width + 4 <= col[3] ? col[1] : '';
+        if (t) g.fillText(t, col[2] + col[3] / 2, TOP + MH + 5);
+      });
+    g.textBaseline = 'bottom';
+    g.fillText('all trades', x0 + MW / 2, TOP - 5);
+    g.fillText('still open', bx + BW / 2, TOP - 5);
+
+    /* the open trades alone: delayed winners below, slow losers above, against the base rate */
+    if (s.post == null) {
+      g.strokeStyle = DL.color('rule');
+      g.strokeRect(bx + 0.5, TOP + 0.5, BW - 1, MH - 1);
+      g.textAlign = 'left';
+      g.textBaseline = 'middle';
+      g.fillStyle = faint;
+      g.fillText('none', bx + BW + 6, TOP + MH / 2);
+    } else {
+      var hw = MH * s.post;
+      cell(bx, TOP + MH - hw, BW, hw, DL.fade(ins, 0.9));
+      cell(bx, TOP, BW, MH - hw, DL.fade(pla, 0.9));
+      g.textAlign = 'left';
+      g.textBaseline = 'middle';
+      g.font = font(true);
+      g.fillStyle = ins;
+      var yw = Math.min(TOP + MH - hw / 2, TOP + MH - 7);
+      g.fillText(pc(s.post), bx + BW + 6, yw);
+      /* the base rate, a line across the bar */
+      var yb = yOf(s.w);
+      g.strokeStyle = ink;
+      g.lineWidth = 1.6;
+      g.setLineDash([4, 3]);
+      g.beginPath();
+      g.moveTo(bx - 5, yb);
+      g.lineTo(bx + BW + 4, yb);
+      g.stroke();
+      g.setLineDash([]);
+      g.font = font();
+      g.fillStyle = ink;
+      /* the base rate's two-line label keeps clear of the winners' share beside it */
+      var yl = yb <= yw ? Math.min(yb, yw - 18) : Math.max(yb, yw + 18);
+      yl = Math.max(TOP + 11, Math.min(TOP + MH - 11, yl));
+      g.textBaseline = 'bottom';
+      g.fillText('base rate', bx + BW + 6, yl);
+      g.textBaseline = 'top';
+      g.fillText(pc(s.w), bx + BW + 6, yl);
+    }
+    g.restore();
+  });
+
+  function update() {
+    st = state();
+    var s = st;
+    DL.out(U + '-w-o', pc(s.w));
+    DL.out(U + '-pay-o', pc(s.pay));
+    DL.out(U + '-open-o', pc(s.op));
+    DL.out(U + '-dw', 'delayed winners = ' + DL.num(s.w, 2) + ' × ' + DL.num(1 - s.pay, 2) +
+           ' = ' + DL.num(s.dw, 3));
+    DL.out(U + '-sl', 'slow losers = ' + DL.num(1 - s.w, 2) + ' × ' + DL.num(s.op, 2) +
+           ' = ' + DL.num(s.sl, 3));
+    if (s.post == null) {
+      DL.out(U + '-pw', 'P(winner | open) = none open');
+      DL.out(U + '-vk', 'Nothing is left open.');
+      DL.out(U + '-vt', 'Every trade has resolved by the time stop, so the stop never has to act.');
+    } else {
+      DL.out(U + '-pw', 'P(winner | open) = ' + pc(s.post));
+      var ratio = s.post / s.w;
+      DL.out(U + '-vk', s.post < 0.5 ? 'More likely a slow loser.' : 'More likely a delayed winner.');
+      DL.out(U + '-vt', 'A trade open at the time stop is a winner ' + pc(s.post) +
+             ' of the time, against a base rate of ' + pc(s.w) +
+             (ratio < 0.95 ? ': the wait itself is evidence against it.' :
+              ratio > 1.05 ? ': here the wait is evidence for it.' : ': the wait tells you little.'));
+    }
+    draw();
+  }
+  function setCase(w, pay, op) { WR.value = w; PAY.value = pay; OPEN.value = op; update(); }
+  DL.$(U + '-ex').addEventListener('click', function () { setCase(60, 85, 50); });
+  DL.$(U + '-chk').addEventListener('click', function () { setCase(55, 90, 60); });
+  update();
+  DL.bind([U + '-w', U + '-pay', U + '-open'], update);
+})();
+</script>

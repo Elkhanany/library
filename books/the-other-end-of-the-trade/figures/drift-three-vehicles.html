@@ -1,0 +1,148 @@
+<!--
+name: three vehicles for one drift
+source: new for this book: chapter 12F, "Three vehicles for one drift"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-m">expected rise</label>
+      <input type="range" id="{{uid}}-m" min="0" max="5" step="0.25" value="2">
+      <output id="{{uid}}-m-o" for="{{uid}}-m"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV</label>
+      <input type="range" id="{{uid}}-iv" min="8" max="40" step="1" value="16">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-d">days to expiry</label>
+      <input type="range" id="{{uid}}-d" min="7" max="90" step="1" value="30">
+      <output id="{{uid}}-d-o" for="{{uid}}-d"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-k">spread's upper strike</label>
+      <input type="range" id="{{uid}}-k" min="6050" max="6400" step="25" value="6150">
+      <output id="{{uid}}-k-o" for="{{uid}}-k"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-call"></output></div>
+    <div class="ctrl"><output id="{{uid}}-spr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-x"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">P&amp;L and return</th><th><span id="{{uid}}-h0"></span><span class="ev-meta" id="{{uid}}-hp0"></span></th><th><span id="{{uid}}-h1"></span><span class="ev-meta" id="{{uid}}-hp1"></span></th><th><span id="{{uid}}-h2"></span><span class="ev-meta" id="{{uid}}-hp2"></span></th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">shares</td><td data-label="low"><span id="{{uid}}-s0"></span><span class="ev-meta" id="{{uid}}-sr0"></span></td><td data-label="center"><span id="{{uid}}-s1"></span><span class="ev-meta" id="{{uid}}-sr1"></span></td><td data-label="high"><span id="{{uid}}-s2"></span><span class="ev-meta" id="{{uid}}-sr2"></span></td></tr>
+      <tr><td class="c-trial">long call</td><td data-label="low"><span id="{{uid}}-c0"></span><span class="ev-meta" id="{{uid}}-cr0"></span></td><td data-label="center"><span id="{{uid}}-c1"></span><span class="ev-meta" id="{{uid}}-cr1"></span></td><td data-label="high"><span id="{{uid}}-c2"></span><span class="ev-meta" id="{{uid}}-cr2"></span></td></tr>
+      <tr><td class="c-trial">call spread</td><td data-label="low"><span id="{{uid}}-p0"></span><span class="ev-meta" id="{{uid}}-pr0"></span></td><td data-label="center"><span id="{{uid}}-p1"></span><span class="ev-meta" id="{{uid}}-pr1"></span></td><td data-label="high"><span id="{{uid}}-p2"></span><span class="ev-meta" id="{{uid}}-pr2"></span></td></tr>
+    </tbody>
+  </table></div></div>
+  <figcaption><b>A spread for a drift, a call for a breakout.</b> The P&amp;L at expiry, in SPX
+  points, of shares bought at 6,000, the 6,000 call and the call debit spread that sells the
+  upper strike, both priced by Black-Scholes with interest ignored. The shaded band is the move
+  expected, one percentage point either side of the expected rise, and the table gives each
+  vehicle's P&amp;L at its low edge, center and high edge, with the return on what it risks: the
+  premium for an option, the whole price for shares. The figure opens on the worked example, a
+  1% to 3% drift at 16% IV and 30 days; move the expected rise past about 3.4% and the call
+  overtakes the spread.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var M = DL.$(U + '-m'), IV = DL.$(U + '-iv'), DD = DL.$(U + '-d'), K = DL.$(U + '-k');
+
+  /* the worked example: SPX at 6,000, the 6,000 call and a spread that sells a higher
+     strike, Black-Scholes with interest ignored (r = 0) */
+  var S0 = 6000, K1 = 6000, XMIN = 5880, XMAX = 6380;
+  function call(Kx, days, iv) { return DL.bsPrice(S0, Kx, days / 365, iv, 'call', 0); }
+  var FONT = function () { return '11px ' + DL.color('sans'); };
+
+  /* the key sits in a band above the plot, in one row or, on a narrow screen, two */
+  function keyRows(g, items, width) {
+    g.font = FONT();
+    var rows = [[]], x = 4;
+    items.forEach(function (it) {
+      var w = 19 + g.measureText(it.label).width;
+      if (x + w > width - 4 && rows[rows.length - 1].length) { rows.push([]); x = 4; }
+      rows[rows.length - 1].push({ it: it, x: x });
+      x += w + 14;
+    });
+    return rows;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var m = +M.value, iv = +IV.value / 100, days = +DD.value, K2 = +K.value;
+    var c1 = call(K1, days, iv), c2 = call(K2, days, iv), D = c1 - c2;
+    function shares(S) { return S - S0; }
+    function longCall(S) { return Math.max(S - K1, 0) - c1; }
+    function spread(S) { return Math.max(S - K1, 0) - Math.max(S - K2, 0) - D; }
+    var band = [m - 1, m, m + 1].map(function (x) { return S0 * (1 + x / 100); });
+
+    var fam = DL.color('familiar'), acc = DL.color('accent'), soft = DL.color('ink-soft'),
+        ins = DL.color('insight');
+    var items = [{ label: 'shares', color: soft }, { label: 'long call', color: fam },
+                 { label: 'call spread', color: acc },
+                 { label: 'expected move', color: DL.fade(ins, 0.35), box: true }];
+    var rows = keyRows(c.getContext('2d'), items, c.clientWidth || 640);
+
+    /* the options set the scale; the shares' line may leave it at the top right */
+    var ymin = Math.min(-c1, shares(XMIN)) - 20, ymax = Math.max(longCall(XMAX), K2 - K1 - D, 60) + 20;
+    var p = new NMT.Plot(c, { xmin: XMIN, xmax: XMAX, ymin: ymin, ymax: ymax,
+                              pad: { l: 42, r: 14, t: 12 + 15 * rows.length, b: 30 } });
+    DL.axes(p, { xs: [5900, 6000, 6100, 6200, 6300], ny: 5, yAt: XMIN,
+                 x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return DL.signed(v, 0); } });
+    DL.band(p, [band[0], band[2]], [ymax, ymax], ymin, DL.fade(ins, 0.14));
+    DL.vline(p, band[1], { color: DL.fade(ins, 0.7), dash: [3, 3] });
+    DL.hline(p, 0, { color: DL.color('ink-faint') });
+
+    p.fn(shares, { color: soft, width: 1.6 });
+    p.fn(longCall, { color: fam, width: 2 });
+    p.fn(spread, { color: acc, width: 2.4 });
+
+    var g = p.g;
+    g.save();
+    g.font = FONT();
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    rows.forEach(function (row, r) {
+      var y = 9 + 15 * r;
+      row.forEach(function (e) {
+        g.strokeStyle = e.it.color;
+        g.fillStyle = e.it.color;
+        g.lineWidth = 2;
+        if (e.it.box) g.fillRect(e.x, y - 4, 14, 8);
+        else {
+          g.beginPath();
+          g.moveTo(e.x, y);
+          g.lineTo(e.x + 14, y);
+          g.stroke();
+        }
+        g.fillStyle = soft;
+        g.fillText(e.it.label, e.x + 19, y);
+      });
+    });
+    g.restore();
+
+    DL.out(U + '-m-o', DL.num(m, 2) + '%');
+    DL.out(U + '-iv-o', DL.num(iv * 100, 0) + '%');
+    DL.out(U + '-d-o', String(days));
+    DL.out(U + '-k-o', DL.num(K2, 0));
+    DL.out(U + '-call', 'long call: ' + DL.num(c1, 0) + ', breakeven ' + DL.num(K1 + c1, 0));
+    DL.out(U + '-spr', 'spread: ' + DL.num(D, 0) + ', breakeven ' + DL.num(K1 + D, 0));
+    DL.out(U + '-x', 'call beats spread above ' + DL.num(K2 + c2, 0));
+    [0, 1, 2].forEach(function (i) {
+      var S = band[i], x = m - 1 + i;
+      DL.out(U + '-h' + i, 'at ' + DL.spct(x / 100, 2).replace('.00', ''));
+      DL.out(U + '-hp' + i, DL.num(S, 0));
+      [['s', shares(S), S0], ['c', longCall(S), c1], ['p', spread(S), D]].forEach(function (v) {
+        DL.out(U + '-' + v[0] + i, DL.signed(v[1], 0));
+        DL.out(U + '-' + v[0] + 'r' + i, DL.spct(v[1] / v[2], 0));
+      });
+    });
+  });
+  DL.bind([U + '-m', U + '-iv', U + '-d', U + '-k'], draw);
+})();
+</script>

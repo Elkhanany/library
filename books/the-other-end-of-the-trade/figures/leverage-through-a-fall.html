@@ -1,0 +1,143 @@
+<!--
+name: leverage through a fall
+source: new for this book: chapter 1E, "One SPX price path drawn"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="270"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-fall">the index falls</label>
+      <input type="range" id="{{uid}}-fall" min="10" max="80" step="1" value="55">
+      <output id="{{uid}}-fall-o" for="{{uid}}-fall"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new path</button></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Leverage</th><th>Maximum drawdown</th><th>Gain to recover</th><th>Leverage at the trough</th><th>Capital gone at a fall of</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">1×</td><td data-label="Maximum drawdown" id="{{uid}}-d0"></td><td data-label="Gain to recover" id="{{uid}}-g0"></td><td data-label="Leverage at the trough" id="{{uid}}-k0"></td><td data-label="Capital gone at a fall of">100%</td></tr>
+      <tr><td class="c-trial">1.4×</td><td data-label="Maximum drawdown" id="{{uid}}-d1"></td><td data-label="Gain to recover" id="{{uid}}-g1"></td><td data-label="Leverage at the trough" id="{{uid}}-k1"></td><td data-label="Capital gone at a fall of">71%</td></tr>
+      <tr><td class="c-trial">2×</td><td data-label="Maximum drawdown" id="{{uid}}-d2"></td><td data-label="Gain to recover" id="{{uid}}-g2"></td><td data-label="Leverage at the trough" id="{{uid}}-k2"></td><td data-label="Capital gone at a fall of">50%</td></tr>
+      <tr><td class="c-trial">4×</td><td data-label="Maximum drawdown" id="{{uid}}-d3"></td><td data-label="Gain to recover" id="{{uid}}-g3"></td><td data-label="Leverage at the trough" id="{{uid}}-k3"></td><td data-label="Capital gone at a fall of">25%</td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>Leverage multiplies the fall, and the fall multiplies the leverage.</b> Four
+  accounts each start with $1M of capital and hold one made-up index path at 1×, 1.4×, 2× and 4×
+  leverage, with the shares held fixed and financing left aside. The slider sets how far the
+  index falls from its peak, and a new path changes the wiggles but nothing in the table. At the
+  chapter's 55% fall, the 1.4× account loses 77%, needs a 335% gain to recover and holds 2.7×
+  leverage at the trough. The 2× and 4× accounts are wiped out on the way down, at falls of 50%
+  and 25%, and never see the recovery.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var FALL = DL.$(U + '-fall');
+  var KS = [1, 1.4, 2, 4], ROLE = ['ink-soft', 'accent', 'familiar', 'plain'];
+  var NAME = ['1×', '1.4×', '2×', '4×'];
+  /* weekly points over five years: the peak at week 0, the trough at week 78 */
+  var WEEKS = 260, TROUGH = 78, SIG = 0.025;
+  var seed = 7, shape = build(seed);
+
+  /* The made-up path, written as the share s of the whole fall reached in each week: 0 at the
+     peak and again at the end, 1 at the trough. A smooth fall and recovery carry seeded
+     wiggles pinned to zero at those three weeks, folded back inside [0, 1), so the peak and
+     the trough are the path's only extremes whatever the seed. The index is then 1 − F·s. */
+  function build(sd) {
+    var r = DL.rng(sd), s = [], t;
+    function bridge(n) {
+      var w = [0], i;
+      for (i = 1; i <= n; i++) w.push(w[i - 1] + DL.gauss(r));
+      return w.map(function (v, j) { return v - j / n * w[n]; });
+    }
+    var b1 = bridge(TROUGH), b2 = bridge(WEEKS - TROUGH);
+    for (t = 0; t <= WEEKS; t++) {
+      var x = t <= TROUGH
+        ? Math.pow(t / TROUGH, 1.3) + SIG * b1[t]
+        : 1 - Math.pow((t - TROUGH) / (WEEKS - TROUGH), 0.7) + SIG * b2[t - TROUGH];
+      while (x < 0 || x > 1) x = x < 0 ? -x : 2 - x;
+      s.push(t === TROUGH ? 1 : Math.min(x, 0.999));
+    }
+    s[0] = 0; s[WEEKS] = 0;
+    return s;
+  }
+
+  /* One account per dollar of capital at the peak: k dollars of index on a loan of k − 1,
+     worth k(1 − F·s) − (k − 1) = 1 − k·F·s, until the capital is gone and the account with it.
+     Its drawdown from the peak is k·F·s, so the worst is k·F at the trough (eq:dd); the gain
+     that repairs D is D/(1 − D) (eq:recovery); the leverage at the trough is the holding over
+     what is left of the capital, k(1 − F)/(1 − k·F). */
+  function account(k, F) {
+    var pts = [], gone = null, t;
+    for (t = 0; t <= WEEKS && gone == null; t++) {
+      var x = 1 - k * F * shape[t];
+      if (x <= 0) {
+        var a = 1 - k * F * shape[t - 1];
+        gone = (t - 1 + a / (a - x)) / 52;
+        pts.push([gone, 0]);
+      } else pts.push([t / 52, x]);
+    }
+    var D = Math.min(1, k * F);
+    return { pts: pts, gone: gone, D: D, G: D < 1 ? D / (1 - D) : null,
+             lev: D < 1 ? k * (1 - F) / (1 - k * F) : null };
+  }
+
+  function listing(names) {
+    if (names.length === 1) return 'the ' + names[0] + ' account';
+    return 'the ' + names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' accounts';
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var F = +FALL.value / 100, i;
+    var acc = KS.map(function (k) { return account(k, F); });
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 5, ymin: 0, ymax: 1.12,
+                              pad: { l: 48, r: 16, t: 26, b: 28 } });
+    DL.axes(p, { xs: [0, 1, 2, 3, 4, 5], ys: [0, 0.25, 0.5, 0.75, 1],
+                 x: function (v) { return v === 0 ? 'peak' : v + ' yr'; },
+                 y: function (v) { return v === 0 ? '$0' : '$' + DL.num(v, v === 1 ? 0 : 2).replace(/0$/, '') + 'M'; } });
+
+    /* the trough, where every account that is left is at its worst */
+    var xt = TROUGH / 52;
+    DL.vline(p, xt, { color: DL.color('ink-faint'), dash: [3, 4] });
+    p.text(xt, 1.12, 'trough: index ' + DL.MINUS + Math.round(F * 100) + '%',
+           { dx: 5, dy: 14, font: '11px ' + DL.color('sans'), color: DL.color('ink-soft') });
+
+    /* the accounts, the 1.4× of the worked example on top */
+    [3, 2, 0, 1].forEach(function (j) {
+      p.path(acc[j].pts, { color: DL.color(ROLE[j]), width: j === 1 ? 2.4 : 1.7 });
+      if (acc[j].gone != null) p.dot(acc[j].gone, 0, { r: 4, color: DL.color(ROLE[j]), ring: true });
+    });
+    DL.legend(p, KS.map(function (k, j) {
+      return { label: NAME[j] + (acc[j].gone != null ? ' gone' : ''), color: DL.color(ROLE[j]) };
+    }), { dx: -54, dy: -26 });
+
+    DL.out(U + '-fall-o', Math.round(F * 100) + '%');
+    for (i = 0; i < KS.length; i++) {
+      var a = acc[i];
+      DL.out(U + '-d' + i, DL.pct(a.D, 0));
+      DL.out(U + '-g' + i, a.G == null ? 'without limit' : DL.pct(a.G, 0));
+      DL.out(U + '-k' + i, a.lev == null ? 'no capital left' : DL.num(a.lev, 1) + '×');
+    }
+    var gone = [], alive = [];
+    for (i = 0; i < KS.length; i++) (acc[i].gone != null ? gone : alive).push(i);
+    var focus = alive.indexOf(1) >= 0 ? 1 : 0, f = acc[focus];
+    DL.out(U + '-vk', 'The index falls ' + Math.round(F * 100) + '%.');
+    DL.out(U + '-vt', (focus === 1
+             ? 'The 1.4× account loses ' + DL.pct(f.D, 0) + ', needs a ' + DL.pct(f.G, 0) +
+               ' gain to recover and ends the fall at ' + DL.num(f.lev, 1) +
+               '× leverage without a trade. '
+             : 'The unlevered account loses ' + DL.pct(f.D, 0) + ' and needs a ' +
+               DL.pct(f.G, 0) + ' gain to recover. ') +
+           (gone.length ? 'Wiped out on the way down: ' +
+             listing(gone.map(function (j) { return NAME[j]; })) + '.'
+                        : 'No account is wiped out.'));
+  });
+  DL.bind([U + '-fall'], draw);
+  DL.$(U + '-new').addEventListener('click', function () {
+    seed += 1;
+    shape = build(seed);
+    draw();
+  });
+})();
+</script>

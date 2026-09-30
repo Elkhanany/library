@@ -1,0 +1,155 @@
+<!--
+name: overlay covariance
+source: new for this book: chapter 10G, "An overlay as a covariance"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-k" data-h="92"></canvas>
+  <canvas id="{{uid}}-c" data-h="190"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-gap">return gap</label>
+      <input type="range" id="{{uid}}-gap" min="0" max="1.2" step="0.05" value="0.6">
+      <output id="{{uid}}-gap-o" for="{{uid}}-gap"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cut">cut</label>
+      <input type="range" id="{{uid}}-cut" min="0" max="100" step="5" value="25">
+      <output id="{{uid}}-cut-o" for="{{uid}}-cut"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-cost">cost per $ traded</label>
+      <input type="range" id="{{uid}}-cost" min="0" max="20" step="1" value="0">
+      <output id="{{uid}}-cost-o" for="{{uid}}-cost"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="Timing of the cuts" id="{{uid}}-time">
+      <label>cuts fall on</label>
+      <button type="button" data-v="match" class="on" aria-pressed="true">poor weeks</button>
+      <button type="button" data-v="shuffle" aria-pressed="false">shuffled</button>
+    </div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-costs"></output></div>
+    <div class="ctrl"><output id="{{uid}}-be"></output></div>
+    <div class="ctrl"><output id="{{uid}}-net"></output></div>
+  </div>
+  <figcaption><b>An overlay earns the covariance, less its costs.</b> The bars are a made-up year
+  of expected weekly returns R, alternating between good and poor weeks a return gap apart, as the
+  FOMC cycle's even and odd weeks do, and averaging 0.3% a week. The line above is the size the
+  overlay holds, k, and the filled part of each bar is what it keeps, k × R. Costs charge every
+  change of size for each dollar traded. Press shuffled, and the cuts land on good and poor weeks
+  alike: the static part stays, the covariance falls toward zero, and only the costs
+  remain.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var GAP = DL.$(U + '-gap'), CUT = DL.$(U + '-cut'), COST = DL.$(U + '-cost');
+  var W = 52, MEAN = 0.3, seed = 7, shuffled = null;
+  var time = DL.seg(U + '-time', function (v) {
+    /* each press of "shuffled weeks" draws a new set of 26 weeks to cut */
+    if (v === 'shuffle') { seed += 1; shuffled = pick(seed); }
+    update();
+  });
+
+  /* 26 of the 52 weeks, chosen at random (Fisher-Yates on a seeded stream) */
+  function pick(s) {
+    var r = DL.rng(s), idx = [], i;
+    for (i = 0; i < W; i++) idx.push(i);
+    for (i = W - 1; i > 0; i--) {
+      var j = Math.floor(r() * (i + 1)), t = idx[i];
+      idx[i] = idx[j];
+      idx[j] = t;
+    }
+    var out = [];
+    for (i = 0; i < W; i++) out.push(false);
+    idx.slice(0, W / 2).forEach(function (w) { out[w] = true; });
+    return out;
+  }
+
+  /* eq:overlay over the 52 weeks, with population moments:
+       E[kR] = E[k] E[R] + Cov(k, R)
+     Costs: each change of size trades |dk| of the position at the cost per dollar,
+     counted round the year, so week 52 runs into week 1 of the next. */
+  var st;
+  function compute() {
+    var gap = +GAP.value, cut = +CUT.value / 100, cost = +COST.value / 1e4;
+    var R = [], k = [], cutAt = time() === 'shuffle' && shuffled ? shuffled : null, t;
+    for (t = 0; t < W; t++) {
+      var good = t % 2 === 0;
+      R.push(good ? MEAN + gap / 2 : MEAN - gap / 2);
+      var isCut = cutAt ? cutAt[t] : !good;
+      k.push(isCut ? 1 - cut : 1);
+    }
+    var Ek = 0, ER = 0, EkR = 0, traded = 0, switches = 0;
+    for (t = 0; t < W; t++) {
+      Ek += k[t] / W;
+      ER += R[t] / W;
+      EkR += k[t] * R[t] / W;
+      var dk = Math.abs(k[t] - k[(t + W - 1) % W]);
+      if (dk > 1e-12) { switches += 1; traded += dk; }
+    }
+    var cov = EkR - Ek * ER;                 /* % a week */
+    var costYear = traded * cost * 100;      /* % a year */
+    st = { gap: gap, cut: cut, cost: cost, R: R, k: k, Ek: Ek, ER: ER, EkR: EkR, cov: cov,
+           covYear: cov * W, costYear: costYear, switches: switches, traded: traded,
+           net: cov * W - costYear };
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  var PAD = { l: 46, r: 12 };
+
+  compute();
+  var drawK = DL.figure(U + '-k', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0.5, xmax: W + 0.5, ymin: 0, ymax: 1.15,
+                              pad: { l: PAD.l, r: PAD.r, t: 24, b: 8 } });
+    DL.axes(p, { xs: [], ys: [0, 0.5, 1], x: false, grid: true,
+                 y: function (v) { return DL.num(v, v === 0.5 ? 1 : 0); } });
+    var acc = DL.color('accent'), pts = [];
+    for (var t = 0; t < W; t++) { pts.push([t + 0.5, st.k[t]]); pts.push([t + 1.5, st.k[t]]); }
+    DL.hline(p, st.Ek, { color: DL.color('ink-soft'), dash: [4, 3], width: 1.1 });
+    p.path(pts, { color: acc, width: 2 });
+    p.text(0.5, 1.15, 'size held, k', { dy: -8, font: font(), color: DL.color('ink-soft') });
+    p.text(W + 0.5, 1.15, 'dashed: E[k] = ' + DL.num(st.Ek, 3),
+           { align: 'right', dy: -8, font: font(), color: DL.color('ink-soft') });
+  });
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0.5, xmax: W + 0.5, ymin: -0.4, ymax: 1.0,
+                              pad: { l: PAD.l, r: PAD.r, t: 26, b: 24 } });
+    DL.axes(p, { xs: [1, 13, 26, 39, 52], ys: [-0.3, 0, 0.3, 0.6, 0.9],
+                 x: function (v) { return v === 1 ? 'week 1' : String(v); },
+                 y: function (v) { return DL.num(v, 1) + '%'; } });
+    var xs = [], full = [], held = [], acc = DL.color('accent');
+    for (var t = 0; t < W; t++) { xs.push(t + 1); full.push(st.R[t]); held.push(st.k[t] * st.R[t]); }
+    DL.bars(p, xs, full, { w: 0.72, color: DL.fade(acc, 0.22) });
+    DL.bars(p, xs, held, { w: 0.72, color: DL.fade(acc, 0.85) });
+    DL.hline(p, st.ER, { color: DL.color('ink-soft'), dash: [4, 3], width: 1.1 });
+    DL.legend(p, [{ label: 'R', color: DL.fade(acc, 0.3), box: true },
+                  { label: 'k × R, kept', color: DL.fade(acc, 0.85), box: true },
+                  { label: 'E[R] = ' + DL.num(st.ER, 1) + '%', color: DL.color('ink-soft'), dash: [4, 3] }],
+              { dx: -10, dy: -24 });
+  });
+
+  /* rounded to a millionth first, so the costs and the net round the same way */
+  function r6(x) { return Math.round(x * 1e6) / 1e6; }
+  function pc(x, d) { return DL.num(r6(x), d) + '%'; }
+  function update() {
+    compute();
+    DL.out(U + '-gap-o', pc(st.gap, 2));
+    DL.out(U + '-cut-o', DL.num(st.cut * 100, 0) + '%');
+    DL.out(U + '-cost-o', DL.num(st.cost * 1e4, 0) + ' bps');
+    DL.out(U + '-vk', 'The overlay earns ' + pc(st.EkR, 4) + ' a week.');
+    DL.out(U + '-vt', 'A static position at its average size, ' + DL.num(st.Ek, 3) +
+           ', earns ' + pc(st.Ek * st.ER, 4) + '. Cov(k, R) = ' + DL.signed(r6(st.cov), 4) +
+           '% a week, or ' + DL.signed(r6(st.covYear), 2) + '% a year before costs.');
+    DL.out(U + '-costs', 'costs = ' + pc(st.costYear, 2) + ' a year, ' + st.switches + ' switches');
+    var be = st.traded > 0 && r6(st.cov) > 0 ? st.covYear / 100 / st.traded * 1e4 : null;
+    DL.out(U + '-be', be == null ? 'break-even cost: none' : 'break-even cost = ' + DL.num(be, 1) + ' bps');
+    DL.out(U + '-net', 'net = ' + DL.signed(r6(st.net), 2) + '% a year');
+    drawK();
+    draw();
+  }
+  update();
+  DL.bind([U + '-gap', U + '-cut', U + '-cost'], update);
+})();
+</script>

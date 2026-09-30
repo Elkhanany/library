@@ -1,0 +1,110 @@
+<!--
+name: island risk premium
+source: new for this book: chapter 1G, "An island economy calculator"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-pay">bad-year payoff</label>
+      <input type="range" id="{{uid}}-pay" min="0" max="90" step="5" value="60">
+      <output id="{{uid}}-pay-o" for="{{uid}}-pay"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-qb">bad-year dollar costs</label>
+      <input type="range" id="{{uid}}-qb" min="45" max="75" step="0.3333333333333333" value="63.333333333333336">
+      <output id="{{uid}}-qb-o" for="{{uid}}-qb"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-p"></output></div>
+    <div class="ctrl"><output id="{{uid}}-r"></output></div>
+    <div class="ctrl"><output id="{{uid}}-prem"></output></div>
+    <div class="ctrl"><output id="{{uid}}-qg"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A premium for paying in the wrong years.</b> On the chapter's island, good and
+  bad years are equally likely, and a bond paying $100 in both costs $90, so a good-year dollar and
+  a bad-year dollar together cost 90 cents. The stock costs what the island pays for its dollars in
+  each kind of year, and the curve is its expected return as its payoffs spread around the same
+  $90. The shaded gap above the bond's certain 11.1% is the risk premium. Drag the bad-year payoff
+  down and the premium widens, then price a bad-year dollar at 45 cents, as cheap as a good-year
+  one, and the premium is gone.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var PAY = DL.$(U + '-pay'), QB = DL.$(U + '-qb');
+  var BOND = 100, BOND_PRICE = 90, MEAN = 90;
+
+  /* The island's two prices, q_g for a dollar paid only in a good year and q_b for one paid
+     only in a bad year. The bond pays $100 in both and costs $90, so q_g + q_b = 0.90 whatever
+     the split. An asset costs its payoff in each kind of year times that year's price. */
+  function state() {
+    var qb = +QB.value / 100, qg = BOND_PRICE / BOND - qb, b = +PAY.value, g = 2 * MEAN - b;
+    return { qb: qb, qg: qg, b: b, g: g };
+  }
+  function price(qg, qb, b) { return qg * (2 * MEAN - b) + qb * b; }
+  function cents(q) { return DL.num(q * 100, 1) + '¢'; }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var st = state(), rb = BOND / BOND_PRICE - 1;
+    var P = price(st.qg, st.qb, st.b), rs = MEAN / P - 1;
+    /* returns up to 100% on a fixed scale; above that the scale grows to keep the stock in view */
+    var top = Math.max(1, Math.ceil(rs * 1.1 * 2) / 2);
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 90, ymin: 0, ymax: top,
+                              pad: { l: 42, r: 26, t: 26, b: 44 } });
+    DL.axes(p, { xs: [0, 30, 60, 90], ys: top === 1 ? [0, 0.25, 0.5, 0.75, 1] : null, ny: 4,
+                 x: function (v) { return '$' + v + ' / $' + (2 * MEAN - v); },
+                 y: function (v) { return Math.round(v * 100) + '%'; } });
+    var xs = [], stock = [], bond = [], i;
+    for (i = 0; i <= 180; i++) {
+      var b = i / 2;
+      xs.push(b);
+      stock.push(MEAN / price(st.qg, st.qb, b) - 1);
+      bond.push(rb);
+    }
+    var acc = DL.color('accent'), ins = DL.color('insight'), soft = DL.color('ink-soft');
+    DL.band(p, xs, stock, bond, DL.fade(ins, 0.16));
+    DL.line(p, xs, bond, { color: soft, width: 1.4, dash: [5, 4] });
+    DL.line(p, xs, stock, { color: acc, width: 2.4 });
+
+    /* the chosen stock: its expected return, the bond's, and the premium between them */
+    DL.vline(p, st.b, { color: DL.color('ink-faint'), dash: [2, 3] });
+    p.seg(st.b, rb, st.b, rs, { color: ins, width: 2.5 });
+    p.dot(st.b, rb, { r: 3.5, color: soft, ring: true });
+    p.dot(st.b, rs, { r: 4.5, color: acc, ring: true });
+    if (p.Y(rb) - p.Y(rs) >= 18) {
+      /* beside the segment on the side where the band is wider: the curve falls to the right */
+      var left = st.b >= 25;
+      p.text(st.b, (rb + rs) / 2, 'premium ' + DL.num((rs - rb) * 100, 1) + ' pts',
+             { dx: left ? -7 : 7, dy: 4, align: left ? 'right' : 'left', font: font(), color: ins });
+    }
+    DL.legend(p, [{ label: 'stock, expected', color: acc },
+                  { label: 'bond, certain', color: soft, dash: [5, 4] }], { dx: -48, dy: -26 });
+    var g = p.g;
+    g.save();
+    g.font = font();
+    g.fillStyle = DL.color('ink-faint');
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillText('stock pays in a bad year / a good year', p.X(45), p.h - 3);
+    g.restore();
+
+    DL.out(U + '-pay-o', '$' + st.b);
+    DL.out(U + '-qb-o', cents(st.qb));
+    DL.out(U + '-p', 'stock price = ' + DL.usd(P, 2));
+    DL.out(U + '-r', 'expected return = ' + DL.pct(rs, 1));
+    DL.out(U + '-prem', 'risk premium = ' + DL.num((rs - rb) * 100, 1) + ' pts');
+    DL.out(U + '-qg', 'good-year dollar costs ' + cents(st.qg));
+    DL.out(U + '-vt', (st.g === st.b ? 'The stock pays $' + MEAN + ' in every year, like a bond. '
+             : 'The stock pays $' + st.g + ' in a good year and $' + st.b + ' in a bad one, $' +
+               MEAN + ' on average. ') + 'At ' + DL.usd(P, 2) + ' it returns ' +
+           DL.pct(st.g / P - 1, 1) + ' in a good year and ' + DL.pct(st.b / P - 1, 1) +
+           ' in a bad one, ' + DL.pct(rs, 1) + ' on average, against the bond\'s certain ' +
+           DL.pct(rb, 1) + '.');
+  });
+  DL.bind([U + '-pay', U + '-qb'], draw);
+})();
+</script>

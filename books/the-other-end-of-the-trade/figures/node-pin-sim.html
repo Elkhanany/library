@@ -1,0 +1,181 @@
+<!--
+name: pinning simulator
+source: new for this book: one heavily held strike on expiration day
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="250"></canvas>
+  <canvas id="{{uid}}-h" data-h="150"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-n">dealers at 6,000</label>
+      <input type="range" id="{{uid}}-n" min="-30000" max="30000" step="1000" value="20000">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-lam">impact</label>
+      <input type="range" id="{{uid}}-lam" min="0" max="3" step="0.1" value="1">
+      <output id="{{uid}}-lam-o" for="{{uid}}-lam"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-s0">spot at the open</label>
+      <input type="range" id="{{uid}}-s0" min="5970" max="6030" step="1" value="6012">
+      <output id="{{uid}}-s0-o" for="{{uid}}-s0"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-iv">IV</label>
+      <input type="range" id="{{uid}}-iv" min="10" max="30" step="1" value="15">
+      <output id="{{uid}}-iv-o" for="{{uid}}-iv"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new paths</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-pin"></output></div>
+    <div class="ctrl"><output id="{{uid}}-med"></output></div>
+    <div class="ctrl"><output id="{{uid}}-w"></output></div>
+  </div>
+  <figcaption><b>One heavily held strike on expiration day.</b> Dealers hold a net position in
+  same-day options struck at 6,000, positive when they are long them and so long gamma, and
+  hedge it every minute; each hedge trade moves the price by the impact, in index points per
+  billion dollars traded. Above, ten simulated sessions (solid) beside their twins with the
+  same news and no dealers (faint); below, where 400 sessions close. The model is made up and
+  the news is random: set the dealers long and the closes crowd toward 6,000, set them short
+  and the strike repels them, and set the impact to zero and the dealers change
+  nothing.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var NN = DL.$(U + '-n'), LAM = DL.$(U + '-lam'), S0 = DL.$(U + '-s0'), IV = DL.$(U + '-iv');
+  var K = 6000, STEPS = 390, PATHS = 400, SHOWN = 10, MIN = 1 / (365 * 24 * 60);
+  var seed = 3, st;
+
+  /* One session, minute by minute. The news moves spot by sigma * S * sqrt(dt) * e. The
+     dealers' hedge is minus their delta, H = -N * 100 * delta, in index units; a change in
+     it moves the price by lambda points per $1 billion traded. Solving for the move that
+     includes the dealers' own reaction gives
+         dS = (news - c) / (1 + w),
+     w = lambda * N * 100 * gamma * S / 1e9    (the feedback from gamma: damping when > 0)
+     c = lambda * N * 100 * charm * dt * S / 1e9 (the flow from delta decaying with time)
+     The time left is floored at half a minute, and 1 + w at 0.1, where a short position
+     would otherwise push the feedback past the point of no return. */
+  function session(r, s0, sigma, n, lam, keep) {
+    var S = s0, T0 = S, path = keep ? [S] : null, twin = keep ? [S] : null, maxw = 0, clamped = false;
+    for (var t = 0; t < STEPS; t++) {
+      var e = DL.gauss(r), T = Math.max(STEPS - t, 0.5) * MIN;
+      var news = sigma * S * Math.sqrt(MIN) * e;
+      var dS = news;
+      if (lam > 0 && n !== 0) {
+        var g = DL.bsGamma(S, K, T, sigma), ch = DL.bsCharm(S, K, T, sigma, 'call');
+        var w = lam * n * 100 * g * S / 1e9, c = lam * n * 100 * ch * MIN * S / 1e9;
+        if (Math.abs(w) > Math.abs(maxw)) maxw = w;
+        if (1 + w < 0.1) { w = -0.9; clamped = true; }
+        dS = (news - c) / (1 + w);
+      }
+      S += dS;
+      T0 += sigma * T0 * Math.sqrt(MIN) * e;
+      if (keep) { path.push(S); twin.push(T0); }
+    }
+    return { close: S, twinClose: T0, path: path, twin: twin, maxw: maxw, clamped: clamped };
+  }
+
+  function compute() {
+    var n = +NN.value, lam = +LAM.value, s0 = +S0.value, sigma = +IV.value / 100;
+    var r = DL.rng(seed), shown = [], closes = [], twins = [], maxw = 0, clamped = false;
+    for (var i = 0; i < PATHS; i++) {
+      var s = session(r, s0, sigma, n, lam, i < SHOWN);
+      if (i < SHOWN) shown.push(s);
+      closes.push(s.close);
+      twins.push(s.twinClose);
+      if (Math.abs(s.maxw) > Math.abs(maxw)) maxw = s.maxw;
+      clamped = clamped || s.clamped;
+    }
+    st = { n: n, lam: lam, s0: s0, sigma: sigma, shown: shown, closes: closes, twins: twins,
+           maxw: maxw, clamped: clamped };
+  }
+
+  function near(xs) {
+    return xs.filter(function (x) { return Math.abs(x - K) <= 5; }).length / xs.length;
+  }
+  function median(xs) {
+    var d = xs.map(function (x) { return Math.abs(x - K); }).sort(function (a, b) { return a - b; });
+    var m = d.length >> 1;
+    return d.length % 2 ? d[m] : (d[m - 1] + d[m]) / 2;
+  }
+  function font() { return '11px ' + DL.color('sans'); }
+  var CLOCK = ['9:30', '11:00', '12:30', '2:00', '3:30'];
+
+  compute();
+
+  var drawPaths = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: 0, xmax: STEPS, ymin: K - 50, ymax: K + 50,
+                              pad: { l: 46, r: 22, t: 16, b: 24 } });
+    DL.axes(p, { xs: [0, 90, 180, 270, 360], ys: [5950, 5975, 6000, 6025, 6050],
+                 x: function (v) { return CLOCK[v / 90]; },
+                 y: function (v) { return DL.num(v, 0); } });
+    var xs = [];
+    for (var t = 0; t <= STEPS; t++) xs.push(t);
+    var faint = DL.fade(DL.color('ink-faint'), 0.55), acc = DL.color('accent');
+    st.shown.forEach(function (s) { DL.line(p, xs, s.twin, { color: faint, width: 1 }); });
+    st.shown.forEach(function (s) { DL.line(p, xs, s.path, { color: DL.fade(acc, 0.85), width: 1.4 }); });
+    DL.hline(p, K, { color: DL.color('familiar'), dash: [5, 3], width: 1.2 });
+    /* the label sits on a paper patch, so the paths passing under it leave it readable */
+    var g = p.g, lab = 'strike 6,000';
+    g.save();
+    g.font = font();
+    var tw = g.measureText(lab).width, lx = p.X(8), ly = p.Y(K) - 17;
+    g.fillStyle = DL.fade(DL.color('paper'), 0.9);
+    g.fillRect(lx - 3, ly, tw + 6, 15);
+    g.restore();
+    p.text(8, K, lab, { dy: -4, font: font(), color: DL.color('familiar') });
+  });
+
+  var drawHist = DL.figure(U + '-h', function (c) {
+    var lo = K - 50, hi = K + 50, bw = 2, nb = (hi - lo) / bw;
+    function count(xs) {
+      var h = [];
+      for (var b = 0; b < nb; b++) h.push(0);
+      xs.forEach(function (x) {
+        var b2 = Math.floor((x - lo) / bw);
+        if (b2 >= 0 && b2 < nb) h[b2]++;
+      });
+      return h.map(function (v) { return v / xs.length; });
+    }
+    var hd = count(st.closes), ht = count(st.twins);
+    var top = Math.max(Math.max.apply(null, hd), Math.max.apply(null, ht), 0.02) * 1.12;
+    var p = new NMT.Plot(c, { xmin: lo, xmax: hi, ymin: 0, ymax: top,
+                              pad: { l: 46, r: 22, t: 16, b: 24 } });
+    var ty = DL.ticks(0, top, 3), dp = ty.step >= 0.01 ? 0 : 1;
+    DL.axes(p, { xs: [5950, 5975, 6000, 6025, 6050], ys: ty.vals, x: function (v) { return DL.num(v, 0); },
+                 y: function (v) { return DL.pct(v, dp); } });
+    var mids = hd.map(function (_, b) { return lo + (b + 0.5) * bw; });
+    DL.bars(p, mids, hd, { w: bw * 0.86, color: DL.fade(DL.color('accent'), 0.7) });
+    var sx = [], sy = [];
+    ht.forEach(function (v, b) { sx.push(lo + b * bw, lo + (b + 1) * bw); sy.push(v, v); });
+    DL.line(p, sx, sy, { color: DL.color('ink-faint'), width: 1.3 });
+    DL.vline(p, K, { color: DL.color('familiar'), dash: [5, 3], width: 1.2 });
+    p.text(lo, top, 'where 400 sessions close', { dx: 4, dy: 12, font: font(), color: DL.color('ink-soft') });
+  });
+
+  function update() {
+    compute();
+    var n = st.n;
+    DL.out(U + '-n-o', (n > 0 ? '+' : n < 0 ? DL.MINUS : '') + DL.num(Math.abs(n), 0));
+    DL.out(U + '-lam-o', DL.num(st.lam, 1) + ' pt per $1B');
+    DL.out(U + '-s0-o', DL.num(st.s0, 0));
+    DL.out(U + '-iv-o', DL.num(st.sigma * 100, 0) + '%');
+    DL.out(U + '-pin', 'within 5 of 6,000: ' + DL.pct(near(st.closes), 0) +
+                       ' (none: ' + DL.pct(near(st.twins), 0) + ')');
+    DL.out(U + '-med', 'median miss: ' + DL.num(median(st.closes), 1) +
+                       ' (none: ' + DL.num(median(st.twins), 1) + ')');
+    DL.out(U + '-w', st.clamped ? 'feedback w: past −0.9 (capped)'
+                                : 'largest feedback w = ' + DL.signed(st.maxw, 2));
+    drawPaths();
+    drawHist();
+  }
+  update();
+  DL.bind([U + '-n', U + '-lam', U + '-s0', U + '-iv'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+</script>

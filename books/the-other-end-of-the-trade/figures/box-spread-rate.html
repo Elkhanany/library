@@ -1,0 +1,155 @@
+<!--
+name: box-spread rate
+source: new for this book: chapter 12E, "A box-spread rate calculator"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="270"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-r">rate before costs</label>
+      <input type="range" id="{{uid}}-r" min="0.5" max="8" step="0.01" value="2.45">
+      <output id="{{uid}}-r-o" for="{{uid}}-r"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-n">days to expiry</label>
+      <input type="range" id="{{uid}}-n" min="7" max="365" step="1" value="90">
+      <output id="{{uid}}-n-o" for="{{uid}}-n"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-f">round-trip cost</label>
+      <input type="range" id="{{uid}}-f" min="0" max="400" step="25" value="100">
+      <output id="{{uid}}-f-o" for="{{uid}}-f"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-cr"></output></div>
+    <div class="ctrl"><output id="{{uid}}-r1"></output></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-lo"></output></div>
+    <div class="ctrl"><output id="{{uid}}-hi"></output></div>
+  </div>
+  <figcaption><b>A loan that pays for its costs only with time.</b> Selling a box 100 SPX points
+  wide borrows its credit C today against the $10,000 owed in n days, at the rate
+  r = (W − C)/C × 365/n. Set the rate before costs and the term, and the credit follows; the
+  round-trip cost, which the chapter puts at $100 to $400 on this box, comes off the credit. The
+  curve is the rate after costs at every term for the chosen rate before costs (dashed), against
+  the example's 4.2% T-bill and a band of margin loans 100 to 400 bps above it, with the T-bill
+  standing in for the federal funds rate. The figure opens on the worked example: 2.45% for $9,940
+  over 90 days, below the T-bill, where 4.2% would bring in about $9,898.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var RR = DL.$(U + '-r'), NN = DL.$(U + '-n'), FR = DL.$(U + '-f');
+
+  /* the worked example's box: 6,000 and 6,100 on SPX, 100 points wide, $10,000 owed at
+     expiry; the example's T-bill yields 4.2%, and a broker lends on margin 100 to 400 bps
+     above the federal funds rate, for which the T-bill stands in */
+  var W = 10000, TBILL = 0.042, M_LO = TBILL + 0.01, M_HI = TBILL + 0.04, YMAX = 0.16;
+
+  /* the chapter's rate: a credit C now against W owed in n days, C (1 + r n / 365) = W,
+     read one way for the credit and the other for the rate */
+  function credit(r, n) { return W / (1 + r * n / 365); }
+  function rate(C, n) { return (W - C) / C * 365 / n; }
+  /* the round-trip cost comes off the credit */
+  function after(r0, n, cost) { return rate(credit(r0, n) - cost, n); }
+  function firstDay(r0, cost, m) {
+    for (var n = 1; n <= 365; n++) if (after(r0, n, cost) <= m) return n;
+    return null;
+  }
+  function pc(x) { return DL.num(x * 100, 2) + '%'; }
+  var FONT = function () { return '11px ' + DL.color('sans'); };
+
+  /* the key sits in a band above the plot, in one row or, on a narrow screen, two */
+  function keyRows(g, items, width) {
+    g.font = FONT();
+    var rows = [[]], x = 4;
+    items.forEach(function (it) {
+      var w = 19 + g.measureText(it.label).width;
+      if (x + w > width - 4 && rows[rows.length - 1].length) { rows.push([]); x = 4; }
+      rows[rows.length - 1].push({ it: it, x: x });
+      x += w + 14;
+    });
+    return rows;
+  }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var r0 = +RR.value / 100, n = +NN.value, cost = +FR.value;
+    /* the credit in whole dollars, rounded from the cent as a quote would be */
+    var C = Math.round(Math.round(credit(r0, n) * 100) / 100), r1 = after(r0, n, cost);
+
+    var acc = DL.color('accent'), soft = DL.color('ink-soft'), fam = DL.color('familiar'),
+        plain = DL.color('plain');
+    var items = [{ label: 'after costs', color: acc }, { label: 'before costs', color: soft, dash: [5, 4] },
+                 { label: 'T-bill', color: fam }, { label: 'margin loans', color: DL.fade(plain, 0.45), box: true }];
+    var rows = keyRows(c.getContext('2d'), items, c.clientWidth || 640);
+
+    var p = new NMT.Plot(c, { xmin: 0, xmax: 365, ymin: 0, ymax: YMAX,
+                              pad: { l: 40, r: 16, t: 12 + 15 * rows.length, b: 40 } });
+    DL.axes(p, { xs: [0, 90, 180, 270, 365], ys: [0, 0.04, 0.08, 0.12, 0.16],
+                 x: function (v) { return String(v); },
+                 y: function (v) { return DL.num(v * 100, 0) + '%'; } });
+
+    /* the margin loans as a band, the T-bill as a line */
+    DL.band(p, [0, 365], [M_HI, M_HI], M_LO, DL.fade(plain, 0.16));
+    DL.hline(p, M_LO, { color: DL.fade(plain, 0.5) });
+    DL.hline(p, M_HI, { color: DL.fade(plain, 0.5) });
+    DL.hline(p, TBILL, { color: fam, width: 1.4 });
+
+    /* the rate before costs, and after them for every term from a few days to a year */
+    DL.hline(p, r0, { color: soft, width: 1.4, dash: [5, 4] });
+    var xs = [], ys = [];
+    for (var d = 3; d <= 365; d += 1) { xs.push(d); ys.push(after(r0, d, cost)); }
+    DL.line(p, xs, ys, { color: acc, width: 2.2 });
+    if (r1 <= YMAX) p.dot(n, r1, { r: 4.5, color: acc, ring: true });
+    else p.dot(n, YMAX, { r: 3, color: acc });
+
+    var g = p.g;
+    g.save();
+    g.font = FONT();
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.fillStyle = soft;
+    g.fillText('days to expiry', p.X(182.5), p.h - 4);
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    rows.forEach(function (row, r) {
+      var y = 9 + 15 * r;
+      row.forEach(function (e) {
+        g.strokeStyle = e.it.color;
+        g.fillStyle = e.it.color;
+        g.lineWidth = 2;
+        if (e.it.box) g.fillRect(e.x, y - 4, 14, 8);
+        else {
+          g.setLineDash(e.it.dash || []);
+          g.beginPath();
+          g.moveTo(e.x, y);
+          g.lineTo(e.x + 14, y);
+          g.stroke();
+          g.setLineDash([]);
+        }
+        g.fillStyle = soft;
+        g.fillText(e.it.label, e.x + 19, y);
+      });
+    });
+    g.restore();
+
+    function beats(m) {
+      var head = 'beats ' + DL.num(m * 100, 1) + '% margin ';
+      var d0 = firstDay(r0, cost, m);
+      if (d0 === 1) return head + 'at any term';
+      if (d0 == null) return head + 'in no term to a year';
+      return head + 'from ' + d0 + ' days';
+    }
+    DL.out(U + '-r-o', pc(r0));
+    DL.out(U + '-n-o', String(n));
+    DL.out(U + '-f-o', DL.usd(cost, 0));
+    DL.out(U + '-cr', 'credit C = ' + DL.usd(C, 0) + ' (' + DL.usd(W - C, 0) + ' interest)');
+    DL.out(U + '-r1', 'rate after costs = ' + pc(r1));
+    DL.out(U + '-lo', beats(M_LO));
+    DL.out(U + '-hi', beats(M_HI));
+  });
+  DL.bind([U + '-r', U + '-n', U + '-f'], draw);
+})();
+</script>

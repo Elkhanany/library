@@ -1,0 +1,198 @@
+<!--
+name: classification error
+source: new for this book: chapter 8B, "Vendors that update maps intraday"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="290"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-e">misclassified, e</label>
+      <input type="range" id="{{uid}}-e" min="0" max="45" step="1" value="20">
+      <output id="{{uid}}-e-o" for="{{uid}}-e"></output>
+    </div>
+    <div class="ctrl"><button type="button" id="{{uid}}-new">new draw</button></div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-flip"></output></div>
+    <div class="ctrl"><output id="{{uid}}-node"></output></div>
+    <div class="ctrl"><output id="{{uid}}-err"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A map built on guessed sides.</b> A vendor that updates its map during the day
+  has to infer which side of each trade the customer took. Here a made-up day's 240 same-day
+  trades at nine strikes around 6,000 each carry a true side. The outlines are the dealers'
+  true net position at each strike, positive where they are long, and the filled bars the
+  position estimated when each trade's side is misclassified with probability e. Rings mark the
+  largest node in each. On average the errors shrink every strike toward zero by the factor
+  1&nbsp;−&nbsp;2e. Each draw scatters the strikes around that, and new draw misclassifies the same
+  trades afresh. In one study of CBOE option trades from the 1990s (Savickas and Wilson,
+  2003), the four standard rules signed 17% to 41% of classifiable trades wrongly, depending on
+  the rule, and the legs of complex index orders almost half the time: a range, not a
+  constant.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var EE = DL.$(U + '-e');
+  var KS = [5980, 5985, 5990, 5995, 6000, 6005, 6010, 6015, 6020];
+  var seed = 4, st;
+
+  /* The made-up day: 240 same-day trades from a fixed seed, each a strike (more of them near
+     6,000), a size in contracts (heavy-tailed, median about 20) and the side the customer
+     took. Within 10 points of 6,000 customers sell more often than they buy (62% of trades),
+     beyond it they buy more often (62%). */
+  var TRADES = (function () {
+    var W = [0.6, 0.8, 1.0, 1.3, 1.6, 1.3, 1.0, 0.8, 0.6], tw = 0, r = DL.rng(12), out = [];
+    W.forEach(function (w) { tw += w; });
+    for (var i = 0; i < 240; i++) {
+      var u = r() * tw, k = 0;
+      while (u > W[k]) { u -= W[k]; k++; }
+      var n = Math.max(1, Math.round(Math.exp(3.2 + DL.gauss(r))));
+      var pSell = Math.abs(KS[k] - 6000) <= 10 ? 0.62 : 0.38;
+      out.push({ k: k, n: n, sell: r() < pSell });
+    }
+    return out;
+  })();
+
+  /* the dealers' net position at each strike, in contracts, + where they are long: a trade
+     the customer sold leaves the dealer long. A trade is misclassified when its draw falls
+     below e, so a larger e keeps every trade it had and adds more */
+  function nets(e, draws) {
+    var net = KS.map(function () { return 0; }), mis = 0;
+    TRADES.forEach(function (t, i) {
+      var wrong = draws[i] < e;
+      if (wrong) mis++;
+      net[t.k] += (t.sell ? 1 : -1) * (wrong ? -1 : 1) * t.n;
+    });
+    return { net: net, mis: mis };
+  }
+  function largest(net) {
+    var b = 0;
+    net.forEach(function (v, i) { if (Math.abs(v) > Math.abs(net[b])) b = i; });
+    return b;
+  }
+  function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+
+  var draws = null, drawSeed = null, lo = 0, hi = 0;
+  function compute() {
+    if (drawSeed !== seed) {
+      /* this draw's numbers, and one scale for every e, so the slider moves the bars and
+         not the axis */
+      var r = DL.rng(seed);
+      draws = TRADES.map(function () { return r(); });
+      drawSeed = seed;
+      lo = 0; hi = 0;
+      for (var p = 0; p <= 45; p++) {
+        nets(p / 100, draws).net.forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+      }
+    }
+    var e = +EE.value / 100, truth = nets(0, draws).net, est = nets(e, draws);
+    st = { e: e, truth: truth, est: est.net, mis: est.mis, lo: lo, hi: hi,
+           bigT: largest(truth), bigE: largest(est.net) };
+  }
+
+  function strike(K) { return DL.num(K, 0); }
+  function contracts(x) { return (x > 0 ? '+' : '') + DL.num(x, 0); }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  compute();
+  var draw = DL.figure(U + '-c', function (c) {
+    var span = st.hi - st.lo, ymax = st.hi + span * 0.16, ymin = st.lo - span * 0.04;
+    var p = new NMT.Plot(c, { xmin: -0.6, xmax: 8.6, ymin: ymin, ymax: ymax,
+                              pad: { l: 52, r: 12, t: 40, b: 24 } });
+    var ty = DL.ticks(ymin, ymax, 5);
+    DL.axes(p, { xs: [], ys: ty.vals, x: false, yAt: -0.6,
+                 y: function (v) { return Math.abs(v) < ty.step * 1e-6 ? '0' : contracts(v); } });
+    var g = p.g, pos = DL.color('insight'), neg = DL.color('plain'), ink = DL.color('ink'),
+        soft = DL.color('ink-soft'), acc = DL.color('accent'), warn = DL.color('warn');
+    var idx = KS.map(function (K, i) { return i; });
+
+    /* the estimate, filled and narrow; the truth, outlined and wide around it */
+    DL.bars(p, idx, st.est, { w: 0.44, color: function (v) { return DL.fade(v >= 0 ? pos : neg, 0.8); } });
+    g.save();
+    g.strokeStyle = ink;
+    g.lineWidth = 1.4;
+    st.truth.forEach(function (v, i) {
+      var x0 = p.X(i - 0.36), x1 = p.X(i + 0.36), y0 = p.Y(0), y1 = p.Y(v);
+      g.strokeRect(x0 + 0.5, Math.min(y0, y1) + 0.5, x1 - x0 - 1, Math.abs(y1 - y0));
+    });
+    g.restore();
+
+    /* the largest node, true (ink) and estimated (accent), ringed at the end of its bar */
+    function ring(x, y, col) {
+      g.save();
+      g.beginPath();
+      g.arc(p.X(x), p.Y(y), 7, 0, 2 * Math.PI);
+      g.strokeStyle = col;
+      g.lineWidth = 2;
+      g.stroke();
+      g.restore();
+    }
+    ring(st.bigT, st.truth[st.bigT], ink);
+    ring(st.bigE, st.est[st.bigE], acc);
+
+    /* strikes whose sign the estimate gets wrong */
+    st.truth.forEach(function (v, i) {
+      if (v !== 0 && (st.est[i] > 0) !== (v > 0)) {
+        p.text(i, ymax, 'flip', { dy: 13, align: 'center', font: font(), color: warn });
+      }
+    });
+
+    /* the strikes, every other one where they would crowd */
+    var every = p.X(1) - p.X(0) >= 38;
+    DL.xticks(p, idx.filter(function (i) { return every || i % 2 === 0; }),
+              function (i) { return strike(KS[i]); });
+
+    /* the title and a key */
+    g.save();
+    g.font = font();
+    g.textBaseline = 'middle';
+    g.textAlign = 'left';
+    g.fillStyle = soft;
+    g.fillText("dealers' net position by strike, contracts: + long, − short", 6, 10);
+    var kx = 6, ky = 27;
+    g.strokeStyle = ink;
+    g.lineWidth = 1.4;
+    g.strokeRect(kx + 0.5, ky - 4.5, 11, 9);
+    g.fillText('true', kx + 17, ky);
+    kx += 17 + g.measureText('true').width + 14;
+    g.fillStyle = DL.fade(pos, 0.8);
+    g.fillRect(kx, ky - 4, 6, 8);
+    g.fillStyle = DL.fade(neg, 0.8);
+    g.fillRect(kx + 6, ky - 4, 6, 8);
+    g.fillStyle = soft;
+    g.fillText('estimated', kx + 17, ky);
+    kx += 17 + g.measureText('estimated').width + 14;
+    [[ink, 6], [acc, 19]].forEach(function (q) {
+      g.beginPath();
+      g.arc(kx + q[1], ky, 5, 0, 2 * Math.PI);
+      g.strokeStyle = q[0];
+      g.lineWidth = 1.6;
+      g.stroke();
+    });
+    g.fillText('largest node', kx + 30, ky);
+    g.restore();
+  });
+
+  function update() {
+    compute();
+    var flips = 0;
+    st.truth.forEach(function (v, i) { if (v !== 0 && (st.est[i] > 0) !== (v > 0)) flips++; });
+    var tT = sum(st.truth), tE = sum(st.est);
+    DL.out(U + '-e-o', Math.round(st.e * 100) + '%');
+    DL.out(U + '-flip', 'signs flipped: ' + flips + ' of 9 strikes');
+    DL.out(U + '-node', 'largest node: ' + strike(KS[st.bigT]) +
+                        (st.bigE === st.bigT ? ', unchanged' : ' → ' + strike(KS[st.bigE])));
+    DL.out(U + '-err', 'total net error: ' + contracts(tE - tT) + ' contracts');
+    DL.out(U + '-vk', 'This draw:');
+    DL.out(U + '-vt', st.mis + ' of ' + TRADES.length + ' trades misclassified, and a total of ' +
+                      contracts(tE) + ' contracts against a true ' + contracts(tT) +
+                      '. On average the errors leave each strike at 1\u00a0−\u00a02e\u00a0=\u00a0' +
+                      DL.num(1 - 2 * st.e, 2) + ' of its true net.');
+    draw();
+  }
+  update();
+  DL.bind([U + '-e'], update);
+  DL.$(U + '-new').addEventListener('click', function () { seed += 1; update(); });
+})();
+</script>
