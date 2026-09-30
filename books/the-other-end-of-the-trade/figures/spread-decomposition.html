@@ -34,7 +34,8 @@ source: new for this book: chapter 2B, "The spread decomposition"
   the mid M₁ a short while later. Below, in cents a share and signed by the side d, the realized
   spread 2d(P − M₁) and the price impact 2d(M₁ − M₀) add up to the effective spread 2d(P − M₀).
   Drag the later mid: what you paid stays put, and only the split between the firm's profit and
-  the impact changes. A fill outside the quote is flagged as trading through the NBBO.</figcaption>
+  the impact changes. A buy above the ask, or a sell below the bid, is flagged as trading through
+  the NBBO.</figcaption>
 </figure>
 <script>
 (function () {
@@ -72,25 +73,38 @@ source: new for this book: chapter 2B, "The spread decomposition"
     var p = new NMT.Plot(c, { xmin: 99.99, xmax: 100.07, ymin: 0, ymax: 1,
                               pad: { l: 16, r: 16, t: 8, b: 26 } });
     var narrow = p.w < 520, xs = [];
-    for (var k = 99990; k <= 100070; k += narrow ? 20 : 10) xs.push(k / 1000);
+    for (var k = 100000; k <= 100060; k += narrow ? 20 : 10) xs.push(k / 1000);
     DL.axes(p, { xs: xs, y: false, yAxis: false, grid: false,
                  x: function (v) { return '$' + v.toFixed(2); } });
     var fam = DL.color('familiar'), acc = DL.color('accent'), ins = DL.color('insight');
-    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var soft = DL.color('ink-soft'), paper = DL.color('paper'), g = p.g;
+    /* a label on the paper's own color, so a line passing behind it does not cross the letters */
+    function tag(x, y, text, o) {
+      g.save();
+      g.font = (o.bold ? 'bold ' : '') + font();
+      var w = g.measureText(text).width, px = p.X(x) + (o.dx || 0), py = p.Y(y) + (o.dy || 0);
+      var left = o.align === 'right' ? px - w : o.align === 'center' ? px - w / 2 : px;
+      g.fillStyle = paper;
+      g.fillRect(left - 2, py - 12, w + 4, 14);
+      g.fillStyle = o.color;
+      g.textAlign = o.align || 'left';
+      g.textBaseline = 'bottom';
+      g.fillText(text, px, py);
+      g.restore();
+    }
+    var P = st.P / 1000, M = st.M / 1000, pLeft = st.P <= st.M;
+    var pc = st.through ? DL.color('plain') : acc;
     p.path([[BID / 1000, 0.22], [ASK / 1000, 0.22], [ASK / 1000, 0.62], [BID / 1000, 0.62]],
            { close: true, fill: DL.fade(fam, 0.14), color: DL.fade(fam, 0.5), width: 1 });
     p.seg(MID / 1000, 0.1, MID / 1000, 0.74, { color: soft, width: 1.2, dash: [4, 3] });
-    p.text(BID / 1000, 0.62, 'bid', { dy: -3, align: 'center', font: font(), color: fam });
-    p.text(ASK / 1000, 0.62, 'ask', { dy: -3, align: 'center', font: font(), color: fam });
-    p.text(MID / 1000, 0.74, 'M₀', { dy: -3, align: 'center', font: font(), color: soft });
-    /* the fill and the later mid, their labels pushed apart when they sit close */
-    var P = st.P / 1000, M = st.M / 1000, pLeft = st.P <= st.M;
     p.seg(M, 0.08, M, 0.9, { color: ins, width: 2 });
-    p.text(M, 0.9, 'M₁ later', { dx: pLeft ? 3 : -3, dy: -1, align: pLeft ? 'left' : 'right',
-           font: font(), color: ins });
-    p.dot(P, 0.42, { r: 5, color: st.through ? DL.color('plain') : acc, ring: true });
-    p.text(P, 0.42, 'P', { dx: pLeft ? -8 : 8, dy: 4, align: pLeft ? 'right' : 'left',
-           font: 'bold ' + font(), color: st.through ? DL.color('plain') : acc });
+    p.dot(P, 0.42, { r: 5, color: pc, ring: true });
+    /* the labels last, the fill's and the later mid's on the sides away from each other */
+    tag(BID / 1000, 0.62, 'bid', { dy: -3, align: 'center', color: fam });
+    tag(ASK / 1000, 0.62, 'ask', { dy: -3, align: 'center', color: fam });
+    tag(MID / 1000, 0.74, 'M₀', { dy: -3, align: 'center', color: soft });
+    tag(M, 0.9, 'M₁ later', { dx: pLeft ? 3 : -3, dy: -1, align: pLeft ? 'left' : 'right', color: ins });
+    tag(P, 0.42, 'P', { dx: pLeft ? -8 : 8, dy: 6, align: pLeft ? 'right' : 'left', bold: true, color: pc });
   });
 
   /* the three metrics as a waterfall: realized, then the impact on top of it, equal the effective */

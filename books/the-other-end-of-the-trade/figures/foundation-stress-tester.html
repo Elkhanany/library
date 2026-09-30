@@ -1,0 +1,206 @@
+<!--
+name: foundation stress tester
+source: new for this book: chapter 10E, "A foundation stress tester"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="290"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-erp">ERP</label>
+      <input type="range" id="{{uid}}-erp" min="0" max="80" step="5" value="60">
+      <output id="{{uid}}-erp-o" for="{{uid}}-erp"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-vrp">VRP</label>
+      <input type="range" id="{{uid}}-vrp" min="0" max="30" step="5" value="15">
+      <output id="{{uid}}-vrp-o" for="{{uid}}-vrp"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-trd">trend</label>
+      <input type="range" id="{{uid}}-trd" min="0" max="30" step="5" value="15">
+      <output id="{{uid}}-trd-o" for="{{uid}}-trd"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-car">carry</label>
+      <input type="range" id="{{uid}}-car" min="0" max="20" step="5" value="10">
+      <output id="{{uid}}-car-o" for="{{uid}}-car"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Trend sleeve" id="{{uid}}-tr">
+      <label>trend sleeve</label>
+      <button type="button" data-v="held" class="on" aria-pressed="true">held</button>
+      <button type="button" data-v="cash" aria-pressed="false">cash</button>
+      <button type="button" data-v="eq" aria-pressed="false">equities</button>
+    </div>
+    <div class="ctrl"><output id="{{uid}}-cash"></output></div>
+  </div>
+  <div class="evidence"><div class="ev-scroll"><table class="trials">
+    <thead><tr><th class="c-trial">Scenario</th><th>Loss</th><th>Gain to recover</th></tr></thead>
+    <tbody>
+      <tr><td class="c-trial">S1</td><td data-label="Loss" id="{{uid}}-s0"></td><td data-label="Gain to recover" id="{{uid}}-g0"></td></tr>
+      <tr><td class="c-trial">S2</td><td data-label="Loss" id="{{uid}}-s1"></td><td data-label="Gain to recover" id="{{uid}}-g1"></td></tr>
+      <tr><td class="c-trial">S3</td><td data-label="Loss" id="{{uid}}-s2"></td><td data-label="Gain to recover" id="{{uid}}-g2"></td></tr>
+      <tr><td class="c-trial">S4</td><td data-label="Loss" id="{{uid}}-s3"></td><td data-label="Gain to recover" id="{{uid}}-g3"></td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="readout" aria-live="polite" id="{{uid}}-say"></p>
+  <figcaption><b>What the whole foundation loses, and what trend saves.</b> A hypothetical $1
+  million portfolio split across the four foundation sleeves, with anything left over in cash.
+  Each sleeve's profit and loss per dollar in each scenario is taken from the chapter's stress
+  table and scaled to the weight you set, so the default weights, 60/15/15/10, reproduce the
+  table. The line across each bar is the total, and the table beneath gives it as a loss of the
+  portfolio with the gain needed to recover from it. Move the trend sleeve into cash or into equities to see how much of the
+  offset in S2 and S3 is trend's.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var E = DL.$(U + '-erp'), V = DL.$(U + '-vrp'), T = DL.$(U + '-trd'), C = DL.$(U + '-car');
+  var mode = DL.seg(U + '-tr', update);
+
+  /* the chapter's stress table: each sleeve's profit and loss in thousands of dollars on
+     $1 million weighted 60/15/15/10; a sleeve of another size scales in proportion */
+  var KEYS = ['erp', 'vrp', 'carry', 'trend'];
+  var ROLE = { erp: 'accent', vrp: 'plain', trend: 'insight', carry: 'familiar' };
+  var NAME = { erp: 'ERP', vrp: 'VRP', trend: 'trend', carry: 'carry' };
+  var BASE = { erp: 0.60, vrp: 0.15, trend: 0.15, carry: 0.10 };
+  var TABLE = [{ erp: -60, vrp: -25, trend: 0, carry: -3 },
+               { erp: -120, vrp: -50, trend: 10, carry: -8 },
+               { erp: -210, vrp: -110, trend: 30, carry: -15 },
+               { erp: -132, vrp: -80, trend: 5, carry: -10 }];
+  var SCN = [['S1', 'SPX ' + DL.MINUS + '10%'], ['S2', 'SPX ' + DL.MINUS + '20%'],
+             ['S3', 'SPX ' + DL.MINUS + '35%'], ['S4', '1987 gap']];
+
+  function weights(m) {
+    var w = { erp: +E.value / 100, vrp: +V.value / 100, trend: +T.value / 100, carry: +C.value / 100 };
+    if (m === 'cash') w.trend = 0;
+    if (m === 'eq') { w.erp += w.trend; w.trend = 0; }
+    return w;
+  }
+  function stress(m) {
+    var w = weights(m);
+    return TABLE.map(function (row) {
+      var parts = {}, tot = 0;
+      KEYS.forEach(function (k) { parts[k] = row[k] * w[k] / BASE[k]; tot += parts[k]; });
+      return { parts: parts, total: tot };
+    });
+  }
+  /* thousands of dollars, with one decimal only when the number needs it */
+  function k$(x, signed) {
+    var a = Math.abs(x), d = Math.abs(a - Math.round(a)) > 0.05 ? 1 : 0;
+    var s = '$' + DL.num(a, d) + 'k';
+    if (!signed || Number(a.toFixed(d)) === 0) return s;
+    return (x < 0 ? DL.MINUS : '+') + s;
+  }
+
+  var draw = DL.figure(U + '-c', function (cv) {
+    var R = stress(mode()), low = 0, high = 0;
+    R.forEach(function (r) {
+      var n = 0, q = 0;
+      KEYS.forEach(function (k) { if (r.parts[k] < 0) n += r.parts[k]; else q += r.parts[k]; });
+      low = Math.min(low, n, r.total);
+      high = Math.max(high, q, r.total);
+    });
+    var lo = Math.min(low, -20) * 1.2, hi = Math.max(high * 1.3, -lo * 0.1);
+    var p = new NMT.Plot(cv, { xmin: 0, xmax: 4, ymin: lo, ymax: hi,
+                               pad: { l: 52, r: 8, t: 40, b: 30 } });
+    DL.axes(p, { xs: [], ny: 5,
+                 y: function (v) { return v === 0 ? '0' : k$(v, true); } });
+    var g = p.g, f = '11px ' + DL.color('sans'), soft = DL.color('ink-soft'),
+        faint = DL.color('ink-faint'), ink = DL.color('ink');
+    var hw = 0.23;
+    R.forEach(function (r, i) {
+      var x0 = i + 0.5, n = 0, q = 0;
+      KEYS.forEach(function (k) {
+        var v = r.parts[k];
+        if (!v) return;
+        var a = v < 0 ? n : q, b = a + v;
+        g.fillStyle = DL.fade(DL.color(ROLE[k]), 0.82);
+        g.fillRect(p.X(x0 - hw), Math.min(p.Y(a), p.Y(b)), p.X(x0 + hw) - p.X(x0 - hw),
+                   Math.max(1, Math.abs(p.Y(b) - p.Y(a))));
+        if (v < 0) n = b; else q = b;
+      });
+      p.seg(x0 - hw - 0.07, r.total, x0 + hw + 0.07, r.total, { color: ink, width: 2.2 });
+      p.text(x0, Math.min(n, r.total), k$(r.total, true),
+             { align: 'center', baseline: 'top', dy: 6, color: soft, font: 'bold ' + f });
+      g.save();
+      g.textAlign = 'center';
+      g.textBaseline = 'bottom';
+      g.font = 'bold ' + f;
+      g.fillStyle = soft;
+      g.fillText(SCN[i][0], p.X(x0), 16);
+      g.font = f;
+      g.fillStyle = faint;
+      g.fillText(SCN[i][1], p.X(x0), 30);
+      g.restore();
+    });
+
+    /* the key, along the bottom */
+    g.save();
+    g.font = f;
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    var x = p.o.pad.l, y = p.h - 10;
+    ['erp', 'vrp', 'trend', 'carry'].forEach(function (k) {
+      g.fillStyle = DL.fade(DL.color(ROLE[k]), 0.82);
+      g.fillRect(x, y - 5, 11, 10);
+      g.fillStyle = soft;
+      g.fillText(NAME[k], x + 16, y);
+      x += 16 + g.measureText(NAME[k]).width + 13;
+    });
+    g.strokeStyle = ink;
+    g.lineWidth = 2.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + 13, y);
+    g.stroke();
+    g.fillStyle = soft;
+    g.fillText('total', x + 18, y);
+    g.restore();
+  });
+
+  function update() {
+    var m = mode(), w = weights('held'), R = stress(m), H = stress('held');
+    DL.out(U + '-erp-o', E.value + '%');
+    DL.out(U + '-vrp-o', V.value + '%');
+    DL.out(U + '-trd-o', T.value + '%');
+    DL.out(U + '-car-o', C.value + '%');
+    var rest = 100 - (+E.value + +V.value + +T.value + +C.value);
+    DL.out(U + '-cash', rest >= 0 ? 'in cash = ' + rest + '%' : 'borrowed = ' + (-rest) + '%');
+    R.forEach(function (r, i) {
+      var d = -r.total / 1000;     /* the loss as a share of the $1 million */
+      DL.out(U + '-s' + i, d > 0 ? DL.pct(d, 1) : 'none: a gain of ' + DL.pct(-d, 1));
+      DL.out(U + '-g' + i, d > 0 ? (d < 1 ? DL.pct(d / (1 - d), 0) : 'none possible') : 'none');
+    });
+    /* how much more S2 and S3 lose than with trend held: in percent of the held loss,
+       or in dollars when a held total is not a loss */
+    function more(a2, b2, a3, b3) {
+      if (b2 < 0 && b3 < 0 && a2 <= b2 && a3 <= b3)
+        return DL.num((a2 / b2 - 1) * 100, 0) + '% and ' + DL.num((a3 / b3 - 1) * 100, 0) + '% more';
+      return k$(b2 - a2) + ' and ' + k$(b3 - a3) + ' more';
+    }
+    var say;
+    if (!(w.trend > 0)) {
+      say = 'The trend sleeve is empty, so nothing offsets the other sleeves in S2 and S3.';
+    } else if (m === 'held') {
+      var C2 = stress('cash');
+      say = 'Trend gains ' + k$(H[1].parts.trend) + ' in S2 and ' + k$(H[2].parts.trend) +
+            ' in S3, the only sleeve that gains. Held in cash instead, ' +
+            (H[1].total < 0 && H[2].total < 0
+              ? 'those losses would be ' +
+                more(C2[1].total, H[1].total, C2[2].total, H[2].total).replace(' more', '') + ' larger.'
+              : 'S2 and S3 would come out ' + k$(H[1].total - C2[1].total) + ' and ' +
+                k$(H[2].total - C2[2].total) + ' lower.');
+    } else {
+      say = 'With the trend sleeve ' + (m === 'cash' ? 'in cash' : 'in equities') + ', S2 loses ' +
+            k$(-R[1].total) + ' and S3 ' + k$(-R[2].total) + ': ' +
+            more(R[1].total, H[1].total, R[2].total, H[2].total) + ' than with trend held.';
+    }
+    DL.out(U + '-say', say);
+    draw();
+  }
+  update();
+  DL.bind([U + '-erp', U + '-vrp', U + '-trd', U + '-car'], update);
+})();
+</script>

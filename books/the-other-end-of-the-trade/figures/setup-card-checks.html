@@ -75,7 +75,7 @@ source: new for this book: chapter 13F, "A card with live checks"
       vix: ['< 22', function (r) { return r.vix < 22; }],
       adx: ['≤ 30', function (r) { return r.adx <= 30; }],
       gex: ['positive', function (r) { return r.gex === 'pos'; }] } },
-    { title: 'Card 02', name: ['Card 02', 'VRP harvest'], short: 'VRP 02', vrp: true, rows: {
+    { title: 'Card 02', name: ['Card 02', 'VRP harvest'], short: 'Card 02', vrp: true, rows: {
       ratio: ['< 1.00', function (r) { return r.ratio < 1; }],
       gex: ['positive', function (r) { return r.gex === 'pos'; }, 'soft'] } }
   ];
@@ -131,40 +131,50 @@ source: new for this book: chapter 13F, "A card with live checks"
     g.fillRect(0, 0, W, H);
     var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), acc = DL.color('accent');
     var tone = { insight: DL.color('insight'), plain: DL.color('plain'), warn: DL.color('warn') };
-    var LB = Math.round(Math.min(120, Math.max(82, W * 0.19))), HH = 38;
-    var cw = (W - LB) / CARDS.length, rh = (H - HH) / (ROWS.length + 1);
-    var wide = cw >= 88;
+    var n = CARDS.length, nr = ROWS.length + 1;
     function font(b) { return (b ? 'bold ' : '') + '11px ' + DL.color('sans'); }
+
+    /* Wide: the readings down a column on the left, each cell a full row high. Narrow: each
+       reading's name and value on a line of its own above its row of cells, so the five
+       cards share the whole width. */
+    var wide = W >= 480, LB = wide ? Math.round(Math.min(120, Math.max(90, W * 0.18))) : 0;
+    var HH = wide ? 38 : 22, cw = (W - LB) / n, rh = (H - HH) / nr, top = wide ? 0 : 15;
+    function cellBox(j, i) {
+      var y0 = HH + i * rh;
+      return { x: LB + j * cw + 2, y: y0 + top + 2, w: cw - 4, h: rh - top - 4 };
+    }
 
     g.save();
     g.textBaseline = 'middle';
-    /* the card names across the top */
     g.font = font(false);
     g.textAlign = 'center';
     st.cards.forEach(function (c, j) {
       var x = LB + (j + 0.5) * cw;
       g.fillStyle = soft;
       if (wide) { g.fillText(c.card.name[0], x, 12); g.fillText(c.card.name[1], x, 26); }
-      else g.fillText(c.card.short, x, 19);
+      else g.fillText(c.card.short, x, 11);
     });
-    /* the readings down the side: the name, and today's value beneath it */
     g.textAlign = 'left';
-    ROWS.forEach(function (k, i) {
-      var y = HH + (i + 0.5) * rh;
+    ROWS.concat(['verdict']).forEach(function (k, i) {
+      var y0 = HH + i * rh, name = k === 'verdict' ? 'verdict' : LABEL[k];
+      var val = k === 'verdict' ? '' : reading(k);
       g.fillStyle = soft;
-      g.fillText(LABEL[k], 4, y - 7);
-      g.fillStyle = acc;
-      g.fillText(reading(k), 4, y + 7);
+      if (wide) {
+        g.fillText(name, 4, y0 + rh / 2 - (val ? 7 : 0));
+        g.fillStyle = acc;
+        if (val) g.fillText(val, 4, y0 + rh / 2 + 7);
+      } else {
+        g.fillText(name, 2, y0 + 8);
+        g.fillStyle = acc;
+        if (val) g.fillText(val, 2 + g.measureText(name + ' ').width, y0 + 8);
+      }
     });
-    g.fillStyle = soft;
-    g.fillText('verdict', 4, HH + (ROWS.length + 0.5) * rh);
 
     /* the cells: the card's condition on each reading, shaded by whether it holds */
     g.textAlign = 'center';
     st.cards.forEach(function (c, j) {
-      var x0 = LB + j * cw;
       ROWS.forEach(function (k, i) {
-        var cell = c.cells[k], y0 = HH + i * rh, xm = x0 + cw / 2, ym = y0 + rh / 2;
+        var cell = c.cells[k], b = cellBox(j, i), xm = b.x + b.w / 2, ym = b.y + b.h / 2;
         if (!cell) {
           g.fillStyle = faint;
           g.fillText('—', xm, ym);
@@ -172,21 +182,21 @@ source: new for this book: chapter 13F, "A card with live checks"
         }
         var col = cell.ok ? tone.insight : cell.soft ? tone.warn : tone.plain;
         g.fillStyle = DL.fade(col, 0.16);
-        g.fillRect(x0 + 2, y0 + 2, cw - 4, rh - 4);
+        g.fillRect(b.x, b.y, b.w, b.h);
         g.fillStyle = col;
         g.fillText(cell.txt, xm, ym);
       });
-      /* the verdict, under a rule */
-      var yv = HH + ROWS.length * rh, col2 = tone[c.v.tone];
+      /* the verdict, stronger than the cells, with its detail beneath where there is room */
+      var bv = cellBox(j, ROWS.length), col2 = tone[c.v.tone], two = wide && c.v.sub;
       g.fillStyle = DL.fade(col2, 0.28);
-      g.fillRect(x0 + 2, yv + 3, cw - 4, rh - 5);
+      g.fillRect(bv.x, bv.y, bv.w, bv.h);
       g.fillStyle = col2;
       g.font = font(true);
-      g.fillText(c.v.word, x0 + cw / 2, yv + rh / 2 - (c.v.sub ? 6 : 0) + 1);
-      if (c.v.sub) {
+      g.fillText(c.v.word, bv.x + bv.w / 2, bv.y + bv.h / 2 - (two ? 6 : 0) + 0.5);
+      if (two) {
         g.font = font(false);
         g.fillStyle = soft;
-        g.fillText(wide || c.v.sub.length < 9 ? c.v.sub : '', x0 + cw / 2, yv + rh / 2 + 8);
+        g.fillText(c.v.sub, bv.x + bv.w / 2, bv.y + bv.h / 2 + 8);
       }
       g.font = font(false);
     });
@@ -213,14 +223,11 @@ source: new for this book: chapter 13F, "A card with live checks"
     DL.out(U + '-adx-o', String(r.adx));
     var open = st.cards.filter(function (c) { return c.v.open; }).length;
     DL.out(U + '-open', 'cards open: ' + open + ' of ' + st.cards.length);
-    var swings = st.cards.slice(0, 4), on = [], off = [];
-    swings.forEach(function (c) {
-      if (c.v.open) on.push(c.card.title);
-      else off.push(c.card.title + ' (' + c.fails.map(function (k) { return LABEL[k]; }).join(', ') + ')');
-    });
-    var say = (on.length ? 'Open: ' + list(on) + '. ' : 'No swing card is open. ') +
-              (off.length ? 'Skipped: ' + list(off) + '. ' : '') +
-              'Card 02: ' + st.cards[4].v.say + '.';
+    var say = st.cards.map(function (c) {
+      var v = c.card.vrp ? c.v.say : c.v.open ? 'trade on its trigger'
+            : 'skip (fails on ' + list(c.fails.map(function (k) { return LABEL[k]; })) + ')';
+      return c.card.title + ': ' + v + '.';
+    }).join(' ');
     DL.out(U + '-say', say);
     draw();
   }
