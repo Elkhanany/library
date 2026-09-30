@@ -1,6 +1,6 @@
 # Where a new figure would help
 
-461 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
+460 ideas, collected by `tools/spx.py` from the `[FIGURE IDEA: ...]` markers in `chapters/*.md`. The markers are not shown in the book: edit them in the chapters, not here.
 
 ## 1A · What a return is
 
@@ -401,7 +401,6 @@
 - *A decision rule.* Rate dispersion and carry. The reader sets the policy rates of up to ten currencies on sliders, and the figure ranks them, forms a long-short carry basket of the highest against the lowest, and reports its expected carry. Presets for a dispersed world and a world with every rate near zero show the carry collapsing when the rates converge.
 - *The allocation.* Risk shares and dollar shares. The reader sets each foundation sleeve's share of portfolio risk within the table's ranges and each sleeve's volatility, and the figure converts the risk shares into the dollars each sleeve needs, treating the sleeves as independent for simplicity. It shows why a calm sleeve needs more dollars than a volatile one for the same share of risk, and how the totals can leave room for the 20% to 30% outside the foundation.
 - *How the premia move together in stress.* A correlation map of the four foundation premia, drawn twice: in calm months and in the worst months for equities. Cells shade from −1 to +1, and the reader toggles between the two panels or slides a threshold that defines the stress months. It shows the ERP, VRP and carry cells darkening together in stress while trend's row turns negative.
-- *Stress profit and loss on the whole foundation.* A foundation stress tester. The reader sets the four sleeve weights and picks a scenario from S1 to S4, and stacked bars show each sleeve's profit and loss and the total, with the gain needed to recover. A toggle moves the trend sleeve into cash or into equities, showing how much of the offset in S2 and S3 comes from trend.
 
 ## 10F · Equity factors
 

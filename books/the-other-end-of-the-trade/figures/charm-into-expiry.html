@@ -7,8 +7,8 @@ source: new for this book: chapter 8F, "Dealers' delta decays with time"
   <div class="ctrls">
     <div class="ctrl" role="group" aria-label="Customers are long" id="{{uid}}-book">
       <label>customers long</label>
-      <button type="button" data-v="puts" class="on" aria-pressed="true">OTM puts</button>
-      <button type="button" data-v="both" aria-pressed="false">OTM puts and calls</button>
+      <button type="button" data-v="puts" class="on" aria-pressed="true">puts</button>
+      <button type="button" data-v="both" aria-pressed="false">puts and calls</button>
     </div>
     <div class="ctrl">
       <label for="{{uid}}-iv">IV fall</label>
@@ -23,14 +23,15 @@ source: new for this book: chapter 8F, "Dealers' delta decays with time"
   </div>
   <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
   <figcaption><b>The clock moves the hedge.</b> A made-up book of monthly SPX options at 18%
-  implied volatility: customers are long out-of-the-money puts, and dealers are short them and
+  implied volatility: customers are long out-of-the-money puts, so dealers are short them, with
   short futures as the hedge. Spot stays at 6,000 through the last 20 trading days, to
-  expiration at the close of week 4, and time runs on the calendar, so each Monday's bar
-  carries the weekend's decay. Each bar is the change in the dealers' hedge from one close to
-  the next, −Δ change × S × 100 × contracts, in billions of dollars: as the puts' deltas shrink
-  toward zero, dealers buy their hedge back. With calls in the book, the dealers' long hedge
-  against them is sold (rose), and the tick is the net. The IV fall lowers volatility in equal
-  steps over the 20 days; the outlines are the same book with volatility unchanged.</figcaption>
+  expiration at the close of week 4. Time runs on the calendar, so each Monday's bar carries a
+  weekend of decay. Each bar is one day's change in the dealers' hedge, minus the change in the
+  delta of the options they are short, times spot, in billions of dollars. As the puts' deltas
+  shrink toward zero, dealers buy their hedge back. With calls in the book, dealers sell the long
+  hedge they hold against them (rose), and the tick is the net. The IV fall lowers volatility in
+  equal steps over the 20 days, and the outlines are the same book with volatility
+  unchanged.</figcaption>
 </figure>
 <script>
 (function () {
@@ -157,8 +158,11 @@ source: new for this book: chapter 8F, "Dealers' delta decays with time"
       });
     }
 
-    /* the days along the bottom, the weeks beneath them, expiration at the right */
-    DL.xticks(p, xs, function (x, j) { return NAMES[j % 5].charAt(0); });
+    /* the days along the bottom (only the Mondays where the bars are narrow), the weeks
+       beneath them, expiration at the right */
+    var every = p.X(1) - p.X(0) >= 16;
+    DL.xticks(p, xs.filter(function (x, j) { return every || j % 5 === 0; }),
+              function (x) { return NAMES[x % 6].charAt(0); });
     g.save();
     g.font = font();
     g.fillStyle = soft;
