@@ -1,0 +1,230 @@
+<!--
+name: evidence forest plot
+source: new for this book: the studies of Chapter 8G on one axis
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="640"></canvas>
+  <div class="ctrls">
+    <div class="ctrl" role="group" aria-label="Group the studies by" id="{{uid}}-grp">
+      <label>group by</label>
+      <button type="button" data-v="market" class="on" aria-pressed="true">market</button>
+      <button type="button" data-v="ident" aria-pressed="false">how dealers were known</button>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-mv">mean vol</label>
+      <input type="range" id="{{uid}}-mv" min="10" max="30" step="1" value="15">
+      <output id="{{uid}}-mv-o" for="{{uid}}-mv"></output>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-agree"></output></div>
+    <div class="ctrl"><output id="{{uid}}-size"></output></div>
+  </div>
+  <figcaption><b>Dealer gamma and volatility, study by study.</b> Each row is one estimate: its
+  study, market and sample, its effect as published, and below them the same effect in points
+  of annualized volatility, a dot for an estimate, a bar for a range, an arrow for "at least"
+  and a hatched bar for an upper bound; green is calmer, rose more volatile, and orange marks the
+  one estimate that runs against the mechanism. Effects published in basis points
+  of absolute daily return are converted assuming normal daily returns and 252 trading days, and
+  the volume row needs a mean volatility, which the slider sets. The rows measure different
+  comparisons (per standard deviation of dealer gamma, days with and without same-day options,
+  observed short gamma against none), so compare their sizes and directions, not their exact
+  values.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var MV = DL.$(U + '-mv');
+  var grp = DL.seg(U + '-grp', update);
+
+  /* basis points of absolute daily return into points of annualized volatility: for normal
+     returns the mean absolute return is sigma * sqrt(2 / pi), so sigma = |r| * sqrt(pi / 2),
+     and a year has 252 trading days */
+  var K = Math.sqrt(Math.PI / 2) * Math.sqrt(252) / 100;
+
+  /* each row: its label, its effect as published, its market and how the authors knew the
+     dealers' positions, and its effect in annualized points as a point, a range, an "at least"
+     (arrow) or an upper bound; agree says whether it fits "long gamma calms, short gamma
+     stirs" */
+  var ROWS = [
+    { lab: 'Ni et al. 2021 · stocks, 1990–2001', own: '28.8 bp of |r| per SD',
+      mkt: 0, id: 0, kind: 'pt', v: -28.8 * K, agree: true },
+    { lab: 'Ni et al. 2021 · stocks, 2002–2012', own: '29.6 bp of |r| per SD',
+      mkt: 0, id: 1, kind: 'pt', v: -29.6 * K, agree: true },
+    { lab: 'Barbon, Buraschi 2021 · stocks', own: 'about 12 bp of |r| per SD',
+      mkt: 0, id: 1, kind: 'rg', v: -12 * K, lo: -25 * K, hi: -5 * K, agree: true },
+    { lab: 'Barbon, Buraschi 2021 · indexes', own: 'over 20 bp of |r| per SD',
+      mkt: 1, id: 1, kind: 'least', v: -20 * K, agree: true },
+    { lab: 'Adams et al. 2024 · SPX, 0DTE days', own: '60 to 90 bp lower',
+      mkt: 1, id: 1, kind: 'rg', v: -0.75, lo: -0.9, hi: -0.6, agree: true },
+    { lab: 'Vasquez et al. 2025 · SPX, daily', own: 'at most +3.3 points',
+      mkt: 1, id: 0, kind: 'ub', v: 3.3, agree: true },
+    { lab: 'Vasquez et al. 2025 · SPX, 30 min', own: 'at most +6.4 points',
+      mkt: 1, id: 0, kind: 'ub', v: 6.4, agree: true },
+    { lab: 'Brogaard et al. 2023 · 0DTE volume', own: '+9.1% of mean vol per SD',
+      mkt: 1, id: 2, kind: 'pt', v: null, agree: false },
+    { lab: 'Anderegg et al. 2022 · EURUSD', own: '+0.7 points',
+      mkt: 2, id: 1, kind: 'pt', v: 0.7, agree: true },
+    { lab: 'Anderegg et al. 2022 · USDJPY', own: '+0.9 points',
+      mkt: 2, id: 1, kind: 'pt', v: 0.9, agree: true }
+  ];
+  var GROUPS = {
+    market: ['Single stocks', 'Stock indexes', 'Currencies'],
+    ident: ['Positions observed', 'Positions estimated or inferred', 'Volume only, no positions']
+  };
+
+  function layout() {
+    var mode = grp(), key = mode === 'market' ? 'mkt' : 'id', out = [];
+    GROUPS[mode].forEach(function (name, gi) {
+      var rows = ROWS.filter(function (r) { return r[key] === gi; });
+      if (!rows.length) return;
+      out.push({ head: name });
+      rows.forEach(function (r) { out.push({ row: r }); });
+    });
+    return out;
+  }
+
+  function font(px, bold) { return (bold ? '600 ' : '') + (px || 11) + 'px ' + DL.color('sans'); }
+
+  var draw = DL.figure(U + '-c', function (c) {
+    var p = new NMT.Plot(c, { xmin: -8, xmax: 8, ymin: 0, ymax: 1, pad: { l: 12, r: 12, t: 8, b: 58 } });
+    var g = p.g, W = p.w, H = p.h, items = layout();
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = DL.color('paper');
+    g.fillRect(0, 0, W, H);
+    var HEAD = 22, ROW = 52, y = 10, mv = +MV.value / 100;
+    var ink = DL.color('ink'), soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var calm = DL.color('insight'), stir = DL.color('plain'), odd = DL.color('warn');
+    var top = y, bottom = H - 58;
+
+    /* the zero line and the grid, drawn first so the rows sit over them */
+    g.save();
+    [-8, -6, -4, -2, 2, 4, 6, 8].forEach(function (v) {
+      g.strokeStyle = DL.color('rule-soft');
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(p.X(v) + 0.5, top);
+      g.lineTo(p.X(v) + 0.5, bottom);
+      g.stroke();
+    });
+    g.strokeStyle = DL.color('rule');
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(p.X(0) + 0.5, top);
+    g.lineTo(p.X(0) + 0.5, bottom);
+    g.stroke();
+    g.restore();
+
+    items.forEach(function (it) {
+      g.save();
+      if (it.head) {
+        g.font = font(11, true);
+        g.fillStyle = ink;
+        g.textAlign = 'left';
+        g.textBaseline = 'middle';
+        var tw = g.measureText(it.head).width;
+        g.fillStyle = DL.fade(DL.color('paper'), 0.92);
+        g.fillRect(6, y + 3, tw + 8, 16);
+        g.fillStyle = ink;
+        g.fillText(it.head, 10, y + HEAD / 2 + 1);
+        y += HEAD;
+        g.restore();
+        return;
+      }
+      var r = it.row, v = r.v == null ? 0.091 * mv * 100 : r.v;
+      /* the label, then the effect as published beneath it, each on a paper patch over the grid */
+      g.font = font(11);
+      g.textBaseline = 'middle';
+      g.textAlign = 'left';
+      var lw = g.measureText(r.lab).width, ow = g.measureText(r.own).width;
+      g.fillStyle = DL.fade(DL.color('paper'), 0.92);
+      g.fillRect(8, y + 2, lw + 6, 15);
+      g.fillRect(8, y + 17, ow + 6, 14);
+      g.fillStyle = soft;
+      g.fillText(r.lab, 10, y + 10);
+      g.fillStyle = faint;
+      g.fillText(r.own, 10, y + 24);
+      /* the effect in annualized points */
+      var yl = y + 41, col = !r.agree ? odd : v < 0 ? calm : stir;
+      g.strokeStyle = col;
+      g.fillStyle = col;
+      g.lineWidth = 2.5;
+      if (r.kind === 'rg') {
+        g.beginPath();
+        g.moveTo(p.X(r.lo), yl);
+        g.lineTo(p.X(r.hi), yl);
+        g.stroke();
+        g.beginPath();
+        g.arc(p.X(v), yl, 4.5, 0, 2 * Math.PI);
+        g.fill();
+      } else if (r.kind === 'least') {
+        var x0 = p.X(v), x1 = p.X(-7.6);
+        g.beginPath();
+        g.moveTo(x0, yl);
+        g.lineTo(x1 + 6, yl);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x1, yl);
+        g.lineTo(x1 + 8, yl - 5);
+        g.lineTo(x1 + 8, yl + 5);
+        g.closePath();
+        g.fill();
+        g.beginPath();
+        g.arc(x0, yl, 4.5, 0, 2 * Math.PI);
+        g.fill();
+      } else if (r.kind === 'ub') {
+        var a = p.X(0), b = p.X(v);
+        g.fillStyle = DL.fade(col, 0.22);
+        g.fillRect(a, yl - 6, b - a, 12);
+        g.lineWidth = 1;
+        for (var hx = a + 4; hx < b; hx += 6) {
+          g.beginPath();
+          g.moveTo(hx, yl + 6);
+          g.lineTo(Math.min(hx + 6, b), yl - 6);
+          g.stroke();
+        }
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.moveTo(b, yl - 7);
+        g.lineTo(b, yl + 7);
+        g.stroke();
+      } else {
+        g.beginPath();
+        g.arc(p.X(v), yl, 5, 0, 2 * Math.PI);
+        g.fill();
+      }
+      y += ROW;
+      g.restore();
+    });
+
+    /* the axis */
+    g.save();
+    g.font = font(11);
+    g.fillStyle = faint;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    [-8, -4, 0, 4, 8].forEach(function (v) {
+      g.fillText((v > 0 ? '+' : v < 0 ? DL.MINUS : '') + Math.abs(v), p.X(v), bottom + 6);
+    });
+    g.fillStyle = soft;
+    g.textAlign = 'left';
+    g.fillText('← calmer', p.X(-8), bottom + 22);
+    g.textAlign = 'right';
+    g.fillText('more volatile →', p.X(8), bottom + 22);
+    g.textAlign = 'center';
+    g.fillText('points of annualized volatility', p.X(0), bottom + 38);
+    g.restore();
+  });
+
+  function update() {
+    var mv = +MV.value;
+    DL.out(U + '-mv-o', mv + '% → ' + DL.signed(0.091 * mv, 1));
+    var agree = ROWS.filter(function (r) { return r.agree; }).length;
+    DL.out(U + '-agree', agree + ' of ' + ROWS.length + ' estimates fit the mechanism');
+    DL.out(U + '-size', 'largest per-SD effect: ' + DL.num(29.6 * K, 1) + ' pts (stocks)');
+    draw();
+  }
+  update();
+  DL.bind([U + '-mv'], update);
+})();
+</script>
