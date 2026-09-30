@@ -67,12 +67,17 @@ source: new for this book: chapter 11B, "Pooled against conditional reversal"
 
   compute();
   var draw = DL.figure(U + '-c', function (cv) {
-    var p = new NMT.Plot(cv, { xmin: 0.45, xmax: 3.55, ymin: -0.45, ymax: 0.4,
+    /* the scale covers every bar and the cost line, in steps of 0.1%, never less than 0.2% a side */
+    var lo = Math.min(-0.2, Math.floor(Math.round((Math.min(st.ms, st.pooled) - 0.06) * 1e6) / 1e5) / 10);
+    var hi = Math.max(0.2, Math.ceil(Math.round((Math.max(st.mc, st.pooled, st.k) + 0.07) * 1e6) / 1e5) / 10);
+    var ys = [];
+    for (var y = lo; y <= hi + 1e-9; y += 0.1) ys.push(Math.round(y * 10) / 10);
+    var p = new NMT.Plot(cv, { xmin: 0.45, xmax: 3.55, ymin: lo, ymax: hi,
                                pad: { l: 50, r: 12, t: 26, b: 38 } });
-    DL.axes(p, { xs: [], ys: [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4], x: false,
+    DL.axes(p, { xs: [], ys: ys, x: false,
                  y: function (v) { return v === 0 ? '0%' : DL.signed(v, 1) + '%'; } });
     var acc = DL.color('accent'), ins = DL.color('insight'), pla = DL.color('plain');
-    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint');
+    var soft = DL.color('ink-soft'), faint = DL.color('ink-faint'), g = p.g;
     var bars = [
       { x: 1, v: st.pooled, col: acc, name: 'pooled', sub: 'all down weeks' },
       { x: 2, v: st.mc, col: ins, name: 'calm only', sub: DL.num((1 - st.w) * 100, 0) + '% of them' },
@@ -80,13 +85,24 @@ source: new for this book: chapter 11B, "Pooled against conditional reversal"
     ];
     bars.forEach(function (b) {
       DL.bars(p, [b.x], [b.v], { w: 0.5, color: DL.fade(b.col, 0.8) });
-      var up = b.v >= 0;
-      p.text(b.x, b.v, pc(b.v, true), { align: 'center', baseline: up ? 'bottom' : 'top',
-                                        dy: up ? -4 : 4, font: font(), color: b.col });
-      p.text(b.x, -0.45, b.name, { align: 'center', baseline: 'top', dy: 6, font: font(), color: soft });
-      p.text(b.x, -0.45, b.sub, { align: 'center', baseline: 'top', dy: 20, font: font(), color: faint });
+      p.text(b.x, lo, b.name, { align: 'center', baseline: 'top', dy: 6, font: font(), color: soft });
+      p.text(b.x, lo, b.sub, { align: 'center', baseline: 'top', dy: 20, font: font(), color: faint });
     });
     DL.hline(p, st.k, { color: soft, dash: [5, 3], width: 1.3 });
+    /* each bar's value on a paper patch, so the cost line passes behind it */
+    bars.forEach(function (b) {
+      var s = pc(b.v, true), up = b.v >= 0;
+      g.save();
+      g.font = font();
+      var w = g.measureText(s).width, x = p.X(b.x), y = p.Y(b.v) + (up ? -11 : 11);
+      g.fillStyle = DL.fade(DL.color('paper'), 0.9);
+      g.fillRect(x - w / 2 - 3, y - 7, w + 6, 14);
+      g.fillStyle = b.col;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(s, x, y);
+      g.restore();
+    });
     DL.legend(p, [{ label: 'round-trip cost', color: soft, dash: [5, 3] }], { dy: -22 });
   });
 

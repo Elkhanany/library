@@ -89,8 +89,9 @@ source: new for this book: chapter 10E, "A foundation stress tester"
   /* thousands of dollars, with one decimal only when the number needs it */
   function k$(x, signed) {
     var a = Math.abs(x), d = Math.abs(a - Math.round(a)) > 0.05 ? 1 : 0;
+    if (Number(a.toFixed(d)) === 0) return '$0';
     var s = '$' + DL.num(a, d) + 'k';
-    if (!signed || Number(a.toFixed(d)) === 0) return s;
+    if (!signed) return s;
     return (x < 0 ? DL.MINUS : '+') + s;
   }
 
@@ -170,8 +171,9 @@ source: new for this book: chapter 10E, "A foundation stress tester"
     DL.out(U + '-cash', rest >= 0 ? 'in cash = ' + rest + '%' : 'borrowed = ' + (-rest) + '%');
     R.forEach(function (r, i) {
       var d = -r.total / 1000;     /* the loss as a share of the $1 million */
-      DL.out(U + '-s' + i, d > 0 ? DL.pct(d, 1) : 'none: a gain of ' + DL.pct(-d, 1));
-      DL.out(U + '-g' + i, d > 0 ? (d < 1 ? DL.pct(d / (1 - d), 0) : 'none possible') : 'none');
+      var zero = Math.abs(d) < 5e-5;
+      DL.out(U + '-s' + i, zero ? 'none' : d > 0 ? DL.pct(d, 1) : 'none (+' + DL.pct(-d, 1) + ')');
+      DL.out(U + '-g' + i, !zero && d > 0 ? (d < 1 ? DL.pct(d / (1 - d), 0) : 'none possible') : 'none');
     });
     /* how much more S2 and S3 lose than with trend held: in percent of the held loss,
        or in dollars when a held total is not a loss */
