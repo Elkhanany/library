@@ -1,0 +1,122 @@
+<!--
+name: stop and release
+source: new for this book: chapter 11K, "The stop and the release"
+-->
+<figure class="fig" id="fig-{{uid}}">
+  <canvas id="{{uid}}-c" data-h="230"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="{{uid}}-m">expected move</label>
+      <input type="range" id="{{uid}}-m" min="0.2" max="3" step="0.05" value="1.2">
+      <output id="{{uid}}-m-o" for="{{uid}}-m"></output>
+    </div>
+    <div class="ctrl">
+      <label for="{{uid}}-d">stop distance</label>
+      <input type="range" id="{{uid}}-d" min="0.1" max="3" step="0.05" value="0.65">
+      <output id="{{uid}}-d-o" for="{{uid}}-d"></output>
+    </div>
+    <div class="ctrl" role="group" aria-label="The chapter's cases">
+      <label>cases</label>
+      <button type="button" id="{{uid}}-fomc">FOMC Tuesday</button>
+      <button type="button" id="{{uid}}-cpi">CPI morning</button>
+    </div>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><output id="{{uid}}-sd"></output></div>
+    <div class="ctrl"><output id="{{uid}}-p"></output></div>
+    <div class="ctrl"><output id="{{uid}}-fill"></output></div>
+    <div class="ctrl"><output id="{{uid}}-loss"></output></div>
+  </div>
+  <p class="readout" aria-live="polite"><b id="{{uid}}-vk"></b> <span id="{{uid}}-vt"></span></p>
+  <figcaption><b>A stop does not cap a release.</b> The curve is the release's move, normal
+  with a standard deviation of the expected move over 0.8, and the shaded tail is the chance
+  that the release alone reaches a stop the set distance below the price: N(−0.8 d/m). The
+  stop fills after the move, so a hit fills on average beyond it, at the dashed line; with the
+  stop's distance as the planned loss of 1R, that average fill is the loss a hit costs. The two
+  cases are the chapter's: Tuesday's close in the FOMC week and the CPI check
+  question.</figcaption>
+</figure>
+<script>
+(function () {
+  var U = '{{uid}}';
+  var M = DL.$(U + '-m'), D = DL.$(U + '-d');
+
+  /* eq:pstop: the release's move is normal with standard deviation m / 0.8, since the
+     expected move m is about 0.8 of it; the stop d below the price is hit with probability
+     N(-0.8 d / m), and a hit fills at the move itself, on average sigma phi(z) / N(-z) */
+  function state() {
+    var m = parseFloat(M.value), d = parseFloat(D.value), sig = m / 0.8, z = d / sig;
+    var p = DL.N(-z), fill = sig * DL.phi(z) / p;
+    return { m: m, d: d, sig: sig, z: z, p: p, fill: fill, lossR: fill / d };
+  }
+  function pc(x) { return DL.num(x, 2) + '%'; }
+  function font() { return '11px ' + DL.color('sans'); }
+
+  var st = state();
+  var draw = DL.figure(U + '-c', function (c) {
+    var s = st;
+    /* the axis follows the curve, so the stop's place against the spread is what moves */
+    var half = Math.max(4 * s.sig, 1.2 * Math.max(s.d, s.fill), 1);
+    var step = half > 8 ? 2 : half > 4 ? 1 : 0.5;
+    half = Math.ceil(half / step) * step;
+    var peak = 1 / (s.sig * Math.sqrt(2 * Math.PI));
+    var p = new NMT.Plot(c, { xmin: -half, xmax: half, ymin: 0, ymax: peak * 1.32,
+                              pad: { l: 12, r: 12, t: 12, b: 24 } });
+    var xs = [];
+    for (var t = -half; t <= half + 1e-9; t += step) xs.push(Math.round(t * 100) / 100);
+    DL.axes(p, { xs: xs, y: false, yAxis: false,
+                 x: function (v) { return v === 0 ? '0' : DL.signed(v, step < 1 ? 1 : 0) + '%'; } });
+    var acc = DL.color('accent'), pla = DL.color('plain'), fam = DL.color('familiar'),
+        soft = DL.color('ink-soft');
+    function f(x) { return DL.phi(x / s.sig) / s.sig; }
+
+    /* the expected move, a light band from -m to +m */
+    DL.clip(p);
+    p.g.fillStyle = DL.fade(fam, 0.08);
+    p.g.fillRect(p.X(-s.m), p.Y(peak * 1.32), p.X(s.m) - p.X(-s.m), p.Y(0) - p.Y(peak * 1.32));
+    p.g.restore();
+    p.text(s.m, peak * 1.32, 'expected move ' + DL.MINUS + '/+' + DL.num(s.m, 2) + '%',
+           { align: 'right', dx: -3, dy: 14, color: fam, font: font() });
+
+    /* the tail beyond the stop, shaded under the curve */
+    var tx = [], ty = [];
+    for (var i = 0; i <= 160; i++) {
+      var x = -half + (half - s.d) * i / 160;
+      tx.push(x); ty.push(f(x));
+    }
+    DL.band(p, tx, ty, 0, DL.fade(pla, 0.35));
+    p.fn(f, { color: acc, width: 2 });
+
+    /* the stop, and the average fill of the releases that pass it */
+    DL.vline(p, -s.d, { color: pla, width: 1.6 });
+    p.seg(-s.fill, 0, -s.fill, f(s.fill) + peak * 0.12, { color: pla, width: 1.2, dash: [4, 3] });
+    p.text(-s.d, peak * 1.32, 'stop ' + DL.MINUS + DL.num(s.d, 2) + '%',
+           { align: 'right', dx: -4, dy: 14, color: pla, font: font() });
+    p.text(-s.fill, f(s.fill) + peak * 0.12, 'average fill', { align: 'right', dx: -3,
+                                                              color: pla, font: font() });
+    p.text(-half, peak * 0.08, DL.pct(s.p, 0), { dx: 4, color: pla, font: 'bold ' + font() });
+  });
+
+  function update() {
+    st = state();
+    var s = st;
+    DL.out(U + '-m-o', DL.MINUS + '/+' + pc(s.m));
+    DL.out(U + '-d-o', pc(s.d));
+    DL.out(U + '-sd', 'σ = m/0.8 = ' + pc(s.sig));
+    DL.out(U + '-p', 'Pr(stop) = N(' + DL.MINUS + DL.num(s.z, 2) + ') = ' + DL.num(s.p, 2));
+    DL.out(U + '-fill', 'average fill = ' + DL.MINUS + pc(s.fill));
+    DL.out(U + '-loss', 'average loss = ' + DL.num(s.lossR, 2) + 'R');
+    var one = Math.max(1, Math.round(1 / s.p));
+    DL.out(U + '-vk', s.d < s.m ? 'Inside the expected move.' : 'Outside the expected move.');
+    DL.out(U + '-vt', 'The release alone takes the stop out ' +
+           (one <= 1 ? 'more often than not' : 'about one time in ' + one) +
+           ', and a hit costs ' + DL.num(s.lossR, 1) + 'R on average where the plan allowed 1R.');
+    draw();
+  }
+  function setCase(m, d) { M.value = m; D.value = d; update(); }
+  DL.$(U + '-fomc').addEventListener('click', function () { setCase(1.2, 0.65); });
+  DL.$(U + '-cpi').addEventListener('click', function () { setCase(0.8, 1.0); });
+  update();
+  DL.bind([U + '-m', U + '-d'], update);
+})();
+</script>
