@@ -13,8 +13,9 @@ and those are exactly the links no single-book check was ever built to see.
 
 Exit 1 if any internal link, stylesheet, script or image is missing, if any
 same-site link names a #fragment its page does not carry, if any page carries
-a navigation bar other than the one its book.json describes, or if any page
-reaches outside the site for something it needs to render.
+a navigation bar other than the one its book.json describes, if any page
+reaches outside the site for something it needs to render, or if a page served
+at any address is missing or links relatively.
 
 Two kinds of link a relative resolver used to get wrong or skip:
 
@@ -28,6 +29,15 @@ Two kinds of link a relative resolver used to get wrong or skip:
   are addresses for a script, not ids, and are skipped. Ids and links built by
   a page's own scripts at runtime are invisible here, as they always were.
   KNOWN_FRAGMENTS lists the ones missing today; it must not grow.
+
+Two pages are served at an address that is not their own, so a relative link
+on either resolves against wherever the reader was rather than against docs/,
+and every internal link on them must start with library.SITE. offline.html is
+what the service worker gives for a page it never stored. 404.html is what
+Cloudflare Pages gives, with status 404, for any address that has no file, at
+any depth; it must also exist, because without it Pages treats the site as a
+single-page app and answers a missing address with the hub and status 200,
+which the worker and the book download then store as the page asked for.
 
 --build <slug> runs the same resolver over build/<slug>/*.html, the self-
 contained pages make.py writes for Dropbox, ignoring external links. That tree
@@ -69,6 +79,29 @@ KNOWN_BUILD = {
     'breast-cancer': {},
     'newton-to-mtheory': {},
 }
+
+
+# Pages served at an address that is not their own (see the module docstring).
+ANYWHERE = ("offline.html", "404.html")
+
+
+def anywhere(docs):
+    """(page, problem) for each page in ANYWHERE that is missing, or that has
+    an internal link not absolute from library.SITE."""
+    bad = []
+    for rel in ANYWHERE:
+        p = os.path.join(docs, rel)
+        if not os.path.exists(p):
+            bad.append((rel, None))
+            continue
+        for raw in REF.findall(SCRIPT.sub("", library.read(p))):
+            url = raw.strip()
+            if not url or url.startswith(("#", "data:", "mailto:", "javascript:", "//")) \
+                    or re.match(r"^[a-z][a-z0-9+.-]*:", url, re.I):
+                continue            # in-page, or not a path on this site
+            if not url.startswith(library.SITE):
+                bad.append((rel, url))
+    return bad
 
 
 def pages(root):
@@ -223,16 +256,27 @@ def main():
             print(f"  known    {rel}  ->  {url}  ({why})")
         else:
             print(f"  NOTE     KNOWN_FRAGMENTS entry {rel} -> {url} now resolves; delete it")
+    loose = anywhere(docs)
+    for rel, url in loose:
+        if url is None:
+            print(f"  MISSING  {rel}  (served in place of a page at any address; "
+                  f"run python3 tools/pwa.py)")
+        else:
+            print(f"  RELATIVE  {rel}  ->  {url}  (served at any address, so every "
+                  f"link starts with {library.SITE})")
 
     books = ", ".join(b.slug for b in library.books())
     print(f"sitecheck: {n_pages} pages, {n_links} internal links, {n_frags} fragments, "
           f"books: {books}")
-    if missing or external or new_frags:
+    if missing or external or new_frags or loose:
         print(f"  {len(missing)} broken, {len(external)} external dependency, "
-              f"{len(new_frags)} missing fragment(s): FIX THESE")
+              f"{len(new_frags)} missing fragment(s), {len(loose)} problem(s) on "
+              f"the pages served at any address: FIX THESE")
         return 1
     print("  every internal link and fragment resolves, nothing loaded from off-site"
           + (f" ({len(still)} known missing fragment)" if still else ""))
+    print(f"  {' and '.join(ANYWHERE)} link only from {library.SITE}, "
+          f"so they work at any address")
 
     # Every link resolving is not the same as every page offering the same
     # links. A bar that has gone stale points only at pages that exist, so the

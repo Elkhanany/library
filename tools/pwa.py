@@ -20,6 +20,7 @@ diffs it against what is on disk, which is what stops the two paths drifting.
 
 Nothing here may import webbuild, build, playwright or asyncio.
 """
+import html
 import io
 import json
 import os
@@ -41,6 +42,11 @@ OPEN, CLOSE = "<!--PWA-->", "<!--/PWA-->"
 # before viewport-fit was added and on one built after.
 VP_OLD = '<meta name="viewport" content="width=device-width,initial-scale=1">'
 VP_NEW = '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+
+# The library-level pages written whole by emit_pages(). Each is self-contained
+# (see PAGE), so none takes the injected head or nav.py's bar, and two of them
+# are served at addresses that are not their own.
+STATIC = ("offline.html", "continue.html", "404.html")
 
 # Icon sizes. 180 is the only one iOS actually reads for the home screen; 192
 # and 512 are the manifest's, and the maskable variant carries extra inset for
@@ -446,7 +452,12 @@ def shell_files():
     """Library-level files only: the hub, the manifest, the client, the icons,
     the two static pages. Deliberately O(1) in the number of books -- putting
     every book's landing page and stylesheet in here would make the install cost
-    grow with the shelf, and charge a reader for twenty books to open one."""
+    grow with the shelf, and charge a reader for twenty books to open one.
+
+    404.html is not one of them. The host serves it online only, with a 404
+    status the worker passes through and never stores, and offline a missing
+    page gets offline.html; precaching it would charge every install for a page
+    no offline reader can reach."""
     out = ["index.html", "manifest.webmanifest", "offline.html",
            "continue.html", "catalog.json", "assets/pwa.js", "assets/pwa.css",
            "assets/nav.css"]
@@ -458,10 +469,13 @@ def shell_files():
 
 # --------------------------------------------------------------- static pages
 
-# Both are deliberately dependency-free: no stylesheet, no script, no font that
-# has to be fetched. offline.html is what a reader sees when the network is gone
-# and the page they asked for was never stored, so it must render from its own
-# bytes alone -- a fallback that needs a fetch to look right is not a fallback.
+# All three are deliberately dependency-free: no stylesheet, no script, no font
+# that has to be fetched. offline.html is what a reader sees when the network is
+# gone and the page they asked for was never stored, so it must render from its
+# own bytes alone -- a fallback that needs a fetch to look right is not a
+# fallback. 404.html is served at whatever address went missing, at any depth,
+# so a relative stylesheet link in it would resolve against that address and
+# not against docs/.
 #
 # The theme is resolved inline, in <head>, by the same three steps as BOOT
 # (THEME_JS), and both [data-theme] values are styled, so a reader who chose
@@ -472,7 +486,7 @@ PAGE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+%(viewport)s
 <title>%(title)s</title>
 <script>(function(){var d=document.documentElement;%(theme)s})();</script>
 <style>
@@ -609,8 +623,19 @@ CONTINUE_JS = r"""<script>
 </script>"""
 
 
+# 404.html's script: the same Go back as offline.html, and nothing else. The
+# shelf below it is written at build time, so the page needs no fetch.
+NOTFOUND_JS = r"""<script>
+(function(){
+  var back=document.getElementById('back');
+  if(history.length>1){back.hidden=false;back.addEventListener('click',function(){history.back()})}
+})();
+</script>"""
+
+
 def emit_pages(bks):
     library.write(os.path.join(DOCS, "offline.html"), PAGE % {
+        "viewport": VP_NEW,
         "theme": THEME_JS,
         "title": "Offline — A Library",
         "body": ("<h1>Not stored on this device</h1>"
@@ -629,12 +654,61 @@ def emit_pages(bks):
     # The hub's Continue strip and the front doors link to the chapter itself
     # and do not come through here.
     library.write(os.path.join(DOCS, "continue.html"), PAGE % {
+        "viewport": VP_NEW,
         "theme": THEME_JS,
         "title": "Continue reading",
         "body": ('<h1>Continue reading</h1>'
                  '<p id="m">Looking for where you left off\u2026</p>'
                  '<ul id="l"></ul>'),
         "script": CONTINUE_JS})
+
+    # 404.html is what Cloudflare Pages serves, with status 404, for any
+    # address that has no file. Without it Pages assumes a single-page app and
+    # answers every missing address with the hub and status 200, which the
+    # worker and the book download then store as if it were the chapter asked
+    # for. Like offline.html it stands at the address that was asked for, so
+    # every link is absolute from library.SITE. It is the site's page rather
+    # than the app's -- never precached, never served by the worker -- so it
+    # keeps the plain viewport webbuild writes, which the app layer's
+    # viewport-fit=cover replaces only on the pages it injects.
+    shelf = "".join('<li><a href="%s%s/index.html">%s</a></li>'
+                    % (library.SITE, b.slug, html.escape(b.app_name)) for b in bks)
+    library.write(os.path.join(DOCS, "404.html"), PAGE % {
+        "viewport": VP_OLD,
+        "theme": THEME_JS,
+        "title": "Not found — A Library",
+        "body": ("<h1>Nothing at this address</h1>"
+                 "<p>There is no page here. The link may be mistyped, or the "
+                 "page may have moved.</p>"
+                 '<div class="acts"><button type="button" id="back" hidden>Go back</button>'
+                 '<a href="%s">The library</a></div>'
+                 '<section><h2>The books</h2><ul>%s</ul></section>'
+                 % (library.SITE, shelf)),
+        "script": NOTFOUND_JS})
+
+
+# ------------------------------------------------------------ the host's rules
+#
+# Cloudflare Pages answers every *.html address with a permanent 308 to the
+# same address without the extension. Two things here break on that. The
+# worker stores the response it is handed, which is then a redirected one, and
+# a browser refuses a redirected response as the answer to a navigation, so a
+# stored chapter would not open offline. And pwa.js finds a chapter in
+# nav.json, and keys the reader's place, by the .html file name the address no
+# longer carries.
+#
+# A 200 rule is a rewrite, and Pages applies _redirects before its own .html
+# handling, so each line serves the file at the address that was asked for,
+# with no redirect. The destinations stay extensionless: one ending in .html
+# would be redirected in turn. They are root-relative rather than built from
+# library.SITE because Pages always serves the output directory at the root.
+REDIRECTS = ("/index.html / 200\n"
+             "/*/index.html /:splat/ 200\n"
+             "/*.html /:splat 200\n")
+
+
+def emit_redirects():
+    library.write(os.path.join(DOCS, "_redirects"), REDIRECTS)
 
 
 # ------------------------------------------------------------------ the emitter
@@ -660,8 +734,10 @@ def emit_all(books=None):
         emit_icons(os.path.join(DOCS, b.slug, "icons"), b.slug,
                    b.icon_spec["bg"], b.icon_spec["fg"])
 
-    # 2. the two static pages, then manifests and the catalogue
+    # 2. the three static pages and the host's rules, then manifests and the
+    #    catalogue
     emit_pages(bks)
+    emit_redirects()
     # 2. manifests and the catalogue
     write_json(os.path.join(DOCS, "manifest.webmanifest"), library_manifest())
     for b in bks:
@@ -693,7 +769,7 @@ def emit_all(books=None):
                 continue
             p = os.path.join(dp, f)
             rel = os.path.relpath(p, DOCS).replace(os.sep, "/")
-            if rel in ("offline.html", "continue.html"):
+            if rel in STATIC:
                 continue
             depth = rel.count("/")
             bk = owning_book(rel, by_slug) if depth else None
@@ -756,7 +832,7 @@ def check():
                 continue
             p = os.path.join(dp, f)
             rel = os.path.relpath(p, DOCS).replace(os.sep, "/")
-            if rel in ("offline.html", "continue.html"):
+            if rel in STATIC:
                 continue
             text = library.read(p)
             depth = rel.count("/")
@@ -785,12 +861,15 @@ def check():
         elif not want and os.path.exists(p):
             bad.append("%s/nav.json (should not exist: fewer than two chapters)" % b.slug)
     # The generated files themselves, not only their presence. offline.html,
-    # continue.html, every manifest (its shortcuts and theme_color follow the
-    # books' labels and colours), every nav.json and the two shell assets are
-    # regenerated in memory, through the very writers emit_all() uses, and
-    # compared byte for byte with docs/. library.write is captured for the
-    # duration, so nothing is written. A label change in PAGE or book.json that
-    # was never pushed through pwa.py used to pass here because the file existed.
+    # continue.html, 404.html, _redirects, every manifest (its shortcuts and
+    # theme_color follow the books' labels and colours), every nav.json and the
+    # two shell assets are regenerated in memory, through the very writers
+    # emit_all() uses, and compared byte for byte with docs/. library.write is
+    # captured for the duration, so nothing is written. A label change in PAGE
+    # or book.json that was never pushed through pwa.py used to pass here
+    # because the file existed. A missing 404.html or _redirects fails here like
+    # any other file: the site still serves without either, and quietly stores
+    # the wrong pages.
     made = {}
     real_write = library.write
 
@@ -800,6 +879,7 @@ def check():
     library.write = capture
     try:
         emit_pages(bks)
+        emit_redirects()
         write_json(os.path.join(DOCS, "manifest.webmanifest"), library_manifest())
         for b in bks:
             write_json(os.path.join(DOCS, b.slug, "manifest.webmanifest"),
@@ -831,7 +911,8 @@ def check():
         return 1
     print("pwa: every built page carries the current app-layer head; "
           "manifests, worker and icons all present; offline.html, continue.html, "
-          "%d manifests, %d nav.json and the shell assets are what pwa.py would emit"
+          "404.html, _redirects, %d manifests, %d nav.json and the shell assets "
+          "are what pwa.py would emit"
           % (1 + len(bks), sum(1 for r in made if r.endswith("nav.json"))))
     return 0
 

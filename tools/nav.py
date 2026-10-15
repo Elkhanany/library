@@ -69,11 +69,15 @@ HEAD_END = "</head>"
 # has to render from its own bytes. A bar that needs a stylesheet would be the
 # one piece of it that did not. Both already carry their own way back.
 #
+# 404.html is the same kind of page, written by pwa.py, and is served at every
+# missing address at any depth, where a bar's relative links would resolve
+# against wherever the reader happened to be. Its own links are absolute.
+#
 # The hub is barred. It used to be left out as the page the bar points back to,
 # which also left it the one page in the library with no theme control (NAV-02):
 # its bar is the brand "A Library", marked as the current page, and the theme
 # button.
-UNBARRED = ("offline.html", "continue.html")
+UNBARRED = ("offline.html", "continue.html", "404.html")
 
 # The theme button's glyph: a circle half-filled with currentColor, the same
 # everywhere (DESIGN.md section 4). Decorative; the button carries the label.
