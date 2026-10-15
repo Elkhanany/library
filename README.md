@@ -43,14 +43,15 @@ tools/                the build system, shared by every book
   library.py          resolves the repository, loads each book.json
   build.py            assembles src/ fragments into whole pages
   make.py             the offline build   → build/<book>/   (self-contained)
-  webbuild.py         the website build   → docs/           (GitHub Pages)
+  webbuild.py         the website build   → docs/           (Cloudflare Pages)
   nav.py              the library bar, on every page of every book. One
                       producer, so a book cannot offer a page from three of its
                       four fronts. Each book declares what it wants in
                       book.json and the bar is derived from that. A text pass
                       like pwa.py; `--check` asserts docs/ matches.
   pwa.py              the app layer over docs/: manifests, service worker,
-                      icons, offline manifests. A text pass, no browser, about
+                      icons, offline manifests, and the host's 404.html and
+                      _redirects. A text pass, no browser, about
                       five seconds -- so adding a meta tag never costs the
                       fifteen-minute rebuild. webbuild.py calls it last;
                       `python3 tools/pwa.py` on its own is the usual way.
@@ -96,6 +97,7 @@ books/<slug>/
 docs/                 the published site, committed deliberately
   index.html          the library hub
   <slug>/             one directory per book
+  404.html _redirects for Cloudflare Pages, written by pwa.py (see Publishing)
 ```
 
 ## Building
@@ -152,6 +154,30 @@ Both builds render the mathematics **at build time** in headless Chromium and wr
 to disk, so nothing is typeset in the reader's browser: pages paint immediately and work with the
 network switched off. All output is written UTF-8 with LF endings regardless of platform, so the
 same source builds to the same bytes anywhere.
+
+## Publishing
+
+Cloudflare Pages serves the site from this repository's `main` branch, with no build command and
+`docs` as the output directory, so `docs/` is published at the root of the domain. `SITE` in
+`tools/library.py` records that as `"/"`. It is the only absolute path in the library: a
+manifest's `id` resolves against the origin, and `offline.html` and `404.html` are served at
+whatever address was asked for, so those need it. Every other link is relative.
+
+Two files in `docs/` are for the host. `pwa.py` writes both, so `pwa.py --check` and a
+regenerate-and-diff of `docs/` cover them like everything else:
+
+- `_redirects` holds three rewrites. Without them Pages answers every `.html` address with a
+  permanent redirect to the same address without the extension. A browser refuses a redirected
+  response when the service worker hands it back for a page, so a stored chapter would not open
+  offline, and `pwa.js` finds a chapter and keeps the reader's place by its `.html` name. A `200`
+  rule is a rewrite, which Pages applies before that redirect, so every `.html` address is served
+  as it stands.
+- `404.html` is what Pages serves, with status 404, for an address that has no file. Without it
+  Pages treats the site as a single-page app and answers every missing address with the hub and
+  status 200, which the worker and a book download would then store as the page asked for.
+
+`sitecheck` fails if `404.html` is missing, or if it or `offline.html` has a link that does not
+start with `SITE`.
 
 ## Adding a book
 
@@ -210,8 +236,9 @@ what keeps a reader inside the installed app, whose scope is the library rather 
 
 `verify.py` opens every built page at desktop and phone widths **with all network requests blocked**,
 and fails if any equation did not typeset, any cross-reference did not resolve, any mathematics
-overflows its column, or any page reaches for the internet. `docs/` is committed rather than built by
-an Action, so what is published is exactly the bytes that passed.
+overflows its column, or any page reaches for the internet. `docs/` is committed rather than built at
+deploy time, and Cloudflare Pages runs no build command, so what is published is exactly the bytes
+that passed.
 
 `navcheck.py` holds the navigation to the same standard, because a bar that is merely present is not
 a bar that works. It fails if any page offers something other than what its `book.json` declares, if
