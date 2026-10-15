@@ -17,9 +17,10 @@
  *   fetch rather than orphaning sixty-five megabytes somebody chose to store.
  */
 
-/* elkhanany.github.io is one origin shared with every other Pages project on
- * the account, and Cache Storage is per-origin, so every name is prefixed. A
- * bare 'shell-v1' would collide with a neighbouring repo's worker. */
+/* Cache Storage is per-origin, and an origin can be shared: on GitHub Pages
+ * this site was one project among several on elkhanany.github.io. So every
+ * name is prefixed, and a bare 'shell-v1' cannot collide with a neighbour's
+ * worker on whatever host the library is served from. */
 const SHELL = 'lib:shell:' + BUILD;
 const BOOK = slug => 'lib:book:' + slug;
 
@@ -99,7 +100,7 @@ self.addEventListener('activate', e => e.waitUntil((async () => {
   }
 })()));
 
-/* Which book, if any, owns a path under /library/. */
+/* Which book, if any, owns a path on this site. */
 function slugOf(url) {
   const parts = url.pathname.split('/').filter(Boolean);
   for (const s of SLUGS) if (parts.indexOf(s) !== -1) return s;

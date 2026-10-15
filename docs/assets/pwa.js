@@ -216,8 +216,10 @@
    * at the root of a local preview, or on a custom domain. Deriving both from
    * the path assumed the prefix, and a root-served page lost the drawer's
    * prev/next, the arrow keys and position memory without a word (NAV-19).
-   * The path is the fallback, for a page with no bar. */
-  var parts = location.pathname.split('/').filter(Boolean);
+   * The path is the fallback, for a page with no bar, and it is read below
+   * the site root, which is the directory above this script's own assets/.
+   * It used to skip one directory as the Pages project prefix ("library"),
+   * which on the root of a domain is the book itself. */
   var SLUG = null, ROOT = './';
   (function () {
     var tn = document.querySelector('.topnav[data-book]');
@@ -226,11 +228,15 @@
       ROOT = '../';
       return;
     }
+    var base = '/', me = document.currentScript, path = location.pathname;
+    try { if (me && me.src) base = new URL('../', me.src).pathname; }
+    catch (e) { /* the root of the origin, then */ }
+    if (path.indexOf(base) === 0) path = path.slice(base.length);
+    var parts = path.split('/').filter(Boolean);
     var f = parts[parts.length - 1] || '';
-    var isFile = /\.html?$/.test(f);
-    var dirs = isFile ? parts.slice(0, -1) : parts.slice();
-    /* dirs[0] is the Pages project prefix ("library"); a book adds one more. */
-    if (dirs.length >= 2) { SLUG = dirs[dirs.length - 1]; ROOT = '../'; }
+    var dirs = /\.html?$/.test(f) ? parts.slice(0, -1) : parts.slice();
+    /* a book is the first directory under the root; the hub has none */
+    if (dirs.length >= 1) { SLUG = dirs[0]; ROOT = '../'; }
   })();
 
   /* ------------------------------------------------------- reading position

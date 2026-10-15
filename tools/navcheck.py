@@ -23,12 +23,15 @@ there.
 
 TWO THINGS IT HAS TO REPRODUCE, OR IT TESTS NOTHING
 
-pwa.js returns immediately on file://, so docs/ is served over http. And it
-reads the book slug out of the path, expecting the project prefix that GitHub
-Pages puts there, so docs/ is served under /library/ rather than at the root.
-Serving it at the root makes every book page look like the hub, which switches
-the whole app layer off silently: the first version of this file did exactly
-that and reported seven failures that were all its own.
+pwa.js returns immediately on file://, so docs/ is served over http. And it is
+served at library.SITE, the root of the Cloudflare Pages domain, because that
+is where readers meet it. pwa.js used to read the book slug out of the path,
+expecting the project prefix GitHub Pages put there, so a site served anywhere
+else made every book page look like the hub and switched the whole app layer
+off silently: the first version of this file did exactly that and reported
+seven failures that were all its own. The slug now comes from the bar
+(NAV-19), but a harness that serves the site where readers do not is testing a
+different site.
 
 A MISSING ELEMENT IS A FAILURE, NOT A CRASH
 
@@ -89,7 +92,7 @@ TWO CHECKS THE RESTYLE DEPENDS ON
   it. A KNOWN entry that no longer reproduces also fails, so the list can only
   shrink: delete the entry when its package lands.
 """
-import asyncio, http.server, os, socketserver, sys, threading
+import asyncio, http.server, os, socketserver, sys, threading, urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import library
@@ -208,16 +211,15 @@ fails = []
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    """docs/ under a /library/ prefix, which is where GitHub Pages puts it."""
+    """docs/ at library.SITE, which is where the host serves it."""
 
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=DOCS, **kw)
 
     def translate_path(self, path):
-        if path.startswith('/library/'):
-            path = path[len('/library'):]
-        elif path == '/library':
-            path = '/'
+        prefix = library.SITE.rstrip('/')
+        if prefix and (path == prefix or path.startswith(prefix + '/')):
+            path = path[len(prefix):] or '/'
         return super().translate_path(path)
 
     def log_message(self, *a):
@@ -254,9 +256,11 @@ def _short(js):
 
 
 def where(pg):
-    """The page, as a reader would name it: the path under /library/."""
+    """The page, as a reader would name it: the path under library.SITE."""
     try:
-        return pg.url.split('/library/', 1)[-1] or 'index.html'
+        u = urllib.parse.urlsplit(pg.url)
+        rest = u.path[len(library.SITE):] if u.path.startswith(library.SITE) else u.path
+        return (rest + ('?' + u.query if u.query else '')) or 'index.html'
     except Exception:
         return '?'
 
@@ -618,14 +622,14 @@ async def returning_reader(br, base):
         except Exception:
             pass
         ok('continue.html?b=newton-to-mtheory lands on ch1-1', pg.url.endswith('/ch1-1.html'),
-           pg.url.split('/library/')[-1])
+           where(pg))
         await pg.goto(base + 'continue.html', wait_until='load')
         try:
             await pg.wait_for_url('**/breast-cancer/BC-500.html', timeout=5000)
         except Exception:
             pass
         ok('continue.html lands on the most recent place, BC-500', pg.url.endswith('/BC-500.html'),
-           pg.url.split('/library/')[-1])
+           where(pg))
 
         # the hub's strip, most recent first, one tap to the chapter
         await pg.goto(base + 'index.html', wait_until='load')
@@ -640,7 +644,7 @@ async def returning_reader(br, base):
             await pg.click('section[data-continue] li a')
             await pg.wait_for_load_state('load')
             ok('one tap on its first row opens BC-500', pg.url.endswith('/breast-cancer/BC-500.html'),
-               pg.url.split('/library/')[-1])
+               where(pg))
     finally:
         await ctx.close()
 
@@ -978,7 +982,7 @@ async def apparatus(br, base):
 
 async def main():
     from playwright.async_api import async_playwright
-    base = 'http://127.0.0.1:%d/library/' % PORT
+    base = 'http://127.0.0.1:%d%s' % (PORT, library.SITE)
     async with async_playwright() as pw:
         br = await pw.chromium.launch()
 

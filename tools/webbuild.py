@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Emit docs/ — the GitHub Pages site.
+Emit docs/ — the published site, which Cloudflare Pages serves at the root of its domain.
 
 Differs from build/ in one way that matters: the website shares one stylesheet and
 one set of maths fonts across every page instead of inlining them into each file.

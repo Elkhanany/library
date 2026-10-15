@@ -18,9 +18,10 @@ reaches outside the site for something it needs to render.
 
 Two kinds of link a relative resolver used to get wrong or skip:
 
-- A link that starts with library.SITE ('/library/') is where GitHub Pages
-  serves docs/, so it resolves against docs/. Resolved as a file path it
-  pointed at /library on the filesystem and was reported missing.
+- A link that starts with library.SITE ('/', the root of the Cloudflare Pages
+  domain; '/library/' under GitHub Pages) is where the host serves docs/, so it
+  resolves against docs/. Resolved as a file path it pointed at the root of
+  the filesystem and was reported missing.
 - A link with a #fragment -- contents.html#sec-N, trials.html#t-<key>, the
   Stories page's #SQ- and #r- links, and in-page links like #sec-3 -- names an
   id the target page must carry. Hash routes that hold '=' (#who=, #study=)
@@ -91,9 +92,9 @@ def ids_of(path):
 
 def resolve(page, url, site_root):
     """(file, fragment) for an internal url. site_root is where library.SITE is
-    served from (docs/), or None where there is no site (the Dropbox build): an
-    absolute /library/ link then resolves to a file that does not exist, which
-    is the truth about it on a phone opening a file from Dropbox."""
+    served from (docs/), or None where there is no site (the Dropbox build): a
+    link absolute from library.SITE then resolves to a file that does not
+    exist, which is the truth about it on a phone opening a file from Dropbox."""
     path, _, frag = url.partition("#")
     target = urllib.parse.unquote(path.split("?")[0])
     site = library.SITE

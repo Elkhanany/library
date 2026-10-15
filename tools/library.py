@@ -37,13 +37,16 @@ DOCS = os.path.join(ROOT, "docs")
 ORDER = ["newton-to-mtheory", "the-long-argument", "the-ages-of-thought",
          "breast-cancer", "the-other-end-of-the-trade"]
 
-# GitHub Pages serves this repo as a PROJECT page, so every published URL carries
-# this prefix. It is the only absolute path anywhere in the library. A manifest's
-# "id" needs it, because id resolves against the ORIGIN rather than against the
-# manifest's own URL; everything else stays document-relative so the tree can be
-# moved or previewed from a file:// path. Moving to a custom domain changes this
-# one line and nothing else.
-SITE = "/library/"
+# Where docs/ is served. Cloudflare Pages publishes it at the root of the domain
+# (output directory "docs", no build command); under GitHub Pages it was a
+# PROJECT page and this was "/library/". It is the only absolute path anywhere in
+# the library. A manifest's "id" needs it, because id resolves against the ORIGIN
+# rather than against the manifest's own URL, and offline.html and 404.html need
+# it because they are served at whatever address was asked for; everything else
+# stays document-relative so the tree can be moved or previewed from a file://
+# path. Moving the site changes this one line, and docs/_redirects (pwa.py) if
+# the new host is not Cloudflare Pages.
+SITE = "/"
 
 
 def plain(text):
