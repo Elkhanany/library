@@ -38,9 +38,16 @@ REFS = os.path.join(BOOK, "references.yaml")
 STORIES = os.path.join(BOOK, "stories.yaml")
 
 
+def body_start(text):
+    """Where the records begin: after the top-level `trials:` or `refs:` line. The file header
+    above it has two-space keys of its own (`chapters:` in trials.yaml), which are not records."""
+    m = re.search(r"^(?:trials|refs):\n", text, re.M)
+    return m.end() if m else 0
+
+
 def block(text, key):
     """The body of one record (or reference): the lines indented under '  key:'."""
-    return re.search(r"^  %s:\n((?:    [^\n]*\n)*)" % re.escape(key), text, re.M)
+    return re.compile(r"^  %s:\n((?:    [^\n]*\n)*)" % re.escape(key), re.M).search(text, body_start(text))
 
 
 def set_field(text, key, field, value):
@@ -98,8 +105,8 @@ def same(a, b):
 
 
 def insert_sorted(text, entry_text, key, pattern):
-    """Put a new top-level entry before the first existing key that sorts after it."""
-    keys = [(mm.group(1), mm.start()) for mm in re.finditer(pattern, text, re.M)]
+    """Put a new record before the first existing record whose key sorts after it."""
+    keys = [(mm.group(1), mm.start()) for mm in re.compile(pattern, re.M).finditer(text, body_start(text))]
     at = next((pos for k, pos in keys if k > key), len(text))
     return text[:at] + entry_text + text[at:]
 
