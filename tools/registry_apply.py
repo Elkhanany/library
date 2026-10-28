@@ -18,8 +18,11 @@ Nothing is guessed. A field is replaced only when the registry still holds the `
 edit was reviewed against; a prose edit only when its quote occurs exactly once; a reference only
 when neither its key nor its PMID is already in references.yaml; a record only when its key is new.
 Everything else is reported and skipped. A dotted field (`digest.results`) edits one key of a
-mapping. Each record that changes gets `reviewed` set to --date (default today), and each story
-question in `stories_named` is listed so it can be re-read before its own `reviewed` moves.
+mapping, and a `new` of null removes the field (`tabulated` once a result is entered). A record whose fields change, and every new record, gets `reviewed` set to --date
+(default today). A publication added on its own does not move `reviewed`, so that
+`evidence.py --stale` keeps the trial on its worklist until the prose that cites it has been
+read; an edit sets `"mark_reviewed": true` once that reading is done. Each story question in
+`stories_named` is listed so it can be re-read before its own `reviewed` moves.
 
 The registry is edited as text, field by field, so every record keeps the registry's own wrapping
 and a diff shows only what changed. Data files are never edited by a prose edit.
@@ -39,13 +42,18 @@ def block(text, key):
 
 
 def set_field(text, key, field, value):
-    """Replace or insert one top-level field of a record. Continuation lines are six-space
-    lines and four-space list items, which is how yaml.safe_dump lays out this registry."""
+    """Replace or insert one top-level field of a record, or remove it when value is None.
+    Continuation lines are six-space lines and four-space list items, which is how
+    yaml.safe_dump lays out this registry."""
     m = block(text, key)
     if not m:
         return text, "record not found"
     blk = m.group(1)
     f = re.search(r"^    %s:(?:[ \t][^\n]*)?\n(?:(?:      |    - )[^\n]*\n)*" % re.escape(field), blk, re.M)
+    if value is None:
+        if not f:
+            return text, None
+        return text[:m.start(1)] + blk[:f.start()] + blk[f.end():] + text[m.end(1):], None
     dumped = yaml.safe_dump({field: value}, allow_unicode=True, width=116, sort_keys=False)
     new = "".join("    " + ln + "\n" for ln in dumped.rstrip("\n").split("\n"))
     if f:
@@ -66,7 +74,10 @@ def current(text, key):
 
 
 def same(a, b):
-    norm = lambda v: " ".join(str(v if v is not None else "").strip("'\"").split())
+    def norm(v):
+        if isinstance(v, bool):
+            v = "true" if v else "false"          # as YAML writes it, which is what an edit copies
+        return " ".join(str(v if v is not None else "").strip("'\"").split())
     return norm(a) == norm(b)
 
 
@@ -122,7 +133,7 @@ def main():
         t = current(reg, k)
         if t is None:
             bad.append((k, "not in the registry")); continue
-        changed = is_new
+        changed = is_new or bool(f.get("mark_reviewed"))
         for c in ([] if is_new else f.get("field_changes") or []):
             fld, val = c["field"], c["new"]
             top, _, sub = fld.partition(".")
@@ -132,7 +143,7 @@ def main():
             if c.get("old") not in (None, "", "None") and not same(now, c["old"]):
                 bad.append((k, "%s: registry holds %r, the edit was reviewed against %r"
                             % (fld, str(now)[:70], str(c["old"])[:70]))); continue
-            if top in ("n", "year") and str(val).isdigit():
+            if val is not None and top in ("n", "year") and str(val).isdigit():
                 val = int(val)
             if sub:
                 d = dict(t.get(top) or {}); d[sub] = val; val, fld = d, top
@@ -150,7 +161,6 @@ def main():
                     continue
                 pubs.append({"added": today, "kind": p["kind"], "ref": p["ref"], "role": p["role"]})
                 log.append("%-16s + pub %s" % (k, p["ref"]))
-                changed = True
             reg, err = set_field(reg, k, "pubs", pubs)
             if err:
                 bad.append((k, err))
