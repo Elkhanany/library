@@ -22,7 +22,8 @@ mapping, and a `new` of null removes the field (`tabulated` once a result is ent
 (default today). A publication added on its own does not move `reviewed`, so that
 `evidence.py --stale` keeps the trial on its worklist until the prose that cites it has been
 read; an edit sets `"mark_reviewed": true` once that reading is done. Each story question in
-`stories_named` is listed so it can be re-read before its own `reviewed` moves.
+`stories_named` is listed so it can be re-read before its own `reviewed` moves. A question in
+`stories_reread` has been re-read, so its `reviewed` is set to --date, after every prose edit.
 
 The registry is edited as text, field by field, so every record keeps the registry's own wrapping
 and a diff shows only what changed. Data files are never edited by a prose edit.
@@ -34,6 +35,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOOK = os.path.join(ROOT, "books", "breast-cancer")
 REG = os.path.join(BOOK, "trials.yaml")
 REFS = os.path.join(BOOK, "references.yaml")
+STORIES = os.path.join(BOOK, "stories.yaml")
 
 
 def block(text, key):
@@ -66,6 +68,20 @@ def set_field(text, key, field, value):
                 break
         nb = blk[:at] + new + blk[at:]
     return text[:m.start(1)] + nb + text[m.end(1):], None
+
+
+def date_question(text, qid, today):
+    """Set one story question's `reviewed`. A question is a list item whose keys sit six spaces in."""
+    m = re.search(r"^      id: %s\n" % re.escape(qid), text, re.M)
+    if not m:
+        return text, "no story question %s" % qid
+    start = text.rfind("\n    - ", 0, m.start()) + 1
+    nxt = re.search(r"^(?!      |        )", text[m.end():], re.M)
+    end = m.end() + (nxt.start() if nxt else len(text) - m.end())
+    blk, k = re.subn(r"^      reviewed: [^\n]*$", "      reviewed: %s" % today, text[start:end], count=1, flags=re.M)
+    if not k:
+        return text, "story question %s has no reviewed line" % qid
+    return text[:start] + blk + text[end:], None
 
 
 def current(text, key):
@@ -102,7 +118,7 @@ def main():
     reg, refs = open(REG, encoding="utf-8").read(), open(REFS, encoding="utf-8").read()
     ref_data = yaml.safe_load(refs)["refs"]
     pmids = {str(v.get("pmid")): k for k, v in ref_data.items() if v.get("pmid")}
-    files, log, bad, stories = {}, [], [], {}
+    files, log, bad, stories, reread = {}, [], [], {}, set()
     for e in edits:
         if not e or e.get("verdict") == "rejected":
             continue
@@ -182,6 +198,18 @@ def main():
             log.append("%-16s prose %s" % (k, os.path.relpath(fn, BOOK)))
         for q in f.get("stories_named") or []:
             stories.setdefault(q, []).append(k)
+        for q in f.get("stories_reread") or []:
+            reread.add(q)
+    if reread:
+        st = files.setdefault(STORIES, open(STORIES, encoding="utf-8").read())
+        for q in sorted(reread):
+            st, err = date_question(st, q, today)
+            if err:
+                bad.append(("stories", err))
+            else:
+                log.append("%-16s reviewed %s" % (q, today))
+        files[STORIES] = st
+        yaml.safe_load(st)
     yaml.safe_load(reg), yaml.safe_load(refs)        # both must still parse
     for line in log:
         print(line)
