@@ -249,6 +249,10 @@ def format_ref(key, r):
     if r.get("volume"):
         tail.append(("%s:%s" % (r["volume"], r.get("pages", ""))).rstrip(":"))
     out = esc(s) + (". " + " ".join(tail) if tail else "")
+    # A congress presentation is citable but has not been through peer review, and a
+    # clinician reading the reference list has to be able to see that without opening it.
+    if r.get("type") == "conference":
+        out += ". Conference presentation; not yet peer reviewed"
     if r.get("pmid"):
         out += '. <a href="https://pubmed.ncbi.nlm.nih.gov/%s/">PMID&nbsp;%s</a>' % (
             r["pmid"], r["pmid"])
