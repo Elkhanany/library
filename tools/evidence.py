@@ -108,7 +108,7 @@ def parse_filter(spec):
             bad.append(f"token {tok!r} is not key=value")
             continue
         k, v = tok.split("=", 1)
-        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry", "catalogue"):
+        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry", "catalogue", "allcomers"):
             bad.append(f"unknown filter key {k!r}")
             continue
         if k in VOCAB or k == "entry":
@@ -117,6 +117,8 @@ def parse_filter(spec):
                     bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB['line' if k == 'entry' else k])}")
         if k == "catalogue" and v != "any":
             bad.append(f"catalogue={v!r}: the only value is any")
+        if k == "allcomers" and v != "no":
+            bad.append(f"allcomers={v!r}: the only value is no")
         f[k] = v
     return f, bad
 
@@ -151,7 +153,7 @@ def matches(trial, f):
         if str(trial.get("weight") or "") not in set(want_w.split(",")):
             return False
     for k, v in f.items():
-        if k in DIRECTIVES or k in ("weight", "catalogue"):
+        if k in DIRECTIVES or k in ("weight", "catalogue", "allcomers"):
             continue
         if k == "entry":
             if entry_line(trial) not in set(v.split(",")):
@@ -170,6 +172,10 @@ def matches(trial, f):
         # An all-comers trial belongs in every subtype table. Wildcarding is deliberately
         # NOT extended to setting, line or modality, where "any" means not applicable and
         # a trial with it should stay out of a specific table.
+        # allcomers=no holds a block to its own subtype, so an all-comers trial is argued
+        # once, in the chapter about all comers, and not repeated in every subtype table.
+        if k == "subtype" and "all" in have and f.get("allcomers") == "no":
+            return False
         if k == "subtype" and ("all" in have or "all" in wanted):
             continue
         if not (wanted & have):
