@@ -817,6 +817,7 @@ def trialdata(m):
             "line": t.get("line"), "line_basis": t.get("line_basis"),
             "prior_therapy": t.get("prior_therapy"), "modality": t.get("modality"),
             "status": t.get("status"), "weight": t.get("weight"),
+            "catalogue": True if t.get("catalogue") else None,
             "topic": t.get("topic"),
             "population": t.get("population"), "arms": t.get("arms"),
             "endpoint": t.get("endpoint"), "result": t.get("result"),

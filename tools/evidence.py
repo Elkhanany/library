@@ -108,13 +108,15 @@ def parse_filter(spec):
             bad.append(f"token {tok!r} is not key=value")
             continue
         k, v = tok.split("=", 1)
-        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry"):
+        if k not in VOCAB and k not in DIRECTIVES and k not in ("topic", "entry", "catalogue"):
             bad.append(f"unknown filter key {k!r}")
             continue
         if k in VOCAB or k == "entry":
             for part in v.split(","):
                 if part not in VOCAB["line" if k == "entry" else k]:
                     bad.append(f"{k}={part!r} is not in the controlled vocabulary {sorted(VOCAB['line' if k == 'entry' else k])}")
+        if k == "catalogue" and v != "any":
+            bad.append(f"catalogue={v!r}: the only value is any")
         f[k] = v
     return f, bad
 
@@ -133,6 +135,11 @@ def entry_line(trial):
 
 
 def matches(trial, f):
+    # A catalogue record is in the registry so that the registry is complete, not
+    # because the book argues it. No table shows one unless it asks with
+    # catalogue=any, so adding a record never moves a row the prose counts.
+    if trial.get("catalogue") and f.get("catalogue") != "any":
+        return False
     # The one axis that is not a plain AND. A block that says nothing about weight
     # is asking for the trials a decision rests on, which is everything the registry
     # holds except the ones marked exploratory.
@@ -144,7 +151,7 @@ def matches(trial, f):
         if str(trial.get("weight") or "") not in set(want_w.split(",")):
             return False
     for k, v in f.items():
-        if k in DIRECTIVES or k == "weight":
+        if k in DIRECTIVES or k in ("weight", "catalogue"):
             continue
         if k == "entry":
             if entry_line(trial) not in set(v.split(",")):

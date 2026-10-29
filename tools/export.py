@@ -151,7 +151,7 @@ def build():
     # ---------------------------------------------------------------- Trials
     thead = ["Key", "Trial", "Discipline", "Phase", "N", "Setting", "Subtype", "Line",
              "Lines counted by", "Prior therapy", "Modality",
-             "Status", "Evidence weight", "Year", "Topic", "Population", "Experimental vs control",
+             "Status", "Evidence weight", "Catalogue only", "Year", "Topic", "Population", "Experimental vs control",
              "Primary endpoint", "Result", "Overall survival", "Read with care",
              "Methods", "Results", "Result taken from", "PMID", "Papers", "NCT",
              "Result state", "Last reviewed", "Chapters it is assigned to",
@@ -165,7 +165,7 @@ def build():
             k, t.get("acronym") or k, t.get("discipline"), t.get("phase"), t.get("n"),
             t.get("setting"), t.get("subtype"), t.get("line"), t.get("line_basis"),
             t.get("prior_therapy"), t.get("modality"), t.get("status"),
-            t.get("weight"), t.get("year"), t.get("topic"), t.get("population"), t.get("arms"),
+            t.get("weight"), "yes" if t.get("catalogue") else None, t.get("year"), t.get("topic"), t.get("population"), t.get("arms"),
             t.get("endpoint"), t.get("result"), t.get("os"), t.get("note"),
             d.get("methods"), d.get("results"), pr,
             (refs.get(pr) or {}).get("pmid") if pr else None,

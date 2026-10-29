@@ -78,6 +78,8 @@ TRIAL = re.compile(r"\{\{trial:([a-z0-9][a-z0-9\-.]*)\}\}")
 # trial in the same bucket. Modality separates those two, and neither axis
 # alone sorts the orphans the way a person would.
 def family(t):
+    if t.get("catalogue"):
+        return "catalogue"
     # A comma list names the trial's settings in order, and the first is the one a
     # reader would file it under (TAM-01, dcis,prevention, is a DCIS trial).
     setting = str(t.get("setting") or "").split(",")[0].strip() or None

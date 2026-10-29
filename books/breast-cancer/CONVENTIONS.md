@@ -595,6 +595,17 @@ situation. It is reported so the choice is deliberate rather than accidental.
 `docs/breast-cancer/stories.html` draws the whole landscape from `src/data/stories.json`, filtered
 and searchable, with each trial linked into the registry appendix.
 
+## Catalogue records
+
+The registry aims to hold every trial a breast oncologist could be asked about, not only the
+trials the book argues. A record the book does not take up carries `catalogue: true`. It is filled
+like any other record and verified the same way, appears in Appendix A and in the workbook (column
+"Catalogue only"), and is otherwise invisible to the book: no evidence table shows it unless its
+block says `catalogue=any`, and `synthcheck.py` files it under the declared `catalogue` family
+rather than reporting it as an orphan. So a record can be added for completeness without moving a
+row that a chapter's prose counts. When a chapter starts to argue the trial, remove the flag, name
+the trial in its story question, and re-read every table its filters would now match.
+
 ## Evidence weight
 
 A trial may carry one more axis, and it is the only one a filter has to ask for by name:
