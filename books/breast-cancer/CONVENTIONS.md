@@ -606,6 +606,10 @@ rather than reporting it as an orphan. So a record can be added for completeness
 row that a chapter's prose counts. When a chapter starts to argue the trial, remove the flag, name
 the trial in its story question, and re-read every table its filters would now match.
 
+A trial that enrolled every subtype (`subtype: all`) matches every subtype table by default. A block
+that should hold only trials of its own subtype says `allcomers=no`; the all-comers trials are then
+argued where all comers are, in BC-440 and BC-490.
+
 ## Evidence weight
 
 A trial may carry one more axis, and it is the only one a filter has to ask for by name:

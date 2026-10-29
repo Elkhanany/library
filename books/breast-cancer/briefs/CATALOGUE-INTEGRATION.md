@@ -45,7 +45,18 @@ Computed from the registry on 2026-10-29 (`scratchpad/plan/catalogue-map.json`):
   MA.5 and others) would land in BC-850's triple-negative tables, and eleven all-comers neoadjuvant
   trials in BC-810's receptor-positive ones. Decision 2 below.
 
-## Decisions needed before work starts
+## Decisions (taken 2026-10-29)
+
+1. Tiers as proposed.
+2. All-comers trials are argued once, in BC-440 and BC-490. A block that should hold only its own
+   subtype says `allcomers=no`, which keeps out records whose subtype is `all`.
+3. Historic randomised trials appear as table rows (tier B), with captions that say which rows
+   predate aromatase inhibitors or taxanes.
+4. Package by package, starting with WP1 and WP2.
+
+FinXX moves from WP1 to WP5, because the all-comers rule decides where it lands.
+
+## The decisions as they were put
 
 1. **The tiering rule above.** Tier A is the expensive one (new prose, story edits, re-argued
    tables). The work packages below propose about 70 tier-A trials, 30 tier-B and 65 tier-C.
@@ -67,8 +78,8 @@ Computed from the registry on 2026-10-29 (`scratchpad/plan/catalogue-map.json`):
 Ordered by how much each changes what a reader is told. Each package names its tier-A and tier-B
 trials; everything else in its area stays tier C (listed at the end).
 
-**WP1 · Naming only (quick).** FinXX in BC-440, GEC-ESTRO in BC-480, IBCSG 23-01 in BC-410, as for
-the five trials on 29 October. FinXX also enters BC-850's tables (see decision 2).
+**WP1 · Naming only (quick).** GEC-ESTRO in BC-480 and IBCSG 23-01 in BC-410, as for the five
+trials on 29 October. (FinXX, cited in BC-440, moves to WP5.)
 
 **WP2 · Prevention, BC-080.** Tier A: STAR, RUTH, MORE/CORE, PEARL, Generations, the Royal Marsden
 and Italian tamoxifen trials, HOT, LIBER (letrozole in BRCA carriers, 2025), the Decensi low-dose
