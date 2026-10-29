@@ -174,6 +174,8 @@ def reconcile(reg, sto, doc):
     anywhere = set(named)
     for c in tabled:
         anywhere |= tabled[c] | prosed[c]
+    # A catalogue record reaches the reader through Appendix A and the workbook, by design.
+    anywhere |= {k for k, t in reg.items() if t.get("catalogue")}
     rep["silent"] = sorted(set(reg) - anywhere)
 
     # a chapter that carries evidence and no story
