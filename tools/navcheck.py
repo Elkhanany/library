@@ -969,7 +969,14 @@ async def apparatus(br, base):
             ctx.set_default_timeout(TIMEOUT)
             pg = await ctx.new_page()
             await pg.goto(base + 'breast-cancer/BC-870.html#' + rid, wait_until='load')
-            await pg.wait_for_timeout(900)
+            # The list opens and then scrolls smoothly to the entry. On a long chapter the scroll
+            # outlasts a fixed pause, so wait for it to arrive, or time out and report the miss.
+            try:
+                await pg.wait_for_function(
+                    "(id) => { const r = document.getElementById(id).getBoundingClientRect();"
+                    " return r.top >= 0 && r.top < innerHeight; }", arg=rid, timeout=5000)
+            except Exception:
+                pass
             r = await pg.evaluate("""(id) => { const li = document.getElementById(id), rc = li.getBoundingClientRect();
               const bg = getComputedStyle(li).backgroundColor;
               return {open: document.querySelector('details.refs-list').open,

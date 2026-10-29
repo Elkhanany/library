@@ -286,7 +286,8 @@ population was never CNS-restricted.
 | `line_basis` | untreated, endocrine, chemotherapy, all, not-stated |
 | `discipline` | medical, radiation, surgical, supportive, other |
 | `modality` | endocrine, cdk4-6, chemo, her2, adc, immunotherapy, parp, pi3k-akt, surgery, radiation, bone, supportive |
-| `phase`, `status`, `topic` | filters |
+| `status` | reported, presented, ongoing, awaited |
+| `phase`, `topic` | filters |
 | `sort`, `cols`, `caption` | directives, not filters |
 
 **`discipline` is what the trial tested.** `medical` is systemic anticancer therapy, including
@@ -411,6 +412,24 @@ to imply a negative), `year`, `status`, `primary_ref` and `cited_by`.
 
 Adding a trial means filling those fields and verifying `primary_ref` against PubMed. Nothing else
 has to change for it to appear in the book.
+
+**Congress data is entered as congress data.** A result presented at a meeting and not yet in a
+peer-reviewed journal used to stay off the record entirely, which left the book a congress behind
+the clinic. It is now entered, and labelled so that it cannot pass for a paper:
+
+- The source is a `references.yaml` entry with `type: conference`, naming the presenter, the
+  abstract's title, the congress and the abstract number (`journal: ESMO Congress 2026, LBA25`).
+  It is `verified: true` only when the figures were read off the presenter's own slides or abstract,
+  and the reference list prints it as a conference presentation that has not been peer reviewed.
+- A trial whose only result is a presentation carries `status: presented`, and its `primary_ref` is
+  the conference entry. A published trial with a newer congress update keeps `status: reported`,
+  and the field the update changes says so in its first words (`Final analysis presented at ESMO
+  2026 (1RO), not yet published: ...`). The publication list gains the conference entry with the
+  `kind` the update is.
+- A figure that appears only in a vendor summary or a social-media post, and on no slide, is not
+  entered.
+- When the paper is indexed it replaces the conference entry as the source of the figures, and the
+  status returns to `reported`.
 
 ## The trial registry and Appendix A
 
@@ -575,6 +594,17 @@ situation. It is reported so the choice is deliberate rather than accidental.
 
 `docs/breast-cancer/stories.html` draws the whole landscape from `src/data/stories.json`, filtered
 and searchable, with each trial linked into the registry appendix.
+
+## Catalogue records
+
+The registry aims to hold every trial a breast oncologist could be asked about, not only the
+trials the book argues. A record the book does not take up carries `catalogue: true`. It is filled
+like any other record and verified the same way, appears in Appendix A and in the workbook (column
+"Catalogue only"), and is otherwise invisible to the book: no evidence table shows it unless its
+block says `catalogue=any`, and `synthcheck.py` files it under the declared `catalogue` family
+rather than reporting it as an orphan. So a record can be added for completeness without moving a
+row that a chapter's prose counts. When a chapter starts to argue the trial, remove the flag, name
+the trial in its story question, and re-read every table its filters would now match.
 
 ## Evidence weight
 
