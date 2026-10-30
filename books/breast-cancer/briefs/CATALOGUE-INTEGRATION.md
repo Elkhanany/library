@@ -1,8 +1,30 @@
 ---
 id: catalogue-integration
 title: "Bringing the catalogue trials into the chapters"
-status: plan
+status: done
 ---
+
+## Outcome (2026-10-30)
+
+All ten work packages are applied. The catalogue went from 165 records to 71. Ninety-four records
+left it and are argued in prose or shown as table rows. Two records were added because a chapter
+already argued the trial: LTMBC (WP3) and the iniparib phase 3 trial (WP8 and WP9). The registry
+holds 593 trials.
+
+| Package | Chapters | Pull request |
+|---|---|---|
+| WP1, WP2 | BC-480, BC-410, BC-080 | #42 |
+| WP3 | BC-410, BC-420, BC-550, BC-600 | #43 |
+| WP4 | BC-540, BC-810, BC-830, BC-840, BC-860 | #44 |
+| WP5 to WP10 | BC-440, BC-490, BC-510, BC-850, BC-790, BC-820, BC-840, BC-900, BC-470, BC-590, BC-740, BC-890, BC-920, BC-640, BC-650 | this round |
+
+WP8 and WP9 ran as one package, because SWOG S1416 enters tables in both.
+
+The 71 that stay are the tier C records: phase 1 and pilot studies, single-arm neoadjuvant endocrine
+studies, the phase 1 HER2 vaccines, metabolic and bone-density studies, and basket trials. Two
+randomised phase 2 trials among them could be promoted when a chapter question needs them:
+FAIRLANE (neoadjuvant ipatasertib in triple-negative disease) and TBCRC 008 (neoadjuvant vorinostat
+with carboplatin and nab-paclitaxel).
 
 The registry holds 591 trials. 165 of them are catalogue records (`catalogue: true`): verified and
 listed in Appendix A, but argued nowhere in the book and shown in no evidence table. This plan says
