@@ -265,6 +265,40 @@ def result_state(t):
     return "none"
 
 
+_TAG = re.compile(r"^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)+$")
+_TOPIC_FILTERS = None
+
+
+def topic_filters():
+    """Every value a chapter's evidence block filters `topic` on, read from the
+    chapters each time the set is first asked for in a run."""
+    global _TOPIC_FILTERS
+    if _TOPIC_FILTERS is None:
+        vals = set()
+        chdir = os.path.join(BOOK, "chapters")
+        for fn in sorted(os.listdir(chdir)):
+            if not fn.endswith(".md"):
+                continue
+            with open(os.path.join(chdir, fn), encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("```evidence"):
+                        f, _ = parse_filter(line[len("```evidence"):].strip())
+                        if f.get("topic"):
+                            vals.add(f["topic"].lower())
+        _TOPIC_FILTERS = vals
+    return _TOPIC_FILTERS
+
+
+def topic_text(t):
+    """The topic as a reader sees it. `topic` also carries the tags that table
+    filters match, each as its own clause after a comma; a clause that is a
+    filter value or a hyphenated token is a tag, and the reader is not shown it."""
+    clauses = [c.strip() for c in str(t.get("topic") or "").split(",")]
+    tags = topic_filters()
+    keep = [c for c in clauses if c and not _TAG.match(c) and c.lower() not in tags]
+    return ", ".join(keep) or None
+
+
 def _yaml_load(path):
     with open(path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)

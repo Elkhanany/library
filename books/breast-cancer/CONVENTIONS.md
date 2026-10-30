@@ -362,8 +362,18 @@ up, `--axes` checks every trial's axes against the heading the source document f
 every trial that belongs gets one, and nothing fails when a trial is missed: the table renders, it
 is simply short. aTTom was absent from the tamoxifen-duration table for exactly this reason, and
 GIM4 and SOLE from the extended-endocrine one, while still appearing in their chapter's overview
-table so nothing looked wrong. Append a tag as its own clause after a comma, because `topic` is
-printed to the reader, and run `--topics` after adding a trial.
+table so nothing looked wrong. Append a tag as its own clause after a comma, and run `--topics`
+after adding a trial.
+
+**The rest of `topic` is the trial's one-line description.** The registry explorer prints it under
+the trial's name, and the hover on a trial mark carries it. Both drop the tag clauses: a clause
+that equals a block's `topic` filter, or is a single hyphenated token, is a tag
+(`evidence.topic_text`). What remains says what was tested, against what, and in whom, in at most
+about 25 words: the intervention by generic name, the comparator after "against" (or "single-arm"),
+and the subtype, setting and line. It describes the design only, because the result has its own
+field: no figures, no verdict, no "versus", which is itself a filter value. Rewording it can move a
+trial into or out of a table whose filter matches a plain word such as `platinum` or `dual`, so run
+the table diff after any change to it.
 
 **Adding axes to a trial changes published tables.** A table is a filter, so a trial starts appearing
 in one the moment it starts matching. Before merging any batch of axes, render every affected block and
