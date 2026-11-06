@@ -315,7 +315,7 @@ class Chapter:
             return esc(k)
         bits = [b for b in (("phase %s" % t["phase"]) if t.get("phase") else None,
                             t.get("setting"), t.get("subtitle") or t.get("subtype"),
-                            t.get("topic")) if b]
+                            evidence.topic_text(t)) if b]
         return '<span class="trial%s" data-trial="%s" title="%s">%s</span>' % (
             " chip" if chip else "", esc(k), esc("; ".join(bits)),
             esc(t.get("acronym", k)))
@@ -818,7 +818,7 @@ def trialdata(m):
             "prior_therapy": t.get("prior_therapy"), "modality": t.get("modality"),
             "status": t.get("status"), "weight": t.get("weight"),
             "catalogue": True if t.get("catalogue") else None,
-            "topic": t.get("topic"),
+            "topic": evidence.topic_text(t),
             "population": t.get("population"), "arms": t.get("arms"),
             "endpoint": t.get("endpoint"), "result": t.get("result"),
             "os": t.get("os"), "nct": t.get("nct"),
