@@ -72,3 +72,9 @@ CLEOPATRA survival analyses had been conflated; RIGHT Choice had been called the
 only randomised test of first-line endocrine therapy against chemotherapy, and
 PADMA is a second; and D-CARE had been set against the fracture-dose
 denosumab trial without that trial's disease-free survival result.
+
+## Registry completeness sweeps
+
+`registry-sweep-2026-11/` holds the November 2026 list of 674 trials the registry is missing. It was built
+from PubMed's phase 3 breast cancer papers, the ESMO and ASCO guideline reference lists and the NCCN list.
+Its README says how the list was made and which decision is still open.
